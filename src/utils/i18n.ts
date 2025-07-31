@@ -108,6 +108,12 @@ const i18n = new I18n({
       placeholder: 'Referral Code',
       skip: 'Skip',
     },
+    allDone: {
+      title: 'All done!',
+      allDone: 'All done!',
+      thankYou: 'Thank you for trusting us',
+      privacy: 'We promise to always keep your personal information private and secure.',
+    },
   },
   es: {
     loading: 'Cargando...',
@@ -214,6 +220,12 @@ const i18n = new I18n({
       subtitle: 'Puedes saltar este paso.',
       placeholder: 'Código de referido',
       skip: 'Saltar',
+    },
+    allDone: {
+      title: '¡Todo hecho!',
+      allDone: '¡Todo hecho!',
+      thankYou: 'Gracias por confiar en nosotros',
+      privacy: 'Prometemos siempre mantener tu información personal privada y segura.',
     },
   },
   zh: {
@@ -322,6 +334,12 @@ const i18n = new I18n({
       placeholder: '推荐码',
       skip: '跳过',
     },
+    allDone: {
+      title: '全部完成！',
+      allDone: '全部完成！',
+      thankYou: '感谢您的信任',
+      privacy: '我们保证始终保护您的个人信息安全。',
+    },
   },
   it: {
     loading: 'Caricamento...',
@@ -428,6 +446,12 @@ const i18n = new I18n({
       subtitle: 'Puoi saltare questo passo.',
       placeholder: 'Codice di riferimento',
       skip: 'Salta',
+    },
+    allDone: {
+      title: 'Tutto fatto!',
+      allDone: 'Tutto fatto!',
+      thankYou: 'Grazie per averci fidato',
+      privacy: 'Promettiamo sempre di mantenere la tua privacy e la sicurezza delle tue informazioni personali.',
     },
   },
   pt: {
@@ -536,6 +560,12 @@ const i18n = new I18n({
       placeholder: 'Código de referência',
       skip: 'Pular',
     },
+    allDone: {
+      title: 'Tudo feito!',
+      allDone: 'Tudo feito!',
+      thankYou: 'Obrigado por confiar em nós',
+      privacy: 'Prometemos sempre manter sua privacidade e a segurança das suas informações pessoais.',
+    },
   },
   ro: {
     loading: 'Se încarcă...',
@@ -642,6 +672,12 @@ const i18n = new I18n({
       subtitle: 'Poți să sari acest pas.',
       placeholder: 'Cod de referință',
       skip: 'Sari',
+    },
+    allDone: {
+      title: 'Toate făcute!',
+      allDone: 'Toate făcute!',
+      thankYou: 'Vă mulțumim că ne-ați făcut încredere',
+      privacy: 'Promitem să îți păstrăm înțelepciunea și să-ți asigurăm securitatea informațiilor personale.',
     },
   },
   de: {
@@ -750,6 +786,12 @@ const i18n = new I18n({
       placeholder: 'Referenzcode',
       skip: 'Überspringen',
     },
+    allDone: {
+      title: 'Alles erledigt!',
+      allDone: 'Alles erledigt!',
+      thankYou: 'Vielen Dank für Ihre Vertrauen',
+      privacy: 'Wir versprechen, Ihre Privatsphäre und die Sicherheit Ihrer persönlichen Daten immer zu wahren.',
+    },
   },
   fr: {
     loading: 'Chargement...',
@@ -857,6 +899,12 @@ const i18n = new I18n({
       placeholder: 'Code de référence',
       skip: 'Sauter',
     },
+    allDone: {
+      title: 'Tout fait!',
+      allDone: 'Tout fait!',
+      thankYou: 'Merci de votre confiance',
+      privacy: 'Nous promettons de toujours garder votre vie privée et la sécurité de vos informations personnelles.',
+    },
   },
   ar: {
     loading: 'جاري التحميل...',
@@ -963,6 +1011,12 @@ const i18n = new I18n({
       subtitle: 'يمكنك تخطي هذا الخطوة.',
       placeholder: 'رمز مرجعي',
       skip: 'تخطي',
+    },
+    allDone: {
+      title: 'كل شيء أكمل!',
+      allDone: 'كل شيء أكمل!',
+      thankYou: 'شكراً لك على الثقة',
+      privacy: 'نعدك أننا سنحافظ دائماً على سرية وأمان معرفتك الشخصية.',
     },
   },
 });

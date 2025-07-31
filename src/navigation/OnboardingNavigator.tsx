@@ -13,6 +13,7 @@ import { LiftingGoalScreen } from '../screens/onboarding/LiftingGoalScreen';
 import { FormBarrierScreen } from '../screens/onboarding/FormBarrierScreen';
 import { RatingScreen } from '../screens/onboarding/RatingScreen';
 import { ReferralCodeScreen } from '../screens/onboarding/ReferralCodeScreen';
+import { AllDoneScreen } from '../screens/onboarding/AllDoneScreen';
 
 interface OnboardingNavigatorProps {
   onComplete: () => void;
@@ -33,7 +34,8 @@ type OnboardingScreen =
   | 'liftingGoal'
   | 'formBarrier'
   | 'rating'
-  | 'referralCode';
+  | 'referralCode'
+  | 'allDone';
 
 export function OnboardingNavigator({ onComplete, onSignIn }: OnboardingNavigatorProps) {
   const [currentScreen, setCurrentScreen] = useState<OnboardingScreen>('loading');
@@ -135,11 +137,19 @@ export function OnboardingNavigator({ onComplete, onSignIn }: OnboardingNavigato
   };
 
   const handleReferralCodeNext = () => {
-    onComplete();
+    setCurrentScreen('allDone');
   };
 
   const handleReferralCodeBack = () => {
     setCurrentScreen('rating');
+  };
+
+  const handleAllDoneNext = () => {
+    onComplete();
+  };
+
+  const handleAllDoneBack = () => {
+    setCurrentScreen('referralCode');
   };
 
   switch (currentScreen) {
@@ -247,6 +257,14 @@ export function OnboardingNavigator({ onComplete, onSignIn }: OnboardingNavigato
         <ReferralCodeScreen
           onNext={handleReferralCodeNext}
           onBack={handleReferralCodeBack}
+        />
+      );
+
+    case 'allDone':
+      return (
+        <AllDoneScreen
+          onNext={handleAllDoneNext}
+          onBack={handleAllDoneBack}
         />
       );
 
