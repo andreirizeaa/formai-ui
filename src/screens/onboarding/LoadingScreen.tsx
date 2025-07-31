@@ -40,7 +40,9 @@ export function LoadingScreen({ onLoadComplete }: LoadingScreenProps) {
             resizeMode="contain"
           />
         </View>
-        
+      </View>
+      
+      <View style={styles.bottomContainer}>
         <Text 
           style={[
             styles.loadingText,
@@ -67,18 +69,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   iconContainer: {
-    width: 200,
-    height: 200,
+    width: 300,
+    height: 300,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 24,
   },
   icon: {
-    width: 180,
-    height: 180,
+    width: 260,
+    height: 260,
+  },
+  bottomContainer: {
+    paddingBottom: 50,
+    alignItems: 'center',
   },
   loadingText: {
-    fontSize: 17,
+    fontSize: 14,
     fontWeight: '400',
   },
 }); 
