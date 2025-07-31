@@ -85,7 +85,7 @@ export function MeasurementsScreen({ onNext, onBack }: MeasurementsScreenProps) 
       title={i18n.t('measurements.title')}
       subtitle={i18n.t('measurements.subtitle')}
       currentStep={7}
-      totalSteps={10}
+      totalSteps={12}
       onBack={onBack}
       onNext={handleNext}
       nextTitle={i18n.t('next')}

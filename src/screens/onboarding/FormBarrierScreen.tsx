@@ -5,41 +5,42 @@ import { OnboardingLayout } from '../../components/common/OnboardingLayout';
 import { useOnboarding } from '../../context/OnboardingContext';
 import i18n from '../../utils/i18n';
 
-interface PersonalTrainerScreenProps {
+interface FormBarrierScreenProps {
   onNext: () => void;
   onBack: () => void;
 }
 
-export function PersonalTrainerScreen({ onNext, onBack }: PersonalTrainerScreenProps) {
+export function FormBarrierScreen({ onNext, onBack }: FormBarrierScreenProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const { preferences, updatePreference } = useOnboarding();
 
-  const trainerOptions = [
-    { key: true, label: i18n.t('personalTrainer.yes') },
-    { key: false, label: i18n.t('personalTrainer.no') },
+  const formBarrierOptions = [
+    { key: 'expensive_trainers', label: i18n.t('formBarrier.expensiveTrainers') },
+    { key: 'gym_advice_scary', label: i18n.t('formBarrier.gymAdviceScary') },
+    { key: 'no_time', label: i18n.t('formBarrier.noTime') },
   ] as const;
 
-  const handleTrainerSelect = (hasTrainer: boolean) => {
-    updatePreference('hasPersonalTrainer', hasTrainer);
+  const handleFormBarrierSelect = (barrier: 'expensive_trainers' | 'gym_advice_scary' | 'no_time') => {
+    updatePreference('formBarrier', barrier);
   };
 
   const handleNext = () => {
-    if (preferences.hasPersonalTrainer !== null) {
+    if (preferences.formBarrier) {
       onNext();
     }
   };
 
   return (
     <OnboardingLayout
-      title={i18n.t('personalTrainer.title')}
-      subtitle={i18n.t('personalTrainer.subtitle')}
-      currentStep={5}
+      title={i18n.t('formBarrier.title')}
+      subtitle={i18n.t('formBarrier.subtitle')}
+      currentStep={10}
       totalSteps={12}
       onBack={onBack}
       onNext={handleNext}
       nextTitle={i18n.t('next')}
-      nextDisabled={preferences.hasPersonalTrainer === null}
+      nextDisabled={!preferences.formBarrier}
     >
       <ScrollView 
         style={styles.scrollView}
@@ -53,29 +54,29 @@ export function PersonalTrainerScreen({ onNext, onBack }: PersonalTrainerScreenP
         nestedScrollEnabled={true}
         fadingEdgeLength={Platform.OS === 'android' ? 50 : 0}
       >
-        {trainerOptions.map((option) => (
+        {formBarrierOptions.map((option) => (
           <TouchableOpacity
-            key={option.key.toString()}
+            key={option.key}
             style={[
-              styles.trainerButton,
+              styles.formBarrierButton,
               {
-                backgroundColor: preferences.hasPersonalTrainer === option.key
+                backgroundColor: preferences.formBarrier === option.key
                   ? '#000000'  // Black background when selected
                   : 'transparent',
-                borderColor: preferences.hasPersonalTrainer === option.key
+                borderColor: preferences.formBarrier === option.key
                   ? '#000000'  // Black border when selected
                   : (isDark ? '#2C2C2E' : '#E5E5EA'),
               }
             ]}
-            onPress={() => handleTrainerSelect(option.key)}
+            onPress={() => handleFormBarrierSelect(option.key)}
             activeOpacity={0.7}
           >
-            <View style={styles.trainerContent}>
+            <View style={styles.formBarrierContent}>
               <Text 
                 style={[
-                  styles.trainerLabel,
+                  styles.formBarrierLabel,
                   { 
-                    color: preferences.hasPersonalTrainer === option.key
+                    color: preferences.formBarrier === option.key
                       ? '#FFFFFF'  // White text when selected
                       : (isDark ? '#FFFFFF' : '#000000'),
                     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
@@ -98,21 +99,26 @@ const styles = StyleSheet.create({
   },
   scrollContentContainer: {
     flexGrow: 1,
-    justifyContent: 'center',
-    gap: 12,
-  },
-  trainerButton: {
-    borderWidth: 1.5,
-    borderRadius: 16,
+    justifyContent: 'center', // Center the buttons vertically when they fit
     paddingVertical: 20,
-    paddingHorizontal: 24,
   },
-  trainerContent: {
+  formBarrierButton: {
+    height: 60,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 12,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
   },
-  trainerLabel: {
-    fontSize: 18,
-    fontWeight: '600',
-    textAlign: 'center',
+  formBarrierContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  formBarrierLabel: {
+    fontSize: 17,
+    fontWeight: '500',
   },
 }); 

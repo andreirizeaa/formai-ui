@@ -81,7 +81,7 @@ export function BirthDateScreen({ onNext, onBack }: BirthDateScreenProps) {
       title={i18n.t('birthDate.title')}
       subtitle={i18n.t('birthDate.subtitle')}
       currentStep={8}
-      totalSteps={10}
+      totalSteps={12}
       onBack={onBack}
       onNext={handleNext}
       nextTitle={i18n.t('next')}

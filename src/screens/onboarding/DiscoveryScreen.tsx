@@ -58,7 +58,7 @@ export function DiscoveryScreen({ onNext, onBack }: DiscoveryScreenProps) {
       title={i18n.t('discovery.title')}
       subtitle={i18n.t('discovery.subtitle')}
       currentStep={4}
-      totalSteps={10}
+      totalSteps={12}
       onBack={onBack}
       onNext={handleNext}
       nextTitle={i18n.t('next')}
