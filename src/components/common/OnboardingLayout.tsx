@@ -17,6 +17,7 @@ interface OnboardingLayoutProps {
   onNext: () => void;
   nextTitle: string;
   nextDisabled?: boolean;
+  customButtons?: React.ReactNode;
 }
 
 export function OnboardingLayout({
@@ -29,6 +30,7 @@ export function OnboardingLayout({
   onNext,
   nextTitle,
   nextDisabled = false,
+  customButtons,
 }: OnboardingLayoutProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -60,11 +62,18 @@ export function OnboardingLayout({
         </View>
       </View>
 
-      <NextButton 
-        title={nextTitle}
-        onPress={onNext}
-        disabled={nextDisabled}
-      />
+      {/* Show custom buttons if provided, otherwise show default Next button */}
+      {customButtons ? (
+        <View style={styles.customButtonsContainer}>
+          {customButtons}
+        </View>
+      ) : (
+        <NextButton 
+          title={nextTitle}
+          onPress={onNext}
+          disabled={nextDisabled}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -96,5 +105,9 @@ const styles = StyleSheet.create({
   centeredContent: {
     flex: 1,
     justifyContent: 'center', // Center the buttons vertically within the available space
+  },
+  customButtonsContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 34,
   },
 }); 

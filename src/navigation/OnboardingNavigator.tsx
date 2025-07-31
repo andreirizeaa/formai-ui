@@ -11,6 +11,7 @@ import { MeasurementsScreen } from '../screens/onboarding/MeasurementsScreen';
 import { BirthDateScreen } from '../screens/onboarding/BirthDateScreen';
 import { LiftingGoalScreen } from '../screens/onboarding/LiftingGoalScreen';
 import { FormBarrierScreen } from '../screens/onboarding/FormBarrierScreen';
+import { RatingScreen } from '../screens/onboarding/RatingScreen';
 
 interface OnboardingNavigatorProps {
   onComplete: () => void;
@@ -29,7 +30,8 @@ type OnboardingScreen =
   | 'measurements' 
   | 'birthDate'
   | 'liftingGoal'
-  | 'formBarrier';
+  | 'formBarrier'
+  | 'rating';
 
 export function OnboardingNavigator({ onComplete, onSignIn }: OnboardingNavigatorProps) {
   const [currentScreen, setCurrentScreen] = useState<OnboardingScreen>('loading');
@@ -115,11 +117,19 @@ export function OnboardingNavigator({ onComplete, onSignIn }: OnboardingNavigato
   };
 
   const handleFormBarrierNext = () => {
-    onComplete();
+    setCurrentScreen('rating');
   };
 
   const handleFormBarrierBack = () => {
     setCurrentScreen('liftingGoal');
+  };
+
+  const handleRatingNext = () => {
+    onComplete();
+  };
+
+  const handleRatingBack = () => {
+    setCurrentScreen('formBarrier');
   };
 
   switch (currentScreen) {
@@ -211,6 +221,14 @@ export function OnboardingNavigator({ onComplete, onSignIn }: OnboardingNavigato
         <FormBarrierScreen
           onNext={handleFormBarrierNext}
           onBack={handleFormBarrierBack}
+        />
+      );
+
+    case 'rating':
+      return (
+        <RatingScreen
+          onNext={handleRatingNext}
+          onBack={handleRatingBack}
         />
       );
 

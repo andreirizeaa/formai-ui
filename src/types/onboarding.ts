@@ -21,7 +21,8 @@ export interface UserPreferences {
   } | null;
   unitSystem: 'metric' | 'imperial';
   liftingGoal: 'muscle_building' | 'powerlifting' | 'toning' | 'strength' | 'weight_loss' | null;
-  formBarrier: 'expensive_trainers' | 'gym_advice_scary' | 'no_time' | null;
+  formBarrier: 'expensive_trainers' | 'gym_advice_scary' | 'no_time' | 'other' | null;
+  rating: number | null;
 }
 
 export interface OnboardingContextType {

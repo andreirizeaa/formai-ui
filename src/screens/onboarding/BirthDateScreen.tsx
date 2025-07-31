@@ -67,8 +67,11 @@ export function BirthDateScreen({ onNext, onBack }: BirthDateScreenProps) {
   const isComplete = birthDate.month && birthDate.day && birthDate.year;
   const textColor = isDark ? '#FFFFFF' : '#000000';
 
-  // Generate years from current year - 4 to current year (ascending order)
-  const years = Array.from({ length: 5 }, (_, i) => currentYear - 4 + i);
+  // Generate years from 1940 to current year - 4 (descending order for better UX)
+  const years = Array.from(
+    { length: currentYear - 1940 - 3 }, // -3 because we want to go up to currentYear - 4
+    (_, i) => currentYear - 4 - i
+  ).reverse(); // Reverse to show in ascending order
   
   // Generate days based on selected month and year
   const maxDays = birthDate.month && birthDate.year 
