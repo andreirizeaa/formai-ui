@@ -17,6 +17,7 @@ const initialPreferences: UserPreferences = {
   liftingGoal: null,
   formBarrier: null,
   rating: null,
+  referralCode: null,
 };
 
 interface OnboardingProviderProps {

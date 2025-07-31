@@ -12,6 +12,7 @@ import { BirthDateScreen } from '../screens/onboarding/BirthDateScreen';
 import { LiftingGoalScreen } from '../screens/onboarding/LiftingGoalScreen';
 import { FormBarrierScreen } from '../screens/onboarding/FormBarrierScreen';
 import { RatingScreen } from '../screens/onboarding/RatingScreen';
+import { ReferralCodeScreen } from '../screens/onboarding/ReferralCodeScreen';
 
 interface OnboardingNavigatorProps {
   onComplete: () => void;
@@ -31,7 +32,8 @@ type OnboardingScreen =
   | 'birthDate'
   | 'liftingGoal'
   | 'formBarrier'
-  | 'rating';
+  | 'rating'
+  | 'referralCode';
 
 export function OnboardingNavigator({ onComplete, onSignIn }: OnboardingNavigatorProps) {
   const [currentScreen, setCurrentScreen] = useState<OnboardingScreen>('loading');
@@ -125,11 +127,19 @@ export function OnboardingNavigator({ onComplete, onSignIn }: OnboardingNavigato
   };
 
   const handleRatingNext = () => {
-    onComplete();
+    setCurrentScreen('referralCode');
   };
 
   const handleRatingBack = () => {
     setCurrentScreen('formBarrier');
+  };
+
+  const handleReferralCodeNext = () => {
+    onComplete();
+  };
+
+  const handleReferralCodeBack = () => {
+    setCurrentScreen('rating');
   };
 
   switch (currentScreen) {
@@ -229,6 +239,14 @@ export function OnboardingNavigator({ onComplete, onSignIn }: OnboardingNavigato
         <RatingScreen
           onNext={handleRatingNext}
           onBack={handleRatingBack}
+        />
+      );
+
+    case 'referralCode':
+      return (
+        <ReferralCodeScreen
+          onNext={handleReferralCodeNext}
+          onBack={handleReferralCodeBack}
         />
       );
 
