@@ -32,7 +32,7 @@ export function LanguageScreen({ onNext, onBack }: LanguageScreenProps) {
       title={i18n.t('language.title')}
       subtitle={i18n.t('language.subtitle')}
       currentStep={1}
-      totalSteps={4}
+      totalSteps={10}
       onBack={onBack}
       onNext={handleNext}
       nextTitle={i18n.t('next')}

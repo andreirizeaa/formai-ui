@@ -5,41 +5,43 @@ import { OnboardingLayout } from '../../components/common/OnboardingLayout';
 import { useOnboarding } from '../../context/OnboardingContext';
 import i18n from '../../utils/i18n';
 
-interface GenderScreenProps {
+interface WorkoutsScreenProps {
   onNext: () => void;
   onBack: () => void;
 }
 
-export function GenderScreen({ onNext, onBack }: GenderScreenProps) {
+export function WorkoutsScreen({ onNext, onBack }: WorkoutsScreenProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const { preferences, updatePreference } = useOnboarding();
 
-  const genderOptions = [
-    { key: 'male', label: i18n.t('gender.male') },
-    { key: 'female', label: i18n.t('gender.female') },
+  const workoutOptions = [
+    { key: '0', label: i18n.t('workouts.zero') },
+    { key: '1-3', label: i18n.t('workouts.oneToThree') },
+    { key: '3-5', label: i18n.t('workouts.threeToFive') },
+    { key: '5-7', label: i18n.t('workouts.fiveToSeven') },
   ] as const;
 
-  const handleGenderSelect = (gender: 'male' | 'female' | 'other') => {
-    updatePreference('gender', gender);
+  const handleWorkoutSelect = (workoutFrequency: '0' | '1-3' | '3-5' | '5-7') => {
+    updatePreference('workoutsPerWeek', workoutFrequency);
   };
 
   const handleNext = () => {
-    if (preferences.gender) {
+    if (preferences.workoutsPerWeek) {
       onNext();
     }
   };
 
   return (
     <OnboardingLayout
-      title={i18n.t('gender.title')}
-      subtitle={i18n.t('gender.subtitle')}
-      currentStep={2}
+      title={i18n.t('workouts.title')}
+      subtitle={i18n.t('workouts.subtitle')}
+      currentStep={3}
       totalSteps={10}
       onBack={onBack}
       onNext={handleNext}
       nextTitle={i18n.t('next')}
-      nextDisabled={!preferences.gender}
+      nextDisabled={!preferences.workoutsPerWeek}
     >
       <ScrollView 
         style={styles.scrollView}
@@ -53,29 +55,29 @@ export function GenderScreen({ onNext, onBack }: GenderScreenProps) {
         nestedScrollEnabled={true}
         fadingEdgeLength={Platform.OS === 'android' ? 50 : 0}
       >
-        {genderOptions.map((option) => (
+        {workoutOptions.map((option) => (
           <TouchableOpacity
             key={option.key}
             style={[
-              styles.genderButton,
+              styles.workoutButton,
               {
-                backgroundColor: preferences.gender === option.key
+                backgroundColor: preferences.workoutsPerWeek === option.key
                   ? '#000000'  // Black background when selected
                   : 'transparent',
-                borderColor: preferences.gender === option.key
+                borderColor: preferences.workoutsPerWeek === option.key
                   ? '#000000'  // Black border when selected
                   : (isDark ? '#2C2C2E' : '#E5E5EA'),
               }
             ]}
-            onPress={() => handleGenderSelect(option.key)}
+            onPress={() => handleWorkoutSelect(option.key)}
             activeOpacity={0.7}
           >
-            <View style={styles.genderContent}>
+            <View style={styles.workoutContent}>
               <Text 
                 style={[
-                  styles.genderLabel,
+                  styles.workoutLabel,
                   { 
-                    color: preferences.gender === option.key
+                    color: preferences.workoutsPerWeek === option.key
                       ? '#FFFFFF'  // White text when selected
                       : (isDark ? '#FFFFFF' : '#000000'),
                     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
@@ -98,26 +100,21 @@ const styles = StyleSheet.create({
   },
   scrollContentContainer: {
     flexGrow: 1,
-    justifyContent: 'center', // Center the buttons vertically when they fit
+    justifyContent: 'center',
+    gap: 12,
+  },
+  workoutButton: {
+    borderWidth: 1.5,
+    borderRadius: 16,
     paddingVertical: 20,
+    paddingHorizontal: 24,
   },
-  genderButton: {
-    height: 60,
-    borderRadius: 12,
-    borderWidth: 1,
-    marginBottom: 12,
-    flexDirection: 'row',
+  workoutContent: {
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 16,
   },
-  genderContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+  workoutLabel: {
+    fontSize: 18,
+    fontWeight: '600',
+    textAlign: 'center',
   },
-  genderLabel: {
-    fontSize: 17,
-    fontWeight: '500',
-  },
-});
+}); 
