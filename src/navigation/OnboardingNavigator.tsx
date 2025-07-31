@@ -9,6 +9,8 @@ import { PersonalTrainerScreen } from '../screens/onboarding/PersonalTrainerScre
 import { ProgressScreen } from '../screens/onboarding/ProgressScreen';
 import { MeasurementsScreen } from '../screens/onboarding/MeasurementsScreen';
 import { BirthDateScreen } from '../screens/onboarding/BirthDateScreen';
+import { LiftingGoalScreen } from '../screens/onboarding/LiftingGoalScreen';
+import { FormBarrierScreen } from '../screens/onboarding/FormBarrierScreen';
 
 interface OnboardingNavigatorProps {
   onComplete: () => void;
@@ -25,7 +27,9 @@ type OnboardingScreen =
   | 'personalTrainer' 
   | 'progress' 
   | 'measurements' 
-  | 'birthDate';
+  | 'birthDate'
+  | 'liftingGoal'
+  | 'formBarrier';
 
 export function OnboardingNavigator({ onComplete, onSignIn }: OnboardingNavigatorProps) {
   const [currentScreen, setCurrentScreen] = useState<OnboardingScreen>('loading');
@@ -95,11 +99,27 @@ export function OnboardingNavigator({ onComplete, onSignIn }: OnboardingNavigato
   };
 
   const handleBirthDateNext = () => {
-    onComplete();
+    setCurrentScreen('liftingGoal');
   };
 
   const handleBirthDateBack = () => {
     setCurrentScreen('measurements');
+  };
+
+  const handleLiftingGoalNext = () => {
+    setCurrentScreen('formBarrier');
+  };
+
+  const handleLiftingGoalBack = () => {
+    setCurrentScreen('birthDate');
+  };
+
+  const handleFormBarrierNext = () => {
+    onComplete();
+  };
+
+  const handleFormBarrierBack = () => {
+    setCurrentScreen('liftingGoal');
   };
 
   switch (currentScreen) {
@@ -175,6 +195,22 @@ export function OnboardingNavigator({ onComplete, onSignIn }: OnboardingNavigato
         <BirthDateScreen
           onNext={handleBirthDateNext}
           onBack={handleBirthDateBack}
+        />
+      );
+
+    case 'liftingGoal':
+      return (
+        <LiftingGoalScreen
+          onNext={handleLiftingGoalNext}
+          onBack={handleLiftingGoalBack}
+        />
+      );
+
+    case 'formBarrier':
+      return (
+        <FormBarrierScreen
+          onNext={handleFormBarrierNext}
+          onBack={handleFormBarrierBack}
         />
       );
 

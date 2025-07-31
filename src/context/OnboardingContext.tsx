@@ -14,6 +14,8 @@ const initialPreferences: UserPreferences = {
   weight: null,
   birthDate: null,
   unitSystem: 'metric',
+  liftingGoal: null,
+  formBarrier: null,
 };
 
 interface OnboardingProviderProps {

@@ -37,7 +37,7 @@ export function WorkoutsScreen({ onNext, onBack }: WorkoutsScreenProps) {
       title={i18n.t('workouts.title')}
       subtitle={i18n.t('workouts.subtitle')}
       currentStep={3}
-      totalSteps={10}
+      totalSteps={12}
       onBack={onBack}
       onNext={handleNext}
       nextTitle={i18n.t('next')}

@@ -35,7 +35,7 @@ export function GenderScreen({ onNext, onBack }: GenderScreenProps) {
       title={i18n.t('gender.title')}
       subtitle={i18n.t('gender.subtitle')}
       currentStep={2}
-      totalSteps={10}
+      totalSteps={12}
       onBack={onBack}
       onNext={handleNext}
       nextTitle={i18n.t('next')}

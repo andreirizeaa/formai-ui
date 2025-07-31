@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Image } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import i18n from '../../utils/i18n';
@@ -21,22 +21,16 @@ export function WelcomeScreen({ onGetStarted, onSignIn }: WelcomeScreenProps) {
       ]}
     >
       <View style={styles.content}>
-        {/* Main feature photo placeholder */}
-        <View style={[
-          styles.featurePlaceholder,
-          { backgroundColor: isDark ? '#1C1C1E' : '#F2F2F7' }
-        ]}>
-          <Text 
-            style={[
-              styles.featureTitle,
-              { 
-                color: isDark ? '#FFFFFF' : '#000000',
-                fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto'
-              }
-            ]}
-          >
-            {i18n.t('welcome.title')}
-          </Text>
+        {/* FormAI Icon */}
+        <View style={styles.iconContainer}>
+          <Image 
+            source={isDark 
+              ? require('../../../assets/formai-dark-icon.png')
+              : require('../../../assets/formai-light-icon.png')
+            }
+            style={styles.icon}
+            resizeMode="contain"
+          />
         </View>
         
         <Text 
@@ -102,18 +96,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
   },
-  featurePlaceholder: {
+  iconContainer: {
     width: 200,
     height: 200,
-    borderRadius: 100,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 32,
   },
-  featureTitle: {
-    fontSize: 36,
-    fontWeight: '700',
-    textAlign: 'center',
+  icon: {
+    width: 180,
+    height: 180,
   },
   subtitle: {
     fontSize: 17,

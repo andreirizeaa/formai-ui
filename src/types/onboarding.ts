@@ -20,6 +20,8 @@ export interface UserPreferences {
     year: number | null;
   } | null;
   unitSystem: 'metric' | 'imperial';
+  liftingGoal: 'muscle_building' | 'powerlifting' | 'toning' | 'strength' | 'weight_loss' | null;
+  formBarrier: 'expensive_trainers' | 'gym_advice_scary' | 'no_time' | null;
 }
 
 export interface OnboardingContextType {

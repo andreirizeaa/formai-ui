@@ -5,41 +5,44 @@ import { OnboardingLayout } from '../../components/common/OnboardingLayout';
 import { useOnboarding } from '../../context/OnboardingContext';
 import i18n from '../../utils/i18n';
 
-interface PersonalTrainerScreenProps {
+interface LiftingGoalScreenProps {
   onNext: () => void;
   onBack: () => void;
 }
 
-export function PersonalTrainerScreen({ onNext, onBack }: PersonalTrainerScreenProps) {
+export function LiftingGoalScreen({ onNext, onBack }: LiftingGoalScreenProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const { preferences, updatePreference } = useOnboarding();
 
-  const trainerOptions = [
-    { key: true, label: i18n.t('personalTrainer.yes') },
-    { key: false, label: i18n.t('personalTrainer.no') },
+  const liftingGoalOptions = [
+    { key: 'muscle_building', label: i18n.t('liftingGoal.muscleBuilding') },
+    { key: 'powerlifting', label: i18n.t('liftingGoal.powerlifting') },
+    { key: 'toning', label: i18n.t('liftingGoal.toning') },
+    { key: 'strength', label: i18n.t('liftingGoal.strength') },
+    { key: 'weight_loss', label: i18n.t('liftingGoal.weightLoss') },
   ] as const;
 
-  const handleTrainerSelect = (hasTrainer: boolean) => {
-    updatePreference('hasPersonalTrainer', hasTrainer);
+  const handleLiftingGoalSelect = (goal: 'muscle_building' | 'powerlifting' | 'toning' | 'strength' | 'weight_loss') => {
+    updatePreference('liftingGoal', goal);
   };
 
   const handleNext = () => {
-    if (preferences.hasPersonalTrainer !== null) {
+    if (preferences.liftingGoal) {
       onNext();
     }
   };
 
   return (
     <OnboardingLayout
-      title={i18n.t('personalTrainer.title')}
-      subtitle={i18n.t('personalTrainer.subtitle')}
-      currentStep={5}
+      title={i18n.t('liftingGoal.title')}
+      subtitle={i18n.t('liftingGoal.subtitle')}
+      currentStep={9}
       totalSteps={12}
       onBack={onBack}
       onNext={handleNext}
       nextTitle={i18n.t('next')}
-      nextDisabled={preferences.hasPersonalTrainer === null}
+      nextDisabled={!preferences.liftingGoal}
     >
       <ScrollView 
         style={styles.scrollView}
@@ -53,29 +56,29 @@ export function PersonalTrainerScreen({ onNext, onBack }: PersonalTrainerScreenP
         nestedScrollEnabled={true}
         fadingEdgeLength={Platform.OS === 'android' ? 50 : 0}
       >
-        {trainerOptions.map((option) => (
+        {liftingGoalOptions.map((option) => (
           <TouchableOpacity
-            key={option.key.toString()}
+            key={option.key}
             style={[
-              styles.trainerButton,
+              styles.liftingGoalButton,
               {
-                backgroundColor: preferences.hasPersonalTrainer === option.key
+                backgroundColor: preferences.liftingGoal === option.key
                   ? '#000000'  // Black background when selected
                   : 'transparent',
-                borderColor: preferences.hasPersonalTrainer === option.key
+                borderColor: preferences.liftingGoal === option.key
                   ? '#000000'  // Black border when selected
                   : (isDark ? '#2C2C2E' : '#E5E5EA'),
               }
             ]}
-            onPress={() => handleTrainerSelect(option.key)}
+            onPress={() => handleLiftingGoalSelect(option.key)}
             activeOpacity={0.7}
           >
-            <View style={styles.trainerContent}>
+            <View style={styles.liftingGoalContent}>
               <Text 
                 style={[
-                  styles.trainerLabel,
+                  styles.liftingGoalLabel,
                   { 
-                    color: preferences.hasPersonalTrainer === option.key
+                    color: preferences.liftingGoal === option.key
                       ? '#FFFFFF'  // White text when selected
                       : (isDark ? '#FFFFFF' : '#000000'),
                     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
@@ -98,21 +101,26 @@ const styles = StyleSheet.create({
   },
   scrollContentContainer: {
     flexGrow: 1,
-    justifyContent: 'center',
-    gap: 12,
-  },
-  trainerButton: {
-    borderWidth: 1.5,
-    borderRadius: 16,
+    justifyContent: 'center', // Center the buttons vertically when they fit
     paddingVertical: 20,
-    paddingHorizontal: 24,
   },
-  trainerContent: {
+  liftingGoalButton: {
+    height: 70,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 12,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
   },
-  trainerLabel: {
-    fontSize: 18,
-    fontWeight: '600',
-    textAlign: 'center',
+  liftingGoalContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  liftingGoalLabel: {
+    fontSize: 17,
+    fontWeight: '500',
   },
 }); 

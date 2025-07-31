@@ -54,7 +54,7 @@ export function ProgressScreen({ onNext, onBack }: ProgressScreenProps) {
       title={i18n.t('progress.title')}
       subtitle={i18n.t('progress.subtitle')}
       currentStep={6}
-      totalSteps={10}
+      totalSteps={12}
       onBack={onBack}
       onNext={onNext}
       nextTitle={i18n.t('next')}
