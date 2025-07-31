@@ -23,6 +23,7 @@ export interface UserPreferences {
   liftingGoal: 'muscle_building' | 'powerlifting' | 'toning' | 'strength' | 'weight_loss' | null;
   formBarrier: 'expensive_trainers' | 'gym_advice_scary' | 'no_time' | 'other' | null;
   rating: number | null;
+  referralCode: string | null;
 }
 
 export interface OnboardingContextType {

@@ -102,6 +102,12 @@ const i18n = new I18n({
       title: 'Give us a rating',
       subtitle: 'Help us improve by sharing your experience',
     },
+    referralCode: {
+      title: 'Do you have a referral code?',
+      subtitle: 'You can skip this step.',
+      placeholder: 'Referral Code',
+      skip: 'Skip',
+    },
   },
   es: {
     loading: 'Cargando...',
@@ -202,6 +208,12 @@ const i18n = new I18n({
     rating: {
       title: 'Danos una calificación',
       subtitle: 'Ayúdanos a mejorar compartiendo tu experiencia',
+    },
+    referralCode: {
+      title: '¿Tienes un código de referido?',
+      subtitle: 'Puedes saltar este paso.',
+      placeholder: 'Código de referido',
+      skip: 'Saltar',
     },
   },
   zh: {
@@ -304,6 +316,12 @@ const i18n = new I18n({
       title: '给我们评分',
       subtitle: '通过分享您的体验帮助我们改进',
     },
+    referralCode: {
+      title: '您有推荐码吗？',
+      subtitle: '您可以跳过此步骤。',
+      placeholder: '推荐码',
+      skip: '跳过',
+    },
   },
   it: {
     loading: 'Caricamento...',
@@ -404,6 +422,12 @@ const i18n = new I18n({
     rating: {
       title: 'Dacci una valutazione',
       subtitle: 'Aiutaci a migliorare condividendo la tua esperienza',
+    },
+    referralCode: {
+      title: 'Hai un codice di riferimento?',
+      subtitle: 'Puoi saltare questo passo.',
+      placeholder: 'Codice di riferimento',
+      skip: 'Salta',
     },
   },
   pt: {
@@ -506,6 +530,12 @@ const i18n = new I18n({
       title: 'Dê-nos uma avaliação',
       subtitle: 'Ajude-nos a melhorar compartilhando sua experiência',
     },
+    referralCode: {
+      title: 'Você tem um código de referência?',
+      subtitle: 'Você pode pular este passo.',
+      placeholder: 'Código de referência',
+      skip: 'Pular',
+    },
   },
   ro: {
     loading: 'Se încarcă...',
@@ -606,6 +636,12 @@ const i18n = new I18n({
     rating: {
       title: 'Dă-ne o evaluare',
       subtitle: 'Ajută-ne să îmbunătățim prin împărtășirea experienței tale',
+    },
+    referralCode: {
+      title: 'Ai un cod de referință?',
+      subtitle: 'Poți să sari acest pas.',
+      placeholder: 'Cod de referință',
+      skip: 'Sari',
     },
   },
   de: {
@@ -708,6 +744,12 @@ const i18n = new I18n({
       title: 'Gib uns eine Bewertung',
       subtitle: 'Hilf uns zu verbessern, indem du deine Erfahrung teilst',
     },
+    referralCode: {
+      title: 'Hast du einen Referenzcode?',
+      subtitle: 'Du kannst diesen Schritt überspringen.',
+      placeholder: 'Referenzcode',
+      skip: 'Überspringen',
+    },
   },
   fr: {
     loading: 'Chargement...',
@@ -809,6 +851,12 @@ const i18n = new I18n({
       title: 'Donnez-nous une évaluation',
       subtitle: 'Aidez-nous à améliorer en partageant votre expérience',
     },
+    referralCode: {
+      title: 'Avez-vous un code de référence ?',
+      subtitle: 'Vous pouvez sauter ce pas.',
+      placeholder: 'Code de référence',
+      skip: 'Sauter',
+    },
   },
   ar: {
     loading: 'جاري التحميل...',
@@ -909,6 +957,12 @@ const i18n = new I18n({
     rating: {
       title: 'أعطنا تقييماً',
       subtitle: 'ساعدنا في التحسن من خلال مشاركة تجربتك',
+    },
+    referralCode: {
+      title: 'هل لديك رمز مرجعي؟',
+      subtitle: 'يمكنك تخطي هذا الخطوة.',
+      placeholder: 'رمز مرجعي',
+      skip: 'تخطي',
     },
   },
 });

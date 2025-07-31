@@ -71,7 +71,7 @@ export function RatingScreen({ onNext, onBack }: RatingScreenProps) {
       title={i18n.t('rating.title')}
       subtitle={i18n.t('rating.subtitle')}
       currentStep={11}
-      totalSteps={12}
+      totalSteps={13}
       onBack={onBack}
       onNext={() => {}}
       nextTitle={i18n.t('next')}
