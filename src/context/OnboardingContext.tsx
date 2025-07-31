@@ -16,6 +16,7 @@ const initialPreferences: UserPreferences = {
   unitSystem: 'metric',
   liftingGoal: null,
   formBarrier: null,
+  rating: null,
 };
 
 interface OnboardingProviderProps {

@@ -94,8 +94,13 @@ const i18n = new I18n({
       title: 'What\'s stopping you from perfecting your exercise form?',
       subtitle: 'Help us understand your challenges',
       expensiveTrainers: 'Personal trainers are too expensive',
-      gymAdviceScary: 'Asking people in the gym for form advice scares me',
+      gymAdviceScary: 'Asking for advice scares me',
       noTime: 'I don\'t have time to perfect my form',
+      other: 'Other',
+    },
+    rating: {
+      title: 'Give us a rating',
+      subtitle: 'Help us improve by sharing your experience',
     },
   },
   es: {
@@ -190,8 +195,13 @@ const i18n = new I18n({
       title: '¿Qué te impide perfeccionar tu forma de ejercicio?',
       subtitle: 'Ayúdanos a entender tus desafíos',
       expensiveTrainers: 'Los entrenadores personales son demasiado caros',
-      gymAdviceScary: 'Pedir consejos de forma a personas en el gimnasio me asusta',
+      gymAdviceScary: 'Pedir consejos me asusta',
       noTime: 'No tengo tiempo para perfeccionar mi forma',
+      other: 'Otro',
+    },
+    rating: {
+      title: 'Danos una calificación',
+      subtitle: 'Ayúdanos a mejorar compartiendo tu experiencia',
     },
   },
   zh: {
@@ -286,8 +296,13 @@ const i18n = new I18n({
       title: '什么阻止您完善运动形式？',
       subtitle: '帮助我们了解您的挑战',
       expensiveTrainers: '私人教练太贵了',
-      gymAdviceScary: '在健身房向人请教动作要领让我害怕',
+      gymAdviceScary: '寻求建议让我害怕',
       noTime: '我没有时间完善我的动作',
+      other: '其他',
+    },
+    rating: {
+      title: '给我们评分',
+      subtitle: '通过分享您的体验帮助我们改进',
     },
   },
   it: {
@@ -382,8 +397,13 @@ const i18n = new I18n({
       title: 'Cosa ti impedisce di perfezionare la tua forma di esercizio?',
       subtitle: 'Aiutaci a capire le tue sfide',
       expensiveTrainers: 'I personal trainer sono troppo costosi',
-      gymAdviceScary: 'Chiedere consigli sulla forma alle persone in palestra mi spaventa',
+      gymAdviceScary: 'Chiedere consigli mi spaventa',
       noTime: 'Non ho tempo per perfezionare la mia forma',
+      other: 'Altro',
+    },
+    rating: {
+      title: 'Dacci una valutazione',
+      subtitle: 'Aiutaci a migliorare condividendo la tua esperienza',
     },
   },
   pt: {
@@ -478,8 +498,13 @@ const i18n = new I18n({
       title: 'O que está impedindo você de aperfeiçoar sua forma de exercício?',
       subtitle: 'Ajude-nos a entender seus desafios',
       expensiveTrainers: 'Personal trainers são muito caros',
-      gymAdviceScary: 'Pedir conselhos de forma às pessoas na academia me assusta',
+      gymAdviceScary: 'Pedir conselhos me assusta',
       noTime: 'Não tenho tempo para aperfeiçoar minha forma',
+      other: 'Outro',
+    },
+    rating: {
+      title: 'Dê-nos uma avaliação',
+      subtitle: 'Ajude-nos a melhorar compartilhando sua experiência',
     },
   },
   ro: {
@@ -574,8 +599,13 @@ const i18n = new I18n({
       title: 'Ce te împiedică să îți perfecționezi forma de exercițiu?',
       subtitle: 'Ajută-ne să înțelegem provocările tale',
       expensiveTrainers: 'Antrenorii personali sunt prea scumpi',
-      gymAdviceScary: 'Să cer sfaturi de formă oamenilor din sală mă sperie',
+      gymAdviceScary: 'Să cer sfaturi mă sperie',
       noTime: 'Nu am timp să îmi perfecționez forma',
+      other: 'Altul',
+    },
+    rating: {
+      title: 'Dă-ne o evaluare',
+      subtitle: 'Ajută-ne să îmbunătățim prin împărtășirea experienței tale',
     },
   },
   de: {
@@ -670,8 +700,13 @@ const i18n = new I18n({
       title: 'Was hindert dich daran, deine Übungsform zu perfektionieren?',
       subtitle: 'Hilf uns, deine Herausforderungen zu verstehen',
       expensiveTrainers: 'Persönliche Trainer sind zu teuer',
-      gymAdviceScary: 'Leute im Fitnessstudio um Formberatung zu bitten macht mir Angst',
+      gymAdviceScary: 'Um Rat zu bitten macht mir Angst',
       noTime: 'Ich habe keine Zeit, meine Form zu perfektionieren',
+      other: 'Andere',
+    },
+    rating: {
+      title: 'Gib uns eine Bewertung',
+      subtitle: 'Hilf uns zu verbessern, indem du deine Erfahrung teilst',
     },
   },
   fr: {
@@ -766,8 +801,13 @@ const i18n = new I18n({
       title: 'Qu\'est-ce qui vous empêche de perfectionner votre forme d\'exercice ?',
       subtitle: 'Aidez-nous à comprendre vos défis',
       expensiveTrainers: 'Les entraîneurs personnels sont trop chers',
-      gymAdviceScary: 'Demander des conseils de forme aux gens au gymnase me fait peur',
+      gymAdviceScary: 'Demander des conseils me fait peur',
       noTime: 'Je n\'ai pas le temps de perfectionner ma forme',
+      other: 'Autre',
+    },
+    rating: {
+      title: 'Donnez-nous une évaluation',
+      subtitle: 'Aidez-nous à améliorer en partageant votre expérience',
     },
   },
   ar: {
@@ -862,8 +902,13 @@ const i18n = new I18n({
       title: 'ما الذي يمنعك من إتقان شكل التمرين؟',
       subtitle: 'ساعدنا في فهم تحدياتك',
       expensiveTrainers: 'المدربون الشخصيون مكلفون للغاية',
-      gymAdviceScary: 'طلب النصيحة حول الشكل من الناس في الصالة الرياضية يخيفني',
+      gymAdviceScary: 'طلب النصيحة يخيفني',
       noTime: 'ليس لدي وقت لإتقان شكلي',
+      other: 'آخر',
+    },
+    rating: {
+      title: 'أعطنا تقييماً',
+      subtitle: 'ساعدنا في التحسن من خلال مشاركة تجربتك',
     },
   },
 });

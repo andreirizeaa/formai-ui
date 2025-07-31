@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, Platform } from 'react-native';
+import { View, Text, StyleSheet, Platform, Image } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import i18n from '../../utils/i18n';
@@ -29,22 +29,16 @@ export function LoadingScreen({ onLoadComplete }: LoadingScreenProps) {
       ]}
     >
       <View style={styles.content}>
-        {/* Logo placeholder - will be replaced with actual logo images */}
-        <View style={[
-          styles.logoPlaceholder,
-          { backgroundColor: isDark ? '#1C1C1E' : '#F2F2F7' }
-        ]}>
-          <Text 
-            style={[
-              styles.logoText,
-              { 
-                color: isDark ? '#FFFFFF' : '#000000',
-                fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto'
-              }
-            ]}
-          >
-            FormAI
-          </Text>
+        {/* FormAI Icon */}
+        <View style={styles.iconContainer}>
+          <Image 
+            source={isDark 
+              ? require('../../../assets/formai-dark-icon.png')
+              : require('../../../assets/formai-light-icon.png')
+            }
+            style={styles.icon}
+            resizeMode="contain"
+          />
         </View>
         
         <Text 
@@ -72,17 +66,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  logoPlaceholder: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+  iconContainer: {
+    width: 200,
+    height: 200,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 24,
   },
-  logoText: {
-    fontSize: 24,
-    fontWeight: '700',
+  icon: {
+    width: 180,
+    height: 180,
   },
   loadingText: {
     fontSize: 17,

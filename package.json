@@ -17,6 +17,7 @@
     "expo-font": "^13.3.2",
     "expo-localization": "^16.1.6",
     "expo-status-bar": "~2.2.3",
+    "expo-store-review": "^8.1.5",
     "i18n-js": "^4.5.1",
     "react": "19.0.0",
     "react-native": "0.79.5",

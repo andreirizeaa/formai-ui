@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
   },
   liftingGoalButton: {
-    height: 70,
+    height: 60,
     borderRadius: 12,
     borderWidth: 1,
     marginBottom: 12,
