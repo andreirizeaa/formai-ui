@@ -7,7 +7,13 @@ const initialPreferences: UserPreferences = {
   language: 'en',
   gender: null,
   goal: null,
+  workoutsPerWeek: null,
   discoverySource: null,
+  hasPersonalTrainer: null,
+  height: null,
+  weight: null,
+  birthDate: null,
+  unitSystem: 'metric',
 };
 
 interface OnboardingProviderProps {

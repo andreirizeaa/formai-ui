@@ -3,14 +3,32 @@ import { LoadingScreen } from '../screens/onboarding/LoadingScreen';
 import { WelcomeScreen } from '../screens/onboarding/WelcomeScreen';
 import { LanguageScreen } from '../screens/onboarding/LanguageScreen';
 import { GenderScreen } from '../screens/onboarding/GenderScreen';
+import { WorkoutsScreen } from '../screens/onboarding/WorkoutsScreen';
+import { DiscoveryScreen } from '../screens/onboarding/DiscoveryScreen';
+import { PersonalTrainerScreen } from '../screens/onboarding/PersonalTrainerScreen';
+import { ProgressScreen } from '../screens/onboarding/ProgressScreen';
+import { MeasurementsScreen } from '../screens/onboarding/MeasurementsScreen';
+import { BirthDateScreen } from '../screens/onboarding/BirthDateScreen';
 
 interface OnboardingNavigatorProps {
   onComplete: () => void;
   onSignIn: () => void;
 }
 
+type OnboardingScreen = 
+  | 'loading' 
+  | 'welcome' 
+  | 'language' 
+  | 'gender' 
+  | 'workouts' 
+  | 'discovery' 
+  | 'personalTrainer' 
+  | 'progress' 
+  | 'measurements' 
+  | 'birthDate';
+
 export function OnboardingNavigator({ onComplete, onSignIn }: OnboardingNavigatorProps) {
-  const [currentScreen, setCurrentScreen] = useState<'loading' | 'welcome' | 'language' | 'gender'>('loading');
+  const [currentScreen, setCurrentScreen] = useState<OnboardingScreen>('loading');
 
   const handleLoadComplete = () => {
     setCurrentScreen('welcome');
@@ -29,12 +47,59 @@ export function OnboardingNavigator({ onComplete, onSignIn }: OnboardingNavigato
   };
 
   const handleGenderNext = () => {
-    // Future: Add more screens here (goal, discovery, etc.)
-    onComplete();
+    setCurrentScreen('workouts');
   };
 
   const handleGenderBack = () => {
     setCurrentScreen('language');
+  };
+
+  const handleWorkoutsNext = () => {
+    setCurrentScreen('discovery');
+  };
+
+  const handleWorkoutsBack = () => {
+    setCurrentScreen('gender');
+  };
+
+  const handleDiscoveryNext = () => {
+    setCurrentScreen('personalTrainer');
+  };
+
+  const handleDiscoveryBack = () => {
+    setCurrentScreen('workouts');
+  };
+
+  const handlePersonalTrainerNext = () => {
+    setCurrentScreen('progress');
+  };
+
+  const handlePersonalTrainerBack = () => {
+    setCurrentScreen('discovery');
+  };
+
+  const handleProgressNext = () => {
+    setCurrentScreen('measurements');
+  };
+
+  const handleProgressBack = () => {
+    setCurrentScreen('personalTrainer');
+  };
+
+  const handleMeasurementsNext = () => {
+    setCurrentScreen('birthDate');
+  };
+
+  const handleMeasurementsBack = () => {
+    setCurrentScreen('progress');
+  };
+
+  const handleBirthDateNext = () => {
+    onComplete();
+  };
+
+  const handleBirthDateBack = () => {
+    setCurrentScreen('measurements');
   };
 
   switch (currentScreen) {
@@ -62,6 +127,54 @@ export function OnboardingNavigator({ onComplete, onSignIn }: OnboardingNavigato
         <GenderScreen
           onNext={handleGenderNext}
           onBack={handleGenderBack}
+        />
+      );
+
+    case 'workouts':
+      return (
+        <WorkoutsScreen
+          onNext={handleWorkoutsNext}
+          onBack={handleWorkoutsBack}
+        />
+      );
+
+    case 'discovery':
+      return (
+        <DiscoveryScreen
+          onNext={handleDiscoveryNext}
+          onBack={handleDiscoveryBack}
+        />
+      );
+
+    case 'personalTrainer':
+      return (
+        <PersonalTrainerScreen
+          onNext={handlePersonalTrainerNext}
+          onBack={handlePersonalTrainerBack}
+        />
+      );
+
+    case 'progress':
+      return (
+        <ProgressScreen
+          onNext={handleProgressNext}
+          onBack={handleProgressBack}
+        />
+      );
+
+    case 'measurements':
+      return (
+        <MeasurementsScreen
+          onNext={handleMeasurementsNext}
+          onBack={handleMeasurementsBack}
+        />
+      );
+
+    case 'birthDate':
+      return (
+        <BirthDateScreen
+          onNext={handleBirthDateNext}
+          onBack={handleBirthDateBack}
         />
       );
 
