@@ -68,7 +68,6 @@ export function LanguageScreen({ onNext, onBack }: LanguageScreenProps) {
             activeOpacity={0.7}
           >
             <View style={styles.languageContent}>
-              <Text style={styles.flag}>{language.flag}</Text>
               <Text 
                 style={[
                   styles.languageName,
@@ -82,6 +81,7 @@ export function LanguageScreen({ onNext, onBack }: LanguageScreenProps) {
               >
                 {language.nativeName}
               </Text>
+              <Text style={styles.flag}>{language.flag}</Text>
             </View>
           </TouchableOpacity>
         ))}
