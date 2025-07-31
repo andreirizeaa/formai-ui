@@ -14,6 +14,8 @@ import { FormBarrierScreen } from '../screens/onboarding/FormBarrierScreen';
 import { RatingScreen } from '../screens/onboarding/RatingScreen';
 import { ReferralCodeScreen } from '../screens/onboarding/ReferralCodeScreen';
 import { AllDoneScreen } from '../screens/onboarding/AllDoneScreen';
+import { NotificationPermissionScreen } from '../screens/onboarding/NotificationPermissionScreen';
+import { SetupLoadingScreen } from '../screens/onboarding/SetupLoadingScreen';
 
 interface OnboardingNavigatorProps {
   onComplete: () => void;
@@ -35,7 +37,9 @@ type OnboardingScreen =
   | 'formBarrier'
   | 'rating'
   | 'referralCode'
-  | 'allDone';
+  | 'allDone'
+  | 'notificationPermission'
+  | 'setupLoading';
 
 export function OnboardingNavigator({ onComplete, onSignIn }: OnboardingNavigatorProps) {
   const [currentScreen, setCurrentScreen] = useState<OnboardingScreen>('loading');
@@ -145,11 +149,27 @@ export function OnboardingNavigator({ onComplete, onSignIn }: OnboardingNavigato
   };
 
   const handleAllDoneNext = () => {
-    onComplete();
+    setCurrentScreen('notificationPermission');
   };
 
   const handleAllDoneBack = () => {
     setCurrentScreen('referralCode');
+  };
+
+  const handleNotificationPermissionNext = () => {
+    setCurrentScreen('setupLoading');
+  };
+
+  const handleNotificationPermissionBack = () => {
+    setCurrentScreen('allDone');
+  };
+
+  const handleSetupLoadingNext = () => {
+    onComplete();
+  };
+
+  const handleSetupLoadingBack = () => {
+    setCurrentScreen('notificationPermission');
   };
 
   switch (currentScreen) {
@@ -265,6 +285,22 @@ export function OnboardingNavigator({ onComplete, onSignIn }: OnboardingNavigato
         <AllDoneScreen
           onNext={handleAllDoneNext}
           onBack={handleAllDoneBack}
+        />
+      );
+
+    case 'notificationPermission':
+      return (
+        <NotificationPermissionScreen
+          onNext={handleNotificationPermissionNext}
+          onBack={handleNotificationPermissionBack}
+        />
+      );
+
+    case 'setupLoading':
+      return (
+        <SetupLoadingScreen
+          onNext={handleSetupLoadingNext}
+          onBack={handleSetupLoadingBack}
         />
       );
 
