@@ -17,6 +17,7 @@ interface OnboardingLayoutProps {
   onNext: () => void;
   nextTitle: string;
   nextDisabled?: boolean;
+  hideNextButton?: boolean;
   customButtons?: React.ReactNode;
 }
 
@@ -30,6 +31,7 @@ export function OnboardingLayout({
   onNext,
   nextTitle,
   nextDisabled = false,
+  hideNextButton = false,
   customButtons,
 }: OnboardingLayoutProps) {
   const colorScheme = useColorScheme();
@@ -67,13 +69,13 @@ export function OnboardingLayout({
         <View style={styles.customButtonsContainer}>
           {customButtons}
         </View>
-      ) : (
+      ) : !hideNextButton ? (
         <NextButton 
           title={nextTitle}
           onPress={onNext}
           disabled={nextDisabled}
         />
-      )}
+      ) : null}
     </SafeAreaView>
   );
 }

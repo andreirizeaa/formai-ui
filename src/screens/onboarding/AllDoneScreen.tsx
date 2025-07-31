@@ -52,7 +52,7 @@ export function AllDoneScreen({ onNext, onBack }: AllDoneScreenProps) {
       title={i18n.t('allDone.title')}
       subtitle=""
       currentStep={13}
-      totalSteps={13}
+      totalSteps={16}
       onBack={onBack}
       onNext={onNext}
       nextTitle={i18n.t('next')}
