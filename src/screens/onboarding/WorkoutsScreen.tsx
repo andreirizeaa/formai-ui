@@ -17,10 +17,10 @@ export function WorkoutsScreen({ onNext, onBack }: WorkoutsScreenProps) {
   const { preferences, updatePreference } = useOnboarding();
 
   const workoutOptions = [
-    { key: '0', label: i18n.t('workouts.zero') },
-    { key: '1-3', label: i18n.t('workouts.oneToThree') },
-    { key: '3-5', label: i18n.t('workouts.threeToFive') },
-    { key: '5-7', label: i18n.t('workouts.fiveToSeven') },
+    { key: '0', label: i18n.t('workouts.zero'), subtitle: i18n.t('workouts.sedentary') },
+    { key: '1-3', label: i18n.t('workouts.oneToThree'), subtitle: i18n.t('workouts.lightlyActive') },
+    { key: '3-5', label: i18n.t('workouts.threeToFive'), subtitle: i18n.t('workouts.active') },
+    { key: '5-7', label: i18n.t('workouts.fiveToSeven'), subtitle: i18n.t('workouts.dedicatedAthlete') },
   ] as const;
 
   const handleWorkoutSelect = (workoutFrequency: '0' | '1-3' | '3-5' | '5-7') => {
@@ -78,7 +78,7 @@ export function WorkoutsScreen({ onNext, onBack }: WorkoutsScreenProps) {
             <View style={styles.workoutContent}>
               <Text 
                 style={[
-                  styles.workoutLabel,
+                  styles.workoutNumber,
                   { 
                     color: preferences.workoutsPerWeek === option.key
                       ? '#FFFFFF'  // White text when selected
@@ -88,6 +88,19 @@ export function WorkoutsScreen({ onNext, onBack }: WorkoutsScreenProps) {
                 ]}
               >
                 {option.label}
+              </Text>
+              <Text 
+                style={[
+                  styles.workoutSubtitle,
+                  { 
+                    color: preferences.workoutsPerWeek === option.key
+                      ? '#FFFFFF'  // White text when selected
+                      : (isDark ? '#FFFFFF' : '#000000'),
+                    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
+                  }
+                ]}
+              >
+                {option.subtitle}
               </Text>
             </View>
           </TouchableOpacity>
@@ -113,11 +126,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   workoutContent: {
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
-  workoutLabel: {
+  workoutNumber: {
     fontSize: 18,
-    fontWeight: '600',
-    textAlign: 'center',
+    fontWeight: '700',
+  },
+  workoutSubtitle: {
+    fontSize: 14,
+    fontWeight: '400',
+    marginTop: 8,
   },
 }); 
