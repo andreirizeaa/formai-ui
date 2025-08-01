@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, Switch }
 import Svg, { Path } from 'react-native-svg';
 import { RulerPicker } from 'react-native-ruler-picker';
 import i18n from '../../../../utils/i18n';
+import { hapticFeedback } from '../../../../utils/haptic';
 
 interface EditCurrentWeightScreenProps {
   onBack: () => void;
@@ -32,6 +33,7 @@ export function EditCurrentWeightScreen({ onBack, currentValue, onSave }: EditCu
   }, [currentValue]);
 
   const handleUnitSystemChange = (value: boolean) => {
+    hapticFeedback.selection();
     setIsMetric(value);
     // Convert weight when switching units
     if (value) {
@@ -49,6 +51,7 @@ export function EditCurrentWeightScreen({ onBack, currentValue, onSave }: EditCu
   };
 
   const handleSave = () => {
+    hapticFeedback.selection();
     const unit = isMetric ? 'kg' : 'lbs';
     const formattedWeight = isMetric ? selectedWeight.toFixed(1) : selectedWeight.toString();
     onSave(`${formattedWeight} ${unit}`);
@@ -64,7 +67,13 @@ export function EditCurrentWeightScreen({ onBack, currentValue, onSave }: EditCu
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={onBack}>
+        <TouchableOpacity 
+          style={styles.backButton} 
+          onPress={() => {
+            hapticFeedback.selection();
+            onBack();
+          }}
+        >
           <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
             <Path
               strokeLinecap="round"

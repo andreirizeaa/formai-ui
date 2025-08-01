@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import i18n from '../../../utils/i18n';
+import { hapticFeedback } from '../../../utils/haptic';
 
 interface LogoutModalProps {
   isVisible: boolean;
@@ -27,7 +28,13 @@ export function LogoutModal({ isVisible, onClose, onConfirm }: LogoutModalProps)
           onPress={(e) => e.stopPropagation()}
         >
           {/* Close button */}
-          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+          <TouchableOpacity 
+            style={styles.closeButton} 
+            onPress={() => {
+              hapticFeedback.selection();
+              onClose();
+            }}
+          >
             <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
               <Path
                 strokeLinecap="round"
@@ -47,10 +54,22 @@ export function LogoutModal({ isVisible, onClose, onConfirm }: LogoutModalProps)
 
           {/* Action buttons */}
           <View style={styles.buttonContainer}>
-            <TouchableOpacity style={styles.button} onPress={onClose}>
+            <TouchableOpacity 
+              style={styles.button} 
+              onPress={() => {
+                hapticFeedback.selection();
+                onClose();
+              }}
+            >
               <Text style={styles.buttonText}>{i18n.t('settings.no')}</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.button} onPress={onConfirm}>
+            <TouchableOpacity 
+              style={styles.button} 
+              onPress={() => {
+                hapticFeedback.selection();
+                onConfirm();
+              }}
+            >
               <Text style={styles.buttonText}>{i18n.t('settings.yes')}</Text>
             </TouchableOpacity>
           </View>

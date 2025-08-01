@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import i18n from '../../../../utils/i18n';
+import { hapticFeedback } from '../../../../utils/haptic';
 
 interface EditGenderScreenProps {
   onBack: () => void;
@@ -13,6 +14,7 @@ export function EditGenderScreen({ onBack, currentValue, onSave }: EditGenderScr
   const [selectedGender, setSelectedGender] = useState(currentValue);
 
   const handleNext = () => {
+    hapticFeedback.selection();
     onSave(selectedGender);
   };
 
@@ -21,7 +23,13 @@ export function EditGenderScreen({ onBack, currentValue, onSave }: EditGenderScr
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={onBack}>
+        <TouchableOpacity 
+          style={styles.backButton} 
+          onPress={() => {
+            hapticFeedback.selection();
+            onBack();
+          }}
+        >
           <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
             <Path
               strokeLinecap="round"

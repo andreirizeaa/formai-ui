@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Platform, TouchableOpacity, Alert } from 'react
 import Svg, { Path } from 'react-native-svg';
 import * as MailComposer from 'expo-mail-composer';
 import i18n from '../../../utils/i18n';
+import { hapticFeedback } from '../../../utils/haptic';
 import { DeleteAccountModal } from './DeleteAccountModal';
 import { LogoutModal } from './LogoutModal';
 import { LanguageModal } from './LanguageModal';
@@ -20,7 +21,14 @@ interface SettingsOptionProps {
 
 function SettingsOption({ icon, title, subtitle, onPress }: SettingsOptionProps) {
   return (
-    <TouchableOpacity style={styles.optionRow} onPress={onPress} activeOpacity={0.7}>
+    <TouchableOpacity 
+      style={styles.optionRow} 
+      onPress={() => {
+        hapticFeedback.selection();
+        onPress?.();
+      }} 
+      activeOpacity={0.7}
+    >
       <View style={styles.iconContainer}>
         {icon}
       </View>
