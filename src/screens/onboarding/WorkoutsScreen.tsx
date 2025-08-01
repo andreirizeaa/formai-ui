@@ -4,6 +4,7 @@ import { useColorScheme } from 'react-native';
 import { OnboardingLayout } from '../../components/common/OnboardingLayout';
 import { useOnboarding } from '../../context/OnboardingContext';
 import i18n from '../../utils/i18n';
+import { hapticFeedback } from '../../utils/haptic';
 
 interface WorkoutsScreenProps {
   onNext: () => void;
@@ -23,11 +24,13 @@ export function WorkoutsScreen({ onNext, onBack }: WorkoutsScreenProps) {
   ] as const;
 
   const handleWorkoutSelect = (workoutFrequency: '0' | '1-3' | '3-5' | '5-7') => {
+    hapticFeedback.selection();
     updatePreference('workoutsPerWeek', workoutFrequency);
   };
 
   const handleNext = () => {
     if (preferences.workoutsPerWeek) {
+      hapticFeedback.next();
       onNext();
     }
   };

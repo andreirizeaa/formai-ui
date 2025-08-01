@@ -4,6 +4,7 @@ import { useColorScheme } from 'react-native';
 import { OnboardingLayout } from '../../components/common/OnboardingLayout';
 import { useOnboarding } from '../../context/OnboardingContext';
 import i18n from '../../utils/i18n';
+import { hapticFeedback } from '../../utils/haptic';
 
 interface PersonalTrainerScreenProps {
   onNext: () => void;
@@ -21,11 +22,13 @@ export function PersonalTrainerScreen({ onNext, onBack }: PersonalTrainerScreenP
   ] as const;
 
   const handleTrainerSelect = (hasTrainer: boolean) => {
+    hapticFeedback.selection();
     updatePreference('hasPersonalTrainer', hasTrainer);
   };
 
   const handleNext = () => {
     if (preferences.hasPersonalTrainer !== null) {
+      hapticFeedback.next();
       onNext();
     }
   };

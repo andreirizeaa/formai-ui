@@ -5,6 +5,7 @@ import { OnboardingLayout } from '../../components/common/OnboardingLayout';
 import { useOnboarding } from '../../context/OnboardingContext';
 import { LANGUAGES } from '../../constants/languages';
 import i18n from '../../utils/i18n';
+import { hapticFeedback } from '../../utils/haptic';
 
 interface LanguageScreenProps {
   onNext: () => void;
@@ -17,12 +18,14 @@ export function LanguageScreen({ onNext, onBack }: LanguageScreenProps) {
   const { preferences, updatePreference } = useOnboarding();
 
   const handleLanguageSelect = (languageCode: string) => {
+    hapticFeedback.selection();
     updatePreference('language', languageCode);
     i18n.locale = languageCode;
   };
 
   const handleNext = () => {
     if (preferences.language) {
+      hapticFeedback.next();
       onNext();
     }
   };

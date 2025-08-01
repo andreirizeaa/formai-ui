@@ -4,6 +4,7 @@ import { useColorScheme } from 'react-native';
 import { OnboardingLayout } from '../../components/common/OnboardingLayout';
 import { useOnboarding } from '../../context/OnboardingContext';
 import i18n from '../../utils/i18n';
+import { hapticFeedback } from '../../utils/haptic';
 
 interface GenderScreenProps {
   onNext: () => void;
@@ -21,11 +22,13 @@ export function GenderScreen({ onNext, onBack }: GenderScreenProps) {
   ] as const;
 
   const handleGenderSelect = (gender: 'male' | 'female' | 'other') => {
+    hapticFeedback.selection();
     updatePreference('gender', gender);
   };
 
   const handleNext = () => {
     if (preferences.gender) {
+      hapticFeedback.next();
       onNext();
     }
   };

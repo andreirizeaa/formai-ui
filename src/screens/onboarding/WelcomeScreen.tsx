@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Platform, Image } from 'react
 import { useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import i18n from '../../utils/i18n';
+import { hapticFeedback } from '../../utils/haptic';
 
 interface WelcomeScreenProps {
   onGetStarted: () => void;
@@ -12,6 +13,16 @@ interface WelcomeScreenProps {
 export function WelcomeScreen({ onGetStarted, onSignIn }: WelcomeScreenProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+
+  const handleGetStarted = () => {
+    hapticFeedback.next();
+    onGetStarted();
+  };
+
+  const handleSignIn = () => {
+    hapticFeedback.selection();
+    onSignIn();
+  };
 
   return (
     <SafeAreaView 
@@ -52,7 +63,7 @@ export function WelcomeScreen({ onGetStarted, onSignIn }: WelcomeScreenProps) {
             styles.getStartedButton,
             { backgroundColor: isDark ? '#FFFFFF' : '#000000' }
           ]}
-          onPress={onGetStarted}
+          onPress={handleGetStarted}
           activeOpacity={0.8}
         >
           <Text 
@@ -68,7 +79,7 @@ export function WelcomeScreen({ onGetStarted, onSignIn }: WelcomeScreenProps) {
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={onSignIn} activeOpacity={0.7}>
+        <TouchableOpacity onPress={handleSignIn} activeOpacity={0.7}>
           <Text 
             style={[
               styles.signInText,

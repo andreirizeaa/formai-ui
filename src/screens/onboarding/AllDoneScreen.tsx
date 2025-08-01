@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   allDoneText: {
-    fontSize: 17,
+    fontSize: 24,
     fontWeight: '600',
     marginLeft: 8,
   },

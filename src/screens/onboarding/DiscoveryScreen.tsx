@@ -4,6 +4,7 @@ import { useColorScheme } from 'react-native';
 import { OnboardingLayout } from '../../components/common/OnboardingLayout';
 import { useOnboarding } from '../../context/OnboardingContext';
 import i18n from '../../utils/i18n';
+import { hapticFeedback } from '../../utils/haptic';
 
 interface DiscoveryScreenProps {
   onNext: () => void;
@@ -44,11 +45,13 @@ export function DiscoveryScreen({ onNext, onBack }: DiscoveryScreenProps) {
   ] as const;
 
   const handleDiscoverySelect = (source: 'instagram' | 'tiktok' | 'facebook' | 'google' | 'other') => {
+    hapticFeedback.selection();
     updatePreference('discoverySource', source);
   };
 
   const handleNext = () => {
     if (preferences.discoverySource) {
+      hapticFeedback.next();
       onNext();
     }
   };
