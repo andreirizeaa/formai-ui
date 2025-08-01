@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Platform, Alert } from 'react
 import { useColorScheme } from 'react-native';
 import { OnboardingLayout } from '../../components/onboarding/OnboardingLayout';
 import i18n from '../../utils/i18n';
+import { hapticFeedback } from '../../utils/haptic';
 import * as Notifications from 'expo-notifications';
 
 interface NotificationPermissionScreenProps {
@@ -15,6 +16,7 @@ export function NotificationPermissionScreen({ onNext, onBack }: NotificationPer
   const isDark = colorScheme === 'dark';
 
   const handleAllowNotifications = async () => {
+    hapticFeedback.selection();
     try {
       await Notifications.requestPermissionsAsync();
       onNext();
@@ -24,6 +26,7 @@ export function NotificationPermissionScreen({ onNext, onBack }: NotificationPer
   };
 
   const handleDontAllow = async () => {
+    hapticFeedback.selection();
     try {
       await Notifications.requestPermissionsAsync();
       onNext();

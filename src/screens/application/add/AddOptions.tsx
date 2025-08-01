@@ -16,7 +16,14 @@ export function AddOptions({ isVisible, onUploadPress, onRecordPress, onClose }:
   if (!isVisible) return null;
 
   return (
-    <TouchableOpacity style={styles.overlay} onPress={onClose} activeOpacity={1}>
+    <TouchableOpacity 
+      style={styles.overlay} 
+      onPress={() => {
+        hapticFeedback.selection();
+        onClose();
+      }} 
+      activeOpacity={1}
+    >
       <BlurView intensity={20} style={styles.blurContainer}>
         <View style={styles.cardsContainer}>
           {/* Upload Video Card */}

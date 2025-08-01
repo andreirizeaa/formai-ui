@@ -14,6 +14,7 @@ import { EditGenderScreen } from '../../screens/application/settings/editPersona
 import { AddOptions } from '../../screens/application/add/AddOptions';
 import { RecordModal } from '../../screens/application/add/record/RecordModal';
 import { UploadScreen } from '../../screens/application/add/upload/UploadScreen';
+import { hapticFeedback } from '../../utils/haptic';
 
 interface MainAppLayoutProps {
   children?: React.ReactNode;
@@ -69,10 +70,12 @@ export function MainAppLayout({ children }: MainAppLayoutProps) {
   };
 
   const handleCloseRecordModal = () => {
+    hapticFeedback.selection();
     setShowRecordModal(false);
   };
 
   const handleCloseUploadScreen = () => {
+    hapticFeedback.selection();
     setShowUploadScreen(false);
   };
 

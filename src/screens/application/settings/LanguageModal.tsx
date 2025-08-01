@@ -37,7 +37,13 @@ export function LanguageModal({ isVisible, onClose }: LanguageModalProps) {
           onPress={(e) => e.stopPropagation()}
         >
           {/* Close button */}
-          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+          <TouchableOpacity 
+            style={styles.closeButton} 
+            onPress={() => {
+              hapticFeedback.selection();
+              onClose();
+            }}
+          >
             <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
               <Path
                 strokeLinecap="round"

@@ -4,6 +4,7 @@ import { useColorScheme } from 'react-native';
 import { OnboardingLayout } from '../../components/onboarding/OnboardingLayout';
 import { useOnboarding } from '../../context/OnboardingContext';
 import i18n from '../../utils/i18n';
+import { hapticFeedback } from '../../utils/haptic';
 import Svg, { Path } from 'react-native-svg';
 
 interface ReferralCodeScreenProps {
@@ -39,6 +40,7 @@ export function ReferralCodeScreen({ onNext, onBack }: ReferralCodeScreenProps) 
   };
 
   const handleSubmit = () => {
+    hapticFeedback.selection();
     setIsLoading(true);
     
     // Simulate API call
@@ -55,7 +57,10 @@ export function ReferralCodeScreen({ onNext, onBack }: ReferralCodeScreenProps) 
       currentStep={12}
       totalSteps={13}
       onBack={onBack}
-      onNext={handleNext}
+      onNext={() => {
+        hapticFeedback.selection();
+        handleNext();
+      }}
       nextTitle={i18n.t('next')}
       nextDisabled={false}
     >

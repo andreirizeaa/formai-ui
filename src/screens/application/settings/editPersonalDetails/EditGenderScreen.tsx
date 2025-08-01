@@ -58,7 +58,10 @@ export function EditGenderScreen({ onBack, currentValue, onSave }: EditGenderScr
               styles.optionButton,
               selectedGender === i18n.t('gender.male') && styles.selectedOption,
             ]}
-            onPress={() => setSelectedGender(i18n.t('gender.male'))}
+            onPress={() => {
+              hapticFeedback.selection();
+              setSelectedGender(i18n.t('gender.male'));
+            }}
             activeOpacity={0.7}
           >
             <Text
@@ -76,7 +79,10 @@ export function EditGenderScreen({ onBack, currentValue, onSave }: EditGenderScr
               styles.optionButton,
               selectedGender === i18n.t('gender.female') && styles.selectedOption,
             ]}
-            onPress={() => setSelectedGender(i18n.t('gender.female'))}
+            onPress={() => {
+              hapticFeedback.selection();
+              setSelectedGender(i18n.t('gender.female'));
+            }}
             activeOpacity={0.7}
           >
             <Text

@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { BackButton } from '../../components/ui/BackButton';
 import i18n from '../../utils/i18n';
+import { hapticFeedback } from '../../utils/haptic';
 
 interface SubscriptionSelectionScreenProps {
   onNext: () => void;
@@ -285,7 +286,10 @@ export function SubscriptionSelectionScreen({ onNext, onBack }: SubscriptionSele
               selectedPlan === 'monthly' && styles.selectedButton,
               { borderColor: isDark ? '#FFFFFF' : '#000000' }
             ]}
-            onPress={() => setSelectedPlan('monthly')}
+            onPress={() => {
+              hapticFeedback.selection();
+              setSelectedPlan('monthly');
+            }}
             activeOpacity={0.8}
           >
             <View style={styles.subscriptionContent}>
@@ -321,7 +325,10 @@ export function SubscriptionSelectionScreen({ onNext, onBack }: SubscriptionSele
               selectedPlan === 'yearly' && styles.selectedButton,
               { borderColor: isDark ? '#FFFFFF' : '#000000' }
             ]}
-            onPress={() => setSelectedPlan('yearly')}
+            onPress={() => {
+              hapticFeedback.selection();
+              setSelectedPlan('yearly');
+            }}
             activeOpacity={0.8}
           >
             {/* 3 Days Free Tag */}
@@ -386,7 +393,10 @@ export function SubscriptionSelectionScreen({ onNext, onBack }: SubscriptionSele
             styles.startButton,
             { backgroundColor: isDark ? '#FFFFFF' : '#000000' }
           ]}
-          onPress={onNext}
+          onPress={() => {
+            hapticFeedback.selection();
+            onNext();
+          }}
           activeOpacity={0.8}
         >
           <Text style={[

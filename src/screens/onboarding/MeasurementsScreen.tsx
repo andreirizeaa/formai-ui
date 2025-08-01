@@ -108,7 +108,10 @@ export function MeasurementsScreen({ onNext, onBack }: MeasurementsScreenProps) 
       currentStep={7}
       totalSteps={12}
       onBack={onBack}
-      onNext={handleNext}
+      onNext={() => {
+        hapticFeedback.selection();
+        handleNext();
+      }}
       nextTitle={i18n.t('next')}
       nextDisabled={!preferences.height || !preferences.weight}
     >
