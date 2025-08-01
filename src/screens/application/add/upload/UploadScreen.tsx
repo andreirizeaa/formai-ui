@@ -2,13 +2,14 @@ import React from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
+import i18n from '../../../../utils/i18n';
 
-interface CameraModalProps {
+interface UploadScreenProps {
   isVisible: boolean;
   onClose: () => void;
 }
 
-export function CameraModal({ isVisible, onClose }: CameraModalProps) {
+export function UploadScreen({ isVisible, onClose }: UploadScreenProps) {
   return (
     <Modal
       visible={isVisible}
@@ -26,8 +27,9 @@ export function CameraModal({ isVisible, onClose }: CameraModalProps) {
         </View>
         
         <View style={styles.content}>
+          <Text style={styles.title}>{i18n.t('add.uploadVideo')}</Text>
           <Text style={styles.description}>
-            Camera functionality will be implemented here.
+            {i18n.t('add.uploadVideoDescription')}
           </Text>
         </View>
       </SafeAreaView>
@@ -59,6 +61,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 20,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#000000',
+    textAlign: 'center',
+    marginBottom: 16,
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
   },
   description: {
     fontSize: 17,

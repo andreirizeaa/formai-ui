@@ -8,6 +8,12 @@ const i18n = new I18n({
     signIn: 'Sign In',
     next: 'Next',
     back: 'Back',
+    add: {
+      uploadVideo: 'Upload Video',
+      recordVideo: 'Record Video',
+      uploadVideoDescription: 'Select a video from your gallery to analyze your form.',
+      recordVideoDescription: 'Record a new video to analyze your exercise form.',
+    },
     welcome: {
       title: 'FormAI',
       subtitle: 'Transform your fitness journey with AI-powered form analysis',
