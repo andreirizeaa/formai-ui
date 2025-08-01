@@ -127,7 +127,7 @@ export function ProgressScreen({ onNext, onBack }: ProgressScreenProps) {
             {/* Axis labels */}
             <SvgText
               x={chartWidth / 2}
-              y={chartHeight - 10}
+              y={chartHeight}
               fontSize="14"
               fill={textColor}
               textAnchor="middle"
@@ -153,7 +153,7 @@ export function ProgressScreen({ onNext, onBack }: ProgressScreenProps) {
               <SvgText
                 key={`week-${week}`}
                 x={getX(week)}
-                y={chartHeight - 15}
+                y={chartHeight - 16}
                 fontSize="12"
                 fill={textColor}
                 textAnchor="middle"
@@ -180,17 +180,19 @@ export function ProgressScreen({ onNext, onBack }: ProgressScreenProps) {
           </Svg>
         </View>
         
-        <View style={styles.improvementStats}>
+        <View style={[styles.improvementStats, { 
+          borderColor: isDark ? '#FFF' : '#000',
+        }]}>
           <View style={styles.statItem}>
             <Text style={[styles.statNumber, { color: textColor }]}>+104%</Text>
             <Text style={[styles.statLabel, { color: isDark ? '#8E8E93' : '#6D6D70' }]}>
-              Form Improvement
+              {i18n.t('progress.formImprovement')}
             </Text>
           </View>
           <View style={styles.statItem}>
             <Text style={[styles.statNumber, { color: textColor }]}>12</Text>
             <Text style={[styles.statLabel, { color: isDark ? '#8E8E93' : '#6D6D70' }]}>
-              Weeks to Excellence
+              {i18n.t('progress.weeksToExcellence')}
             </Text>
           </View>
         </View>
@@ -220,6 +222,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     width: '100%',
     paddingHorizontal: 20,
+    paddingVertical: 20,
+    borderWidth: 2,
+    borderRadius: 10,
   },
   statItem: {
     alignItems: 'center',

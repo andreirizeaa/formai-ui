@@ -44,7 +44,7 @@ export function RatingScreen({ onNext, onBack }: RatingScreenProps) {
           styles.skipButtonText,
           { color: isDark ? '#AEAEB2' : '#8E8E93' }
         ]}>
-          Skip
+          {i18n.t('rating.skip')}
         </Text>
       </TouchableOpacity>
 
@@ -78,21 +78,31 @@ export function RatingScreen({ onNext, onBack }: RatingScreenProps) {
       nextDisabled={true}
       customButtons={customButtons}
     >
-      <ScrollView 
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContentContainer}
-        showsVerticalScrollIndicator={false}
-        bounces={true}
-        alwaysBounceVertical={false}
-      >
-        {/* Star Rating Section */}
+      <View style={styles.container}>
+        {/* Star Rating Section - positioned below subtitle */}
         <View style={styles.ratingContainer}>
-          <View style={styles.starsContainer}>
+          <View style={[
+            styles.starsContainer,
+            { borderColor: isDark ? '#FFFFFF' : '#000000' }
+          ]}>
             <Text style={styles.starEmoji}>⭐⭐⭐⭐⭐</Text>
           </View>
         </View>
 
-        {/* Testimonial Card */}
+        {/* Spacer to create gap in the middle */}
+        <View style={styles.spacer} />
+
+        {/* Centered text in the middle space */}
+        <View style={styles.middleTextContainer}>
+          <Text style={[
+            styles.middleText,
+            { color: isDark ? '#FFFFFF' : '#000000' }
+          ]}>
+            {i18n.t('rating.middleText')}
+          </Text>
+        </View>
+
+        {/* Testimonial Card - positioned above buttons */}
         <View style={[
           styles.testimonialCard,
           { backgroundColor: isDark ? 'rgba(28, 28, 30, 0.8)' : 'rgba(242, 242, 247, 0.8)' }
@@ -130,29 +140,44 @@ export function RatingScreen({ onNext, onBack }: RatingScreenProps) {
             "I lost 15 lbs in 2 months! I was about to go on Ozempic but decided to give this app a shot and it worked :)"
           </Text>
         </View>
-      </ScrollView>
+      </View>
     </OnboardingLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollView: {
-    flexGrow: 1,
-  },
-  scrollContentContainer: {
-    flexGrow: 1,
-    paddingVertical: 20,
+  container: {
+    flex: 1,
     justifyContent: 'center',
+    paddingVertical: 20,
   },
   ratingContainer: {
     alignItems: 'center',
-    marginBottom: 24,
   },
   starsContainer: {
     alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    width: '100%',
   },
   starEmoji: {
     fontSize: 48,
+  },
+  spacer: {
+    height: 40,
+  },
+  middleTextContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 40,
+  },
+  middleText: {
+    fontSize: 24,
+    fontWeight: '700',
+    textAlign: 'center',
+    width: '80%',
   },
   testimonialCard: {
     borderRadius: 12,
@@ -205,7 +230,6 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
     width: '100%',
   },
   rateButtonText: {
