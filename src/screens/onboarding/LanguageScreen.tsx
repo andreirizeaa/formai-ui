@@ -101,16 +101,13 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'center', // Center the buttons vertically when they fit
     paddingVertical: 20,
+    gap: 12,
   },
   languageButton: {
-    height: 65,
+    borderWidth: 1.5,
     borderRadius: 16,
-    borderWidth: 1,
-    marginBottom: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 16,
+    paddingVertical: 20,
+    paddingHorizontal: 24,
   },
   languageContent: {
     flexDirection: 'row',
@@ -119,7 +116,6 @@ const styles = StyleSheet.create({
   },
   flag: {
     fontSize: 24,
-    marginRight: 12,
   },
   languageName: {
     fontSize: 18,
