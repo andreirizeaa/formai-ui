@@ -4,6 +4,7 @@ import Svg, { Path } from 'react-native-svg';
 import * as MailComposer from 'expo-mail-composer';
 import i18n from '../../../utils/i18n';
 import { DeleteAccountModal } from './DeleteAccountModal';
+import { LogoutModal } from './LogoutModal';
 
 interface SettingsScreenProps {
   // Add any props as needed
@@ -32,6 +33,7 @@ function SettingsOption({ icon, title, subtitle, onPress }: SettingsOptionProps)
 
 export function SettingsScreen({}: SettingsScreenProps) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const iconSize = 28;
   const iconColor = '#000000';
 
@@ -48,6 +50,25 @@ export function SettingsScreen({}: SettingsScreenProps) {
     console.log('Account deletion confirmed');
     setShowDeleteModal(false);
     // Here you would typically call an API to delete the account
+  };
+
+  const handleLogoutPress = () => {
+    setShowLogoutModal(true);
+  };
+
+  const handleCloseLogoutModal = () => {
+    setShowLogoutModal(false);
+  };
+
+  const handleConfirmLogout = () => {
+    // TODO: Implement actual logout logic
+    console.log('Logout confirmed');
+    setShowLogoutModal(false);
+    // Here you would typically:
+    // 1. Clear user session/tokens
+    // 2. Clear local storage
+    // 3. Navigate to login screen
+    // 4. Reset app state
   };
 
   const handleSupportEmailPress = async () => {
@@ -241,7 +262,7 @@ Best regards,
           <SettingsOption
             icon={icons.logout}
             title={i18n.t('settings.logout')}
-            onPress={() => {}}
+            onPress={handleLogoutPress}
           />
         </View>
       </View>
@@ -251,6 +272,13 @@ Best regards,
         isVisible={showDeleteModal}
         onClose={handleCloseDeleteModal}
         onConfirm={handleConfirmDeleteAccount}
+      />
+
+      {/* Logout Modal */}
+      <LogoutModal
+        isVisible={showLogoutModal}
+        onClose={handleCloseLogoutModal}
+        onConfirm={handleConfirmLogout}
       />
     </View>
   );
