@@ -8,7 +8,7 @@ import { LogoutModal } from './LogoutModal';
 import { LanguageModal } from './LanguageModal';
 
 interface SettingsScreenProps {
-  // Add any props as needed
+  onPersonalDetailsPress: () => void;
 }
 
 interface SettingsOptionProps {
@@ -32,7 +32,7 @@ function SettingsOption({ icon, title, subtitle, onPress }: SettingsOptionProps)
   );
 }
 
-export function SettingsScreen({}: SettingsScreenProps) {
+export function SettingsScreen({ onPersonalDetailsPress }: SettingsScreenProps) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showLanguageModal, setShowLanguageModal] = useState(false);
@@ -79,6 +79,10 @@ export function SettingsScreen({}: SettingsScreenProps) {
 
   const handleCloseLanguageModal = () => {
     setShowLanguageModal(false);
+  };
+
+  const handlePersonalDetailsPress = () => {
+    onPersonalDetailsPress();
   };
 
   const handleSupportEmailPress = async () => {
@@ -224,7 +228,7 @@ Best regards,
           <SettingsOption
             icon={icons.personal}
             title={i18n.t('settings.personalDetails')}
-            onPress={() => {}}
+            onPress={handlePersonalDetailsPress}
           />
           <View style={styles.separator} />
           <SettingsOption
@@ -296,6 +300,9 @@ Best regards,
         isVisible={showLanguageModal}
         onClose={handleCloseLanguageModal}
       />
+
+      {/* Personal Details Screen */}
+      {/* This component is now rendered by the parent based on the onPersonalDetailsPress prop */}
     </View>
   );
 }
