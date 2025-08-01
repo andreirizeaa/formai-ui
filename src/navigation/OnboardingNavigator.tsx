@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { View } from 'react-native';
 import { LoadingScreen } from '../screens/onboarding/LoadingScreen';
 import { WelcomeScreen } from '../screens/onboarding/WelcomeScreen';
 import { LanguageScreen } from '../screens/onboarding/LanguageScreen';
@@ -19,6 +20,9 @@ import { SetupLoadingScreen } from '../screens/onboarding/SetupLoadingScreen';
 import { FreeTrialScreen } from '../screens/payment/FreeTrialScreen';
 import { NotificationReminderScreen } from '../screens/payment/NotificationReminderScreen';
 import { SubscriptionSelectionScreen } from '../screens/payment/SubscriptionSelectionScreen';
+import { CreateAccountScreen } from '../screens/auth/CreateAccountScreen';
+import { CameraPermissionScreen } from '../screens/onboarding/CameraPermissionScreen';
+import { HomeScreen } from '../screens/application/HomeScreen';
 
 interface OnboardingNavigatorProps {
   onComplete: () => void;
@@ -45,7 +49,10 @@ type OnboardingScreen =
   | 'setupLoading'
   | 'freeTrial'
   | 'notificationReminder'
-  | 'subscriptionSelection';
+  | 'subscriptionSelection'
+  | 'createAccount'
+  | 'cameraPermission'
+  | 'homePage';
 
 export function OnboardingNavigator({ onComplete, onSignIn }: OnboardingNavigatorProps) {
   const [currentScreen, setCurrentScreen] = useState<OnboardingScreen>('loading');
@@ -191,11 +198,23 @@ export function OnboardingNavigator({ onComplete, onSignIn }: OnboardingNavigato
   };
 
   const handleSubscriptionSelectionNext = () => {
-    onComplete();
+    setCurrentScreen('createAccount');
   };
 
   const handleSubscriptionSelectionBack = () => {
     setCurrentScreen('notificationReminder');
+  };
+
+  const handleCreateAccountNext = () => {
+    setCurrentScreen('cameraPermission');
+  };
+
+  const handleCreateAccountBack = () => {
+    setCurrentScreen('welcome');
+  };
+
+  const handleCameraPermissionNext = () => {
+    setCurrentScreen('homePage');
   };
 
   switch (currentScreen) {
@@ -352,6 +371,23 @@ export function OnboardingNavigator({ onComplete, onSignIn }: OnboardingNavigato
           onBack={handleSubscriptionSelectionBack}
         />
       );
+
+    case 'createAccount':
+      return (
+        <CreateAccountScreen
+          onNext={handleCreateAccountNext}
+        />
+      );
+
+    case 'cameraPermission':
+      return (
+        <CameraPermissionScreen
+          onNext={handleCameraPermissionNext}
+        />
+      );
+
+    case 'homePage':
+      return <HomeScreen />;
 
     default:
       return <LoadingScreen onLoadComplete={handleLoadComplete} />;

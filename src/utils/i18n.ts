@@ -166,6 +166,18 @@ const i18n = new I18n({
       monthlyFeature3: 'Track your progress',
       monthlyFeature3Description: 'Stay on the right tracks with analytics and reminders',
     },
+    createAccount: {
+      title: 'Create an account',
+      signInWithApple: 'Sign in with Apple',
+      signInWithGoogle: 'Sign in with Google',
+    },
+    cameraPermission: {
+      title: 'Allow camera access',
+      subtitle: 'Camera access is required for FormAI.',
+      dialogText: 'FormAI would like to access your Camera.',
+      allow: 'Allow',
+      dontAllow: "Don't Allow",
+    },
   },
   es: {
     loading: 'Cargando...',
@@ -330,6 +342,18 @@ const i18n = new I18n({
       monthlyFeature2Description: 'Ponerse en forma nunca ha sido tan fácil',
       monthlyFeature3: 'Rastrea tu progreso',
       monthlyFeature3Description: 'Mantente en el camino correcto con análisis y recordatorios',
+    },
+    createAccount: {
+      title: 'Crear una cuenta',
+      signInWithApple: 'Iniciar sesión con Apple',
+      signInWithGoogle: 'Iniciar sesión con Google',
+    },
+    cameraPermission: {
+      title: 'Permitir acceso a la cámara',
+      subtitle: 'El acceso a la cámara es requerido para FormAI.',
+      dialogText: 'FormAI quiere acceder a tu Cámara.',
+      allow: 'Permitir',
+      dontAllow: 'No Permitir',
     },
   },
   zh: {
@@ -496,6 +520,18 @@ const i18n = new I18n({
       monthlyFeature3: '跟踪您的进度',
       monthlyFeature3Description: '通过分析和提醒保持正确的轨道',
     },
+    createAccount: {
+      title: '创建账户',
+      signInWithApple: '使用 Apple 登录',
+      signInWithGoogle: '使用 Google 登录',
+    },
+    cameraPermission: {
+      title: '允许相机访问',
+      subtitle: 'FormAI 需要相机访问权限。',
+      dialogText: 'FormAI 想要访问您的相机。',
+      allow: '允许',
+      dontAllow: '不允许',
+    },
   },
   it: {
     loading: 'Caricamento...',
@@ -660,6 +696,18 @@ const i18n = new I18n({
       monthlyFeature2Description: 'Mettersi in forma non è mai stato così facile',
       monthlyFeature3: 'Traccia i tuoi progressi',
       monthlyFeature3Description: 'Rimani sulla strada giusta con analisi e promemoria',
+    },
+    createAccount: {
+      title: 'Crea un account',
+      signInWithApple: 'Accedi con Apple',
+      signInWithGoogle: 'Accedi con Google',
+    },
+    cameraPermission: {
+      title: 'Consenti accesso alla fotocamera',
+      subtitle: 'L\'accesso alla fotocamera è richiesto per FormAI.',
+      dialogText: 'FormAI vuole accedere alla tua Fotocamera.',
+      allow: 'Consenti',
+      dontAllow: 'Non Consenti',
     },
   },
   pt: {
@@ -826,6 +874,18 @@ const i18n = new I18n({
       monthlyFeature3: 'Acompanhe seu progresso',
       monthlyFeature3Description: 'Mantenha-se no caminho certo com análises e lembretes',
     },
+    createAccount: {
+      title: 'Criar uma conta',
+      signInWithApple: 'Entrar com Apple',
+      signInWithGoogle: 'Entrar com Google',
+    },
+    cameraPermission: {
+      title: 'Permitir acesso à câmera',
+      subtitle: 'O acesso à câmera é necessário para o FormAI.',
+      dialogText: 'FormAI gostaria de acessar sua Câmera.',
+      allow: 'Permitir',
+      dontAllow: 'Não Permitir',
+    },
   },
   ro: {
     loading: 'Se încarcă...',
@@ -990,6 +1050,18 @@ const i18n = new I18n({
       monthlyFeature2Description: 'Să te pui în formă nu a fost niciodată atât de ușor',
       monthlyFeature3: 'Urmărește-ți progresul',
       monthlyFeature3Description: 'Rămâi pe drumul cel bun cu analize și mementouri',
+    },
+    createAccount: {
+      title: 'Creați un cont',
+      signInWithApple: 'Autentificați-vă cu Apple',
+      signInWithGoogle: 'Autentificați-vă cu Google',
+    },
+    cameraPermission: {
+      title: 'Permiteți accesul la cameră',
+      subtitle: 'Accesul la cameră este necesar pentru FormAI.',
+      dialogText: 'FormAI vrea să acceseze Camera dvs.',
+      allow: 'Permiteți',
+      dontAllow: 'Nu Permiteți',
     },
   },
   de: {
@@ -1156,6 +1228,18 @@ const i18n = new I18n({
       monthlyFeature3: 'Verfolgen Sie Ihren Fortschritt',
       monthlyFeature3Description: 'Bleiben Sie mit Analysen und Erinnerungen auf dem richtigen Weg',
     },
+    createAccount: {
+      title: 'Ein Konto erstellen',
+      signInWithApple: 'Mit Apple anmelden',
+      signInWithGoogle: 'Mit Google anmelden',
+    },
+    cameraPermission: {
+      title: 'Kamera-Zugriff erlauben',
+      subtitle: 'Kamera-Zugriff ist für FormAI erforderlich.',
+      dialogText: 'FormAI möchte Zugriff auf deine Kamera haben.',
+      allow: 'Erlauben',
+      dontAllow: 'Nicht Erlauben',
+    },
   },
   fr: {
     loading: 'Chargement...',
@@ -1321,6 +1405,18 @@ const i18n = new I18n({
       monthlyFeature3: 'Suivez vos progrès',
       monthlyFeature3Description: 'Restez sur la bonne voie avec des analyses et des rappels',
     },
+    createAccount: {
+      title: 'Créer un compte',
+      signInWithApple: 'Se connecter avec Apple',
+      signInWithGoogle: 'Se connecter avec Google',
+    },
+    cameraPermission: {
+      title: 'Autoriser l\'accès à la caméra',
+      subtitle: 'L\'accès à la caméra est nécessaire pour FormAI.',
+      dialogText: 'FormAI souhaite accéder à votre Caméra.',
+      allow: 'Autoriser',
+      dontAllow: 'Ne Pas Autoriser',
+    },
   },
   ar: {
     loading: 'جاري التحميل...',
@@ -1485,6 +1581,18 @@ const i18n = new I18n({
       monthlyFeature2Description: 'الوصول إلى الشكل المطلوب لم يكن أبداً بهذه السهولة',
       monthlyFeature3: 'تتبع تقدمك',
       monthlyFeature3Description: 'ابق على المسار الصحيح مع التحليلات والتذكيرات',
+    },
+    createAccount: {
+      title: 'إنشاء حساب',
+      signInWithApple: 'تسجيل الدخول باستخدام Apple',
+      signInWithGoogle: 'تسجيل الدخول باستخدام Google',
+    },
+    cameraPermission: {
+      title: 'السماح بالوصول إلى الكاميرا',
+      subtitle: 'الوصول إلى الكاميرا مطلوب لـ FormAI.',
+      dialogText: 'FormAI يريد الوصول إلى الكاميرا.',
+      allow: 'السماح',
+      dontAllow: 'لا تسمح',
     },
   },
 });
