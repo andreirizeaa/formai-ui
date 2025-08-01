@@ -18,6 +18,7 @@
   - Avoid enums; use maps instead.
   - Use functional components with TypeScript interfaces.
   - Use strict mode in TypeScript for better type safety.
+  - Do not create index.ts files
 
   Syntax and Formatting
   - Use the "function" keyword for pure functions.

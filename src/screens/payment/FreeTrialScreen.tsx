@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Platform, TouchableOpacity, Image } from 'react-native';
 import { useColorScheme } from 'react-native';
-import { PaymentLayout } from '../../components/common/PaymentLayout';
+import { PaymentLayout } from '../../components/payment/PaymentLayout';
 import i18n from '../../utils/i18n';
 
 interface FreeTrialScreenProps {

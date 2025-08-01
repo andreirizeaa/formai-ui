@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { useColorScheme } from 'react-native';
-import { OnboardingLayout } from '../../components/common/OnboardingLayout';
+import { OnboardingLayout } from '../../components/onboarding/OnboardingLayout';
 import i18n from '../../utils/i18n';
 import Svg, { Line, Circle, Text as SvgText, G } from 'react-native-svg';
 

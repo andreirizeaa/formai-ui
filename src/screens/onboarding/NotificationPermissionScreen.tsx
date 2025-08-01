@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform, Alert } from 'react-native';
 import { useColorScheme } from 'react-native';
-import { OnboardingLayout } from '../../components/common/OnboardingLayout';
+import { OnboardingLayout } from '../../components/onboarding/OnboardingLayout';
 import i18n from '../../utils/i18n';
 import * as Notifications from 'expo-notifications';
 
