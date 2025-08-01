@@ -229,10 +229,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   rateButton: {
-    borderWidth: 1.5,
-    borderRadius: 16,
-    paddingVertical: 20,
-    paddingHorizontal: 24,
+    marginHorizontal: 20,
+    height: 56,
+    borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
@@ -240,6 +239,7 @@ const styles = StyleSheet.create({
   rateButtonText: {
     fontSize: 17,
     fontWeight: '600',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
   },
   skipButton: {
     paddingVertical: 8,
