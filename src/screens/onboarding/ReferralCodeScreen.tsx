@@ -143,8 +143,8 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   input: {
-    height: 56,
-    borderRadius: 12,
+    height: 65,
+    borderRadius: 16,
     borderWidth: 1,
     fontSize: 17,
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
@@ -152,15 +152,15 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   submitButton: {
-    height: 56,
-    borderRadius: 12,
+    height: 65,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
   },
   submitButtonText: {
     color: '#FFFFFF',
-    fontSize: 17,
+    fontSize: 18,
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
   successContainer: {
@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
   },
   successText: {
     marginTop: 10,
-    fontSize: 17,
+    fontSize: 18,
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
 }); 

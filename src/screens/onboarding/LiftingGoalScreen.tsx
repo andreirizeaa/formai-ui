@@ -109,7 +109,7 @@ const styles = StyleSheet.create({
   },
   liftingGoalButton: {
     height: 65,
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
     marginBottom: 12,
     flexDirection: 'row',
