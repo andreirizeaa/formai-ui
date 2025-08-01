@@ -8,6 +8,11 @@ const i18n = new I18n({
     signIn: 'Sign In',
     next: 'Next',
     back: 'Back',
+    tabs: {
+      home: 'Home',
+      performance: 'Performance',
+      settings: 'Settings',
+    },
     add: {
       uploadVideo: 'Upload Video',
       recordVideo: 'Record Video',
@@ -201,6 +206,17 @@ const i18n = new I18n({
     signIn: 'Iniciar Sesión',
     next: 'Siguiente',
     back: 'Atrás',
+    tabs: {
+      home: 'Inicio',
+      performance: 'Rendimiento',
+      settings: 'Configuración',
+    },
+    add: {
+      uploadVideo: 'Subir Video',
+      recordVideo: 'Grabar Video',
+      uploadVideoDescription: 'Selecciona un video de tu galería para analizar tu forma.',
+      recordVideoDescription: 'Graba un nuevo video para analizar tu forma de ejercicio.',
+    },
     welcome: {
       title: 'FormAI',
       subtitle: 'Transforma tu viaje fitness con análisis de forma potenciado por IA',
@@ -388,6 +404,17 @@ const i18n = new I18n({
     signIn: '登录',
     next: '下一步',
     back: '返回',
+    tabs: {
+      home: '首页',
+      performance: '表现',
+      settings: '设置',
+    },
+    add: {
+      uploadVideo: '上传视频',
+      recordVideo: '录制视频',
+      uploadVideoDescription: '从您的相册中选择视频来分析您的动作。',
+      recordVideoDescription: '录制新视频来分析您的运动动作。',
+    },
     welcome: {
       title: 'FormAI',
       subtitle: '通过AI驱动的动作分析改变您的健身旅程',
@@ -575,6 +602,17 @@ const i18n = new I18n({
     signIn: 'Accedi',
     next: 'Avanti',
     back: 'Indietro',
+    tabs: {
+      home: 'Home',
+      performance: 'Prestazioni',
+      settings: 'Impostazioni',
+    },
+    add: {
+      uploadVideo: 'Carica Video',
+      recordVideo: 'Registra Video',
+      uploadVideoDescription: 'Seleziona un video dalla tua galleria per analizzare la tua forma.',
+      recordVideoDescription: 'Registra un nuovo video per analizzare la tua forma di esercizio.',
+    },
     welcome: {
       title: 'FormAI',
       subtitle: 'Trasforma il tuo percorso fitness con analisi della forma alimentata da AI',
@@ -585,7 +623,7 @@ const i18n = new I18n({
     },
     gender: {
       title: 'Sesso biologico',
-      subtitle: 'Questo sarà usato per aiutare i nostri sistemi a trovare la forma biomeccanica ottimale per te',
+      subtitle: 'Questo sarà usato per aiutare i nostri sistemi a trovare la forma biomécanique optimale per te',
       male: 'Maschio',
       female: 'Femmina',
       other: 'Altro',
@@ -762,6 +800,17 @@ const i18n = new I18n({
     signIn: 'Entrar',
     next: 'Próximo',
     back: 'Voltar',
+    tabs: {
+      home: 'Início',
+      performance: 'Desempenho',
+      settings: 'Configurações',
+    },
+    add: {
+      uploadVideo: 'Enviar Vídeo',
+      recordVideo: 'Gravar Vídeo',
+      uploadVideoDescription: 'Selecione um vídeo da sua galeria para analisar sua forma.',
+      recordVideoDescription: 'Grave um novo vídeo para analisar sua forma de exercício.',
+    },
     welcome: {
       title: 'FormAI',
       subtitle: 'Transforme sua jornada fitness com análise de forma alimentada por IA',
@@ -949,6 +998,17 @@ const i18n = new I18n({
     signIn: 'Conectează-te',
     next: 'Următorul',
     back: 'Înapoi',
+    tabs: {
+      home: 'Acasă',
+      performance: 'Performanță',
+      settings: 'Setări',
+    },
+    add: {
+      uploadVideo: 'Încarcă Video',
+      recordVideo: 'Înregistrează Video',
+      uploadVideoDescription: 'Selectează un video din galeria ta pentru a analiza forma ta.',
+      recordVideoDescription: 'Înregistrează un video nou pentru a analiza forma ta de exercițiu.',
+    },
     welcome: {
       title: 'FormAI',
       subtitle: 'Transformă-ți călătoria fitness cu analiză de formă alimentată de AI',
@@ -1136,6 +1196,17 @@ const i18n = new I18n({
     signIn: 'Anmelden',
     next: 'Weiter',
     back: 'Zurück',
+    tabs: {
+      home: 'Startseite',
+      performance: 'Leistung',
+      settings: 'Einstellungen',
+    },
+    add: {
+      uploadVideo: 'Video hochladen',
+      recordVideo: 'Video aufnehmen',
+      uploadVideoDescription: 'Wählen Sie ein Video aus Ihrer Galerie aus, um Ihre Form zu analysieren.',
+      recordVideoDescription: 'Nehmen Sie ein neues Video auf, um Ihre Übungsform zu analysieren.',
+    },
     welcome: {
       title: 'FormAI',
       subtitle: 'Verwandle deine Fitness-Reise mit KI-gestützter Formanalyse',
@@ -1323,6 +1394,17 @@ const i18n = new I18n({
     signIn: 'Se connecter',
     next: 'Suivant',
     back: 'Retour',
+    tabs: {
+      home: 'Accueil',
+      performance: 'Performance',
+      settings: 'Paramètres',
+    },
+    add: {
+      uploadVideo: 'Télécharger Vidéo',
+      recordVideo: 'Enregistrer Vidéo',
+      uploadVideoDescription: 'Sélectionnez une vidéo de votre galerie pour analyser votre forme.',
+      recordVideoDescription: 'Enregistrez une nouvelle vidéo pour analyser votre forme d\'exercice.',
+    },
     welcome: {
       title: 'FormAI',
       subtitle: 'Transformez votre parcours fitness avec une analyse de forme alimentée par IA',
@@ -1510,6 +1592,17 @@ const i18n = new I18n({
     signIn: 'تسجيل الدخول',
     next: 'التالي',
     back: 'رجوع',
+    tabs: {
+      home: 'الرئيسية',
+      performance: 'الأداء',
+      settings: 'الإعدادات',
+    },
+    add: {
+      uploadVideo: 'رفع الفيديو',
+      recordVideo: 'تسجيل الفيديو',
+      uploadVideoDescription: 'اختر فيديو من معرض الصور الخاص بك لتحليل شكلك.',
+      recordVideoDescription: 'سجل فيديو جديد لتحليل شكل التمرين الخاص بك.',
+    },
     welcome: {
       title: 'FormAI',
       subtitle: 'حول رحلة اللياقة البدنية الخاصة بك مع تحليل الشكل المدعوم بالذكاء الاصطناعي',
