@@ -4,6 +4,7 @@ import { useColorScheme } from 'react-native';
 import { OnboardingLayout } from '../../components/common/OnboardingLayout';
 import { useOnboarding } from '../../context/OnboardingContext';
 import i18n from '../../utils/i18n';
+import { hapticFeedback } from '../../utils/haptic';
 
 interface LiftingGoalScreenProps {
   onNext: () => void;
@@ -24,11 +25,13 @@ export function LiftingGoalScreen({ onNext, onBack }: LiftingGoalScreenProps) {
   ] as const;
 
   const handleLiftingGoalSelect = (goal: 'muscle_building' | 'powerlifting' | 'toning' | 'strength' | 'weight_loss') => {
+    hapticFeedback.selection();
     updatePreference('liftingGoal', goal);
   };
 
   const handleNext = () => {
     if (preferences.liftingGoal) {
+      hapticFeedback.next();
       onNext();
     }
   };

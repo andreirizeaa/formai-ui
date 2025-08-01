@@ -5,6 +5,7 @@ import { Picker } from '@react-native-picker/picker';
 import { OnboardingLayout } from '../../components/common/OnboardingLayout';
 import { useOnboarding } from '../../context/OnboardingContext';
 import i18n from '../../utils/i18n';
+import { hapticFeedback } from '../../utils/haptic';
 
 interface BirthDateScreenProps {
   onNext: () => void;
@@ -40,6 +41,7 @@ export function BirthDateScreen({ onNext, onBack }: BirthDateScreenProps) {
   };
 
   const updateBirthDate = (field: 'month' | 'day' | 'year', value: number | null) => {
+    hapticFeedback.selection();
     const updatedBirthDate = {
       ...birthDate,
       [field]: value,
@@ -60,6 +62,7 @@ export function BirthDateScreen({ onNext, onBack }: BirthDateScreenProps) {
 
   const handleNext = () => {
     if (birthDate.month && birthDate.day && birthDate.year) {
+      hapticFeedback.next();
       onNext();
     }
   };

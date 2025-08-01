@@ -5,6 +5,7 @@ import { OnboardingLayout } from '../../components/common/OnboardingLayout';
 import { useOnboarding } from '../../context/OnboardingContext';
 import i18n from '../../utils/i18n';
 import * as StoreReview from 'expo-store-review';
+import { hapticFeedback } from '../../utils/haptic';
 
 interface RatingScreenProps {
   onNext: () => void;
@@ -17,6 +18,7 @@ export function RatingScreen({ onNext, onBack }: RatingScreenProps) {
   const { preferences, updatePreference } = useOnboarding();
 
   const handleRateFormAI = async () => {
+    hapticFeedback.important();
     try {
       const isAvailable = await StoreReview.isAvailableAsync();
       if (isAvailable) {
@@ -28,6 +30,7 @@ export function RatingScreen({ onNext, onBack }: RatingScreenProps) {
   };
 
   const handleSkip = () => {
+    hapticFeedback.selection();
     // Save a default rating of 5 when skipped
     updatePreference('rating', 5);
     onNext();
