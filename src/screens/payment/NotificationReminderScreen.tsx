@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Platform, TouchableOpacity, Animated } from 're
 import { useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
-import { BackButton } from '../../components/common/BackButton';
+import { BackButton } from '../../components/ui/BackButton';
 import i18n from '../../utils/i18n';
 
 interface NotificationReminderScreenProps {

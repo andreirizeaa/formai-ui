@@ -2,10 +2,10 @@ import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { BackButton } from './BackButton';
-import { ProgressBar } from './ProgressBar';
+import { BackButton } from '../ui/BackButton';
+import { ProgressBar } from '../ui/ProgressBar';
 import { OnboardingHeader } from './OnboardingHeader';
-import { NextButton } from './NextButton';
+import { NextButton } from '../ui/NextButton';
 
 interface OnboardingLayoutProps {
   children: React.ReactNode;

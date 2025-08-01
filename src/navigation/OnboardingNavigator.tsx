@@ -22,7 +22,6 @@ import { NotificationReminderScreen } from '../screens/payment/NotificationRemin
 import { SubscriptionSelectionScreen } from '../screens/payment/SubscriptionSelectionScreen';
 import { CreateAccountScreen } from '../screens/auth/CreateAccountScreen';
 import { CameraPermissionScreen } from '../screens/onboarding/CameraPermissionScreen';
-import { HomeScreen } from '../screens/application/HomeScreen';
 
 interface OnboardingNavigatorProps {
   onComplete: () => void;
@@ -387,7 +386,7 @@ export function OnboardingNavigator({ onComplete, onSignIn }: OnboardingNavigato
       );
 
     case 'homePage':
-      return <HomeScreen />;
+      return <></>;
 
     default:
       return <LoadingScreen onLoadComplete={handleLoadComplete} />;

@@ -5,9 +5,10 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import { OnboardingProvider } from './src/context/OnboardingContext';
 import { OnboardingNavigator } from './src/navigation/OnboardingNavigator';
+import { MainAppLayout } from './src/components/layout/MainAppLayout';
 
 export default function App() {
-  const [showOnboarding, setShowOnboarding] = useState(true);
+  const [showOnboarding, setShowOnboarding] = useState(false); // Changed to false to show navigation immediately
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 
@@ -35,33 +36,11 @@ export default function App() {
     );
   }
 
-  // Main app placeholder
+  // Main app with bottom navigation
   return (
     <SafeAreaProvider>
-      <View style={[
-        styles.container, 
-        { backgroundColor: isDark ? '#000000' : '#FFFFFF' }
-      ]}>
-        <Text style={[
-          styles.text,
-          { 
-            color: isDark ? '#FFFFFF' : '#000000',
-            fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto'
-          }
-        ]}>
-          Welcome to FormAI!
-        </Text>
-        <Text style={[
-          styles.subtitle,
-          { 
-            color: isDark ? '#AEAEB2' : '#8E8E93',
-            fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
-          }
-        ]}>
-          Onboarding completed successfully
-        </Text>
-        <StatusBar style={isDark ? 'light' : 'dark'} />
-      </View>
+      <MainAppLayout />
+      <StatusBar style={isDark ? 'light' : 'dark'} />
     </SafeAreaProvider>
   );
 }
