@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, Alert } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
+import * as MailComposer from 'expo-mail-composer';
 import i18n from '../../../utils/i18n';
 import { DeleteAccountModal } from './DeleteAccountModal';
 
@@ -47,6 +48,48 @@ export function SettingsScreen({}: SettingsScreenProps) {
     console.log('Account deletion confirmed');
     setShowDeleteModal(false);
     // Here you would typically call an API to delete the account
+  };
+
+  const handleSupportEmailPress = async () => {
+    try {
+      const isAvailable = await MailComposer.isAvailableAsync();
+      
+      if (!isAvailable) {
+        Alert.alert(
+          'Email Not Available',
+          'No email app is available on this device.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
+      await MailComposer.composeAsync({
+        recipients: ['support@formai.com'],
+        subject: 'FormAI Support Request',
+        body: `Hello FormAI Support Team,
+
+I'm reaching out for assistance with the FormAI app.
+
+Issue Description:
+[Please describe your issue here]
+
+Device Information:
+- Platform: ${Platform.OS}
+- Version: ${Platform.Version}
+
+Thank you for your help!
+
+Best regards,
+[Your name]`,
+      });
+    } catch (error) {
+      console.error('Error opening email composer:', error);
+      Alert.alert(
+        'Error',
+        'Failed to open email composer. Please try again.',
+        [{ text: 'OK' }]
+      );
+    }
   };
 
   const icons = {
@@ -183,7 +226,7 @@ export function SettingsScreen({}: SettingsScreenProps) {
           <SettingsOption
             icon={icons.email}
             title={i18n.t('settings.supportEmail')}
-            onPress={() => {}}
+            onPress={handleSupportEmailPress}
           />
           <View style={styles.separator} />
           <SettingsOption
