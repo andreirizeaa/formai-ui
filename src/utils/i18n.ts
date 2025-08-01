@@ -126,6 +126,18 @@ const i18n = new I18n({
       step1: 'Setting up your profile...',
       step2: 'Almost ready...',
     },
+    freeTrial: {
+      title: 'We want you to try FormAI for free.',
+      noPaymentDue: 'No Payment Due Now',
+      tryForFree: 'Try for $0.00',
+      pricing: 'Just $39.99 a year ($3.33/mo)',
+    },
+    notificationReminder: {
+      title: "We'll send you\na reminder before your\nfree trial ends",
+      noPaymentDue: 'No Payment Due Now',
+      continueForFree: 'Continue for FREE',
+      pricing: 'Just $39.99 a year ($3.33/mo)',
+    },
   },
   es: {
     loading: 'Cargando...',
@@ -250,6 +262,18 @@ const i18n = new I18n({
       mainTitle: 'Estamos configurando todo para ti',
       step1: 'Configurando tu perfil...',
       step2: 'Casi listo...',
+    },
+    freeTrial: {
+      title: 'Queremos que pruebes FormAI gratis.',
+      noPaymentDue: 'No hay pago pendiente ahora',
+      tryForFree: 'Probar por $0.00',
+      pricing: 'Solo $39.99 al año ($3.33/mes)',
+    },
+    notificationReminder: {
+      title: 'Te enviaremos\nun recordatorio antes de que\ntermine tu prueba gratuita',
+      noPaymentDue: 'No hay pago pendiente ahora',
+      continueForFree: 'Continuar GRATIS',
+      pricing: 'Solo $39.99 al año ($3.33/mes)',
     },
   },
   zh: {
@@ -376,6 +400,18 @@ const i18n = new I18n({
       step1: '正在设置您的个人资料...',
       step2: '快准备好了...',
     },
+    freeTrial: {
+      title: '我们希望您免费试用FormAI。',
+      noPaymentDue: '现在无需付款',
+      tryForFree: '免费试用 $0.00',
+      pricing: '仅需 $39.99 一年 ($3.33/月)',
+    },
+    notificationReminder: {
+      title: '我们会在您的\n免费试用结束前\n发送提醒',
+      noPaymentDue: '现在无需付款',
+      continueForFree: '免费继续',
+      pricing: '仅需 $39.99 一年 ($3.33/月)',
+    },
   },
   it: {
     loading: 'Caricamento...',
@@ -500,6 +536,18 @@ const i18n = new I18n({
       mainTitle: 'Stiamo configurando tutto per te',
       step1: 'Configurando il tuo profilo...',
       step2: 'Quasi pronto...',
+    },
+    freeTrial: {
+      title: 'Vogliamo che tu provi FormAI gratuitamente.',
+      noPaymentDue: 'Nessun pagamento dovuto ora',
+      tryForFree: 'Prova per $0.00',
+      pricing: 'Solo $39.99 all\'anno ($3.33/mese)',
+    },
+    notificationReminder: {
+      title: 'Ti invieremo\nun promemoria prima che\nfinisca la tua prova gratuita',
+      noPaymentDue: 'Nessun pagamento dovuto ora',
+      continueForFree: 'Continua GRATIS',
+      pricing: 'Solo $39.99 all\'anno ($3.33/mese)',
     },
   },
   pt: {
@@ -626,6 +674,18 @@ const i18n = new I18n({
       step1: 'Configurando seu perfil...',
       step2: 'Quase pronto...',
     },
+    freeTrial: {
+      title: 'Queremos que você experimente FormAI gratuitamente.',
+      noPaymentDue: 'Nenhum pagamento devido agora',
+      tryForFree: 'Experimente por $0.00',
+      pricing: 'Apenas $39.99 por ano ($3.33/mês)',
+    },
+    notificationReminder: {
+      title: 'Enviaremos um\nlembrete antes do seu\nperíodo gratuito terminar',
+      noPaymentDue: 'Nenhum pagamento devido agora',
+      continueForFree: 'Continuar GRÁTIS',
+      pricing: 'Apenas $39.99 por ano ($3.33/mês)',
+    },
   },
   ro: {
     loading: 'Se încarcă...',
@@ -750,6 +810,18 @@ const i18n = new I18n({
       mainTitle: 'Vă configurăm totul pentru dvs.',
       step1: 'Configurând profilul dvs....',
       step2: 'Aproape gata...',
+    },
+    freeTrial: {
+      title: 'Vrem să încercați FormAI gratuit.',
+      noPaymentDue: 'Niciun plată datorată acum',
+      tryForFree: 'Încercați pentru $0.00',
+      pricing: 'Doar $39.99 pe an ($3.33/lună)',
+    },
+    notificationReminder: {
+      title: 'Vă vom trimite\nun memento înainte să\nse termine perioada gratuită',
+      noPaymentDue: 'Niciun plată datorată acum',
+      continueForFree: 'Continuați GRATUIT',
+      pricing: 'Doar $39.99 pe an ($3.33/lună)',
     },
   },
   de: {
@@ -876,6 +948,18 @@ const i18n = new I18n({
       step1: 'Ihr Profil wird eingerichtet...',
       step2: 'Fast fertig...',
     },
+    freeTrial: {
+      title: 'Wir möchten, dass Sie FormAI kostenlos ausprobieren.',
+      noPaymentDue: 'Keine Zahlung fällig',
+      tryForFree: 'Kostenlos testen für $0.00',
+      pricing: 'Nur $39.99 pro Jahr ($3.33/Monat)',
+    },
+    notificationReminder: {
+      title: 'Wir senden Ihnen\neine Erinnerung vor dem Ende\nIhrer kostenlosen Testversion',
+      noPaymentDue: 'Keine Zahlung fällig',
+      continueForFree: 'Kostenlos fortfahren',
+      pricing: 'Nur $39.99 pro Jahr ($3.33/Monat)',
+    },
   },
   fr: {
     loading: 'Chargement...',
@@ -1001,6 +1085,18 @@ const i18n = new I18n({
       step1: 'Configuration de votre profil...',
       step2: 'Presque prêt...',
     },
+    freeTrial: {
+      title: 'Nous voulons que vous essayiez FormAI gratuitement.',
+      noPaymentDue: 'Aucun paiement dû maintenant',
+      tryForFree: 'Essayer pour $0.00',
+      pricing: 'Seulement $39.99 par an ($3.33/mois)',
+    },
+    notificationReminder: {
+      title: 'Nous vous enverrons\nun rappel avant la fin\nde votre essai gratuit',
+      noPaymentDue: 'Aucun paiement dû maintenant',
+      continueForFree: 'Continuer GRATUITEMENT',
+      pricing: 'Seulement $39.99 par an ($3.33/mois)',
+    },
   },
   ar: {
     loading: 'جاري التحميل...',
@@ -1125,6 +1221,18 @@ const i18n = new I18n({
       mainTitle: 'نحن نجهز كل شيء لك',
       step1: 'إعداد ملفك الشخصي...',
       step2: 'تقريباً جاهز...',
+    },
+    freeTrial: {
+      title: 'نريدك أن تجرب FormAI مجاناً.',
+      noPaymentDue: 'لا يوجد دفع مستحق الآن',
+      tryForFree: 'جرب مجاناً مقابل $0.00',
+      pricing: 'فقط $39.99 سنوياً ($3.33/شهر)',
+    },
+    notificationReminder: {
+      title: 'سنرسل لك\nتذكيراً قبل انتهاء\nفترة التجربة المجانية',
+      noPaymentDue: 'لا يوجد دفع مستحق الآن',
+      continueForFree: 'استمر مجاناً',
+      pricing: 'فقط $39.99 سنوياً ($3.33/شهر)',
     },
   },
 });

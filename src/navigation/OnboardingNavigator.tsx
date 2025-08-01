@@ -16,6 +16,8 @@ import { ReferralCodeScreen } from '../screens/onboarding/ReferralCodeScreen';
 import { AllDoneScreen } from '../screens/onboarding/AllDoneScreen';
 import { NotificationPermissionScreen } from '../screens/onboarding/NotificationPermissionScreen';
 import { SetupLoadingScreen } from '../screens/onboarding/SetupLoadingScreen';
+import { FreeTrialScreen } from '../screens/payment/FreeTrialScreen';
+import { NotificationReminderScreen } from '../screens/payment/NotificationReminderScreen';
 
 interface OnboardingNavigatorProps {
   onComplete: () => void;
@@ -39,7 +41,9 @@ type OnboardingScreen =
   | 'referralCode'
   | 'allDone'
   | 'notificationPermission'
-  | 'setupLoading';
+  | 'setupLoading'
+  | 'freeTrial'
+  | 'notificationReminder';
 
 export function OnboardingNavigator({ onComplete, onSignIn }: OnboardingNavigatorProps) {
   const [currentScreen, setCurrentScreen] = useState<OnboardingScreen>('loading');
@@ -165,11 +169,23 @@ export function OnboardingNavigator({ onComplete, onSignIn }: OnboardingNavigato
   };
 
   const handleSetupLoadingNext = () => {
-    onComplete();
+    setCurrentScreen('freeTrial');
   };
 
   const handleSetupLoadingBack = () => {
     setCurrentScreen('notificationPermission');
+  };
+
+  const handleFreeTrialNext = () => {
+    setCurrentScreen('notificationReminder');
+  };
+
+  const handleNotificationReminderNext = () => {
+    onComplete();
+  };
+
+  const handleNotificationReminderBack = () => {
+    setCurrentScreen('freeTrial');
   };
 
   switch (currentScreen) {
@@ -301,6 +317,21 @@ export function OnboardingNavigator({ onComplete, onSignIn }: OnboardingNavigato
         <SetupLoadingScreen
           onNext={handleSetupLoadingNext}
           onBack={handleSetupLoadingBack}
+        />
+      );
+
+    case 'freeTrial':
+      return (
+        <FreeTrialScreen
+          onNext={handleFreeTrialNext}
+        />
+      );
+
+    case 'notificationReminder':
+      return (
+        <NotificationReminderScreen
+          onNext={handleNotificationReminderNext}
+          onBack={handleNotificationReminderBack}
         />
       );
 
