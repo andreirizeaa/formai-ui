@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, Switch }
 import { Picker } from '@react-native-picker/picker';
 import Svg, { Path } from 'react-native-svg';
 import i18n from '../../../../utils/i18n';
+import { hapticFeedback } from '../../../../utils/haptic';
 
 interface EditHeightScreenProps {
   onBack: () => void;
@@ -38,6 +39,7 @@ export function EditHeightScreen({ onBack, currentValue, onSave }: EditHeightScr
   }, [currentValue]);
 
   const handleUnitSystemChange = (value: boolean) => {
+    hapticFeedback.selection();
     setIsMetric(value);
     // Convert height when switching units
     if (value) {
@@ -67,6 +69,7 @@ export function EditHeightScreen({ onBack, currentValue, onSave }: EditHeightScr
   };
 
   const handleSave = () => {
+    hapticFeedback.selection();
     if (isMetric) {
       onSave(`${selectedHeight} ${i18n.t('measurements.cm')}`);
     } else {
@@ -84,7 +87,13 @@ export function EditHeightScreen({ onBack, currentValue, onSave }: EditHeightScr
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={onBack}>
+        <TouchableOpacity 
+          style={styles.backButton} 
+          onPress={() => {
+            hapticFeedback.selection();
+            onBack();
+          }}
+        >
           <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
             <Path
               strokeLinecap="round"

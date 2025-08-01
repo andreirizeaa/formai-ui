@@ -5,6 +5,7 @@ import { Picker } from '@react-native-picker/picker';
 import { OnboardingLayout } from '../../components/onboarding/OnboardingLayout';
 import { useOnboarding } from '../../context/OnboardingContext';
 import i18n from '../../utils/i18n';
+import { hapticFeedback } from '../../utils/haptic';
 
 interface MeasurementsScreenProps {
   onNext: () => void;
@@ -29,6 +30,7 @@ export function MeasurementsScreen({ onNext, onBack }: MeasurementsScreenProps) 
   }, []);
 
   const handleUnitSystemChange = (value: boolean) => {
+    hapticFeedback.selection();
     const system = value ? 'metric' : 'imperial';
     updatePreference('unitSystem', system);
     

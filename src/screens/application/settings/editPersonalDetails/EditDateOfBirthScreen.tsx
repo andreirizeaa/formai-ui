@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar } from 'r
 import { Picker } from '@react-native-picker/picker';
 import Svg, { Path } from 'react-native-svg';
 import i18n from '../../../../utils/i18n';
+import { hapticFeedback } from '../../../../utils/haptic';
 
 interface EditDateOfBirthScreenProps {
   onBack: () => void;
@@ -101,6 +102,7 @@ export function EditDateOfBirthScreen({ onBack, currentValue, onSave }: EditDate
   };
 
   const handleSave = () => {
+    hapticFeedback.selection();
     const monthName = months[selectedMonth - 1]; // Use the translated month name
     const formattedDate = `${monthName} ${selectedDay}, ${selectedYear}`;
     onSave(formattedDate);
@@ -121,7 +123,13 @@ export function EditDateOfBirthScreen({ onBack, currentValue, onSave }: EditDate
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={onBack}>
+        <TouchableOpacity 
+          style={styles.backButton} 
+          onPress={() => {
+            hapticFeedback.selection();
+            onBack();
+          }}
+        >
           <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
             <Path
               strokeLinecap="round"

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import i18n from '../../../utils/i18n';
+import { hapticFeedback } from '../../../utils/haptic';
 
 interface PersonalDetailsScreenProps {
   onBack: () => void;
@@ -27,7 +28,14 @@ interface PersonalDetailOptionProps {
 
 function PersonalDetailOption({ title, value, onPress }: PersonalDetailOptionProps) {
   return (
-    <TouchableOpacity style={styles.optionRow} onPress={onPress} activeOpacity={0.7}>
+    <TouchableOpacity 
+      style={styles.optionRow} 
+      onPress={() => {
+        hapticFeedback.selection();
+        onPress?.();
+      }} 
+      activeOpacity={0.7}
+    >
       <View style={styles.textContainer}>
         <Text style={styles.optionTitle}>{title}</Text>
         <Text style={styles.optionValue}>{value}</Text>
@@ -142,7 +150,13 @@ export function PersonalDetailsScreen({
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={onBack}>
+        <TouchableOpacity 
+          style={styles.backButton} 
+          onPress={() => {
+            hapticFeedback.selection();
+            onBack();
+          }}
+        >
           <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
             <Path
               strokeLinecap="round"

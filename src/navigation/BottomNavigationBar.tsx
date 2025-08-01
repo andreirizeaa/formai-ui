@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import i18n from '../utils/i18n';
 import { useLanguage } from '../context/LanguageContext';
+import { hapticFeedback } from '../utils/haptic';
 
 interface BottomNavigationBarProps {
   activeTab: 'home' | 'performance' | 'settings';
@@ -86,7 +87,10 @@ export function BottomNavigationBar({
           {/* Home Tab */}
           <TouchableOpacity
             style={styles.tab}
-            onPress={() => onTabPress('home')}
+            onPress={() => {
+              onTabPress('home');
+              hapticFeedback.selection();
+            }}
             activeOpacity={0.7}
           >
             <TabIcon name="home" isActive={activeTab === 'home'} />
@@ -101,7 +105,10 @@ export function BottomNavigationBar({
           {/* Performance Tab */}
           <TouchableOpacity
             style={styles.tab}
-            onPress={() => onTabPress('performance')}
+            onPress={() => {
+              onTabPress('performance');
+              hapticFeedback.selection();
+            }}
             activeOpacity={0.7}
           >
             <TabIcon name="performance" isActive={activeTab === 'performance'} />
@@ -116,7 +123,10 @@ export function BottomNavigationBar({
           {/* Settings Tab */}
           <TouchableOpacity
             style={styles.tab}
-            onPress={() => onTabPress('settings')}
+            onPress={() => {
+              onTabPress('settings');
+              hapticFeedback.selection();
+            }}
             activeOpacity={0.7}
           >
             <TabIcon name="settings" isActive={activeTab === 'settings'} />
@@ -132,7 +142,10 @@ export function BottomNavigationBar({
         {/* Right side - Add button */}
         <TouchableOpacity
           style={styles.addButton}
-          onPress={onAddPress}
+          onPress={() => {
+            onAddPress();
+            hapticFeedback.selection();
+          }}
           activeOpacity={0.7}
         >
           <Svg width={32} height={32} viewBox="0 0 24 24" fill="none">
