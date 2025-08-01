@@ -150,7 +150,6 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   discoveryContentCentered: {
-    borderWidth: 1.5,
     borderRadius: 16,
     paddingVertical: 10,
     paddingHorizontal: 24,
