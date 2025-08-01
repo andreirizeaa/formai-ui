@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, Platform, TouchableOpacity } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import i18n from '../../../utils/i18n';
+import { DeleteAccountModal } from './DeleteAccountModal';
 
 interface SettingsScreenProps {
   // Add any props as needed
@@ -29,8 +30,24 @@ function SettingsOption({ icon, title, subtitle, onPress }: SettingsOptionProps)
 }
 
 export function SettingsScreen({}: SettingsScreenProps) {
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const iconSize = 28;
   const iconColor = '#000000';
+
+  const handleDeleteAccountPress = () => {
+    setShowDeleteModal(true);
+  };
+
+  const handleCloseDeleteModal = () => {
+    setShowDeleteModal(false);
+  };
+
+  const handleConfirmDeleteAccount = () => {
+    // TODO: Implement actual account deletion logic
+    console.log('Account deletion confirmed');
+    setShowDeleteModal(false);
+    // Here you would typically call an API to delete the account
+  };
 
   const icons = {
     personal: (
@@ -141,12 +158,12 @@ export function SettingsScreen({}: SettingsScreenProps) {
             title={i18n.t('settings.language')}
             onPress={() => {}}
           />
-          <View style={styles.separator} />
-          <SettingsOption
+          {/* <View style={styles.separator} /> */}
+          {/* <SettingsOption
             icon={icons.appearance}
             title={i18n.t('settings.appTheme')}
             onPress={() => {}}
-          />
+          /> */}
         </View>
 
         {/* Second Card */}
@@ -172,7 +189,7 @@ export function SettingsScreen({}: SettingsScreenProps) {
           <SettingsOption
             icon={icons.delete}
             title={i18n.t('settings.deleteAccount')}
-            onPress={() => {}}
+            onPress={handleDeleteAccountPress}
           />
         </View>
 
@@ -185,6 +202,13 @@ export function SettingsScreen({}: SettingsScreenProps) {
           />
         </View>
       </View>
+
+      {/* Delete Account Modal */}
+      <DeleteAccountModal
+        isVisible={showDeleteModal}
+        onClose={handleCloseDeleteModal}
+        onConfirm={handleConfirmDeleteAccount}
+      />
     </View>
   );
 }
