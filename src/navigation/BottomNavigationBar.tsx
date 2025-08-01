@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
+import i18n from '../utils/i18n';
 
 interface BottomNavigationBarProps {
   activeTab: 'home' | 'performance' | 'settings';
@@ -91,7 +92,7 @@ export function BottomNavigationBar({
               styles.tabText,
               { color: activeTab === 'home' ? '#000000' : '#8E8E93' }
             ]}>
-              Home
+              {i18n.t('tabs.home')}
             </Text>
           </TouchableOpacity>
 
@@ -106,7 +107,7 @@ export function BottomNavigationBar({
               styles.tabText,
               { color: activeTab === 'performance' ? '#000000' : '#8E8E93' }
             ]}>
-              Performance
+              {i18n.t('tabs.performance')}
             </Text>
           </TouchableOpacity>
 
@@ -121,7 +122,7 @@ export function BottomNavigationBar({
               styles.tabText,
               { color: activeTab === 'settings' ? '#000000' : '#8E8E93' }
             ]}>
-              Settings
+              {i18n.t('tabs.settings')}
             </Text>
           </TouchableOpacity>
         </View>
