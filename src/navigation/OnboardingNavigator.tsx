@@ -18,6 +18,7 @@ import { NotificationPermissionScreen } from '../screens/onboarding/Notification
 import { SetupLoadingScreen } from '../screens/onboarding/SetupLoadingScreen';
 import { FreeTrialScreen } from '../screens/payment/FreeTrialScreen';
 import { NotificationReminderScreen } from '../screens/payment/NotificationReminderScreen';
+import { SubscriptionSelectionScreen } from '../screens/payment/SubscriptionSelectionScreen';
 
 interface OnboardingNavigatorProps {
   onComplete: () => void;
@@ -43,7 +44,8 @@ type OnboardingScreen =
   | 'notificationPermission'
   | 'setupLoading'
   | 'freeTrial'
-  | 'notificationReminder';
+  | 'notificationReminder'
+  | 'subscriptionSelection';
 
 export function OnboardingNavigator({ onComplete, onSignIn }: OnboardingNavigatorProps) {
   const [currentScreen, setCurrentScreen] = useState<OnboardingScreen>('loading');
@@ -181,11 +183,19 @@ export function OnboardingNavigator({ onComplete, onSignIn }: OnboardingNavigato
   };
 
   const handleNotificationReminderNext = () => {
-    onComplete();
+    setCurrentScreen('subscriptionSelection');
   };
 
   const handleNotificationReminderBack = () => {
     setCurrentScreen('freeTrial');
+  };
+
+  const handleSubscriptionSelectionNext = () => {
+    onComplete();
+  };
+
+  const handleSubscriptionSelectionBack = () => {
+    setCurrentScreen('notificationReminder');
   };
 
   switch (currentScreen) {
@@ -332,6 +342,14 @@ export function OnboardingNavigator({ onComplete, onSignIn }: OnboardingNavigato
         <NotificationReminderScreen
           onNext={handleNotificationReminderNext}
           onBack={handleNotificationReminderBack}
+        />
+      );
+
+    case 'subscriptionSelection':
+      return (
+        <SubscriptionSelectionScreen
+          onNext={handleSubscriptionSelectionNext}
+          onBack={handleSubscriptionSelectionBack}
         />
       );
 
