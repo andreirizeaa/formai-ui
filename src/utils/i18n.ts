@@ -60,6 +60,8 @@ const i18n = new I18n({
       chartTitle: 'Form Score Improvement Over Time',
       week: 'Week',
       score: 'Form Score',
+      formImprovement: 'Form Improvement',
+      weeksToExcellence: 'Weeks to Excellence',
     },
     measurements: {
       title: 'Height and Weight',
@@ -101,12 +103,16 @@ const i18n = new I18n({
     rating: {
       title: 'Give us a rating',
       subtitle: 'Help us improve by sharing your experience',
+      skip: 'Skip',
+      middleText: 'FormAI was made for gym lovers like you!',
     },
     referralCode: {
       title: 'Do you have a referral code?',
       subtitle: 'You can skip this step.',
       placeholder: 'Referral Code',
       skip: 'Skip',
+      submit: 'Submit',
+      success: 'Referral code has been successfully applied',
     },
     allDone: {
       title: 'All done!',
@@ -237,6 +243,8 @@ const i18n = new I18n({
       chartTitle: 'Mejora de la puntuación de la forma a lo largo del tiempo',
       week: 'Semana',
       score: 'Puntuación de la forma',
+      formImprovement: 'Mejora de la forma',
+      weeksToExcellence: 'Semanas para excelencia',
     },
     measurements: {
       title: 'Altura y Peso',
@@ -278,12 +286,16 @@ const i18n = new I18n({
     rating: {
       title: 'Danos una calificación',
       subtitle: 'Ayúdanos a mejorar compartiendo tu experiencia',
+      skip: 'Saltar',
+      middleText: 'FormAI fue hecho para amantes del gimnasio como tú!',
     },
     referralCode: {
       title: '¿Tienes un código de referido?',
       subtitle: 'Puedes saltar este paso.',
       placeholder: 'Código de referido',
       skip: 'Saltar',
+      submit: 'Enviar',
+      success: 'El código de referido ha sido aplicado exitosamente',
     },
     allDone: {
       title: '¡Todo hecho!',
@@ -414,6 +426,8 @@ const i18n = new I18n({
       chartTitle: '形式得分随时间改进',
       week: '周',
       score: '形式得分',
+      formImprovement: '形式改进',
+      weeksToExcellence: '周数达到卓越',
     },
     measurements: {
       title: '身高和体重',
@@ -455,12 +469,16 @@ const i18n = new I18n({
     rating: {
       title: '给我们评分',
       subtitle: '通过分享您的体验帮助我们改进',
+      skip: '跳过',
+      middleText: 'FormAI是为像您这样的健身房爱好者制作的！',
     },
     referralCode: {
       title: '您有推荐码吗？',
       subtitle: '您可以跳过此步骤。',
       placeholder: '推荐码',
       skip: '跳过',
+      submit: '提交',
+      success: '推荐码已成功应用',
     },
     allDone: {
       title: '全部完成！',
@@ -591,6 +609,8 @@ const i18n = new I18n({
       chartTitle: 'Miglioramento della punteggio forma nel tempo',
       week: 'Settimana',
       score: 'Punteggio forma',
+      formImprovement: 'Miglioramento della forma',
+      weeksToExcellence: 'Settimane per l\'eccellenza',
     },
     measurements: {
       title: 'Altezza e Peso',
@@ -632,12 +652,16 @@ const i18n = new I18n({
     rating: {
       title: 'Dacci una valutazione',
       subtitle: 'Ajută-ne să îmbunătățim prin împărtășirea experienței tale',
+      skip: 'Salta',
+      middleText: 'FormAI è stato fatto per amanti del fitness come te!',
     },
     referralCode: {
       title: 'Hai un codice di riferimento?',
       subtitle: 'Puoi saltare questo passo.',
       placeholder: 'Codice di riferimento',
       skip: 'Salta',
+      submit: 'Invia',
+      success: 'Il codice di riferimento è stato applicato con successo',
     },
     allDone: {
       title: 'Tutto fatto!',
@@ -768,6 +792,8 @@ const i18n = new I18n({
       chartTitle: 'Melhoria da pontuação de forma ao longo do tempo',
       week: 'Semana',
       score: 'Pontuação de forma',
+      formImprovement: 'Melhoria da forma',
+      weeksToExcellence: 'Semanas para excelência',
     },
     measurements: {
       title: 'Altura e Peso',
@@ -809,12 +835,16 @@ const i18n = new I18n({
     rating: {
       title: 'Dê-nos uma avaliação',
       subtitle: 'Ajude-nos a melhorar compartilhando sua experiência',
+      skip: 'Pular',
+      middleText: 'FormAI foi feito para amantes do fitness como você!',
     },
     referralCode: {
       title: 'Você tem um código de referência?',
       subtitle: 'Você pode pular este passo.',
       placeholder: 'Código de referência',
       skip: 'Pular',
+      submit: 'Enviar',
+      success: 'Código de referência foi aplicado com sucesso',
     },
     allDone: {
       title: 'Tudo feito!',
@@ -945,6 +975,8 @@ const i18n = new I18n({
       chartTitle: 'Îmbunătățirea scorului formei în timp',
       week: 'Săptămână',
       score: 'Scorul formei',
+      formImprovement: 'Îmbunătățirea formei',
+      weeksToExcellence: 'Săptămâni până la excelență',
     },
     measurements: {
       title: 'Înălțime și Greutate',
@@ -986,12 +1018,16 @@ const i18n = new I18n({
     rating: {
       title: 'Dă-ne o evaluare',
       subtitle: 'Ajută-ne să îmbunătățim prin împărtășirea experienței tale',
+      skip: 'Sari',
+      middleText: 'FormAI a fost creat pentru oameni înclinați spre fitness ca tine!',
     },
     referralCode: {
       title: 'Ai un cod de referință?',
       subtitle: 'Poți să sari acest pas.',
       placeholder: 'Cod de referință',
       skip: 'Sari',
+      submit: 'Trimite',
+      success: 'Codul de referință a fost aplicat cu succes',
     },
     allDone: {
       title: 'Toate făcute!',
@@ -1122,6 +1158,8 @@ const i18n = new I18n({
       chartTitle: 'Verbesserung der Form-Punktzahl im Laufe der Zeit',
       week: 'Woche',
       score: 'Form-Punktzahl',
+      formImprovement: 'Verbesserung der Form',
+      weeksToExcellence: 'Wochen bis zur Excellenz',
     },
     measurements: {
       title: 'Größe und Gewicht',
@@ -1163,12 +1201,16 @@ const i18n = new I18n({
     rating: {
       title: 'Gib uns eine Bewertung',
       subtitle: 'Hilf uns zu verbessern, indem du deine Erfahrung teilst',
+      skip: 'Überspringen',
+      middleText: 'FormAI wurde für Fitness-Fans wie Sie erstellt!',
     },
     referralCode: {
       title: 'Hast du einen Referenzcode?',
       subtitle: 'Du kannst diesen Schritt überspringen.',
       placeholder: 'Referenzcode',
       skip: 'Überspringen',
+      submit: 'Einreichen',
+      success: 'Referenzcode wurde erfolgreich angewendet',
     },
     allDone: {
       title: 'Alles erledigt!',
@@ -1299,6 +1341,8 @@ const i18n = new I18n({
       chartTitle: 'Amélioration de la note de forme au fil du temps',
       week: 'Semaine',
       score: 'Note de forme',
+      formImprovement: 'Amélioration de la forme',
+      weeksToExcellence: 'Semaines pour l\'excellence',
     },
     measurements: {
       title: 'Taille et Poids',
@@ -1340,12 +1384,16 @@ const i18n = new I18n({
     rating: {
       title: 'Donnez-nous une évaluation',
       subtitle: 'Aidez-nous à améliorer en partageant votre expérience',
+      skip: 'Sauter',
+      middleText: 'FormAI a été conçu pour les amateurs de fitness comme vous!',
     },
     referralCode: {
       title: 'Avez-vous un code de référence ?',
       subtitle: 'Vous pouvez sauter ce pas.',
       placeholder: 'Code de référence',
       skip: 'Sauter',
+      submit: 'Soumettre',
+      success: 'Le code de référence a été appliqué avec succès',
     },
     allDone: {
       title: 'Tout fait!',
@@ -1476,6 +1524,8 @@ const i18n = new I18n({
       chartTitle: 'تحسين النقاط في الشكل مع مرور الوقت',
       week: 'أسبوع',
       score: 'النقاط في الشكل',
+      formImprovement: 'تحسين الشكل',
+      weeksToExcellence: 'أسابيع للتفوق',
     },
     measurements: {
       title: 'الطول والوزن',
@@ -1517,12 +1567,16 @@ const i18n = new I18n({
     rating: {
       title: 'أعطنا تقييماً',
       subtitle: 'ساعدنا في التحسن من خلال مشاركة تجربتك',
+      skip: 'تخطي',
+      middleText: 'FormAI كان مصممًا لمحبي اللياقة كما أنت!',
     },
     referralCode: {
       title: 'هل لديك رمز مرجعي؟',
       subtitle: 'يمكنك تخطي هذا الخطوة.',
       placeholder: 'رمز مرجعي',
       skip: 'تخطي',
+      submit: 'إرسال الكود',
+      success: 'تم تطبيق رمز الإحالة بنجاح',
     },
     allDone: {
       title: 'كل شيء أكمل!',
