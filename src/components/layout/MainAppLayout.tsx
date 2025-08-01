@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { BottomNavigationBar } from '../../navigation/BottomNavigationBar';
 import { HomeScreen } from '../../screens/application/home/HomeScreen';
 import { PerformanceScreen } from '../../screens/application/performance/PerformanceScreen';
@@ -41,29 +42,39 @@ export function MainAppLayout({ children }: MainAppLayoutProps) {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        {renderScreenContent()}
-      </View>
-      
-      <BottomNavigationBar
-        activeTab={activeTab}
-        onTabPress={handleTabPress}
-        onAddPress={handleAddPress}
-      />
+    <LinearGradient
+      colors={['#ddd6ff', '#ffffff']}
+      locations={[0, 0.75]}
+      style={styles.container}
+      start={{ x: 1, y: 0 }}
+      end={{ x: 0, y: 1 }}
+    >
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.content}>
+          {renderScreenContent()}
+        </View>
+        
+        <BottomNavigationBar
+          activeTab={activeTab}
+          onTabPress={handleTabPress}
+          onAddPress={handleAddPress}
+        />
 
-      <CameraModal
-        isVisible={isModalVisible}
-        onClose={handleCloseModal}
-      />
-    </SafeAreaView>
+        <CameraModal
+          isVisible={isModalVisible}
+          onClose={handleCloseModal}
+        />
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+  },
+  safeArea: {
+    flex: 1,
   },
   content: {
     flex: 1,

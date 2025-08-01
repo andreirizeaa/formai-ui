@@ -19,7 +19,6 @@ export function PerformanceScreen({}: PerformanceScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
   },
   content: {
     flex: 1,
