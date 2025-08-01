@@ -50,8 +50,7 @@ type OnboardingScreen =
   | 'notificationReminder'
   | 'subscriptionSelection'
   | 'createAccount'
-  | 'cameraPermission'
-  | 'homePage';
+  | 'cameraPermission';
 
 export function OnboardingNavigator({ onComplete, onSignIn }: OnboardingNavigatorProps) {
   const [currentScreen, setCurrentScreen] = useState<OnboardingScreen>('loading');
@@ -213,7 +212,7 @@ export function OnboardingNavigator({ onComplete, onSignIn }: OnboardingNavigato
   };
 
   const handleCameraPermissionNext = () => {
-    setCurrentScreen('homePage');
+    onComplete();
   };
 
   switch (currentScreen) {
@@ -384,9 +383,6 @@ export function OnboardingNavigator({ onComplete, onSignIn }: OnboardingNavigato
           onNext={handleCameraPermissionNext}
         />
       );
-
-    case 'homePage':
-      return <></>;
 
     default:
       return <LoadingScreen onLoadComplete={handleLoadComplete} />;

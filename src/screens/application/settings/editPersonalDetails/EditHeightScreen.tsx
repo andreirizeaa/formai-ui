@@ -276,7 +276,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     width: '100%',
-    gap: 20,
+    gap: 30,
   },
   imperialPickerWrapper: {
     alignItems: 'center',
@@ -291,7 +291,8 @@ const styles = StyleSheet.create({
   },
   imperialPicker: {
     height: Platform.OS === 'ios' ? 280 : 80,
-    width: '100%',
+    width: 120,
+    minWidth: 80,
   },
   bottomContainer: {
     paddingHorizontal: 20,

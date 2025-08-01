@@ -297,7 +297,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
-    gap: 20,
+    gap: 30,
   },
   imperialPickerWrapper: {
     flex: 1,
@@ -310,6 +310,7 @@ const styles = StyleSheet.create({
   },
   imperialPicker: {
     height: Platform.OS === 'ios' ? 280 : 80,
-    width: '100%',
+    width: 90,
+    minWidth: 80,
   },
 }); 
