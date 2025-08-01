@@ -177,25 +177,23 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'center', // Center the buttons vertically when they fit
     paddingVertical: 20,
+    gap: 12,
   },
   formBarrierButton: {
-    height: 65,
+    borderWidth: 1.5,
     borderRadius: 16,
-    borderWidth: 1,
-    marginBottom: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-start', // Align content to the left
-    paddingHorizontal: 16,
+    paddingVertical: 18,
+    paddingHorizontal: 24,
   },
   formBarrierContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-start', // Align items to the left
+    justifyContent: 'flex-start',
+    marginLeft: -12,
   },
   formBarrierLabel: {
     fontSize: 18,
     fontWeight: '500',
-    marginLeft: 12, // Add space between icon and text
+    marginLeft: 8,
   },
 }); 

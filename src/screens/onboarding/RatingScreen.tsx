@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
   },
   starsContainer: {
     alignItems: 'center',
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderRadius: 12,
     paddingHorizontal: 20,
     paddingVertical: 20,
@@ -229,8 +229,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   rateButton: {
-    height: 56,
-    borderRadius: 28,
+    borderWidth: 1.5,
+    borderRadius: 16,
+    paddingVertical: 20,
+    paddingHorizontal: 24,
     justifyContent: 'center',
     alignItems: 'center',
     width: '100%',

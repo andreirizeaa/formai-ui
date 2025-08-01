@@ -106,21 +106,16 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'center', // Center the buttons vertically when they fit
     paddingVertical: 20,
+    gap: 12,
   },
   liftingGoalButton: {
-    height: 65,
+    borderWidth: 1.5,
     borderRadius: 16,
-    borderWidth: 1,
-    marginBottom: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 16,
+    paddingVertical: 20,
+    paddingHorizontal: 24,
   },
   liftingGoalContent: {
-    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
   },
   liftingGoalLabel: {
     fontSize: 18,

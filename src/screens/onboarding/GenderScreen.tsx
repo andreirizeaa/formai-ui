@@ -103,21 +103,16 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'center', // Center the buttons vertically when they fit
     paddingVertical: 20,
+    gap: 12,
   },
   genderButton: {
-    height: 65,
+    borderWidth: 1.5,
     borderRadius: 16,
-    borderWidth: 1,
-    marginBottom: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 16,
+    paddingVertical: 20,
+    paddingHorizontal: 24,
   },
   genderContent: {
-    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
   },
   genderLabel: {
     fontSize: 18,
