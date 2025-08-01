@@ -1,10 +1,9 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet, Platform, Dimensions } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, Platform } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { OnboardingLayout } from '../../components/common/OnboardingLayout';
 import i18n from '../../utils/i18n';
 import Svg, { Circle, Path } from 'react-native-svg';
-import Explosion from '../../animations/ConfettiExplosion';
 
 interface AllDoneScreenProps {
   onNext: () => void;
@@ -28,24 +27,6 @@ const CheckmarkIcon = () => (
 export function AllDoneScreen({ onNext, onBack }: AllDoneScreenProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
-  const [showConfetti, setShowConfetti] = useState(false);
-  const { width, height } = Dimensions.get('window');
-  const explosionRef = useRef<any>(null);
-
-  useEffect(() => {
-    // Show confetti after content has rendered
-    const timer = setTimeout(() => {
-      setShowConfetti(true);
-      // Start the explosion after a short delay
-      setTimeout(() => {
-        if (explosionRef.current) {
-          explosionRef.current.start();
-        }
-      }, 100);
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, []);
 
   return (
     <OnboardingLayout
@@ -103,19 +84,6 @@ export function AllDoneScreen({ onNext, onBack }: AllDoneScreenProps) {
           </Text>
         </View>
       </View>
-
-      {showConfetti && (
-        <View style={styles.confetti}>
-          <Explosion
-            ref={explosionRef}
-            count={200}
-            origin={{ x: width / 2, y: height}}
-            fallSpeed={3000}
-            explosionSpeed={200}
-            fadeOut={true}
-          />
-        </View>
-      )}
     </OnboardingLayout>
   );
 }
@@ -153,13 +121,5 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     textAlign: 'center',
     lineHeight: 22,
-  },
-  confetti: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: -10, // Ensure it's behind other content
   },
 }); 
