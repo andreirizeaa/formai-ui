@@ -103,7 +103,7 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
   },
   languageButton: {
-    height: 60,
+    height: 65,
     borderRadius: 12,
     borderWidth: 1,
     marginBottom: 12,
