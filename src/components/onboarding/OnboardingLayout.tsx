@@ -6,6 +6,7 @@ import { BackButton } from '../ui/BackButton';
 import { ProgressBar } from '../ui/ProgressBar';
 import { OnboardingHeader } from './OnboardingHeader';
 import { NextButton } from '../ui/NextButton';
+import { hapticFeedback } from '../../utils/haptic';
 
 interface OnboardingLayoutProps {
   children: React.ReactNode;
@@ -46,7 +47,10 @@ export function OnboardingLayout({
     >
       {/* Header with back button and progress bar */}
       <View style={styles.header}>
-        <BackButton onPress={onBack} />
+        <BackButton onPress={() => {
+          hapticFeedback.selection();
+          onBack();
+        }} />
         <View style={styles.progressContainer}>
           <ProgressBar currentStep={currentStep} totalSteps={totalSteps} />
         </View>

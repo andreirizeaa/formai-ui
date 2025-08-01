@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Platform, TouchableOpacity, Image } from 'react
 import { useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import i18n from '../../utils/i18n';
+import { hapticFeedback } from '../../utils/haptic';
 
 interface CreateAccountScreenProps {
   onNext: () => void;
@@ -39,7 +40,10 @@ export function CreateAccountScreen({ onNext }: CreateAccountScreenProps) {
                 styles.appleButton,
                 { backgroundColor: isDark ? '#FFFFFF' : '#000000' }
               ]}
-              onPress={onNext}
+              onPress={() => {
+                hapticFeedback.selection();
+                onNext();
+              }}
               activeOpacity={0.8}
             >
               <View style={styles.buttonContent}>
@@ -69,7 +73,10 @@ export function CreateAccountScreen({ onNext }: CreateAccountScreenProps) {
                   borderColor: isDark ? '#FFFFFF' : '#000000'
                 }
               ]}
-              onPress={onNext}
+              onPress={() => {
+                hapticFeedback.selection();
+                onNext();
+              }}
               activeOpacity={0.8}
             >
               <View style={styles.buttonContent}>

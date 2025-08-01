@@ -4,6 +4,7 @@ import { useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Camera, useCameraPermissions } from 'expo-camera';
 import i18n from '../../utils/i18n';
+import { hapticFeedback } from '../../utils/haptic';
 
 interface CameraPermissionScreenProps {
   onNext: () => void;
@@ -15,6 +16,7 @@ export function CameraPermissionScreen({ onNext }: CameraPermissionScreenProps) 
   const [permission, requestPermission] = useCameraPermissions();
 
   const handleAllowCamera = async () => {
+    hapticFeedback.selection();
     try {
       onNext();
       const result = await requestPermission();
@@ -29,7 +31,9 @@ export function CameraPermissionScreen({ onNext }: CameraPermissionScreenProps) 
     }
   };
 
-  const handleDontAllow = async () => {};
+  const handleDontAllow = async () => {
+    hapticFeedback.selection();
+  };
 
   return (
     <SafeAreaView 

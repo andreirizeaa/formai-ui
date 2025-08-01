@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Platform, TouchableOpacity, Image } from 'react
 import { useColorScheme } from 'react-native';
 import { PaymentLayout } from '../../components/payment/PaymentLayout';
 import i18n from '../../utils/i18n';
+import { hapticFeedback } from '../../utils/haptic';
 
 interface FreeTrialScreenProps {
   onNext: () => void;
@@ -38,7 +39,10 @@ export function FreeTrialScreen({ onNext }: FreeTrialScreenProps) {
               styles.tryButton,
               { backgroundColor: isDark ? '#FFFFFF' : '#000000' }
             ]}
-            onPress={onNext}
+            onPress={() => {
+              hapticFeedback.selection();
+              onNext();
+            }}
             activeOpacity={0.8}
           >
             <Text style={[
