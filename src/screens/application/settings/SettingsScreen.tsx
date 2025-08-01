@@ -5,6 +5,7 @@ import * as MailComposer from 'expo-mail-composer';
 import i18n from '../../../utils/i18n';
 import { DeleteAccountModal } from './DeleteAccountModal';
 import { LogoutModal } from './LogoutModal';
+import { LanguageModal } from './LanguageModal';
 
 interface SettingsScreenProps {
   // Add any props as needed
@@ -34,6 +35,7 @@ function SettingsOption({ icon, title, subtitle, onPress }: SettingsOptionProps)
 export function SettingsScreen({}: SettingsScreenProps) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showLanguageModal, setShowLanguageModal] = useState(false);
   const iconSize = 28;
   const iconColor = '#000000';
 
@@ -69,6 +71,14 @@ export function SettingsScreen({}: SettingsScreenProps) {
     // 2. Clear local storage
     // 3. Navigate to login screen
     // 4. Reset app state
+  };
+
+  const handleLanguagePress = () => {
+    setShowLanguageModal(true);
+  };
+
+  const handleCloseLanguageModal = () => {
+    setShowLanguageModal(false);
   };
 
   const handleSupportEmailPress = async () => {
@@ -220,7 +230,7 @@ Best regards,
           <SettingsOption
             icon={icons.language}
             title={i18n.t('settings.language')}
-            onPress={() => {}}
+            onPress={handleLanguagePress}
           />
           {/* <View style={styles.separator} /> */}
           {/* <SettingsOption
@@ -279,6 +289,12 @@ Best regards,
         isVisible={showLogoutModal}
         onClose={handleCloseLogoutModal}
         onConfirm={handleConfirmLogout}
+      />
+
+      {/* Language Modal */}
+      <LanguageModal
+        isVisible={showLanguageModal}
+        onClose={handleCloseLanguageModal}
       />
     </View>
   );
