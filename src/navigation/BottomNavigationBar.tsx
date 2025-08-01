@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import i18n from '../utils/i18n';
+import { useLanguage } from '../context/LanguageContext';
 
 interface BottomNavigationBarProps {
   activeTab: 'home' | 'performance' | 'settings';
@@ -71,6 +72,7 @@ export function BottomNavigationBar({
   onAddPress 
 }: BottomNavigationBarProps) {
   const insets = useSafeAreaInsets();
+  const { currentLanguage } = useLanguage(); // This will trigger re-render when language changes
 
   return (
     <View style={styles.container}>
@@ -127,13 +129,21 @@ export function BottomNavigationBar({
           </TouchableOpacity>
         </View>
 
-        {/* Add Button */}
+        {/* Right side - Add button */}
         <TouchableOpacity
           style={styles.addButton}
           onPress={onAddPress}
-          activeOpacity={0.8}
+          activeOpacity={0.7}
         >
-          <Text style={styles.addButtonText}>+</Text>
+          <Svg width={32} height={32} viewBox="0 0 24 24" fill="none">
+            <Path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 4.5v15m7.5-7.5h-15"
+              stroke="#FFFFFF"
+              strokeWidth={2}
+            />
+          </Svg>
         </TouchableOpacity>
       </View>
     </View>

@@ -42,6 +42,7 @@ const i18n = new I18n({
     language: {
       title: 'Language',
       subtitle: 'Choose your preferred language',
+      selectLanguage: 'Select a language',
     },
     gender: {
       title: 'Biological gender',
@@ -256,6 +257,7 @@ const i18n = new I18n({
     language: {
       title: 'Idioma',
       subtitle: 'Elige tu idioma preferido',
+      selectLanguage: 'Selecciona un idioma',
     },
     gender: {
       title: 'Género biológico',
@@ -470,6 +472,7 @@ const i18n = new I18n({
     language: {
       title: '语言',
       subtitle: '选择您的首选语言',
+      selectLanguage: '选择一种语言',
     },
     gender: {
       title: '生理性别',
@@ -684,6 +687,7 @@ const i18n = new I18n({
     language: {
       title: 'Lingua',
       subtitle: 'Scegli la tua lingua preferita',
+      selectLanguage: 'Seleziona una lingua',
     },
     gender: {
       title: 'Sesso biologico',
@@ -898,6 +902,7 @@ const i18n = new I18n({
     language: {
       title: 'Idioma',
       subtitle: 'Escolha seu idioma preferido',
+      selectLanguage: 'Selecione um idioma',
     },
     gender: {
       title: 'Sexo biológico',
@@ -1112,6 +1117,7 @@ const i18n = new I18n({
     language: {
       title: 'Limba',
       subtitle: 'Alege limba preferată',
+      selectLanguage: 'Selectează o limbă',
     },
     gender: {
       title: 'Sex biologic',
@@ -1326,6 +1332,7 @@ const i18n = new I18n({
     language: {
       title: 'Sprache',
       subtitle: 'Wähle deine bevorzugte Sprache',
+      selectLanguage: 'Wähle eine bevorzugte Sprache',
     },
     gender: {
       title: 'Biologisches Geschlecht',
@@ -1540,6 +1547,7 @@ const i18n = new I18n({
     language: {
       title: 'Langue',
       subtitle: 'Choisissez votre langue préférée',
+      selectLanguage: 'Sélectionnez une langue',
     },
     gender: {
       title: 'Sexe biologique',
@@ -1754,6 +1762,7 @@ const i18n = new I18n({
     language: {
       title: 'اللغة',
       subtitle: 'اختر لغتك المفضلة',
+      selectLanguage: 'حالب أحد اللغات المفضلة لديك؟',
     },
     gender: {
       title: 'الجنس البيولوجي',

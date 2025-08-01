@@ -4,6 +4,7 @@ import { StyleSheet, Text, View, Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import { OnboardingProvider } from './src/context/OnboardingContext';
+import { LanguageProvider } from './src/context/LanguageContext';
 import { OnboardingNavigator } from './src/navigation/OnboardingNavigator';
 import { MainAppLayout } from './src/components/layout/MainAppLayout';
 
@@ -25,13 +26,15 @@ export default function App() {
   if (showOnboarding) {
     return (
       <SafeAreaProvider>
-        <OnboardingProvider>
-          <OnboardingNavigator 
-            onComplete={handleOnboardingComplete}
-            onSignIn={handleSignIn}
-          />
-          <StatusBar style={isDark ? 'light' : 'dark'} />
-        </OnboardingProvider>
+        <LanguageProvider>
+          <OnboardingProvider>
+            <OnboardingNavigator 
+              onComplete={handleOnboardingComplete}
+              onSignIn={handleSignIn}
+            />
+            <StatusBar style={isDark ? 'light' : 'dark'} />
+          </OnboardingProvider>
+        </LanguageProvider>
       </SafeAreaProvider>
     );
   }
@@ -39,8 +42,10 @@ export default function App() {
   // Main app with bottom navigation
   return (
     <SafeAreaProvider>
-      <MainAppLayout />
-      <StatusBar style={isDark ? 'light' : 'dark'} />
+      <LanguageProvider>
+        <MainAppLayout />
+        <StatusBar style={isDark ? 'light' : 'dark'} />
+      </LanguageProvider>
     </SafeAreaProvider>
   );
 }
