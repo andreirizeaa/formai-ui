@@ -151,10 +151,8 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   submitButton: {
-    borderWidth: 1.5,
+    height: 40,
     borderRadius: 16,
-    paddingVertical: 20,
-    paddingHorizontal: 24,
     justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
