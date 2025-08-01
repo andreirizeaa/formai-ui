@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
   },
   languageButton: {
     height: 65,
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
     marginBottom: 12,
     flexDirection: 'row',
@@ -122,7 +122,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   languageName: {
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '500',
   },
 }); 
