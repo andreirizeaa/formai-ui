@@ -65,9 +65,8 @@ export function ReferralCodeScreen({ onNext, onBack }: ReferralCodeScreenProps) 
             style={[
               styles.input,
               {
-                backgroundColor: isDark ? '#1C1C1E' : '#F2F2F7',
                 color: isDark ? '#FFFFFF' : '#000000',
-                borderColor: isDark ? '#2C2C2E' : '#E5E5EA',
+                borderColor: isDark ? '#FFF' : '#000',
               }
             ]}
             placeholder={i18n.t('referralCode.placeholder')}
