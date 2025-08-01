@@ -78,50 +78,53 @@ export function BottomNavigationBar({
       
       {/* Navigation bar */}
       <View style={[styles.navigationBar, { paddingBottom: insets.bottom + 8 }]}>
-        {/* Home Tab */}
-        <TouchableOpacity
-          style={styles.tab}
-          onPress={() => onTabPress('home')}
-          activeOpacity={0.7}
-        >
-          <TabIcon name="home" isActive={activeTab === 'home'} />
-          <Text style={[
-            styles.tabText,
-            { color: activeTab === 'home' ? '#000000' : '#8E8E93' }
-          ]}>
-            Home
-          </Text>
-        </TouchableOpacity>
+        {/* Left side - Tabs */}
+        <View style={styles.tabsContainer}>
+          {/* Home Tab */}
+          <TouchableOpacity
+            style={styles.tab}
+            onPress={() => onTabPress('home')}
+            activeOpacity={0.7}
+          >
+            <TabIcon name="home" isActive={activeTab === 'home'} />
+            <Text style={[
+              styles.tabText,
+              { color: activeTab === 'home' ? '#000000' : '#8E8E93' }
+            ]}>
+              Home
+            </Text>
+          </TouchableOpacity>
 
-        {/* Performance Tab */}
-        <TouchableOpacity
-          style={styles.tab}
-          onPress={() => onTabPress('performance')}
-          activeOpacity={0.7}
-        >
-          <TabIcon name="performance" isActive={activeTab === 'performance'} />
-          <Text style={[
-            styles.tabText,
-            { color: activeTab === 'performance' ? '#000000' : '#8E8E93' }
-          ]}>
-            Performance
-          </Text>
-        </TouchableOpacity>
+          {/* Performance Tab */}
+          <TouchableOpacity
+            style={styles.tab}
+            onPress={() => onTabPress('performance')}
+            activeOpacity={0.7}
+          >
+            <TabIcon name="performance" isActive={activeTab === 'performance'} />
+            <Text style={[
+              styles.tabText,
+              { color: activeTab === 'performance' ? '#000000' : '#8E8E93' }
+            ]}>
+              Performance
+            </Text>
+          </TouchableOpacity>
 
-        {/* Settings Tab */}
-        <TouchableOpacity
-          style={styles.tab}
-          onPress={() => onTabPress('settings')}
-          activeOpacity={0.7}
-        >
-          <TabIcon name="settings" isActive={activeTab === 'settings'} />
-          <Text style={[
-            styles.tabText,
-            { color: activeTab === 'settings' ? '#000000' : '#8E8E93' }
-          ]}>
-            Settings
-          </Text>
-        </TouchableOpacity>
+          {/* Settings Tab */}
+          <TouchableOpacity
+            style={styles.tab}
+            onPress={() => onTabPress('settings')}
+            activeOpacity={0.7}
+          >
+            <TabIcon name="settings" isActive={activeTab === 'settings'} />
+            <Text style={[
+              styles.tabText,
+              { color: activeTab === 'settings' ? '#000000' : '#8E8E93' }
+            ]}>
+              Settings
+            </Text>
+          </TouchableOpacity>
+        </View>
 
         {/* Add Button */}
         <TouchableOpacity
@@ -153,8 +156,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-around',
-    paddingHorizontal: 20,
+    justifyContent: 'space-between',
+    paddingHorizontal: 40,
     paddingTop: 12,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
@@ -167,9 +170,14 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
   },
+  tabsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    flex: 1,
+    marginRight: 20,
+  },
   tab: {
     alignItems: 'center',
-    flex: 1,
     paddingVertical: 4,
   },
   tabText: {
