@@ -6,7 +6,9 @@ import { BottomNavigationBar } from '../../navigation/BottomNavigationBar';
 import { HomeScreen } from '../../screens/application/home/HomeScreen';
 import { PerformanceScreen } from '../../screens/application/performance/PerformanceScreen';
 import { SettingsScreen } from '../../screens/application/settings/SettingsScreen';
-import { CameraModal } from '../../screens/application/cameraModal/CameraModal';
+import { AddOptions } from '../../screens/application/add/AddOptions';
+import { RecordModal } from '../../screens/application/add/record/RecordModal';
+import { UploadScreen } from '../../screens/application/add/upload/UploadScreen';
 
 interface MainAppLayoutProps {
   children?: React.ReactNode;
@@ -14,18 +16,38 @@ interface MainAppLayoutProps {
 
 export function MainAppLayout({ children }: MainAppLayoutProps) {
   const [activeTab, setActiveTab] = useState<'home' | 'performance' | 'settings'>('home');
-  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [showAddOptions, setShowAddOptions] = useState(false);
+  const [showRecordModal, setShowRecordModal] = useState(false);
+  const [showUploadScreen, setShowUploadScreen] = useState(false);
 
   const handleTabPress = (tab: 'home' | 'performance' | 'settings') => {
     setActiveTab(tab);
   };
 
   const handleAddPress = () => {
-    setIsModalVisible(true);
+    setShowAddOptions(true);
   };
 
-  const handleCloseModal = () => {
-    setIsModalVisible(false);
+  const handleCloseAddOptions = () => {
+    setShowAddOptions(false);
+  };
+
+  const handleUploadPress = () => {
+    setShowAddOptions(false);
+    setShowUploadScreen(true);
+  };
+
+  const handleRecordPress = () => {
+    setShowAddOptions(false);
+    setShowRecordModal(true);
+  };
+
+  const handleCloseRecordModal = () => {
+    setShowRecordModal(false);
+  };
+
+  const handleCloseUploadScreen = () => {
+    setShowUploadScreen(false);
   };
 
   const renderScreenContent = () => {
@@ -60,9 +82,21 @@ export function MainAppLayout({ children }: MainAppLayoutProps) {
           onAddPress={handleAddPress}
         />
 
-        <CameraModal
-          isVisible={isModalVisible}
-          onClose={handleCloseModal}
+        <AddOptions
+          isVisible={showAddOptions}
+          onUploadPress={handleUploadPress}
+          onRecordPress={handleRecordPress}
+          onClose={handleCloseAddOptions}
+        />
+
+        <RecordModal
+          isVisible={showRecordModal}
+          onClose={handleCloseRecordModal}
+        />
+
+        <UploadScreen
+          isVisible={showUploadScreen}
+          onClose={handleCloseUploadScreen}
         />
       </SafeAreaView>
     </LinearGradient>
