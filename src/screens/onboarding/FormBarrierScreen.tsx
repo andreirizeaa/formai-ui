@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
   },
   formBarrierButton: {
-    height: 60,
+    height: 65,
     borderRadius: 12,
     borderWidth: 1,
     marginBottom: 12,
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start', // Align items to the left
   },
   formBarrierLabel: {
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '500',
     marginLeft: 12, // Add space between icon and text
   },

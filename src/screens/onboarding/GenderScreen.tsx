@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
   },
   genderButton: {
-    height: 60,
+    height: 65,
     borderRadius: 12,
     borderWidth: 1,
     marginBottom: 12,
@@ -120,7 +120,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   genderLabel: {
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '500',
   },
 });
