@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, Animated } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
@@ -29,6 +29,53 @@ function BellIcon({ color, size }: { color: string; size: number }) {
 export function NotificationReminderScreen({ onNext, onBack }: NotificationReminderScreenProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const shakeAnimation = useRef(new Animated.Value(0)).current;
+
+  // Shake animation effect
+  useEffect(() => {
+    const shakeSequence = Animated.sequence([
+      Animated.timing(shakeAnimation, {
+        toValue: -1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shakeAnimation, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shakeAnimation, {
+        toValue: -1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shakeAnimation, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]);
+
+    // Repeat the shake sequence continuously for 2 seconds
+    const repeatShake = Animated.loop(
+      shakeSequence,
+      { iterations: 8 } // 8 iterations * 400ms = 3.2 seconds, but we'll stop after 2 seconds
+    );
+
+    repeatShake.start();
+
+    // Stop the animation after 2 seconds
+    const timer = setTimeout(() => {
+      repeatShake.stop();
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  const shakeInterpolate = shakeAnimation.interpolate({
+    inputRange: [-1, 1],
+    outputRange: ['-10deg', '10deg'],
+  });
 
   return (
     <SafeAreaView 
@@ -55,16 +102,26 @@ export function NotificationReminderScreen({ onNext, onBack }: NotificationRemin
 
           {/* Bell Icon */}
           <View style={styles.bellContainer}>
-            <View style={styles.bellIcon}>
+            <Animated.View 
+              style={[
+                styles.bellIcon,
+                {
+                  transform: [
+                    { rotate: shakeInterpolate },
+                    { rotate: '15deg' } // Keep the original 15deg rotation
+                  ]
+                }
+              ]}
+            >
               <BellIcon 
                 color={isDark ? '#8E8E93' : '#8E8E93'} 
                 size={160}
               />
-            </View>
-            {/* Notification Badge */}
-            <View style={styles.notificationBadge}>
-              <Text style={styles.badgeText}>1</Text>
-            </View>
+              {/* Notification Badge */}
+              <View style={styles.notificationBadge}>
+                <Text style={styles.badgeText}>1</Text>
+              </View>
+            </Animated.View>
           </View>
         </View>
       </View>
