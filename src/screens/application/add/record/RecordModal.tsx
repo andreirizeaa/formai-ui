@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity, Platform, Alert } from 'react-native';
+import { View, Text, StyleSheet, Modal, TouchableOpacity, Platform, Alert, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import Svg, { Path } from 'react-native-svg';
@@ -190,6 +190,23 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
 
           {/* Spacer to push content to bottom */}
           <View style={styles.practicesSpacer} />
+
+          {/* Recording Tip Image */}
+          <View style={styles.tipImageWrapper}>
+            {/* Checkmark Icon */}
+            <View style={styles.simpleIconContainer}>
+              <Svg width={48} height={48} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="#000000">
+                <Path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+              </Svg>
+            </View>
+            <View style={styles.tipImageContainer}>
+              <Image
+                source={require('../../../../../assets/recording-tip.jpg')}
+                style={styles.tipImage}
+                resizeMode="cover"
+              />
+            </View>
+          </View>
 
           {/* Tips Card */}
           <View style={styles.tipsCard}>
@@ -559,7 +576,7 @@ const styles = StyleSheet.create({
     textAlign: 'left',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
     position: 'absolute',
-    top: 36,
+    top: 24,
     left: 20,
     width: '60%',
   },
@@ -633,5 +650,48 @@ const styles = StyleSheet.create({
     color: '#333333',
     flex: 1,
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
+  tipImageWrapper: {
+    position: 'relative',
+    alignItems: 'center',
+    marginHorizontal: 20,
+    marginBottom: 20,
+  },
+  tipImageContainer: {
+    width: '60%',
+    height: 280,
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: '#F0F0F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  tipImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 18,
+  },
+  iconContainer: {
+    position: 'absolute',
+    top: -20,
+    alignSelf: 'center',
+    zIndex: 10,
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  simpleIconContainer: {
+    position: 'absolute',
+    top: -60,
+    alignSelf: 'center',
+    zIndex: 10,
   },
 }); 
