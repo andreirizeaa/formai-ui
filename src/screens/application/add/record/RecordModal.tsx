@@ -16,11 +16,15 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
   const [isRecording, setIsRecording] = useState(false);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [recordingTime, setRecordingTime] = useState(0);
+  const [showPractices, setShowPractices] = useState(true);
   const cameraRef = useRef<CameraView>(null);
 
   useEffect(() => {
     if (isVisible) {
       checkCameraPermission();
+      setShowPractices(true);
+      setIsRecording(false);
+      setRecordingTime(0);
     }
   }, [isVisible]);
 
@@ -44,6 +48,11 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+
+  const handleNext = () => {
+    hapticFeedback.selection();
+    setShowPractices(false);
   };
 
   const checkCameraPermission = async () => {
@@ -111,12 +120,14 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
           { text: 'Stop', style: 'destructive', onPress: () => {
             handleStopRecording();
             setIsRecording(false);
+            setShowPractices(true);
             onClose();
           }},
         ]
       );
     } else {
       setIsRecording(false);
+      setShowPractices(true);
       onClose();
     }
   };
@@ -161,91 +172,117 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
     <Modal
       visible={isVisible}
       animationType="slide"
-      presentationStyle="pageSheet"
-      onRequestClose={handleClose}
+      presentationStyle={showPractices ? "pageSheet" : "fullScreen"}
+      onRequestClose={showPractices ? onClose : handleClose}
     >
-      <SafeAreaView style={styles.container}>
-        <View style={styles.cameraContainer}>
-          <CameraView
-            ref={cameraRef}
-            style={styles.camera}
-            facing="back"
-          >
-            <View style={styles.cameraOverlay}>
-              {/* Timer Pill */}
-              <View style={styles.timerContainer}>
-                <View style={[
-                  styles.timerPill,
-                  isRecording && styles.timerPillRecording
-                ]}>
-                  <Text style={[
-                    styles.timerText,
-                    isRecording && styles.timerTextRecording
-                  ]}>{formatTime(recordingTime)}</Text>
-                </View>
-              </View>
+      {showPractices ? (
+        // Practices Content
+        <SafeAreaView style={styles.practicesContainer}>
+          {/* Close Button and Title */}
+          <View style={styles.practicesTopControls}>
+            <Text style={styles.practicesTitle}>Best recording practices</Text>
+            <TouchableOpacity onPress={onClose} style={styles.practicesCloseButton}>
+              <Svg width={24} height={24} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="#8E8E93">
+                <Path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+              </Svg>
+            </TouchableOpacity>
+          </View>
 
-              {/* Corner Guides */}
-              <View style={styles.cornerGuides}>
-                {/* Top Left Corner */}
-                <View style={[styles.cornerGuide, styles.cornerTopLeft]}>
-                  <View style={[styles.cornerLine, styles.cornerLineHorizontal, styles.cornerLineTop]} />
-                  <View style={[styles.cornerLine, styles.cornerLineVertical, styles.cornerLineLeft]} />
-                </View>
-                
-                {/* Top Right Corner */}
-                <View style={[styles.cornerGuide, styles.cornerTopRight]}>
-                  <View style={[styles.cornerLine, styles.cornerLineHorizontal, styles.cornerLineTop]} />
-                  <View style={[styles.cornerLine, styles.cornerLineVertical, styles.cornerLineRight]} />
-                </View>
-                
-                {/* Bottom Left Corner */}
-                <View style={[styles.cornerGuide, styles.cornerBottomLeft]}>
-                  <View style={[styles.cornerLine, styles.cornerLineHorizontal, styles.cornerLineBottom]} />
-                  <View style={[styles.cornerLine, styles.cornerLineVertical, styles.cornerLineLeft]} />
-                </View>
-                
-                {/* Bottom Right Corner */}
-                <View style={[styles.cornerGuide, styles.cornerBottomRight]}>
-                  <View style={[styles.cornerLine, styles.cornerLineHorizontal, styles.cornerLineBottom]} />
-                  <View style={[styles.cornerLine, styles.cornerLineVertical, styles.cornerLineRight]} />
-                </View>
-              </View>
+          {/* Spacer to push button to bottom */}
+          <View style={styles.practicesSpacer} />
 
-              {/* Top Controls */}
-              <View style={styles.topControls}>
-                <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
-                  <Svg width={24} height={24} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="white">
-                    <Path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-                  </Svg>
-                </TouchableOpacity>
-              </View>
+          {/* Next Button */}
+          <View style={styles.practicesBottomControls}>
+            <TouchableOpacity style={styles.practicesNextButton} onPress={handleNext}>
+              <Text style={styles.practicesNextButtonText}>Next</Text>
+            </TouchableOpacity>
+          </View>
+        </SafeAreaView>
+      ) : (
+        // Camera Content
+        <SafeAreaView style={styles.container}>
+          <View style={styles.cameraContainer}>
+            <CameraView
+              ref={cameraRef}
+              style={styles.camera}
+              facing="back"
+            >
+              <View style={styles.cameraOverlay}>
+                {/* Timer Pill */}
+                <View style={styles.timerContainer}>
+                  <View style={[
+                    styles.timerPill,
+                    isRecording && styles.timerPillRecording
+                  ]}>
+                    <Text style={[
+                      styles.timerText,
+                      isRecording && styles.timerTextRecording
+                    ]}>{formatTime(recordingTime)}</Text>
+                  </View>
+                </View>
 
-              {/* Bottom Controls */}
-              <View style={styles.bottomControls}>
-                <View style={styles.controlsContainer}>
-                  {/* Record/Stop Button */}
-                  <TouchableOpacity
-                    style={[
-                      styles.recordButton,
-                      isRecording && styles.stopButton
-                    ]}
-                    onPress={handleButtonPress}
-                    activeOpacity={0.8}
-                  >
-                    {!isRecording && (
-                      <View style={styles.recordIcon} />
-                    )}
-                    {isRecording && (
-                      <View style={styles.recordSquare} />
-                    )}
+                {/* Corner Guides */}
+                <View style={styles.cornerGuides}>
+                  {/* Top Left Corner */}
+                  <View style={[styles.cornerGuide, styles.cornerTopLeft]}>
+                    <View style={[styles.cornerLine, styles.cornerLineHorizontal, styles.cornerLineTop, { borderTopLeftRadius: 4, borderTopRightRadius: 4 }]} />
+                    <View style={[styles.cornerLine, styles.cornerLineVertical, styles.cornerLineLeft, { borderTopLeftRadius: 4, borderBottomLeftRadius: 4 }]} />
+                  </View>
+                  
+                  {/* Top Right Corner */}
+                  <View style={[styles.cornerGuide, styles.cornerTopRight]}>
+                    <View style={[styles.cornerLine, styles.cornerLineHorizontal, styles.cornerLineTop, { borderTopLeftRadius: 4, borderTopRightRadius: 4 }]} />
+                    <View style={[styles.cornerLine, styles.cornerLineVertical, styles.cornerLineRight, { borderTopRightRadius: 4, borderBottomRightRadius: 4 }]} />
+                  </View>
+                  
+                  {/* Bottom Left Corner */}
+                  <View style={[styles.cornerGuide, styles.cornerBottomLeft]}>
+                    <View style={[styles.cornerLine, styles.cornerLineHorizontal, styles.cornerLineBottom, { borderBottomLeftRadius: 4, borderBottomRightRadius: 4 }]} />
+                    <View style={[styles.cornerLine, styles.cornerLineVertical, styles.cornerLineLeft, { borderTopLeftRadius: 4, borderBottomLeftRadius: 4 }]} />
+                  </View>
+                  
+                  {/* Bottom Right Corner */}
+                  <View style={[styles.cornerGuide, styles.cornerBottomRight]}>
+                    <View style={[styles.cornerLine, styles.cornerLineHorizontal, styles.cornerLineBottom, { borderBottomLeftRadius: 4, borderBottomRightRadius: 4 }]} />
+                    <View style={[styles.cornerLine, styles.cornerLineVertical, styles.cornerLineRight, { borderTopRightRadius: 4, borderBottomRightRadius: 4 }]} />
+                  </View>
+                </View>
+
+                {/* Top Controls */}
+                <View style={styles.topControls}>
+                  <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
+                    <Svg width={24} height={24} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="white">
+                      <Path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    </Svg>
                   </TouchableOpacity>
                 </View>
+
+                {/* Bottom Controls */}
+                <View style={styles.bottomControls}>
+                  <View style={styles.controlsContainer}>
+                    {/* Record/Stop Button */}
+                    <TouchableOpacity
+                      style={[
+                        styles.recordButton,
+                        isRecording && styles.stopButton
+                      ]}
+                      onPress={handleButtonPress}
+                      activeOpacity={0.8}
+                    >
+                      {!isRecording && (
+                        <View style={styles.recordIcon} />
+                      )}
+                      {isRecording && (
+                        <View style={styles.recordSquare} />
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                </View>
               </View>
-            </View>
-          </CameraView>
-        </View>
-      </SafeAreaView>
+            </CameraView>
+          </View>
+        </SafeAreaView>
+      )}
     </Modal>
   );
 }
@@ -283,6 +320,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 10,
+    marginTop: 6,
   },
   bottomControls: {
     flex: 1,
@@ -404,7 +442,7 @@ const styles = StyleSheet.create({
   cornerLine: {
     position: 'absolute',
     backgroundColor: 'white',
-    borderRadius: 1,
+    borderRadius: 4,
   },
   cornerLineHorizontal: {
     width: 30,
@@ -459,7 +497,7 @@ const styles = StyleSheet.create({
   timerPill: {
     backgroundColor: 'white',
     borderRadius: 20,
-    paddingHorizontal: 12,
+    paddingHorizontal: 40,
     paddingVertical: 6,
     marginTop: 20,
   },
@@ -473,5 +511,60 @@ const styles = StyleSheet.create({
   },
   timerTextRecording: {
     color: 'white',
+  },
+  practicesContainer: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  practicesTopControls: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: -6,
+    position: 'relative',
+  },
+  practicesCloseButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 24,
+  },
+  practicesTitle: {
+    fontSize: 36,
+    fontWeight: '600',
+    color: '#000000',
+    textAlign: 'left',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
+    position: 'absolute',
+    top: 48,
+    left: 20,
+    width: '60%',
+  },
+  practicesSpacer: {
+    flex: 1,
+  },
+  practicesBottomControls: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    paddingBottom: 40,
+    paddingHorizontal: 20,
+  },
+  practicesNextButton: {
+    backgroundColor: '#000000',
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    borderRadius: 28,
+    width: '100%',
+    alignItems: 'center',
+  },
+  practicesNextButtonText: {
+    color: '#FFFFFF',
+    fontSize: 17,
+    fontWeight: '600',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
 }); 
