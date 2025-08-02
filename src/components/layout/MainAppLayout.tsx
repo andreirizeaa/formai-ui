@@ -14,7 +14,7 @@ import { EditDateOfBirthScreen } from '../../screens/application/settings/editPe
 import { EditGenderScreen } from '../../screens/application/settings/editPersonalDetails/EditGenderScreen';
 import { AddOptions } from '../../screens/application/add/AddOptions';
 import { RecordModal } from '../../screens/application/add/record/RecordModal';
-import { UploadScreen } from '../../screens/application/add/upload/UploadScreen';
+import { UploadModal } from '../../screens/application/add/upload/UploadModal';
 import { LiftDetails } from '../../screens/application/feedback/liftDetails';
 import { FeedbackSlideshow } from '../../screens/application/feedback/feedbackSlideshow';
 import { hapticFeedback } from '../../utils/haptic';
@@ -46,7 +46,7 @@ export function MainAppLayout({ children }: MainAppLayoutProps) {
   const [activeTab, setActiveTab] = useState<'home' | 'performance' | 'settings'>('home');
   const [showAddOptions, setShowAddOptions] = useState(false);
   const [showRecordModal, setShowRecordModal] = useState(false);
-  const [showUploadScreen, setShowUploadScreen] = useState(false);
+  const [showUploadModal, setShowUploadModal] = useState(false);
   const [showPersonalDetails, setShowPersonalDetails] = useState(false);
   const [showShareScreen, setShowShareScreen] = useState(false);
   const [showEditCurrentWeight, setShowEditCurrentWeight] = useState(false);
@@ -83,7 +83,7 @@ export function MainAppLayout({ children }: MainAppLayoutProps) {
 
   const handleUploadPress = () => {
     setShowAddOptions(false);
-    setShowUploadScreen(true);
+    setShowUploadModal(true);
   };
 
   const handleRecordPress = () => {
@@ -96,9 +96,9 @@ export function MainAppLayout({ children }: MainAppLayoutProps) {
     setShowRecordModal(false);
   };
 
-  const handleCloseUploadScreen = () => {
+  const handleCloseUploadModal = () => {
     hapticFeedback.selection();
-    setShowUploadScreen(false);
+    setShowUploadModal(false);
   };
 
   const handleShowLiftDetails = (liftData: LiftData) => {
@@ -354,9 +354,9 @@ export function MainAppLayout({ children }: MainAppLayoutProps) {
           onClose={handleCloseRecordModal}
         />
 
-        <UploadScreen
-          isVisible={showUploadScreen}
-          onClose={handleCloseUploadScreen}
+        <UploadModal
+          isVisible={showUploadModal}
+          onClose={handleCloseUploadModal}
         />
       </SafeAreaView>
 
