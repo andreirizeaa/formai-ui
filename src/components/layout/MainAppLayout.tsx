@@ -7,6 +7,7 @@ import { HomeScreen } from '../../screens/application/home/HomeScreen';
 import { PerformanceScreen } from '../../screens/application/performance/PerformanceScreen';
 import { SettingsScreen } from '../../screens/application/settings/SettingsScreen';
 import { PersonalDetailsScreen } from '../../screens/application/settings/PersonalDetailsScreen';
+import { ShareScreen } from '../../screens/application/settings/ShareScreen';
 import { EditCurrentWeightScreen } from '../../screens/application/settings/editPersonalDetails/EditCurrentWeightScreen';
 import { EditHeightScreen } from '../../screens/application/settings/editPersonalDetails/EditHeightScreen';
 import { EditDateOfBirthScreen } from '../../screens/application/settings/editPersonalDetails/EditDateOfBirthScreen';
@@ -35,6 +36,7 @@ export function MainAppLayout({ children }: MainAppLayoutProps) {
   const [showRecordModal, setShowRecordModal] = useState(false);
   const [showUploadScreen, setShowUploadScreen] = useState(false);
   const [showPersonalDetails, setShowPersonalDetails] = useState(false);
+  const [showShareScreen, setShowShareScreen] = useState(false);
   const [showEditCurrentWeight, setShowEditCurrentWeight] = useState(false);
   const [showEditHeight, setShowEditHeight] = useState(false);
   const [showEditDateOfBirth, setShowEditDateOfBirth] = useState(false);
@@ -50,6 +52,7 @@ export function MainAppLayout({ children }: MainAppLayoutProps) {
     gender: 'Male',
   });
   const slideAnim = useRef(new Animated.Value(0)).current;
+  const shareSlideAnim = useRef(new Animated.Value(0)).current;
   const editSlideAnim = useRef(new Animated.Value(0)).current;
   const liftDetailsSlideAnim = useRef(new Animated.Value(400)).current;
   const feedbackSlideshowAnim = useRef(new Animated.Value(0)).current;
@@ -144,6 +147,7 @@ export function MainAppLayout({ children }: MainAppLayoutProps) {
   };
 
   const handlePersonalDetailsBack = () => {
+    hapticFeedback.selection();
     // Animate slide out to right
     Animated.timing(slideAnim, {
       toValue: 0,
@@ -151,6 +155,30 @@ export function MainAppLayout({ children }: MainAppLayoutProps) {
       useNativeDriver: true,
     }).start(() => {
       setShowPersonalDetails(false);
+    });
+  };
+
+  const handleShareScreenPress = () => {
+    hapticFeedback.selection();
+    setShowShareScreen(true);
+    
+    // Animate slide in from right
+    Animated.timing(shareSlideAnim, {
+      toValue: 1,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handleShareScreenBack = () => {
+    hapticFeedback.selection();
+    // Animate slide out to right
+    Animated.timing(shareSlideAnim, {
+      toValue: 0,
+      duration: 200,
+      useNativeDriver: true,
+    }).start(() => {
+      setShowShareScreen(false);
     });
   };
 
@@ -277,7 +305,7 @@ export function MainAppLayout({ children }: MainAppLayoutProps) {
       case 'performance':
         return <PerformanceScreen />;
       case 'settings':
-        return <SettingsScreen onPersonalDetailsPress={handlePersonalDetailsPress} />;
+        return <SettingsScreen onPersonalDetailsPress={handlePersonalDetailsPress} onSharePress={handleShareScreenPress} />;
       default:
         return children;
     }
@@ -344,6 +372,29 @@ export function MainAppLayout({ children }: MainAppLayoutProps) {
             onEditDateOfBirth={handleEditDateOfBirthPress}
             onEditGender={handleEditGenderPress}
             personalData={personalData}
+          />
+        </Animated.View>
+      )}
+
+      {/* Share Screen - Full Screen Overlay with Animation */}
+      {showShareScreen && (
+        <Animated.View
+          style={[
+            styles.fullScreenOverlay,
+            {
+              transform: [
+                {
+                  translateX: shareSlideAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [400, 0], // Slide from right (400) to center (0)
+                  }),
+                },
+              ],
+            },
+          ]}
+        >
+          <ShareScreen 
+            onBack={handleShareScreenBack}
           />
         </Animated.View>
       )}

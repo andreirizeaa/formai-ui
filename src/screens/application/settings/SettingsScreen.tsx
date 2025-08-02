@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, Alert, ImageBackground, ScrollView } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import * as MailComposer from 'expo-mail-composer';
 import i18n from '../../../utils/i18n';
@@ -10,6 +10,7 @@ import { LanguageModal } from './LanguageModal';
 
 interface SettingsScreenProps {
   onPersonalDetailsPress: () => void;
+  onSharePress: () => void;
 }
 
 interface SettingsOptionProps {
@@ -40,11 +41,58 @@ function SettingsOption({ icon, title, subtitle, onPress }: SettingsOptionProps)
   );
 }
 
-export function SettingsScreen({ onPersonalDetailsPress }: SettingsScreenProps) {
+interface ReferFriendOptionProps {
+  icon: React.ReactNode;
+  title: string;
+  subtitle?: string;
+  onPress?: () => void;
+  onSharePress: () => void;
+}
+
+function ReferFriendOption({ icon, title, subtitle, onPress, onSharePress }: ReferFriendOptionProps) {
+  return (
+    <View>
+      <View style={styles.optionRow}>
+        <View style={styles.iconContainer}>
+          {icon}
+        </View>
+        <View style={styles.textContainer}>
+          <Text style={styles.optionTitle}>{title}</Text>
+          {subtitle && <Text style={styles.optionSubtitle}>{subtitle}</Text>}
+        </View>
+      </View>
+      
+      {/* Nested Card */}
+      <ImageBackground 
+        source={require('../../../../assets/refer-friends.png')}
+        style={styles.nestedCard}
+        imageStyle={styles.nestedCardImage}
+      >
+        <View style={styles.opacityLayer}>
+          <Text style={styles.nestedCardTitle}>{i18n.t('settings.growStrongerTogether')}</Text>
+          <Text style={styles.nestedCardSubtitle}>{i18n.t('settings.currentBalance')}</Text>
+          <Text style={styles.balanceAmount}>$0</Text>
+          <TouchableOpacity 
+            style={styles.shareButton}
+            onPress={() => {
+              hapticFeedback.selection();
+              onSharePress();
+            }}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.shareButtonText}>{i18n.t('settings.shareNow')}</Text>
+          </TouchableOpacity>
+        </View>
+      </ImageBackground>
+    </View>
+  );
+}
+
+export function SettingsScreen({ onPersonalDetailsPress, onSharePress }: SettingsScreenProps) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showLanguageModal, setShowLanguageModal] = useState(false);
-  const iconSize = 28;
+  const iconSize = 26;
   const iconColor = '#000000';
 
   const handleDeleteAccountPress = () => {
@@ -87,6 +135,9 @@ export function SettingsScreen({ onPersonalDetailsPress }: SettingsScreenProps) 
 
   const handleCloseLanguageModal = () => {
     setShowLanguageModal(false);
+  };
+
+  const handleReferFriendPress = () => {
   };
 
   const handlePersonalDetailsPress = () => {
@@ -153,6 +204,17 @@ Best regards,
           strokeLinecap="round"
           strokeLinejoin="round"
           d="m10.5 21 5.25-11.25L21 21m-9-3h7.5M3 5.621a48.474 48.474 0 0 1 6-.371m0 0c1.12 0 2.233.038 3.334.114M9 5.25V3m3.334 2.364C11.176 10.658 7.69 15.08 3 17.502m9.334-12.138c.896.061 1.785.147 2.666.257m-4.589 8.495a18.023 18.023 0 0 1-3.827-5.802"
+          stroke={iconColor}
+          strokeWidth={1.5}
+        />
+      </Svg>
+    ),
+    referFriend: (
+      <Svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none">
+        <Path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z"
           stroke={iconColor}
           strokeWidth={1.5}
         />
@@ -227,7 +289,7 @@ Best regards,
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.content}>
         <Text style={styles.title}>{i18n.t('tabs.settings')}</Text>
         
@@ -254,6 +316,16 @@ Best regards,
 
         {/* Second Card */}
         <View style={styles.card}>
+          <ReferFriendOption
+            icon={icons.referFriend}
+            title={i18n.t('settings.referFriends')}
+            onPress={handleReferFriendPress}
+            onSharePress={onSharePress}
+          />
+        </View>
+
+        {/* Third Card */}
+        <View style={styles.card}>
           <SettingsOption
             icon={icons.terms}
             title={i18n.t('settings.termsAndConditions')}
@@ -279,7 +351,7 @@ Best regards,
           />
         </View>
 
-        {/* Third Card */}
+        {/* Forth Card */}
         <View style={styles.card}>
           <SettingsOption
             icon={icons.logout}
@@ -311,7 +383,7 @@ Best regards,
 
       {/* Personal Details Screen */}
       {/* This component is now rendered by the parent based on the onPersonalDetailsPress prop */}
-    </View>
+    </ScrollView>
   );
 }
 
@@ -378,5 +450,69 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: '#E5E5EA',
     marginVertical: 4,
+  },
+  nestedCard: {
+    borderRadius: 12,
+    marginTop: 16,
+    overflow: 'hidden',
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  nestedCardImage: {
+    borderRadius: 12,
+    top: -20,
+  },
+  opacityLayer: {
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+  },
+  nestedCardTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
+    marginBottom: 4,
+    textAlign: 'left',
+  },
+  nestedCardSubtitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#FFFFFF',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
+    marginBottom: 4,
+    textAlign: 'left',
+  },
+  balanceAmount: {
+    fontSize: 36,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
+    marginBottom: 8,
+    textAlign: 'left',
+  },
+  shareButton: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 120,
+    width: '100%',
+  },
+  shareButtonText: {
+    color: '#000000',
+    fontSize: 16,
+    fontWeight: '600',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
   },
 }); 
