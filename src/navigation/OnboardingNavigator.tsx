@@ -22,7 +22,6 @@ import { NotificationReminderScreen } from '../screens/payment/NotificationRemin
 import { SubscriptionSelectionScreen } from '../screens/payment/SubscriptionSelectionScreen';
 import { CreateAccountScreen } from '../screens/auth/CreateAccountScreen';
 import { CameraPermissionScreen } from '../screens/onboarding/CameraPermissionScreen';
-import { HomeScreen } from '../screens/application/HomeScreen';
 
 interface OnboardingNavigatorProps {
   onComplete: () => void;
@@ -51,8 +50,7 @@ type OnboardingScreen =
   | 'notificationReminder'
   | 'subscriptionSelection'
   | 'createAccount'
-  | 'cameraPermission'
-  | 'homePage';
+  | 'cameraPermission';
 
 export function OnboardingNavigator({ onComplete, onSignIn }: OnboardingNavigatorProps) {
   const [currentScreen, setCurrentScreen] = useState<OnboardingScreen>('loading');
@@ -214,7 +212,7 @@ export function OnboardingNavigator({ onComplete, onSignIn }: OnboardingNavigato
   };
 
   const handleCameraPermissionNext = () => {
-    setCurrentScreen('homePage');
+    onComplete();
   };
 
   switch (currentScreen) {
@@ -385,9 +383,6 @@ export function OnboardingNavigator({ onComplete, onSignIn }: OnboardingNavigato
           onNext={handleCameraPermissionNext}
         />
       );
-
-    case 'homePage':
-      return <HomeScreen />;
 
     default:
       return <LoadingScreen onLoadComplete={handleLoadComplete} />;

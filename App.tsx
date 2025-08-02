@@ -4,10 +4,12 @@ import { StyleSheet, Text, View, Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import { OnboardingProvider } from './src/context/OnboardingContext';
+import { LanguageProvider } from './src/context/LanguageContext';
 import { OnboardingNavigator } from './src/navigation/OnboardingNavigator';
+import { MainAppLayout } from './src/components/layout/MainAppLayout';
 
 export default function App() {
-  const [showOnboarding, setShowOnboarding] = useState(true);
+  const [showOnboarding, setShowOnboarding] = useState(true); // Show onboarding first
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 
@@ -24,44 +26,26 @@ export default function App() {
   if (showOnboarding) {
     return (
       <SafeAreaProvider>
-        <OnboardingProvider>
-          <OnboardingNavigator 
-            onComplete={handleOnboardingComplete}
-            onSignIn={handleSignIn}
-          />
-          <StatusBar style={isDark ? 'light' : 'dark'} />
-        </OnboardingProvider>
+        <LanguageProvider>
+          <OnboardingProvider>
+            <OnboardingNavigator 
+              onComplete={handleOnboardingComplete}
+              onSignIn={handleSignIn}
+            />
+            <StatusBar style={isDark ? 'light' : 'dark'} />
+          </OnboardingProvider>
+        </LanguageProvider>
       </SafeAreaProvider>
     );
   }
 
-  // Main app placeholder
+  // Main app with bottom navigation
   return (
     <SafeAreaProvider>
-      <View style={[
-        styles.container, 
-        { backgroundColor: isDark ? '#000000' : '#FFFFFF' }
-      ]}>
-        <Text style={[
-          styles.text,
-          { 
-            color: isDark ? '#FFFFFF' : '#000000',
-            fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto'
-          }
-        ]}>
-          Welcome to FormAI!
-        </Text>
-        <Text style={[
-          styles.subtitle,
-          { 
-            color: isDark ? '#AEAEB2' : '#8E8E93',
-            fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
-          }
-        ]}>
-          Onboarding completed successfully
-        </Text>
+      <LanguageProvider>
+        <MainAppLayout />
         <StatusBar style={isDark ? 'light' : 'dark'} />
-      </View>
+      </LanguageProvider>
     </SafeAreaProvider>
   );
 }
