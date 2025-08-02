@@ -1,8 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet, Platform } from 'react-native';
 import { useColorScheme } from 'react-native';
-import { OnboardingLayout } from '../../components/common/OnboardingLayout';
+import { OnboardingLayout } from '../../components/onboarding/OnboardingLayout';
 import i18n from '../../utils/i18n';
+import { hapticFeedback } from '../../utils/haptic';
 import Svg, { Circle, Path } from 'react-native-svg';
 
 interface AllDoneScreenProps {
@@ -35,7 +36,10 @@ export function AllDoneScreen({ onNext, onBack }: AllDoneScreenProps) {
       currentStep={13}
       totalSteps={16}
       onBack={onBack}
-      onNext={onNext}
+      onNext={() => {
+        hapticFeedback.selection();
+        onNext();
+      }}
       nextTitle={i18n.t('next')}
       nextDisabled={false}
     > 

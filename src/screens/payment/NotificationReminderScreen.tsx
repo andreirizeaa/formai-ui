@@ -3,8 +3,9 @@ import { View, Text, StyleSheet, Platform, TouchableOpacity, Animated } from 're
 import { useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
-import { BackButton } from '../../components/common/BackButton';
+import { BackButton } from '../../components/ui/BackButton';
 import i18n from '../../utils/i18n';
+import { hapticFeedback } from '../../utils/haptic';
 
 interface NotificationReminderScreenProps {
   onNext: () => void;
@@ -150,7 +151,10 @@ export function NotificationReminderScreen({ onNext, onBack }: NotificationRemin
             styles.continueButton,
             { backgroundColor: isDark ? '#FFFFFF' : '#000000' }
           ]}
-          onPress={onNext}
+          onPress={() => {
+            hapticFeedback.selection();
+            onNext();
+          }}
           activeOpacity={0.8}
         >
           <Text style={[

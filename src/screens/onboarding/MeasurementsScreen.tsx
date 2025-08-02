@@ -2,9 +2,10 @@ import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, Platform, TouchableOpacity, Switch } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
-import { OnboardingLayout } from '../../components/common/OnboardingLayout';
+import { OnboardingLayout } from '../../components/onboarding/OnboardingLayout';
 import { useOnboarding } from '../../context/OnboardingContext';
 import i18n from '../../utils/i18n';
+import { hapticFeedback } from '../../utils/haptic';
 
 interface MeasurementsScreenProps {
   onNext: () => void;
@@ -29,6 +30,7 @@ export function MeasurementsScreen({ onNext, onBack }: MeasurementsScreenProps) 
   }, []);
 
   const handleUnitSystemChange = (value: boolean) => {
+    hapticFeedback.selection();
     const system = value ? 'metric' : 'imperial';
     updatePreference('unitSystem', system);
     
@@ -46,6 +48,22 @@ export function MeasurementsScreen({ onNext, onBack }: MeasurementsScreenProps) 
     updatePreference('height', isMetric ? height : height * 2.54); // Convert to cm if imperial
   };
 
+  const handleFeetSelect = (feet: number) => {
+    const currentHeight = preferences.height || 170;
+    const totalInches = Math.round(currentHeight / 2.54); // Convert current cm to inches
+    const currentInches = totalInches % 12;
+    const newTotalInches = feet * 12 + currentInches;
+    updatePreference('height', newTotalInches * 2.54); // Convert back to cm
+  };
+
+  const handleInchesSelect = (inches: number) => {
+    const currentHeight = preferences.height || 170;
+    const totalInches = Math.round(currentHeight / 2.54); // Convert current cm to inches
+    const currentFeet = Math.floor(totalInches / 12);
+    const newTotalInches = currentFeet * 12 + inches;
+    updatePreference('height', newTotalInches * 2.54); // Convert back to cm
+  };
+
   const handleWeightSelect = (weight: number) => {
     updatePreference('weight', isMetric ? weight : weight * 0.453592); // Convert to kg if imperial
   };
@@ -59,9 +77,9 @@ export function MeasurementsScreen({ onNext, onBack }: MeasurementsScreenProps) 
   const textColor = isDark ? '#FFFFFF' : '#000000';
 
   // Generate height options
-  const heightOptions = isMetric 
-    ? Array.from({ length: 151 }, (_, i) => 100 + i) // 100-250 cm
-    : Array.from({ length: 60 }, (_, i) => 39 + i); // 39-98 inches (approximately 100-250cm)
+  const heightOptions = Array.from({ length: 151 }, (_, i) => 100 + i); // 100-250 cm
+  const feetOptions = Array.from({ length: 8 }, (_, i) => 1 + i); // 1-8 feet
+  const inchesOptions = Array.from({ length: 12 }, (_, i) => i); // 0-11 inches
 
   // Generate weight options
   const weightOptions = isMetric
@@ -69,9 +87,12 @@ export function MeasurementsScreen({ onNext, onBack }: MeasurementsScreenProps) 
     : Array.from({ length: 251 }, (_, i) => 90 + i); // 90-340 lbs
 
   const getCurrentHeight = () => {
-    if (!preferences.height) return isMetric ? 170 : 67;
+    if (!preferences.height) return isMetric ? 170 : { feet: 5, inches: 7, totalInches: 67 };
     if (isMetric) return preferences.height;
-    return Math.round(preferences.height / 2.54); // Convert cm to inches
+    const totalInches = Math.round(preferences.height / 2.54); // Convert cm to inches
+    const feet = Math.floor(totalInches / 12);
+    const inches = totalInches % 12;
+    return { feet, inches, totalInches };
   };
 
   const getCurrentWeight = () => {
@@ -87,7 +108,10 @@ export function MeasurementsScreen({ onNext, onBack }: MeasurementsScreenProps) 
       currentStep={7}
       totalSteps={12}
       onBack={onBack}
-      onNext={handleNext}
+      onNext={() => {
+        hapticFeedback.selection();
+        handleNext();
+      }}
       nextTitle={i18n.t('next')}
       nextDisabled={!preferences.height || !preferences.weight}
     >
@@ -128,22 +152,65 @@ export function MeasurementsScreen({ onNext, onBack }: MeasurementsScreenProps) 
                 {i18n.t('measurements.height')}
               </Text>
               <View style={styles.pickerWrapper}>
-                <Picker
-                  selectedValue={getCurrentHeight()}
-                  onValueChange={(value) => value && handleHeightSelect(value)}
-                  style={[styles.picker, { color: textColor }]}
-                  itemStyle={Platform.OS === 'ios' ? { color: textColor, fontSize: 14 } : undefined}
-                  dropdownIconColor={textColor}
-                >
-                  {heightOptions.map(height => (
-                    <Picker.Item 
-                      key={height} 
-                      label={`${height} ${isMetric ? i18n.t('measurements.cm') : i18n.t('measurements.in')}`} 
-                      value={height}
-                      color={textColor}
-                    />
-                  ))}
-                </Picker>
+                {isMetric ? (
+                  // Single picker for metric
+                  <Picker
+                    selectedValue={getCurrentHeight() as number}
+                    onValueChange={(value) => value && handleHeightSelect(value)}
+                    style={[styles.picker, { color: textColor }]}
+                    itemStyle={Platform.OS === 'ios' ? { color: textColor, fontSize: 14 } : undefined}
+                    dropdownIconColor={textColor}
+                  >
+                    {heightOptions.map(height => (
+                      <Picker.Item 
+                        key={height} 
+                        label={`${height} ${i18n.t('measurements.cm')}`} 
+                        value={height}
+                        color={textColor}
+                      />
+                    ))}
+                  </Picker>
+                ) : (
+                  // Two pickers for imperial
+                  <View style={styles.imperialPickersContainer}>
+                    <View style={styles.imperialPickerWrapper}>
+                      <Picker
+                        selectedValue={(getCurrentHeight() as { feet: number }).feet}
+                        onValueChange={(value) => value && handleFeetSelect(value)}
+                        style={[styles.imperialPicker, { color: textColor }]}
+                        itemStyle={Platform.OS === 'ios' ? { color: textColor, fontSize: 14 } : undefined}
+                        dropdownIconColor={textColor}
+                      >
+                        {feetOptions.map(feet => (
+                          <Picker.Item 
+                            key={feet} 
+                            label={`${feet} ft`} 
+                            value={feet}
+                            color={textColor}
+                          />
+                        ))}
+                      </Picker>
+                    </View>
+                    <View style={styles.imperialPickerWrapper}>
+                      <Picker
+                        selectedValue={(getCurrentHeight() as { inches: number }).inches}
+                        onValueChange={(value) => value && handleInchesSelect(value)}
+                        style={[styles.imperialPicker, { color: textColor }]}
+                        itemStyle={Platform.OS === 'ios' ? { color: textColor, fontSize: 14 } : undefined}
+                        dropdownIconColor={textColor}
+                      >
+                        {inchesOptions.map(inches => (
+                          <Picker.Item 
+                            key={inches} 
+                            label={`${inches} in`} 
+                            value={inches}
+                            color={textColor}
+                          />
+                        ))}
+                      </Picker>
+                    </View>
+                  </View>
+                )}
               </View>
             </View>
 
@@ -230,5 +297,25 @@ const styles = StyleSheet.create({
   picker: {
     height: Platform.OS === 'ios' ? 280 : 80,
     width: '100%',
+  },
+  imperialPickersContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    gap: 30,
+  },
+  imperialPickerWrapper: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  imperialPickerLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 15,
+  },
+  imperialPicker: {
+    height: Platform.OS === 'ios' ? 280 : 80,
+    width: 90,
+    minWidth: 80,
   },
 }); 

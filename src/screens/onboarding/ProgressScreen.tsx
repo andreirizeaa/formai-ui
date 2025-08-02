@@ -1,8 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { useColorScheme } from 'react-native';
-import { OnboardingLayout } from '../../components/common/OnboardingLayout';
+import { OnboardingLayout } from '../../components/onboarding/OnboardingLayout';
 import i18n from '../../utils/i18n';
+import { hapticFeedback } from '../../utils/haptic';
 import Svg, { Line, Circle, Text as SvgText, G } from 'react-native-svg';
 
 interface ProgressScreenProps {
@@ -56,7 +57,10 @@ export function ProgressScreen({ onNext, onBack }: ProgressScreenProps) {
       currentStep={6}
       totalSteps={12}
       onBack={onBack}
-      onNext={onNext}
+      onNext={() => {
+        hapticFeedback.selection();
+        onNext();
+      }}
       nextTitle={i18n.t('next')}
       nextDisabled={false}
     >

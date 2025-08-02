@@ -1,9 +1,10 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Platform } from 'react-native';
 import { useColorScheme } from 'react-native';
-import { OnboardingLayout } from '../../components/common/OnboardingLayout';
+import { OnboardingLayout } from '../../components/onboarding/OnboardingLayout';
 import { useOnboarding } from '../../context/OnboardingContext';
 import i18n from '../../utils/i18n';
+import { hapticFeedback } from '../../utils/haptic';
 import Svg, { Path } from 'react-native-svg';
 
 interface FormBarrierScreenProps {
@@ -89,6 +90,7 @@ export function FormBarrierScreen({ onNext, onBack }: FormBarrierScreenProps) {
   ] as const;
 
   const handleFormBarrierSelect = (barrier: 'expensive_trainers' | 'gym_advice_scary' | 'no_time' | 'other') => {
+    hapticFeedback.selection();
     updatePreference('formBarrier', barrier);
   };
 
@@ -105,7 +107,10 @@ export function FormBarrierScreen({ onNext, onBack }: FormBarrierScreenProps) {
       currentStep={10}
       totalSteps={12}
       onBack={onBack}
-      onNext={handleNext}
+      onNext={() => {
+        hapticFeedback.selection();
+        handleNext();
+      }}
       nextTitle={i18n.t('next')}
       nextDisabled={!preferences.formBarrier}
     >
