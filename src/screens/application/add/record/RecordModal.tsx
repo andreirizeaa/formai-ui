@@ -273,6 +273,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     paddingHorizontal: 20,
     paddingTop: 10,
+    zIndex: 10,
   },
   closeButton: {
     width: 40,
@@ -281,6 +282,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     alignItems: 'center',
     justifyContent: 'center',
+    zIndex: 10,
   },
   bottomControls: {
     flex: 1,
@@ -392,6 +394,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     pointerEvents: 'none',
+    zIndex: 1,
   },
   cornerGuide: {
     position: 'absolute',
