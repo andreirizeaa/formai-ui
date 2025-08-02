@@ -4,12 +4,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import i18n from '../../../../utils/i18n';
 
-interface UploadScreenProps {
+interface UploadModalProps {
   isVisible: boolean;
   onClose: () => void;
 }
 
-export function UploadScreen({ isVisible, onClose }: UploadScreenProps) {
+export function UploadModal({ isVisible, onClose }: UploadModalProps) {
   return (
     <Modal
       visible={isVisible}
