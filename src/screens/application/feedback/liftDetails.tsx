@@ -1,10 +1,28 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Alert, ActionSheetIOS, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Alert, ActionSheetIOS, Platform, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Video, ResizeMode } from 'expo-av';
+import { VideoView, useVideoPlayer } from 'expo-video';
 import { LineChart } from 'react-native-chart-kit';
 import Svg, { Path } from 'react-native-svg';
 import { hapticFeedback } from '../../../utils/haptic';
+
+interface VideoPlayerComponentProps {
+  videoUri: string;
+}
+
+function VideoPlayerComponent({ videoUri }: VideoPlayerComponentProps) {
+  const player = useVideoPlayer(videoUri, (player) => {
+    player.loop = false;
+    player.showNowPlayingNotification = false;
+  });
+
+  return (
+    <VideoView
+      player={player}
+      style={styles.video}
+    />
+  );
+}
 
 interface LiftDetailsProps {
   onClose: () => void;
@@ -138,14 +156,7 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData }: Lift
         <View style={styles.content}>
           {/* Video Player */}
           <View style={styles.videoContainer}>
-            <Video
-              source={require('../../../videos/video.mp4')}
-              style={styles.video}
-              useNativeControls
-              resizeMode={ResizeMode.CONTAIN}
-              shouldPlay={false}
-              isLooping={false}
-            />
+            <VideoPlayerComponent videoUri={require('../../../videos/video.mp4')} />
           </View>
 
           {/* Pills Row */}
@@ -404,7 +415,7 @@ const styles = StyleSheet.create({
   videoContainer: {
     borderRadius: 18,
     overflow: 'hidden',
-    backgroundColor: '#F2F2F7',
+    backgroundColor: 'black',
     marginBottom: 16,
   },
   video: {

@@ -34,6 +34,17 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow }: HomeScre
       sets: 3,
       reps: 8,
     },
+    {
+      id: '2',
+      liftType: 'Shoulder Press',
+      liftDate: 'Today, 2:40 PM',
+      accuracy: 98,
+      lineGraphValues: [95, 92, 90, 88, 85, 87, 89, 91],
+      weight: 85,
+      unit: 'KG',
+      sets: 3,
+      reps: 8,
+    },
   ];
 
   const handleLiftPress = (lift: LiftData) => {
@@ -71,19 +82,22 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow }: HomeScre
           resizeMode="contain"
         />
       </View>
-      <View style={styles.content}>
+      
+      {/* Spacer to push content to bottom */}
+      <View style={styles.spacer} />
+      
+      <View style={styles.bottomContent}>
         <Text style={styles.sectionTitle}>Recent Lifts</Text>
-      </View>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        <View style={styles.content}>          
+        <ScrollView 
+          style={styles.liftsScrollView} 
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.liftsScrollContent}
+        >
           {recentLifts.map((lift) => (
             <LiftCard key={lift.id} lift={lift} />
           ))}
-        </View>
-      </ScrollView>
-
-      {/* Feedback Slideshow - Full Screen Overlay with Animation */}
-      {/* This component is now managed by MainAppLayout */}
+        </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
@@ -170,5 +184,21 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     paddingHorizontal: 10,
     paddingVertical: 5,
+  },
+  spacer: {
+    flex: 1,
+  },
+  bottomContent: {
+    paddingHorizontal: 20,
+    backgroundColor: 'transparent',
+  },
+  liftsScrollView: {
+    maxHeight: 180,
+    backgroundColor: 'transparent',
+  },
+  liftsScrollContent: {
+    paddingVertical: 4,
+    paddingHorizontal: 4,
+    paddingBottom: 20,
   },
 }); 
