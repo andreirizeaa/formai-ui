@@ -64,7 +64,7 @@ function ReferFriendOption({ icon, title, subtitle, onPress, onSharePress }: Ref
       
       {/* Nested Card */}
       <ImageBackground 
-        source={require('../../../../assets/refer-friends.png')}
+        source={require('../../../../assets/refer-friends.jpg')}
         style={styles.nestedCard}
         imageStyle={styles.nestedCardImage}
       >
