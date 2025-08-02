@@ -16,27 +16,27 @@ export function ShareScreen({ onBack }: ShareScreenProps) {
     try {
       hapticFeedback.selection();
       await Clipboard.setString(promoCode);
-      Alert.alert('Copied!', 'Promo code copied to clipboard');
+      Alert.alert(i18n.t('share.copied'), i18n.t('share.promoCodeCopied'));
       setIsCopied(true);
       setTimeout(() => setIsCopied(false), 2000); // Reset copied state after 2 seconds
     } catch (error) {
       console.error('Failed to copy to clipboard:', error);
-      Alert.alert('Error', 'Failed to copy promo code to clipboard');
+      Alert.alert(i18n.t('share.error'), i18n.t('share.failedToCopy'));
     }
   };
 
   const handleShare = async () => {
     try {
       hapticFeedback.selection();
-      const shareMessage = `Hey! Download this app and use this promo code: ${promoCode}\n`;
+      const shareMessage = `${i18n.t('share.shareMessage')} ${promoCode}\n`;
       
       await Share.share({
         message: shareMessage,
-        title: 'Download FormAI!',
+        title: i18n.t('share.shareTitle'),
       });
     } catch (error) {
       console.error('Failed to share:', error);
-      Alert.alert('Error', 'Failed to open share dialog');
+      Alert.alert(i18n.t('share.error'), i18n.t('share.failedToShare'));
     }
   };
 
@@ -62,7 +62,7 @@ export function ShareScreen({ onBack }: ShareScreenProps) {
             />
           </Svg>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Refer your friends</Text>
+        <Text style={styles.headerTitle}>{i18n.t('share.referYourFriends')}</Text>
         <View style={styles.placeholder} />
       </View>
 
@@ -75,13 +75,13 @@ export function ShareScreen({ onBack }: ShareScreenProps) {
             resizeMode="cover"
           />
         </View>
-        <Text style={styles.contentTitle}>Empower your friends</Text>
+        <Text style={styles.contentTitle}>{i18n.t('share.empowerYourFriends')}</Text>
         
         {/* Promo Code Section */}
         <View style={styles.promoCodeContainer}>
           <View style={styles.promoCodeRow}>
             <View style={styles.promoCodeContent}>
-              <Text style={styles.promoCodeLabel}>Your personal promo code</Text>
+              <Text style={styles.promoCodeLabel}>{i18n.t('share.yourPersonalPromoCode')}</Text>
               <Text style={styles.promoCode}>{promoCode}</Text>
             </View>
             <TouchableOpacity 
@@ -117,23 +117,23 @@ export function ShareScreen({ onBack }: ShareScreenProps) {
           onPress={handleShare}
           activeOpacity={0.7}
         >
-          <Text style={styles.shareButtonText}>Share</Text>
+          <Text style={styles.shareButtonText}>{i18n.t('share.share')}</Text>
         </TouchableOpacity>
 
         {/* How it works card */}
         <View style={styles.howItWorksCard}>
-          <Text style={styles.howItWorksTitle}>How it works</Text>
+          <Text style={styles.howItWorksTitle}>{i18n.t('share.howItWorks')}</Text>
           <View style={styles.stepContainer}>
             <View style={styles.stepNumber}>
               <Text style={styles.stepNumberText}>1</Text>
             </View>
-            <Text style={styles.stepText}>Share the code with friends</Text>
+            <Text style={styles.stepText}>{i18n.t('share.step1')}</Text>
           </View>
           <View style={styles.stepContainer}>
             <View style={styles.stepNumber}>
               <Text style={styles.stepNumberText}>2</Text>
             </View>
-            <Text style={styles.stepText}>Earn $5 per friend that signs up with your code and pays</Text>
+            <Text style={styles.stepText}>{i18n.t('share.step2')}</Text>
           </View>
         </View>
       </View>

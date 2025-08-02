@@ -73,6 +73,7 @@ export function BottomNavigationBar({
   onAddPress 
 }: BottomNavigationBarProps) {
   const insets = useSafeAreaInsets();
+  const { currentLanguage } = useLanguage(); // Add this to listen to language changes
 
   return (
     <View style={styles.container}>
