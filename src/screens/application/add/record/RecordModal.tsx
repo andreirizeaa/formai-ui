@@ -188,8 +188,27 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
             </TouchableOpacity>
           </View>
 
-          {/* Spacer to push button to bottom */}
+          {/* Spacer to push content to bottom */}
           <View style={styles.practicesSpacer} />
+
+          {/* Tips Card */}
+          <View style={styles.tipsCard}>
+            <Text style={styles.tipsTitle}>General tips</Text>
+            <View style={styles.tipsList}>
+              <View style={styles.tipItem}>
+                <View style={styles.tipNumber}>
+                  <Text style={styles.tipNumberText}>1</Text>
+                </View>
+                <Text style={styles.tipText}>Ensure good lighting and a stable camera</Text>
+              </View>
+              <View style={styles.tipItem}>
+                <View style={styles.tipNumber}>
+                  <Text style={styles.tipNumberText}>2</Text>
+                </View>
+                <Text style={styles.tipText}>Try to record yourself from the side</Text>
+              </View>
+            </View>
+          </View>
 
           {/* Next Button */}
           <View style={styles.practicesBottomControls}>
@@ -540,7 +559,7 @@ const styles = StyleSheet.create({
     textAlign: 'left',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
     position: 'absolute',
-    top: 48,
+    top: 36,
     left: 20,
     width: '60%',
   },
@@ -565,6 +584,54 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 17,
     fontWeight: '600',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
+  tipsCard: {
+    backgroundColor: '#F0F0F0',
+    borderRadius: 12,
+    padding: 20,
+    marginHorizontal: 20,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  tipsTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#000000',
+    marginBottom: 15,
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
+  },
+  tipsList: {
+    //
+  },
+  tipItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  tipNumber: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#000000',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  tipNumberText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  tipText: {
+    fontSize: 16,
+    fontWeight: '400',
+    color: '#333333',
+    flex: 1,
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
 }); 
