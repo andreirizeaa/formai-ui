@@ -14,6 +14,8 @@ import { EditGenderScreen } from '../../screens/application/settings/editPersona
 import { AddOptions } from '../../screens/application/add/AddOptions';
 import { RecordModal } from '../../screens/application/add/record/RecordModal';
 import { UploadScreen } from '../../screens/application/add/upload/UploadScreen';
+import { LiftDetails } from '../../screens/application/feedback/liftDetails';
+import { FeedbackSlideshow } from '../../screens/application/feedback/feedbackSlideshow';
 import { hapticFeedback } from '../../utils/haptic';
 
 interface MainAppLayoutProps {
@@ -37,6 +39,9 @@ export function MainAppLayout({ children }: MainAppLayoutProps) {
   const [showEditHeight, setShowEditHeight] = useState(false);
   const [showEditDateOfBirth, setShowEditDateOfBirth] = useState(false);
   const [showEditGender, setShowEditGender] = useState(false);
+  const [showLiftDetails, setShowLiftDetails] = useState(false);
+  const [showFeedbackSlideshow, setShowFeedbackSlideshow] = useState(false);
+  const [selectedLift, setSelectedLift] = useState<any>(null);
   const [currentPersonalData, setCurrentPersonalData] = useState<PersonalData | null>(null);
   const [personalData, setPersonalData] = useState<PersonalData>({
     currentWeight: '75 kg',
@@ -46,6 +51,8 @@ export function MainAppLayout({ children }: MainAppLayoutProps) {
   });
   const slideAnim = useRef(new Animated.Value(0)).current;
   const editSlideAnim = useRef(new Animated.Value(0)).current;
+  const liftDetailsSlideAnim = useRef(new Animated.Value(400)).current;
+  const feedbackSlideshowAnim = useRef(new Animated.Value(0)).current;
 
   const handleTabPress = (tab: 'home' | 'performance' | 'settings') => {
     setActiveTab(tab);
@@ -77,6 +84,53 @@ export function MainAppLayout({ children }: MainAppLayoutProps) {
   const handleCloseUploadScreen = () => {
     hapticFeedback.selection();
     setShowUploadScreen(false);
+  };
+
+  const handleShowLiftDetails = (liftData: any) => {
+    hapticFeedback.selection();
+    setSelectedLift(liftData);
+    setShowLiftDetails(true);
+    
+    // Animate slide in from right
+    Animated.timing(liftDetailsSlideAnim, {
+      toValue: 0,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handleCloseLiftDetails = () => {
+    // Animate slide out to right
+    Animated.timing(liftDetailsSlideAnim, {
+      toValue: 400,
+      duration: 200,
+      useNativeDriver: true,
+    }).start(() => {
+      setShowLiftDetails(false);
+      setSelectedLift(null);
+    });
+  };
+
+  const handleShowFeedbackSlideshow = () => {
+    setShowFeedbackSlideshow(true);
+    
+    // Animate scale in from center
+    Animated.timing(feedbackSlideshowAnim, {
+      toValue: 1,
+      duration: 150,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handleCloseFeedbackSlideshow = () => {
+    // Animate scale out to center
+    Animated.timing(feedbackSlideshowAnim, {
+      toValue: 0,
+      duration: 150,
+      useNativeDriver: true,
+    }).start(() => {
+      setShowFeedbackSlideshow(false);
+    });
   };
 
   const handlePersonalDetailsPress = () => {
@@ -219,7 +273,7 @@ export function MainAppLayout({ children }: MainAppLayoutProps) {
   const renderScreenContent = () => {
     switch (activeTab) {
       case 'home':
-        return <HomeScreen />;
+        return <HomeScreen onShowFeedback={handleShowLiftDetails} onShowFeedbackSlideshow={handleShowFeedbackSlideshow} />;
       case 'performance':
         return <PerformanceScreen />;
       case 'settings':
@@ -231,10 +285,10 @@ export function MainAppLayout({ children }: MainAppLayoutProps) {
 
   return (
     <LinearGradient
-      colors={['#ddd6ff', '#ffffff']}
+      colors={['#ffd6a7', '#ffffff']}
       locations={[0, 0.75]}
       style={styles.container}
-      start={{ x: 1, y: 0 }}
+      start={{ x: 2, y: 0 }}
       end={{ x: 0, y: 1 }}
     >
       <SafeAreaView style={styles.safeArea}>
@@ -390,6 +444,48 @@ export function MainAppLayout({ children }: MainAppLayoutProps) {
             onBack={handleEditGenderBack}
             currentValue={currentPersonalData.gender}
             onSave={handleEditGenderSave}
+          />
+        </Animated.View>
+      )}
+
+      {/* Lift Details - Full Screen Overlay with Animation */}
+      {showLiftDetails && (
+        <Animated.View
+          style={[
+            styles.fullScreenOverlay,
+            {
+              transform: [
+                {
+                  translateX: liftDetailsSlideAnim,
+                },
+              ],
+            },
+          ]}
+        >
+          <LiftDetails
+            onClose={handleCloseLiftDetails}
+            onShowFeedbackSlideshow={handleShowFeedbackSlideshow}
+            liftData={selectedLift || undefined}
+          />
+        </Animated.View>
+      )}
+
+      {/* Feedback Slideshow - Center Scale Animation */}
+      {showFeedbackSlideshow && (
+        <Animated.View
+          style={[
+            styles.fullScreenOverlay,
+            {
+              transform: [
+                {
+                  scale: feedbackSlideshowAnim,
+                },
+              ],
+            },
+          ]}
+        >
+          <FeedbackSlideshow
+            onClose={handleCloseFeedbackSlideshow}
           />
         </Animated.View>
       )}
