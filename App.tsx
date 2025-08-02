@@ -9,7 +9,7 @@ import { OnboardingNavigator } from './src/navigation/OnboardingNavigator';
 import { MainAppLayout } from './src/components/layout/MainAppLayout';
 
 export default function App() {
-  const [showOnboarding, setShowOnboarding] = useState(true); // Show onboarding first
+  const [showOnboarding, setShowOnboarding] = useState(false); // Show onboarding first
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 
