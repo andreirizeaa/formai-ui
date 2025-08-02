@@ -1,20 +1,31 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Alert, ActionSheetIOS, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Video, ResizeMode } from 'expo-av';
+import { LineChart } from 'react-native-chart-kit';
 import Svg, { Path } from 'react-native-svg';
 import { hapticFeedback } from '../../../utils/haptic';
 
 interface LiftDetailsProps {
   onClose: () => void;
   onShowFeedbackSlideshow: () => void;
-  liftData?: {
-    liftName: string;
+  liftData: {
+    liftType: string;
     liftDate: string;
-    liftAccuracy: number;
+    accuracy: number;
+    lineGraphValues: number[];
+    weight: number;
+    unit: string;
+    sets: number;
+    reps: number;
   };
 }
 
 export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData }: LiftDetailsProps) {
+  const [isStarSelected, setIsStarSelected] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
   const handleClose = () => {
     hapticFeedback.selection();
     onClose();
@@ -23,6 +34,68 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData }: Lift
   const handleReviewFeedback = () => {
     hapticFeedback.selection();
     onShowFeedbackSlideshow();
+  };
+
+  const handleDeleteLift = () => {
+    hapticFeedback.selection();
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    hapticFeedback.selection();
+    // TODO: Implement actual lift deletion logic
+    console.log('Lift deletion confirmed');
+    setShowDeleteModal(false);
+    onClose(); // Close the lift details screen after deletion
+  };
+
+  const handleDeleteCancel = () => {
+    hapticFeedback.selection();
+    setShowDeleteModal(false);
+  };
+
+  const handleStarPress = () => {
+    hapticFeedback.selection();
+    setIsStarSelected(!isStarSelected);
+    console.log('Star button pressed, selected:', !isStarSelected);
+  };
+
+  const handleActionSheet = () => {
+    hapticFeedback.selection();
+    setShowDropdown(!showDropdown);
+  };
+
+  const handleFavourite = () => {
+    hapticFeedback.selection();
+    handleStarPress();
+    setShowDropdown(false);
+  };
+
+  const handleDelete = () => {
+    hapticFeedback.selection();
+    setShowDropdown(false);
+    handleDeleteLift();
+  };
+
+  // Form score data using liftData
+  const formScoreData = {
+    labels: ['1', '2', '3', '4', '5', '6', '7', '8'],
+    datasets: [
+      {
+        data: liftData.lineGraphValues,
+        color: (opacity = 1) => `rgba(255, 149, 0, 1)`,
+        strokeWidth: 2,
+      },
+    ],
+  };
+
+  // Ensure we have valid data for the chart
+  const chartData = {
+    labels: formScoreData.labels,
+    datasets: formScoreData.datasets.map(dataset => ({
+      ...dataset,
+      data: dataset.data || [0, 0, 0, 0, 0, 0, 0, 0], // Fallback to zeros if data is undefined
+    })),
   };
 
   return (
@@ -45,38 +118,223 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData }: Lift
             </Svg>
           </TouchableOpacity>
           <Text style={styles.title}>Lift Details</Text>
+          <TouchableOpacity 
+            style={styles.ellipsisButton} 
+            onPress={handleActionSheet}
+            activeOpacity={0.7}
+          >
+            <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+              <Path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M6.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM12.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM18.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z"
+                stroke="#000000"
+                strokeWidth={1.5}
+              />
+            </Svg>
+          </TouchableOpacity>
         </View>
         
         <View style={styles.content}>
-          {/* First Card */}
-          <View style={styles.card}>
+          {/* Video Player */}
+          <View style={styles.videoContainer}>
+            <Video
+              source={require('../../../videos/video.mp4')}
+              style={styles.video}
+              useNativeControls
+              resizeMode={ResizeMode.CONTAIN}
+              shouldPlay={false}
+              isLooping={false}
+            />
           </View>
 
-          {/* Second Card */}
-          <View style={styles.card}>
+          {/* Pills Row */}
+          <View style={styles.pillsRow}>
+            <View style={styles.leftPills}>
+              <View style={styles.pill}>
+                <Text style={styles.pillText}>{liftData.liftType || 'Bench Press'}</Text>
+              </View>
+              <View style={styles.pill}>
+                <Text style={styles.pillText}>{liftData.liftDate || '4 Sep, 2025'}</Text>
+              </View>
+            </View>
+            <View style={styles.orangePill}>
+              <Text style={styles.pillText}>{liftData.accuracy || 91}%</Text>
+            </View>
           </View>
 
-          {/* Third Card - Review Feedback */}
+          {/* Form Score Chart Card */}
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Form accuracy across your reps</Text>
+            <View style={styles.chartContainer}>
+              {chartData && chartData.datasets && chartData.datasets[0] && chartData.datasets[0].data && (
+                <LineChart
+                  data={chartData}
+                  width={width - 80} // Reduced width to make chart smaller
+                  height={180} // Increased height to show x-axis labels
+                  chartConfig={{
+                    backgroundColor: '#FFFFFF',
+                    backgroundGradientFrom: '#FFFFFF',
+                    backgroundGradientTo: '#FFFFFF',
+                    decimalPlaces: 0,
+                    color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+                    labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+                    style: {
+                      borderRadius: 16,
+                    },
+                    propsForDots: {
+                      r: '0',
+                      strokeWidth: '0',
+                    },
+                  }}
+                  bezier
+                  style={styles.chart}
+                  withDots={false}
+                  withShadow={false}
+                  withInnerLines={false}
+                  withOuterLines={false}
+                  withVerticalLines={false}
+                  withHorizontalLines={false}
+                  yAxisLabel=""
+                  yAxisSuffix="%"
+                  xAxisLabel=""
+                />
+              )}
+            </View>
+          </View>
+
+          {/* Weight and Sets/Reps Cards Row */}
+          <View style={styles.cardsRow}>
+            {/* Weight Card */}
+            <View style={styles.halfCard}>
+              <Text style={styles.halfCardTitle}>Weight</Text>
+              <Text style={styles.halfCardValue}>
+                {liftData.weight || '--'} {liftData.unit || ''}
+              </Text>
+            </View>
+            
+            {/* Sets/Reps Card */}
+            <View style={styles.halfCard}>
+              <Text style={styles.halfCardTitle}>Sets & Reps</Text>
+              <Text style={styles.halfCardValue}>
+                {liftData.sets || '--'} × {liftData.reps || '--'}
+              </Text>
+            </View>
+          </View>
+        </View>
+      </SafeAreaView>
+
+      {/* Review Feedback Button - Fixed to Bottom */}
+      <View style={styles.bottomContainer}>
+        <View style={styles.bottomBackground}>
           <TouchableOpacity 
-            style={styles.card}
+            style={styles.reviewFeedbackButton}
             onPress={handleReviewFeedback}
             activeOpacity={0.7}
           >
-            <View style={styles.reviewFeedbackRow}>
-              <Svg width={28} height={28} viewBox="0 0 24 24" fill="none">
+            <Text style={styles.reviewFeedbackButtonText}>Review Feedback</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Custom Dropdown Modal */}
+      {showDropdown && (
+        <TouchableOpacity 
+          style={styles.dropdownOverlay} 
+          activeOpacity={1} 
+          onPress={() => setShowDropdown(false)}
+        >
+          <View style={styles.dropdownContainer}>
+            <TouchableOpacity 
+              style={styles.dropdownOption} 
+              onPress={handleFavourite}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.dropdownOptionText}>Favourite</Text>
+              <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
                 <Path
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z"
-                  stroke="#000000"
+                  d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z"
+                  stroke={isStarSelected ? "#FF9500" : "#000000"}
+                  fill={isStarSelected ? "#FF9500" : "none"}
                   strokeWidth={1.5}
                 />
               </Svg>
-              <Text style={styles.reviewFeedbackText}>Review Feedback</Text>
+            </TouchableOpacity>
+            <View style={styles.dropdownDivider} />
+            <TouchableOpacity 
+              style={styles.dropdownOption} 
+              onPress={handleDelete}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.dropdownOptionTextDestructive}>Delete Lift</Text>
+              <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+                <Path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
+                  stroke="#FF3B30"
+                  strokeWidth={1.5}
+                />
+              </Svg>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      )}
+
+      {/* Delete Lift Modal */}
+      {showDeleteModal && (
+        <TouchableOpacity 
+          style={styles.modalOverlay} 
+          activeOpacity={1} 
+          onPress={handleDeleteCancel}
+        >
+          <TouchableOpacity 
+            style={styles.modalContainer} 
+            activeOpacity={1} 
+            onPress={(e) => e.stopPropagation()}
+          >
+            {/* Close button */}
+            <TouchableOpacity 
+              style={styles.modalCloseButton} 
+              onPress={handleDeleteCancel}
+            >
+              <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+                <Path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 18L18 6M6 6l12 12"
+                  stroke="#000000"
+                  strokeWidth={2}
+                />
+              </Svg>
+            </TouchableOpacity>
+
+            {/* Title */}
+            <Text style={styles.modalTitle}>Delete Lift</Text>
+
+            {/* Message */}
+            <Text style={styles.modalMessage}>Are you sure you want to delete this lift? This action cannot be undone.</Text>
+
+            {/* Action buttons */}
+            <View style={styles.modalButtonContainer}>
+              <TouchableOpacity 
+                style={styles.modalButton} 
+                onPress={handleDeleteCancel}
+              >
+                <Text style={styles.modalButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.modalButtonDelete]} 
+                onPress={handleDeleteConfirm}
+              >
+                <Text style={[styles.modalButtonText, styles.modalButtonTextDelete]}>Delete</Text>
+              </TouchableOpacity>
             </View>
           </TouchableOpacity>
-        </View>
-      </SafeAreaView>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -99,6 +357,7 @@ const styles = StyleSheet.create({
   headerCard: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingVertical: 16,
     position: 'relative',
@@ -124,6 +383,7 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 20,
+    paddingBottom: 100,
   },
   card: {
     backgroundColor: '#FFFFFF',
@@ -132,6 +392,24 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E5E5EA',
     marginBottom: 16,
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  videoContainer: {
+    borderRadius: 18,
+    overflow: 'hidden',
+    backgroundColor: '#F2F2F7',
+    marginBottom: 16,
+  },
+  video: {
+    width: '100%',
+    height: 200,
   },
   optionRow: {
     flexDirection: 'row',
@@ -164,5 +442,267 @@ const styles = StyleSheet.create({
     color: '#000000',
     fontFamily: 'SF Pro Display',
     marginLeft: 12,
+  },
+  pillsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+    gap: 12,
+  },
+  leftPills: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  pill: {
+    backgroundColor: '#333333',
+    borderRadius: 18,
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pillText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '400',
+    fontFamily: 'SF Pro Display',
+  },
+  orangePill: {
+    backgroundColor: '#FF9500',
+    borderRadius: 18,
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#000000',
+    fontFamily: 'SF Pro Display',
+    marginBottom: 12,
+  },
+  chartContainer: {
+    backgroundColor: 'transparent',
+    borderRadius: 16,
+    overflow: 'hidden',
+    alignItems: 'flex-start',
+  },
+  chart: {
+    borderRadius: 16,
+    marginLeft: -22,
+  },
+  ellipsisButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#F2F2F7',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
+  },
+  dropdownOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'transparent',
+    zIndex: 100,
+  },
+  dropdownContainer: {
+    position: 'absolute',
+    top: 120,
+    right: 20,
+    width: 180,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  dropdownOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+  },
+  dropdownOptionText: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: '#000000',
+    fontFamily: 'SF Pro Text',
+  },
+  dropdownOptionTextDestructive: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#FF3B30',
+    fontFamily: 'SF Pro Display',
+  },
+  dropdownDivider: {
+    height: 1,
+    backgroundColor: '#E5E5EA',
+    marginVertical: 8,
+  },
+  modalOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    zIndex: 200,
+  },
+  modalContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 24,
+    width: '100%',
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  modalCloseButton: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: '#E5E5EA',
+    backgroundColor: 'transparent',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#000000',
+    marginBottom: 8,
+    textAlign: 'left',
+  },
+  modalMessage: {
+    fontSize: 16,
+    fontWeight: '400',
+    color: '#000000',
+    marginBottom: 24,
+    textAlign: 'left',
+    lineHeight: 22,
+  },
+  modalButtonContainer: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  modalButton: {
+    flex: 1,
+    height: 44,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#000000',
+  },
+  modalButtonDelete: {
+    backgroundColor: '#FF3B30',
+  },
+  modalButtonTextDelete: {
+    color: '#FFFFFF',
+  },
+  reviewFeedbackButton: {
+    borderWidth: 1,
+    borderColor: '#000000',
+    borderRadius: 28,
+    width: '90%',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'transparent',
+    marginBottom: 4,
+  },
+  reviewFeedbackButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#000000',
+    fontFamily: 'SF Pro Display',
+  },
+  bottomContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'transparent',
+  },
+  bottomBackground: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingVertical: 30,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: -2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  cardsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  halfCard: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  halfCardTitle: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#000000',
+    fontFamily: 'SF Pro Display',
+    marginBottom: 4,
+  },
+  halfCardValue: {
+    fontSize: 24,
+    fontWeight: '600',
+    color: '#000000',
+    fontFamily: 'SF Pro Display',
   },
 }); 

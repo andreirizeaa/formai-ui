@@ -173,7 +173,6 @@ const styles = StyleSheet.create({
   },
   separator: {
     height: 0.5,
-    backgroundColor: '#C6C6C8',
     marginHorizontal: 16,
   },
   navigationBar: {
@@ -192,7 +191,7 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.1,
     shadowRadius: 8,
-    elevation: 8,
+    elevation: 4,
   },
   tabsContainer: {
     flexDirection: 'row',

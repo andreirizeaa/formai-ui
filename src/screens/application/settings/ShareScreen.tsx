@@ -192,6 +192,14 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 20,
     justifyContent: 'center',
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
   },
   contentTitle: {
     fontSize: 28,
@@ -266,13 +274,21 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     marginBottom: 24,
     alignSelf: 'center',
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
   },
   referImage: {
     width: '100%',
     height: 200,
   },
   howItWorksCard: {
-    backgroundColor: '#F2F2F7',
+    backgroundColor: '#E5E5EA',
     borderRadius: 20,
     paddingVertical: 24,
     paddingHorizontal: 20,

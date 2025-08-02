@@ -10,9 +10,14 @@ interface HomeScreenProps {
 
 interface LiftData {
   id: string;
-  liftName: string;
+  liftType: string;
   liftDate: string;
-  liftAccuracy: number;
+  accuracy: number;
+  lineGraphValues: number[];
+  weight: number;
+  unit: string;
+  sets: number;
+  reps: number;
 }
 
 export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow }: HomeScreenProps) {
@@ -20,9 +25,14 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow }: HomeScre
   const recentLifts: LiftData[] = [
     {
       id: '1',
-      liftName: 'Bench Press',
+      liftType: 'Bench Press',
       liftDate: 'Today, 2:30 PM',
-      liftAccuracy: 87,
+      accuracy: 87,
+      lineGraphValues: [95, 92, 90, 88, 85, 87, 89, 91],
+      weight: 85,
+      unit: 'KG',
+      sets: 3,
+      reps: 8,
     },
   ];
 
@@ -39,13 +49,13 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow }: HomeScre
         activeOpacity={0.7}
       >
         <View style={styles.liftHeader}>
-          <Text style={styles.liftName}>{lift.liftName}</Text>
+          <Text style={styles.liftName}>{lift.liftType}</Text>
           <Text style={styles.liftDate}>{lift.liftDate}</Text>
         </View>
         <View style={styles.liftAccuracyContainer}>
           <Text style={styles.accuracyLabel}>Accuracy</Text>
           <View style={styles.accuracyPill}>
-            <Text style={styles.accuracyValue}>{lift.liftAccuracy}%</Text>
+            <Text style={styles.accuracyValue}>{lift.accuracy}%</Text>
           </View>
         </View>
       </TouchableOpacity>

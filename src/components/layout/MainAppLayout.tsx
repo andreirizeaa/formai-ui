@@ -30,6 +30,18 @@ interface PersonalData {
   gender: string;
 }
 
+interface LiftData {
+  id: string;
+  liftType: string;
+  liftDate: string;
+  accuracy: number;
+  lineGraphValues: number[];
+  weight: number;
+  unit: string;
+  sets: number;
+  reps: number;
+}
+
 export function MainAppLayout({ children }: MainAppLayoutProps) {
   const [activeTab, setActiveTab] = useState<'home' | 'performance' | 'settings'>('home');
   const [showAddOptions, setShowAddOptions] = useState(false);
@@ -43,7 +55,7 @@ export function MainAppLayout({ children }: MainAppLayoutProps) {
   const [showEditGender, setShowEditGender] = useState(false);
   const [showLiftDetails, setShowLiftDetails] = useState(false);
   const [showFeedbackSlideshow, setShowFeedbackSlideshow] = useState(false);
-  const [selectedLift, setSelectedLift] = useState<any>(null);
+  const [selectedLift, setSelectedLift] = useState<LiftData | null>(null);
   const [currentPersonalData, setCurrentPersonalData] = useState<PersonalData | null>(null);
   const [personalData, setPersonalData] = useState<PersonalData>({
     currentWeight: '75 kg',
@@ -89,7 +101,7 @@ export function MainAppLayout({ children }: MainAppLayoutProps) {
     setShowUploadScreen(false);
   };
 
-  const handleShowLiftDetails = (liftData: any) => {
+  const handleShowLiftDetails = (liftData: LiftData) => {
     hapticFeedback.selection();
     setSelectedLift(liftData);
     setShowLiftDetails(true);
@@ -500,7 +512,7 @@ export function MainAppLayout({ children }: MainAppLayoutProps) {
       )}
 
       {/* Lift Details - Full Screen Overlay with Animation */}
-      {showLiftDetails && (
+      {showLiftDetails && selectedLift && (
         <Animated.View
           style={[
             styles.fullScreenOverlay,
@@ -516,7 +528,7 @@ export function MainAppLayout({ children }: MainAppLayoutProps) {
           <LiftDetails
             onClose={handleCloseLiftDetails}
             onShowFeedbackSlideshow={handleShowFeedbackSlideshow}
-            liftData={selectedLift || undefined}
+            liftData={selectedLift}
           />
         </Animated.View>
       )}
