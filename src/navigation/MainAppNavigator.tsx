@@ -551,7 +551,8 @@ export function MainAppNavigator() {
           name="FeedbackSlideshow" 
           component={FeedbackSlideshowWrapper}
           options={{
-            presentation: 'modal',
+            presentation: 'card',
+            animation: 'scale_from_center',
           }}
         />
         <Stack.Screen 
