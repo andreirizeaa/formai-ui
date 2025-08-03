@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
-import { BlurView } from 'expo-blur';
 import Svg, { Path } from 'react-native-svg';
 import i18n from '../../../utils/i18n';
 import { hapticFeedback } from '../../../utils/haptic';
@@ -24,7 +23,7 @@ export function AddOptions({ isVisible, onUploadPress, onRecordPress, onClose }:
       }} 
       activeOpacity={1}
     >
-      <BlurView intensity={20} style={styles.blurContainer}>
+      <View style={styles.darkOverlay}>
         <View style={styles.cardsContainer}>
           {/* Upload Video Card */}
           <TouchableOpacity 
@@ -58,7 +57,7 @@ export function AddOptions({ isVisible, onUploadPress, onRecordPress, onClose }:
             <Text style={styles.cardTitle}>{i18n.t('add.recordVideo')}</Text>
           </TouchableOpacity>
         </View>
-      </BlurView>
+      </View>
     </TouchableOpacity>
   );
 }
@@ -72,8 +71,9 @@ const styles = StyleSheet.create({
     bottom: 0,
     zIndex: 1000,
   },
-  blurContainer: {
+  darkOverlay: {
     flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-end',
     alignItems: 'flex-end',
     paddingBottom: 120,
