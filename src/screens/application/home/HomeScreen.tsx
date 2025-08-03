@@ -86,18 +86,23 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
   };
 
   // Test function to add sample loading lifts
-  const handleAddTestLift = () => {
+  const handleAddTestLift = async () => {
     hapticFeedback.selection();
     const today = new Date().toISOString().split('T')[0];
     
-    addLoadingLift({
-      thumbnailUri: 'https://picsum.photos/200/300',
-      movementType: 'Bench Press',
-      weightValue: 135,
-      weightUnit: 'lbs',
-      reps: 8,
-      dateToday: today,
-    });
+    try {
+      await addLoadingLift({
+        thumbnailUri: 'https://picsum.photos/200/300',
+        movementType: 'Bench Press',
+        weightValue: 135,
+        weightUnit: 'lbs',
+        reps: 8,
+        dateToday: today,
+      });
+    } catch (error) {
+      console.error('Failed to add test lift:', error);
+      // You could show a toast notification here
+    }
   };
 
   function LiftCard({ lift, index }: { lift: LiftData; index: number }) {

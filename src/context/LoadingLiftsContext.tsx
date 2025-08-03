@@ -10,6 +10,8 @@ interface LoadingLiftData {
   dateToday: string;
   progress: number;
   isComplete: boolean;
+  status: 'uploading' | 'processing' | 'completed' | 'error';
+  errorMessage?: string;
 }
 
 interface CompletedLiftData {
@@ -26,13 +28,27 @@ interface CompletedLiftData {
   thumbnailURL?: string;
 }
 
+// API response interface for when you integrate real APIs
+interface VideoAnalysisResponse {
+  id: string;
+  accuracy: number;
+  lineGraphValues: number[];
+  analysis: {
+    formScore: number;
+    recommendations: string[];
+    keyFrames: string[];
+  };
+}
+
 interface LoadingLiftsContextType {
   loadingLifts: LoadingLiftData[];
   completedLifts: CompletedLiftData[];
-  addLoadingLift: (liftData: Omit<LoadingLiftData, 'id' | 'progress' | 'isComplete'>) => void;
+  addLoadingLift: (liftData: Omit<LoadingLiftData, 'id' | 'progress' | 'isComplete' | 'status'>) => Promise<string>;
   updateLiftProgress: (id: string, progress: number) => void;
-  completeLift: (id: string) => void;
+  completeLift: (id: string, analysisData?: VideoAnalysisResponse) => void;
   removeLift: (id: string) => void;
+  removeCompletedLift: (id: string) => void;
+  retryLift: (id: string) => Promise<void>;
 }
 
 const LoadingLiftsContext = createContext<LoadingLiftsContextType | undefined>(undefined);
@@ -45,31 +61,89 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
   const [loadingLifts, setLoadingLifts] = useState<LoadingLiftData[]>([]);
   const [completedLifts, setCompletedLifts] = useState<CompletedLiftData[]>([]);
 
-  const addLoadingLift = (liftData: Omit<LoadingLiftData, 'id' | 'progress' | 'isComplete'>) => {
+  // Mock API function - replace with real API call
+  const analyzeVideo = async (liftData: LoadingLiftData): Promise<VideoAnalysisResponse> => {
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 5000 + Math.random() * 2000));
+    
+    // Return successful analysis data
+    return {
+      id: liftData.id,
+      accuracy: generateAccuracy(liftData.movementType),
+      lineGraphValues: generateRandomLineGraph(),
+      analysis: {
+        formScore: Math.floor(Math.random() * 20) + 80,
+        recommendations: [
+          'Keep your back straight',
+          'Lower the weight slightly',
+          'Focus on breathing rhythm'
+        ],
+        keyFrames: ['frame1.jpg', 'frame2.jpg', 'frame3.jpg']
+      }
+    };
+  };
+
+  const addLoadingLift = async (liftData: Omit<LoadingLiftData, 'id' | 'progress' | 'isComplete' | 'status'>): Promise<string> => {
+    const liftId = Date.now().toString();
+    
     const newLift: LoadingLiftData = {
       ...liftData,
-      id: Date.now().toString(),
+      id: liftId,
       progress: 0,
       isComplete: false,
+      status: 'uploading',
     };
     
     setLoadingLifts(prev => [newLift, ...prev]);
     
-    // Simulate realistic progress over 5 seconds
-    let progress = 0;
-    const interval = setInterval(() => {
-      // Vary the progress increment to make it more realistic
-      const increment = Math.random() * 15 + 10; // 10-25% per second
-      progress += increment;
+    try {
+      // Simulate upload phase (0-30%)
+      await simulateUpload(newLift.id);
       
-      if (progress >= 100) {
-        progress = 100;
-        clearInterval(interval);
-        completeLift(newLift.id);
-      } else {
-        updateLiftProgress(newLift.id, Math.min(progress, 99)); // Cap at 99% until complete
-      }
-    }, 1000);
+      // Update status to processing
+      setLoadingLifts(prev => 
+        prev.map(lift => 
+          lift.id === newLift.id ? { ...lift, status: 'processing' } : lift
+        )
+      );
+      
+      // Simulate processing phase (30-90%)
+      await simulateProcessing(newLift.id);
+      
+      // Call mock API for analysis
+      const analysisData = await analyzeVideo(newLift);
+      
+      // Complete the lift with analysis data
+      completeLift(newLift.id, analysisData);
+      
+    } catch (error) {
+      // Handle API errors
+      setLoadingLifts(prev => 
+        prev.map(lift => 
+          lift.id === newLift.id ? { 
+            ...lift, 
+            status: 'error', 
+            errorMessage: error instanceof Error ? error.message : 'Unknown error occurred'
+          } : lift
+        )
+      );
+    }
+    
+    return liftId;
+  };
+
+  const simulateUpload = async (liftId: string) => {
+    for (let progress = 0; progress <= 30; progress += 5) {
+      await new Promise(resolve => setTimeout(resolve, 200));
+      updateLiftProgress(liftId, progress);
+    }
+  };
+
+  const simulateProcessing = async (liftId: string) => {
+    for (let progress = 30; progress <= 90; progress += 10) {
+      await new Promise(resolve => setTimeout(resolve, 300 + Math.random() * 200));
+      updateLiftProgress(liftId, progress);
+    }
   };
 
   const updateLiftProgress = (id: string, progress: number) => {
@@ -80,8 +154,7 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
     );
   };
 
-  const completeLift = (id: string) => {
-    // Find the loading lift to convert to completed lift
+  const completeLift = (id: string, analysisData?: VideoAnalysisResponse) => {
     setLoadingLifts(prevLoadingLifts => {
       const loadingLift = prevLoadingLifts.find(lift => lift.id === id);
       
@@ -91,25 +164,25 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
           id: loadingLift.id,
           liftType: loadingLift.movementType,
           liftDate: formatLiftDate(loadingLift.dateToday),
-          accuracy: generateAccuracy(loadingLift.movementType),
-          lineGraphValues: generateRandomLineGraph(),
+          accuracy: analysisData?.accuracy || generateAccuracy(loadingLift.movementType),
+          lineGraphValues: analysisData?.lineGraphValues || generateRandomLineGraph(),
           weight: loadingLift.weightValue,
           unit: loadingLift.weightUnit.toUpperCase(),
-          sets: 1, // Default to 1 set for now
+          sets: 1,
           reps: loadingLift.reps,
           videoURL: '', // This would be the actual video URL from your backend
           thumbnailURL: loadingLift.thumbnailUri,
         };
 
-        // Add to completed lifts after the loading lift is removed (2 seconds)
+        // Add to completed lifts after the loading lift is removed
         setTimeout(() => {
           setCompletedLifts(prev => [completedLift, ...prev]);
-        }, 2000); // Changed from 500ms to 2000ms
+        }, 2000);
       }
 
       // Update loading lift to complete
       return prevLoadingLifts.map(lift => 
-        lift.id === id ? { ...lift, progress: 100, isComplete: true } : lift
+        lift.id === id ? { ...lift, progress: 100, isComplete: true, status: 'completed' } : lift
       );
     });
     
@@ -119,8 +192,56 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
     }, 2000);
   };
 
+  const retryLift = async (id: string) => {
+    const lift = loadingLifts.find(l => l.id === id);
+    if (!lift) return;
+
+    // Reset lift to initial state
+    setLoadingLifts(prev => 
+      prev.map(l => 
+        l.id === id ? { 
+          ...l, 
+          progress: 0, 
+          isComplete: false, 
+          status: 'uploading',
+          errorMessage: undefined
+        } : l
+      )
+    );
+
+    try {
+      await simulateUpload(id);
+      
+      setLoadingLifts(prev => 
+        prev.map(l => 
+          l.id === id ? { ...l, status: 'processing' } : l
+        )
+      );
+      
+      await simulateProcessing(id);
+      
+      const analysisData = await analyzeVideo(lift);
+      completeLift(id, analysisData);
+      
+    } catch (error) {
+      setLoadingLifts(prev => 
+        prev.map(l => 
+          l.id === id ? { 
+            ...l, 
+            status: 'error', 
+            errorMessage: error instanceof Error ? error.message : 'Unknown error occurred'
+          } : l
+        )
+      );
+    }
+  };
+
   const removeLift = (id: string) => {
     setLoadingLifts(prev => prev.filter(lift => lift.id !== id));
+  };
+
+  const removeCompletedLift = (id: string) => {
+    setCompletedLifts(prev => prev.filter(lift => lift.id !== id));
   };
 
   // Helper function to format date for completed lifts
@@ -179,6 +300,8 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
         updateLiftProgress,
         completeLift,
         removeLift,
+        removeCompletedLift,
+        retryLift,
       }}
     >
       {children}

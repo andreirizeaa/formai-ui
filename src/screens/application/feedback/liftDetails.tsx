@@ -5,6 +5,7 @@ import { VideoView, useVideoPlayer } from 'expo-video';
 import { LineChart } from 'react-native-chart-kit';
 import Svg, { Path } from 'react-native-svg';
 import { hapticFeedback } from '../../../utils/haptic';
+import { useLoadingLifts } from '../../../context/LoadingLiftsContext';
 
 interface VideoPlayerComponentProps {
   videoUri: string;
@@ -28,6 +29,7 @@ interface LiftDetailsProps {
   onClose: () => void;
   onShowFeedbackSlideshow: () => void;
   liftData: {
+    id: string; // Added id to liftData
     liftType: string;
     liftDate: string;
     accuracy: number;
@@ -40,6 +42,7 @@ interface LiftDetailsProps {
 }
 
 export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData }: LiftDetailsProps) {
+  const { removeCompletedLift } = useLoadingLifts();
   const [isStarSelected, setIsStarSelected] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -62,8 +65,8 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData }: Lift
   const handleDeleteConfirm = () => {
     hapticFeedback.success();
     
-    // TODO: Implement actual lift deletion logic
-    console.log('Lift deletion confirmed');
+    // Remove the lift from completed lifts
+    removeCompletedLift(liftData.id);
     setShowDeleteModal(false);
     onClose(); // Close the lift details screen after deletion
   };
