@@ -6,6 +6,7 @@ import { VideoView, useVideoPlayer } from 'expo-video';
 import Svg, { Path } from 'react-native-svg';
 import i18n from '../../../../utils/i18n';
 import { hapticFeedback } from '../../../../utils/haptic';
+import { generateVideoThumbnail } from '../../../../utils/generateVideoThumbnail';
 import { VideoPreviewScreen } from '../common/VideoPreviewScreen';
 import { MovementSelectionScreen } from '../common/MovementSelectionScreen';
 import { PracticesScreen } from '../common/PracticesScreen';
@@ -168,6 +169,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
   // Combined state object for logging
   const [uploadData, setUploadData] = useState<{
     videoLink: string;
+    thumbnailUri: string;
     dateToday: string;
     movementType: string;
     weightValue: number;
@@ -349,27 +351,36 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
     setShowMovementSelection(true);
   };
 
-  const handleWeightRepsUpload = (data: { weight: number; unit: 'kg' | 'lbs'; reps: number }) => {
+  const handleWeightRepsUpload = async (data: { weight: number; unit: 'kg' | 'lbs'; reps: number }) => {
     setWeightData(data);
 
-    // Create the upload data object
-    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
-    const uploadDataObj = {
-      videoLink: recordedVideoUri || '',
-      dateToday: today,
-      movementType: selectedMovement,
-      weightValue: data.weight,
-      weightUnit: data.unit,
-      reps: data.reps,
-    };
-    setUploadData(uploadDataObj);
-    
-    // Triple important haptic feedback for distinct feedback
-    hapticFeedback.success();
-    
-    // Here you would typically upload the video to your server
-    // For now, we'll just close the modal
-    onClose();
+    try {
+      // Generate thumbnail from the video URI
+      const thumbnailUri = await generateVideoThumbnail(recordedVideoUri || '');
+
+      // Create the upload data object with thumbnail
+      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+      const uploadDataObj = {
+        videoLink: recordedVideoUri || '',
+        thumbnailUri: thumbnailUri,
+        dateToday: today,
+        movementType: selectedMovement,
+        weightValue: data.weight,
+        weightUnit: data.unit,
+        reps: data.reps,
+      };
+      setUploadData(uploadDataObj);
+      
+      // Triple important haptic feedback for distinct feedback
+      hapticFeedback.success();
+      
+      // Here you would typically upload the video to your server
+      // For now, we'll just close the modal
+      onClose();
+    } catch (error) {
+      console.error('Error generating thumbnail:', error);
+      Alert.alert('Error', 'Failed to generate video thumbnail. Please try again.');
+    }
   };
 
   const handleSearchChange = (text: string) => {
