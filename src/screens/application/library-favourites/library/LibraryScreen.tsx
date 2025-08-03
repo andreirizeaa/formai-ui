@@ -2,13 +2,26 @@ import React from 'react';
 import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
-import { hapticFeedback } from '../../../utils/haptic';
+import { hapticFeedback } from '../../../../utils/haptic';
 
 interface LibraryScreenProps {
   onBack: () => void;
+  onTriggerAddOptions: () => void;
 }
 
-export function LibraryScreen({ onBack }: LibraryScreenProps) {
+export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProps) {
+  // Dummy empty list for now
+  const libraryVideos: any[] = [];
+
+  const handleEmptyCardPress = () => {
+    hapticFeedback.selection();
+    onBack(); // Close library screen
+    // Small delay to ensure navigation completes before triggering add options
+    setTimeout(() => {
+      onTriggerAddOptions();
+    }, 100);
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
@@ -37,7 +50,21 @@ export function LibraryScreen({ onBack }: LibraryScreenProps) {
 
       {/* Content */}
       <View style={styles.content}>
-        {/* Empty content for now */}
+        {libraryVideos.length > 0 ? (
+          // TODO: Add video list rendering here when we have data
+          <View />
+        ) : (
+          <TouchableOpacity 
+            style={styles.noVideosCard}
+            onPress={handleEmptyCardPress}
+            activeOpacity={0.7}
+          >
+            <View style={styles.noVideosContent}>
+              <Text style={styles.noVideosTitle}>No videos anaylsed</Text>
+              <Text style={styles.noVideosSubtitle}>Start analysing today's workout by taking a quick video</Text>
+            </View>
+          </TouchableOpacity>
+        )}
       </View>
     </SafeAreaView>
   );
@@ -76,5 +103,37 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 20,
     paddingTop: 10,
+  },
+  noVideosCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  noVideosContent: {
+    alignItems: 'center',
+  },
+  noVideosTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#000000',
+    marginBottom: 8,
+    fontFamily: 'SF Pro Display',
+  },
+  noVideosSubtitle: {
+    fontSize: 16,
+    fontWeight: '400',
+    color: '#8E8E93',
+    fontFamily: 'SF Pro Text',
+    textAlign: 'center',
   },
 }); 

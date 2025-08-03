@@ -20,8 +20,8 @@ import { RecordModal } from '../screens/application/add/record/RecordModal';
 import { UploadModal } from '../screens/application/add/upload/UploadModal';
 import { LiftDetails } from '../screens/application/feedback/liftDetails';
 import { FeedbackSlideshow } from '../screens/application/feedback/feedbackSlideshow';
-import { LibraryScreen } from '../screens/application/library/LibraryScreen';
-import { FavouritesScreen } from '../screens/application/favourites/FavouritesScreen';
+import { LibraryScreen } from '../screens/application/library-favourites/library/LibraryScreen';
+import { FavouritesScreen } from '../screens/application/library-favourites/favourites/FavouritesScreen';
 import { BottomNavigationBar } from './BottomNavigationBar';
 
 // Types for navigation
@@ -52,6 +52,7 @@ export type MainStackParamList = {
       unit: string;
       sets: number;
       reps: number;
+      videoURL: string;
     };
   };
   FeedbackSlideshow: undefined;
@@ -318,24 +319,24 @@ function FeedbackSlideshowWrapper() {
   );
 }
 
-function LibraryScreenWrapper() {
+function LibraryScreenWrapper({ onTriggerAddOptions }: { onTriggerAddOptions: () => void }) {
   const navigation = useNavigation<MainStackNavigationProp>();
   
   const handleBack = () => {
     navigation.goBack();
   };
 
-  return <LibraryScreen onBack={handleBack} />;
+  return <LibraryScreen onBack={handleBack} onTriggerAddOptions={onTriggerAddOptions} />;
 }
 
-function FavouritesScreenWrapper() {
+function FavouritesScreenWrapper({ onTriggerAddOptions }: { onTriggerAddOptions: () => void }) {
   const navigation = useNavigation<MainStackNavigationProp>();
   
   const handleBack = () => {
     navigation.goBack();
   };
 
-  return <FavouritesScreen onBack={handleBack} />;
+  return <FavouritesScreen onBack={handleBack} onTriggerAddOptions={onTriggerAddOptions} />;
 }
 
 // Main tabs navigator with custom bottom navigation
@@ -411,6 +412,21 @@ function MainTabsNavigator() {
 
 // Main stack navigator
 export function MainAppNavigator() {
+  const [showAddOptions, setShowAddOptions] = React.useState(false);
+
+  const handleAddPress = () => {
+    setShowAddOptions(true);
+  };
+
+  const handleCloseAddOptions = () => {
+    setShowAddOptions(false);
+  };
+
+  const handleNavigateToLibrary = () => {
+    // Navigate to library screen
+    // This will be handled by the navigation prop in the wrapper
+  };
+
   return (
     <NavigationContainer>
       <Stack.Navigator
@@ -467,7 +483,6 @@ export function MainAppNavigator() {
           component={RecordModalWrapper}
           options={{
             presentation: 'modal',
-            animation: 'none',
           }}
         />
         <Stack.Screen 
@@ -475,7 +490,6 @@ export function MainAppNavigator() {
           component={UploadModalWrapper}
           options={{
             presentation: 'modal',
-            animation: 'none',
           }}
         />
         <Stack.Screen 
@@ -489,26 +503,53 @@ export function MainAppNavigator() {
           name="FeedbackSlideshow" 
           component={FeedbackSlideshowWrapper}
           options={{
-            presentation: 'card',
-            animation: 'scale_from_center',
+            presentation: 'modal',
           }}
         />
         <Stack.Screen 
           name="Library" 
-          component={LibraryScreenWrapper}
+          component={() => <LibraryScreenWrapper onTriggerAddOptions={handleAddPress} />}
           options={{
             presentation: 'card',
           }}
         />
         <Stack.Screen 
           name="Favourites" 
-          component={FavouritesScreenWrapper}
+          component={() => <FavouritesScreenWrapper onTriggerAddOptions={handleAddPress} />}
           options={{
             presentation: 'card',
           }}
         />
       </Stack.Navigator>
+
+      <AddOptionsWrapper 
+        showAddOptions={showAddOptions}
+        onClose={handleCloseAddOptions}
+      />
     </NavigationContainer>
+  );
+}
+
+function AddOptionsWrapper({ showAddOptions, onClose }: { showAddOptions: boolean; onClose: () => void }) {
+  const navigation = useNavigation<MainStackNavigationProp>();
+
+  const handleUploadPress = () => {
+    onClose();
+    navigation.navigate('UploadModal');
+  };
+
+  const handleRecordPress = () => {
+    onClose();
+    navigation.navigate('RecordModal');
+  };
+
+  return (
+    <AddOptions
+      isVisible={showAddOptions}
+      onUploadPress={handleUploadPress}
+      onRecordPress={handleRecordPress}
+      onClose={onClose}
+    />
   );
 }
 
