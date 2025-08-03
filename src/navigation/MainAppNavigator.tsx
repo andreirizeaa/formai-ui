@@ -20,6 +20,8 @@ import { RecordModal } from '../screens/application/add/record/RecordModal';
 import { UploadModal } from '../screens/application/add/upload/UploadModal';
 import { LiftDetails } from '../screens/application/feedback/liftDetails';
 import { FeedbackSlideshow } from '../screens/application/feedback/feedbackSlideshow';
+import { LibraryScreen } from '../screens/application/library/LibraryScreen';
+import { FavouritesScreen } from '../screens/application/favourites/FavouritesScreen';
 import { BottomNavigationBar } from './BottomNavigationBar';
 
 // Types for navigation
@@ -53,6 +55,8 @@ export type MainStackParamList = {
     };
   };
   FeedbackSlideshow: undefined;
+  Library: undefined;
+  Favourites: undefined;
 };
 
 type MainStackNavigationProp = StackNavigationProp<MainStackParamList>;
@@ -71,10 +75,20 @@ function HomeScreenWrapper() {
     navigation.navigate('FeedbackSlideshow');
   };
 
+  const handleShowLibrary = () => {
+    navigation.navigate('Library');
+  };
+
+  const handleShowFavourites = () => {
+    navigation.navigate('Favourites');
+  };
+
   return (
     <HomeScreen 
       onShowFeedback={handleShowFeedback}
       onShowFeedbackSlideshow={handleShowFeedbackSlideshow}
+      onShowLibrary={handleShowLibrary}
+      onShowFavourites={handleShowFavourites}
     />
   );
 }
@@ -304,6 +318,26 @@ function FeedbackSlideshowWrapper() {
   );
 }
 
+function LibraryScreenWrapper() {
+  const navigation = useNavigation<MainStackNavigationProp>();
+  
+  const handleBack = () => {
+    navigation.goBack();
+  };
+
+  return <LibraryScreen onBack={handleBack} />;
+}
+
+function FavouritesScreenWrapper() {
+  const navigation = useNavigation<MainStackNavigationProp>();
+  
+  const handleBack = () => {
+    navigation.goBack();
+  };
+
+  return <FavouritesScreen onBack={handleBack} />;
+}
+
 // Main tabs navigator with custom bottom navigation
 function MainTabsNavigator() {
   const [activeTab, setActiveTab] = React.useState<'home' | 'performance' | 'settings'>('home');
@@ -457,6 +491,20 @@ export function MainAppNavigator() {
           options={{
             presentation: 'card',
             animation: 'scale_from_center',
+          }}
+        />
+        <Stack.Screen 
+          name="Library" 
+          component={LibraryScreenWrapper}
+          options={{
+            presentation: 'card',
+          }}
+        />
+        <Stack.Screen 
+          name="Favourites" 
+          component={FavouritesScreenWrapper}
+          options={{
+            presentation: 'card',
           }}
         />
       </Stack.Navigator>
