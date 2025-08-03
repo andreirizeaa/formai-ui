@@ -24,9 +24,7 @@ export default function App() {
           require('./assets/refer-friends-group.png'),
           require('./assets/formai-light-icon.png'),
           require('./assets/formai-dark-icon.png'),
-          require('./assets/adaptive-icon.png'),
-          require('./assets/icon.png'),
-          require('./assets/splash-icon.png'),
+          require('./assets/formai-ios-logo.png'),
         ]);
       } catch (error) {
         console.warn('Error preloading assets:', error);
