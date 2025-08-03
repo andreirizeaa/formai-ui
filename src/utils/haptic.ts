@@ -3,11 +3,6 @@ import * as Haptics from 'expo-haptics';
 export const hapticFeedback = {
   // Light impact for button selections
   selection: () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  },
-
-  // Medium impact for next button clicks
-  next: () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
   },
 
@@ -18,6 +13,7 @@ export const hapticFeedback = {
 
   // Success notification for completed actions
   success: () => {
+    // Error haptic feels better than success
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   },
 

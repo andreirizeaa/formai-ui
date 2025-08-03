@@ -14,7 +14,7 @@ export function EditGenderScreen({ onBack, currentValue, onSave }: EditGenderScr
   const [selectedGender, setSelectedGender] = useState(currentValue);
 
   const handleNext = () => {
-    hapticFeedback.selection();
+    hapticFeedback.success();
     onSave(selectedGender);
   };
 

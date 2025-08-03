@@ -69,7 +69,7 @@ export function EditHeightScreen({ onBack, currentValue, onSave }: EditHeightScr
   };
 
   const handleSave = () => {
-    hapticFeedback.selection();
+    hapticFeedback.success();
     if (isMetric) {
       onSave(`${selectedHeight} ${i18n.t('measurements.cm')}`);
     } else {

@@ -31,7 +31,7 @@ export function LiftingGoalScreen({ onNext, onBack }: LiftingGoalScreenProps) {
 
   const handleNext = () => {
     if (preferences.liftingGoal) {
-      hapticFeedback.next();
+      hapticFeedback.selection();
       onNext();
     }
   };

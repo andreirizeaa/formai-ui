@@ -66,7 +66,7 @@ export function LogoutModal({ isVisible, onClose, onConfirm }: LogoutModalProps)
             <TouchableOpacity 
               style={styles.button} 
               onPress={() => {
-                hapticFeedback.selection();
+                hapticFeedback.success();
                 onConfirm();
               }}
             >

@@ -102,7 +102,7 @@ export function EditDateOfBirthScreen({ onBack, currentValue, onSave }: EditDate
   };
 
   const handleSave = () => {
-    hapticFeedback.selection();
+    hapticFeedback.success();
     const monthName = months[selectedMonth - 1]; // Use the translated month name
     const formattedDate = `${monthName} ${selectedDay}, ${selectedYear}`;
     onSave(formattedDate);
