@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   logo: {
-    width: 110,
+    width: 160,
     height: 40,
   },
   scrollView: {
