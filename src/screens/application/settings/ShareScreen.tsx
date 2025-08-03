@@ -145,11 +145,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-    position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    bottom: 12,
+    bottom: 0,
   },
   header: {
     flexDirection: 'row',
@@ -179,7 +178,7 @@ const styles = StyleSheet.create({
   titleContainer: {
     paddingHorizontal: 20,
     paddingVertical: 16,
-    paddingTop: 0, // Remove padding top from header
+    paddingTop: 0,
   },
   pageTitle: {
     fontSize: 28,
@@ -191,7 +190,7 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: 20,
-    justifyContent: 'center',
+    paddingTop: 10,
     shadowColor: '#000000',
     shadowOffset: {
       width: 0,

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import i18n from '../../../utils/i18n';
 import { hapticFeedback } from '../../../utils/haptic';
@@ -146,7 +147,7 @@ export function PersonalDetailsScreen({
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       {/* Header */}
       <View style={styles.header}>
@@ -200,7 +201,7 @@ export function PersonalDetailsScreen({
           />
         </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -208,19 +209,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 12,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingVertical: 16,
-    paddingTop: 60, // Account for status bar
+    paddingBottom: 10,
   },
   backButton: {
     width: 44,
@@ -242,7 +237,7 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingTop: 10,
   },
   card: {
     backgroundColor: '#FFFFFF',

@@ -347,10 +347,10 @@ function MainTabsNavigator() {
 
   return (
     <LinearGradient
-      colors={['#ffd6a7', '#ffffff']}
+      colors={['#F7EFFF', '#ffffff']}
       locations={[0, 0.75]}
       style={styles.container}
-      start={{ x: 2, y: 0 }}
+      start={{ x: 0, y: 0 }}
       end={{ x: 0, y: 1 }}
     >
       <SafeAreaView style={styles.safeArea}>

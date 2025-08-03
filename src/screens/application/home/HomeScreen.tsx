@@ -88,15 +88,13 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow }: HomeScre
       
       <View style={styles.bottomContent}>
         <Text style={styles.sectionTitle}>Recent Lifts</Text>
-        <ScrollView 
+        <View 
           style={styles.liftsScrollView} 
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.liftsScrollContent}
         >
           {recentLifts.map((lift) => (
             <LiftCard key={lift.id} lift={lift} />
           ))}
-        </ScrollView>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -180,7 +178,7 @@ const styles = StyleSheet.create({
     fontFamily: 'SF Pro Text',
   },
   accuracyPill: {
-    backgroundColor: '#FF9500',
+    backgroundColor: '#000',
     borderRadius: 18,
     paddingHorizontal: 10,
     paddingVertical: 5,
