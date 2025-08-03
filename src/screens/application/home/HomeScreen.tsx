@@ -1,11 +1,14 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Svg, { Path } from 'react-native-svg';
 import { hapticFeedback } from '../../../utils/haptic';
 
 interface HomeScreenProps {
   onShowFeedback: (liftData: LiftData) => void;
   onShowFeedbackSlideshow: () => void;
+  onShowLibrary: () => void;
+  onShowFavourites: () => void;
 }
 
 interface LiftData {
@@ -20,7 +23,7 @@ interface LiftData {
   reps: number;
 }
 
-export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow }: HomeScreenProps) {
+export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibrary, onShowFavourites }: HomeScreenProps) {
   // Dummy data for recent lifts
   // const recentLifts: LiftData[] = [];
 
@@ -80,6 +83,16 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow }: HomeScre
     onShowFeedback(lift);
   };
 
+  const handleLibraryPress = () => {
+    hapticFeedback.selection();
+    onShowLibrary();
+  };
+
+  const handleFavouritesPress = () => {
+    hapticFeedback.selection();
+    onShowFavourites();
+  };
+
   function LiftCard({ lift, index }: { lift: LiftData; index: number }) {
     const translateY = liftAnimations[index].interpolate({
       inputRange: [0, 1],
@@ -131,6 +144,33 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow }: HomeScre
       <View style={styles.spacer} />
       
       <View style={styles.bottomContent}>
+        <View style={styles.topCardsContainer}>
+          <TouchableOpacity 
+            style={styles.topCard}
+            onPress={handleLibraryPress}
+            activeOpacity={0.7}
+          >
+            <View style={styles.topCardContent}>
+              <Svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+                <Path strokeLinecap="round" strokeLinejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0 0 12 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75Z" />
+              </Svg>
+              <Text style={styles.topCardTitle}>Library</Text>
+            </View>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.topCard}
+            onPress={handleFavouritesPress}
+            activeOpacity={0.7}
+          >
+            <View style={styles.topCardContent}>
+              <Svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+                <Path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+              </Svg>
+              <Text style={styles.topCardTitle}>Favourites</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+        
         <Text style={styles.sectionTitle}>Recent Lifts</Text>
         <View 
           style={styles.liftsScrollView} 
@@ -283,5 +323,37 @@ const styles = StyleSheet.create({
     color: '#8E8E93',
     fontFamily: 'SF Pro Text',
     textAlign: 'center',
+  },
+  topCardsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  topCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 20,
+    width: '48%', // Adjust as needed for 50/50 split
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  topCardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  topCardTitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#000000',
+    marginLeft: 8,
+    fontFamily: 'SF Pro Text',
   },
 }); 
