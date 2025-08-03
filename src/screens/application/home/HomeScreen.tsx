@@ -5,33 +5,20 @@ import Svg, { Path } from 'react-native-svg';
 import { hapticFeedback } from '../../../utils/haptic';
 import { useLoadingLifts } from '../../../context/LoadingLiftsContext';
 import { LoadingLiftCard } from './LoadingLiftCard';
+import { ILiftData } from '../feedback/liftDetails';
 
 interface HomeScreenProps {
-  onShowFeedback: (liftData: LiftData) => void;
+  onShowFeedback: (liftData: ILiftData) => void;
   onShowFeedbackSlideshow: () => void;
   onShowLibrary: () => void;
   onShowFavourites: () => void;
-}
-
-interface LiftData {
-  id: string;
-  liftType: string;
-  liftDate: string;
-  accuracy: number;
-  lineGraphValues: number[];
-  weight: number;
-  unit: string;
-  sets: number;
-  reps: number;
-  videoURL: any;
-  thumbnailURL?: any;
 }
 
 export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibrary, onShowFavourites }: HomeScreenProps) {
   const { loadingLifts, completedLifts, addLoadingLift } = useLoadingLifts();
   
   // Use completed lifts from context instead of dummy data
-  const recentLifts: LiftData[] = completedLifts;
+  const recentLifts: ILiftData[] = completedLifts;
 
   // Animation values for each lift card - recreate when lifts change
   const liftAnimations = useRef<Animated.Value[]>([]);
@@ -70,7 +57,7 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
     Animated.parallel(animations).start();
   }, [recentLifts]); // Re-run when lifts change
 
-  const handleLiftPress = (lift: LiftData) => {
+  const handleLiftPress = (lift: ILiftData) => {
     hapticFeedback.selection();
     onShowFeedback(lift);
   };
@@ -105,7 +92,7 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
     }
   };
 
-  function LiftCard({ lift, index }: { lift: LiftData; index: number }) {
+  function LiftCard({ lift, index }: { lift: ILiftData; index: number }) {
     // Ensure the animation values exist before using them
     const translateY = liftAnimations.current[index]?.interpolate({
       inputRange: [0, 1],
@@ -159,7 +146,7 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
             <View style={styles.liftAccuracyContainer}>
               <Text style={styles.accuracyLabel}>Accuracy</Text>
               <View style={styles.accuracyPill}>
-                <Text style={styles.accuracyValue}>{lift.accuracy}%</Text>
+                <Text style={styles.accuracyValue}>{lift.analysis.accuracy}%</Text>
               </View>
             </View>
           </View>

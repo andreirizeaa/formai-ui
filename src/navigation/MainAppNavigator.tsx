@@ -18,8 +18,9 @@ import { EditGenderScreen } from '../screens/application/settings/editPersonalDe
 import { AddOptions } from '../screens/application/add/AddOptions';
 import { RecordModal } from '../screens/application/add/record/RecordModal';
 import { UploadModal } from '../screens/application/add/upload/UploadModal';
-import { LiftDetails } from '../screens/application/feedback/liftDetails';
+import { ILiftData, LiftDetails } from '../screens/application/feedback/liftDetails';
 import { FeedbackSlideshow } from '../screens/application/feedback/feedbackSlideshow';
+import { HowItWorksScreen } from '../screens/application/feedback/HowItWorksScreen';
 import { LibraryScreen } from '../screens/application/library-favourites/library/LibraryScreen';
 import { FavouritesScreen } from '../screens/application/library-favourites/favourites/FavouritesScreen';
 import { BottomNavigationBar } from './BottomNavigationBar';
@@ -42,20 +43,14 @@ export type MainStackParamList = {
   RecordModal: undefined;
   UploadModal: undefined;
   LiftDetails: {
-    liftData: {
-      id: string;
-      liftType: string;
-      liftDate: string;
-      accuracy: number;
-      lineGraphValues: number[];
-      weight: number;
-      unit: string;
-      sets: number;
-      reps: number;
-      videoURL: string;
-    };
+    liftData: ILiftData;
   };
-  FeedbackSlideshow: undefined;
+  HowItWorks: {
+    liftData: ILiftData;
+  };
+  FeedbackSlideshow: {
+    liftData: ILiftData;
+  };
   Library: undefined;
   Favourites: undefined;
 };
@@ -78,7 +73,8 @@ function HomeScreenWrapper() {
   };
 
   const handleShowFeedbackSlideshow = () => {
-    navigation.navigate('FeedbackSlideshow');
+    // This function is not used from HomeScreen
+    // FeedbackSlideshow is only called from LiftDetails
   };
 
   const handleShowLibrary = () => {
@@ -298,7 +294,7 @@ function LiftDetailsWrapper() {
   };
 
   const handleShowFeedbackSlideshow = () => {
-    navigation.navigate('FeedbackSlideshow');
+    navigation.navigate('HowItWorks', { liftData: route.params.liftData });
   };
 
   return (
@@ -312,14 +308,42 @@ function LiftDetailsWrapper() {
 
 function FeedbackSlideshowWrapper() {
   const navigation = useNavigation<MainStackNavigationProp>();
+  const route = useRoute<RouteProp<MainStackParamList, 'FeedbackSlideshow'>>();
   
   const handleClose = () => {
     navigation.goBack();
   };
 
+  const handleNavigateToLiftDetails = () => {
+    // Navigate back to LiftDetails by going back twice (HowItWorks → LiftDetails)
+    navigation.navigate('LiftDetails', { liftData: route.params?.liftData });
+  };
+
   return (
     <FeedbackSlideshow
       onClose={handleClose}
+      onNavigateToLiftDetails={handleNavigateToLiftDetails}
+      liftData={route.params?.liftData}
+    />
+  );
+}
+
+function HowItWorksScreenWrapper() {
+  const navigation = useNavigation<MainStackNavigationProp>();
+  const route = useRoute<RouteProp<MainStackParamList, 'HowItWorks'>>();
+  
+  const handleClose = () => {
+    navigation.goBack();
+  };
+
+  const handleViewFeedback = () => {
+    navigation.navigate('FeedbackSlideshow', { liftData: route.params.liftData });
+  };
+
+  return (
+    <HowItWorksScreen 
+      onClose={handleClose} 
+      onViewFeedback={handleViewFeedback}
     />
   );
 }
@@ -553,6 +577,13 @@ export function MainAppNavigator() {
           options={{
             presentation: 'card',
             animation: 'scale_from_center',
+          }}
+        />
+        <Stack.Screen 
+          name="HowItWorks" 
+          component={HowItWorksScreenWrapper}
+          options={{
+            presentation: 'card',
           }}
         />
         <Stack.Screen 

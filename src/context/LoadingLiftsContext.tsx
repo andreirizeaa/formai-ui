@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { ILiftData } from '../screens/application/feedback/liftDetails';
 
 interface LoadingLiftData {
   id: string;
@@ -14,38 +15,12 @@ interface LoadingLiftData {
   errorMessage?: string;
 }
 
-interface CompletedLiftData {
-  id: string;
-  liftType: string;
-  liftDate: string;
-  accuracy: number;
-  lineGraphValues: number[];
-  weight: number;
-  unit: string;
-  sets: number;
-  reps: number;
-  videoURL: string;
-  thumbnailURL?: string;
-}
-
-// API response interface for when you integrate real APIs
-interface VideoAnalysisResponse {
-  id: string;
-  accuracy: number;
-  lineGraphValues: number[];
-  analysis: {
-    formScore: number;
-    recommendations: string[];
-    keyFrames: string[];
-  };
-}
-
 interface LoadingLiftsContextType {
   loadingLifts: LoadingLiftData[];
-  completedLifts: CompletedLiftData[];
+  completedLifts: ILiftData[];
   addLoadingLift: (liftData: Omit<LoadingLiftData, 'id' | 'progress' | 'isComplete' | 'status'>) => Promise<string>;
   updateLiftProgress: (id: string, progress: number) => void;
-  completeLift: (id: string, analysisData?: VideoAnalysisResponse) => void;
+  completeLift: (id: string, analysisData?: ILiftData) => void;
   removeLift: (id: string) => void;
   removeCompletedLift: (id: string) => void;
   retryLift: (id: string) => Promise<void>;
@@ -59,26 +34,43 @@ interface LoadingLiftsProviderProps {
 
 export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
   const [loadingLifts, setLoadingLifts] = useState<LoadingLiftData[]>([]);
-  const [completedLifts, setCompletedLifts] = useState<CompletedLiftData[]>([]);
+  const [completedLifts, setCompletedLifts] = useState<ILiftData[]>([]);
 
   // Mock API function - replace with real API call
-  const analyzeVideo = async (liftData: LoadingLiftData): Promise<VideoAnalysisResponse> => {
+  const analyzeVideo = async (liftData: LoadingLiftData): Promise<ILiftData> => {
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 5000 + Math.random() * 2000));
     
-    // Return successful analysis data
+    // Return successful analysis data in ILiftData format
     return {
       id: liftData.id,
-      accuracy: generateAccuracy(liftData.movementType),
-      lineGraphValues: generateRandomLineGraph(),
+      liftType: liftData.movementType,
+      liftDate: formatLiftDate(liftData.dateToday),
+      weightValue: liftData.weightValue,
+      weightUnit: liftData.weightUnit.toUpperCase(),
+      reps: liftData.reps,
+      videoURL: 'https://example.com/video.mp4', // Mock video URL
+      thumbnailURL: liftData.thumbnailUri,
       analysis: {
-        formScore: Math.floor(Math.random() * 20) + 80,
-        recommendations: [
-          'Keep your back straight',
-          'Lower the weight slightly',
-          'Focus on breathing rhythm'
-        ],
-        keyFrames: ['frame1.jpg', 'frame2.jpg', 'frame3.jpg']
+        accuracy: generateAccuracy(liftData.movementType),
+        lineGraphValues: generateRandomLineGraph(),
+        feedback: [
+          { 
+            imageURL: require('../../assets/feedback.png'), 
+            flaws: 'Incorrect form - back not straight', 
+            improvement: 'Keep your back straight and engage your core' 
+          },
+          { 
+            imageURL: require('../../assets/feedback.png'), 
+            flaws: 'Weight dropped too quickly', 
+            improvement: 'Control the descent and maintain tension throughout the movement' 
+          },
+          { 
+            imageURL: require('../../assets/feedback.png'), 
+            flaws: 'Incorrect grip position', 
+            improvement: 'Use a wider grip for better stability and power' 
+          }
+        ]
       }
     };
   };
@@ -154,29 +146,14 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
     );
   };
 
-  const completeLift = (id: string, analysisData?: VideoAnalysisResponse) => {
+  const completeLift = (id: string, analysisData?: ILiftData) => {
     setLoadingLifts(prevLoadingLifts => {
       const loadingLift = prevLoadingLifts.find(lift => lift.id === id);
       
-      if (loadingLift) {
-        // Create completed lift data
-        const completedLift: CompletedLiftData = {
-          id: loadingLift.id,
-          liftType: loadingLift.movementType,
-          liftDate: formatLiftDate(loadingLift.dateToday),
-          accuracy: analysisData?.accuracy || generateAccuracy(loadingLift.movementType),
-          lineGraphValues: analysisData?.lineGraphValues || generateRandomLineGraph(),
-          weight: loadingLift.weightValue,
-          unit: loadingLift.weightUnit.toUpperCase(),
-          sets: 1,
-          reps: loadingLift.reps,
-          videoURL: '', // This would be the actual video URL from your backend
-          thumbnailURL: loadingLift.thumbnailUri,
-        };
-
+      if (loadingLift && analysisData) {
         // Add to completed lifts after the loading lift is removed
         setTimeout(() => {
-          setCompletedLifts(prev => [completedLift, ...prev]);
+          setCompletedLifts(prev => [analysisData, ...prev]);
         }, 2000);
       }
 
