@@ -22,6 +22,8 @@ interface LiftData {
 
 export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow }: HomeScreenProps) {
   // Dummy data for recent lifts
+  // const recentLifts: LiftData[] = [];
+
   const recentLifts: LiftData[] = [
     {
       id: '1',
@@ -46,6 +48,7 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow }: HomeScre
       reps: 8,
     },
   ];
+
 
   const handleLiftPress = (lift: LiftData) => {
     hapticFeedback.selection();
@@ -91,9 +94,18 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow }: HomeScre
         <View 
           style={styles.liftsScrollView} 
         >
-          {recentLifts.map((lift) => (
-            <LiftCard key={lift.id} lift={lift} />
-          ))}
+          {recentLifts.length > 0 ? (
+            recentLifts.map((lift) => (
+              <LiftCard key={lift.id} lift={lift} />
+            ))
+          ) : (
+            <View style={styles.noLiftsCard}>
+              <View style={styles.noLiftsContent}>
+                <Text style={styles.noLiftsTitle}>You haven't recorded any lifts</Text>
+                <Text style={styles.noLiftsSubtitle}>Start analysing today's workout by taking a quick video</Text>
+              </View>
+            </View>
+          )}
         </View>
       </View>
     </SafeAreaView>
@@ -198,5 +210,37 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     paddingHorizontal: 4,
     paddingBottom: 20,
+  },
+  noLiftsCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  noLiftsContent: {
+    alignItems: 'center',
+  },
+  noLiftsTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#000000',
+    marginBottom: 8,
+    fontFamily: 'SF Pro Display',
+  },
+  noLiftsSubtitle: {
+    fontSize: 16,
+    fontWeight: '400',
+    color: '#8E8E93',
+    fontFamily: 'SF Pro Text',
+    textAlign: 'center',
   },
 }); 
