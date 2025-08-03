@@ -80,7 +80,7 @@ export function MovementSelectionScreen({
             disabled={!selectedMovement}
           >
             <Text style={[styles.uploadButtonText, !selectedMovement && styles.uploadButtonTextDisabled]}>
-              Upload
+              Continue
             </Text>
           </TouchableOpacity>
         </View>

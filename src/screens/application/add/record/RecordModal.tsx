@@ -9,6 +9,7 @@ import { hapticFeedback } from '../../../../utils/haptic';
 import { VideoPreviewScreen } from '../common/VideoPreviewScreen';
 import { MovementSelectionScreen } from '../common/MovementSelectionScreen';
 import { PracticesScreen } from '../common/PracticesScreen';
+import { WeightRepsScreen } from '../common/WeightRepsScreen';
 
 interface RecordModalProps {
   isVisible: boolean;
@@ -158,6 +159,22 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
   const cameraRef = useRef<CameraView>(null);
   const recordingPromise = useRef<Promise<any> | null>(null);
 
+  // Screen states
+  const [showWeightReps, setShowWeightReps] = useState(false);
+
+  // Weight and reps state
+  const [weightData, setWeightData] = useState<{ weight: number; unit: 'kg' | 'lbs'; reps: number } | null>(null);
+
+  // Combined state object for logging
+  const [uploadData, setUploadData] = useState<{
+    videoLink: string;
+    dateToday: string;
+    movementType: string;
+    weightValue: number;
+    weightUnit: 'kg' | 'lbs';
+    reps: number;
+  } | null>(null);
+
   useEffect(() => {
     if (isVisible) {
       checkCameraPermission();
@@ -173,17 +190,20 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
       setIsCameraReady(false);
       setShowCamera(true);
       recordingPromise.current = null;
+      setUploadData(null);
     } else {
       // Reset states when modal becomes invisible
       setIsRecording(false);
       setShowPractices(true);
       setShowVideoPreview(false);
       setShowMovementSelection(false);
+      setShowWeightReps(false);
       setShowCamera(false);
       setRecordedVideoUri(null);
       setSelectedMovement('');
       setSearchQuery('');
       setFilteredMovements(gymMovements);
+      setUploadData(null);
     }
   }, [isVisible]);
 
@@ -317,33 +337,47 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
     Keyboard.dismiss();
   };
 
+  const handleContinueFromMovementSelection = () => {
+    hapticFeedback.selection();
+    setShowMovementSelection(false);
+    setShowWeightReps(true);
+  };
+
+  const handleWeightRepsBack = () => {
+    hapticFeedback.selection();
+    setShowWeightReps(false);
+    setShowMovementSelection(true);
+  };
+
+  const handleWeightRepsUpload = (data: { weight: number; unit: 'kg' | 'lbs'; reps: number }) => {
+    setWeightData(data);
+
+    // Create the upload data object
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+    const uploadDataObj = {
+      videoLink: recordedVideoUri || '',
+      dateToday: today,
+      movementType: selectedMovement,
+      weightValue: data.weight,
+      weightUnit: data.unit,
+      reps: data.reps,
+    };
+    setUploadData(uploadDataObj);
+    
+    // Triple important haptic feedback for distinct feedback
+    hapticFeedback.success();
+    
+    // Here you would typically upload the video to your server
+    // For now, we'll just close the modal
+    onClose();
+  };
+
   const handleSearchChange = (text: string) => {
     setSearchQuery(text);
     const filtered = gymMovements.filter(movement =>
       movement.toLowerCase().includes(text.toLowerCase())
     );
     setFilteredMovements(filtered);
-  };
-
-  const handleFinalUpload = () => {
-    if (!selectedMovement) {
-      Alert.alert('Selection Required', 'Please select a movement before uploading.');
-      return;
-    }
-    
-    // Triple important haptic feedback for distinct feedback
-    hapticFeedback.important();
-    setTimeout(() => {
-      hapticFeedback.important();
-    }, 100);
-    setTimeout(() => {
-      hapticFeedback.important();
-    }, 200);
-    
-    
-    // Here you would typically upload the video to your server
-    // For now, we'll just close the modal
-    onClose();
   };
 
   const handleClose = () => {
@@ -368,6 +402,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
       setShowPractices(true);
       setShowVideoPreview(false);
       setShowMovementSelection(false);
+      setShowWeightReps(false);
       setShowCamera(false);
       onClose();
     }
@@ -470,7 +505,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
           </View>
 
           {/* Content */}
-          <View style={styles.content}>
+          <View style={styles.contentWithBottomPadding}>
             <VideoPreviewScreen
               videoUri={recordedVideoUri || ''}
               onSelectNewVideo={handleSelectNewVideo}
@@ -496,7 +531,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
           </View>
 
           {/* Content */}
-          <View style={styles.content}>
+          <View style={styles.contentWithBottomPadding}>
             <MovementSelectionScreen
               searchQuery={searchQuery}
               filteredMovements={filteredMovements}
@@ -504,8 +539,31 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
               onMovementSelect={handleMovementSelect}
               onSearchChange={handleSearchChange}
               onBack={handleBack}
-              onUpload={handleFinalUpload}
+              onUpload={handleContinueFromMovementSelection}
               onClose={handleClose}
+            />
+          </View>
+        </SafeAreaView>
+      ) : showWeightReps ? (
+        // Weight and Reps Content
+        <SafeAreaView style={styles.container}>
+          {/* Close Button and Title */}
+          <View style={styles.topControls}>
+            <View style={styles.titleContainer}>
+              <Text style={styles.title}>Record Video</Text>
+            </View>
+            <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
+              <Svg width={24} height={24} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="#8E8E93">
+                <Path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+              </Svg>
+            </TouchableOpacity>
+          </View>
+
+          {/* Content */}
+          <View style={styles.contentWithBottomPadding}>
+            <WeightRepsScreen
+              onBack={handleWeightRepsBack}
+              onUpload={handleWeightRepsUpload}
             />
           </View>
         </SafeAreaView>
@@ -649,6 +707,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'flex-end',
     paddingBottom: 40,
+    
   },
   controlsContainer: {
     alignItems: 'center',
@@ -829,5 +888,10 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+  },
+  contentWithBottomPadding: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    paddingBottom: 40,
   },
 }); 
