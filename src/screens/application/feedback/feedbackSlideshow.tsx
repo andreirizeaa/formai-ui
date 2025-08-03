@@ -157,7 +157,7 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, liftData }
 
   const getPageTitle = () => {
     switch (currentPageType) {
-      case 'image': return 'Photo';
+      case 'image': return `Feedback point ${currentFeedbackIndex + 1}`;
       case 'flaws': return 'Issues';
       case 'improvement': return 'Tips';
     }
@@ -166,70 +166,11 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, liftData }
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        {/* Content Area */}
-        <View style={[
-          styles.content,
-          currentPageType === 'image' && styles.fullWidthContent
-        ]}>
-          {getCurrentPageContent()}
-        </View>
-
-        {/* Left Chevron */}
-        {getCurrentPageNumber() > 1 && (
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.title}>{getPageTitle()}</Text>
           <TouchableOpacity 
-            style={[
-              styles.leftChevron,
-              currentPageType === 'image' && styles.transparentChevron
-            ]}
-            onPress={handleLeftChevron}
-            activeOpacity={0.7}
-          >
-            <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-              <Path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M15.75 19.5 8.25 12l7.5-7.5"
-                stroke="#000000"
-                strokeWidth={1.5}
-              />
-            </Svg>
-          </TouchableOpacity>
-        )}
-
-        {/* Right Chevron */}
-        <TouchableOpacity 
-          style={[
-            styles.rightChevron,
-            currentPageType === 'image' && styles.transparentChevron
-          ]}
-          onPress={handleRightChevron}
-          activeOpacity={0.7}
-        >
-          <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-            <Path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="m8.25 4.5 7.5 7.5-7.5 7.5"
-              stroke="#000000"
-              strokeWidth={1.5}
-            />
-          </Svg>
-        </TouchableOpacity>
-
-        {/* Page indicator */}
-        <View style={styles.pageIndicatorRow}>
-          <View style={styles.pageIndicator}>
-            <Text style={styles.pageIndicatorText}>
-              {getCurrentPageNumber()} / {getTotalPages()}
-            </Text>
-          </View>
-          <View style={styles.pageTitleContainer}>
-            <Text style={styles.pageTitleText}>
-              {getPageTitle()}
-            </Text>
-          </View>
-          <TouchableOpacity 
-            style={styles.closeButton}
+            style={styles.closeButton} 
             onPress={handleClose}
             activeOpacity={0.7}
           >
@@ -244,12 +185,62 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, liftData }
             </Svg>
           </TouchableOpacity>
         </View>
+
+        {/* Content Area */}
+        <View style={[
+          styles.content,
+          currentPageType === 'image' && styles.fullWidthContent
+        ]}>
+          {getCurrentPageContent()}
+        </View>
+
+        {/* Bottom Navigation Section */}
+        <View style={styles.bottomNavigationSection}>
+          {/* Left Chevron */}
+          <TouchableOpacity 
+            style={styles.bottomChevron}
+            onPress={handleLeftChevron}
+            activeOpacity={0.7}
+          >
+            <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+              <Path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M15.75 19.5 8.25 12l7.5-7.5"
+                stroke="#000000"
+                strokeWidth={1.5}
+              />
+            </Svg>
+          </TouchableOpacity>
+
+          {/* Page Indicator in Center */}
+          <View style={styles.bottomPageIndicator}>
+            <Text style={styles.bottomPageIndicatorText}>
+              {getCurrentPageNumber()} / {getTotalPages()}
+            </Text>
+          </View>
+
+          {/* Right Chevron */}
+          <TouchableOpacity 
+            style={styles.bottomChevron}
+            onPress={handleRightChevron}
+            activeOpacity={0.7}
+          >
+            <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+              <Path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="m8.25 4.5 7.5 7.5-7.5 7.5"
+                stroke="#000000"
+                strokeWidth={1.5}
+              />
+            </Svg>
+          </TouchableOpacity>
+        </View>
       </SafeAreaView>
     </View>
   );
 }
-
-const { width, height } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   container: {
@@ -264,6 +255,53 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
+  closeButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#F2F2F7',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10000,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingBottom: 100,
+    paddingTop: 0,
+  },
+  imageContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 28,
+    overflow: 'hidden',
+    marginTop: 20,
+    marginHorizontal: 20,
+    minHeight: 400,
+  },
+  feedbackImage: {
+    width: '100%',
+    height: '100%',
+    minHeight: 400,
+  },
+  textContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  pageContent: {
+    fontSize: 20,
+    fontWeight: '400',
+    color: '#000000',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
+    textAlign: 'center',
+    lineHeight: 28,
+  },
+  fullWidthContent: {
+    paddingHorizontal: 0,
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -277,228 +315,53 @@ const styles = StyleSheet.create({
     color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
   },
-  closeButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#F2F2F7',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 10000,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 20,
-  },
-  bottomContainer: {
-    paddingHorizontal: 20,
-    paddingVertical: 30,
-  },
-  viewFeedbackButton: {
-    backgroundColor: '#000000',
-    borderRadius: 28,
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '100%',
-  },
-  viewFeedbackButtonText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#FFFFFF',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
-  },
-  leftChevron: {
+  bottomNavigationSection: {
     position: 'absolute',
-    left: 20,
-    top: height / 2 - 24, // Vertically center (adjusted for circle size)
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 10,
-    zIndex: 9999,
-  },
-  rightChevron: {
-    position: 'absolute',
-    right: 20,
-    top: height / 2 - 24, // Vertically center (adjusted for circle size)
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 10,
-    zIndex: 9999,
-  },
-  textAboveChevrons: {
-    position: 'absolute',
-    top: height / 2 - 120, // Move higher above chevrons
-    left: 0,
-    right: 0,
-    paddingHorizontal: 40,
-    zIndex: 1,
-  },
-  textBelowChevrons: {
-    position: 'absolute',
-    top: height / 2 + 80, // Position below chevrons
-    left: 0,
-    right: 0,
-    paddingHorizontal: 40,
-    zIndex: 1,
-  },
-  instructionText: {
-    fontSize: 20,
-    fontWeight: '500',
-    color: '#000000',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
-    textAlign: 'center',
-    lineHeight: 24, // Increased line height to match larger font
-  },
-  imageContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 28,
-    overflow: 'hidden',
-    marginTop: 44,
-    marginBottom: -34,
-  },
-  feedbackImage: {
-    width: '100%',
-    height: '100%',
-  },
-  textContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-  },
-  pageTitle: {
-    fontSize: 32,
-    fontWeight: '600',
-    color: '#000000',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
-    marginBottom: 10,
-  },
-  pageContent: {
-    fontSize: 20,
-    fontWeight: '400',
-    color: '#000000',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
-    textAlign: 'center',
-    lineHeight: 28,
-  },
-  pageIndicator: {
-    alignItems: 'center',
-    zIndex: 9999,
-  },
-  pageIndicatorText: {
-    marginTop: 4,
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#000000',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
-    backgroundColor: '#ffffff',
-    borderRadius: 20,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 10,
-  },
-  pageTitleText: {
-    fontSize: 20,
-    fontWeight: '500',
-    color: '#000000',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
-    textAlign: 'center',
-    width: '100%',
-  },
-  pageTitleContainer: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  transparentChevron: {
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
-  },
-  fullWidthContent: {
-    paddingHorizontal: 0,
-  },
-  pageIndicatorRow: {
-    position: 'absolute',
-    top: 60,
+    bottom: 0,
     left: 0,
     right: 0,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    zIndex: 10000,
+    paddingTop: 24,
+    paddingBottom: 40,
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: -2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 8,
   },
-  howItWorksContainer: {
-    flex: 1,
+  bottomChevron: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#F2F2F7',
+    alignItems: 'center',
     justifyContent: 'center',
+    flex: 1,
+    maxWidth: 44,
+  },
+  bottomPageIndicator: {
     alignItems: 'center',
-    paddingHorizontal: 20,
-  },
-  howItWorksItems: {
-    width: '100%',
-  },
-  howItWorksItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 44,
-  },
-  howItWorksIcon: {
-    width: 40,
-    height: 40,
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: '#F2F2F7',
     borderRadius: 20,
-    backgroundColor: '#000000',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 15,
-  },
-  howItWorksNumber: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
-  },
-  howItWorksContent: {
     flex: 1,
+    maxWidth: 100,
   },
-  howItWorksText: {
-    fontSize: 18,
-    fontWeight: '400',
+  bottomPageIndicatorText: {
+    fontSize: 16,
+    fontWeight: '600',
     color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
-    lineHeight: 24,
   },
 }); 
