@@ -8,6 +8,7 @@ import { hapticFeedback } from '../../../../utils/haptic';
 import { VideoPreviewScreen } from '../common/VideoPreviewScreen';
 import { MovementSelectionScreen } from '../common/MovementSelectionScreen';
 import { PracticesScreen } from '../common/PracticesScreen';
+import { WeightRepsScreen } from '../common/WeightRepsScreen';
 
 interface UploadModalProps {
   isVisible: boolean;
@@ -142,18 +143,36 @@ const gymMovements = [
 export function UploadModal({ isVisible, onClose }: UploadModalProps) {
   const [selectedVideo, setSelectedVideo] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const [showMovementSelection, setShowMovementSelection] = useState(false);
+  const [showWeightReps, setShowWeightReps] = useState(false);
+
+  // Movement selection state
   const [selectedMovement, setSelectedMovement] = useState<string>('');
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [filteredMovements, setFilteredMovements] = useState<string[]>(gymMovements);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredMovements, setFilteredMovements] = useState(gymMovements);
+
+  // Weight and reps state
+  const [weightData, setWeightData] = useState<{ weight: number; unit: 'kg' | 'lbs'; reps: number } | null>(null);
+
+  // Combined state object for logging
+  const [uploadData, setUploadData] = useState<{
+    videoLink: string;
+    dateToday: string;
+    movementType: string;
+    weightValue: number;
+    weightUnit: 'kg' | 'lbs';
+    reps: number;
+  } | null>(null);
 
   // Reset states when modal becomes invisible
   useEffect(() => {
     if (!isVisible) {
       setSelectedVideo(null);
       setShowMovementSelection(false);
+      setShowWeightReps(false);
       setSelectedMovement('');
       setSearchQuery('');
       setFilteredMovements(gymMovements);
+      setWeightData(null);
     }
   }, [isVisible]);
 
@@ -194,8 +213,6 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
             durationInSeconds = asset.duration / 1000;
           }
         }
-        
-        console.log('duration in seconds:', durationInSeconds);
         
         if (durationInSeconds !== undefined && durationInSeconds !== null && durationInSeconds > 60) {
           Alert.alert(
@@ -245,11 +262,44 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
   };
 
   const handleMovementSelect = (movement: string) => {
-    // Selection haptic feedback
     hapticFeedback.selection();
-    
     setSelectedMovement(movement);
     Keyboard.dismiss();
+  };
+
+  const handleContinueFromMovementSelection = () => {
+    hapticFeedback.selection();
+    setShowMovementSelection(false);
+    setShowWeightReps(true);
+  };
+
+  const handleWeightRepsBack = () => {
+    hapticFeedback.selection();
+    setShowWeightReps(false);
+    setShowMovementSelection(true);
+  };
+
+  const handleWeightRepsUpload = (data: { weight: number; unit: 'kg' | 'lbs'; reps: number }) => {
+    setWeightData(data);
+    
+    // Create the upload data object
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+    const uploadDataObj = {
+      videoLink: selectedVideo?.uri || '',
+      dateToday: today,
+      movementType: selectedMovement,
+      weightValue: data.weight,
+      weightUnit: data.unit,
+      reps: data.reps,
+    };
+    setUploadData(uploadDataObj);
+    
+    // Triple important haptic feedback for distinct feedback
+    hapticFeedback.success();
+    
+    // Here you would typically upload the video to your server
+    // For now, we'll just close the modal
+    onClose();
   };
 
   const handleSearchChange = (text: string) => {
@@ -260,38 +310,19 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
     setFilteredMovements(filtered);
   };
 
-  const handleFinalUpload = () => {
-    if (!selectedMovement) {
-      Alert.alert('Selection Required', 'Please select a movement before uploading.');
-      return;
-    }
-    
-    // Triple important haptic feedback for distinct feedback
-    hapticFeedback.important();
-    setTimeout(() => {
-      hapticFeedback.important();
-    }, 100);
-    setTimeout(() => {
-      hapticFeedback.important();
-    }, 100);
-    
-    console.log('Uploading video for movement:', selectedMovement);
-    console.log('Video URI:', selectedVideo?.uri);
-    
-    // Here you would typically upload the video to your server
-    // For now, we'll just close the modal
-    onClose();
-  };
-
   const resetModal = () => {
     setSelectedVideo(null);
     setShowMovementSelection(false);
+    setShowWeightReps(false);
     setSelectedMovement('');
     setSearchQuery('');
     setFilteredMovements(gymMovements);
+    setWeightData(null);
+    setUploadData(null);
   };
 
   const handleClose = () => {
+    hapticFeedback.selection();
     resetModal();
     onClose();
   };
@@ -341,8 +372,14 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
               onMovementSelect={handleMovementSelect}
               onSearchChange={handleSearchChange}
               onBack={handleBack}
-              onUpload={handleFinalUpload}
+              onUpload={handleContinueFromMovementSelection}
               onClose={handleClose}
+            />
+          ) : showWeightReps ? (
+            // Weight and Reps - shown after movement selection
+            <WeightRepsScreen
+              onBack={handleWeightRepsBack}
+              onUpload={handleWeightRepsUpload}
             />
           ) : (
             // Video Preview - shown when video is selected but movement not yet selected
