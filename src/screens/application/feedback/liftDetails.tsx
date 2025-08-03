@@ -25,20 +25,30 @@ function VideoPlayerComponent({ videoUri }: VideoPlayerComponentProps) {
   );
 }
 
+export interface ILiftData {
+  id: string;
+  liftType: string;
+  liftDate: string;
+  weightValue: number;
+  weightUnit: string;
+  reps: number;
+  videoURL: any;
+  thumbnailURL?: any;
+  analysis: {
+    accuracy: number;
+    lineGraphValues: number[];
+    feedback: Array<{
+      imageURL: any;
+      flaws: string;
+      improvement: string;
+    }>;
+  };
+}
+
 interface LiftDetailsProps {
   onClose: () => void;
   onShowFeedbackSlideshow: () => void;
-  liftData: {
-    id: string; // Added id to liftData
-    liftType: string;
-    liftDate: string;
-    accuracy: number;
-    lineGraphValues: number[];
-    weight: number;
-    unit: string;
-    sets: number;
-    reps: number;
-  };
+  liftData: ILiftData;
 }
 
 export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData }: LiftDetailsProps) {
@@ -54,6 +64,8 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData }: Lift
 
   const handleReviewFeedback = () => {
     hapticFeedback.selection();
+    // Navigate to HowItWorks screen instead of directly to FeedbackSlideshow
+    // The navigation will be handled by the parent component
     onShowFeedbackSlideshow();
   };
 
@@ -104,7 +116,7 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData }: Lift
     labels: ['1', '2', '3', '4', '5', '6', '7', '8'],
     datasets: [
       {
-        data: liftData.lineGraphValues,
+        data: liftData.analysis.lineGraphValues,
         color: (opacity = 1) => `#000000`,
         strokeWidth: 2,
       },
@@ -119,7 +131,7 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData }: Lift
       data: dataset.data || [0, 0, 0, 0, 0, 0, 0, 0], // Fallback to zeros if data is undefined
     })),
   };
-
+  
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
@@ -174,7 +186,7 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData }: Lift
               </View>
             </View>
             <View style={styles.orangePill}>
-              <Text style={styles.pillText}>{liftData.accuracy || 91}%</Text>
+              <Text style={styles.pillText}>{liftData.analysis.accuracy || 91}%</Text>
             </View>
           </View>
 
@@ -224,7 +236,7 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData }: Lift
             <View style={styles.halfCard}>
               <Text style={styles.halfCardTitle}>Weight</Text>
               <Text style={styles.halfCardValue}>
-                {liftData.weight || '--'} {liftData.unit || ''}
+                {liftData.weightValue || '--'} {liftData.weightUnit || ''}
               </Text>
             </View>
             
