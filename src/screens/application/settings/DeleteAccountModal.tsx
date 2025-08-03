@@ -66,7 +66,7 @@ export function DeleteAccountModal({ isVisible, onClose, onConfirm }: DeleteAcco
             <TouchableOpacity 
               style={styles.button} 
               onPress={() => {
-                hapticFeedback.selection();
+                hapticFeedback.success();
                 onConfirm();
               }}
             >

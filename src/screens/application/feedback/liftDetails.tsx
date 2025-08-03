@@ -60,7 +60,8 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData }: Lift
   };
 
   const handleDeleteConfirm = () => {
-    hapticFeedback.selection();
+    hapticFeedback.success();
+    
     // TODO: Implement actual lift deletion logic
     console.log('Lift deletion confirmed');
     setShowDeleteModal(false);
@@ -84,7 +85,7 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData }: Lift
   };
 
   const handleFavourite = () => {
-    hapticFeedback.selection();
+    hapticFeedback.success();
     handleStarPress();
     setShowDropdown(false);
   };

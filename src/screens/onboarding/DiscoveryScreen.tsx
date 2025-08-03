@@ -51,7 +51,7 @@ export function DiscoveryScreen({ onNext, onBack }: DiscoveryScreenProps) {
 
   const handleNext = () => {
     if (preferences.discoverySource) {
-      hapticFeedback.next();
+      hapticFeedback.selection();
       onNext();
     }
   };

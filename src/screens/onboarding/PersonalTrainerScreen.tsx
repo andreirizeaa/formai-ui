@@ -28,7 +28,7 @@ export function PersonalTrainerScreen({ onNext, onBack }: PersonalTrainerScreenP
 
   const handleNext = () => {
     if (preferences.hasPersonalTrainer !== null) {
-      hapticFeedback.next();
+      hapticFeedback.selection();
       onNext();
     }
   };

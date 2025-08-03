@@ -51,7 +51,7 @@ export function EditCurrentWeightScreen({ onBack, currentValue, onSave }: EditCu
   };
 
   const handleSave = () => {
-    hapticFeedback.selection();
+    hapticFeedback.success();
     const unit = isMetric ? 'kg' : 'lbs';
     const formattedWeight = isMetric ? selectedWeight.toFixed(1) : selectedWeight.toString();
     onSave(`${formattedWeight} ${unit}`);

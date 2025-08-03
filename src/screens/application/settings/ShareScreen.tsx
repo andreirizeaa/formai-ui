@@ -14,7 +14,7 @@ export function ShareScreen({ onBack }: ShareScreenProps) {
 
   const handleCopyPromoCode = async () => {
     try {
-      hapticFeedback.selection();
+      hapticFeedback.success();
       await Clipboard.setString(promoCode);
       Alert.alert(i18n.t('share.copied'), i18n.t('share.promoCodeCopied'));
       setIsCopied(true);

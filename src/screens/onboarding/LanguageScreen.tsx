@@ -25,7 +25,7 @@ export function LanguageScreen({ onNext, onBack }: LanguageScreenProps) {
 
   const handleNext = () => {
     if (preferences.language) {
-      hapticFeedback.next();
+      hapticFeedback.selection();
       onNext();
     }
   };

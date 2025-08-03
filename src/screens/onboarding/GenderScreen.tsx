@@ -28,7 +28,7 @@ export function GenderScreen({ onNext, onBack }: GenderScreenProps) {
 
   const handleNext = () => {
     if (preferences.gender) {
-      hapticFeedback.next();
+      hapticFeedback.selection();
       onNext();
     }
   };

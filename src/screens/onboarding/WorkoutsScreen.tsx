@@ -30,7 +30,7 @@ export function WorkoutsScreen({ onNext, onBack }: WorkoutsScreenProps) {
 
   const handleNext = () => {
     if (preferences.workoutsPerWeek) {
-      hapticFeedback.next();
+      hapticFeedback.selection();
       onNext();
     }
   };

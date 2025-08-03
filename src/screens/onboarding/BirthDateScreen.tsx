@@ -62,7 +62,7 @@ export function BirthDateScreen({ onNext, onBack }: BirthDateScreenProps) {
 
   const handleNext = () => {
     if (birthDate.month && birthDate.day && birthDate.year) {
-      hapticFeedback.next();
+      hapticFeedback.selection();
       onNext();
     }
   };

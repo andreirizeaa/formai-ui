@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     width: '100%',
     paddingHorizontal: 20,
-
+    paddingBottom: 4,
   },
   buttonStack: {
     width: '100%',
