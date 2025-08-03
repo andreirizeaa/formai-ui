@@ -101,7 +101,7 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData }: Lift
     datasets: [
       {
         data: liftData.lineGraphValues,
-        color: (opacity = 1) => `rgba(255, 149, 0, 1)`,
+        color: (opacity = 1) => `#000000`,
         strokeWidth: 2,
       },
     ],
@@ -465,7 +465,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   pill: {
-    backgroundColor: '#333333',
+    backgroundColor: '#000000',
     borderRadius: 18,
     paddingVertical: 4,
     paddingHorizontal: 12,
@@ -479,7 +479,7 @@ const styles = StyleSheet.create({
     fontFamily: 'SF Pro Display',
   },
   orangePill: {
-    backgroundColor: '#FF9500',
+    backgroundColor: '#000000',
     borderRadius: 18,
     paddingVertical: 4,
     paddingHorizontal: 12,
