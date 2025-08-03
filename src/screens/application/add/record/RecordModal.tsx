@@ -11,6 +11,7 @@ import { VideoPreviewScreen } from '../common/VideoPreviewScreen';
 import { MovementSelectionScreen } from '../common/MovementSelectionScreen';
 import { PracticesScreen } from '../common/PracticesScreen';
 import { WeightRepsScreen } from '../common/WeightRepsScreen';
+import { useLoadingLifts } from '../../../../context/LoadingLiftsContext';
 
 interface RecordModalProps {
   isVisible: boolean;
@@ -143,6 +144,7 @@ const gymMovements = [
 ];
 
 export function RecordModal({ isVisible, onClose }: RecordModalProps) {
+  const { addLoadingLift } = useLoadingLifts();
   const [permission, requestPermission] = useCameraPermissions();
   const [isRecording, setIsRecording] = useState(false);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
@@ -351,7 +353,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
     setShowMovementSelection(true);
   };
 
-  const handleWeightRepsUpload = async (data: { weight: number; unit: 'kg' | 'lbs'; reps: number }) => {
+  const handleFinalCompleteClicked = async (data: { weight: number; unit: 'kg' | 'lbs'; reps: number }) => {
     setWeightData(data);
 
     try {
@@ -370,6 +372,16 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
         reps: data.reps,
       };
       setUploadData(uploadDataObj);
+      
+      // Add to loading lifts
+      addLoadingLift({
+        thumbnailUri: thumbnailUri,
+        movementType: selectedMovement,
+        weightValue: data.weight,
+        weightUnit: data.unit,
+        reps: data.reps,
+        dateToday: today,
+      });
       
       // Triple important haptic feedback for distinct feedback
       hapticFeedback.success();
@@ -574,7 +586,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
           <View style={styles.contentWithBottomPadding}>
             <WeightRepsScreen
               onBack={handleWeightRepsBack}
-              onUpload={handleWeightRepsUpload}
+              onUpload={handleFinalCompleteClicked}
             />
           </View>
         </SafeAreaView>

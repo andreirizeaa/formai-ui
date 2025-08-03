@@ -529,6 +529,7 @@ export function MainAppNavigator() {
           component={RecordModalWrapper}
           options={{
             presentation: 'modal',
+            animation: 'none',
           }}
         />
         <Stack.Screen 
@@ -536,6 +537,7 @@ export function MainAppNavigator() {
           component={UploadModalWrapper}
           options={{
             presentation: 'modal',
+            animation: 'none',
           }}
         />
         <Stack.Screen 
