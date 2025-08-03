@@ -315,8 +315,8 @@ function FeedbackSlideshowWrapper() {
   };
 
   const handleNavigateToLiftDetails = () => {
-    // Navigate back to LiftDetails by going back twice (HowItWorks → LiftDetails)
-    navigation.navigate('LiftDetails', { liftData: route.params?.liftData });
+    // Pop back to the original LiftDetails screen by going back twice
+    navigation.pop(2);
   };
 
   return (
