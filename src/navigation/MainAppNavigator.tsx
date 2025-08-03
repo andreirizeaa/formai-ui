@@ -20,7 +20,7 @@ import { RecordModal } from '../screens/application/add/record/RecordModal';
 import { UploadModal } from '../screens/application/add/upload/UploadModal';
 import { ILiftData, LiftDetails } from '../screens/application/feedback/liftDetails';
 import { FeedbackSlideshow } from '../screens/application/feedback/feedbackSlideshow';
-import { HowItWorksScreen } from '../screens/application/feedback/HowItWorksScreen';
+import { HowItWorksModal } from '../screens/application/feedback/howItWorksModal';
 import { LibraryScreen } from '../screens/application/library-favourites/library/LibraryScreen';
 import { FavouritesScreen } from '../screens/application/library-favourites/favourites/FavouritesScreen';
 import { BottomNavigationBar } from './BottomNavigationBar';
@@ -328,20 +328,24 @@ function FeedbackSlideshowWrapper() {
   );
 }
 
-function HowItWorksScreenWrapper() {
+function HowItWorksModalWrapper() {
   const navigation = useNavigation<MainStackNavigationProp>();
   const route = useRoute<RouteProp<MainStackParamList, 'HowItWorks'>>();
+  const [isVisible, setIsVisible] = React.useState(true);
   
   const handleClose = () => {
+    setIsVisible(false);
     navigation.goBack();
   };
 
   const handleViewFeedback = () => {
+    setIsVisible(false);
     navigation.navigate('FeedbackSlideshow', { liftData: route.params.liftData });
   };
 
   return (
-    <HowItWorksScreen 
+    <HowItWorksModal 
+      isVisible={isVisible}
       onClose={handleClose} 
       onViewFeedback={handleViewFeedback}
     />
@@ -452,10 +456,10 @@ function MainTabsNavigator() {
 
   return (
     <LinearGradient
-      colors={['#F7EFFF', '#ffffff']}
-      locations={[0, 0.75]}
+      colors={['#ede9fe', '#e2e8f0', '#ffffff']}
+      locations={[0, 0.5, 0.9]}
       style={styles.container}
-      start={{ x: 0, y: 0 }}
+      start={{ x: 0.5, y: 0 }}
       end={{ x: 0, y: 1 }}
     >
       <SafeAreaView style={styles.safeArea}>
@@ -576,14 +580,15 @@ export function MainAppNavigator() {
           component={FeedbackSlideshowWrapper}
           options={{
             presentation: 'card',
-            animation: 'scale_from_center',
+            animation: 'reveal_from_bottom',
           }}
         />
         <Stack.Screen 
           name="HowItWorks" 
-          component={HowItWorksScreenWrapper}
+          component={HowItWorksModalWrapper}
           options={{
-            presentation: 'card',
+            presentation: 'modal',
+            animation: 'none',
           }}
         />
         <Stack.Screen 
