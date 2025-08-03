@@ -6,6 +6,9 @@ import { VideoView, useVideoPlayer } from 'expo-video';
 import Svg, { Path } from 'react-native-svg';
 import i18n from '../../../../utils/i18n';
 import { hapticFeedback } from '../../../../utils/haptic';
+import { VideoPreviewScreen } from '../common/VideoPreviewScreen';
+import { MovementSelectionScreen } from '../common/MovementSelectionScreen';
+import { PracticesScreen } from '../common/PracticesScreen';
 
 interface RecordModalProps {
   isVisible: boolean;
@@ -137,23 +140,6 @@ const gymMovements = [
   'Medicine Ball Slam',
 ];
 
-function VideoPlayerComponent({ videoUri }: { videoUri: string }) {
-  const player = useVideoPlayer(videoUri, (player) => {
-    player.loop = true;
-    player.showNowPlayingNotification = false;
-    player.play();
-  });
-
-  return (
-    <View style={styles.videoPreview}>
-      <VideoView
-        player={player}
-        style={styles.videoPreview}
-      />
-    </View>
-  );
-}
-
 export function RecordModal({ isVisible, onClose }: RecordModalProps) {
   const [permission, requestPermission] = useCameraPermissions();
   const [isRecording, setIsRecording] = useState(false);
@@ -187,6 +173,17 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
       setIsCameraReady(false);
       setShowCamera(true);
       recordingPromise.current = null;
+    } else {
+      // Reset states when modal becomes invisible
+      setIsRecording(false);
+      setShowPractices(true);
+      setShowVideoPreview(false);
+      setShowMovementSelection(false);
+      setShowCamera(false);
+      setRecordedVideoUri(null);
+      setSelectedMovement('');
+      setSearchQuery('');
+      setFilteredMovements(gymMovements);
     }
   }, [isVisible]);
 
@@ -395,7 +392,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
           {/* Close Button */}
           <View style={styles.permissionTopControls}>
             <TouchableOpacity onPress={() => {
-              setShowCamera(false);
+              hapticFeedback.selection();
               onClose();
             }} style={styles.closeButton}>
               <Svg width={24} height={24} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="#8E8E93">
@@ -422,131 +419,21 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
     <Modal
       visible={isVisible}
       animationType="slide"
-      presentationStyle={showPractices || showVideoPreview || showMovementSelection ? "pageSheet" : "fullScreen"}
+      presentationStyle="pageSheet"
       onRequestClose={showPractices || showVideoPreview || showMovementSelection ? () => {
-        setShowCamera(false);
         onClose();
       } : handleClose}
-      statusBarTranslucent={true}
     >
       {showPractices ? (
         // Practices Content
-        <SafeAreaView style={styles.practicesContainer}>
-          {/* Close Button and Title */}
-          <View style={styles.practicesTopControls}>
-            <Text style={styles.practicesTitle}>Best recording practices</Text>
-            <TouchableOpacity onPress={() => {
-              setShowCamera(false);
-              onClose();
-            }} style={styles.practicesCloseButton}>
-              <Svg width={24} height={24} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="#8E8E93">
-                <Path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-              </Svg>
-            </TouchableOpacity>
-          </View>
-
-          {/* Spacer to push content to bottom */}
-          <View style={styles.practicesSpacer} />
-
-          {/* Recording Tip Image */}
-          <View style={styles.tipImageWrapper}>
-            {/* Checkmark Icon */}
-            <View style={styles.simpleIconContainer}>
-              <Svg width={48} height={48} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="#000000">
-                <Path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-              </Svg>
-            </View>
-            <View style={styles.tipImageContainer}>
-              <Image
-                source={require('../../../../../assets/recording-tip.jpg')}
-                style={styles.tipImage}
-                resizeMode="cover"
-              />
-            </View>
-          </View>
-
-          {/* Tips Card */}
-          <View style={styles.tipsCard}>
-            <Text style={styles.tipsTitle}>General tips</Text>
-            <View style={styles.tipsList}>
-              <View style={styles.tipItem}>
-                <View style={styles.tipNumber}>
-                  <Text style={styles.tipNumberText}>1</Text>
-                </View>
-                <Text style={styles.tipText}>Ensure good lighting and a stable camera</Text>
-              </View>
-              <View style={styles.tipItem}>
-                <View style={styles.tipNumber}>
-                  <Text style={styles.tipNumberText}>2</Text>
-                </View>
-                <Text style={styles.tipText}>Try to record yourself from the side</Text>
-              </View>
-            </View>
-          </View>
-
-          {/* Next Button */}
-          <View style={styles.practicesBottomControls}>
-            <TouchableOpacity style={styles.practicesNextButton} onPress={handleNext}>
-              <Text style={styles.practicesNextButtonText}>Next</Text>
-            </TouchableOpacity>
-          </View>
-        </SafeAreaView>
-      ) : showVideoPreview ? (
-        // Video Preview Content
         <SafeAreaView style={styles.container}>
           {/* Close Button and Title */}
           <View style={styles.topControls}>
             <View style={styles.titleContainer}>
-              <Text style={styles.title}>Video Preview</Text>
+              <Text style={styles.title}>Record Video</Text>
             </View>
             <TouchableOpacity onPress={() => {
-              setShowCamera(false);
-              onClose();
-            }} style={styles.closeButton}>
-              <Svg width={24} height={24} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="#000000">
-                <Path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-              </Svg>
-            </TouchableOpacity>
-          </View>
-
-          {/* Content */}
-          <View style={[styles.content, { paddingHorizontal: 20 }]}>
-            {/* Video Preview */}
-            <View style={styles.videoPreviewWrapper}>
-              <View style={styles.videoPreviewContainer}>
-                {recordedVideoUri ? (
-                  <VideoPlayerComponent videoUri={recordedVideoUri} />
-                ) : (
-                  <View style={styles.noVideoContainer}>
-                    <Text style={styles.noVideoText}>No video available</Text>
-                  </View>
-                )}
-              </View>
-            </View>
-          </View>
-
-          {/* Bottom Buttons */}
-          <View style={styles.bottomControls}>
-            <View style={[styles.buttonStack, { paddingHorizontal: 20 }]}>
-              <TouchableOpacity style={styles.selectNewVideoButton} onPress={handleSelectNewVideo}>
-                <Text style={styles.selectNewVideoButtonText}>Record New Video</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.continueButton} onPress={handleContinue}>
-                <Text style={styles.continueButtonText}>Continue</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </SafeAreaView>
-      ) : showMovementSelection ? (
-        // Movement Selection Content
-        <SafeAreaView style={styles.container}>
-          {/* Close Button and Title */}
-          <View style={styles.topControls}>
-            <View style={styles.titleContainer}>
-              <Text style={styles.title}>Upload Video</Text>
-            </View>
-            <TouchableOpacity onPress={() => {
-              setShowCamera(false);
+              hapticFeedback.selection();
               onClose();
             }} style={styles.closeButton}>
               <Svg width={24} height={24} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="#8E8E93">
@@ -557,61 +444,69 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
 
           {/* Content */}
           <View style={styles.content}>
-            <View style={styles.movementSelectionContainer}>
-              <Text style={styles.movementSelectionTitle}>What exercise were you doing?</Text>
-              <TextInput
-                style={styles.searchInput}
-                placeholder="Search movements..."
-                value={searchQuery}
-                onChangeText={handleSearchChange}
-                placeholderTextColor="#8E8E93"
-              />
-              
-              <ScrollView style={styles.movementsList} showsVerticalScrollIndicator={true} keyboardShouldPersistTaps="handled">
-                {filteredMovements.map((movement, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={[
-                      styles.movementItem,
-                      selectedMovement === movement && styles.movementItemSelected
-                    ]}
-                    onPress={() => handleMovementSelect(movement)}
-                    activeOpacity={0.7}
-                    delayPressIn={0}
-                  >
-                    <Text style={[
-                      styles.movementItemText,
-                      selectedMovement === movement && styles.movementItemTextSelected
-                    ]}>
-                      {movement}
-                    </Text>
-                    {selectedMovement === movement && (
-                      <Svg width={20} height={20} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="#000000">
-                        <Path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </Svg>
-                    )}
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
+            <PracticesScreen
+              onNext={handleNext}
+              buttonText="Next"
+              tips={[
+                "Ensure good lighting and a stable camera",
+                "Try to record yourself from the side"
+              ]}
+            />
+          </View>
+        </SafeAreaView>
+      ) : showVideoPreview ? (
+        // Video Preview Content
+        <SafeAreaView style={styles.container}>
+          {/* Close Button and Title */}
+          <View style={styles.topControls}>
+            <View style={styles.titleContainer}>
+              <Text style={styles.title}>Record Video</Text>
             </View>
+            <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
+              <Svg width={24} height={24} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="#8E8E93">
+                <Path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+              </Svg>
+            </TouchableOpacity>
           </View>
 
-          {/* Bottom Buttons */}
-          <View style={styles.bottomControls}>
-            <View style={[styles.buttonStack, { paddingHorizontal: 20 }]}>
-              <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-                <Text style={styles.backButtonText}>Back</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.uploadButton, !selectedMovement && styles.uploadButtonDisabled]} 
-                onPress={handleFinalUpload}
-                disabled={!selectedMovement}
-              >
-                <Text style={[styles.uploadButtonText, !selectedMovement && styles.uploadButtonTextDisabled]}>
-                  Upload
-                </Text>
-              </TouchableOpacity>
+          {/* Content */}
+          <View style={styles.content}>
+            <VideoPreviewScreen
+              videoUri={recordedVideoUri || ''}
+              onSelectNewVideo={handleSelectNewVideo}
+              onContinue={handleContinue}
+              onClose={handleClose}
+              selectNewVideoText="Record New Video"
+            />
+          </View>
+        </SafeAreaView>
+      ) : showMovementSelection ? (
+        // Movement Selection Content
+        <SafeAreaView style={styles.container}>
+          {/* Close Button and Title */}
+          <View style={styles.topControls}>
+            <View style={styles.titleContainer}>
+              <Text style={styles.title}>Record Video</Text>
             </View>
+            <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
+              <Svg width={24} height={24} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="#8E8E93">
+                <Path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+              </Svg>
+            </TouchableOpacity>
+          </View>
+
+          {/* Content */}
+          <View style={styles.content}>
+            <MovementSelectionScreen
+              searchQuery={searchQuery}
+              filteredMovements={filteredMovements}
+              selectedMovement={selectedMovement}
+              onMovementSelect={handleMovementSelect}
+              onSearchChange={handleSearchChange}
+              onBack={handleBack}
+              onUpload={handleFinalUpload}
+              onClose={handleClose}
+            />
           </View>
         </SafeAreaView>
       ) : (
@@ -674,7 +569,10 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
               {/* Top Controls */}
               <View style={styles.topControls}>
                 <View style={styles.topControlsSpacer} />
-                <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
+                <TouchableOpacity onPress={() => {
+                  hapticFeedback.selection();
+                  onClose();
+                }} style={styles.closeButton}>
                   <Svg width={24} height={24} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="white">
                     <Path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
                   </Svg>
@@ -729,9 +627,6 @@ const styles = StyleSheet.create({
     bottom: 0,
     zIndex: 10,
   },
-  safeArea: {
-    flex: 1,
-  },
   topControls: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -739,17 +634,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 24,
     zIndex: 10,
-  },
-  titleContainer: {
-    flex: 1,
-    alignItems: 'flex-start',
-  },
-  title: {
-    fontSize: 36,
-    fontWeight: '600',
-    color: '#000000',
-    textAlign: 'left',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
   },
   closeButton: {
     width: 40,
@@ -765,78 +649,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'flex-end',
     paddingBottom: 40,
-  },
-  buttonStack: {
-    width: '100%',
-  },
-  selectNewVideoButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: '#000000',
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    borderRadius: 28,
-    width: '100%',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  selectNewVideoButtonText: {
-    color: '#000000',
-    fontSize: 17,
-    fontWeight: '600',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
-  },
-  continueButton: {
-    backgroundColor: '#000000',
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    borderRadius: 28,
-    width: '100%',
-    alignItems: 'center',
-  },
-  continueButtonText: {
-    color: '#FFFFFF',
-    fontSize: 17,
-    fontWeight: '600',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
-  },
-  backButton: {
-    width: '100%',
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: '#000000',
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    borderRadius: 28,
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  backButtonText: {
-    color: '#000000',
-    fontSize: 17,
-    fontWeight: '600',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
-  },
-  uploadButton: {
-    backgroundColor: '#000000',
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    borderRadius: 28,
-    width: '100%',
-    alignItems: 'center',
-  },
-  uploadButtonText: {
-    color: '#FFFFFF',
-    fontSize: 17,
-    fontWeight: '600',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
-  },
-  uploadButtonDisabled: {
-    backgroundColor: '#8E8E93',
-    opacity: 0.7,
-  },
-  uploadButtonTextDisabled: {
-    color: '#C7C7CC',
   },
   controlsContainer: {
     alignItems: 'center',
@@ -867,74 +679,37 @@ const styles = StyleSheet.create({
     borderRadius: 32,
     backgroundColor: '#FF3B30',
   },
-  stopIcon: {
-    width: 24,
-    height: 24,
-    backgroundColor: '#FF3B30',
-    borderRadius: 0,
-  },
-  recordingIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    borderRadius: 20,
-  },
-  recordingDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#FF3B30',
-    marginRight: 8,
-  },
-  recordingText: {
-    color: 'white',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  permissionContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-    backgroundColor: '#000000',
-  },
-  permissionTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: 'white',
-    textAlign: 'center',
-    marginBottom: 16,
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
-  },
-  permissionDescription: {
-    fontSize: 17,
-    fontWeight: '400',
-    color: '#8E8E93',
-    textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 32,
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
-  },
-  permissionButton: {
-    backgroundColor: '#FF3B30',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
+  recordSquare: {
+    width: 32,
+    height: 32,
     borderRadius: 8,
+    backgroundColor: '#FF3B30',
   },
-  permissionButtonText: {
-    color: 'white',
-    fontSize: 17,
+  timerContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 1,
+  },
+  timerPill: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    paddingHorizontal: 40,
+    paddingVertical: 6,
+    marginTop: 20,
+  },
+  timerText: {
+    color: 'black',
+    fontSize: 18,
     fontWeight: '600',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
-  permissionTopControls: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    paddingHorizontal: 20,
-    paddingTop: 10,
+  timerPillRecording: {
+    backgroundColor: '#FF3B30',
+  },
+  timerTextRecording: {
+    color: 'white',
   },
   cornerGuides: {
     position: 'absolute',
@@ -991,257 +766,47 @@ const styles = StyleSheet.create({
     bottom: 120,
     right: 30,
   },
-  recordSquare: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    backgroundColor: '#FF3B30',
-  },
-  timerContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-    zIndex: 1,
-  },
-  timerPill: {
-    backgroundColor: 'white',
-    borderRadius: 20,
-    paddingHorizontal: 40,
-    paddingVertical: 6,
-    marginTop: 20,
-  },
-  timerText: {
-    color: 'black',
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  timerPillRecording: {
-    backgroundColor: '#FF3B30',
-  },
-  timerTextRecording: {
-    color: 'white',
-  },
-  practicesContainer: {
+  permissionContainer: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    backgroundColor: '#000000',
   },
-  practicesTopControls: {
+  permissionTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: 'white',
+    textAlign: 'center',
+    marginBottom: 16,
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
+  },
+  permissionDescription: {
+    fontSize: 17,
+    fontWeight: '400',
+    color: '#8E8E93',
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 32,
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
+  permissionButton: {
+    backgroundColor: '#FF3B30',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  permissionButtonText: {
+    color: 'white',
+    fontSize: 17,
+    fontWeight: '600',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
+  permissionTopControls: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: -6,
-    position: 'relative',
-  },
-  practicesCloseButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 24,
-  },
-  practicesTitle: {
-    fontSize: 36,
-    fontWeight: '600',
-    color: '#000000',
-    textAlign: 'left',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
-    position: 'absolute',
-    top: 24,
-    left: 20,
-    width: '60%',
-  },
-  practicesSpacer: {
-    flex: 1,
-  },
-  practicesBottomControls: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    paddingBottom: 40,
-    paddingHorizontal: 20,
-  },
-  practicesNextButton: {
-    backgroundColor: '#000000',
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    borderRadius: 28,
-    width: '100%',
-    alignItems: 'center',
-  },
-  practicesNextButtonText: {
-    color: '#FFFFFF',
-    fontSize: 17,
-    fontWeight: '600',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
-  },
-  tipsCard: {
-    backgroundColor: '#F0F0F0',
-    borderRadius: 12,
-    padding: 20,
-    marginHorizontal: 20,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  tipsTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#000000',
-    marginBottom: 15,
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
-  },
-  tipsList: {
-    //
-  },
-  tipItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  tipNumber: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#000000',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 10,
-  },
-  tipNumberText: {
-    color: 'white',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  tipText: {
-    fontSize: 16,
-    fontWeight: '400',
-    color: '#333333',
-    flex: 1,
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
-  },
-  tipImageWrapper: {
-    position: 'relative',
-    alignItems: 'center',
-    marginHorizontal: 20,
-    marginBottom: 20,
-  },
-  tipImageContainer: {
-    width: '60%',
-    height: 280,
-    borderRadius: 12,
-    overflow: 'hidden',
-    backgroundColor: '#F0F0F0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  tipImage: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 18,
-  },
-  iconContainer: {
-    position: 'absolute',
-    top: -20,
-    alignSelf: 'center',
-    zIndex: 10,
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  simpleIconContainer: {
-    position: 'absolute',
-    top: -60,
-    alignSelf: 'center',
-    zIndex: 10,
-  },
-  videoPreview: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 12,
-  },
-  videoPreviewWrapper: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  videoPreviewContainer: {
-    width: '100%',
-    aspectRatio: 16 / 9,
-    borderRadius: 18,
-    overflow: 'hidden',
-    backgroundColor: 'black',
-  },
-  spacer: {
-    flex: 1,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 20,
-  },
-  movementSelectionContainer: {
-    flex: 1,
-    paddingVertical: 20,
-    paddingBottom: 20,
-    width: '100%',
-  },
-  movementSelectionTitle: {
-    fontSize: 22,
-    fontWeight: '400',
-    color: '#000000',
-    marginBottom: 10,
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
-  },
-  searchInput: {
-    width: '100%',
-    height: 50,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#8E8E93',
-    paddingHorizontal: 15,
-    fontSize: 16,
-    fontWeight: '400',
-    color: '#000000',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
-    marginBottom: 20,
-  },
-  movementsList: {
-    width: '100%',
-  },
-  movementItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 15,
-    paddingHorizontal: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-  },
-  movementItemSelected: {
-    backgroundColor: '#E0E0E0',
-  },
-  movementItemText: {
-    fontSize: 17,
-    fontWeight: '400',
-    color: '#000000',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
-  },
-  movementItemTextSelected: {
-    fontWeight: '600',
+    paddingTop: 10,
   },
   topControlsSpacer: {
     width: 40, // Adjust as needed to balance the close button
@@ -1250,32 +815,19 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000000',
   },
-  noVideoContainer: {
+  titleContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#000000',
+    alignItems: 'flex-start',
   },
-  noVideoText: {
-    color: '#FFFFFF',
-    fontSize: 20,
+  title: {
+    fontSize: 36,
     fontWeight: '600',
-    marginBottom: 10,
+    color: '#000000',
+    textAlign: 'left',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
   },
-  noVideoSubtext: {
-    color: '#8E8E93',
-    fontSize: 14,
-  },
-  debugInfo: {
-    position: 'absolute',
-    bottom: 20,
-    left: 20,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    padding: 10,
-    borderRadius: 8,
-  },
-  debugText: {
-    color: 'white',
-    fontSize: 12,
+  content: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
   },
 }); 

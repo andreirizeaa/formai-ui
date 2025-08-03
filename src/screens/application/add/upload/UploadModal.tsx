@@ -1,30 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity, Platform, Alert, Image, TextInput, ScrollView, Keyboard } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import * as ImagePicker from 'expo-image-picker';
-import { VideoView, useVideoPlayer } from 'expo-video';
 import i18n from '../../../../utils/i18n';
 import { hapticFeedback } from '../../../../utils/haptic';
-
-interface VideoPlayerComponentProps {
-  videoUri: string;
-}
-
-function VideoPlayerComponent({ videoUri }: VideoPlayerComponentProps) {
-  const player = useVideoPlayer(videoUri, (player) => {
-    player.loop = true;
-    player.showNowPlayingNotification = false;
-    player.play();
-  });
-
-  return (
-    <VideoView
-      player={player}
-      style={styles.videoPreview}
-    />
-  );
-}
+import { VideoPreviewScreen } from '../common/VideoPreviewScreen';
+import { MovementSelectionScreen } from '../common/MovementSelectionScreen';
+import { PracticesScreen } from '../common/PracticesScreen';
 
 interface UploadModalProps {
   isVisible: boolean;
@@ -162,6 +145,17 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
   const [selectedMovement, setSelectedMovement] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [filteredMovements, setFilteredMovements] = useState<string[]>(gymMovements);
+
+  // Reset states when modal becomes invisible
+  useEffect(() => {
+    if (!isVisible) {
+      setSelectedVideo(null);
+      setShowMovementSelection(false);
+      setSelectedMovement('');
+      setSearchQuery('');
+      setFilteredMovements(gymMovements);
+    }
+  }, [isVisible]);
 
   const handleUploadPress = async () => {
     // Selection haptic feedback
@@ -308,7 +302,6 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
       animationType="slide"
       presentationStyle="pageSheet"
       onRequestClose={onClose}
-      statusBarTranslucent={true}
     >
       <SafeAreaView style={styles.container}>
         {/* Close Button and Title */}
@@ -316,148 +309,61 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
           <View style={styles.titleContainer}>
             <Text style={styles.title}>Upload Video</Text>
           </View>
-          <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
+          <TouchableOpacity onPress={() => {
+            hapticFeedback.selection();
+            onClose();
+          }} style={styles.closeButton}>
             <Svg width={24} height={24} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="#8E8E93">
               <Path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
             </Svg>
           </TouchableOpacity>
         </View>
 
-        {/* Spacer to push content to bottom when no video selected */}
-        {!selectedVideo && <View style={styles.spacer} />}
-
         {/* Content */}
-        <View style={[styles.content, selectedVideo && styles.contentCentered]}>
+        <View style={styles.content}>
           {!selectedVideo ? (
             // Tips Card - shown when no video is selected
-            <>
-              {/* Recording Tip Image */}
-              <View style={styles.tipImageWrapper}>
-                {/* Checkmark Icon */}
-                <View style={styles.simpleIconContainer}>
-                  <Svg width={48} height={48} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="#000000">
-                    <Path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                  </Svg>
-                </View>
-                <View style={styles.tipImageContainer}>
-                  <Image
-                    source={require('../../../../../assets/recording-tip.jpg')}
-                    style={styles.tipImage}
-                    resizeMode="cover"
-                  />
-                </View>
-              </View>
-
-              <View style={styles.tipsCard}>
-                <Text style={styles.tipsTitle}>General tips</Text>
-                <View style={styles.tipsList}>
-                  <View style={styles.tipItem}>
-                    <View style={styles.tipNumber}>
-                      <Text style={styles.tipNumberText}>1</Text>
-                    </View>
-                    <Text style={styles.tipText}>Ensure good lighting</Text>
-                  </View>
-                  <View style={styles.tipItem}>
-                    <View style={styles.tipNumber}>
-                      <Text style={styles.tipNumberText}>2</Text>
-                    </View>
-                    <Text style={styles.tipText}>Ensure a stable video</Text>
-                  </View>
-                  <View style={styles.tipItem}>
-                    <View style={styles.tipNumber}>
-                      <Text style={styles.tipNumberText}>3</Text>
-                    </View>
-                    <Text style={styles.tipText}>Have the video of yourself from the side</Text>
-                  </View>
-                </View>
-              </View>
-            </>
+            <PracticesScreen
+              onUpload={handleUploadPress}
+              buttonText="Upload Video"
+              tips={[
+                "Ensure good lighting",
+                "Ensure a stable video",
+                "Have the video of yourself from the side"
+              ]}
+            />
           ) : showMovementSelection ? (
             // Movement Selection - shown when video is selected and user clicked continue
-            <View style={styles.movementSelectionContainer}>
-              <Text style={styles.movementSelectionTitle}>What exercise were you doing?</Text>
-              <TextInput
-                style={styles.searchInput}
-                placeholder="Search movements..."
-                value={searchQuery}
-                onChangeText={handleSearchChange}
-                placeholderTextColor="#8E8E93"
-              />
-              
-              <ScrollView style={styles.movementsList} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-                {filteredMovements.map((movement, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={[
-                      styles.movementItem,
-                      selectedMovement === movement && styles.movementItemSelected
-                    ]}
-                    onPress={() => handleMovementSelect(movement)}
-                    activeOpacity={0.7}
-                    delayPressIn={0}
-                  >
-                    <Text style={[
-                      styles.movementItemText,
-                      selectedMovement === movement && styles.movementItemTextSelected
-                    ]}>
-                      {movement}
-                    </Text>
-                    {selectedMovement === movement && (
-                      <Svg width={20} height={20} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="#000000">
-                        <Path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </Svg>
-                    )}
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
+            <MovementSelectionScreen
+              searchQuery={searchQuery}
+              filteredMovements={filteredMovements}
+              selectedMovement={selectedMovement}
+              onMovementSelect={handleMovementSelect}
+              onSearchChange={handleSearchChange}
+              onBack={handleBack}
+              onUpload={handleFinalUpload}
+              onClose={handleClose}
+            />
           ) : (
             // Video Preview - shown when video is selected but movement not yet selected
-            <View style={styles.videoPreviewWrapper}>
-              <View style={styles.videoPreviewContainer}>
-                {selectedVideo && (
-                  <VideoPlayerComponent videoUri={selectedVideo.uri} />
-                )}
-              </View>
-            </View>
+            <VideoPreviewScreen
+              videoUri={selectedVideo?.uri || ''}
+              onSelectNewVideo={handleSelectNewVideo}
+              onContinue={handleContinue}
+              onClose={handleClose}
+              selectNewVideoText="Select New Video"
+            />
           )}
         </View>
 
         {/* Bottom Buttons */}
-        <View style={styles.bottomControls}>
-          {!selectedVideo ? (
-            // Upload Video button - shown when no video is selected
-            <TouchableOpacity style={styles.uploadButton} onPress={handleUploadPress}>
-              <Text style={styles.uploadButtonText}>Upload Video</Text>
-            </TouchableOpacity>
-          ) : showMovementSelection ? (
-            // Upload button - shown when movement is selected
+        {selectedVideo && (
+          <View style={styles.bottomControls}>
             <View style={styles.buttonStack}>
-              <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-                <Text style={styles.backButtonText}>Back</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.uploadButton, !selectedMovement && styles.uploadButtonDisabled]} 
-                onPress={handleFinalUpload}
-                disabled={!selectedMovement}
-              >
-                <Text style={[styles.uploadButtonText, !selectedMovement && styles.uploadButtonTextDisabled]}>
-                  Upload
-                </Text>
-              </TouchableOpacity>
+              {/* No button needed here since PracticesScreen handles the upload button */}
             </View>
-          ) : (
-            // Continue and Select New Video buttons - shown when video is selected
-            <View style={styles.buttonStack}>
-              <TouchableOpacity style={styles.selectNewVideoButton} onPress={handleSelectNewVideo}>
-                <Text style={styles.selectNewVideoButtonText}>Select New Video</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.continueButton} onPress={handleContinue}>
-                <Text style={styles.continueButtonText}>Continue</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-        </View>
+          </View>
+        )}
       </SafeAreaView>
     </Modal>
   );
@@ -502,17 +408,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  spacer: {
-    flex: 1,
-  },
   content: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  contentCentered: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   description: {
     fontSize: 17,
@@ -523,8 +420,13 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
   bottomControls: {
+    justifyContent: 'flex-end',
+    width: '100%',
     paddingBottom: 40,
     paddingHorizontal: 20,
+  },
+  buttonStack: {
+    width: '100%',
   },
   uploadButton: {
     backgroundColor: '#000000',
@@ -546,202 +448,5 @@ const styles = StyleSheet.create({
   },
   uploadButtonTextDisabled: {
     color: '#C7C7CC',
-  },
-  tipsCard: {
-    backgroundColor: '#F2F2F7',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 20,
-  },
-  tipsTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#000000',
-    marginBottom: 15,
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
-  },
-  tipsList: {
-    //
-  },
-  tipItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  tipNumber: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#000000',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 10,
-  },
-  tipNumberText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
-  },
-  tipText: {
-    fontSize: 15,
-    fontWeight: '400',
-    color: '#000000',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
-  },
-  videoPreviewContainer: {
-    width: '100%',
-    aspectRatio: 16 / 9,
-    borderRadius: 16,
-    overflow: 'hidden',
-    backgroundColor: 'black',
-  },
-  videoPreview: {
-    width: '100%',
-    height: '100%',
-  },
-  selectNewVideoButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: '#000000',
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    borderRadius: 28,
-    width: '100%',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  selectNewVideoButtonText: {
-    color: '#000000',
-    fontSize: 17,
-    fontWeight: '600',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
-  },
-  continueButton: {
-    backgroundColor: '#000000',
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    borderRadius: 28,
-    width: '100%',
-    alignItems: 'center',
-  },
-  continueButtonText: {
-    color: '#FFFFFF',
-    fontSize: 17,
-    fontWeight: '600',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
-  },
-  tipImageWrapper: {
-    position: 'relative',
-    alignItems: 'center',
-    marginHorizontal: 20,
-    marginBottom: 20,
-  },
-  simpleIconContainer: {
-    position: 'absolute',
-    top: -60,
-    alignSelf: 'center',
-    zIndex: 10,
-  },
-  tipImageContainer: {
-    width: '60%',
-    height: 280,
-    borderRadius: 12,
-    overflow: 'hidden',
-    backgroundColor: '#F0F0F0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  tipImage: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 18,
-  },
-  buttonStack: {
-    width: '100%',
-  },
-  videoPreviewWrapper: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  movementSelectionContainer: {
-    flex: 1,
-    paddingVertical: 20,
-    paddingBottom: 20,
-    width: '100%',
-  },
-  movementSelectionTitle: {
-    fontSize: 22,
-    fontWeight: '400',
-    color: '#000000',
-    marginBottom: 10,
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
-  },
-  movementSelectionSubtitle: {
-    fontSize: 17,
-    fontWeight: '400',
-    color: '#8E8E93',
-    textAlign: 'center',
-    lineHeight: 24,
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
-    marginBottom: 20,
-  },
-  searchInput: {
-    width: '100%',
-    height: 50,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#8E8E93',
-    paddingHorizontal: 15,
-    fontSize: 16,
-    fontWeight: '400',
-    color: '#000000',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
-    marginBottom: 20,
-  },
-  movementsList: {
-    width: '100%',
-  },
-  movementItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 15,
-    paddingHorizontal: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-  },
-  movementItemSelected: {
-    backgroundColor: '#E0E0E0',
-  },
-  movementItemText: {
-    fontSize: 17,
-    fontWeight: '400',
-    color: '#000000',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
-  },
-  movementItemTextSelected: {
-    fontWeight: '600',
-  },
-  backButton: {
-    width: '100%',
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: '#000000',
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    borderRadius: 28,
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  backButtonText: {
-    color: '#000000',
-    fontSize: 17,
-    fontWeight: '600',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
 }); 
