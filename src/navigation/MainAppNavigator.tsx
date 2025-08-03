@@ -64,6 +64,11 @@ type MainStackNavigationProp = StackNavigationProp<MainStackParamList>;
 
 const Stack = createStackNavigator<MainStackParamList>();
 
+// Declare global function type
+declare global {
+  var triggerAddOptions: (() => void) | undefined;
+}
+
 // Wrapper components for screens that need navigation
 function HomeScreenWrapper() {
   const navigation = useNavigation<MainStackNavigationProp>();
@@ -319,24 +324,60 @@ function FeedbackSlideshowWrapper() {
   );
 }
 
-function LibraryScreenWrapper({ onTriggerAddOptions }: { onTriggerAddOptions: () => void }) {
+function LibraryScreenWrapperWithProps() {
   const navigation = useNavigation<MainStackNavigationProp>();
   
   const handleBack = () => {
     navigation.goBack();
   };
 
-  return <LibraryScreen onBack={handleBack} onTriggerAddOptions={onTriggerAddOptions} />;
+  const handleTriggerAddOptions = () => {
+    // Check if we can go back, if not just trigger add options directly
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+      // Use a small delay to ensure navigation completes
+      setTimeout(() => {
+        if (global.triggerAddOptions) {
+          global.triggerAddOptions();
+        }
+      }, 100);
+    } else {
+      // If we can't go back, just trigger add options directly
+      if (global.triggerAddOptions) {
+        global.triggerAddOptions();
+      }
+    }
+  };
+
+  return <LibraryScreen onBack={handleBack} onTriggerAddOptions={handleTriggerAddOptions} />;
 }
 
-function FavouritesScreenWrapper({ onTriggerAddOptions }: { onTriggerAddOptions: () => void }) {
+function FavouritesScreenWrapperWithProps() {
   const navigation = useNavigation<MainStackNavigationProp>();
   
   const handleBack = () => {
     navigation.goBack();
   };
 
-  return <FavouritesScreen onBack={handleBack} onTriggerAddOptions={onTriggerAddOptions} />;
+  const handleTriggerAddOptions = () => {
+    // Check if we can go back, if not just trigger add options directly
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+      // Use a small delay to ensure navigation completes
+      setTimeout(() => {
+        if (global.triggerAddOptions) {
+          global.triggerAddOptions();
+        }
+      }, 100);
+    } else {
+      // If we can't go back, just trigger add options directly
+      if (global.triggerAddOptions) {
+        global.triggerAddOptions();
+      }
+    }
+  };
+
+  return <FavouritesScreen onBack={handleBack} onTriggerAddOptions={handleTriggerAddOptions} />;
 }
 
 // Main tabs navigator with custom bottom navigation
@@ -366,6 +407,11 @@ function MainTabsNavigator() {
     setShowAddOptions(false);
     navigation.navigate('RecordModal');
   };
+
+  // Expose the add press function globally
+  React.useEffect(() => {
+    global.triggerAddOptions = handleAddPress;
+  }, []);
 
   const renderScreenContent = () => {
     switch (activeTab) {
@@ -508,14 +554,14 @@ export function MainAppNavigator() {
         />
         <Stack.Screen 
           name="Library" 
-          component={() => <LibraryScreenWrapper onTriggerAddOptions={handleAddPress} />}
+          component={LibraryScreenWrapperWithProps}
           options={{
             presentation: 'card',
           }}
         />
         <Stack.Screen 
           name="Favourites" 
-          component={() => <FavouritesScreenWrapper onTriggerAddOptions={handleAddPress} />}
+          component={FavouritesScreenWrapperWithProps}
           options={{
             presentation: 'card',
           }}
