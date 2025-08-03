@@ -1,9 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, Animated, Dimensions, ImageSourcePropType } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import { hapticFeedback } from '../../../utils/haptic';
-import * as VideoThumbnails from 'expo-video-thumbnails';
 
 interface HomeScreenProps {
   onShowFeedback: (liftData: LiftData) => void;
@@ -22,7 +21,8 @@ interface LiftData {
   unit: string;
   sets: number;
   reps: number;
-  videoURL: any; // Changed back to any for video source
+  videoURL: any;
+  thumbnailURL?: any;
 }
 
 export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibrary, onShowFavourites }: HomeScreenProps) {
@@ -55,38 +55,6 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
       videoURL: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
     },
   ];
-
-  // State to store thumbnail paths
-  const [thumbnails, setThumbnails] = useState<{[key: string]: string}>({});
-
-  // Generate thumbnails on mount
-  useEffect(() => {
-    const generateThumbnails = async () => {
-      const thumbnailPromises = recentLifts.map(async (lift) => {
-        try {
-          const { uri } = await VideoThumbnails.getThumbnailAsync(lift.videoURL, {
-            time: 2000, // First frame
-            quality: 0.8, // Good quality
-          });
-          return { id: lift.id, path: uri };
-        } catch (err) {
-          return { id: lift.id, path: null };
-        }
-      });
-
-      const results = await Promise.all(thumbnailPromises);
-      const thumbnailMap = results.reduce((acc, result) => {
-        if (result.path) {
-          acc[result.id] = result.path;
-        }
-        return acc;
-      }, {} as {[key: string]: string});
-
-      setThumbnails(thumbnailMap);
-    };
-
-    generateThumbnails();
-  }, []);
 
   // Animation values for each lift card
   const liftAnimations = useRef(recentLifts.map(() => new Animated.Value(0))).current;
@@ -137,9 +105,6 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
 
     const opacity = fadeAnimations[index];
 
-    // Get thumbnail path for this lift
-    const thumbnailPath = thumbnails[lift.id];
-
     return (
       <Animated.View
         style={[
@@ -157,19 +122,11 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
         >
           {/* Video Thumbnail - Left 20% */}
           <View style={styles.videoThumbnailContainer}>
-            {thumbnailPath ? (
-              <Image
-                source={{ uri: thumbnailPath }}
+            <Image
+                source={require('../../../../assets/placeholder-thumbnail.png')}
                 style={styles.videoThumbnail}
                 resizeMode="cover"
               />
-            ) : (
-              <View style={styles.placeholderThumbnail}>
-                <Svg width={32} height={32} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
-                  <Path strokeLinecap="round" strokeLinejoin="round" d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z" />
-                </Svg>
-              </View>
-            )}
           </View>
           
           {/* Content - Right 80% */}
