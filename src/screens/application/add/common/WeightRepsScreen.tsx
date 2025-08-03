@@ -286,7 +286,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     width: '100%',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 24,
   },
   keyboardButtonDisabled: {
     backgroundColor: '#8E8E93',

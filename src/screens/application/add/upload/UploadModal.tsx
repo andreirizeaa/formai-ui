@@ -10,6 +10,7 @@ import { VideoPreviewScreen } from '../common/VideoPreviewScreen';
 import { MovementSelectionScreen } from '../common/MovementSelectionScreen';
 import { PracticesScreen } from '../common/PracticesScreen';
 import { WeightRepsScreen } from '../common/WeightRepsScreen';
+import { useLoadingLifts } from '../../../../context/LoadingLiftsContext';
 
 interface UploadModalProps {
   isVisible: boolean;
@@ -142,6 +143,7 @@ const gymMovements = [
 ]
 
 export function UploadModal({ isVisible, onClose }: UploadModalProps) {
+  const { addLoadingLift } = useLoadingLifts();
   const [selectedVideo, setSelectedVideo] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const [showMovementSelection, setShowMovementSelection] = useState(false);
   const [showWeightReps, setShowWeightReps] = useState(false);
@@ -281,9 +283,8 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
     setShowMovementSelection(true);
   };
 
-  const handleWeightRepsUpload = async (data: { weight: number; unit: 'kg' | 'lbs'; reps: number }) => {
+  const handleFinalCompleteClicked = async (data: { weight: number; unit: 'kg' | 'lbs'; reps: number }) => {
     setWeightData(data);
-    console.log('outside');
     try {
       // Generate thumbnail from the video URI
       const thumbnailUri = await generateVideoThumbnail(selectedVideo?.uri || '');
@@ -300,6 +301,16 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
         reps: data.reps,
       };
       setUploadData(uploadDataObj);
+      
+      // Add to loading lifts
+      addLoadingLift({
+        thumbnailUri: thumbnailUri,
+        movementType: selectedMovement,
+        weightValue: data.weight,
+        weightUnit: data.unit,
+        reps: data.reps,
+        dateToday: today,
+      });
       
       // Triple important haptic feedback for distinct feedback
       hapticFeedback.success();
@@ -390,7 +401,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
             // Weight and Reps - shown after movement selection
             <WeightRepsScreen
               onBack={handleWeightRepsBack}
-              onUpload={handleWeightRepsUpload}
+              onUpload={handleFinalCompleteClicked}
             />
           ) : (
             // Video Preview - shown when video is selected but movement not yet selected

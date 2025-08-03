@@ -6,6 +6,7 @@ import { useColorScheme } from 'react-native';
 import { Asset } from 'expo-asset';
 import { OnboardingProvider } from './src/context/OnboardingContext';
 import { LanguageProvider } from './src/context/LanguageContext';
+import { LoadingLiftsProvider } from './src/context/LoadingLiftsContext';
 import { OnboardingNavigator } from './src/navigation/OnboardingNavigator';
 import { MainAppLayout } from './src/components/layout/MainAppLayout';
 
@@ -77,7 +78,9 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <LanguageProvider>
-        <MainAppLayout />
+        <LoadingLiftsProvider>
+          <MainAppLayout />
+        </LoadingLiftsProvider>
         <StatusBar style={isDark ? 'light' : 'dark'} />
       </LanguageProvider>
     </SafeAreaProvider>

@@ -24,7 +24,7 @@ export async function generateVideoThumbnail(
 ): Promise<string> {
   try {
     const { uri } = await VideoThumbnails.getThumbnailAsync(videoUri, {
-      time: options.time ?? 15000, // Default to 15 seconds
+      time: options.time ?? 2000,
       quality: options.quality ?? 0.8, // Default quality 80%
       headers: options.headers,
     });

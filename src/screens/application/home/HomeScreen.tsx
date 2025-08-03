@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, Animated, 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import { hapticFeedback } from '../../../utils/haptic';
+import { useLoadingLifts } from '../../../context/LoadingLiftsContext';
+import { LoadingLiftCard } from './LoadingLiftCard';
 
 interface HomeScreenProps {
   onShowFeedback: (liftData: LiftData) => void;
@@ -26,51 +28,37 @@ interface LiftData {
 }
 
 export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibrary, onShowFavourites }: HomeScreenProps) {
-  // Dummy data for recent lifts
-  // const recentLifts: LiftData[] = [];
+  const { loadingLifts, completedLifts, addLoadingLift } = useLoadingLifts();
+  
+  // Use completed lifts from context instead of dummy data
+  const recentLifts: LiftData[] = completedLifts;
 
-  const recentLifts: LiftData[] = [
-    {
-      id: '1',
-      liftType: 'Bench Press',
-      liftDate: 'Today, 2:30 PM',
-      accuracy: 87,
-      lineGraphValues: [95, 92, 90, 88, 85, 87, 89, 91],
-      weight: 85,
-      unit: 'KG',
-      sets: 3,
-      reps: 8,
-      videoURL: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-    },
-    {
-      id: '2',
-      liftType: 'Shoulder Press',
-      liftDate: 'Today, 2:40 PM',
-      accuracy: 98,
-      lineGraphValues: [95, 92, 90, 88, 85, 87, 89, 91],
-      weight: 85,
-      unit: 'KG',
-      sets: 3,
-      reps: 8,
-      videoURL: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-    },
-  ];
+  // Animation values for each lift card - recreate when lifts change
+  const liftAnimations = useRef<Animated.Value[]>([]);
+  const fadeAnimations = useRef<Animated.Value[]>([]);
 
-  // Animation values for each lift card
-  const liftAnimations = useRef(recentLifts.map(() => new Animated.Value(0))).current;
-  const fadeAnimations = useRef(recentLifts.map(() => new Animated.Value(0))).current;
-
-  // Animate lift cards on mount
+  // Update animation arrays when lifts change
   useEffect(() => {
+    const newLiftAnimations = recentLifts.map(() => new Animated.Value(0));
+    const newFadeAnimations = recentLifts.map(() => new Animated.Value(0));
+    
+    liftAnimations.current = newLiftAnimations;
+    fadeAnimations.current = newFadeAnimations;
+  }, [recentLifts]);
+
+  // Animate lift cards when lifts change
+  useEffect(() => {
+    if (recentLifts.length === 0) return;
+
     const animations = recentLifts.map((_, index) => {
       return Animated.parallel([
-        Animated.timing(liftAnimations[index], {
+        Animated.timing(liftAnimations.current[index], {
           toValue: 1,
           duration: 300,
           delay: index * 50, // Stagger the animations
           useNativeDriver: true,
         }),
-        Animated.timing(fadeAnimations[index], {
+        Animated.timing(fadeAnimations.current[index], {
           toValue: 1,
           duration: 250,
           delay: index * 50,
@@ -80,7 +68,7 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
     });
 
     Animated.parallel(animations).start();
-  }, []);
+  }, [recentLifts]); // Re-run when lifts change
 
   const handleLiftPress = (lift: LiftData) => {
     hapticFeedback.selection();
@@ -97,13 +85,29 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
     onShowFavourites();
   };
 
+  // Test function to add sample loading lifts
+  const handleAddTestLift = () => {
+    hapticFeedback.selection();
+    const today = new Date().toISOString().split('T')[0];
+    
+    addLoadingLift({
+      thumbnailUri: 'https://picsum.photos/200/300',
+      movementType: 'Bench Press',
+      weightValue: 135,
+      weightUnit: 'lbs',
+      reps: 8,
+      dateToday: today,
+    });
+  };
+
   function LiftCard({ lift, index }: { lift: LiftData; index: number }) {
-    const translateY = liftAnimations[index].interpolate({
+    // Ensure the animation values exist before using them
+    const translateY = liftAnimations.current[index]?.interpolate({
       inputRange: [0, 1],
       outputRange: [50, 0], // Start 50px below, animate to normal position
-    });
+    }) || new Animated.Value(0);
 
-    const opacity = fadeAnimations[index];
+    const opacity = fadeAnimations.current[index] || new Animated.Value(1);
 
     return (
       <Animated.View
@@ -122,11 +126,23 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
         >
           {/* Video Thumbnail - Left 20% */}
           <View style={styles.videoThumbnailContainer}>
-            <Image
+            {lift.thumbnailURL ? (
+              <Image
+                source={{ uri: lift.thumbnailURL }}
+                style={styles.videoThumbnail}
+                resizeMode="cover"
+                onError={() => {
+                  // Fallback to placeholder if thumbnail fails to load
+                  console.warn('Failed to load thumbnail:', lift.thumbnailURL);
+                }}
+              />
+            ) : (
+              <Image
                 source={require('../../../../assets/placeholder-thumbnail.png')}
                 style={styles.videoThumbnail}
                 resizeMode="cover"
               />
+            )}
           </View>
           
           {/* Content - Right 80% */}
@@ -160,6 +176,13 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
             style={styles.logo}
             resizeMode="contain"
           />
+          {/* Test button - remove this in production */}
+          <TouchableOpacity 
+            style={styles.testButton}
+            onPress={handleAddTestLift}
+          >
+            <Text style={styles.testButtonText}>Add Test Lift</Text>
+          </TouchableOpacity>
         </View>
         
         {/* Spacer to push content to bottom */}
@@ -197,18 +220,24 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
           <View 
             style={styles.liftsScrollView} 
           >
+            {/* Show loading lifts first */}
+            {loadingLifts.map((loadingLift) => (
+              <LoadingLiftCard key={loadingLift.id} lift={loadingLift} />
+            ))}
+            
+            {/* Show completed lifts */}
             {recentLifts.length > 0 ? (
               recentLifts.map((lift, index) => (
                 <LiftCard key={lift.id} lift={lift} index={index} />
               ))
-            ) : (
+            ) : loadingLifts.length === 0 ? (
               <View style={styles.noLiftsCard}>
                 <View style={styles.noLiftsContent}>
                   <Text style={styles.noLiftsTitle}>You haven't recorded any lifts</Text>
                   <Text style={styles.noLiftsSubtitle}>Start analysing today's workout by taking a quick video</Text>
                 </View>
               </View>
-            )}
+            ) : null}
           </View>
         </View>
       </ScrollView>
@@ -226,16 +255,32 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
     backgroundColor: 'transparent',
     zIndex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   logo: {
     width: 160,
     height: 40,
   },
+  testButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  testButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+    fontFamily: 'SF Pro Text',
+  },
   scrollView: {
     flex: 1,
+    marginBottom: -58,
   },
   scrollContent: {
-    paddingBottom: 20, // Add padding to the bottom of the ScrollView content
+    paddingBottom: 0, // Increased from 20 to 100 to account for bottom navigation bar
   },
   content: {
     paddingHorizontal: 20,
