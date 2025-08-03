@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, Alert, ImageBackground, ScrollView } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, Alert, ImageBackground, ScrollView, Animated } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import * as MailComposer from 'expo-mail-composer';
 import i18n from '../../../utils/i18n';
@@ -50,6 +50,31 @@ interface ReferFriendOptionProps {
 }
 
 function ReferFriendOption({ icon, title, subtitle, onPress, onSharePress }: ReferFriendOptionProps) {
+  // Animation value for pump effect
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  // Pump animation on mount
+  useEffect(() => {
+    const pumpAnimation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(scaleAnim, {
+          toValue: 1.05,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 1,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+      ]),
+      { iterations: 4 } // Repeat 4 times
+    );
+
+    // Start animation immediately
+    pumpAnimation.start();
+  }, []);
+
   return (
     <View>
       <View style={styles.optionRow}>
@@ -63,27 +88,29 @@ function ReferFriendOption({ icon, title, subtitle, onPress, onSharePress }: Ref
       </View>
       
       {/* Nested Card */}
-      <ImageBackground 
-        source={require('../../../../assets/refer-friends.jpg')}
-        style={styles.nestedCard}
-        imageStyle={styles.nestedCardImage}
-      >
-        <View style={styles.opacityLayer}>
-          <Text style={styles.nestedCardTitle}>{i18n.t('settings.growStrongerTogether')}</Text>
-          <Text style={styles.nestedCardSubtitle}>{i18n.t('settings.currentBalance')}</Text>
-          <Text style={styles.balanceAmount}>$0</Text>
-          <TouchableOpacity 
-            style={styles.shareButton}
-            onPress={() => {
-              hapticFeedback.selection();
-              onSharePress();
-            }}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.shareButtonText}>{i18n.t('settings.shareNow')}</Text>
-          </TouchableOpacity>
-        </View>
-      </ImageBackground>
+      <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+        <ImageBackground 
+          source={require('../../../../assets/refer-friends.jpg')}
+          style={styles.nestedCard}
+          imageStyle={styles.nestedCardImage}
+        >
+          <View style={styles.opacityLayer}>
+            <Text style={styles.nestedCardTitle}>{i18n.t('settings.growStrongerTogether')}</Text>
+            <Text style={styles.nestedCardSubtitle}>{i18n.t('settings.currentBalance')}</Text>
+            <Text style={styles.balanceAmount}>$0</Text>
+            <TouchableOpacity 
+              style={styles.shareButton}
+              onPress={() => {
+                hapticFeedback.selection();
+                onSharePress();
+              }}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.shareButtonText}>{i18n.t('settings.shareNow')}</Text>
+            </TouchableOpacity>
+          </View>
+        </ImageBackground>
+      </Animated.View>
     </View>
   );
 }

@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { hapticFeedback } from '../../../utils/haptic';
 
@@ -49,30 +49,71 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow }: HomeScre
     },
   ];
 
+  // Animation values for each lift card
+  const liftAnimations = useRef(recentLifts.map(() => new Animated.Value(0))).current;
+  const fadeAnimations = useRef(recentLifts.map(() => new Animated.Value(0))).current;
+
+  // Animate lift cards on mount
+  useEffect(() => {
+    const animations = recentLifts.map((_, index) => {
+      return Animated.parallel([
+        Animated.timing(liftAnimations[index], {
+          toValue: 1,
+          duration: 300,
+          delay: index * 50, // Stagger the animations
+          useNativeDriver: true,
+        }),
+        Animated.timing(fadeAnimations[index], {
+          toValue: 1,
+          duration: 250,
+          delay: index * 50,
+          useNativeDriver: true,
+        }),
+      ]);
+    });
+
+    Animated.parallel(animations).start();
+  }, []);
 
   const handleLiftPress = (lift: LiftData) => {
     hapticFeedback.selection();
     onShowFeedback(lift);
   };
 
-  function LiftCard({ lift }: { lift: LiftData }) {
+  function LiftCard({ lift, index }: { lift: LiftData; index: number }) {
+    const translateY = liftAnimations[index].interpolate({
+      inputRange: [0, 1],
+      outputRange: [50, 0], // Start 50px below, animate to normal position
+    });
+
+    const opacity = fadeAnimations[index];
+
     return (
-      <TouchableOpacity 
-        style={styles.liftCard}
-        onPress={() => handleLiftPress(lift)}
-        activeOpacity={0.7}
+      <Animated.View
+        style={[
+          styles.liftCard,
+          {
+            transform: [{ translateY }],
+            opacity,
+          },
+        ]}
       >
-        <View style={styles.liftHeader}>
-          <Text style={styles.liftName}>{lift.liftType}</Text>
-          <Text style={styles.liftDate}>{lift.liftDate}</Text>
-        </View>
-        <View style={styles.liftAccuracyContainer}>
-          <Text style={styles.accuracyLabel}>Accuracy</Text>
-          <View style={styles.accuracyPill}>
-            <Text style={styles.accuracyValue}>{lift.accuracy}%</Text>
+        <TouchableOpacity 
+          onPress={() => handleLiftPress(lift)}
+          activeOpacity={0.7}
+        >
+          <View style={styles.liftHeader}>
+            <Text style={styles.liftName}>{lift.liftType}</Text>
+            <Text style={styles.liftDate}>{lift.liftDate}</Text>
           </View>
-        </View>
-      </TouchableOpacity>
+          <View style={styles.liftAccuracyContainer}>
+            <Text style={styles.accuracyLabel}>Accuracy</Text>
+            <View style={styles.accuracyPill}>
+              <Text style={styles.accuracyValue}>{lift.accuracy}%</Text>
+            </View>
+          </View>
+        </TouchableOpacity>
+      </Animated.View>
     );
   }
 
@@ -95,8 +136,8 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow }: HomeScre
           style={styles.liftsScrollView} 
         >
           {recentLifts.length > 0 ? (
-            recentLifts.map((lift) => (
-              <LiftCard key={lift.id} lift={lift} />
+            recentLifts.map((lift, index) => (
+              <LiftCard key={lift.id} lift={lift} index={index} />
             ))
           ) : (
             <View style={styles.noLiftsCard}>
