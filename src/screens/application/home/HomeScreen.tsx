@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, Animated, Dimensions, ImageSourcePropType } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, Animated, Dimensions, ImageSourcePropType, ImageBackground } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import { hapticFeedback } from '../../../utils/haptic';
@@ -12,9 +12,10 @@ interface HomeScreenProps {
   onShowFeedback: (liftData: ILiftData) => void;
   onShowFeedbackSlideshow: () => void;
   onShowLibrary: () => void;
+  onShowShare: () => void;
 }
 
-export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibrary }: HomeScreenProps) {
+export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibrary, onShowShare }: HomeScreenProps) {
   const { loadingLifts, completedLifts, addLoadingLift, removeCompletedLift } = useLoadingLifts();
   
   // Use completed lifts from context instead of dummy data
@@ -71,6 +72,11 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
     onShowLibrary();
   };
 
+  const handleReferCardPress = () => {
+    hapticFeedback.selection();
+    onShowShare();
+  };
+
   // Test function to add sample loading lifts
   const handleAddTestLift = async () => {
     hapticFeedback.selection();
@@ -119,16 +125,33 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
         <View style={styles.bottomContent}>
           <View style={styles.topCardsContainer}>
             <TouchableOpacity 
-              style={styles.topCard}
+              style={[styles.topCard, styles.libraryCard]}
               onPress={handleLibraryPress}
               activeOpacity={0.7}
             >
               <View style={styles.topCardContent}>
                 <Svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
-                  <Path strokeLinecap="round" strokeLinejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0 0 12 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75Z" />
+                  <Path strokeLinecap="round" strokeLinejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" />
                 </Svg>
-                <Text style={styles.topCardTitle}>Library</Text>
+                <Text style={styles.topCardTitle}>Lifts</Text>
               </View>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.blankCard}
+              onPress={handleReferCardPress}
+              activeOpacity={0.7}
+            >
+              <ImageBackground 
+                source={require('../../../../assets/homescreen-refer-image.png')}
+                style={styles.blankCardBackground}
+                imageStyle={styles.blankCardImage}
+                resizeMode="cover"
+              >
+                <View style={styles.blankCardOverlay}>
+                  <Text style={styles.blankCardTitle}>Earn by Referring!</Text>
+                </View>
+              </ImageBackground>
             </TouchableOpacity>
           </View>
           
@@ -264,14 +287,13 @@ const styles = StyleSheet.create({
   },
   topCardsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    gap: 12,
     marginBottom: 16,
   },
   topCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 18,
-    padding: 20,
-    width: '48%', // Adjust as needed for 50/50 split
+    padding: 16,
     alignItems: 'flex-start',
     justifyContent: 'center',
     shadowColor: '#000000',
@@ -283,6 +305,40 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
+  libraryCard: {
+    width: '35%',
+  },
+  blankCard: {
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
+  blankCardBackground: {
+    borderRadius: 18,
+    height: 60,
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  blankCardImage: {
+    borderRadius: 18,
+  },
+  blankCardContent: {
+    padding: 20,
+  },
+  blankCardTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    fontFamily: 'SF Pro Text',
+    textAlign: 'center',
+  },
   topCardContent: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -293,5 +349,16 @@ const styles = StyleSheet.create({
     color: '#000000',
     marginLeft: 8,
     fontFamily: 'SF Pro Text',
+  },
+  blankCardOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 }); 
