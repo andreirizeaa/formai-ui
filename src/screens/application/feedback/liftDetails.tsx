@@ -27,6 +27,7 @@ function VideoPlayerComponent({ videoUri }: VideoPlayerComponentProps) {
 
 export interface ILiftData {
   id: string;
+  isFavourite: boolean;
   liftType: string;
   liftDate: string;
   weightValue: number;
@@ -90,8 +91,8 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData }: Lift
 
   const handleStarPress = () => {
     hapticFeedback.selection();
-    setIsStarSelected(!isStarSelected);
-    console.log('Star button pressed, selected:', !isStarSelected);
+    const newFavouriteState = !isStarSelected;
+    setIsStarSelected(newFavouriteState);
   };
 
   const handleActionSheet = () => {

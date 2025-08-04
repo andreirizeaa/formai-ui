@@ -12,136 +12,12 @@ import { MovementSelectionScreen } from '../common/MovementSelectionScreen';
 import { PracticesScreen } from '../common/PracticesScreen';
 import { WeightRepsScreen } from '../common/WeightRepsScreen';
 import { useLoadingLifts } from '../../../../context/LoadingLiftsContext';
+import { gymMovements } from '../../../../constants/gymMovements';
 
 interface RecordModalProps {
   isVisible: boolean;
   onClose: () => void;
 }
-
-// Gym movements data (same as UploadModal)
-const gymMovements = [
-  'Flat Barbell Bench Press',
-  'Incline Barbell Bench Press',
-  'Decline Barbell Bench Press',
-  'Flat Dumbbell Chest Press',
-  'Incline Dumbbell Chest Press',
-  'Decline Dumbbell Chest Press',
-  'Flat Cable Chest Press',
-  'Incline Cable Chest Press',
-  'Decline Cable Chest Press',
-  'Chest Fly (Dumbbell)',
-  'Incline Chest Fly (Dumbbell)',
-  'Cable Chest Fly',
-  'Pec Deck Machine',
-  'Push-Up',
-  'Resistance Band Chest Press',
-
-  'Deadlift',
-  'Rack Pull',
-  'Barbell Row',
-  'Pendlay Row',
-  'T-Bar Row',
-  'Dumbbell Row',
-  'Single Arm Dumbbell Row',
-  'Seal Row',
-  'Cable Row',
-  'Lat Pulldown',
-  'Pull-Up',
-  'Chin-Up',
-  'Straight Arm Cable Pulldown',
-  'Resistance Band Row',
-  'Machine Row',
-  'Machine Pulldown',
-
-  'Overhead Barbell Press',
-  'Seated Dumbbell Shoulder Press',
-  'Arnold Press',
-  'Lateral Raise (Dumbbell)',
-  'Lateral Raise (Cable)',
-  'Front Raise (Dumbbell)',
-  'Front Raise (Cable)',
-  'Rear Delt Fly (Dumbbell)',
-  'Rear Delt Fly (Cable)',
-  'Face Pull',
-  'Upright Row',
-  'Machine Shoulder Press',
-  'Resistance Band Shoulder Press',
-  
-  'Barbell Curl',
-  'EZ-Bar Curl',
-  'Dumbbell Curl',
-  'Hammer Curl',
-  'Incline Dumbbell Curl',
-  'Cable Curl',
-  'Preacher Curl',
-  'Concentration Curl',
-  'Machine Curl',
-  'Resistance Band Curl',
-
-  'Close Grip Bench Press',
-  'Skullcrusher (Barbell or EZ-Bar)',
-  'Dumbbell Overhead Triceps Extension',
-  'Cable Triceps Pushdown',
-  'Cable Overhead Triceps Extension',
-  'Triceps Kickback',
-  'Dips (Parallel Bars)',
-  'Machine Triceps Extension',
-  'Resistance Band Triceps Extension',
-
-  'Barbell Back Squat',
-  'Barbell Front Squat',
-  'Goblet Squat',
-  'Dumbbell Squat',
-  'Leg Press',
-  'Bulgarian Split Squat',
-  'Walking Lunge',
-  'Step-Up',
-  'Machine Leg Extension',
-  'Resistance Band Squat',
-
-  'Romanian Deadlift (Barbell or Dumbbell)',
-  'Stiff-Leg Deadlift',
-  'Good Morning',
-  'Glute Ham Raise',
-  'Seated Leg Curl Machine',
-  'Lying Leg Curl Machine',
-  'Cable Leg Curl',
-  'Resistance Band Leg Curl',
-
-  'Hip Thrust (Barbell)',
-  'Glute Bridge (Bodyweight or Dumbbell)',
-  'Cable Kickback',
-  'Banded Glute Bridge',
-  'Donkey Kick (Cable or Band)',
-  'Step-Up with Knee Raise',
-  
-  'Standing Calf Raise',
-  'Seated Calf Raise',
-  'Leg Press Calf Raise',
-  'Smith Machine Calf Raise',
-  'Resistance Band Calf Raise',
-
-  'Plank',
-  'Crunch',
-  'Cable Crunch',
-  'Hanging Leg Raise',
-  'Toes to Bar',
-  'Ab Wheel Rollout',
-  'Russian Twist (Bodyweight or Weighted)',
-  'Sit-Up',
-  'Bicycle Crunch',
-  'Machine Crunch',
-  'Resistance Band Woodchopper',
-
-  'Power Clean',
-  'Clean and Press',
-  'Snatch',
-  'Thruster',
-  'Kettlebell Swing',
-  'Turkish Get-Up',
-  'Farmer\'s Carry',
-  'Medicine Ball Slam',
-];
 
 export function RecordModal({ isVisible, onClose }: RecordModalProps) {
   const { addLoadingLift } = useLoadingLifts();
@@ -155,7 +31,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
   const [recordedVideoUri, setRecordedVideoUri] = useState<string | null>(null);
   const [selectedMovement, setSelectedMovement] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [filteredMovements, setFilteredMovements] = useState<string[]>(gymMovements);
+  const [filteredMovements, setFilteredMovements] = useState<string[]>([...gymMovements]);
   const [isCameraReady, setIsCameraReady] = useState(false);
   const [showCamera, setShowCamera] = useState(true);
   const [cameraKey, setCameraKey] = useState(0);
@@ -190,7 +66,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
       setRecordedVideoUri(null);
       setSelectedMovement('');
       setSearchQuery('');
-      setFilteredMovements(gymMovements);
+      setFilteredMovements([...gymMovements]);
       setIsCameraReady(false);
       setShowCamera(true);
       recordingPromise.current = null;
@@ -206,7 +82,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
       setRecordedVideoUri(null);
       setSelectedMovement('');
       setSearchQuery('');
-      setFilteredMovements(gymMovements);
+      setFilteredMovements([...gymMovements]);
       setUploadData(null);
     }
   }, [isVisible]);
@@ -397,7 +273,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
 
   const handleSearchChange = (text: string) => {
     setSearchQuery(text);
-    const filtered = gymMovements.filter(movement =>
+    const filtered = [...gymMovements].filter(movement =>
       movement.toLowerCase().includes(text.toLowerCase())
     );
     setFilteredMovements(filtered);
