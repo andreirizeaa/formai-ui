@@ -6,15 +6,15 @@ import { hapticFeedback } from '../../../utils/haptic';
 import { useLoadingLifts } from '../../../context/LoadingLiftsContext';
 import { LoadingLiftCard } from './LoadingLiftCard';
 import { ILiftData } from '../feedback/liftDetails';
+import { LiftDataCard } from '../../../components/LiftDataCard';
 
 interface HomeScreenProps {
   onShowFeedback: (liftData: ILiftData) => void;
   onShowFeedbackSlideshow: () => void;
   onShowLibrary: () => void;
-  onShowFavourites: () => void;
 }
 
-export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibrary, onShowFavourites }: HomeScreenProps) {
+export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibrary }: HomeScreenProps) {
   const { loadingLifts, completedLifts, addLoadingLift } = useLoadingLifts();
   
   // Use completed lifts from context instead of dummy data
@@ -67,11 +67,6 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
     onShowLibrary();
   };
 
-  const handleFavouritesPress = () => {
-    hapticFeedback.selection();
-    onShowFavourites();
-  };
-
   // Test function to add sample loading lifts
   const handleAddTestLift = async () => {
     hapticFeedback.selection();
@@ -91,69 +86,6 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
       // You could show a toast notification here
     }
   };
-
-  function LiftCard({ lift, index }: { lift: ILiftData; index: number }) {
-    // Ensure the animation values exist before using them
-    const translateY = liftAnimations.current[index]?.interpolate({
-      inputRange: [0, 1],
-      outputRange: [50, 0], // Start 50px below, animate to normal position
-    }) || new Animated.Value(0);
-
-    const opacity = fadeAnimations.current[index] || new Animated.Value(1);
-
-    return (
-      <Animated.View
-        style={[
-          styles.liftCard,
-          {
-            transform: [{ translateY }],
-            opacity,
-          },
-        ]}
-      >
-        <TouchableOpacity 
-          onPress={() => handleLiftPress(lift)}
-          activeOpacity={0.7}
-          style={styles.liftCardContent}
-        >
-          {/* Video Thumbnail - Left 20% */}
-          <View style={styles.videoThumbnailContainer}>
-            {lift.thumbnailURL ? (
-              <Image
-                source={{ uri: lift.thumbnailURL }}
-                style={styles.videoThumbnail}
-                resizeMode="cover"
-                onError={() => {
-                  // Fallback to placeholder if thumbnail fails to load
-                  console.warn('Failed to load thumbnail:', lift.thumbnailURL);
-                }}
-              />
-            ) : (
-              <Image
-                source={require('../../../../assets/placeholder-thumbnail.png')}
-                style={styles.videoThumbnail}
-                resizeMode="cover"
-              />
-            )}
-          </View>
-          
-          {/* Content - Right 80% */}
-          <View style={styles.liftContent}>
-            <View style={styles.liftHeader}>
-              <Text style={styles.liftName}>{lift.liftType}</Text>
-              <Text style={styles.liftDate}>{lift.liftDate}</Text>
-            </View>
-            <View style={styles.liftAccuracyContainer}>
-              <Text style={styles.accuracyLabel}>Accuracy</Text>
-              <View style={styles.accuracyPill}>
-                <Text style={styles.accuracyValue}>{lift.analysis.accuracy}%</Text>
-              </View>
-            </View>
-          </View>
-        </TouchableOpacity>
-      </Animated.View>
-    );
-  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -194,18 +126,6 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
                 <Text style={styles.topCardTitle}>Library</Text>
               </View>
             </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.topCard}
-              onPress={handleFavouritesPress}
-              activeOpacity={0.7}
-            >
-              <View style={styles.topCardContent}>
-                <Svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
-                  <Path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
-                </Svg>
-                <Text style={styles.topCardTitle}>Favourites</Text>
-              </View>
-            </TouchableOpacity>
           </View>
           
           <Text style={styles.sectionTitle}>Recent Lifts</Text>
@@ -219,9 +139,25 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
             
             {/* Show completed lifts */}
             {recentLifts.length > 0 ? (
-              recentLifts.map((lift, index) => (
-                <LiftCard key={lift.id} lift={lift} index={index} />
-              ))
+              recentLifts.map((lift, index) => {
+                // Ensure the animation values exist before using them
+                const translateY = liftAnimations.current[index]?.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [50, 0], // Start 50px below, animate to normal position
+                }) || new Animated.Value(0);
+
+                const opacity = fadeAnimations.current[index] || new Animated.Value(1);
+
+                return (
+                  <LiftDataCard 
+                    key={lift.id} 
+                    lift={lift} 
+                    onPress={() => handleLiftPress(lift)}
+                    translateY={translateY}
+                    opacity={opacity}
+                  />
+                );
+              })
             ) : loadingLifts.length === 0 ? (
               <View style={styles.noLiftsCard}>
                 <View style={styles.noLiftsContent}>
@@ -283,98 +219,6 @@ const styles = StyleSheet.create({
     color: '#000000',
     marginBottom: 16,
     fontFamily: 'SF Pro Display',
-  },
-  liftCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    padding: 20,
-    marginBottom: 16,
-    shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  liftCardContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginHorizontal: -20, // Extend beyond card padding
-  },
-  videoThumbnailContainer: {
-    height: 120,
-    width: Dimensions.get('window').width * 0.25, // 25% of screen width
-    overflow: 'hidden',
-    borderTopLeftRadius: 18, // Only left side border radius
-    borderBottomLeftRadius: 18, // Only left side border radius
-    marginVertical: -20, // Extend beyond card padding
-  },
-  videoThumbnail: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
-  placeholderThumbnail: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: '#F2F2F7', // Light gray background
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 10,
-  },
-  placeholderText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#8E8E93',
-    fontFamily: 'SF Pro Text',
-  },
-  liftContent: {
-    flex: 1,
-    paddingLeft: 16, // Add padding to separate from video
-    paddingRight: 16, // Add padding to prevent text from touching right edge
-  },
-  liftHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  liftName: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#000000',
-    fontFamily: 'SF Pro Text',
-  },
-  liftDate: {
-    fontSize: 14,
-    fontWeight: '400',
-    color: '#8E8E93',
-    fontFamily: 'SF Pro Text',
-  },
-  liftAccuracyContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  accuracyLabel: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#000000',
-    fontFamily: 'SF Pro Text',
-  },
-  accuracyValue: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    fontFamily: 'SF Pro Text',
-  },
-  accuracyPill: {
-    backgroundColor: '#000',
-    borderRadius: 18,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
   },
   spacer: {
     flex: 1,
