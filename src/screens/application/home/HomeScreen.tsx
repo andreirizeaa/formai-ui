@@ -7,6 +7,7 @@ import { useLoadingLifts } from '../../../context/LoadingLiftsContext';
 import { LoadingLiftCard } from './LoadingLiftCard';
 import { ILiftData } from '../feedback/liftDetails';
 import { LiftDataCard } from '../../../components/LiftDataCard';
+import { SwipeableCalendar } from '../../../components/ui/SwipeableCalendar';
 
 interface HomeScreenProps {
   onShowFeedback: (liftData: ILiftData) => void;
@@ -65,6 +66,7 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
   };
 
   const handleDeleteLift = (liftId: string) => {
+    hapticFeedback.success();
     removeCompletedLift(liftId);
   };
 
@@ -81,6 +83,11 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
   const handleNoLiftsPress = () => {
     hapticFeedback.selection();
     onTriggerAddOptions();
+  };
+
+  const handleDateSelect = (date: Date) => {
+    hapticFeedback.selection();
+    // You can add logic here to filter lifts by date or perform other actions
   };
 
   // Test function to add sample loading lifts
@@ -124,6 +131,9 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
             <Text style={styles.testButtonText}>Add Test Lift</Text>
           </TouchableOpacity>
         </View>
+        
+        {/* Swipeable Calendar */}
+        <SwipeableCalendar onDateSelect={handleDateSelect} />
         
         {/* Spacer to push content to bottom */}
         <View style={styles.spacer} />
@@ -233,7 +243,7 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
-    marginBottom: -58,
+    marginBottom: -62,
   },
   scrollContent: {
     paddingBottom: 0, // Increased from 20 to 100 to account for bottom navigation bar
