@@ -67,19 +67,23 @@ declare global {
 function HomeScreenWrapper() {
   const navigation = useNavigation<MainStackNavigationProp>();
   
-  const handleShowFeedback = (liftData: any) => {
+  const handleShowFeedback = (liftData: ILiftData) => {
     navigation.navigate('LiftDetails', { 
-      liftData
+      liftData: liftData,
     });
   };
 
   const handleShowFeedbackSlideshow = () => {
-    // This function is not used from HomeScreen
-    // FeedbackSlideshow is only called from LiftDetails
+    // Navigate to feedback slideshow
+    // This will be implemented later
   };
 
   const handleShowLibrary = () => {
     navigation.navigate('Library', { selectedFilters: [] });
+  };
+
+  const handleShowShare = () => {
+    navigation.navigate('Share');
   };
 
   return (
@@ -87,6 +91,7 @@ function HomeScreenWrapper() {
       onShowFeedback={handleShowFeedback}
       onShowFeedbackSlideshow={handleShowFeedbackSlideshow}
       onShowLibrary={handleShowLibrary}
+      onShowShare={handleShowShare}
     />
   );
 }

@@ -42,7 +42,7 @@ const i18n = new I18n({
       share: 'Share',
       howItWorks: 'How it works',
       step1: 'Share the code with friends',
-      step2: 'Earn $5 per friend that signs up with your code and pays',
+      step2: 'Earn $5 per friend that signs up to an annual plan with your code',
       copied: 'Copied!',
       promoCodeCopied: 'Promo code copied to clipboard',
       error: 'Error',
