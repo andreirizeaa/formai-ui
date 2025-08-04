@@ -13,9 +13,10 @@ interface HomeScreenProps {
   onShowFeedbackSlideshow: () => void;
   onShowLibrary: () => void;
   onShowShare: () => void;
+  onTriggerAddOptions: () => void;
 }
 
-export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibrary, onShowShare }: HomeScreenProps) {
+export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibrary, onShowShare, onTriggerAddOptions }: HomeScreenProps) {
   const { loadingLifts, completedLifts, addLoadingLift, removeCompletedLift } = useLoadingLifts();
   
   // Use completed lifts from context instead of dummy data
@@ -75,6 +76,11 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
   const handleReferCardPress = () => {
     hapticFeedback.selection();
     onShowShare();
+  };
+
+  const handleNoLiftsPress = () => {
+    hapticFeedback.selection();
+    onTriggerAddOptions();
   };
 
   // Test function to add sample loading lifts
@@ -177,12 +183,16 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
                 );
               })
             ) : loadingLifts.length === 0 ? (
-              <View style={styles.noLiftsCard}>
+              <TouchableOpacity 
+                style={styles.noLiftsCard}
+                onPress={handleNoLiftsPress}
+                activeOpacity={0.7}
+              >
                 <View style={styles.noLiftsContent}>
                   <Text style={styles.noLiftsTitle}>You haven't recorded any lifts</Text>
                   <Text style={styles.noLiftsSubtitle}>Start analysing today's workout by taking a quick video</Text>
                 </View>
-              </View>
+              </TouchableOpacity>
             ) : null}
           </View>
         </View>

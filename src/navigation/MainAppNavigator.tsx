@@ -86,12 +86,21 @@ function HomeScreenWrapper() {
     navigation.navigate('Share');
   };
 
+  const handleTriggerAddOptions = () => {
+    // This will be handled by the parent component
+    // For now, we'll need to expose this through the global trigger
+    if (global.triggerAddOptions) {
+      global.triggerAddOptions();
+    }
+  };
+
   return (
     <HomeScreen 
       onShowFeedback={handleShowFeedback}
       onShowFeedbackSlideshow={handleShowFeedbackSlideshow}
       onShowLibrary={handleShowLibrary}
       onShowShare={handleShowShare}
+      onTriggerAddOptions={handleTriggerAddOptions}
     />
   );
 }
