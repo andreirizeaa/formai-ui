@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, ScrollView, Dimensions, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
@@ -137,20 +137,39 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
     }
   }, [route.params?.selectedFilters]);
 
-  // Handle lift deletion
-  const handleDeleteLift = (liftId: string) => {
+  // Memoize handlers to prevent unnecessary re-renders
+  const handleDeleteLift = useCallback((liftId: string) => {
     hapticFeedback.success();
     setLifts(prevLifts => prevLifts.filter(lift => lift.id !== liftId));
-  };
+  }, []);
 
-  // Sample data - replace with your actual data source
-  const allLifts: ILiftData[] = lifts;
+  // Optimize the filtering and sorting logic
+  const filteredAndSortedLifts = useMemo(() => {
+    let filtered = lifts;
 
-  const handleEmptyCardPress = () => {
+    // Apply tab filter (All vs Favourites)
+    if (activeTab === 'favourites') {
+      filtered = filtered.filter(lift => lift.analysis.accuracy > 90);
+    }
+
+    // Apply movement type filter
+    if (filterOption.length > 0) {
+      filtered = filtered.filter(lift => filterOption.includes(lift.liftType));
+    }
+
+    // Apply sort - use a more efficient sort
+    return filtered.sort((a, b) => {
+      const dateA = new Date(a.liftDate).getTime();
+      const dateB = new Date(b.liftDate).getTime();
+      return sortOption === 'newest' ? dateB - dateA : dateA - dateB;
+    });
+  }, [lifts, activeTab, filterOption, sortOption]);
+
+  const handleEmptyCardPress = useCallback(() => {
     hapticFeedback.selection();
     
     // If there are lifts but none match the current filters, open the filter modal
-    if (allLifts.length > 0 && filteredAndSortedLifts.length === 0) {
+    if (lifts.length > 0 && filteredAndSortedLifts.length === 0) {
       setShowFilterModal(true);
     } else {
       // Otherwise, go back and trigger add options (for when there are no lifts at all)
@@ -159,58 +178,42 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
         onTriggerAddOptions();
       }, 100);
     }
-  };
+  }, [lifts.length, filteredAndSortedLifts.length, onBack, onTriggerAddOptions]);
 
-  const handleSortPress = () => {
+  const handleSortPress = useCallback(() => {
     hapticFeedback.selection();
     setSortOption(sortOption === 'newest' ? 'oldest' : 'newest');
-  };
+  }, [sortOption]);
 
-  const handleFilterPress = () => {
+  const handleFilterPress = useCallback(() => {
     hapticFeedback.selection();
     setShowFilterModal(true);
-  };
+  }, []);
 
-  const handleFilterModalClose = () => {
+  const handleFilterModalClose = useCallback(() => {
     hapticFeedback.selection();
     setShowFilterModal(false);
-  };
+  }, []);
 
-  const handleTabPress = (tab: TabOption) => {
+  const handleTabPress = useCallback((tab: TabOption) => {
     hapticFeedback.selection();
     setActiveTab(tab);
-  };
+  }, []);
 
-  const handleLiftPress = (lift: ILiftData) => {
+  const handleLiftPress = useCallback((lift: ILiftData) => {
     hapticFeedback.selection();
     navigation.navigate('LiftDetails', { 
       liftData: lift,
     });
-  };
+  }, [navigation]);
 
-  const filteredAndSortedLifts = useMemo(() => {
-    let filtered = allLifts;
+  const handleBackPress = useCallback(() => {
+    hapticFeedback.selection();
+    onBack();
+  }, [onBack]);
 
-    // Apply tab filter (All vs Favourites)
-    if (activeTab === 'favourites') {
-      // For now, we'll use a simple filter - you can replace this with actual favourite logic
-      filtered = filtered.filter(lift => lift.analysis.accuracy > 90); // Example: high accuracy lifts as "favourites"
-    }
-
-    // Apply movement type filter
-    if (filterOption.length > 0) {
-      filtered = filtered.filter(lift => filterOption.includes(lift.liftType));
-    }
-
-    // Apply sort
-    filtered.sort((a, b) => {
-      const dateA = new Date(a.liftDate);
-      const dateB = new Date(b.liftDate);
-      return sortOption === 'newest' ? dateB.getTime() - dateA.getTime() : dateA.getTime() - dateB.getTime();
-    });
-
-    return filtered;
-  }, [allLifts, activeTab, filterOption, sortOption]);
+  // Memoize the lift count to prevent unnecessary re-renders
+  const liftCount = useMemo(() => filteredAndSortedLifts.length, [filteredAndSortedLifts.length]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -220,10 +223,7 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton} 
-          onPress={() => {
-            hapticFeedback.selection();
-            onBack();
-          }}
+          onPress={handleBackPress}
         >
           <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
             <Path
@@ -263,7 +263,7 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
       <View style={styles.controlsContainer}>
         <View style={styles.liftCountContainer}>
           <Text style={styles.liftCountText}>
-            {filteredAndSortedLifts.length} lift{filteredAndSortedLifts.length === 1 ? '' : 's'}
+            {liftCount} lift{liftCount === 1 ? '' : 's'}
           </Text>
         </View>
         
@@ -308,23 +308,22 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
         </View>
       </View>
 
-      {/* Content - ScrollView for lift cards only */}
+      {/* Content - Optimized ScrollView */}
       <ScrollView 
         style={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContentContainer}
+        removeClippedSubviews={true}
       >
         {filteredAndSortedLifts.length > 0 ? (
-          <>
-            {filteredAndSortedLifts.map((lift, index) => (
-              <LiftDataCard 
-                key={lift.id} 
-                lift={lift} 
-                onPress={() => handleLiftPress(lift)}
-                onDelete={handleDeleteLift}
-              />
-            ))}
-          </>
+          filteredAndSortedLifts.map((lift) => (
+            <LiftDataCard 
+              key={lift.id} 
+              lift={lift} 
+              onPress={() => handleLiftPress(lift)}
+              onDelete={handleDeleteLift}
+            />
+          ))
         ) : (
           <TouchableOpacity 
             style={styles.noLiftsCard}
@@ -333,11 +332,11 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
           >
             <View style={styles.noLiftsContent}>
               <Text style={styles.noLiftsTitle}>
-                {allLifts.length === 0 ? 'No lifts analysed' : 
+                {lifts.length === 0 ? 'No lifts analysed' : 
                  activeTab === 'favourites' ? 'No favourite lifts' : 'No lifts found'}
               </Text>
               <Text style={styles.noLiftsSubtitle}>
-                {allLifts.length === 0 
+                {lifts.length === 0 
                   ? 'Start analysing today\'s workout by taking a quick video'
                   : activeTab === 'favourites'
                   ? 'Mark lifts as favourites to see them here'
