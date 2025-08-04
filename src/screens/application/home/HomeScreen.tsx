@@ -15,7 +15,7 @@ interface HomeScreenProps {
 }
 
 export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibrary }: HomeScreenProps) {
-  const { loadingLifts, completedLifts, addLoadingLift } = useLoadingLifts();
+  const { loadingLifts, completedLifts, addLoadingLift, removeCompletedLift } = useLoadingLifts();
   
   // Use completed lifts from context instead of dummy data
   const recentLifts: ILiftData[] = completedLifts;
@@ -60,6 +60,10 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
   const handleLiftPress = (lift: ILiftData) => {
     hapticFeedback.selection();
     onShowFeedback(lift);
+  };
+
+  const handleDeleteLift = (liftId: string) => {
+    removeCompletedLift(liftId);
   };
 
   const handleLibraryPress = () => {
@@ -140,21 +144,12 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
             {/* Show completed lifts */}
             {recentLifts.length > 0 ? (
               recentLifts.map((lift, index) => {
-                // Ensure the animation values exist before using them
-                const translateY = liftAnimations.current[index]?.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [50, 0], // Start 50px below, animate to normal position
-                }) || new Animated.Value(0);
-
-                const opacity = fadeAnimations.current[index] || new Animated.Value(1);
-
                 return (
                   <LiftDataCard 
                     key={lift.id} 
                     lift={lift} 
                     onPress={() => handleLiftPress(lift)}
-                    translateY={translateY}
-                    opacity={opacity}
+                    onDelete={handleDeleteLift}
                   />
                 );
               })

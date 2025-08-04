@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, ScrollView, Animated, Dimensions, Image } from 'react-native';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, ScrollView, Dimensions, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import { hapticFeedback } from '../../../utils/haptic';
@@ -9,6 +9,17 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 import { FilterModal } from './FilterModal';
+import { PanGestureHandler, State } from 'react-native-gesture-handler';
+import Animated, { 
+  useSharedValue, 
+  useAnimatedStyle, 
+  useAnimatedGestureHandler,
+  runOnJS,
+  withSpring,
+  withTiming,
+  interpolate,
+  Extrapolate
+} from 'react-native-reanimated';
 
 interface LibraryScreenProps {
   onBack: () => void;
@@ -36,16 +47,7 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
   const [filterOption, setFilterOption] = useState<FilterOption>(route.params?.selectedFilters || []);
   const [activeTab, setActiveTab] = useState<TabOption>('all');
   const [showFilterModal, setShowFilterModal] = useState(false);
-
-  // Update filter state when navigation params change
-  useEffect(() => {
-    if (route.params?.selectedFilters) {
-      setFilterOption(route.params.selectedFilters);
-    }
-  }, [route.params?.selectedFilters]);
-
-  // Sample data - replace with your actual data source
-  const allLifts: ILiftData[] = [
+  const [lifts, setLifts] = useState<ILiftData[]>([
     {
       id: '1',
       isFavourite: false,
@@ -126,7 +128,23 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
         feedback: []
       }
     },
-  ];
+  ]);
+
+  // Update filter state when navigation params change
+  useEffect(() => {
+    if (route.params?.selectedFilters) {
+      setFilterOption(route.params.selectedFilters);
+    }
+  }, [route.params?.selectedFilters]);
+
+  // Handle lift deletion
+  const handleDeleteLift = (liftId: string) => {
+    hapticFeedback.success();
+    setLifts(prevLifts => prevLifts.filter(lift => lift.id !== liftId));
+  };
+
+  // Sample data - replace with your actual data source
+  const allLifts: ILiftData[] = lifts;
 
   const handleEmptyCardPress = () => {
     hapticFeedback.selection();
@@ -302,7 +320,8 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
               <LiftDataCard 
                 key={lift.id} 
                 lift={lift} 
-                onPress={() => handleLiftPress(lift)} 
+                onPress={() => handleLiftPress(lift)}
+                onDelete={handleDeleteLift}
               />
             ))}
           </>
@@ -344,12 +363,10 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
   );
 }
 
-const { width } = Dimensions.get('window');
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#ffffff',
   },
   header: {
     flexDirection: 'row',
@@ -403,7 +420,7 @@ const styles = StyleSheet.create({
     // Removed borderBottomColor to eliminate underscore highlight
   },
   tabText: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '600',
     color: '#8E8E93',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
@@ -422,9 +439,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   controlButton: {
-    width: 64,
-    height: 44,
-    borderRadius: 22,
+    width: 56,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: '#F2F2F7',
     alignItems: 'center',
     justifyContent: 'center',
@@ -434,18 +451,18 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     width: '100%',
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
   },
   liftCountContainer: {
-    height: 44,
-    borderRadius: 22,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: '#F2F2F7',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 26,
+    paddingHorizontal: 20,
   },
   liftCountText: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '400',
     color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',

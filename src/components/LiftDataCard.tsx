@@ -1,84 +1,181 @@
 import React from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, Image, Dimensions, Animated } from 'react-native';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, Image, Dimensions } from 'react-native';
 import { ILiftData } from '../screens/application/feedback/liftDetails';
+import { PanGestureHandler, State } from 'react-native-gesture-handler';
+import Animated, { 
+  useSharedValue, 
+  useAnimatedStyle, 
+  useAnimatedGestureHandler,
+  runOnJS,
+  withSpring,
+  withTiming,
+  interpolate,
+  Extrapolate
+} from 'react-native-reanimated';
+import Svg, { Path } from 'react-native-svg';
 
 interface LiftDataCardProps {
   lift: ILiftData;
   onPress?: (lift: ILiftData) => void;
+  onDelete?: (liftId: string) => void;
   style?: any;
-  translateY?: Animated.Value | Animated.AnimatedInterpolation<string | number>;
-  opacity?: Animated.Value;
 }
 
-export function LiftDataCard({ lift, onPress, style, translateY, opacity }: LiftDataCardProps) {
+export function LiftDataCard({ lift, onPress, onDelete, style }: LiftDataCardProps) {
+  const translateX = useSharedValue(0);
+  const deleteButtonOpacity = useSharedValue(0);
+
   const handlePress = () => {
     if (onPress) {
       onPress(lift);
     }
   };
 
+  const handleDelete = () => {
+    if (onDelete) {
+      onDelete(lift.id);
+    }
+  };
+
+  const gestureHandler = useAnimatedGestureHandler({
+    onStart: (_, context: any) => {
+      context.startX = translateX.value;
+    },
+    onActive: (event, context: any) => {
+      const newTranslateX = context.startX + event.translationX;
+      translateX.value = Math.min(0, Math.max(-100, newTranslateX));
+      
+      // Show delete button when swiping left
+      if (translateX.value < -20) {
+        deleteButtonOpacity.value = withTiming(1, { duration: 200 });
+      } else {
+        deleteButtonOpacity.value = withTiming(0, { duration: 200 });
+      }
+    },
+    onEnd: (event) => {
+      // If swiped far enough, delete the item
+      if (translateX.value < -80) {
+        translateX.value = withTiming(-100, { duration: 200 });
+        runOnJS(handleDelete)();
+      } else {
+        // Snap back to original position
+        translateX.value = withSpring(0);
+        deleteButtonOpacity.value = withTiming(0, { duration: 200 });
+      }
+    },
+  });
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateX: translateX.value }],
+    };
+  });
+
+  const deleteButtonStyle = useAnimatedStyle(() => {
+    return {
+      opacity: deleteButtonOpacity.value,
+      transform: [{ translateX: translateX.value }],
+    };
+  });
+
   const cardStyle = [
     styles.liftCard,
     style,
-    translateY && {
-      transform: [{ translateY }],
-    },
-    opacity && {
-      opacity,
-    },
   ];
 
   return (
-    <Animated.View style={cardStyle}>
-      <TouchableOpacity 
-        onPress={handlePress}
-        activeOpacity={0.7}
-        style={styles.liftCardContent}
-        disabled={!onPress}
-      >
-        {/* Video Thumbnail - Left 25% */}
-        <View style={styles.videoThumbnailContainer}>
-          {lift.thumbnailURL ? (
-            <Image
-              source={{ uri: lift.thumbnailURL }}
-              style={styles.videoThumbnail}
-              resizeMode="cover"
-              onError={() => {
-                console.warn('Failed to load thumbnail:', lift.thumbnailURL);
-              }}
+    <View style={styles.container}>
+      {/* Delete Button Background */}
+      <Animated.View style={[styles.deleteButton, deleteButtonStyle]}>
+        <TouchableOpacity 
+          style={styles.deleteButtonContent}
+          onPress={handleDelete}
+          activeOpacity={0.8}
+        >
+          <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+            <Path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
+              stroke="#FFFFFF"
+              strokeWidth={1.5}
             />
-          ) : (
-            <Image
-              source={require('../../assets/placeholder-thumbnail.png')}
-              style={styles.videoThumbnail}
-              resizeMode="cover"
-            />
-          )}
-        </View>
-        
-        {/* Content - Right 75% */}
-        <View style={styles.liftContent}>
-          <View style={styles.liftHeader}>
-            <Text style={styles.liftName} numberOfLines={1} ellipsizeMode="tail">
-              {lift.liftType}
-            </Text>
-            <Text style={styles.liftDate}>{lift.liftDate}</Text>
-          </View>
-          <View style={styles.liftAccuracyContainer}>
-            <Text style={styles.accuracyLabel}>Accuracy</Text>
-            <View style={styles.accuracyPill}>
-              <Text style={styles.accuracyValue}>{lift.analysis.accuracy}%</Text>
+          </Svg>
+        </TouchableOpacity>
+      </Animated.View>
+
+      {/* Main Card */}
+      <PanGestureHandler onGestureEvent={gestureHandler}>
+        <Animated.View style={[cardStyle, animatedStyle]}>
+          <TouchableOpacity 
+            onPress={handlePress}
+            activeOpacity={0.7}
+            style={styles.liftCardContent}
+            disabled={!onPress}
+          >
+            {/* Video Thumbnail - Left 25% */}
+            <View style={styles.videoThumbnailContainer}>
+              {lift.thumbnailURL ? (
+                <Image
+                  source={{ uri: lift.thumbnailURL }}
+                  style={styles.videoThumbnail}
+                  resizeMode="cover"
+                  onError={() => {
+                    console.warn('Failed to load thumbnail:', lift.thumbnailURL);
+                  }}
+                />
+              ) : (
+                <Image
+                  source={require('../../assets/placeholder-thumbnail.png')}
+                  style={styles.videoThumbnail}
+                  resizeMode="cover"
+                />
+              )}
             </View>
-          </View>
-        </View>
-      </TouchableOpacity>
-    </Animated.View>
+            
+            {/* Content - Right 75% */}
+            <View style={styles.liftContent}>
+              <View style={styles.liftHeader}>
+                <Text style={styles.liftName} numberOfLines={1} ellipsizeMode="tail">
+                  {lift.liftType}
+                </Text>
+                <Text style={styles.liftDate}>{lift.liftDate}</Text>
+              </View>
+              <View style={styles.liftAccuracyContainer}>
+                <Text style={styles.accuracyLabel}>Accuracy</Text>
+                <View style={styles.accuracyPill}>
+                  <Text style={styles.accuracyValue}>{lift.analysis.accuracy}%</Text>
+                </View>
+              </View>
+            </View>
+          </TouchableOpacity>
+        </Animated.View>
+      </PanGestureHandler>
+    </View>
   );
 }
 
 const { width } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
+  container: {
+    position: 'relative',
+  },
+  deleteButton: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 120, // Reduced height to be smaller than the card
+    backgroundColor: '#000000', // Black background for delete button
+    borderRadius: 18, // Match card border radius
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1,
+  },
+  deleteButtonContent: {
+    padding: 10,
+  },
   liftCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 18,
