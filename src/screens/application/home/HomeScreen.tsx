@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, Dimensions, ImageSourcePropType, ImageBackground, Modal, Animated as RNAnimated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path, Circle } from 'react-native-svg';
@@ -46,14 +46,31 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const translateX = useSharedValue(0);
   
-  // Different data for each card
-  const cardData = [
-    { percentage: percentageValue, label: 'Daily accuracy level' },
-    { percentage: 85, label: 'Weekly progress' }
-  ];
-  
   // Get lifts for the selected date
   const liftsForSelectedDate: ILiftData[] = getLiftsByDate(selectedDate);
+  
+  // Calculate average accuracy for the selected date
+  const averageAccuracy = useMemo(() => {
+    return liftsForSelectedDate.length > 0 
+      ? Math.round(liftsForSelectedDate.reduce((sum, lift) => sum + lift.analysis.accuracy, 0) / liftsForSelectedDate.length)
+      : 0;
+  }, [liftsForSelectedDate]);
+  
+  // Calculate average accuracy for all lifts across all dates
+  const allTimeAverageAccuracy = useMemo(() => {
+    return liftData.length > 0 
+      ? Math.round(liftData.reduce((sum, lift) => sum + lift.analysis.accuracy, 0) / liftData.length)
+      : 0;
+  }, [liftData]);
+  
+  // Different data for each card
+  const cardData = useMemo(() => [
+    { 
+      percentage: averageAccuracy, 
+      label: liftsForSelectedDate.length > 0 ? 'Daily accuracy level' : 'No lifts today'
+    },
+    { percentage: allTimeAverageAccuracy, label: 'All time accuracy' }
+  ], [averageAccuracy, allTimeAverageAccuracy, liftsForSelectedDate.length]);
 
   // Animation values for each lift card - recreate when lifts change
   const liftAnimations = useRef<RNAnimated.Value[]>([]);
