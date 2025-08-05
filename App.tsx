@@ -7,6 +7,8 @@ import { Asset } from 'expo-asset';
 import { OnboardingProvider } from './src/context/OnboardingContext';
 import { LanguageProvider } from './src/context/LanguageContext';
 import { LoadingLiftsProvider } from './src/context/LoadingLiftsContext';
+import { LiftDataProvider } from './src/context/LiftDataContext';
+import { UserDetailsProvider } from './src/context/UserDetailsContext';
 import { OnboardingNavigator } from './src/navigation/OnboardingNavigator';
 import { MainAppLayout } from './src/components/layout/MainAppLayout';
 
@@ -78,9 +80,13 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <LanguageProvider>
-        <LoadingLiftsProvider>
-          <MainAppLayout />
-        </LoadingLiftsProvider>
+        <UserDetailsProvider>
+          <LoadingLiftsProvider>
+            <LiftDataProvider>
+              <MainAppLayout />
+            </LiftDataProvider>
+          </LoadingLiftsProvider>
+        </UserDetailsProvider>
         <StatusBar style={isDark ? 'light' : 'dark'} />
       </LanguageProvider>
     </SafeAreaProvider>
