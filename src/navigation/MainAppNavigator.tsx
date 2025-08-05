@@ -61,6 +61,7 @@ const Stack = createStackNavigator<MainStackParamList>();
 // Declare global function type
 declare global {
   var triggerAddOptions: (() => void) | undefined;
+  var navigateToPerformance: (() => void) | undefined;
 }
 
 // Wrapper components for screens that need navigation
@@ -94,6 +95,14 @@ function HomeScreenWrapper() {
     }
   };
 
+  const handleNavigateToPerformance = () => {
+    // Navigate to performance tab
+    // This will be handled by the parent component to switch tabs
+    if (global.navigateToPerformance) {
+      global.navigateToPerformance();
+    }
+  };
+
   return (
     <HomeScreen 
       onShowFeedback={handleShowFeedback}
@@ -101,6 +110,7 @@ function HomeScreenWrapper() {
       onShowLibrary={handleShowLibrary}
       onShowShare={handleShowShare}
       onTriggerAddOptions={handleTriggerAddOptions}
+      onNavigateToPerformance={handleNavigateToPerformance}
     />
   );
 }
@@ -427,6 +437,7 @@ function MainTabsNavigator() {
   // Expose the add press function globally
   React.useEffect(() => {
     global.triggerAddOptions = handleAddPress;
+    global.navigateToPerformance = () => handleTabPress('performance');
   }, []);
 
   const renderScreenContent = () => {

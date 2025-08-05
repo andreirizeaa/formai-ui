@@ -12,6 +12,7 @@ import { hapticFeedback } from '../../utils/haptic';
 
 interface SwipeableCalendarProps {
   onDateSelect?: (date: Date) => void;
+  initialSelectedDate?: Date;
 }
 
 interface DayData {
@@ -22,9 +23,9 @@ interface DayData {
   isActive: boolean;
 }
 
-export function SwipeableCalendar({ onDateSelect }: SwipeableCalendarProps) {
+export function SwipeableCalendar({ onDateSelect, initialSelectedDate }: SwipeableCalendarProps) {
   const [currentWeekOffset, setCurrentWeekOffset] = useState(0);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(initialSelectedDate || new Date());
   const scrollViewRef = useRef<ScrollView>(null);
   const translateX = useSharedValue(0);
   
