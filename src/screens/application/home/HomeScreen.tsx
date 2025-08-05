@@ -8,6 +8,7 @@ import { LoadingLiftCard } from './LoadingLiftCard';
 import { ILiftData } from '../feedback/liftDetails';
 import { LiftDataCard } from '../../../components/LiftDataCard';
 import { SwipeableCalendar } from '../../../components/ui/SwipeableCalendar';
+import { useUserDetails } from '../../../context/UserDetailsContext';
 
 interface HomeScreenProps {
   onShowFeedback: (liftData: ILiftData) => void;
@@ -20,6 +21,7 @@ interface HomeScreenProps {
 
 export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibrary, onShowShare, onTriggerAddOptions, onNavigateToPerformance }: HomeScreenProps) {
   const { loadingLifts, completedLifts, addLoadingLift, removeCompletedLift } = useLoadingLifts();
+  const { userDetails } = useUserDetails();
   
   // Random percentage value between 1-100
   const [percentageValue, setPercentageValue] = useState(() => Math.floor(Math.random() * 100) + 1);
@@ -158,6 +160,7 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
         <SwipeableCalendar 
           onDateSelect={handleDateSelect} 
           initialSelectedDate={new Date()}
+          daysLogged={userDetails.daysLogged}
         />
         
         {/* Single Card */}
@@ -180,7 +183,7 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
                     cy="60"
                     r="48"
                     stroke="#E5E5E5"
-                    strokeWidth="10"
+                    strokeWidth="8"
                     fill="none"
                   />
                   {/* Progress circle - percentage filled */}
@@ -189,7 +192,7 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
                     cy="60"
                     r="48"
                     stroke="#000000"
-                    strokeWidth="10"
+                    strokeWidth="8"
                     fill="none"
                     strokeDasharray={`${2 * Math.PI * 48}`}
                     strokeDashoffset={`${2 * Math.PI * 48 * (1 - percentageValue / 100)}`}
@@ -200,7 +203,7 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
                   <Circle
                     cx="60"
                     cy="60"
-                    r="36"
+                    r="40"
                     fill="#FFFFFF"
                   />
                 </Svg>
@@ -343,14 +346,14 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
             {/* Large centered fire icon */}
             <View style={styles.fireModalContent}>
               <Image 
-                source={require('../../../../assets/icons/fire-bigger.png')}
+                source={require('../../../../assets/icons/fire.png')}
                 style={styles.fireModalIcon}
                 resizeMode="contain"
               />
             </View>
 
             {/* Streak text */}
-            <Text style={styles.streakText}>12 days streak!</Text>
+            <Text style={styles.streakText}>12 day streak!</Text>
 
             {/* Message */}
             <Text style={styles.message}>You're on fire! Keep up the great work with your daily streaks.</Text>
@@ -488,7 +491,7 @@ const styles = StyleSheet.create({
   },
   libraryCard: {
     width: '100%',
-    backgroundColor: '#ede9fe',
+    backgroundColor: '#ffffff',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -680,13 +683,13 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   fireModalIcon: {
-    width: 80,
-    height: 80,
+    width: 118,
+    height: 118,
   },
   streakText: {
     fontSize: 36,
-    fontWeight: '600',
-    color: '#FF7A00',
+    fontWeight: '700',
+    color: '#ed694a',
     fontFamily: 'SF Pro Display',
     textAlign: 'center',
     marginBottom: 32,
@@ -710,14 +713,14 @@ const styles = StyleSheet.create({
   },
   button: {
     height: 44,
-    borderRadius: 28,
-    backgroundColor: '#000000',
+    borderRadius: 18,
+    backgroundColor: '#ed694a',
     justifyContent: 'center',
     alignItems: 'center',
   },
   buttonText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#ffffff',
   },
 }); 

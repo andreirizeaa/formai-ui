@@ -13,6 +13,7 @@ import { hapticFeedback } from '../../utils/haptic';
 interface SwipeableCalendarProps {
   onDateSelect?: (date: Date) => void;
   initialSelectedDate?: Date;
+  daysLogged?: string[]; // Format: MM-DD-YYYY
 }
 
 interface DayData {
@@ -21,13 +22,21 @@ interface DayData {
   dayNumber: string;
   isToday: boolean;
   isActive: boolean;
+  isLogged: boolean;
 }
 
-export function SwipeableCalendar({ onDateSelect, initialSelectedDate }: SwipeableCalendarProps) {
+export function SwipeableCalendar({ onDateSelect, initialSelectedDate, daysLogged = [] }: SwipeableCalendarProps) {
   const [currentWeekOffset, setCurrentWeekOffset] = useState(0);
   const [selectedDate, setSelectedDate] = useState<Date | null>(initialSelectedDate || new Date());
-  const scrollViewRef = useRef<ScrollView>(null);
   const translateX = useSharedValue(0);
+  
+  // Helper function to format date as DD-MM-YYYY
+  const formatDateAsDDMMYYYY = (date: Date): string => {
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+  };
   
   // Generate weeks of data based on week offset
   const generateWeekData = useCallback((weekOffset: number): DayData[] => {
@@ -53,17 +62,22 @@ export function SwipeableCalendar({ onDateSelect, initialSelectedDate }: Swipeab
       const isSelected = selectedDate ? date.toDateString() === selectedDate.toDateString() : false;
       const isActive = isSelected;
       
+      // Format the date as DD-MM-YYYY for comparison with daysLogged array
+      const formattedDate = formatDateAsDDMMYYYY(date);
+      const isLogged = daysLogged.includes(formattedDate);
+            
       days.push({
         date,
         dayName: dayNames[i],
         dayNumber: date.getDate().toString(),
         isToday,
         isActive,
+        isLogged,
       });
     }
     
     return days;
-  }, [selectedDate]);
+  }, [selectedDate, daysLogged]);
 
   const currentWeek = generateWeekData(currentWeekOffset);
   
@@ -75,7 +89,6 @@ export function SwipeableCalendar({ onDateSelect, initialSelectedDate }: Swipeab
   };
 
   const handleWeekChange = (direction: 'left' | 'right') => {
-    hapticFeedback.selection();
     // Fix the direction mapping: left swipe should go to previous week, right swipe to next week
     const newOffset = direction === 'left' 
       ? currentWeekOffset - 1  // Previous week
@@ -84,8 +97,11 @@ export function SwipeableCalendar({ onDateSelect, initialSelectedDate }: Swipeab
     // Prevent going to future weeks (when currentWeekOffset is 0, which is the current week)
     if (direction === 'right' && currentWeekOffset === 0) {
       // Don't allow swiping to next week when we're on the current week
+      hapticFeedback.error();
       return;
     }
+    hapticFeedback.selection();
+
     
     setCurrentWeekOffset(newOffset);
   };
@@ -131,6 +147,8 @@ export function SwipeableCalendar({ onDateSelect, initialSelectedDate }: Swipeab
               >
                 <View style={[
                   styles.dayCircle,
+                  day.isToday && day.isLogged ? styles.todayLoggedCircle :
+                  day.isLogged ? styles.loggedDayCircle :
                   day.isToday && day.isActive ? styles.todaySelectedCircle : 
                   day.isToday ? styles.todayCircle : 
                   day.isActive ? styles.selectedCircle : styles.inactiveDayCircle
@@ -229,6 +247,18 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#000000',
     borderStyle: 'dashed',
+    backgroundColor: 'transparent',
+  },
+  loggedDayCircle: {
+    borderWidth: 1.5,
+    borderColor: '#ff6900',
+    borderStyle: 'dashed',
+    backgroundColor: 'transparent',
+  },
+  todayLoggedCircle: {
+    borderWidth: 2,
+    borderColor: '#ed694a',
+    borderStyle: 'solid',
     backgroundColor: 'transparent',
   },
 }); 

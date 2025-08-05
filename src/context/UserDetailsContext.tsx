@@ -13,6 +13,7 @@ interface UserDetails {
   dateOfBirth: string; 
   gender: string;
   language: string;
+  daysLogged: string[]; // Format: MM-DD-YYYY
 }
 
 interface UserDetailsContextType {
@@ -37,6 +38,7 @@ const initialUserDetails: UserDetails = {
   dateOfBirth: '15-01-1990',
   gender: 'Male',
   language: 'en',
+  daysLogged: ["03-08-2025", "04-08-2025", "05-08-2025"],
 };
 
 interface UserDetailsProviderProps {
