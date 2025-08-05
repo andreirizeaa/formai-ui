@@ -122,7 +122,7 @@ export function PersonalDetailsScreen({
   onEditDateOfBirth, 
   onEditGender
 }: PersonalDetailsScreenProps) {
-  const { userDetails, getWeightDisplay, getHeightDisplay } = useUserDetails();
+  const { userDetails, getWeightDisplay, getHeightDisplay, getDateOfBirthDisplay } = useUserDetails();
 
   const handleEditCurrentWeight = () => {
     onEditCurrentWeight();
@@ -184,7 +184,7 @@ export function PersonalDetailsScreen({
           <View style={styles.separator} />
           <PersonalDetailOption
             title={i18n.t('personalDetails.dateOfBirth')}
-            value={translatePersonalDataValue('dateOfBirth', userDetails.dateOfBirth)}
+            value={translatePersonalDataValue('dateOfBirth', getDateOfBirthDisplay())}
             onPress={handleEditDateOfBirth}
           />
           <View style={styles.separator} />

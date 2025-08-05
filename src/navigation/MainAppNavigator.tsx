@@ -143,7 +143,7 @@ function SettingsScreenWrapper() {
 
 function PersonalDetailsScreenWrapper() {
   const navigation = useNavigation<MainStackNavigationProp>();
-  const { userDetails, getWeightDisplay, getHeightDisplay } = useUserDetails();
+  const { userDetails, getWeightDisplay, getHeightDisplay, getDateOfBirthDisplay } = useUserDetails();
   
   const handleBack = () => {
     navigation.goBack();
@@ -158,7 +158,7 @@ function PersonalDetailsScreenWrapper() {
   };
 
   const handleEditDateOfBirth = () => {
-    navigation.navigate('EditDateOfBirth', { currentValue: userDetails.dateOfBirth });
+    navigation.navigate('EditDateOfBirth', { currentValue: getDateOfBirthDisplay() });
   };
 
   const handleEditGender = () => {
@@ -288,8 +288,15 @@ function EditDateOfBirthScreenWrapper() {
   };
 
   const handleSave = (newValue: string) => {
-    updateUserDetails('dateOfBirth', newValue);
-    console.log('Date of birth updated:', newValue);
+    // The newValue is already in DD-MM-YYYY format from EditDateOfBirthScreen
+    // Just validate it's in the correct format before saving
+    const dateRegex = /^\d{2}-\d{2}-\d{4}$/;
+    if (dateRegex.test(newValue)) {
+      updateUserDetails('dateOfBirth', newValue);
+      console.log('Date of birth updated:', newValue);
+    } else {
+      console.error('Invalid date format received:', newValue);
+    }
     navigation.goBack();
   };
 
