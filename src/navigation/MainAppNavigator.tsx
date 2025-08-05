@@ -10,6 +10,7 @@ import { HomeScreen } from '../screens/application/home/HomeScreen';
 import { PerformanceScreen } from '../screens/application/performance/PerformanceScreen';
 import { SettingsScreen } from '../screens/application/settings/SettingsScreen';
 import { PersonalDetailsScreen } from '../screens/application/settings/PersonalDetailsScreen';
+import { UnitsDetailsScreen } from '../screens/application/settings/UnitsDetailsScreen';
 import { ShareScreen } from '../screens/application/settings/ShareScreen';
 import { EditCurrentWeightScreen } from '../screens/application/settings/editPersonalDetails/EditCurrentWeightScreen';
 import { EditHeightScreen } from '../screens/application/settings/editPersonalDetails/EditHeightScreen';
@@ -24,6 +25,7 @@ import { HowItWorksModal } from '../screens/application/feedback/howItWorksModal
 import { LibraryScreen } from '../screens/application/library/LibraryScreen';
 import { FilterModal } from '../screens/application/library/FilterModal';
 import { BottomNavigationBar } from './BottomNavigationBar';
+import { UserDetailsProvider, useUserDetails } from '../context/UserDetailsContext';
 
 // Types for navigation
 export type MainTabParamList = {
@@ -35,6 +37,7 @@ export type MainTabParamList = {
 export type MainStackParamList = {
   MainTabs: undefined;
   PersonalDetails: undefined;
+  UnitsDetails: undefined;
   Share: undefined;
   EditCurrentWeight: { currentValue: string };
   EditHeight: { currentValue: string };
@@ -122,6 +125,10 @@ function SettingsScreenWrapper() {
     navigation.navigate('PersonalDetails');
   };
 
+  const handleUnitsPress = () => {
+    navigation.navigate('UnitsDetails');
+  };
+
   const handleSharePress = () => {
     navigation.navigate('Share');
   };
@@ -129,6 +136,7 @@ function SettingsScreenWrapper() {
   return (
     <SettingsScreen 
       onPersonalDetailsPress={handlePersonalDetailsPress}
+      onUnitsPress={handleUnitsPress}
       onSharePress={handleSharePress}
     />
   );
@@ -136,43 +144,49 @@ function SettingsScreenWrapper() {
 
 function PersonalDetailsScreenWrapper() {
   const navigation = useNavigation<MainStackNavigationProp>();
+  const { userDetails, getWeightDisplay, getHeightDisplay } = useUserDetails();
   
   const handleBack = () => {
     navigation.goBack();
   };
 
-  const handleEditCurrentWeight = (data: any) => {
-    navigation.navigate('EditCurrentWeight', { currentValue: data.currentWeight });
+  const handleEditCurrentWeight = () => {
+    navigation.navigate('EditCurrentWeight', { currentValue: getWeightDisplay() });
   };
 
-  const handleEditHeight = (data: any) => {
-    navigation.navigate('EditHeight', { currentValue: data.height });
+  const handleEditHeight = () => {
+    navigation.navigate('EditHeight', { currentValue: getHeightDisplay() });
   };
 
-  const handleEditDateOfBirth = (data: any) => {
-    navigation.navigate('EditDateOfBirth', { currentValue: data.dateOfBirth });
+  const handleEditDateOfBirth = () => {
+    navigation.navigate('EditDateOfBirth', { currentValue: userDetails.dateOfBirth });
   };
 
-  const handleEditGender = (data: any) => {
-    navigation.navigate('EditGender', { currentValue: data.gender });
-  };
-
-  // Mock personal data - in real app this would come from context/state
-  const personalData = {
-    currentWeight: '75 kg',
-    height: '175 cm',
-    dateOfBirth: '15 March 1990',
-    gender: 'Male',
+  const handleEditGender = () => {
+    navigation.navigate('EditGender', { currentValue: userDetails.gender });
   };
 
   return (
-    <PersonalDetailsScreen 
+    <PersonalDetailsScreen
       onBack={handleBack}
       onEditCurrentWeight={handleEditCurrentWeight}
       onEditHeight={handleEditHeight}
       onEditDateOfBirth={handleEditDateOfBirth}
       onEditGender={handleEditGender}
-      personalData={personalData}
+    />
+  );
+}
+
+function UnitsDetailsScreenWrapper() {
+  const navigation = useNavigation<MainStackNavigationProp>();
+  
+  const handleBack = () => {
+    navigation.goBack();
+  };
+
+  return (
+    <UnitsDetailsScreen
+      onBack={handleBack}
     />
   );
 }
@@ -190,13 +204,22 @@ function ShareScreenWrapper() {
 function EditCurrentWeightScreenWrapper() {
   const navigation = useNavigation<MainStackNavigationProp>();
   const route = useRoute<RouteProp<MainStackParamList, 'EditCurrentWeight'>>();
+  const { updateWeight } = useUserDetails();
   
   const handleBack = () => {
     navigation.goBack();
   };
 
   const handleSave = (newValue: string) => {
-    // Here you would typically update the global state
+    // Parse the weight string to get the metric value for storage
+    const weightMatch = newValue.match(/(\d+(?:\.\d+)?)\s*(kg|lbs)/);
+    if (weightMatch) {
+      const [, number, unit] = weightMatch;
+      const weight = parseFloat(number);
+      const weightKg = unit === 'kg' ? Math.round(weight) : Math.round(weight * 0.453592);
+      updateWeight(weightKg);
+      console.log('Weight updated:', weightKg, 'kg');
+    }
     navigation.goBack();
   };
 
@@ -212,13 +235,38 @@ function EditCurrentWeightScreenWrapper() {
 function EditHeightScreenWrapper() {
   const navigation = useNavigation<MainStackNavigationProp>();
   const route = useRoute<RouteProp<MainStackParamList, 'EditHeight'>>();
+  const { updateHeight } = useUserDetails();
   
   const handleBack = () => {
     navigation.goBack();
   };
 
   const handleSave = (newValue: string) => {
-    // Here you would typically update the global state
+    // Parse the height string to get the metric value for storage
+    let heightCm: number;
+    
+    if (newValue.includes('cm')) {
+      const heightMatch = newValue.match(/(\d+)\s*cm/);
+      if (heightMatch) {
+        heightCm = parseFloat(heightMatch[1]);
+      } else {
+        heightCm = 170; // Default
+      }
+    } else {
+      // Parse feet/inches format
+      const feetMatch = newValue.match(/(\d+)'/);
+      const inchesMatch = newValue.match(/(\d+)"/);
+      if (feetMatch && inchesMatch) {
+        const feet = parseInt(feetMatch[1]);
+        const inches = parseInt(inchesMatch[1]);
+        heightCm = (feet * 12 + inches) * 2.54;
+      } else {
+        heightCm = 170; // Default
+      }
+    }
+    
+    updateHeight(heightCm);
+    console.log('Height updated:', heightCm, 'cm');
     navigation.goBack();
   };
 
@@ -234,13 +282,15 @@ function EditHeightScreenWrapper() {
 function EditDateOfBirthScreenWrapper() {
   const navigation = useNavigation<MainStackNavigationProp>();
   const route = useRoute<RouteProp<MainStackParamList, 'EditDateOfBirth'>>();
+  const { updateUserDetails } = useUserDetails();
   
   const handleBack = () => {
     navigation.goBack();
   };
 
   const handleSave = (newValue: string) => {
-    // Here you would typically update the global state
+    updateUserDetails('dateOfBirth', newValue);
+    console.log('Date of birth updated:', newValue);
     navigation.goBack();
   };
 
@@ -256,13 +306,15 @@ function EditDateOfBirthScreenWrapper() {
 function EditGenderScreenWrapper() {
   const navigation = useNavigation<MainStackNavigationProp>();
   const route = useRoute<RouteProp<MainStackParamList, 'EditGender'>>();
+  const { updateUserDetails } = useUserDetails();
   
   const handleBack = () => {
     navigation.goBack();
   };
 
   const handleSave = (newValue: string) => {
-    // Here you would typically update the global state
+    updateUserDetails('gender', newValue);
+    console.log('Gender updated:', newValue);
     navigation.goBack();
   };
 
@@ -501,109 +553,118 @@ export function MainAppNavigator() {
   };
 
   return (
-    <NavigationContainer>
-        <Stack.Navigator
-          initialRouteName="MainTabs"
-          screenOptions={{
-            headerShown: false,
-          }}
-        >
-          <Stack.Screen name="MainTabs" component={MainTabsNavigator} />
-          <Stack.Screen 
-            name="PersonalDetails" 
-            component={PersonalDetailsScreenWrapper}
-            options={{
-              presentation: 'card',
+    <UserDetailsProvider>
+      <NavigationContainer>
+          <Stack.Navigator
+            initialRouteName="MainTabs"
+            screenOptions={{
+              headerShown: false,
             }}
-          />
-          <Stack.Screen 
-            name="Share" 
-            component={ShareScreenWrapper}
-            options={{
-              presentation: 'card',
-            }}
-          />
-          <Stack.Screen 
-            name="EditCurrentWeight" 
-            component={EditCurrentWeightScreenWrapper}
-            options={{
-              presentation: 'card',
-            }}
-          />
-          <Stack.Screen 
-            name="EditHeight" 
-            component={EditHeightScreenWrapper}
-            options={{
-              presentation: 'card',
-            }}
-          />
-          <Stack.Screen 
-            name="EditDateOfBirth" 
-            component={EditDateOfBirthScreenWrapper}
-            options={{
-              presentation: 'card',
-            }}
-          />
-          <Stack.Screen 
-            name="EditGender" 
-            component={EditGenderScreenWrapper}
-            options={{
-              presentation: 'card',
-            }}
-          />
-          <Stack.Screen 
-            name="RecordModal" 
-            component={RecordModalWrapper}
-            options={{
-              presentation: 'modal',
-              animation: 'none',
-            }}
-          />
-          <Stack.Screen 
-            name="UploadModal" 
-            component={UploadModalWrapper}
-            options={{
-              presentation: 'modal',
-              animation: 'none',
-            }}
-          />
-          <Stack.Screen 
-            name="LiftDetails" 
-            component={LiftDetailsWrapper}
-            options={{
-              presentation: 'card',
-            }}
-          />
-          <Stack.Screen 
-            name="FeedbackSlideshow" 
-            component={FeedbackSlideshowWrapper}
-            options={{
-              presentation: 'card',
-              animation: 'reveal_from_bottom',
-            }}
-          />
-          <Stack.Screen 
-            name="HowItWorks" 
-            component={HowItWorksModalWrapper}
-            options={{
-              presentation: 'modal',
-              animation: 'none',
-            }}
-          />
-          <Stack.Screen 
-            name="Library" 
-            component={LibraryScreenWrapperWithProps}
-            options={{
-              presentation: 'card',
-            }}
-          />
-        </Stack.Navigator>
+          >
+            <Stack.Screen name="MainTabs" component={MainTabsNavigator} />
+            <Stack.Screen 
+              name="PersonalDetails" 
+              component={PersonalDetailsScreenWrapper}
+              options={{
+                presentation: 'card',
+              }}
+            />
+            <Stack.Screen 
+              name="UnitsDetails" 
+              component={UnitsDetailsScreenWrapper}
+              options={{
+                presentation: 'card',
+              }}
+            />
+            <Stack.Screen 
+              name="Share" 
+              component={ShareScreenWrapper}
+              options={{
+                presentation: 'card',
+              }}
+            />
+            <Stack.Screen 
+              name="EditCurrentWeight" 
+              component={EditCurrentWeightScreenWrapper}
+              options={{
+                presentation: 'card',
+              }}
+            />
+            <Stack.Screen 
+              name="EditHeight" 
+              component={EditHeightScreenWrapper}
+              options={{
+                presentation: 'card',
+              }}
+            />
+            <Stack.Screen 
+              name="EditDateOfBirth" 
+              component={EditDateOfBirthScreenWrapper}
+              options={{
+                presentation: 'card',
+              }}
+            />
+            <Stack.Screen 
+              name="EditGender" 
+              component={EditGenderScreenWrapper}
+              options={{
+                presentation: 'card',
+              }}
+            />
+            <Stack.Screen 
+              name="RecordModal" 
+              component={RecordModalWrapper}
+              options={{
+                presentation: 'modal',
+                animation: 'none',
+              }}
+            />
+            <Stack.Screen 
+              name="UploadModal" 
+              component={UploadModalWrapper}
+              options={{
+                presentation: 'modal',
+                animation: 'none',
+              }}
+            />
+            <Stack.Screen 
+              name="LiftDetails" 
+              component={LiftDetailsWrapper}
+              options={{
+                presentation: 'card',
+              }}
+            />
+            <Stack.Screen 
+              name="FeedbackSlideshow" 
+              component={FeedbackSlideshowWrapper}
+              options={{
+                presentation: 'card',
+                animation: 'reveal_from_bottom',
+              }}
+            />
+            <Stack.Screen 
+              name="HowItWorks" 
+              component={HowItWorksModalWrapper}
+              options={{
+                presentation: 'modal',
+                animation: 'none',
+              }}
+            />
+            <Stack.Screen 
+              name="Library" 
+              component={LibraryScreenWrapperWithProps}
+              options={{
+                presentation: 'card',
+              }}
+            />
+          </Stack.Navigator>
 
-        <AddOptionsWrapper 
-          showAddOptions={showAddOptions}
-          onClose={handleCloseAddOptions}
-        />
-    </NavigationContainer>
+          <AddOptionsWrapper 
+            showAddOptions={showAddOptions}
+            onClose={handleCloseAddOptions}
+          />
+      </NavigationContainer>
+    </UserDetailsProvider>
   );
 }
 

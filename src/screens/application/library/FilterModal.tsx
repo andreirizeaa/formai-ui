@@ -244,15 +244,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#8E8E93',
     paddingHorizontal: 15,
-    fontSize: 22,
-    fontWeight: '400',
-    color: '#000000',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
     marginBottom: 20,
   },
   searchInput: {
     flex: 1,
     paddingRight: 10, // Add some space for the clear button
+    fontSize: 16,
+    fontWeight: '400',
+    color: '#000000',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+    height: '100%',
+    paddingTop: 0,
+    paddingBottom: 0,
+    textAlignVertical: 'center',
+    lineHeight: 16,
   },
   clearButton: {
     padding: 5,
@@ -275,7 +280,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   movementItemText: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '400',
     color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
