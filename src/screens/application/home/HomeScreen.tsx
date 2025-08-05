@@ -617,16 +617,19 @@ const styles = StyleSheet.create({
     width: '28%',
   },
   fireCardContent: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 4,
   },
   fireIcon: {
     width: 44,
     height: 44,
   },
   fireNumber: {
-    fontSize: 20,
-    fontWeight: '700',
+    marginTop: 8,
+    fontSize: 24,
+    fontWeight: '600',
     color: '#000000',
     fontFamily: 'SF Pro Display',
   },
