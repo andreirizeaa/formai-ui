@@ -76,6 +76,14 @@ const i18n = new I18n({
       subtitle: 'Choose your preferred language',
       selectLanguage: 'Select a language',
     },
+    units: {
+      title: 'Units',
+      subtitle: 'Choose your preferred unit system',
+      metric: 'Metric',
+      imperial: 'Imperial',
+      metricDescription: 'Kilograms and centimeters',
+      imperialDescription: 'Pounds, feet, inches',
+    },
     gender: {
       title: 'Biological gender',
       subtitle: 'This will be used to help our systems find the optimum biomechanic form for you',
@@ -336,6 +344,14 @@ const i18n = new I18n({
       title: 'Idioma',
       subtitle: 'Elige tu idioma preferido',
       selectLanguage: 'Selecciona un idioma',
+    },
+    units: {
+      title: 'Unidades',
+      subtitle: 'Elige tu sistema de unidades preferido',
+      metric: 'Métrico',
+      imperial: 'Imperial',
+      metricDescription: 'Kilogramos, centímetros, kilómetros',
+      imperialDescription: 'Libras, pies, millas',
     },
     gender: {
       title: 'Género biológico',
@@ -598,6 +614,14 @@ const i18n = new I18n({
       subtitle: '选择您的首选语言',
       selectLanguage: '选择一种语言',
     },
+    units: {
+      title: '单位',
+      subtitle: '选择您的首选单位系统',
+      metric: '公制',
+      imperial: '英制',
+      metricDescription: '千克, 厘米, 千米',
+      imperialDescription: '磅, 英尺, 英里',
+    },
     gender: {
       title: '生理性别',
       subtitle: '这将用于帮助我们的系统为您找到最佳的生物力学形式',
@@ -858,6 +882,14 @@ const i18n = new I18n({
       title: 'Lingua',
       subtitle: 'Scegli la tua lingua preferita',
       selectLanguage: 'Seleziona una lingua',
+    },
+    units: {
+      title: 'Unità',
+      subtitle: 'Scegli la tua unità di misura preferita',
+      metric: 'Metrica',
+      imperial: 'Imperiale',
+      metricDescription: 'Chilogrammi, centimetri, chilometri',
+      imperialDescription: 'Libbre, piedi, miglia',
     },
     gender: {
       title: 'Sesso biologico',
@@ -1120,6 +1152,14 @@ const i18n = new I18n({
       subtitle: 'Escolha seu idioma preferido',
       selectLanguage: 'Selecione um idioma',
     },
+    units: {
+      title: 'Unidades',
+      subtitle: 'Escolha seu sistema de unidades preferido',
+      metric: 'Métrico',
+      imperial: 'Imperial',
+      metricDescription: 'Quilogramas, centímetros, quilômetros',
+      imperialDescription: 'Libras, pés, milhas',
+    },
     gender: {
       title: 'Sexo biológico',
       subtitle: 'Isso será usado para ajudar nossos sistemas a encontrar a forma biomecânica ideal para você',
@@ -1380,6 +1420,14 @@ const i18n = new I18n({
       title: 'Limba',
       subtitle: 'Alege limba preferată',
       selectLanguage: 'Selectează o limbă',
+    },
+    units: {
+      title: 'Unități',
+      subtitle: 'Alege unitatea de măsură preferată',
+      metric: 'Metric',
+      imperial: 'Imperial',
+      metricDescription: 'Kilograme, centimetri, kilometri',
+      imperialDescription: 'Lire, picioare, mile',
     },
     gender: {
       title: 'Sex biologic',
@@ -1642,6 +1690,14 @@ const i18n = new I18n({
       subtitle: 'Wähle deine bevorzugte Sprache',
       selectLanguage: 'Wähle eine bevorzugte Sprache',
     },
+    units: {
+      title: 'Einheiten',
+      subtitle: 'Wähle deine bevorzugte Einheit',
+      metric: 'Metrisch',
+      imperial: 'Imperial',
+      metricDescription: 'Kilogramm, Zentimeter, Kilometer',
+      imperialDescription: 'Pfund, Fuß, Meile',
+    },
     gender: {
       title: 'Biologisches Geschlecht',
       subtitle: 'Dies wird verwendet, um unseren Systemen zu helfen, die optimale biomechanische Form für dich zu finden',
@@ -1903,6 +1959,14 @@ const i18n = new I18n({
       subtitle: 'Choisissez votre langue préférée',
       selectLanguage: 'Sélectionnez une langue',
     },
+    units: {
+      title: 'Unités',
+      subtitle: 'Choisissez votre unité de mesure préférée',
+      metric: 'Métrique',
+      imperial: 'Impériale',
+      metricDescription: 'Kilogrammes, centimètres, kilomètres',
+      imperialDescription: 'Livres, pieds, miles',
+    },
     gender: {
       title: 'Sexe biologique',
       subtitle: 'Ceci sera utilisé pour aider nos systèmes à trouver la forme biomécanique optimale pour vous',
@@ -2163,6 +2227,14 @@ const i18n = new I18n({
       title: 'اللغة',
       subtitle: 'اختر لغتك المفضلة',
       selectLanguage: 'حالب أحد اللغات المفضلة لديك؟',
+    },
+    units: {
+      title: 'الوحدات',
+      subtitle: 'اختر الوحدة المفضلة لديك',
+      metric: 'متري',
+      imperial: 'إمبريالي',
+      metricDescription: 'كيلوغرام, سنتيمتر, كيلومتر',
+      imperialDescription: 'رطل, قدم, ميل',
     },
     gender: {
       title: 'الجنس البيولوجي',

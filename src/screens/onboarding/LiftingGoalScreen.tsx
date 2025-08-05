@@ -40,8 +40,8 @@ export function LiftingGoalScreen({ onNext, onBack }: LiftingGoalScreenProps) {
     <OnboardingLayout
       title={i18n.t('liftingGoal.title')}
       subtitle={i18n.t('liftingGoal.subtitle')}
-      currentStep={9}
-      totalSteps={12}
+      currentStep={10}
+      totalSteps={13}
       onBack={onBack}
       onNext={handleNext}
       nextTitle={i18n.t('next')}

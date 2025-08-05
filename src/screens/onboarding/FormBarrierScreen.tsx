@@ -104,8 +104,8 @@ export function FormBarrierScreen({ onNext, onBack }: FormBarrierScreenProps) {
     <OnboardingLayout
       title={i18n.t('formBarrier.title')}
       subtitle={i18n.t('formBarrier.subtitle')}
-      currentStep={10}
-      totalSteps={12}
+      currentStep={11}
+      totalSteps={13}
       onBack={onBack}
       onNext={() => {
         hapticFeedback.selection();

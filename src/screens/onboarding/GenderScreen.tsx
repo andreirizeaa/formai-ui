@@ -37,8 +37,8 @@ export function GenderScreen({ onNext, onBack }: GenderScreenProps) {
     <OnboardingLayout
       title={i18n.t('gender.title')}
       subtitle={i18n.t('gender.subtitle')}
-      currentStep={2}
-      totalSteps={12}
+      currentStep={3}
+      totalSteps={13}
       onBack={onBack}
       onNext={handleNext}
       nextTitle={i18n.t('next')}

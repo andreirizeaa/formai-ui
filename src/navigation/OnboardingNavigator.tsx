@@ -1,9 +1,14 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import { createStackNavigator } from '@react-navigation/stack';
+import { createStackNavigator, StackNavigationProp } from '@react-navigation/stack';
+import { useNavigation } from '@react-navigation/native';
+import { useOnboarding } from '../context/OnboardingContext';
+
+// Import all onboarding screens
 import { LoadingScreen } from '../screens/onboarding/LoadingScreen';
 import { WelcomeScreen } from '../screens/onboarding/WelcomeScreen';
 import { LanguageScreen } from '../screens/onboarding/LanguageScreen';
+import { UnitsScreen } from '../screens/onboarding/UnitsScreen';
 import { GenderScreen } from '../screens/onboarding/GenderScreen';
 import { WorkoutsScreen } from '../screens/onboarding/WorkoutsScreen';
 import { DiscoveryScreen } from '../screens/onboarding/DiscoveryScreen';
@@ -23,8 +28,6 @@ import { NotificationReminderScreen } from '../screens/payment/NotificationRemin
 import { SubscriptionSelectionScreen } from '../screens/payment/SubscriptionSelectionScreen';
 import { CreateAccountScreen } from '../screens/auth/CreateAccountScreen';
 import { CameraPermissionScreen } from '../screens/onboarding/CameraPermissionScreen';
-import { useNavigation } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
 
 interface OnboardingNavigatorProps {
   onComplete: () => void;
@@ -35,6 +38,7 @@ export type OnboardingStackParamList = {
   Loading: undefined;
   Welcome: undefined;
   Language: undefined;
+  Units: undefined;
   Gender: undefined;
   Workouts: undefined;
   Discovery: undefined;
@@ -85,14 +89,28 @@ function LanguageScreenWrapper() {
   const navigation = useNavigation<OnboardingNavigationProp>();
   
   const handleNext = () => {
+    navigation.navigate('Units');
+  };
+
+  const handleBack = () => {
+    navigation.navigate('Welcome');
+  };
+
+  return <LanguageScreen onNext={handleNext} onBack={handleBack} />;
+}
+
+function UnitsScreenWrapper() {
+  const navigation = useNavigation<OnboardingNavigationProp>();
+  
+  const handleNext = () => {
     navigation.navigate('Gender');
   };
 
   const handleBack = () => {
-    navigation.goBack();
+    navigation.navigate('Language');
   };
 
-  return <LanguageScreen onNext={handleNext} onBack={handleBack} />;
+  return <UnitsScreen onNext={handleNext} onBack={handleBack} />;
 }
 
 function GenderScreenWrapper() {
@@ -103,7 +121,7 @@ function GenderScreenWrapper() {
   };
 
   const handleBack = () => {
-    navigation.goBack();
+    navigation.navigate('Units');
   };
 
   return <GenderScreen onNext={handleNext} onBack={handleBack} />;
@@ -117,7 +135,7 @@ function WorkoutsScreenWrapper() {
   };
 
   const handleBack = () => {
-    navigation.goBack();
+    navigation.navigate('Gender');
   };
 
   return <WorkoutsScreen onNext={handleNext} onBack={handleBack} />;
@@ -131,7 +149,7 @@ function DiscoveryScreenWrapper() {
   };
 
   const handleBack = () => {
-    navigation.goBack();
+    navigation.navigate('Workouts');
   };
 
   return <DiscoveryScreen onNext={handleNext} onBack={handleBack} />;
@@ -145,7 +163,7 @@ function PersonalTrainerScreenWrapper() {
   };
 
   const handleBack = () => {
-    navigation.goBack();
+    navigation.navigate('Discovery');
   };
 
   return <PersonalTrainerScreen onNext={handleNext} onBack={handleBack} />;
@@ -159,7 +177,7 @@ function ProgressScreenWrapper() {
   };
 
   const handleBack = () => {
-    navigation.goBack();
+    navigation.navigate('PersonalTrainer');
   };
 
   return <ProgressScreen onNext={handleNext} onBack={handleBack} />;
@@ -173,7 +191,7 @@ function MeasurementsScreenWrapper() {
   };
 
   const handleBack = () => {
-    navigation.goBack();
+    navigation.navigate('Progress');
   };
 
   return <MeasurementsScreen onNext={handleNext} onBack={handleBack} />;
@@ -187,7 +205,7 @@ function BirthDateScreenWrapper() {
   };
 
   const handleBack = () => {
-    navigation.goBack();
+    navigation.navigate('Measurements');
   };
 
   return <BirthDateScreen onNext={handleNext} onBack={handleBack} />;
@@ -201,7 +219,7 @@ function LiftingGoalScreenWrapper() {
   };
 
   const handleBack = () => {
-    navigation.goBack();
+    navigation.navigate('BirthDate');
   };
 
   return <LiftingGoalScreen onNext={handleNext} onBack={handleBack} />;
@@ -215,7 +233,7 @@ function FormBarrierScreenWrapper() {
   };
 
   const handleBack = () => {
-    navigation.goBack();
+    navigation.navigate('LiftingGoal');
   };
 
   return <FormBarrierScreen onNext={handleNext} onBack={handleBack} />;
@@ -229,7 +247,7 @@ function RatingScreenWrapper() {
   };
 
   const handleBack = () => {
-    navigation.goBack();
+    navigation.navigate('FormBarrier');
   };
 
   return <RatingScreen onNext={handleNext} onBack={handleBack} />;
@@ -243,7 +261,7 @@ function ReferralCodeScreenWrapper() {
   };
 
   const handleBack = () => {
-    navigation.goBack();
+    navigation.navigate('Rating');
   };
 
   return <ReferralCodeScreen onNext={handleNext} onBack={handleBack} />;
@@ -257,7 +275,7 @@ function AllDoneScreenWrapper() {
   };
 
   const handleBack = () => {
-    navigation.goBack();
+    navigation.navigate('ReferralCode');
   };
 
   return <AllDoneScreen onNext={handleNext} onBack={handleBack} />;
@@ -271,7 +289,7 @@ function NotificationPermissionScreenWrapper() {
   };
 
   const handleBack = () => {
-    navigation.goBack();
+    navigation.navigate('AllDone');
   };
 
   return <NotificationPermissionScreen onNext={handleNext} onBack={handleBack} />;
@@ -285,7 +303,7 @@ function SetupLoadingScreenWrapper() {
   };
 
   const handleBack = () => {
-    navigation.goBack();
+    navigation.navigate('NotificationPermission');
   };
 
   return <SetupLoadingScreen onNext={handleNext} onBack={handleBack} />;
@@ -309,7 +327,7 @@ function NotificationReminderScreenWrapper() {
   };
 
   const handleBack = () => {
-    navigation.goBack();
+    navigation.navigate('FreeTrial');
   };
 
   return <NotificationReminderScreen onNext={handleNext} onBack={handleBack} />;
@@ -323,7 +341,7 @@ function SubscriptionSelectionScreenWrapper() {
   };
 
   const handleBack = () => {
-    navigation.goBack();
+    navigation.navigate('NotificationReminder');
   };
 
   return <SubscriptionSelectionScreen onNext={handleNext} onBack={handleBack} />;
@@ -351,6 +369,11 @@ export function OnboardingNavigator({ onComplete, onSignIn }: OnboardingNavigato
         screenOptions={{
           headerShown: false,
           gestureEnabled: false,
+          cardStyleInterpolator: () => ({
+            cardStyle: {
+              transform: [{ translateX: 0 }],
+            },
+          }),
         }}
       >
         <Stack.Screen name="Loading">
@@ -363,6 +386,10 @@ export function OnboardingNavigator({ onComplete, onSignIn }: OnboardingNavigato
 
         <Stack.Screen name="Language">
           {() => <LanguageScreenWrapper />}
+        </Stack.Screen>
+
+        <Stack.Screen name="Units">
+          {() => <UnitsScreenWrapper />}
         </Stack.Screen>
 
         <Stack.Screen name="Gender">

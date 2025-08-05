@@ -86,8 +86,8 @@ export function BirthDateScreen({ onNext, onBack }: BirthDateScreenProps) {
     <OnboardingLayout
       title={i18n.t('birthDate.title')}
       subtitle={i18n.t('birthDate.subtitle')}
-      currentStep={8}
-      totalSteps={12}
+      currentStep={9}
+      totalSteps={13}
       onBack={onBack}
       onNext={handleNext}
       nextTitle={i18n.t('next')}
