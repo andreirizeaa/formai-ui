@@ -54,8 +54,8 @@ export function ProgressScreen({ onNext, onBack }: ProgressScreenProps) {
     <OnboardingLayout
       title={i18n.t('progress.title')}
       subtitle={i18n.t('progress.subtitle')}
-      currentStep={6}
-      totalSteps={12}
+      currentStep={7}
+      totalSteps={13}
       onBack={onBack}
       onNext={() => {
         hapticFeedback.selection();

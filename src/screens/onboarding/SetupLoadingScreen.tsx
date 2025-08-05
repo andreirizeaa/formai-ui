@@ -51,7 +51,7 @@ export function SetupLoadingScreen({ onNext, onBack }: SetupLoadingScreenProps) 
     <OnboardingLayout
       title={i18n.t('setupLoading.title')}
       subtitle=""
-      currentStep={15}
+      currentStep={16}
       totalSteps={16}
       onBack={onBack}
       onNext={() => {}} // No next button, handled automatically

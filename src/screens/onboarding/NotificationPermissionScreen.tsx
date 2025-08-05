@@ -39,7 +39,7 @@ export function NotificationPermissionScreen({ onNext, onBack }: NotificationPer
     <OnboardingLayout
       title={i18n.t('notificationPermission.title')}
       subtitle=""
-      currentStep={14}
+      currentStep={15}
       totalSteps={16}
       onBack={onBack}
       onNext={() => {}} // No next button, handled by dialog buttons
