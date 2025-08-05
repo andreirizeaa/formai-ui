@@ -76,9 +76,17 @@ export function SwipeableCalendar({ onDateSelect, initialSelectedDate }: Swipeab
 
   const handleWeekChange = (direction: 'left' | 'right') => {
     hapticFeedback.selection();
+    // Fix the direction mapping: left swipe should go to previous week, right swipe to next week
     const newOffset = direction === 'left' 
-      ? currentWeekOffset - 1 
-      : currentWeekOffset + 1;
+      ? currentWeekOffset - 1  // Previous week
+      : currentWeekOffset + 1; // Next week
+    
+    // Prevent going to future weeks (when currentWeekOffset is 0, which is the current week)
+    if (direction === 'right' && currentWeekOffset === 0) {
+      // Don't allow swiping to next week when we're on the current week
+      return;
+    }
+    
     setCurrentWeekOffset(newOffset);
   };
 
@@ -91,10 +99,13 @@ export function SwipeableCalendar({ onDateSelect, initialSelectedDate }: Swipeab
     },
     onEnd: (event) => {
       const threshold = 50;
+      // Fix the gesture direction mapping
       if (event.translationX > threshold) {
-        runOnJS(handleWeekChange)('right');
-      } else if (event.translationX < -threshold) {
+        // Swipe right (positive translation) = go to previous week
         runOnJS(handleWeekChange)('left');
+      } else if (event.translationX < -threshold) {
+        // Swipe left (negative translation) = go to next week
+        runOnJS(handleWeekChange)('right');
       }
       translateX.value = withSpring(0);
     },
