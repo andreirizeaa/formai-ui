@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, Animated, Dimensions, ImageSourcePropType, ImageBackground, Modal } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, Dimensions, ImageSourcePropType, ImageBackground, Modal, Animated as RNAnimated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { hapticFeedback } from '../../../utils/haptic';
@@ -9,6 +9,14 @@ import { ILiftData } from '../feedback/liftDetails';
 import { LiftDataCard } from '../../../components/LiftDataCard';
 import { SwipeableCalendar } from '../../../components/ui/SwipeableCalendar';
 import { useUserDetails } from '../../../context/UserDetailsContext';
+import { PanGestureHandler } from 'react-native-gesture-handler';
+import Animated, { 
+  useSharedValue, 
+  useAnimatedGestureHandler, 
+  useAnimatedStyle, 
+  withSpring, 
+  runOnJS 
+} from 'react-native-reanimated';
 
 interface HomeScreenProps {
   onShowFeedback: (liftData: ILiftData) => void;
@@ -29,17 +37,27 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
   // Fire card popup state
   const [isFirePopupVisible, setIsFirePopupVisible] = useState(false);
   
+  // Accuracy card swipe state
+  const [currentCardIndex, setCurrentCardIndex] = useState(0);
+  const translateX = useSharedValue(0);
+  
+  // Different data for each card
+  const cardData = [
+    { percentage: percentageValue, label: 'Daily accuracy level' },
+    { percentage: 85, label: 'Weekly progress' }
+  ];
+  
   // Use completed lifts from context instead of dummy data
   const recentLifts: ILiftData[] = completedLifts;
 
   // Animation values for each lift card - recreate when lifts change
-  const liftAnimations = useRef<Animated.Value[]>([]);
-  const fadeAnimations = useRef<Animated.Value[]>([]);
+  const liftAnimations = useRef<RNAnimated.Value[]>([]);
+  const fadeAnimations = useRef<RNAnimated.Value[]>([]);
 
   // Update animation arrays when lifts change
   useEffect(() => {
-    const newLiftAnimations = recentLifts.map(() => new Animated.Value(0));
-    const newFadeAnimations = recentLifts.map(() => new Animated.Value(0));
+    const newLiftAnimations = recentLifts.map(() => new RNAnimated.Value(0));
+    const newFadeAnimations = recentLifts.map(() => new RNAnimated.Value(0));
     
     liftAnimations.current = newLiftAnimations;
     fadeAnimations.current = newFadeAnimations;
@@ -50,14 +68,14 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
     if (recentLifts.length === 0) return;
 
     const animations = recentLifts.map((_, index) => {
-      return Animated.parallel([
-        Animated.timing(liftAnimations.current[index], {
+      return RNAnimated.parallel([
+        RNAnimated.timing(liftAnimations.current[index], {
           toValue: 1,
           duration: 300,
           delay: index * 50, // Stagger the animations
           useNativeDriver: true,
         }),
-        Animated.timing(fadeAnimations.current[index], {
+        RNAnimated.timing(fadeAnimations.current[index], {
           toValue: 1,
           duration: 250,
           delay: index * 50,
@@ -66,7 +84,7 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
       ]);
     });
 
-    Animated.parallel(animations).start();
+    RNAnimated.parallel(animations).start();
   }, [recentLifts]); // Re-run when lifts change
 
   const handleLiftPress = (lift: ILiftData) => {
@@ -109,10 +127,46 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
     setIsFirePopupVisible(false);
   };
 
-  const handleAccuracyCardPress = () => {
+  const handleAccuracyCardSwipe = (direction: 'left' | 'right') => {
     hapticFeedback.selection();
-    onNavigateToPerformance();
+    const newIndex = direction === 'left' 
+      ? currentCardIndex + 1  // Next card
+      : currentCardIndex - 1; // Previous card
+    
+    // Prevent swiping beyond bounds
+    if (newIndex < 0 || newIndex >= cardData.length) {
+      hapticFeedback.error();
+      return;
+    }
+    
+    setCurrentCardIndex(newIndex);
   };
+
+  const accuracyCardGestureHandler = useAnimatedGestureHandler({
+    onStart: (_, context: any) => {
+      context.startX = translateX.value;
+    },
+    onActive: (event, context) => {
+      translateX.value = context.startX + event.translationX;
+    },
+    onEnd: (event) => {
+      const threshold = 50;
+      if (event.translationX > threshold) {
+        // Swipe right (positive translation) = go to previous card
+        runOnJS(handleAccuracyCardSwipe)('right');
+      } else if (event.translationX < -threshold) {
+        // Swipe left (negative translation) = go to next card
+        runOnJS(handleAccuracyCardSwipe)('left');
+      }
+      translateX.value = withSpring(0);
+    },
+  });
+
+  const accuracyCardAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateX: translateX.value }],
+    };
+  });
 
   // Test function to add sample loading lifts
   const handleAddTestLift = async () => {
@@ -163,53 +217,66 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
           daysLogged={userDetails.daysLogged}
         />
         
-        {/* Single Card */}
+        {/* Swipeable Accuracy Card */}
         <View style={styles.cardsContainer}>
-          <TouchableOpacity 
-            style={styles.accuracyCard}
-            onPress={handleAccuracyCardPress}
-            activeOpacity={0.7}
-          >
-            <View style={styles.accuracyCardContent}>
-              <View style={styles.accuracyCardLeftSection}>
-                <Text style={styles.accuracyCardNumber}>{percentageValue}%</Text>
-                <Text style={styles.accuracyCardLabel}>Daily accuracy level</Text>
+          <PanGestureHandler onGestureEvent={accuracyCardGestureHandler}>
+            <Animated.View style={accuracyCardAnimatedStyle}>
+              <View style={styles.accuracyCard}>
+                <View style={styles.accuracyCardContent}>
+                  <View style={styles.accuracyCardLeftSection}>
+                    <Text style={styles.accuracyCardNumber}>{cardData[currentCardIndex].percentage}%</Text>
+                    <Text style={styles.accuracyCardLabel}>{cardData[currentCardIndex].label}</Text>
+                  </View>
+                  <View style={styles.accuracyCardRightSection}>
+                    <Svg width={120} height={120} viewBox="0 0 120 120">
+                      {/* Background circle */}
+                      <Circle
+                        cx="60"
+                        cy="60"
+                        r="48"
+                        stroke="#E5E5E5"
+                        strokeWidth="8"
+                        fill="none"
+                      />
+                      {/* Progress circle - percentage filled */}
+                      <Circle
+                        cx="60"
+                        cy="60"
+                        r="48"
+                        stroke="#000000"
+                        strokeWidth="8"
+                        fill="none"
+                        strokeDasharray={`${2 * Math.PI * 48}`}
+                        strokeDashoffset={`${2 * Math.PI * 48 * (1 - cardData[currentCardIndex].percentage / 100)}`}
+                        strokeLinecap="round"
+                        transform="rotate(-90 60 60)"
+                      />
+                      {/* Inner circle */}
+                      <Circle
+                        cx="60"
+                        cy="60"
+                        r="40"
+                        fill="#FFFFFF"
+                      />
+                    </Svg>
+                  </View>
+                </View>
               </View>
-              <View style={styles.accuracyCardRightSection}>
-                <Svg width={120} height={120} viewBox="0 0 120 120">
-                  {/* Background circle */}
-                  <Circle
-                    cx="60"
-                    cy="60"
-                    r="48"
-                    stroke="#E5E5E5"
-                    strokeWidth="8"
-                    fill="none"
-                  />
-                  {/* Progress circle - percentage filled */}
-                  <Circle
-                    cx="60"
-                    cy="60"
-                    r="48"
-                    stroke="#000000"
-                    strokeWidth="8"
-                    fill="none"
-                    strokeDasharray={`${2 * Math.PI * 48}`}
-                    strokeDashoffset={`${2 * Math.PI * 48 * (1 - percentageValue / 100)}`}
-                    strokeLinecap="round"
-                    transform="rotate(-90 60 60)"
-                  />
-                  {/* Inner circle */}
-                  <Circle
-                    cx="60"
-                    cy="60"
-                    r="40"
-                    fill="#FFFFFF"
-                  />
-                </Svg>
-              </View>
-            </View>
-          </TouchableOpacity>
+            </Animated.View>
+          </PanGestureHandler>
+          
+          {/* Pagination Dots */}
+          <View style={styles.paginationContainer}>
+            {cardData.map((_, index) => (
+              <View
+                key={index}
+                style={[
+                  styles.paginationDot,
+                  index === currentCardIndex ? styles.paginationDotActive : styles.paginationDotInactive
+                ]}
+              />
+            ))}
+          </View>
         </View>
         
         {/* Spacer to push content to bottom */}
@@ -568,6 +635,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
     marginBottom: 24,
+    width: '100%',
   },
   accuracyCardContent: {
     flexDirection: 'row',
@@ -725,5 +793,25 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '600',
     color: '#ffffff',
+  },
+  paginationContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginBottom: 24,
+  },
+  paginationDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginTop: -10,
+    marginHorizontal: 4,
+  },
+  paginationDotActive: {
+    backgroundColor: '#000000',
+  },
+  paginationDotInactive: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#000000',
   },
 }); 
