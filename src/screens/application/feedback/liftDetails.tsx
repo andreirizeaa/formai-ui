@@ -5,7 +5,7 @@ import { VideoView, useVideoPlayer } from 'expo-video';
 import { LineChart } from 'react-native-chart-kit';
 import Svg, { Path } from 'react-native-svg';
 import { hapticFeedback } from '../../../utils/haptic';
-import { useLoadingLifts } from '../../../context/LoadingLiftsContext';
+import { useLiftData } from '../../../context/LiftDataContext';
 
 interface VideoPlayerComponentProps {
   videoUri: string;
@@ -53,8 +53,7 @@ interface LiftDetailsProps {
 }
 
 export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData }: LiftDetailsProps) {
-  const { removeCompletedLift } = useLoadingLifts();
-  const [isStarSelected, setIsStarSelected] = useState(false);
+  const { removeLift, updateLift } = useLiftData();
   const [showDropdown, setShowDropdown] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
@@ -78,8 +77,8 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData }: Lift
   const handleDeleteConfirm = () => {
     hapticFeedback.success();
     
-    // Remove the lift from completed lifts
-    removeCompletedLift(liftData.id);
+    // Remove the lift from the context
+    removeLift(liftData.id);
     setShowDeleteModal(false);
     onClose(); // Close the lift details screen after deletion
   };
@@ -91,8 +90,8 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData }: Lift
 
   const handleStarPress = () => {
     hapticFeedback.selection();
-    const newFavouriteState = !isStarSelected;
-    setIsStarSelected(newFavouriteState);
+    const newFavouriteState = !liftData.isFavourite;
+    updateLift(liftData.id, { isFavourite: newFavouriteState });
   };
 
   const handleActionSheet = () => {
@@ -284,8 +283,8 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData }: Lift
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"
-                  stroke={isStarSelected ? "#000000" : "#000000"}
-                  fill={isStarSelected ? "#000000" : "none"}
+                  stroke={liftData.isFavourite ? "#000000" : "#000000"}
+                  fill={liftData.isFavourite ? "#000000" : "none"}
                   strokeWidth={1.5}
                 />
               </Svg>
