@@ -54,7 +54,7 @@ export function ReferralCodeScreen({ onNext, onBack }: ReferralCodeScreenProps) 
     <OnboardingLayout
       title={i18n.t('referralCode.title')}
       subtitle={i18n.t('referralCode.subtitle')}
-      currentStep={12}
+      currentStep={13}
       totalSteps={13}
       onBack={onBack}
       onNext={() => {

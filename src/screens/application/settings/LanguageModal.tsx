@@ -15,7 +15,7 @@ export function LanguageModal({ isVisible, onClose }: LanguageModalProps) {
   const { currentLanguage, setLanguage } = useLanguage();
 
   const handleLanguageSelect = (languageCode: string) => {
-    hapticFeedback.selection();
+    hapticFeedback.success();
     setLanguage(languageCode);
     onClose();
   };

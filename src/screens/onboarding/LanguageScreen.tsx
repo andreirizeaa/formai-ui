@@ -25,7 +25,7 @@ export function LanguageScreen({ onNext, onBack }: LanguageScreenProps) {
 
   const handleNext = () => {
     if (preferences.language) {
-      hapticFeedback.next();
+      hapticFeedback.selection();
       onNext();
     }
   };
@@ -35,7 +35,7 @@ export function LanguageScreen({ onNext, onBack }: LanguageScreenProps) {
       title={i18n.t('language.title')}
       subtitle={i18n.t('language.subtitle')}
       currentStep={1}
-      totalSteps={12}
+      totalSteps={13}
       onBack={onBack}
       onNext={handleNext}
       nextTitle={i18n.t('next')}
