@@ -10,6 +10,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 import { FilterModal } from './FilterModal';
 import { PanGestureHandler, State } from 'react-native-gesture-handler';
+import { useLiftData } from '../../../context/LiftDataContext';
 import Animated, { 
   useSharedValue, 
   useAnimatedStyle, 
@@ -43,92 +44,12 @@ type LibraryRouteProp = RouteProp<MainStackParamList, 'Library'>;
 export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProps) {
   const navigation = useNavigation<LibraryNavigationProp>();
   const route = useRoute<LibraryRouteProp>();
+  const { liftData, removeLift, toggleFavourite } = useLiftData();
+  
   const [sortOption, setSortOption] = useState<SortOption>('newest');
   const [filterOption, setFilterOption] = useState<FilterOption>(route.params?.selectedFilters || []);
   const [activeTab, setActiveTab] = useState<TabOption>('all');
   const [showFilterModal, setShowFilterModal] = useState(false);
-  const [lifts, setLifts] = useState<ILiftData[]>([
-    {
-      id: '1',
-      isFavourite: false,
-      liftType: 'Flat Barbell Bench Press',
-      liftDate: '2024-01-15',
-      weightValue: 100,
-      weightUnit: 'kg',
-      reps: 8,
-      videoURL: 'https://example.com/video1.mp4',
-      thumbnailURL: 'https://picsum.photos/200/300',
-      analysis: {
-        accuracy: 85,
-        lineGraphValues: [85, 87, 83, 89, 86, 88, 84, 87],
-        feedback: []
-      }
-    },
-    {
-      id: '2',
-      isFavourite: false,
-      liftType: 'Deadlift',
-      liftDate: '2024-01-14',
-      weightValue: 150,
-      weightUnit: 'kg',
-      reps: 5,
-      videoURL: 'https://example.com/video2.mp4',
-      thumbnailURL: 'https://picsum.photos/200/300',
-      analysis: {
-        accuracy: 92,
-        lineGraphValues: [92, 94, 90, 93, 95, 91, 93, 92],
-        feedback: []
-      }
-    },
-    {
-      id: '3',
-      isFavourite: false,
-      liftType: 'Barbell Back Squat',
-      liftDate: '2024-01-13',
-      weightValue: 120,
-      weightUnit: 'kg',
-      reps: 6,
-      videoURL: 'https://example.com/video3.mp4',
-      thumbnailURL: 'https://picsum.photos/200/300',
-      analysis: {
-        accuracy: 78,
-        lineGraphValues: [78, 80, 75, 82, 79, 81, 77, 80],
-        feedback: []
-      }
-    },
-    {
-      id: '4',
-      isFavourite: false,
-      liftType: 'Overhead Barbell Press',
-      liftDate: '2024-01-12',
-      weightValue: 70,
-      weightUnit: 'kg',
-      reps: 8,
-      videoURL: 'https://example.com/video4.mp4',
-      thumbnailURL: 'https://picsum.photos/200/300',
-      analysis: {
-        accuracy: 88,
-        lineGraphValues: [88, 90, 86, 89, 87, 91, 85, 88],
-        feedback: []
-      }
-    },
-    {
-      id: '5',
-      isFavourite: false,
-      liftType: 'Barbell Row',
-      liftDate: '2024-01-11',
-      weightValue: 90,
-      weightUnit: 'kg',
-      reps: 10,
-      videoURL: 'https://example.com/video5.mp4',
-      thumbnailURL: 'https://picsum.photos/200/300',
-      analysis: {
-        accuracy: 91,
-        lineGraphValues: [91, 93, 89, 92, 90, 94, 88, 91],
-        feedback: []
-      }
-    },
-  ]);
 
   // Update filter state when navigation params change
   useEffect(() => {
@@ -140,16 +61,16 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
   // Memoize handlers to prevent unnecessary re-renders
   const handleDeleteLift = useCallback((liftId: string) => {
     hapticFeedback.success();
-    setLifts(prevLifts => prevLifts.filter(lift => lift.id !== liftId));
-  }, []);
+    removeLift(liftId);
+  }, [removeLift]);
 
   // Optimize the filtering and sorting logic
   const filteredAndSortedLifts = useMemo(() => {
-    let filtered = lifts;
+    let filtered = liftData;
 
     // Apply tab filter (All vs Favourites)
     if (activeTab === 'favourites') {
-      filtered = filtered.filter(lift => lift.analysis.accuracy > 90);
+      filtered = filtered.filter(lift => lift.isFavourite);
     }
 
     // Apply movement type filter
@@ -159,17 +80,17 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
 
     // Apply sort - use a more efficient sort
     return filtered.sort((a, b) => {
-      const dateA = new Date(a.liftDate).getTime();
-      const dateB = new Date(b.liftDate).getTime();
+      const dateA = new Date(a.liftDate.split('-').reverse().join('-')).getTime();
+      const dateB = new Date(b.liftDate.split('-').reverse().join('-')).getTime();
       return sortOption === 'newest' ? dateB - dateA : dateA - dateB;
     });
-  }, [lifts, activeTab, filterOption, sortOption]);
+  }, [liftData, activeTab, filterOption, sortOption]);
 
   const handleEmptyCardPress = useCallback(() => {
     hapticFeedback.selection();
     
     // If there are lifts but none match the current filters, open the filter modal
-    if (lifts.length > 0 && filteredAndSortedLifts.length === 0) {
+    if (liftData.length > 0 && filteredAndSortedLifts.length === 0) {
       setShowFilterModal(true);
     } else {
       // Otherwise, go back and trigger add options (for when there are no lifts at all)
@@ -178,7 +99,7 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
         onTriggerAddOptions();
       }, 100);
     }
-  }, [lifts.length, filteredAndSortedLifts.length, onBack, onTriggerAddOptions]);
+  }, [liftData.length, filteredAndSortedLifts.length, onBack, onTriggerAddOptions]);
 
   const handleSortPress = useCallback(() => {
     hapticFeedback.selection();
@@ -332,11 +253,11 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
           >
             <View style={styles.noLiftsContent}>
               <Text style={styles.noLiftsTitle}>
-                {lifts.length === 0 ? 'No lifts analysed' : 
+                {liftData.length === 0 ? 'No lifts analysed' : 
                  activeTab === 'favourites' ? 'No favourite lifts' : 'No lifts found'}
               </Text>
               <Text style={styles.noLiftsSubtitle}>
-                {lifts.length === 0 
+                {liftData.length === 0 
                   ? 'Start analysing today\'s workout by taking a quick video'
                   : activeTab === 'favourites'
                   ? 'Mark lifts as favourites to see them here'

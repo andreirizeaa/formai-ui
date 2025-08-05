@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { hapticFeedback } from '../../../utils/haptic';
 import { useLoadingLifts } from '../../../context/LoadingLiftsContext';
+import { useLiftData } from '../../../context/LiftDataContext';
 import { LoadingLiftCard } from './LoadingLiftCard';
 import { ILiftData } from '../feedback/liftDetails';
 import { LiftDataCard } from '../../../components/LiftDataCard';
@@ -28,8 +29,12 @@ interface HomeScreenProps {
 }
 
 export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibrary, onShowShare, onTriggerAddOptions, onNavigateToPerformance }: HomeScreenProps) {
-  const { loadingLifts, completedLifts, addLoadingLift, removeCompletedLift } = useLoadingLifts();
+  const { loadingLifts } = useLoadingLifts();
+  const { liftData, addLift, removeLift, getLiftsByDate, formatDateForLift } = useLiftData();
   const { userDetails } = useUserDetails();
+  
+  // Selected date state for calendar
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   
   // Random percentage value between 1-100
   const [percentageValue, setPercentageValue] = useState(() => Math.floor(Math.random() * 100) + 1);
@@ -47,8 +52,8 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
     { percentage: 85, label: 'Weekly progress' }
   ];
   
-  // Use completed lifts from context instead of dummy data
-  const recentLifts: ILiftData[] = completedLifts;
+  // Get lifts for the selected date
+  const liftsForSelectedDate: ILiftData[] = getLiftsByDate(selectedDate);
 
   // Animation values for each lift card - recreate when lifts change
   const liftAnimations = useRef<RNAnimated.Value[]>([]);
@@ -56,18 +61,18 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
 
   // Update animation arrays when lifts change
   useEffect(() => {
-    const newLiftAnimations = recentLifts.map(() => new RNAnimated.Value(0));
-    const newFadeAnimations = recentLifts.map(() => new RNAnimated.Value(0));
+    const newLiftAnimations = liftsForSelectedDate.map(() => new RNAnimated.Value(0));
+    const newFadeAnimations = liftsForSelectedDate.map(() => new RNAnimated.Value(0));
     
     liftAnimations.current = newLiftAnimations;
     fadeAnimations.current = newFadeAnimations;
-  }, [recentLifts]);
+  }, [liftsForSelectedDate]);
 
   // Animate lift cards when lifts change
   useEffect(() => {
-    if (recentLifts.length === 0) return;
+    if (liftsForSelectedDate.length === 0) return;
 
-    const animations = recentLifts.map((_, index) => {
+    const animations = liftsForSelectedDate.map((_, index) => {
       return RNAnimated.parallel([
         RNAnimated.timing(liftAnimations.current[index], {
           toValue: 1,
@@ -85,7 +90,7 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
     });
 
     RNAnimated.parallel(animations).start();
-  }, [recentLifts]); // Re-run when lifts change
+  }, [liftsForSelectedDate]); // Re-run when lifts change
 
   const handleLiftPress = (lift: ILiftData) => {
     hapticFeedback.selection();
@@ -94,7 +99,7 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
 
   const handleDeleteLift = (liftId: string) => {
     hapticFeedback.success();
-    removeCompletedLift(liftId);
+    removeLift(liftId);
   };
 
   const handleLibraryPress = () => {
@@ -114,7 +119,7 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
 
   const handleDateSelect = (date: Date) => {
     hapticFeedback.selection();
-    // You can add logic here to filter lifts by date or perform other actions
+    setSelectedDate(date);
   };
 
   const handleFireCardPress = () => {
@@ -168,24 +173,48 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
     };
   });
 
-  // Test function to add sample loading lifts
+  // Test function to add sample lifts with the selected date
   const handleAddTestLift = async () => {
     hapticFeedback.selection();
-    const today = new Date().toISOString().split('T')[0];
     
-    try {
-      await addLoadingLift({
-        thumbnailUri: 'https://picsum.photos/200/300',
-        movementType: 'Bench Press',
-        weightValue: 135,
-        weightUnit: 'lbs',
-        reps: 8,
-        dateToday: today,
-      });
-    } catch (error) {
-      console.error('Failed to add test lift:', error);
-      // You could show a toast notification here
-    }
+    // Generate a random lift type
+    const liftTypes = ['Bench Press', 'Squat', 'Deadlift', 'Overhead Press', 'Pull-up'];
+    const randomLiftType = liftTypes[Math.floor(Math.random() * liftTypes.length)];
+    
+    // Generate random weight and reps
+    const randomWeight = Math.floor(Math.random() * 200) + 50;
+    const randomReps = Math.floor(Math.random() * 10) + 1;
+    const randomAccuracy = Math.floor(Math.random() * 40) + 60; // 60-100%
+    
+    const testLift: ILiftData = {
+      id: Date.now().toString(),
+      isFavourite: false,
+      liftType: randomLiftType,
+      liftDate: formatDateForLift(selectedDate),
+      weightValue: randomWeight,
+      weightUnit: 'lbs',
+      reps: randomReps,
+      videoURL: 'https://example.com/video.mp4',
+      thumbnailURL: 'https://picsum.photos/200/300',
+      analysis: {
+        accuracy: randomAccuracy,
+        lineGraphValues: Array.from({ length: 10 }, () => Math.random() * 100),
+        feedback: [
+          { 
+            imageURL: require('../../../../assets/feedback.png'), 
+            flaws: 'Incorrect form - back not straight', 
+            improvement: 'Keep your back straight and engage your core' 
+          },
+          { 
+            imageURL: require('../../../../assets/feedback.png'), 
+            flaws: 'Weight dropped too quickly', 
+            improvement: 'Control the descent and maintain tension throughout the movement' 
+          }
+        ]
+      }
+    };
+    
+    addLift(testLift);
   };
 
   return (
@@ -213,7 +242,7 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
         {/* Swipeable Calendar */}
         <SwipeableCalendar 
           onDateSelect={handleDateSelect} 
-          initialSelectedDate={new Date()}
+          initialSelectedDate={selectedDate}
           daysLogged={userDetails.daysLogged}
         />
         
@@ -338,9 +367,9 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
               <LoadingLiftCard key={loadingLift.id} lift={loadingLift} />
             ))}
             
-            {/* Show completed lifts */}
-            {recentLifts.length > 0 ? (
-              recentLifts.map((lift, index) => {
+            {/* Show completed lifts for selected date */}
+            {liftsForSelectedDate.length > 0 ? (
+              liftsForSelectedDate.map((lift, index) => {
                 return (
                   <LiftDataCard 
                     key={lift.id} 

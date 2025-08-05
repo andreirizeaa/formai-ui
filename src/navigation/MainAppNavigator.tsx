@@ -24,7 +24,7 @@ import { FeedbackSlideshow } from '../screens/application/feedback/feedbackSlide
 import { HowItWorksModal } from '../screens/application/feedback/howItWorksModal';
 import { LibraryScreen } from '../screens/application/library/LibraryScreen';
 import { BottomNavigationBar } from './BottomNavigationBar';
-import { UserDetailsProvider, useUserDetails } from '../context/UserDetailsContext';
+import { useUserDetails } from '../context/UserDetailsContext';
 
 // Types for navigation
 export type MainTabParamList = {
@@ -559,118 +559,117 @@ export function MainAppNavigator() {
   };
 
   return (
-    <UserDetailsProvider>
-      <NavigationContainer>
-          <Stack.Navigator
-            initialRouteName="MainTabs"
-            screenOptions={{
-              headerShown: false,
+    <NavigationContainer>
+        <Stack.Navigator
+          initialRouteName="MainTabs"
+          screenOptions={{
+            headerShown: false,
+          }}
+        >
+          <Stack.Screen name="MainTabs" component={MainTabsNavigator} />
+          <Stack.Screen 
+            name="PersonalDetails" 
+            component={PersonalDetailsScreenWrapper}
+            options={{
+              presentation: 'card',
             }}
-          >
-            <Stack.Screen name="MainTabs" component={MainTabsNavigator} />
-            <Stack.Screen 
-              name="PersonalDetails" 
-              component={PersonalDetailsScreenWrapper}
-              options={{
-                presentation: 'card',
-              }}
-            />
-            <Stack.Screen 
-              name="UnitsDetails" 
-              component={UnitsDetailsScreenWrapper}
-              options={{
-                presentation: 'card',
-              }}
-            />
-            <Stack.Screen 
-              name="Share" 
-              component={ShareScreenWrapper}
-              options={{
-                presentation: 'card',
-              }}
-            />
-            <Stack.Screen 
-              name="EditCurrentWeight" 
-              component={EditCurrentWeightScreenWrapper}
-              options={{
-                presentation: 'card',
-              }}
-            />
-            <Stack.Screen 
-              name="EditHeight" 
-              component={EditHeightScreenWrapper}
-              options={{
-                presentation: 'card',
-              }}
-            />
-            <Stack.Screen 
-              name="EditDateOfBirth" 
-              component={EditDateOfBirthScreenWrapper}
-              options={{
-                presentation: 'card',
-              }}
-            />
-            <Stack.Screen 
-              name="EditGender" 
-              component={EditGenderScreenWrapper}
-              options={{
-                presentation: 'card',
-              }}
-            />
-            <Stack.Screen 
-              name="RecordModal" 
-              component={RecordModalWrapper}
-              options={{
-                presentation: 'modal',
-                animation: 'none',
-              }}
-            />
-            <Stack.Screen 
-              name="UploadModal" 
-              component={UploadModalWrapper}
-              options={{
-                presentation: 'modal',
-                animation: 'none',
-              }}
-            />
-            <Stack.Screen 
-              name="LiftDetails" 
-              component={LiftDetailsWrapper}
-              options={{
-                presentation: 'card',
-              }}
-            />
-            <Stack.Screen 
-              name="FeedbackSlideshow" 
-              component={FeedbackSlideshowWrapper}
-              options={{
-                presentation: 'card',
-                animation: 'reveal_from_bottom',
-              }}
-            />
-            <Stack.Screen 
-              name="HowItWorks" 
-              component={HowItWorksModalWrapper}
-              options={{
-                presentation: 'modal',
-                animation: 'none',
-              }}
-            />
-            <Stack.Screen 
-              name="Library" 
-              component={LibraryScreenWrapperWithProps}
-              options={{
-                presentation: 'card',
-              }}
-            />
-          </Stack.Navigator>
-
-          <AddOptionsWrapper 
-            showAddOptions={showAddOptions}
-            onClose={handleCloseAddOptions}
           />
+          <Stack.Screen 
+            name="UnitsDetails" 
+            component={UnitsDetailsScreenWrapper}
+            options={{
+              presentation: 'card',
+            }}
+          />
+          <Stack.Screen 
+            name="Share" 
+            component={ShareScreenWrapper}
+            options={{
+              presentation: 'card',
+            }}
+          />
+          <Stack.Screen 
+            name="EditCurrentWeight" 
+            component={EditCurrentWeightScreenWrapper}
+            options={{
+              presentation: 'card',
+            }}
+          />
+          <Stack.Screen 
+            name="EditHeight" 
+            component={EditHeightScreenWrapper}
+            options={{
+              presentation: 'card',
+            }}
+          />
+          <Stack.Screen 
+            name="EditDateOfBirth" 
+            component={EditDateOfBirthScreenWrapper}
+            options={{
+              presentation: 'card',
+            }}
+          />
+          <Stack.Screen 
+            name="EditGender" 
+            component={EditGenderScreenWrapper}
+            options={{
+              presentation: 'card',
+            }}
+          />
+          <Stack.Screen 
+            name="RecordModal" 
+            component={RecordModalWrapper}
+            options={{
+              presentation: 'modal',
+              animation: 'none',
+            }}
+          />
+          <Stack.Screen 
+            name="UploadModal" 
+            component={UploadModalWrapper}
+            options={{
+              presentation: 'modal',
+              animation: 'none',
+            }}
+          />
+          <Stack.Screen 
+            name="LiftDetails" 
+            component={LiftDetailsWrapper}
+            options={{
+              presentation: 'card',
+            }}
+          />
+          <Stack.Screen 
+            name="FeedbackSlideshow" 
+            component={FeedbackSlideshowWrapper}
+            options={{
+              presentation: 'card',
+              animation: 'reveal_from_bottom',
+            }}
+          />
+          <Stack.Screen 
+            name="HowItWorks" 
+            component={HowItWorksModalWrapper}
+            options={{
+              presentation: 'modal',
+              animation: 'none',
+            }}
+          />
+          <Stack.Screen 
+            name="Library" 
+            component={LibraryScreenWrapperWithProps}
+            options={{
+              presentation: 'card',
+            }}
+          />
+        </Stack.Navigator>
+        
+        {/* Add Options Modal */}
+        <AddOptionsWrapper 
+          showAddOptions={showAddOptions} 
+          onClose={handleCloseAddOptions} 
+        />
       </NavigationContainer>
-    </UserDetailsProvider>
   );
 }
 
