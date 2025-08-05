@@ -46,6 +46,9 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const translateX = useSharedValue(0);
   
+  // ScrollView ref for gesture handling
+  const scrollViewRef = useRef<ScrollView>(null);
+  
   // Get lifts for the selected date
   const liftsForSelectedDate: ILiftData[] = getLiftsByDate(selectedDate);
   
@@ -240,6 +243,7 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        ref={scrollViewRef}
       >
         <View style={styles.header}>
           <Image 
@@ -393,6 +397,7 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
                     lift={lift} 
                     onPress={() => handleLiftPress(lift)}
                     onDelete={handleDeleteLift}
+                    scrollViewRef={scrollViewRef}
                   />
                 );
               })

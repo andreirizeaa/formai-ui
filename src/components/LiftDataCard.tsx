@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, Image, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, Image, Dimensions, ScrollView } from 'react-native';
 import { ILiftData } from '../screens/application/feedback/liftDetails';
 import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import Animated, { 
@@ -19,9 +19,10 @@ interface LiftDataCardProps {
   onPress?: (lift: ILiftData) => void;
   onDelete?: (liftId: string) => void;
   style?: any;
+  scrollViewRef?: React.RefObject<ScrollView | null>;
 }
 
-export function LiftDataCard({ lift, onPress, onDelete, style }: LiftDataCardProps) {
+export function LiftDataCard({ lift, onPress, onDelete, style, scrollViewRef }: LiftDataCardProps) {
   const translateX = useSharedValue(0);
   const deleteButtonOpacity = useSharedValue(0);
 
@@ -42,6 +43,20 @@ export function LiftDataCard({ lift, onPress, onDelete, style }: LiftDataCardPro
       context.startX = translateX.value;
     },
     onActive: (event, context: any) => {
+      // Only respond to horizontal gestures (ignore vertical scrolling)
+      const horizontalThreshold = 10; // Minimum horizontal movement to start gesture
+      const verticalThreshold = 20; // Maximum vertical movement allowed
+      
+      // If vertical movement is greater than horizontal, ignore the gesture
+      if (Math.abs(event.translationY) > Math.abs(event.translationX) + verticalThreshold) {
+        return;
+      }
+      
+      // Only start gesture if horizontal movement exceeds threshold
+      if (Math.abs(event.translationX) < horizontalThreshold) {
+        return;
+      }
+      
       const newTranslateX = context.startX + event.translationX;
       translateX.value = Math.min(0, Math.max(-100, newTranslateX));
       
@@ -105,7 +120,12 @@ export function LiftDataCard({ lift, onPress, onDelete, style }: LiftDataCardPro
       </Animated.View>
 
       {/* Main Card */}
-      <PanGestureHandler onGestureEvent={gestureHandler}>
+      <PanGestureHandler 
+        onGestureEvent={gestureHandler}
+        shouldCancelWhenOutside={true}
+        activeOffsetX={[-10, 10]}
+        failOffsetY={[-5, 5]}
+      >
         <Animated.View style={[cardStyle, animatedStyle]}>
           <TouchableOpacity 
             onPress={handlePress}
