@@ -519,13 +519,13 @@ const styles = StyleSheet.create({
     height: 40,
   },
   testButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: 'transparent',
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
   },
   testButtonText: {
-    color: '#FFFFFF',
+    color: 'transparent',
     fontSize: 14,
     fontWeight: '600',
     fontFamily: 'SF Pro Text',
