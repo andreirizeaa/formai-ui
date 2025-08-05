@@ -40,10 +40,10 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
   const analyzeVideo = async (liftData: LoadingLiftData): Promise<ILiftData> => {
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 5000 + Math.random() * 2000));
-    
     // Return successful analysis data in ILiftData format
     return {
       id: liftData.id,
+      isFavourite: false,
       liftType: liftData.movementType,
       liftDate: formatLiftDate(liftData.dateToday),
       weightValue: liftData.weightValue,
