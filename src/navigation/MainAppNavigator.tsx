@@ -23,7 +23,6 @@ import { ILiftData, LiftDetails } from '../screens/application/feedback/liftDeta
 import { FeedbackSlideshow } from '../screens/application/feedback/feedbackSlideshow';
 import { HowItWorksModal } from '../screens/application/feedback/howItWorksModal';
 import { LibraryScreen } from '../screens/application/library/LibraryScreen';
-import { FilterModal } from '../screens/application/library/FilterModal';
 import { BottomNavigationBar } from './BottomNavigationBar';
 import { UserDetailsProvider, useUserDetails } from '../context/UserDetailsContext';
 

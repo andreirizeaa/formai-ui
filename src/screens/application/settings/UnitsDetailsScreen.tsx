@@ -23,7 +23,7 @@ export function UnitsDetailsScreen({ onBack }: UnitsDetailsScreenProps) {
   };
 
   const handleSave = () => {
-    hapticFeedback.selection();
+    hapticFeedback.success();
     console.log('Unit system saved:', selectedUnit);
     console.log('Updated user details:', userDetails);
     onBack();
