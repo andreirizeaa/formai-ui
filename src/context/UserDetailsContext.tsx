@@ -8,9 +8,9 @@ import {
 
 interface UserDetails {
   unitSystem: 'metric' | 'imperial';
-  currentWeight: number; // Always stored in kg
-  height: number; // Always stored in cm
-  dateOfBirth: string;
+  currentWeightKG: number; 
+  heightCM: number; 
+  dateOfBirth: string; 
   gender: string;
   language: string;
 }
@@ -24,15 +24,17 @@ interface UserDetailsContextType {
   updateHeight: (heightCm: number) => void;
   getWeightDisplay: () => string;
   getHeightDisplay: () => string;
+  getDateOfBirthDisplay: () => string;
+  formatDateForDisplay: (dateString: string) => string;
 }
 
 const UserDetailsContext = createContext<UserDetailsContextType | undefined>(undefined);
 
 const initialUserDetails: UserDetails = {
   unitSystem: 'metric',
-  currentWeight: 70, // 70 kg
-  height: 175, // 175 cm
-  dateOfBirth: 'January 15, 1990',
+  currentWeightKG: 70,
+  heightCM: 175,
+  dateOfBirth: '15-01-1990',
   gender: 'Male',
   language: 'en',
 };
@@ -64,23 +66,49 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
   const updateWeight = (weightKg: number) => {
     setUserDetails(prev => ({
       ...prev,
-      currentWeight: weightKg,
+      currentWeightKG: weightKg,
     }));
   };
 
   const updateHeight = (heightCm: number) => {
     setUserDetails(prev => ({
       ...prev,
-      height: heightCm,
+      heightCM: heightCm,
     }));
   };
 
   const getWeightDisplay = (): string => {
-    return formatWeightForDisplay(userDetails.currentWeight, userDetails.unitSystem);
+    return formatWeightForDisplay(userDetails.currentWeightKG, userDetails.unitSystem);
   };
 
   const getHeightDisplay = (): string => {
-    return formatHeightForDisplay(userDetails.height, userDetails.unitSystem);
+    return formatHeightForDisplay(userDetails.heightCM, userDetails.unitSystem);
+  };
+
+  const formatDateForDisplay = (dateString: string): string => {
+    try {
+      // Parse DD-MM-YYYY format
+      const [day, month, year] = dateString.split('-');
+      const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      
+      if (isNaN(date.getTime())) {
+        return 'Invalid date';
+      }
+      
+      const options: Intl.DateTimeFormatOptions = {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      };
+      
+      return date.toLocaleDateString('en-US', options);
+    } catch (error) {
+      return 'Invalid date';
+    }
+  };
+
+  const getDateOfBirthDisplay = (): string => {
+    return formatDateForDisplay(userDetails.dateOfBirth);
   };
 
   return (
@@ -93,6 +121,8 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
         updateHeight,
         getWeightDisplay,
         getHeightDisplay,
+        getDateOfBirthDisplay,
+        formatDateForDisplay,
       }}
     >
       {children}
