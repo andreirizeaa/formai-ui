@@ -4,17 +4,17 @@
     "slug": "formai-ui",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/formai-ios-logo.png",
+    "icon": "./assets/formai-ios-icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/formai-ios-logo.png",
+      "image": "./assets/formai-ios-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/formai-ios-logo.png",
+        "foregroundImage": "./assets/formai-ios-icon.png",
         "backgroundColor": "#ffffff"
       }
     },
