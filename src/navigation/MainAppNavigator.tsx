@@ -513,8 +513,8 @@ function MainTabsNavigator() {
 
   return (
     <LinearGradient
-      colors={['#ede9fe', '#e2e8f0', '#ffffff']}
-      locations={[0, 0.5, 0.9]}
+      colors={['#e2e8f0', '#ffffff']}
+      locations={[0, 0.9]}
       style={styles.container}
       start={{ x: 0.5, y: 0 }}
       end={{ x: 0, y: 1 }}
