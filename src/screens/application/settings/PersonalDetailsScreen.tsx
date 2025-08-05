@@ -4,21 +4,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import i18n from '../../../utils/i18n';
 import { hapticFeedback } from '../../../utils/haptic';
+import { useUserDetails } from '../../../context/UserDetailsContext';
 
 interface PersonalDetailsScreenProps {
   onBack: () => void;
-  onEditCurrentWeight: (data: PersonalData) => void;
-  onEditHeight: (data: PersonalData) => void;
-  onEditDateOfBirth: (data: PersonalData) => void;
-  onEditGender: (data: PersonalData) => void;
-  personalData: PersonalData;
-}
-
-interface PersonalData {
-  currentWeight: string;
-  height: string;
-  dateOfBirth: string;
-  gender: string;
+  onEditCurrentWeight: () => void;
+  onEditHeight: () => void;
+  onEditDateOfBirth: () => void;
+  onEditGender: () => void;
 }
 
 interface PersonalDetailOptionProps {
@@ -86,20 +79,20 @@ function translatePersonalDataValue(key: string, value: string): string {
       return value;
       
     case 'dateOfBirth':
-      // Translate month names in date
+      // Translate month names in date to abbreviated format
       const months = {
-        'January': i18n.t('months.january'),
-        'February': i18n.t('months.february'),
-        'March': i18n.t('months.march'),
-        'April': i18n.t('months.april'),
-        'May': i18n.t('months.may'),
-        'June': i18n.t('months.june'),
-        'July': i18n.t('months.july'),
-        'August': i18n.t('months.august'),
-        'September': i18n.t('months.september'),
-        'October': i18n.t('months.october'),
-        'November': i18n.t('months.november'),
-        'December': i18n.t('months.december')
+        'January': i18n.t('months.january').substring(0, 3),
+        'February': i18n.t('months.february').substring(0, 3),
+        'March': i18n.t('months.march').substring(0, 3),
+        'April': i18n.t('months.april').substring(0, 3),
+        'May': i18n.t('months.may').substring(0, 3),
+        'June': i18n.t('months.june').substring(0, 3),
+        'July': i18n.t('months.july').substring(0, 3),
+        'August': i18n.t('months.august').substring(0, 3),
+        'September': i18n.t('months.september').substring(0, 3),
+        'October': i18n.t('months.october').substring(0, 3),
+        'November': i18n.t('months.november').substring(0, 3),
+        'December': i18n.t('months.december').substring(0, 3),
       };
       
       let translatedDate = value;
@@ -111,8 +104,9 @@ function translatePersonalDataValue(key: string, value: string): string {
     case 'gender':
       // Translate gender values
       const genderTranslations = {
-        'Male': i18n.t('gender.male'),
-        'Female': i18n.t('gender.female'),
+        'Male': i18n.t('personalDetails.male'),
+        'Female': i18n.t('personalDetails.female'),
+        'Other': i18n.t('personalDetails.other'),
       };
       return genderTranslations[value as keyof typeof genderTranslations] || value;
       
@@ -126,24 +120,24 @@ export function PersonalDetailsScreen({
   onEditCurrentWeight, 
   onEditHeight, 
   onEditDateOfBirth, 
-  onEditGender,
-  personalData
+  onEditGender
 }: PersonalDetailsScreenProps) {
-  // Handler functions to open edit screens with current data
+  const { userDetails, getWeightDisplay, getHeightDisplay } = useUserDetails();
+
   const handleEditCurrentWeight = () => {
-    onEditCurrentWeight(personalData);
+    onEditCurrentWeight();
   };
 
   const handleEditHeight = () => {
-    onEditHeight(personalData);
+    onEditHeight();
   };
 
   const handleEditDateOfBirth = () => {
-    onEditDateOfBirth(personalData);
+    onEditDateOfBirth();
   };
 
   const handleEditGender = () => {
-    onEditGender(personalData);
+    onEditGender();
   };
 
   return (
@@ -178,25 +172,25 @@ export function PersonalDetailsScreen({
         <View style={styles.card}>
           <PersonalDetailOption
             title={i18n.t('personalDetails.currentWeight')}
-            value={translatePersonalDataValue('currentWeight', personalData.currentWeight)}
+            value={translatePersonalDataValue('currentWeight', getWeightDisplay())}
             onPress={handleEditCurrentWeight}
           />
           <View style={styles.separator} />
           <PersonalDetailOption
             title={i18n.t('personalDetails.height')}
-            value={translatePersonalDataValue('height', personalData.height)}
+            value={translatePersonalDataValue('height', getHeightDisplay())}
             onPress={handleEditHeight}
           />
           <View style={styles.separator} />
           <PersonalDetailOption
             title={i18n.t('personalDetails.dateOfBirth')}
-            value={translatePersonalDataValue('dateOfBirth', personalData.dateOfBirth)}
+            value={translatePersonalDataValue('dateOfBirth', userDetails.dateOfBirth)}
             onPress={handleEditDateOfBirth}
           />
           <View style={styles.separator} />
           <PersonalDetailOption
             title={i18n.t('personalDetails.gender')}
-            value={translatePersonalDataValue('gender', personalData.gender)}
+            value={translatePersonalDataValue('gender', userDetails.gender)}
             onPress={handleEditGender}
           />
         </View>

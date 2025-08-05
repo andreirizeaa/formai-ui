@@ -16,6 +16,7 @@ const i18n = new I18n({
     settings: {
       personalDetails: 'Personal Details',
       language: 'Language',
+      units: 'Units',
       appTheme: 'App theme',
       referFriends: 'Refer Friends',
       growStrongerTogether: 'Grow stronger together!',
@@ -60,6 +61,8 @@ const i18n = new I18n({
       editHeight: 'Edit Height',
       editDateOfBirth: 'Edit Date of Birth',
       editGender: 'Edit Gender',
+      male: 'Male',
+      female: 'Female',
     },
     add: {
       uploadVideo: 'Upload Video',
@@ -285,6 +288,7 @@ const i18n = new I18n({
     settings: {
       personalDetails: 'Detalles Personales',
       language: 'Idioma',
+      units: 'Unidades',
       appTheme: 'Tema de la app',
       referFriends: 'Referir Amigos',
       growStrongerTogether: '¡Crece más fuerte juntos!',
@@ -554,6 +558,7 @@ const i18n = new I18n({
     settings: {
       personalDetails: '个人详情',
       language: '语言',
+      units: '单位',
       appTheme: '应用主题',
       referFriends: '推荐朋友',
       growStrongerTogether: '一起变得更强！',
@@ -823,6 +828,7 @@ const i18n = new I18n({
     settings: {
       personalDetails: 'Dettagli Personali',
       language: 'Lingua',
+      units: 'Unità',
       appTheme: 'Tema app',
       referFriends: 'Riferisci Amici',
       growStrongerTogether: 'Cresci più forte insieme!',
@@ -889,7 +895,7 @@ const i18n = new I18n({
       metric: 'Metrica',
       imperial: 'Imperiale',
       metricDescription: 'Chilogrammi, centimetri, chilometri',
-      imperialDescription: 'Libbre, piedi, miglia',
+      imperialDescription: 'Libbre, piedi, miles',
     },
     gender: {
       title: 'Sesso biologico',
@@ -1028,7 +1034,7 @@ const i18n = new I18n({
     freeTrial: {
       title: 'Vogliamo che tu provi FormAI gratuitamente.',
       noPaymentDue: 'Nessun pagamento dovuto ora',
-      tryForFree: 'Prova per $0.00',
+      tryForFree: 'Încercați pentru $0.00',
       pricing: 'Solo $39.99 per ano ($3.33/mese)',
     },
     notificationReminder: {
@@ -1092,6 +1098,7 @@ const i18n = new I18n({
     settings: {
       personalDetails: 'Detalhes Pessoais',
       language: 'Idioma',
+      units: 'Unidades',
       appTheme: 'Tema do app',
       referFriends: 'Indicar Amigos',
       growStrongerTogether: 'Cresça mais forte junto!',
@@ -1361,6 +1368,7 @@ const i18n = new I18n({
     settings: {
       personalDetails: 'Detalii Personale',
       language: 'Limba',
+      units: 'Unități',
       appTheme: 'Tema aplicației',
       referFriends: 'Recomandă Prieteni',
       growStrongerTogether: 'Crezte mai puternici împreună!',
@@ -1630,6 +1638,7 @@ const i18n = new I18n({
     settings: {
       personalDetails: 'Persönliche Details',
       language: 'Sprache',
+      units: 'Einheiten',
       appTheme: 'App-Design',
       referFriends: 'Freunde Empfehlen',
       growStrongerTogether: 'Werde zusammen stärker!',
@@ -1899,6 +1908,7 @@ const i18n = new I18n({
     settings: {
       personalDetails: 'Détails Personnels',
       language: 'Langue',
+      units: 'Unités',
       appTheme: 'Thème de l\'app',
       referFriends: 'Parrainer des Amis',
       growStrongerTogether: 'Devenez plus forts ensemble !',
@@ -2168,6 +2178,7 @@ const i18n = new I18n({
     settings: {
       personalDetails: 'التفاصيل الشخصية',
       language: 'اللغة',
+      units: 'الوحدات',
       appTheme: 'مظهر التطبيق',
       referFriends: 'إحالة الأصدقاء',
       growStrongerTogether: 'ننمو أقوى معاً!',

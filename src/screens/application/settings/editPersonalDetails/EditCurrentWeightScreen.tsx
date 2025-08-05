@@ -1,9 +1,15 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, Switch } from 'react-native';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { RulerPicker } from 'react-native-ruler-picker';
 import i18n from '../../../../utils/i18n';
 import { hapticFeedback } from '../../../../utils/haptic';
+import { useUserDetails } from '../../../../context/UserDetailsContext';
+import { 
+  parseWeightToMetric, 
+  convertMetricWeightToImperial, 
+  convertImperialWeightToMetric 
+} from '../../../../utils/unitConversions';
 
 interface EditCurrentWeightScreenProps {
   onBack: () => void;
@@ -12,38 +18,24 @@ interface EditCurrentWeightScreenProps {
 }
 
 export function EditCurrentWeightScreen({ onBack, currentValue, onSave }: EditCurrentWeightScreenProps) {
-  const [isMetric, setIsMetric] = useState(true);
+  const { userDetails } = useUserDetails();
+  const isMetric = userDetails.unitSystem === 'metric';
   const [selectedWeight, setSelectedWeight] = useState(60); // Default 60kg
 
   // Parse current value to determine initial state
   React.useEffect(() => {
     if (currentValue) {
-      const weightMatch = currentValue.match(/(\d+(?:\.\d+)?)/);
-      if (weightMatch) {
-        const weight = parseFloat(weightMatch[1]);
-        if (currentValue.includes('lbs')) {
-          setIsMetric(false);
-          setSelectedWeight(weight);
-        } else {
-          setIsMetric(true);
-          setSelectedWeight(weight);
-        }
+      // Parse the current weight string to get the metric value
+      const weightKg = parseWeightToMetric(currentValue);
+      
+      // Convert to display units based on user's preference
+      if (isMetric) {
+        setSelectedWeight(weightKg);
+      } else {
+        setSelectedWeight(convertMetricWeightToImperial(weightKg));
       }
     }
-  }, [currentValue]);
-
-  const handleUnitSystemChange = (value: boolean) => {
-    hapticFeedback.selection();
-    setIsMetric(value);
-    // Convert weight when switching units
-    if (value) {
-      // Convert lbs to kg
-      setSelectedWeight(Math.round(selectedWeight * 0.453592));
-    } else {
-      // Convert kg to lbs
-      setSelectedWeight(Math.round(selectedWeight / 0.453592));
-    }
-  };
+  }, [currentValue, isMetric]);
 
   const handleWeightChange = (weight: string | number) => {
     const numWeight = typeof weight === 'string' ? parseFloat(weight) : weight;
@@ -52,12 +44,19 @@ export function EditCurrentWeightScreen({ onBack, currentValue, onSave }: EditCu
 
   const handleSave = () => {
     hapticFeedback.success();
+    
+    // Convert to metric for storage
+    const weightKg = isMetric ? selectedWeight : convertImperialWeightToMetric(selectedWeight);
+    
+    // Format for display based on user's unit system
     const unit = isMetric ? 'kg' : 'lbs';
-    const formattedWeight = isMetric ? selectedWeight.toFixed(1) : selectedWeight.toString();
-    onSave(`${formattedWeight} ${unit}`);
+    const formattedWeight = isMetric ? Math.round(weightKg) : Math.round(selectedWeight);
+    const displayValue = `${formattedWeight} ${unit}`;
+    
+    onSave(displayValue);
   };
 
-  // Generate weight options
+  // Generate weight options based on unit system
   const weightOptions = isMetric
     ? Array.from({ length: 151 }, (_, i) => 40 + i) // 40-190 kg
     : Array.from({ length: 251 }, (_, i) => 90 + i); // 90-340 lbs
@@ -90,33 +89,12 @@ export function EditCurrentWeightScreen({ onBack, currentValue, onSave }: EditCu
 
       {/* Content */}
       <View style={styles.content}>
-        {/* Unit System Toggle */}
-        <View style={styles.unitToggleContainer}>
-          <Text style={styles.unitLabel}>
-            {i18n.t('measurements.imperial')}
-          </Text>
-          <Switch
-            value={isMetric}
-            onValueChange={handleUnitSystemChange}
-            trackColor={{ 
-              false: '#767577', 
-              true: '#000000' 
-            }}
-            thumbColor="#f4f3f4"
-            ios_backgroundColor="#767577"
-            style={styles.switch}
-          />
-          <Text style={styles.unitLabel}>
-            {i18n.t('measurements.metric')}
-          </Text>
-        </View>
-
         {/* Ruler Picker */}
         <View style={styles.rulerContainer}>
           <RulerPicker
             min={isMetric ? 40 : 90}
             max={isMetric ? 190 : 340}
-            step={isMetric ? 0.1 : 1}
+            step={isMetric ? 1 : 1}
             unit={isMetric ? 'kg' : 'lbs'}
             initialValue={selectedWeight}
             onValueChange={handleWeightChange}
@@ -177,28 +155,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 20,
-    gap: 40,
-  },
-  unitToggleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 16,
-  },
-  unitLabel: {
-    fontSize: 28,
-    fontWeight: '600',
-    color: '#000000',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
-  },
-  switch: {
-    transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }],
   },
   rulerContainer: {
     width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 32,
   },
   bottomContainer: {
     paddingHorizontal: 20,

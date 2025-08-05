@@ -10,6 +10,7 @@ import { LanguageModal } from './LanguageModal';
 
 interface SettingsScreenProps {
   onPersonalDetailsPress: () => void;
+  onUnitsPress: () => void;
   onSharePress: () => void;
 }
 
@@ -115,7 +116,7 @@ function ReferFriendOption({ icon, title, subtitle, onPress, onSharePress }: Ref
   );
 }
 
-export function SettingsScreen({ onPersonalDetailsPress, onSharePress }: SettingsScreenProps) {
+export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onSharePress }: SettingsScreenProps) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showLanguageModal, setShowLanguageModal] = useState(false);
@@ -162,6 +163,10 @@ export function SettingsScreen({ onPersonalDetailsPress, onSharePress }: Setting
 
   const handleCloseLanguageModal = () => {
     setShowLanguageModal(false);
+  };
+
+  const handleUnitsPress = () => {
+    onUnitsPress();
   };
 
   const handleReferFriendPress = () => {
@@ -233,6 +238,16 @@ Best regards,
           d="m10.5 21 5.25-11.25L21 21m-9-3h7.5M3 5.621a48.474 48.474 0 0 1 6-.371m0 0c1.12 0 2.233.038 3.334.114M9 5.25V3m3.334 2.364C11.176 10.658 7.69 15.08 3 17.502m9.334-12.138c.896.061 1.785.147 2.666.257m-4.589 8.495a18.023 18.023 0 0 1-3.827-5.802"
           stroke={iconColor}
           strokeWidth={1.5}
+        />
+      </Svg>
+    ),
+    units: (
+      <Svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none">
+        <Path
+          fillRule="evenodd"
+          d="M12 2.25a.75.75 0 0 1 .75.75v.756a49.106 49.106 0 0 1 9.152 1 .75.75 0 0 1-.152 1.485h-1.918l2.474 10.124a.75.75 0 0 1-.375.84A6.723 6.723 0 0 1 18.75 18a6.723 6.723 0 0 1-3.181-.795.75.75 0 0 1-.375-.84l2.474-10.124H12.75v13.28c1.293.076 2.534.343 3.697.776a.75.75 0 0 1-.262 1.453h-8.37a.75.75 0 0 1-.262-1.453c1.162-.433 2.404-.7 3.697-.775V6.24H6.332l2.474 10.124a.75.75 0 0 1-.375.84A6.723 6.723 0 0 1 5.25 18a6.723 6.723 0 0 1-3.181-.795.75.75 0 0 1-.375-.84L4.168 6.241H2.25a.75.75 0 0 1-.152-1.485 49.105 49.105 0 0 1 9.152-1V3a.75.75 0 0 1 .75-.75Zm4.878 13.543 1.872-7.662 1.872 7.662h-3.744Zm-9.756 0L5.25 8.131l-1.872 7.662h3.744Z"
+          clipRule="evenodd"
+          fill={iconColor}
         />
       </Svg>
     ),
@@ -332,6 +347,12 @@ Best regards,
             icon={icons.language}
             title={i18n.t('settings.language')}
             onPress={handleLanguagePress}
+          />
+          <View style={styles.separator} />
+          <SettingsOption
+            icon={icons.units}
+            title={i18n.t('settings.units')}
+            onPress={handleUnitsPress}
           />
           {/* <View style={styles.separator} /> */}
           {/* <SettingsOption

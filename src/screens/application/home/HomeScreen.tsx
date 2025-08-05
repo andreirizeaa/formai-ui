@@ -259,7 +259,7 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
             </View>
           </View>
           
-          <Text style={styles.sectionTitle}>Recent Lifts</Text>
+          <Text style={styles.sectionTitle}>Lifts</Text>
           <View 
             style={styles.liftsScrollView} 
           >
@@ -287,8 +287,8 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
                 activeOpacity={0.7}
               >
                 <View style={styles.noLiftsContent}>
-                  <Text style={styles.noLiftsTitle}>You haven't recorded any lifts</Text>
-                  <Text style={styles.noLiftsSubtitle}>Start analysing today's workout by taking a quick video</Text>
+                  <Text style={styles.noLiftsTitle}>No recorded lifts for this date</Text>
+                  <Text style={styles.noLiftsSubtitle}>Start analysing your workout by taking a quick video</Text>
                 </View>
               </TouchableOpacity>
             ) : null}
