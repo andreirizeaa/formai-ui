@@ -33,7 +33,7 @@ export function AllDoneScreen({ onNext, onBack }: AllDoneScreenProps) {
     <OnboardingLayout
       title={i18n.t('allDone.title')}
       subtitle=""
-      currentStep={13}
+      currentStep={14}
       totalSteps={16}
       onBack={onBack}
       onNext={() => {

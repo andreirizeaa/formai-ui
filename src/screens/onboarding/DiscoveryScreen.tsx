@@ -51,7 +51,7 @@ export function DiscoveryScreen({ onNext, onBack }: DiscoveryScreenProps) {
 
   const handleNext = () => {
     if (preferences.discoverySource) {
-      hapticFeedback.next();
+      hapticFeedback.selection();
       onNext();
     }
   };
@@ -60,8 +60,8 @@ export function DiscoveryScreen({ onNext, onBack }: DiscoveryScreenProps) {
     <OnboardingLayout
       title={i18n.t('discovery.title')}
       subtitle={i18n.t('discovery.subtitle')}
-      currentStep={4}
-      totalSteps={12}
+      currentStep={5}
+      totalSteps={13}
       onBack={onBack}
       onNext={handleNext}
       nextTitle={i18n.t('next')}

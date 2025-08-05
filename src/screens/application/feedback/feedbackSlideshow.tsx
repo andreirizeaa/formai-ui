@@ -1,0 +1,457 @@
+import React, { useState } from 'react';
+import { View, StyleSheet, TouchableOpacity, Dimensions, Text, Platform, Image } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Svg, { Path } from 'react-native-svg';
+import { hapticFeedback } from '../../../utils/haptic';
+
+interface FeedbackSlideshowProps {
+  onClose: () => void;
+  onNavigateToLiftDetails?: () => void;
+  liftData?: {
+    analysis: {
+      feedback: Array<{
+        imageURL: any;
+        flaws: string;
+        improvement: string;
+      }>;
+    };
+  };
+}
+
+export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, liftData }: FeedbackSlideshowProps) {
+  const [currentFeedbackIndex, setCurrentFeedbackIndex] = useState(0);
+  const [currentPageType, setCurrentPageType] = useState<'image' | 'flaws' | 'improvement'>('image');
+  const [isBottomExpanded, setIsBottomExpanded] = useState(false);
+
+  const handleClose = () => {
+    hapticFeedback.selection();
+    if (onNavigateToLiftDetails) {
+      onNavigateToLiftDetails();
+    } else {
+      onClose();
+    }
+  };
+
+  const handleLeftChevron = () => {
+    hapticFeedback.selection();
+    navigateBackward();
+  };
+
+  const handleRightChevron = () => {
+    hapticFeedback.selection();
+    navigateForward();
+  };
+
+  const handleExpandCollapse = () => {
+    hapticFeedback.selection();
+    setIsBottomExpanded(!isBottomExpanded);
+  };
+
+  const navigateForward = () => {
+    if (!liftData?.analysis?.feedback) return;
+
+    const totalFeedbackItems = liftData.analysis.feedback.length;
+
+    if (currentPageType === 'image') {
+      setCurrentPageType('flaws');
+      setIsBottomExpanded(true);
+    } else if (currentPageType === 'flaws') {
+      setCurrentPageType('improvement');
+      setIsBottomExpanded(true);
+    } else if (currentPageType === 'improvement') {
+      // Move to next feedback item
+      if (currentFeedbackIndex < totalFeedbackItems - 1) {
+        setCurrentFeedbackIndex(currentFeedbackIndex + 1);
+        setCurrentPageType('image');
+        setIsBottomExpanded(false);
+      } else {
+        // We're on the last feedback item's improvement page, navigate back to LiftDetails
+        if (onNavigateToLiftDetails) {
+          onNavigateToLiftDetails();
+        } else {
+          onClose();
+        }
+      }
+    }
+  };
+
+  const navigateBackward = () => {
+    if (!liftData?.analysis?.feedback) return;
+
+    if (currentPageType === 'image') {
+      // Move to previous feedback item's improvement page
+      if (currentFeedbackIndex > 0) {
+        setCurrentFeedbackIndex(currentFeedbackIndex - 1);
+        setCurrentPageType('improvement');
+        setIsBottomExpanded(true);
+      } else {
+        // We're on the first page, go back to previous screen
+        handleClose();
+      }
+    } else if (currentPageType === 'flaws') {
+      setCurrentPageType('image');
+      setIsBottomExpanded(false);
+    } else if (currentPageType === 'improvement') {
+      setCurrentPageType('flaws');
+      setIsBottomExpanded(true);
+    }
+  };
+
+  const getCurrentFeedbackItem = () => {
+    if (!liftData?.analysis?.feedback) return null;
+    return liftData.analysis.feedback[currentFeedbackIndex];
+  };
+
+  const getCurrentPageNumber = () => {
+    if (!liftData?.analysis?.feedback) return 0;
+    const totalFeedbackItems = liftData.analysis.feedback.length;
+    const totalPages = totalFeedbackItems * 3;
+    return (currentFeedbackIndex * 3 + getPageTypeIndex(currentPageType)) + 1;
+  };
+
+  const getTotalPages = () => {
+    if (!liftData?.analysis?.feedback) return 0;
+    return liftData.analysis.feedback.length * 3;
+  };
+
+  const getPageTypeIndex = (pageType: 'image' | 'flaws' | 'improvement') => {
+    switch (pageType) {
+      case 'image': return 0;
+      case 'flaws': return 1;
+      case 'improvement': return 2;
+    }
+  };
+
+  const getPageTitle = () => {
+    return `Feedback point ${currentFeedbackIndex + 1}`;
+  };
+
+  const getBottomContent = () => {
+    const feedbackItem = getCurrentFeedbackItem();
+    if (!feedbackItem) return null;
+
+    if (currentPageType === 'image' || !isBottomExpanded) {
+      return null; // No content in bottom container for image view or when collapsed
+    }
+
+    return (
+      <View style={styles.bottomContentContainer}>
+        <Text style={styles.bottomContentTitle}>
+          {currentPageType === 'flaws' ? 'Issues' : 'Tips'}
+        </Text>
+        <Text style={styles.bottomContentText}>
+          {currentPageType === 'flaws' ? feedbackItem.flaws : feedbackItem.improvement}
+        </Text>
+      </View>
+    );
+  };
+
+  const feedbackItem = getCurrentFeedbackItem();
+
+  return (
+    <View style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.title}>{getPageTitle()}</Text>
+          <TouchableOpacity 
+            style={styles.closeButton} 
+            onPress={handleClose}
+            activeOpacity={0.7}
+          >
+            <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+              <Path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+                stroke="#000000"
+                strokeWidth={2}
+              />
+            </Svg>
+          </TouchableOpacity>
+        </View>
+
+        {/* Content Area - Always full height */}
+        <View style={styles.content}>
+          {feedbackItem && (
+            <View style={styles.imageContainer}>
+              <Image 
+                source={feedbackItem.imageURL} 
+                style={styles.feedbackImage}
+                resizeMode="cover"
+              />
+            </View>
+          )}
+        </View>
+
+        {/* Bottom Navigation Section - Overlays on top */}
+        <View style={[
+          styles.bottomNavigationSection,
+          (currentPageType !== 'image' && isBottomExpanded) && styles.expandedBottomSection
+        ]}>
+          {/* Bottom Content - Above navigation when expanded */}
+          {getBottomContent()}
+
+          {/* Navigation Row - Always at bottom */}
+          <View style={styles.navigationRow}>
+            {/* Left Chevron */}
+            <TouchableOpacity 
+              style={styles.bottomChevron}
+              onPress={handleLeftChevron}
+              activeOpacity={0.7}
+            >
+              <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+                <Path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15.75 19.5 8.25 12l7.5-7.5"
+                  stroke="#000000"
+                  strokeWidth={1.5}
+                />
+              </Svg>
+            </TouchableOpacity>
+
+            {/* Center Column - Page Indicator and Expand/Collapse */}
+            <View style={styles.centerColumn}>
+              {/* Expand/Collapse Button - Only show on issues/tips */}
+              {currentPageType !== 'image' && (
+                <TouchableOpacity 
+                  style={isBottomExpanded ? styles.downChevronButton : styles.upChevronButton}
+                  onPress={handleExpandCollapse}
+                  activeOpacity={0.7}
+                >
+                  <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+                    <Path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d={
+                        isBottomExpanded 
+                          ? "m19.5 8.25-7.5 7.5-7.5-7.5"
+                          : "m4.5 15.75 7.5-7.5 7.5 7.5"
+                      }
+                      stroke={"#FFFFFF"}
+                      strokeWidth={1.5}
+                    />
+                  </Svg>
+                </TouchableOpacity>
+              )}
+
+              {/* Page Indicator */}
+              <View style={styles.bottomPageIndicator}>
+                <Text style={styles.bottomPageIndicatorText}>
+                  {getCurrentPageNumber()} / {getTotalPages()}
+                </Text>
+              </View>
+            </View>
+
+            {/* Right Chevron */}
+            <TouchableOpacity 
+              style={styles.bottomChevron}
+              onPress={handleRightChevron}
+              activeOpacity={0.7}
+            >
+              <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+                <Path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="m8.25 4.5 7.5 7.5-7.5 7.5"
+                  stroke="#000000"
+                  strokeWidth={1.5}
+                />
+              </Svg>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </SafeAreaView>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#FFFFFF',
+    zIndex: 1000,
+  },
+  safeArea: {
+    flex: 1,
+  },
+  backgroundImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100%',
+    height: '100%',
+  },
+  closeButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#F2F2F7',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10000,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    zIndex: 1000,
+  },
+  title: {
+    fontSize: 36,
+    fontWeight: '600',
+    color: '#000000',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
+  },
+  bottomNavigationSection: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'column',
+    justifyContent: 'flex-end',
+    alignItems: 'stretch',
+    paddingHorizontal: 20,
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: -2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 8,
+    minHeight: 110,
+    zIndex: 1000,
+  },
+  expandedBottomSection: {
+    minHeight: 500,
+  },
+  bottomChevron: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#F2F2F7',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flex: 1,
+    maxWidth: 44,
+  },
+  bottomPageIndicator: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: '#F2F2F7',
+    borderRadius: 20,
+    flex: 1,
+    maxWidth: 100,
+  },
+  bottomPageIndicatorText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#000000',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
+  },
+  bottomContentContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    flex: 1,
+  },
+  bottomContentTitle: {
+    fontSize: 24,
+    fontWeight: '600',
+    color: '#000000',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
+    marginBottom: 12,
+    marginTop: 24,
+  },
+  bottomContentText: {
+    fontSize: 18,
+    fontWeight: '400',
+    color: '#000000',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
+    lineHeight: 26,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 0,
+    paddingBottom: 100,
+  },
+  imageContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 28,
+    overflow: 'hidden',
+    marginTop: 20,
+    marginHorizontal: 20,
+    minHeight: 400,
+  },
+  feedbackImage: {
+    width: '100%',
+    height: '100%',
+    minHeight: 400,
+  },
+  navigationRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 20,
+    paddingBottom: 40,
+  },
+  centerColumn: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flex: 1,
+  },
+  expandCollapseButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#F2F2F7',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+    position: 'absolute',
+    top: -22,
+    zIndex: 1001,
+  },
+  upChevronButton: {
+    width: 60,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#000000',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 14,
+    position: 'absolute',
+    top: -40,
+    zIndex: 1001,
+  },
+  downChevronButton: {
+    width: 60,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#000000',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 14,
+    position: 'absolute',
+    top: -434,
+    zIndex: 1001,
+  },
+}); 

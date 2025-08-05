@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, Alert } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, Alert, ImageBackground, ScrollView, Animated } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import * as MailComposer from 'expo-mail-composer';
 import i18n from '../../../utils/i18n';
@@ -10,6 +10,8 @@ import { LanguageModal } from './LanguageModal';
 
 interface SettingsScreenProps {
   onPersonalDetailsPress: () => void;
+  onUnitsPress: () => void;
+  onSharePress: () => void;
 }
 
 interface SettingsOptionProps {
@@ -40,11 +42,85 @@ function SettingsOption({ icon, title, subtitle, onPress }: SettingsOptionProps)
   );
 }
 
-export function SettingsScreen({ onPersonalDetailsPress }: SettingsScreenProps) {
+interface ReferFriendOptionProps {
+  icon: React.ReactNode;
+  title: string;
+  subtitle?: string;
+  onPress?: () => void;
+  onSharePress: () => void;
+}
+
+function ReferFriendOption({ icon, title, subtitle, onPress, onSharePress }: ReferFriendOptionProps) {
+  // Animation value for pump effect
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  // Pump animation on mount
+  useEffect(() => {
+    const pumpAnimation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(scaleAnim, {
+          toValue: 1.05,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 1,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+      ]),
+      { iterations: 4 } // Repeat 4 times
+    );
+
+    // Start animation immediately
+    pumpAnimation.start();
+  }, []);
+
+  return (
+    <View>
+      <View style={styles.optionRow}>
+        <View style={styles.iconContainer}>
+          {icon}
+        </View>
+        <View style={styles.textContainer}>
+          <Text style={styles.optionTitle}>{title}</Text>
+          {subtitle && <Text style={styles.optionSubtitle}>{subtitle}</Text>}
+        </View>
+      </View>
+      
+      {/* Nested Card */}
+      <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+        <ImageBackground 
+          source={require('../../../../assets/refer-friends.jpg')}
+          style={styles.nestedCard}
+          imageStyle={styles.nestedCardImage}
+        >
+          <View style={styles.opacityLayer}>
+            <Text style={styles.nestedCardTitle}>{i18n.t('settings.growStrongerTogether')}</Text>
+            <Text style={styles.nestedCardSubtitle}>{i18n.t('settings.currentBalance')}</Text>
+            <Text style={styles.balanceAmount}>$0</Text>
+            <TouchableOpacity 
+              style={styles.shareButton}
+              onPress={() => {
+                hapticFeedback.selection();
+                onSharePress();
+              }}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.shareButtonText}>{i18n.t('settings.shareNow')}</Text>
+            </TouchableOpacity>
+          </View>
+        </ImageBackground>
+      </Animated.View>
+    </View>
+  );
+}
+
+export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onSharePress }: SettingsScreenProps) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showLanguageModal, setShowLanguageModal] = useState(false);
-  const iconSize = 28;
+  const iconSize = 26;
   const iconColor = '#000000';
 
   const handleDeleteAccountPress = () => {
@@ -87,6 +163,13 @@ export function SettingsScreen({ onPersonalDetailsPress }: SettingsScreenProps) 
 
   const handleCloseLanguageModal = () => {
     setShowLanguageModal(false);
+  };
+
+  const handleUnitsPress = () => {
+    onUnitsPress();
+  };
+
+  const handleReferFriendPress = () => {
   };
 
   const handlePersonalDetailsPress = () => {
@@ -153,6 +236,27 @@ Best regards,
           strokeLinecap="round"
           strokeLinejoin="round"
           d="m10.5 21 5.25-11.25L21 21m-9-3h7.5M3 5.621a48.474 48.474 0 0 1 6-.371m0 0c1.12 0 2.233.038 3.334.114M9 5.25V3m3.334 2.364C11.176 10.658 7.69 15.08 3 17.502m9.334-12.138c.896.061 1.785.147 2.666.257m-4.589 8.495a18.023 18.023 0 0 1-3.827-5.802"
+          stroke={iconColor}
+          strokeWidth={1.5}
+        />
+      </Svg>
+    ),
+    units: (
+      <Svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none">
+        <Path
+          fillRule="evenodd"
+          d="M12 2.25a.75.75 0 0 1 .75.75v.756a49.106 49.106 0 0 1 9.152 1 .75.75 0 0 1-.152 1.485h-1.918l2.474 10.124a.75.75 0 0 1-.375.84A6.723 6.723 0 0 1 18.75 18a6.723 6.723 0 0 1-3.181-.795.75.75 0 0 1-.375-.84l2.474-10.124H12.75v13.28c1.293.076 2.534.343 3.697.776a.75.75 0 0 1-.262 1.453h-8.37a.75.75 0 0 1-.262-1.453c1.162-.433 2.404-.7 3.697-.775V6.24H6.332l2.474 10.124a.75.75 0 0 1-.375.84A6.723 6.723 0 0 1 5.25 18a6.723 6.723 0 0 1-3.181-.795.75.75 0 0 1-.375-.84L4.168 6.241H2.25a.75.75 0 0 1-.152-1.485 49.105 49.105 0 0 1 9.152-1V3a.75.75 0 0 1 .75-.75Zm4.878 13.543 1.872-7.662 1.872 7.662h-3.744Zm-9.756 0L5.25 8.131l-1.872 7.662h3.744Z"
+          clipRule="evenodd"
+          fill={iconColor}
+        />
+      </Svg>
+    ),
+    referFriend: (
+      <Svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none">
+        <Path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z"
           stroke={iconColor}
           strokeWidth={1.5}
         />
@@ -227,7 +331,7 @@ Best regards,
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.content}>
         <Text style={styles.title}>{i18n.t('tabs.settings')}</Text>
         
@@ -244,6 +348,12 @@ Best regards,
             title={i18n.t('settings.language')}
             onPress={handleLanguagePress}
           />
+          <View style={styles.separator} />
+          <SettingsOption
+            icon={icons.units}
+            title={i18n.t('settings.units')}
+            onPress={handleUnitsPress}
+          />
           {/* <View style={styles.separator} /> */}
           {/* <SettingsOption
             icon={icons.appearance}
@@ -253,6 +363,16 @@ Best regards,
         </View>
 
         {/* Second Card */}
+        <View style={styles.card}>
+          <ReferFriendOption
+            icon={icons.referFriend}
+            title={i18n.t('settings.referFriends')}
+            onPress={handleReferFriendPress}
+            onSharePress={onSharePress}
+          />
+        </View>
+
+        {/* Third Card */}
         <View style={styles.card}>
           <SettingsOption
             icon={icons.terms}
@@ -279,7 +399,7 @@ Best regards,
           />
         </View>
 
-        {/* Third Card */}
+        {/* Forth Card */}
         <View style={styles.card}>
           <SettingsOption
             icon={icons.logout}
@@ -311,7 +431,7 @@ Best regards,
 
       {/* Personal Details Screen */}
       {/* This component is now rendered by the parent based on the onPersonalDetailsPress prop */}
-    </View>
+    </ScrollView>
   );
 }
 
@@ -378,5 +498,69 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: '#E5E5EA',
     marginVertical: 4,
+  },
+  nestedCard: {
+    borderRadius: 12,
+    marginTop: 16,
+    overflow: 'hidden',
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  nestedCardImage: {
+    borderRadius: 12,
+    top: -20,
+  },
+  opacityLayer: {
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+  },
+  nestedCardTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
+    marginBottom: 4,
+    textAlign: 'left',
+  },
+  nestedCardSubtitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#FFFFFF',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
+    marginBottom: 4,
+    textAlign: 'left',
+  },
+  balanceAmount: {
+    fontSize: 36,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
+    marginBottom: 8,
+    textAlign: 'left',
+  },
+  shareButton: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 120,
+    width: '100%',
+  },
+  shareButtonText: {
+    color: '#000000',
+    fontSize: 16,
+    fontWeight: '600',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
   },
 }); 

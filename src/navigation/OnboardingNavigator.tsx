@@ -1,8 +1,14 @@
-import React, { useState } from 'react';
-import { View } from 'react-native';
+import React from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator, StackNavigationProp } from '@react-navigation/stack';
+import { useNavigation } from '@react-navigation/native';
+import { useOnboarding } from '../context/OnboardingContext';
+
+// Import all onboarding screens
 import { LoadingScreen } from '../screens/onboarding/LoadingScreen';
 import { WelcomeScreen } from '../screens/onboarding/WelcomeScreen';
 import { LanguageScreen } from '../screens/onboarding/LanguageScreen';
+import { UnitsScreen } from '../screens/onboarding/UnitsScreen';
 import { GenderScreen } from '../screens/onboarding/GenderScreen';
 import { WorkoutsScreen } from '../screens/onboarding/WorkoutsScreen';
 import { DiscoveryScreen } from '../screens/onboarding/DiscoveryScreen';
@@ -28,363 +34,440 @@ interface OnboardingNavigatorProps {
   onSignIn: () => void;
 }
 
-type OnboardingScreen = 
-  | 'loading' 
-  | 'welcome' 
-  | 'language' 
-  | 'gender' 
-  | 'workouts' 
-  | 'discovery' 
-  | 'personalTrainer' 
-  | 'progress' 
-  | 'measurements' 
-  | 'birthDate'
-  | 'liftingGoal'
-  | 'formBarrier'
-  | 'rating'
-  | 'referralCode'
-  | 'allDone'
-  | 'notificationPermission'
-  | 'setupLoading'
-  | 'freeTrial'
-  | 'notificationReminder'
-  | 'subscriptionSelection'
-  | 'createAccount'
-  | 'cameraPermission';
+export type OnboardingStackParamList = {
+  Loading: undefined;
+  Welcome: undefined;
+  Language: undefined;
+  Units: undefined;
+  Gender: undefined;
+  Workouts: undefined;
+  Discovery: undefined;
+  PersonalTrainer: undefined;
+  Progress: undefined;
+  Measurements: undefined;
+  BirthDate: undefined;
+  LiftingGoal: undefined;
+  FormBarrier: undefined;
+  Rating: undefined;
+  ReferralCode: undefined;
+  AllDone: undefined;
+  NotificationPermission: undefined;
+  SetupLoading: undefined;
+  FreeTrial: undefined;
+  NotificationReminder: undefined;
+  SubscriptionSelection: undefined;
+  CreateAccount: undefined;
+  CameraPermission: undefined;
+};
+
+type OnboardingNavigationProp = StackNavigationProp<OnboardingStackParamList>;
+
+const Stack = createStackNavigator<OnboardingStackParamList>();
+
+// Wrapper components that handle navigation
+function LoadingScreenWrapper({ onComplete }: { onComplete: () => void }) {
+  const navigation = useNavigation<OnboardingNavigationProp>();
+  
+  const handleLoadComplete = () => {
+    navigation.navigate('Welcome');
+  };
+
+  return <LoadingScreen onLoadComplete={handleLoadComplete} />;
+}
+
+function WelcomeScreenWrapper({ onSignIn }: { onSignIn: () => void }) {
+  const navigation = useNavigation<OnboardingNavigationProp>();
+  
+  const handleGetStarted = () => {
+    navigation.navigate('Language');
+  };
+
+  return <WelcomeScreen onGetStarted={handleGetStarted} onSignIn={onSignIn} />;
+}
+
+function LanguageScreenWrapper() {
+  const navigation = useNavigation<OnboardingNavigationProp>();
+  
+  const handleNext = () => {
+    navigation.navigate('Units');
+  };
+
+  const handleBack = () => {
+    navigation.navigate('Welcome');
+  };
+
+  return <LanguageScreen onNext={handleNext} onBack={handleBack} />;
+}
+
+function UnitsScreenWrapper() {
+  const navigation = useNavigation<OnboardingNavigationProp>();
+  
+  const handleNext = () => {
+    navigation.navigate('Gender');
+  };
+
+  const handleBack = () => {
+    navigation.navigate('Language');
+  };
+
+  return <UnitsScreen onNext={handleNext} onBack={handleBack} />;
+}
+
+function GenderScreenWrapper() {
+  const navigation = useNavigation<OnboardingNavigationProp>();
+  
+  const handleNext = () => {
+    navigation.navigate('Workouts');
+  };
+
+  const handleBack = () => {
+    navigation.navigate('Units');
+  };
+
+  return <GenderScreen onNext={handleNext} onBack={handleBack} />;
+}
+
+function WorkoutsScreenWrapper() {
+  const navigation = useNavigation<OnboardingNavigationProp>();
+  
+  const handleNext = () => {
+    navigation.navigate('Discovery');
+  };
+
+  const handleBack = () => {
+    navigation.navigate('Gender');
+  };
+
+  return <WorkoutsScreen onNext={handleNext} onBack={handleBack} />;
+}
+
+function DiscoveryScreenWrapper() {
+  const navigation = useNavigation<OnboardingNavigationProp>();
+  
+  const handleNext = () => {
+    navigation.navigate('PersonalTrainer');
+  };
+
+  const handleBack = () => {
+    navigation.navigate('Workouts');
+  };
+
+  return <DiscoveryScreen onNext={handleNext} onBack={handleBack} />;
+}
+
+function PersonalTrainerScreenWrapper() {
+  const navigation = useNavigation<OnboardingNavigationProp>();
+  
+  const handleNext = () => {
+    navigation.navigate('Progress');
+  };
+
+  const handleBack = () => {
+    navigation.navigate('Discovery');
+  };
+
+  return <PersonalTrainerScreen onNext={handleNext} onBack={handleBack} />;
+}
+
+function ProgressScreenWrapper() {
+  const navigation = useNavigation<OnboardingNavigationProp>();
+  
+  const handleNext = () => {
+    navigation.navigate('Measurements');
+  };
+
+  const handleBack = () => {
+    navigation.navigate('PersonalTrainer');
+  };
+
+  return <ProgressScreen onNext={handleNext} onBack={handleBack} />;
+}
+
+function MeasurementsScreenWrapper() {
+  const navigation = useNavigation<OnboardingNavigationProp>();
+  
+  const handleNext = () => {
+    navigation.navigate('BirthDate');
+  };
+
+  const handleBack = () => {
+    navigation.navigate('Progress');
+  };
+
+  return <MeasurementsScreen onNext={handleNext} onBack={handleBack} />;
+}
+
+function BirthDateScreenWrapper() {
+  const navigation = useNavigation<OnboardingNavigationProp>();
+  
+  const handleNext = () => {
+    navigation.navigate('LiftingGoal');
+  };
+
+  const handleBack = () => {
+    navigation.navigate('Measurements');
+  };
+
+  return <BirthDateScreen onNext={handleNext} onBack={handleBack} />;
+}
+
+function LiftingGoalScreenWrapper() {
+  const navigation = useNavigation<OnboardingNavigationProp>();
+  
+  const handleNext = () => {
+    navigation.navigate('FormBarrier');
+  };
+
+  const handleBack = () => {
+    navigation.navigate('BirthDate');
+  };
+
+  return <LiftingGoalScreen onNext={handleNext} onBack={handleBack} />;
+}
+
+function FormBarrierScreenWrapper() {
+  const navigation = useNavigation<OnboardingNavigationProp>();
+  
+  const handleNext = () => {
+    navigation.navigate('Rating');
+  };
+
+  const handleBack = () => {
+    navigation.navigate('LiftingGoal');
+  };
+
+  return <FormBarrierScreen onNext={handleNext} onBack={handleBack} />;
+}
+
+function RatingScreenWrapper() {
+  const navigation = useNavigation<OnboardingNavigationProp>();
+  
+  const handleNext = () => {
+    navigation.navigate('ReferralCode');
+  };
+
+  const handleBack = () => {
+    navigation.navigate('FormBarrier');
+  };
+
+  return <RatingScreen onNext={handleNext} onBack={handleBack} />;
+}
+
+function ReferralCodeScreenWrapper() {
+  const navigation = useNavigation<OnboardingNavigationProp>();
+  
+  const handleNext = () => {
+    navigation.navigate('AllDone');
+  };
+
+  const handleBack = () => {
+    navigation.navigate('Rating');
+  };
+
+  return <ReferralCodeScreen onNext={handleNext} onBack={handleBack} />;
+}
+
+function AllDoneScreenWrapper() {
+  const navigation = useNavigation<OnboardingNavigationProp>();
+  
+  const handleNext = () => {
+    navigation.navigate('NotificationPermission');
+  };
+
+  const handleBack = () => {
+    navigation.navigate('ReferralCode');
+  };
+
+  return <AllDoneScreen onNext={handleNext} onBack={handleBack} />;
+}
+
+function NotificationPermissionScreenWrapper() {
+  const navigation = useNavigation<OnboardingNavigationProp>();
+  
+  const handleNext = () => {
+    navigation.navigate('SetupLoading');
+  };
+
+  const handleBack = () => {
+    navigation.navigate('AllDone');
+  };
+
+  return <NotificationPermissionScreen onNext={handleNext} onBack={handleBack} />;
+}
+
+function SetupLoadingScreenWrapper() {
+  const navigation = useNavigation<OnboardingNavigationProp>();
+  
+  const handleNext = () => {
+    navigation.navigate('FreeTrial');
+  };
+
+  const handleBack = () => {
+    navigation.navigate('NotificationPermission');
+  };
+
+  return <SetupLoadingScreen onNext={handleNext} onBack={handleBack} />;
+}
+
+function FreeTrialScreenWrapper() {
+  const navigation = useNavigation<OnboardingNavigationProp>();
+  
+  const handleNext = () => {
+    navigation.navigate('NotificationReminder');
+  };
+
+  return <FreeTrialScreen onNext={handleNext} />;
+}
+
+function NotificationReminderScreenWrapper() {
+  const navigation = useNavigation<OnboardingNavigationProp>();
+  
+  const handleNext = () => {
+    navigation.navigate('SubscriptionSelection');
+  };
+
+  const handleBack = () => {
+    navigation.navigate('FreeTrial');
+  };
+
+  return <NotificationReminderScreen onNext={handleNext} onBack={handleBack} />;
+}
+
+function SubscriptionSelectionScreenWrapper() {
+  const navigation = useNavigation<OnboardingNavigationProp>();
+  
+  const handleNext = () => {
+    navigation.navigate('CreateAccount');
+  };
+
+  const handleBack = () => {
+    navigation.navigate('NotificationReminder');
+  };
+
+  return <SubscriptionSelectionScreen onNext={handleNext} onBack={handleBack} />;
+}
+
+function CreateAccountScreenWrapper() {
+  const navigation = useNavigation<OnboardingNavigationProp>();
+  
+  const handleNext = () => {
+    navigation.navigate('CameraPermission');
+  };
+
+  return <CreateAccountScreen onNext={handleNext} />;
+}
+
+function CameraPermissionScreenWrapper({ onComplete }: { onComplete: () => void }) {
+  return <CameraPermissionScreen onNext={onComplete} />;
+}
 
 export function OnboardingNavigator({ onComplete, onSignIn }: OnboardingNavigatorProps) {
-  const [currentScreen, setCurrentScreen] = useState<OnboardingScreen>('loading');
+  return (
+    <NavigationContainer>
+      <Stack.Navigator
+        initialRouteName="Loading"
+        screenOptions={{
+          headerShown: false,
+          gestureEnabled: false,
+          cardStyleInterpolator: () => ({
+            cardStyle: {
+              transform: [{ translateX: 0 }],
+            },
+          }),
+        }}
+      >
+        <Stack.Screen name="Loading">
+          {() => <LoadingScreenWrapper onComplete={onComplete} />}
+        </Stack.Screen>
 
-  const handleLoadComplete = () => {
-    setCurrentScreen('welcome');
-  };
+        <Stack.Screen name="Welcome">
+          {() => <WelcomeScreenWrapper onSignIn={onSignIn} />}
+        </Stack.Screen>
 
-  const handleGetStarted = () => {
-    setCurrentScreen('language');
-  };
+        <Stack.Screen name="Language">
+          {() => <LanguageScreenWrapper />}
+        </Stack.Screen>
 
-  const handleLanguageNext = () => {
-    setCurrentScreen('gender');
-  };
+        <Stack.Screen name="Units">
+          {() => <UnitsScreenWrapper />}
+        </Stack.Screen>
 
-  const handleLanguageBack = () => {
-    setCurrentScreen('welcome');
-  };
+        <Stack.Screen name="Gender">
+          {() => <GenderScreenWrapper />}
+        </Stack.Screen>
 
-  const handleGenderNext = () => {
-    setCurrentScreen('workouts');
-  };
+        <Stack.Screen name="Workouts">
+          {() => <WorkoutsScreenWrapper />}
+        </Stack.Screen>
 
-  const handleGenderBack = () => {
-    setCurrentScreen('language');
-  };
+        <Stack.Screen name="Discovery">
+          {() => <DiscoveryScreenWrapper />}
+        </Stack.Screen>
 
-  const handleWorkoutsNext = () => {
-    setCurrentScreen('discovery');
-  };
+        <Stack.Screen name="PersonalTrainer">
+          {() => <PersonalTrainerScreenWrapper />}
+        </Stack.Screen>
 
-  const handleWorkoutsBack = () => {
-    setCurrentScreen('gender');
-  };
+        <Stack.Screen name="Progress">
+          {() => <ProgressScreenWrapper />}
+        </Stack.Screen>
 
-  const handleDiscoveryNext = () => {
-    setCurrentScreen('personalTrainer');
-  };
+        <Stack.Screen name="Measurements">
+          {() => <MeasurementsScreenWrapper />}
+        </Stack.Screen>
 
-  const handleDiscoveryBack = () => {
-    setCurrentScreen('workouts');
-  };
+        <Stack.Screen name="BirthDate">
+          {() => <BirthDateScreenWrapper />}
+        </Stack.Screen>
 
-  const handlePersonalTrainerNext = () => {
-    setCurrentScreen('progress');
-  };
+        <Stack.Screen name="LiftingGoal">
+          {() => <LiftingGoalScreenWrapper />}
+        </Stack.Screen>
 
-  const handlePersonalTrainerBack = () => {
-    setCurrentScreen('discovery');
-  };
+        <Stack.Screen name="FormBarrier">
+          {() => <FormBarrierScreenWrapper />}
+        </Stack.Screen>
 
-  const handleProgressNext = () => {
-    setCurrentScreen('measurements');
-  };
+        <Stack.Screen name="Rating">
+          {() => <RatingScreenWrapper />}
+        </Stack.Screen>
 
-  const handleProgressBack = () => {
-    setCurrentScreen('personalTrainer');
-  };
+        <Stack.Screen name="ReferralCode">
+          {() => <ReferralCodeScreenWrapper />}
+        </Stack.Screen>
 
-  const handleMeasurementsNext = () => {
-    setCurrentScreen('birthDate');
-  };
+        <Stack.Screen name="AllDone">
+          {() => <AllDoneScreenWrapper />}
+        </Stack.Screen>
 
-  const handleMeasurementsBack = () => {
-    setCurrentScreen('progress');
-  };
+        <Stack.Screen name="NotificationPermission">
+          {() => <NotificationPermissionScreenWrapper />}
+        </Stack.Screen>
 
-  const handleBirthDateNext = () => {
-    setCurrentScreen('liftingGoal');
-  };
+        <Stack.Screen name="SetupLoading">
+          {() => <SetupLoadingScreenWrapper />}
+        </Stack.Screen>
 
-  const handleBirthDateBack = () => {
-    setCurrentScreen('measurements');
-  };
+        <Stack.Screen name="FreeTrial">
+          {() => <FreeTrialScreenWrapper />}
+        </Stack.Screen>
 
-  const handleLiftingGoalNext = () => {
-    setCurrentScreen('formBarrier');
-  };
+        <Stack.Screen name="NotificationReminder">
+          {() => <NotificationReminderScreenWrapper />}
+        </Stack.Screen>
 
-  const handleLiftingGoalBack = () => {
-    setCurrentScreen('birthDate');
-  };
+        <Stack.Screen name="SubscriptionSelection">
+          {() => <SubscriptionSelectionScreenWrapper />}
+        </Stack.Screen>
 
-  const handleFormBarrierNext = () => {
-    setCurrentScreen('rating');
-  };
+        <Stack.Screen name="CreateAccount">
+          {() => <CreateAccountScreenWrapper />}
+        </Stack.Screen>
 
-  const handleFormBarrierBack = () => {
-    setCurrentScreen('liftingGoal');
-  };
-
-  const handleRatingNext = () => {
-    setCurrentScreen('referralCode');
-  };
-
-  const handleRatingBack = () => {
-    setCurrentScreen('formBarrier');
-  };
-
-  const handleReferralCodeNext = () => {
-    setCurrentScreen('allDone');
-  };
-
-  const handleReferralCodeBack = () => {
-    setCurrentScreen('rating');
-  };
-
-  const handleAllDoneNext = () => {
-    setCurrentScreen('notificationPermission');
-  };
-
-  const handleAllDoneBack = () => {
-    setCurrentScreen('referralCode');
-  };
-
-  const handleNotificationPermissionNext = () => {
-    setCurrentScreen('setupLoading');
-  };
-
-  const handleNotificationPermissionBack = () => {
-    setCurrentScreen('allDone');
-  };
-
-  const handleSetupLoadingNext = () => {
-    setCurrentScreen('freeTrial');
-  };
-
-  const handleSetupLoadingBack = () => {
-    setCurrentScreen('notificationPermission');
-  };
-
-  const handleFreeTrialNext = () => {
-    setCurrentScreen('notificationReminder');
-  };
-
-  const handleNotificationReminderNext = () => {
-    setCurrentScreen('subscriptionSelection');
-  };
-
-  const handleNotificationReminderBack = () => {
-    setCurrentScreen('freeTrial');
-  };
-
-  const handleSubscriptionSelectionNext = () => {
-    setCurrentScreen('createAccount');
-  };
-
-  const handleSubscriptionSelectionBack = () => {
-    setCurrentScreen('notificationReminder');
-  };
-
-  const handleCreateAccountNext = () => {
-    setCurrentScreen('cameraPermission');
-  };
-
-  const handleCreateAccountBack = () => {
-    setCurrentScreen('welcome');
-  };
-
-  const handleCameraPermissionNext = () => {
-    onComplete();
-  };
-
-  switch (currentScreen) {
-    case 'loading':
-      return <LoadingScreen onLoadComplete={handleLoadComplete} />;
-    
-    case 'welcome':
-      return (
-        <WelcomeScreen 
-          onGetStarted={handleGetStarted}
-          onSignIn={onSignIn}
-        />
-      );
-    
-    case 'language':
-      return (
-        <LanguageScreen
-          onNext={handleLanguageNext}
-          onBack={handleLanguageBack}
-        />
-      );
-    
-    case 'gender':
-      return (
-        <GenderScreen
-          onNext={handleGenderNext}
-          onBack={handleGenderBack}
-        />
-      );
-
-    case 'workouts':
-      return (
-        <WorkoutsScreen
-          onNext={handleWorkoutsNext}
-          onBack={handleWorkoutsBack}
-        />
-      );
-
-    case 'discovery':
-      return (
-        <DiscoveryScreen
-          onNext={handleDiscoveryNext}
-          onBack={handleDiscoveryBack}
-        />
-      );
-
-    case 'personalTrainer':
-      return (
-        <PersonalTrainerScreen
-          onNext={handlePersonalTrainerNext}
-          onBack={handlePersonalTrainerBack}
-        />
-      );
-
-    case 'progress':
-      return (
-        <ProgressScreen
-          onNext={handleProgressNext}
-          onBack={handleProgressBack}
-        />
-      );
-
-    case 'measurements':
-      return (
-        <MeasurementsScreen
-          onNext={handleMeasurementsNext}
-          onBack={handleMeasurementsBack}
-        />
-      );
-
-    case 'birthDate':
-      return (
-        <BirthDateScreen
-          onNext={handleBirthDateNext}
-          onBack={handleBirthDateBack}
-        />
-      );
-
-    case 'liftingGoal':
-      return (
-        <LiftingGoalScreen
-          onNext={handleLiftingGoalNext}
-          onBack={handleLiftingGoalBack}
-        />
-      );
-
-    case 'formBarrier':
-      return (
-        <FormBarrierScreen
-          onNext={handleFormBarrierNext}
-          onBack={handleFormBarrierBack}
-        />
-      );
-
-    case 'rating':
-      return (
-        <RatingScreen
-          onNext={handleRatingNext}
-          onBack={handleRatingBack}
-        />
-      );
-
-    case 'referralCode':
-      return (
-        <ReferralCodeScreen
-          onNext={handleReferralCodeNext}
-          onBack={handleReferralCodeBack}
-        />
-      );
-
-    case 'allDone':
-      return (
-        <AllDoneScreen
-          onNext={handleAllDoneNext}
-          onBack={handleAllDoneBack}
-        />
-      );
-
-    case 'notificationPermission':
-      return (
-        <NotificationPermissionScreen
-          onNext={handleNotificationPermissionNext}
-          onBack={handleNotificationPermissionBack}
-        />
-      );
-
-    case 'setupLoading':
-      return (
-        <SetupLoadingScreen
-          onNext={handleSetupLoadingNext}
-          onBack={handleSetupLoadingBack}
-        />
-      );
-
-    case 'freeTrial':
-      return (
-        <FreeTrialScreen
-          onNext={handleFreeTrialNext}
-        />
-      );
-
-    case 'notificationReminder':
-      return (
-        <NotificationReminderScreen
-          onNext={handleNotificationReminderNext}
-          onBack={handleNotificationReminderBack}
-        />
-      );
-
-    case 'subscriptionSelection':
-      return (
-        <SubscriptionSelectionScreen
-          onNext={handleSubscriptionSelectionNext}
-          onBack={handleSubscriptionSelectionBack}
-        />
-      );
-
-    case 'createAccount':
-      return (
-        <CreateAccountScreen
-          onNext={handleCreateAccountNext}
-        />
-      );
-
-    case 'cameraPermission':
-      return (
-        <CameraPermissionScreen
-          onNext={handleCameraPermissionNext}
-        />
-      );
-
-    default:
-      return <LoadingScreen onLoadComplete={handleLoadComplete} />;
-  }
+        <Stack.Screen name="CameraPermission">
+          {() => <CameraPermissionScreenWrapper onComplete={onComplete} />}
+        </Stack.Screen>
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
 } 

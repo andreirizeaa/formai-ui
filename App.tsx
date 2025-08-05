@@ -1,17 +1,43 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
+import { Asset } from 'expo-asset';
 import { OnboardingProvider } from './src/context/OnboardingContext';
 import { LanguageProvider } from './src/context/LanguageContext';
+import { LoadingLiftsProvider } from './src/context/LoadingLiftsContext';
+import { LiftDataProvider } from './src/context/LiftDataContext';
+import { UserDetailsProvider } from './src/context/UserDetailsContext';
 import { OnboardingNavigator } from './src/navigation/OnboardingNavigator';
 import { MainAppLayout } from './src/components/layout/MainAppLayout';
 
 export default function App() {
-  const [showOnboarding, setShowOnboarding] = useState(true); // Show onboarding first
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+
+  useEffect(() => {
+    async function preloadAssets() {
+      try {
+        await Asset.loadAsync([
+          require('./assets/recording-tip.jpg'),
+          require('./assets/refer-friends.jpg'),
+          require('./assets/refer-friends-group.png'),
+          require('./assets/formai-light-icon.png'),
+          require('./assets/formai-dark-icon.png'),
+          require('./assets/formai-ios-icon.png'),
+        ]);
+      } catch (error) {
+        console.warn('Error preloading assets:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    preloadAssets();
+  }, []);
 
   const handleOnboardingComplete = () => {
     setShowOnboarding(false);
@@ -22,6 +48,17 @@ export default function App() {
     console.log('Navigate to sign in screen');
     // TODO: Implement sign in navigation
   };
+
+  if (isLoading) {
+    return (
+      <SafeAreaProvider>
+        <View style={styles.container}>
+          <Text style={styles.text}>Loading...</Text>
+        </View>
+        <StatusBar style={isDark ? 'light' : 'dark'} />
+      </SafeAreaProvider>
+    );
+  }
 
   if (showOnboarding) {
     return (
@@ -43,7 +80,13 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <LanguageProvider>
-        <MainAppLayout />
+        <UserDetailsProvider>
+          <LoadingLiftsProvider>
+            <LiftDataProvider>
+              <MainAppLayout />
+            </LiftDataProvider>
+          </LoadingLiftsProvider>
+        </UserDetailsProvider>
         <StatusBar style={isDark ? 'light' : 'dark'} />
       </LanguageProvider>
     </SafeAreaProvider>

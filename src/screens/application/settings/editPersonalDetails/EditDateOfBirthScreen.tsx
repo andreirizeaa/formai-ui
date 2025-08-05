@@ -21,6 +21,26 @@ export function EditDateOfBirthScreen({ onBack, currentValue, onSave }: EditDate
   // Parse current value to determine initial state
   React.useEffect(() => {
     if (currentValue) {
+      // First try to parse DD-MM-YYYY format
+      const ddMmYyyyMatch = currentValue.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+      if (ddMmYyyyMatch) {
+        const [, day, month, year] = ddMmYyyyMatch;
+        setSelectedDay(parseInt(day));
+        setSelectedMonth(parseInt(month));
+        setSelectedYear(parseInt(year));
+        return;
+      }
+
+      // Try to parse YYYY-MM-DD format (for backward compatibility)
+      const isoDateMatch = currentValue.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (isoDateMatch) {
+        const [, year, month, day] = isoDateMatch;
+        setSelectedYear(parseInt(year));
+        setSelectedMonth(parseInt(month));
+        setSelectedDay(parseInt(day));
+        return;
+      }
+
       // Parse date from format like "July 15, 1998" or "15/07/1998"
       const dateMatch = currentValue.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
       if (dateMatch) {
@@ -102,9 +122,9 @@ export function EditDateOfBirthScreen({ onBack, currentValue, onSave }: EditDate
   };
 
   const handleSave = () => {
-    hapticFeedback.selection();
-    const monthName = months[selectedMonth - 1]; // Use the translated month name
-    const formattedDate = `${monthName} ${selectedDay}, ${selectedYear}`;
+    hapticFeedback.success();
+    // Return the date in DD-MM-YYYY format
+    const formattedDate = `${String(selectedDay).padStart(2, '0')}-${String(selectedMonth).padStart(2, '0')}-${selectedYear}`;
     onSave(formattedDate);
   };
 

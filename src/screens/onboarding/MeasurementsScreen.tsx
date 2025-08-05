@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, Platform, TouchableOpacity, Switch } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Platform, TouchableOpacity } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { OnboardingLayout } from '../../components/onboarding/OnboardingLayout';
@@ -22,27 +22,12 @@ export function MeasurementsScreen({ onNext, onBack }: MeasurementsScreenProps) 
   // Set default values if not already set
   React.useEffect(() => {
     if (!preferences.height) {
-      updatePreference('height', 170); // Default to 170cm
+      updatePreference('height', isMetric ? 170 : 67 * 2.54); // Default to 170cm or 67 inches converted to cm
     }
     if (!preferences.weight) {
-      updatePreference('weight', 60); // Default to 60kg
+      updatePreference('weight', isMetric ? 60 : 130 * 0.453592); // Default to 60kg or 130 lbs converted to kg
     }
-  }, []);
-
-  const handleUnitSystemChange = (value: boolean) => {
-    hapticFeedback.selection();
-    const system = value ? 'metric' : 'imperial';
-    updatePreference('unitSystem', system);
-    
-    // Set appropriate default values for the new system
-    if (system === 'metric') {
-      updatePreference('height', 170); // 170cm
-      updatePreference('weight', 60);  // 60kg
-    } else {
-      updatePreference('height', 67 * 2.54); // 67 inches converted to cm
-      updatePreference('weight', 130 * 0.453592); // 130 lbs converted to kg
-    }
-  };
+  }, [isMetric]);
 
   const handleHeightSelect = (height: number) => {
     updatePreference('height', isMetric ? height : height * 2.54); // Convert to cm if imperial
@@ -70,6 +55,7 @@ export function MeasurementsScreen({ onNext, onBack }: MeasurementsScreenProps) 
 
   const handleNext = () => {
     if (preferences.height && preferences.weight) {
+      hapticFeedback.selection();
       onNext();
     }
   };
@@ -105,13 +91,10 @@ export function MeasurementsScreen({ onNext, onBack }: MeasurementsScreenProps) 
     <OnboardingLayout
       title={i18n.t('measurements.title')}
       subtitle={i18n.t('measurements.subtitle')}
-      currentStep={7}
-      totalSteps={12}
+      currentStep={8}
+      totalSteps={13}
       onBack={onBack}
-      onNext={() => {
-        hapticFeedback.selection();
-        handleNext();
-      }}
+      onNext={handleNext}
       nextTitle={i18n.t('next')}
       nextDisabled={!preferences.height || !preferences.weight}
     >
@@ -123,27 +106,6 @@ export function MeasurementsScreen({ onNext, onBack }: MeasurementsScreenProps) 
         alwaysBounceVertical={false}
       >
         <View style={styles.mainContent}>
-          {/* Unit System Toggle */}
-          <View style={styles.unitToggleContainer}>
-            <Text style={[styles.unitLabel, { color: textColor }]}>
-              {i18n.t('measurements.imperial')}
-            </Text>
-            <Switch
-              value={isMetric}
-              onValueChange={handleUnitSystemChange}
-              trackColor={{ 
-                false: isDark ? '#39393D' : '#767577', 
-                true: '#000000' 
-              }}
-              thumbColor={isDark ? '#f4f3f4' : '#f4f3f4'}
-              ios_backgroundColor={isDark ? '#39393D' : '#767577'}
-              style={styles.switch}
-            />
-            <Text style={[styles.unitLabel, { color: textColor }]}>
-              {i18n.t('measurements.metric')}
-            </Text>
-          </View>
-
           {/* Pickers Row */}
           <View style={styles.pickersRow}>
             {/* Height Picker */}
@@ -259,20 +221,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 40,
-  },
-  unitToggleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 16,
-  },
-  unitLabel: {
-    fontSize: 28,
-    fontWeight: '600',
-  },
-  switch: {
-    transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }],
   },
   pickersRow: {
     flexDirection: 'row',
@@ -307,11 +255,6 @@ const styles = StyleSheet.create({
   imperialPickerWrapper: {
     flex: 1,
     alignItems: 'center',
-  },
-  imperialPickerLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 15,
   },
   imperialPicker: {
     height: Platform.OS === 'ios' ? 280 : 80,

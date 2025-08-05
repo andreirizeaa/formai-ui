@@ -18,7 +18,7 @@ interface TabIconProps {
   size?: number;
 }
 
-function TabIcon({ name, isActive, size = 32 }: TabIconProps) {
+function TabIcon({ name, isActive, size = 26 }: TabIconProps) {
   const color = isActive ? '#000000' : '#8E8E93';
   
   const icons = {
@@ -73,7 +73,7 @@ export function BottomNavigationBar({
   onAddPress 
 }: BottomNavigationBarProps) {
   const insets = useSafeAreaInsets();
-  const { currentLanguage } = useLanguage(); // This will trigger re-render when language changes
+  const { currentLanguage } = useLanguage(); // Add this to listen to language changes
 
   return (
     <View style={styles.container}>
@@ -148,7 +148,7 @@ export function BottomNavigationBar({
           }}
           activeOpacity={0.7}
         >
-          <Svg width={32} height={32} viewBox="0 0 24 24" fill="none">
+          <Svg width={26} height={26} viewBox="0 0 24 24" fill="none">
             <Path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -173,7 +173,6 @@ const styles = StyleSheet.create({
   },
   separator: {
     height: 0.5,
-    backgroundColor: '#C6C6C8',
     marginHorizontal: 16,
   },
   navigationBar: {
@@ -192,7 +191,7 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.1,
     shadowRadius: 8,
-    elevation: 8,
+    elevation: 4,
   },
   tabsContainer: {
     flexDirection: 'row',

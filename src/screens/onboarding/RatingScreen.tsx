@@ -73,7 +73,7 @@ export function RatingScreen({ onNext, onBack }: RatingScreenProps) {
     <OnboardingLayout
       title={i18n.t('rating.title')}
       subtitle={i18n.t('rating.subtitle')}
-      currentStep={11}
+      currentStep={12}
       totalSteps={13}
       onBack={onBack}
       onNext={() => {}}

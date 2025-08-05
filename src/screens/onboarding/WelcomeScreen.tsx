@@ -15,7 +15,7 @@ export function WelcomeScreen({ onGetStarted, onSignIn }: WelcomeScreenProps) {
   const isDark = colorScheme === 'dark';
 
   const handleGetStarted = () => {
-    hapticFeedback.next();
+    hapticFeedback.selection();
     onGetStarted();
   };
 
