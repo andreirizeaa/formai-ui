@@ -167,6 +167,11 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
     setCurrentCardIndex(newIndex);
   };
 
+  const handlePaginationDotPress = (index: number) => {
+    hapticFeedback.selection();
+    setCurrentCardIndex(index);
+  };
+
   const accuracyCardGestureHandler = useAnimatedGestureHandler({
     onStart: (_, context: any) => {
       context.startX = translateX.value;
@@ -318,12 +323,14 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
           {/* Pagination Dots */}
           <View style={styles.paginationContainer}>
             {cardData.map((_, index) => (
-              <View
+              <TouchableOpacity
                 key={index}
                 style={[
                   styles.paginationDot,
                   index === currentCardIndex ? styles.paginationDotActive : styles.paginationDotInactive
                 ]}
+                onPress={() => handlePaginationDotPress(index)}
+                activeOpacity={0.7}
               />
             ))}
           </View>
