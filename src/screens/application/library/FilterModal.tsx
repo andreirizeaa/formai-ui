@@ -94,13 +94,13 @@ export function FilterModal({
           <View style={styles.header}>
             <Text style={styles.headerTitle}>{title}</Text>
             <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
-              <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+              <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
                 <Path
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   d="M6 18L18 6M6 6l12 12"
-                  stroke="#8E8E93"
-                  strokeWidth={1.5}
+                  stroke="#000000"
+                  strokeWidth={2}
                 />
               </Svg>
             </TouchableOpacity>
@@ -246,12 +246,18 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   closeButton: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: 'rgba(0, 0, 0, 0.1)',
-    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#E5E5EA',
+    backgroundColor: 'transparent',
     justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1,
   },
   content: {
     flex: 1,
