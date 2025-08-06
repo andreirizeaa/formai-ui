@@ -138,10 +138,7 @@ export function SwipeableLineGraphCard({ cardData, onTriggerAddOptions, hasNoLif
           <View style={styles.performanceCardContent}>
             <View style={styles.performanceCardHeader}>
               <Text style={styles.performanceCardLabel}>
-                No Lifts Yet
-              </Text>
-              <Text style={styles.performanceCardSubtitle}>
-                Start recording your workouts to see your performance metrics
+                No lifts found
               </Text>
             </View>
           </View>

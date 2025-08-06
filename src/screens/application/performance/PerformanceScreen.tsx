@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, Platform, ScrollView, TouchableOpacity, Modal } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { SwipeableLineGraphCard } from '../../../components/ui/SwipeableLineGraphCard';
+import { FilterModal } from '../library/FilterModal';
 import { useLiftData } from '../../../context/LiftDataContext';
 import { hapticFeedback } from '../../../utils/haptic';
 import Svg, { Path } from 'react-native-svg';
@@ -18,7 +19,9 @@ interface DateRange {
 export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProps) {
   const { liftData } = useLiftData();
   const [isDateRangeModalVisible, setIsDateRangeModalVisible] = useState(false);
+  const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
   const [dateRange, setDateRange] = useState<DateRange>({ from: null, to: null });
+  const [selectedMovements, setSelectedMovements] = useState<string[]>([]);
   
   // Initialize date range with current data range
   React.useEffect(() => {
@@ -209,17 +212,42 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
       });
     };
 
-    return `Data from ${formatDate(dateRange.from)} - ${formatDate(dateRange.to)}`;
+    return `${formatDate(dateRange.from)} - ${formatDate(dateRange.to)}`;
   }, [dateRange]);
+
+  // Get filter pill text based on selected movements
+  const filterPillText = useMemo(() => {
+    if (selectedMovements.length === 0) {
+      return 'All lifts';
+    } else if (selectedMovements.length === 1) {
+      return '1 Lift';
+    } else {
+      return `${selectedMovements.length} Lifts`;
+    }
+  }, [selectedMovements]);
 
   const handleDateRangePress = () => {
     hapticFeedback.selection();
     setIsDateRangeModalVisible(true);
   };
 
+  const handleFilterPress = () => {
+    hapticFeedback.selection();
+    setIsFilterModalVisible(true);
+  };
+
   const handleCloseModal = () => {
     hapticFeedback.selection();
     setIsDateRangeModalVisible(false);
+  };
+
+  const handleCloseFilterModal = () => {
+    hapticFeedback.selection();
+    setIsFilterModalVisible(false);
+  };
+
+  const handleFilterSelect = (movements: string[]) => {
+    setSelectedMovements(movements);
   };
 
   const handleResetDateRange = () => {
@@ -313,31 +341,62 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
         <View style={styles.content}>
           <Text style={styles.title}>Performance</Text>
           
-          {/* Date Range Selector */}
-          <TouchableOpacity 
-            style={styles.dateRangeContainer}
-            onPress={handleDateRangePress}
-            activeOpacity={0.7}
-          >
-            <View style={styles.dateRangeContent}>
-              <Text style={styles.dateRangeText}>{dateRangeText}</Text>
-              <View style={styles.editIconContainer}>
-                <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+          {/* Date Range and Filter Pills */}
+          <View style={styles.pillsContainer}>
+            <TouchableOpacity 
+              style={[styles.pill, styles.dateRangePill]}
+              onPress={handleDateRangePress}
+              activeOpacity={0.7}
+            >
+              <View style={styles.pillContent}>
+                <Text style={styles.pillText}>{dateRangeText}</Text>
+                <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
                   <Path
                     d="M21.731 2.269a2.625 2.625 0 0 0-3.712 0l-1.157 1.157 3.712 3.712 1.157-1.157a2.625 2.625 0 0 0 0-3.712ZM19.513 8.199l-3.712-3.712-12.15 12.15a5.25 5.25 0 0 0-1.32 2.214l-.8 2.685a.75.75 0 0 0 .933.933l2.685-.8a5.25 5.25 0 0 0 2.214-1.32L19.513 8.2Z"
                     fill="#000000"
                   />
                 </Svg>
               </View>
-            </View>
-          </TouchableOpacity>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={[styles.pill, styles.filterPill]}
+              onPress={handleFilterPress}
+              activeOpacity={0.7}
+            >
+              <View style={styles.pillContent}>
+                <Text style={styles.pillText}>{filterPillText}</Text>
+                <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
+                  <Path
+                    d="M21.731 2.269a2.625 2.625 0 0 0-3.712 0l-1.157 1.157 3.712 3.712 1.157-1.157a2.625 2.625 0 0 0 0-3.712ZM19.513 8.199l-3.712-3.712-12.15 12.15a5.25 5.25 0 0 0-1.32 2.214l-.8 2.685a.75.75 0 0 0 .933.933l2.685-.8a5.25 5.25 0 0 0 2.214-1.32L19.513 8.2Z"
+                    fill="#000000"
+                  />
+                </Svg>
+              </View>
+            </TouchableOpacity>
+          </View>
           
           {/* Performance Cards */}
-          <SwipeableLineGraphCard 
-            cardData={cardData}
-            onTriggerAddOptions={onTriggerAddOptions}
-            hasNoLifts={hasNoLifts}
-          />
+          {hasNoLifts ? (
+            <TouchableOpacity 
+              style={styles.performanceCard}
+              activeOpacity={0.7}
+            >
+              <View style={styles.performanceCardContent}>
+                <View style={styles.performanceCardHeader}>
+                  <Text style={styles.performanceCardLabel}>
+                    No lifts found
+                  </Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+          ) : (
+            <SwipeableLineGraphCard 
+              cardData={cardData}
+              onTriggerAddOptions={onTriggerAddOptions}
+              hasNoLifts={hasNoLifts}
+            />
+          )}
 
           {/* Accuracy Over Time Cards */}
           {!hasNoLifts && (
@@ -558,6 +617,15 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
           </TouchableOpacity>
         </TouchableOpacity>
       </Modal>
+
+      {/* Filter Modal */}
+      <FilterModal
+        isVisible={isFilterModalVisible}
+        onClose={handleCloseFilterModal}
+        onFilterSelect={handleFilterSelect}
+        currentFilters={selectedMovements}
+        title="Filter lifts"
+      />
     </>
   );
 }
@@ -579,30 +647,45 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
     marginBottom: 12,
   },
-  dateRangeContainer: {
-    backgroundColor: 'transparent',
-    borderBottomWidth: 1,
-    borderBottomColor: '#000000',
-    paddingVertical: 4,
+  pillsContainer: {
+    flexDirection: 'row',
+    gap: 12,
     marginBottom: 24,
     width: '100%',
   },
-  dateRangeContent: {
+  pill: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  dateRangePill: {
+    flex: 0.75,
+  },
+  filterPill: {
+    flex: 0.25,
+  },
+  pillContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    width: '100%',
   },
-  dateRangeText: {
+  pillText: {
     fontSize: 14,
     fontWeight: '500',
     color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
-  },
-  editIconContainer: {
-    width: 24,
-    height: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   overlay: {
     flex: 1,
@@ -733,5 +816,33 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
+  performanceCard: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+    borderRadius: 20,
+    padding: 20,
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+    marginBottom: 24,
+  },
+  performanceCardContent: {
+    alignItems: 'center',
+  },
+  performanceCardHeader: {
+  },
+  performanceCardLabel: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#000000',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
+    textAlign: 'center',
   },
 }); 
