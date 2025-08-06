@@ -5,7 +5,7 @@ import { SwipeableLineGraphCard } from '../../../components/ui/SwipeableLineGrap
 import { FilterModal } from '../library/FilterModal';
 import { useLiftData } from '../../../context/LiftDataContext';
 import { hapticFeedback } from '../../../utils/haptic';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Path, Circle } from 'react-native-svg';
 
 interface PerformanceScreenProps {
   onTriggerAddOptions?: () => void;
@@ -398,6 +398,59 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
             />
           )}
 
+          {/* Performance Summary Card */}
+          {!hasNoLifts && (
+            <View style={styles.performanceSummaryCard}>
+              <View style={styles.performanceSummaryCardContent}>
+                <View style={styles.performanceSummaryCardLeftSection}>
+                  <Text style={styles.performanceSummaryCardNumber}>
+                    {Math.round(filteredLiftData.reduce((sum, lift) => sum + lift.analysis.accuracy, 0) / filteredLiftData.length)}%
+                  </Text>
+                  <Text style={styles.performanceSummaryCardLabel}>Average accuracy</Text>
+                </View>
+                <View style={styles.performanceSummaryCardRightSection}>
+                  <Svg width={120} height={120} viewBox="0 0 120 120">
+                    {/* Background circle */}
+                    <Circle
+                      cx="60"
+                      cy="60"
+                      r="36"
+                      stroke="#E5E5E5"
+                      strokeWidth="8"
+                      fill="none"
+                    />
+                    {/* Progress circle - percentage filled */}
+                    <Circle
+                      cx="60"
+                      cy="60"
+                      r="36"
+                      stroke={
+                        (filteredLiftData.reduce((sum, lift) => sum + lift.analysis.accuracy, 0) / filteredLiftData.length) > 80 
+                          ? "#00a63e" 
+                          : (filteredLiftData.reduce((sum, lift) => sum + lift.analysis.accuracy, 0) / filteredLiftData.length) < 50 
+                            ? "#fb2c36" 
+                            : "#fe9a00"
+                      }
+                      strokeWidth="8"
+                      fill="none"
+                      strokeDasharray={`${2 * Math.PI * 36}`}
+                      strokeDashoffset={`${2 * Math.PI * 36 * (1 - (filteredLiftData.reduce((sum, lift) => sum + lift.analysis.accuracy, 0) / filteredLiftData.length) / 100)}`}
+                      strokeLinecap="round"
+                      transform="rotate(-90 60 60)"
+                    />
+                    {/* Inner circle */}
+                    <Circle
+                      cx="60"
+                      cy="60"
+                      r="28"
+                      fill="#FFFFFF"
+                    />
+                  </Svg>
+                </View>
+              </View>
+            </View>
+          )}
+
           {/* Accuracy Over Time Cards */}
           {!hasNoLifts && (
             <SwipeableLineGraphCard 
@@ -634,6 +687,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingTop: 20,
+    marginBottom: -24,
   },
   content: {
     flex: 1,
@@ -645,7 +699,7 @@ const styles = StyleSheet.create({
     color: '#000000',
     textAlign: 'left',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
-    marginBottom: 12,
+    marginBottom: 24,
   },
   pillsContainer: {
     flexDirection: 'row',
@@ -844,5 +898,49 @@ const styles = StyleSheet.create({
     color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
     textAlign: 'center',
+  },
+  performanceSummaryCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 16,
+    paddingBottom: 0,
+    paddingTop: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+    marginBottom: 24,
+    width: '100%',
+  },
+  performanceSummaryCardContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+  },
+  performanceSummaryCardLeftSection: {
+    alignItems: 'flex-start',
+    paddingLeft: 8,
+  },
+  performanceSummaryCardNumber: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: '#000000',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
+  },
+  performanceSummaryCardLabel: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: '#8E8E93',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
+  performanceSummaryCardRightSection: {
+    alignItems: 'center',
   },
 }); 
