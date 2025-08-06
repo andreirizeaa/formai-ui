@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, Platform, TouchableOpacity, Dimensions } from 'react-native';
 import { PanGestureHandler } from 'react-native-gesture-handler';
 import Animated, { 
@@ -27,22 +27,141 @@ interface CardData {
 }
 
 interface SwipeableLineGraphCardProps {
-  cardData: CardData[];
+  cardData: any[]; // Raw lift data
   onTriggerAddOptions?: () => void;
   hasNoLifts?: boolean;
+  chartType?: 'accuracyPerWeight' | 'accuracyOverTime';
 }
 
-export function SwipeableLineGraphCard({ cardData, onTriggerAddOptions, hasNoLifts = false }: SwipeableLineGraphCardProps) {
+export function SwipeableLineGraphCard({ cardData, onTriggerAddOptions, hasNoLifts = false, chartType = 'accuracyPerWeight' }: SwipeableLineGraphCardProps) {
   const { width } = Dimensions.get('window');
   
   // Current card index state
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const translateX = useSharedValue(0);
 
+  // Calculate chart data based on raw lift data
+  const processedCardData = useMemo(() => {
+    if (!cardData || cardData.length === 0) return [];
+
+    // Get all unique lift types that have data
+    const uniqueLiftTypes = [...new Set(cardData.map(lift => lift.liftType))];
+
+    if (chartType === 'accuracyPerWeight') {
+      // Generate card data for accuracy per weight
+      return uniqueLiftTypes.map((liftType) => {
+        // Get all lifts of this type
+        const liftsOfType = cardData.filter(lift => lift.liftType === liftType);
+        
+        // Sort by weight (lowest to highest)
+        const sortedLifts = liftsOfType.sort((a, b) => a.weightValue - b.weightValue);
+        
+        // Create chart data
+        const chartData = {
+          labels: sortedLifts.length > 6 
+            ? sortedLifts.map((lift, index) => {
+                if (index === 0 || index === sortedLifts.length - 1) {
+                  return `${lift.weightValue}kg`;
+                }
+                return '';
+              })
+            : sortedLifts.map(lift => `${lift.weightValue}kg`),
+          datasets: [
+            {
+              data: sortedLifts.map(lift => lift.analysis.accuracy),
+              color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+              strokeWidth: 2,
+            },
+          ],
+        };
+
+        return {
+          title: 'Accuracy per weight',
+          subtitle: liftType,
+          chartData
+        };
+      });
+    } else {
+      // Generate card data for accuracy over time
+      return uniqueLiftTypes.map((liftType) => {
+        // Get all lifts of this type
+        const liftsOfType = cardData.filter(lift => lift.liftType === liftType);
+        
+        // Group lifts by date and average accuracy for each date
+        const liftsByDate = liftsOfType.reduce((acc, lift) => {
+          const date = lift.liftDate;
+          if (!acc[date]) {
+            acc[date] = [];
+          }
+          acc[date].push(lift);
+          return acc;
+        }, {} as Record<string, typeof liftsOfType>);
+
+        // Calculate average accuracy for each date and sort by date
+        const averagedLifts = Object.entries(liftsByDate)
+          .map(([date, lifts]) => {
+            if (!Array.isArray(lifts) || lifts.length === 0) {
+              return { date, averageAccuracy: 0 }
+            }
+            return {
+              date,
+              averageAccuracy: (lifts as Array<{ analysis: { accuracy: number } }>).reduce(
+                (sum, lift) => sum + (typeof lift.analysis?.accuracy === 'number' ? lift.analysis.accuracy : 0),
+                0
+              ) / lifts.length
+            }
+          })
+          .sort((a, b) => {
+            // Parse DD-MM-YYYY format correctly
+            const parseDate = (dateStr: string) => {
+              const [day, month, year] = dateStr.split('-').map(Number);
+              return new Date(year, month - 1, day); // month is 0-indexed in Date constructor
+            };
+            return parseDate(a.date).getTime() - parseDate(b.date).getTime();
+          });
+        
+        // Format date for display
+        const formatDate = (dateString: string) => {
+          // Parse DD-MM-YYYY format correctly
+          const [day, month, year] = dateString.split('-').map(Number);
+          const date = new Date(year, month - 1, day); // month is 0-indexed in Date constructor
+          return date.toLocaleDateString('en-US', { 
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric'
+          });
+        };
+        
+        // Create chart data
+        const chartData = {
+          labels: averagedLifts.map((lift, index) => {
+            if (index === 0 || index === averagedLifts.length - 1) {
+              return formatDate(lift.date);
+            }
+            return '';
+          }),
+          datasets: [
+            {
+              data: averagedLifts.map(lift => lift.averageAccuracy),
+              color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+              strokeWidth: 2,
+            },
+          ],
+        };
+
+        return {
+          title: 'Accuracy over time',
+          subtitle: liftType,
+          chartData
+        };
+      });
+    }
+  }, [cardData, chartType]);
+
   // Reset shared values when component mounts or data changes
   useEffect(() => {
     translateX.value = 0;
-  }, [cardData]);
+  }, [processedCardData]);
 
   // Ensure cards are properly positioned on component mount
   useEffect(() => {
@@ -56,12 +175,12 @@ export function SwipeableLineGraphCard({ cardData, onTriggerAddOptions, hasNoLif
 
   // Reset current card index when card data changes
   useEffect(() => {
-    if (currentCardIndex >= cardData.length) {
+    if (currentCardIndex >= processedCardData.length) {
       setCurrentCardIndex(0);
     }
     // Reset shared value when card index changes
     translateX.value = withSpring(0);
-  }, [cardData.length, currentCardIndex]);
+  }, [processedCardData.length, currentCardIndex]);
 
   const handleCardSwipe = (direction: 'left' | 'right') => {
     hapticFeedback.selection();
@@ -70,7 +189,7 @@ export function SwipeableLineGraphCard({ cardData, onTriggerAddOptions, hasNoLif
       : currentCardIndex - 1; // Previous card
     
     // Prevent swiping beyond bounds
-    if (newIndex < 0 || newIndex >= cardData.length) {
+    if (newIndex < 0 || newIndex >= processedCardData.length) {
       hapticFeedback.error();
       return;
     }
@@ -157,21 +276,23 @@ export function SwipeableLineGraphCard({ cardData, onTriggerAddOptions, hasNoLif
                 <View style={styles.performanceCardContent}>
                   <View style={styles.performanceCardHeader}>
                     <Text style={styles.performanceCardLabel}>
-                      {cardData[currentCardIndex].title}
+                      {processedCardData[currentCardIndex]?.title || 'No data'}
                     </Text>
                     <Text style={styles.performanceCardSubtitle}>
-                      {cardData[currentCardIndex].subtitle}
+                      {processedCardData[currentCardIndex]?.subtitle || ''}
                     </Text>
                   </View>
                   
                   {/* Chart */}
-                  {cardData[currentCardIndex].chartData && cardData[currentCardIndex].chartData.datasets[0].data.length > 0 && (
+                  {processedCardData[currentCardIndex]?.chartData && processedCardData[currentCardIndex].chartData.datasets[0].data.length > 0 && (
                     <View style={styles.chartContainer}>
                       <LineChart
-                        data={cardData[currentCardIndex].chartData}
+                        data={processedCardData[currentCardIndex].chartData}
                         width={width - 80}
                         height={180}
                         chartConfig={{
+                          fillShadowGradientFrom: '#4f39f6',
+                          fillShadowGradientTo: '#ffffff',
                           backgroundColor: '#FFFFFF',
                           backgroundGradientFrom: '#FFFFFF',
                           backgroundGradientTo: '#FFFFFF',
@@ -209,7 +330,7 @@ export function SwipeableLineGraphCard({ cardData, onTriggerAddOptions, hasNoLif
           
           {/* Pagination Dots */}
           <View style={styles.paginationContainer}>
-            {cardData.map((_, index) => (
+            {processedCardData.map((_, index) => (
               <TouchableOpacity
                 key={index}
                 style={[
