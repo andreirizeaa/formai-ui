@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import { View, Text, StyleSheet, Platform } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { OnboardingLayout } from '../../components/onboarding/OnboardingLayout';
+import { AnimatedOptionButton } from '../../components/onboarding/AnimatedOptionButton';
 import { useOnboarding } from '../../context/OnboardingContext';
 import i18n from '../../utils/i18n';
 import { hapticFeedback } from '../../utils/haptic';
@@ -15,6 +16,19 @@ export function UnitsScreen({ onNext, onBack }: UnitsScreenProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const { preferences, updatePreference } = useOnboarding();
+
+  const unitOptions = [
+    { 
+      key: 'metric', 
+      label: i18n.t('units.metric'),
+      description: i18n.t('units.metricDescription')
+    },
+    { 
+      key: 'imperial', 
+      label: i18n.t('units.imperial'),
+      description: i18n.t('units.imperialDescription')
+    },
+  ] as const;
 
   const handleUnitSelect = (unitSystem: 'metric' | 'imperial') => {
     hapticFeedback.selection();
@@ -40,75 +54,42 @@ export function UnitsScreen({ onNext, onBack }: UnitsScreenProps) {
       nextDisabled={!preferences.unitSystem}
     >
       <View style={styles.container}>
-        <TouchableOpacity
-          style={[
-            styles.unitButton,
-            {
-              backgroundColor: preferences.unitSystem === 'metric'
-                ? '#000000'  // Black background when selected
-                : 'transparent',
-              borderColor: preferences.unitSystem === 'metric'
-                ? '#000000'  // Black border when selected
-                : (isDark ? '#2C2C2E' : '#E5E5EA'),
-            }
-          ]}
-          onPress={() => handleUnitSelect('metric')}
-          activeOpacity={0.7}
-        >
-          <View style={styles.unitContent}>
-            <Text 
-              style={[
-                styles.unitName,
+        {unitOptions.map((option, index) => (
+          <AnimatedOptionButton
+            key={option.key}
+            onPress={() => handleUnitSelect(option.key)}
+            isSelected={preferences.unitSystem === option.key}
+            isDark={isDark}
+            delay={index * 100}
+            style={styles.unitButton}
+          >
+            <View style={styles.unitContent}>
+              <Text 
+                style={[
+                  styles.unitName,
+                  { 
+                    color: preferences.unitSystem === option.key
+                      ? '#FFFFFF'  // White text when selected
+                      : (isDark ? '#FFFFFF' : '#000000'),
+                    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
+                  }
+                ]}
+              >
+                {option.label}
+              </Text>
+              <Text style={[
+                styles.unitDescription,
                 { 
-                  color: preferences.unitSystem === 'metric'
+                  color: preferences.unitSystem === option.key
                     ? '#FFFFFF'  // White text when selected
-                    : (isDark ? '#FFFFFF' : '#000000'),
-                  fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
+                    : '#9CA3AF',
                 }
-              ]}
-            >
-              {i18n.t('units.metric')}
-            </Text>
-            <Text style={styles.unitDescription}>
-              {i18n.t('units.metricDescription')}
-            </Text>
-          </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.unitButton,
-            {
-              backgroundColor: preferences.unitSystem === 'imperial'
-                ? '#000000'  // Black background when selected
-                : 'transparent',
-              borderColor: preferences.unitSystem === 'imperial'
-                ? '#000000'  // Black border when selected
-                : (isDark ? '#2C2C2E' : '#E5E5EA'),
-            }
-          ]}
-          onPress={() => handleUnitSelect('imperial')}
-          activeOpacity={0.7}
-        >
-          <View style={styles.unitContent}>
-            <Text 
-              style={[
-                styles.unitName,
-                { 
-                  color: preferences.unitSystem === 'imperial'
-                    ? '#FFFFFF'  // White text when selected
-                    : (isDark ? '#FFFFFF' : '#000000'),
-                  fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
-                }
-              ]}
-            >
-              {i18n.t('units.imperial')}
-            </Text>
-            <Text style={styles.unitDescription}>
-              {i18n.t('units.imperialDescription')}
-            </Text>
-          </View>
-        </TouchableOpacity>
+              ]}>
+                {option.description}
+              </Text>
+            </View>
+          </AnimatedOptionButton>
+        ))}
       </View>
     </OnboardingLayout>
   );
@@ -121,9 +102,6 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   unitButton: {
-    borderWidth: 1.5,
-    borderRadius: 16,
-    padding: 20,
     minHeight: 80,
     justifyContent: 'center',
   },
@@ -137,7 +115,6 @@ const styles = StyleSheet.create({
   },
   unitDescription: {
     fontSize: 14,
-    color: '#9CA3AF',
     textAlign: 'center',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },

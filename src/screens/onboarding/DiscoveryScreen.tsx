@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Platform, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Platform, Image } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { OnboardingLayout } from '../../components/onboarding/OnboardingLayout';
+import { AnimatedOptionButton } from '../../components/onboarding/AnimatedOptionButton';
 import { useOnboarding } from '../../context/OnboardingContext';
 import i18n from '../../utils/i18n';
 import { hapticFeedback } from '../../utils/haptic';
@@ -37,11 +38,11 @@ export function DiscoveryScreen({ onNext, onBack }: DiscoveryScreenProps) {
       label: i18n.t('discovery.google'), 
       icon: require('../../../assets/icons/google.png')
     },
-    {
-        key: 'other',
-        label: i18n.t('discovery.other'),
-        icon: undefined
-    }
+    { 
+      key: 'other', 
+      label: i18n.t('discovery.other'), 
+      icon: null
+    },
   ] as const;
 
   const handleDiscoverySelect = (source: 'instagram' | 'tiktok' | 'facebook' | 'google' | 'other') => {
@@ -79,33 +80,24 @@ export function DiscoveryScreen({ onNext, onBack }: DiscoveryScreenProps) {
         nestedScrollEnabled={true}
         fadingEdgeLength={Platform.OS === 'android' ? 50 : 0}
       >
-        {discoveryOptions.map((option) => (
-          <TouchableOpacity
+        {discoveryOptions.map((option, index) => (
+          <AnimatedOptionButton
             key={option.key}
-            style={[
-              styles.discoveryButton,
-              {
-                backgroundColor: preferences.discoverySource === option.key
-                  ? '#000000'  // Black background when selected
-                  : 'transparent',
-                borderColor: preferences.discoverySource === option.key
-                  ? '#000000'  // Black border when selected
-                  : (isDark ? '#2C2C2E' : '#E5E5EA'),
-              }
-            ]}
             onPress={() => handleDiscoverySelect(option.key)}
-            activeOpacity={0.7}
+            isSelected={preferences.discoverySource === option.key}
+            isDark={isDark}
+            delay={index * 100}
+            style={{ paddingVertical: 12 }}
           >
-            <View style={[
-              styles.discoveryContent,
-              option.key === 'other' && styles.discoveryContentCentered
-            ]}>
-              {option.icon && (
+            <View style={styles.discoveryContent}>
+              {option.icon ? (
                 <Image 
                   source={option.icon} 
                   style={styles.discoveryIconImage}
                   resizeMode="contain"
                 />
+              ) : (
+                <View style={styles.discoveryIconImage} />
               )}
               <Text 
                 style={[
@@ -121,7 +113,7 @@ export function DiscoveryScreen({ onNext, onBack }: DiscoveryScreenProps) {
                 {option.label}
               </Text>
             </View>
-          </TouchableOpacity>
+          </AnimatedOptionButton>
         ))}
       </ScrollView>
     </OnboardingLayout>
@@ -137,27 +129,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 12,
   },
-  discoveryButton: {
-    borderWidth: 1.5,
-    borderRadius: 16,
-    paddingVertical: 10,
-    paddingHorizontal: 24,
-  },
   discoveryContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-start',
     gap: 12,
   },
-  discoveryContentCentered: {
-    borderRadius: 16,
-    paddingVertical: 10,
-    paddingHorizontal: 24,
-    justifyContent: 'center',
-  },
   discoveryIconImage: {
-    width: 48,
-    height: 48,
+    width: 32,
+    height: 32,
   },
   discoveryLabel: {
     fontSize: 18,

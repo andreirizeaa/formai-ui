@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Platform } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { OnboardingLayout } from '../../components/onboarding/OnboardingLayout';
+import { AnimatedOptionButton } from '../../components/onboarding/AnimatedOptionButton';
 import { useOnboarding } from '../../context/OnboardingContext';
 import i18n from '../../utils/i18n';
 import { hapticFeedback } from '../../utils/haptic';
@@ -59,22 +60,13 @@ export function LiftingGoalScreen({ onNext, onBack }: LiftingGoalScreenProps) {
         nestedScrollEnabled={true}
         fadingEdgeLength={Platform.OS === 'android' ? 50 : 0}
       >
-        {liftingGoalOptions.map((option) => (
-          <TouchableOpacity
+        {liftingGoalOptions.map((option, index) => (
+          <AnimatedOptionButton
             key={option.key}
-            style={[
-              styles.liftingGoalButton,
-              {
-                backgroundColor: preferences.liftingGoal === option.key
-                  ? '#000000'  // Black background when selected
-                  : 'transparent',
-                borderColor: preferences.liftingGoal === option.key
-                  ? '#000000'  // Black border when selected
-                  : (isDark ? '#2C2C2E' : '#E5E5EA'),
-              }
-            ]}
             onPress={() => handleLiftingGoalSelect(option.key)}
-            activeOpacity={0.7}
+            isSelected={preferences.liftingGoal === option.key}
+            isDark={isDark}
+            delay={index * 100}
           >
             <View style={styles.liftingGoalContent}>
               <Text 
@@ -91,7 +83,7 @@ export function LiftingGoalScreen({ onNext, onBack }: LiftingGoalScreenProps) {
                 {option.label}
               </Text>
             </View>
-          </TouchableOpacity>
+          </AnimatedOptionButton>
         ))}
       </ScrollView>
     </OnboardingLayout>
@@ -107,12 +99,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center', // Center the buttons vertically when they fit
     paddingVertical: 20,
     gap: 12,
-  },
-  liftingGoalButton: {
-    borderWidth: 1.5,
-    borderRadius: 16,
-    paddingVertical: 20,
-    paddingHorizontal: 24,
   },
   liftingGoalContent: {
     alignItems: 'center',

@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Platform } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { OnboardingLayout } from '../../components/onboarding/OnboardingLayout';
+import { AnimatedOptionButton } from '../../components/onboarding/AnimatedOptionButton';
 import { useOnboarding } from '../../context/OnboardingContext';
 import i18n from '../../utils/i18n';
 import { hapticFeedback } from '../../utils/haptic';
@@ -56,22 +57,13 @@ export function GenderScreen({ onNext, onBack }: GenderScreenProps) {
         nestedScrollEnabled={true}
         fadingEdgeLength={Platform.OS === 'android' ? 50 : 0}
       >
-        {genderOptions.map((option) => (
-          <TouchableOpacity
+        {genderOptions.map((option, index) => (
+          <AnimatedOptionButton
             key={option.key}
-            style={[
-              styles.genderButton,
-              {
-                backgroundColor: preferences.gender === option.key
-                  ? '#000000'  // Black background when selected
-                  : 'transparent',
-                borderColor: preferences.gender === option.key
-                  ? '#000000'  // Black border when selected
-                  : (isDark ? '#2C2C2E' : '#E5E5EA'),
-              }
-            ]}
             onPress={() => handleGenderSelect(option.key)}
-            activeOpacity={0.7}
+            isSelected={preferences.gender === option.key}
+            isDark={isDark}
+            delay={index * 100}
           >
             <View style={styles.genderContent}>
               <Text 
@@ -88,7 +80,7 @@ export function GenderScreen({ onNext, onBack }: GenderScreenProps) {
                 {option.label}
               </Text>
             </View>
-          </TouchableOpacity>
+          </AnimatedOptionButton>
         ))}
       </ScrollView>
     </OnboardingLayout>
@@ -104,12 +96,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center', // Center the buttons vertically when they fit
     paddingVertical: 20,
     gap: 12,
-  },
-  genderButton: {
-    borderWidth: 1.5,
-    borderRadius: 16,
-    paddingVertical: 20,
-    paddingHorizontal: 24,
   },
   genderContent: {
     alignItems: 'center',
