@@ -5,6 +5,7 @@ import { SwipeableLineGraphCard } from '../../../components/ui/SwipeableLineGrap
 import { SwipeableSummaryCard } from '../../../components/ui/SwipeableSummaryCard';
 import { FilterModal } from '../library/FilterModal';
 import { useLiftData } from '../../../context/LiftDataContext';
+import { useUserDetails } from '../../../context/UserDetailsContext';
 import { hapticFeedback } from '../../../utils/haptic';
 import Svg, { Path, Circle } from 'react-native-svg';
 
@@ -19,6 +20,7 @@ interface DateRange {
 
 export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProps) {
   const { liftData } = useLiftData();
+  const { userDetails } = useUserDetails();
   const [isDateRangeModalVisible, setIsDateRangeModalVisible] = useState(false);
   const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
   const [dateRange, setDateRange] = useState<DateRange>({ from: null, to: null });
@@ -285,6 +287,7 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
               onTriggerAddOptions={onTriggerAddOptions}
               hasNoLifts={hasNoLifts}
               chartType="accuracyPerWeight"
+              unitPreference={userDetails.unitSystem}
             />
           )}
 
@@ -302,6 +305,7 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
               cardData={filteredLiftData}
               hasNoLifts={false}
               chartType="accuracyOverTime"
+              unitPreference={userDetails.unitSystem}
             />
           )}
         </View>
@@ -534,6 +538,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingTop: 20,
     marginBottom: -24,
+    
   },
   content: {
     flex: 1,

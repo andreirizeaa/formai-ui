@@ -10,6 +10,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { LineChart } from 'react-native-chart-kit';
 import { hapticFeedback } from '../../utils/haptic';
+import { formatWeightForDisplay } from '../../utils/unitConversions';
 
 interface ChartData {
   labels: string[];
@@ -31,9 +32,16 @@ interface SwipeableLineGraphCardProps {
   onTriggerAddOptions?: () => void;
   hasNoLifts?: boolean;
   chartType?: 'accuracyPerWeight' | 'accuracyOverTime';
+  unitPreference?: 'metric' | 'imperial';
 }
 
-export function SwipeableLineGraphCard({ cardData, onTriggerAddOptions, hasNoLifts = false, chartType = 'accuracyPerWeight' }: SwipeableLineGraphCardProps) {
+export function SwipeableLineGraphCard({ 
+  cardData, 
+  onTriggerAddOptions, 
+  hasNoLifts = false, 
+  chartType = 'accuracyPerWeight',
+  unitPreference = 'metric'
+}: SwipeableLineGraphCardProps) {
   const { width } = Dimensions.get('window');
   
   // Current card index state
@@ -61,11 +69,11 @@ export function SwipeableLineGraphCard({ cardData, onTriggerAddOptions, hasNoLif
           labels: sortedLifts.length > 6 
             ? sortedLifts.map((lift, index) => {
                 if (index === 0 || index === sortedLifts.length - 1) {
-                  return `${lift.weightValue}kg`;
+                  return formatWeightForDisplay(lift.weightValue, unitPreference);
                 }
                 return '';
               })
-            : sortedLifts.map(lift => `${lift.weightValue}kg`),
+            : sortedLifts.map(lift => formatWeightForDisplay(lift.weightValue, unitPreference)),
           datasets: [
             {
               data: sortedLifts.map(lift => lift.analysis.accuracy),
@@ -156,7 +164,7 @@ export function SwipeableLineGraphCard({ cardData, onTriggerAddOptions, hasNoLif
         };
       });
     }
-  }, [cardData, chartType]);
+  }, [cardData, chartType, unitPreference]);
 
   // Reset shared values when component mounts or data changes
   useEffect(() => {
