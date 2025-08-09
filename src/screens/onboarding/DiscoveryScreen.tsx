@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Platform, Image } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { OnboardingLayout } from '../../components/onboarding/OnboardingLayout';
@@ -16,6 +16,7 @@ export function DiscoveryScreen({ onNext, onBack }: DiscoveryScreenProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const { preferences, updatePreference } = useOnboarding();
+  const [imagesReady, setImagesReady] = useState(false);
 
   const discoveryOptions = [
     { 
@@ -44,6 +45,29 @@ export function DiscoveryScreen({ onNext, onBack }: DiscoveryScreenProps) {
       icon: null
     },
   ] as const;
+
+  // Preload all images
+  useEffect(() => {
+    const preloadImages = async () => {
+      try {
+        // For local assets in React Native, just resolve them
+        discoveryOptions
+          .filter(option => option.icon)
+          .forEach(option => {
+            Image.resolveAssetSource(option.icon);
+          });
+        
+        // Give time for images to be fully loaded and rendered
+        setTimeout(() => setImagesReady(true), 300);
+      } catch (error) {
+        console.warn('Error preloading images:', error);
+        // Fallback: start animation anyway after a delay
+        setTimeout(() => setImagesReady(true), 400);
+      }
+    };
+
+    preloadImages();
+  }, []);
 
   const handleDiscoverySelect = (source: 'instagram' | 'tiktok' | 'facebook' | 'google' | 'other') => {
     hapticFeedback.selection();
@@ -86,7 +110,7 @@ export function DiscoveryScreen({ onNext, onBack }: DiscoveryScreenProps) {
             onPress={() => handleDiscoverySelect(option.key)}
             isSelected={preferences.discoverySource === option.key}
             isDark={isDark}
-            delay={index * 100}
+            delay={imagesReady ? index * 100 : 0}
             style={{ paddingVertical: 12 }}
           >
             <View style={styles.discoveryContent}>

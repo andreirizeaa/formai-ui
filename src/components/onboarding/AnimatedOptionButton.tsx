@@ -27,10 +27,13 @@ export function AnimatedOptionButton({
   style,
   activeOpacity = 0.7
 }: AnimatedOptionButtonProps) {
-  const translateY = useSharedValue(100);
-  const opacity = useSharedValue(0);
+  const translateY = useSharedValue(delay === 0 ? 0 : 100);
+  const opacity = useSharedValue(delay === 0 ? 1 : 0);
 
   useEffect(() => {
+    // If delay is 0, don't animate - show immediately
+    if (delay === 0) return;
+    
     // Animate in with a staggered delay
     translateY.value = withDelay(
       delay,
@@ -48,7 +51,7 @@ export function AnimatedOptionButton({
         stiffness: 100,
       })
     );
-  }, []);
+  }, [delay]);
 
   const animatedStyle = useAnimatedStyle(() => {
     return {
