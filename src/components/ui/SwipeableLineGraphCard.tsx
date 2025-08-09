@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, Dimensions } from 'react-native';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, Dimensions, ScrollView, ViewStyle } from 'react-native';
 import { PanGestureHandler } from 'react-native-gesture-handler';
 import Animated, { 
   useSharedValue, 
@@ -47,6 +47,7 @@ export function SwipeableLineGraphCard({
   // Current card index state
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const translateX = useSharedValue(0);
+  const scrollViewRef = useRef<ScrollView>(null);
 
   // Calculate chart data based on raw lift data
   const processedCardData = useMemo(() => {
@@ -64,16 +65,9 @@ export function SwipeableLineGraphCard({
         // Sort by weight (lowest to highest)
         const sortedLifts = liftsOfType.sort((a, b) => a.weightValue - b.weightValue);
         
-        // Create chart data
+        // Create chart data - show all data points with labels
         const chartData = {
-          labels: sortedLifts.length > 6 
-            ? sortedLifts.map((lift, index) => {
-                if (index === 0 || index === sortedLifts.length - 1) {
-                  return formatWeightForDisplay(lift.weightValue, unitPreference);
-                }
-                return '';
-              })
-            : sortedLifts.map(lift => formatWeightForDisplay(lift.weightValue, unitPreference)),
+          labels: sortedLifts.map(lift => formatWeightForDisplay(lift.weightValue, unitPreference)),
           datasets: [
             {
               data: sortedLifts.map(lift => lift.analysis.accuracy),
@@ -140,14 +134,16 @@ export function SwipeableLineGraphCard({
           });
         };
         
-        // Create chart data
+        // Create chart data - show only first and last labels
+        const formattedLabels = averagedLifts.map((lift, index) => {
+          if (index === 0 || index === averagedLifts.length - 1) {
+            return formatDate(lift.date);
+          }
+          return ''; // Empty string for intermediate labels
+        });
+        
         const chartData = {
-          labels: averagedLifts.map((lift, index) => {
-            if (index === 0 || index === averagedLifts.length - 1) {
-              return formatDate(lift.date);
-            }
-            return '';
-          }),
+          labels: formattedLabels,
           datasets: [
             {
               data: averagedLifts.map(lift => lift.averageAccuracy),
@@ -165,6 +161,21 @@ export function SwipeableLineGraphCard({
       });
     }
   }, [cardData, chartType, unitPreference]);
+
+  // Calculate dynamic chart width based on data points
+  const getChartWidth = (dataPoints: number) => {
+    const minWidth = width - 40; // Reduced minimum width
+    const pointSpacing = 80; // Increased space between each data point
+    const calculatedWidth = Math.max(minWidth, dataPoints * pointSpacing);
+    return calculatedWidth;
+  };
+
+  // Reset scroll progress when card changes
+  useEffect(() => {
+    if (scrollViewRef.current) {
+      scrollViewRef.current.scrollTo({ x: 0, animated: true });
+    }
+  }, [currentCardIndex]);
 
   // Reset shared values when component mounts or data changes
   useEffect(() => {
@@ -294,41 +305,47 @@ export function SwipeableLineGraphCard({
                   {/* Chart */}
                   {processedCardData[currentCardIndex]?.chartData && processedCardData[currentCardIndex].chartData.datasets[0].data.length > 0 && (
                     <View style={styles.chartContainer}>
-                      <LineChart
-                        data={processedCardData[currentCardIndex].chartData}
-                        width={width - 80}
-                        height={180}
-                        chartConfig={{
-                          fillShadowGradientFrom: '#4f39f6',
-                          fillShadowGradientTo: '#ffffff',
-                          backgroundColor: '#FFFFFF',
-                          backgroundGradientFrom: '#FFFFFF',
-                          backgroundGradientTo: '#FFFFFF',
-                          decimalPlaces: 0,
-                          color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-                          labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-                          style: {
-                            borderRadius: 16,
-                          },
-                          propsForDots: {
-                            r: '2',
-                            strokeWidth: '2',
-                            stroke: '#000000',
-                            fill: '#000000',
-                          },
-                          formatXLabel: (value) => value,
-                          formatYLabel: (value) => `${value}%`,
-                        }}
-                        bezier
-                        style={styles.chart}
-                        withDots={true}
-                        withShadow={true}
-                        withInnerLines={true}
-                        withOuterLines={false}
-                        withVerticalLines={false}
-                        withHorizontalLines={true}
-                        yAxisSuffix="%"
-                      />
+                      <ScrollView
+                        ref={scrollViewRef}
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                      >
+                        <LineChart
+                          data={processedCardData[currentCardIndex].chartData}
+                          width={getChartWidth(processedCardData[currentCardIndex].chartData.labels.length)}
+                          height={180}
+                          chartConfig={{
+                            fillShadowGradientFrom: '#4f39f6',
+                            fillShadowGradientTo: '#ffffff',
+                            backgroundColor: '#FFFFFF',
+                            backgroundGradientFrom: '#FFFFFF',
+                            backgroundGradientTo: '#FFFFFF',
+                            decimalPlaces: 0,
+                            color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+                            labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+                            style: {
+                              borderRadius: 16,
+                            },
+                            propsForDots: {
+                              r: '2',
+                              strokeWidth: '2',
+                              stroke: '#000000',
+                              fill: '#000000',
+                            },
+                            formatXLabel: (value) => value,
+                            formatYLabel: (value) => `${value}%`,
+                          }}
+                          bezier
+                          style={styles.chart}
+                          withDots={true}
+                          withShadow={true}
+                          withInnerLines={true}
+                          withOuterLines={false}
+                          withVerticalLines={false}
+                          withHorizontalLines={true}
+                          yAxisSuffix="%"
+                        />
+                      </ScrollView>
                     </View>
                   )}
                 </View>
@@ -425,7 +442,7 @@ const styles = StyleSheet.create({
   chartContainer: {
     width: '100%',
     alignItems: 'center',
-    paddingBottom: 10,
+    paddingBottom: 8,
     overflow: 'visible',
   },
   chart: {
