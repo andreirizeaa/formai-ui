@@ -28,6 +28,14 @@ export default function App() {
           require('./assets/formai-light-icon.png'),
           require('./assets/formai-dark-icon.png'),
           require('./assets/formai-ios-icon.png'),
+          // Discovery page icons
+          require('./assets/icons/instagram.png'),
+          require('./assets/icons/tiktok.png'),
+          require('./assets/icons/fasebook.png'),
+          require('./assets/icons/google.png'),
+          // Auth and other icons
+          require('./assets/icons/apple.png'),
+          require('./assets/icons/fire.png'),
         ]);
       } catch (error) {
         console.warn('Error preloading assets:', error);

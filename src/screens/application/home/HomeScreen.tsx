@@ -29,7 +29,7 @@ interface HomeScreenProps {
 }
 
 export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibrary, onShowShare, onTriggerAddOptions, onNavigateToPerformance }: HomeScreenProps) {
-  const { loadingLifts } = useLoadingLifts();
+  const { loadingLifts, completedLifts } = useLoadingLifts();
   const { liftData, addLift, removeLift, getLiftsByDate, formatDateForLift } = useLiftData();
   const { userDetails } = useUserDetails();
   
@@ -49,8 +49,17 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
   // ScrollView ref for gesture handling
   const scrollViewRef = useRef<ScrollView>(null);
   
-  // Get lifts for the selected date
-  const liftsForSelectedDate: ILiftData[] = getLiftsByDate(selectedDate);
+  // Get lifts for the selected date from both contexts
+  const liftsForSelectedDateFromContext: ILiftData[] = getLiftsByDate(selectedDate);
+  
+  // Filter completed lifts for the selected date
+  const selectedDateString = formatDateForLift(selectedDate);
+  const completedLiftsForSelectedDate: ILiftData[] = completedLifts.filter(lift => 
+    lift.liftDate === selectedDateString
+  );
+  
+  // Combine both sources of lift data
+  const liftsForSelectedDate: ILiftData[] = [...completedLiftsForSelectedDate, ...liftsForSelectedDateFromContext];
   
   // Calculate average accuracy for the selected date
   const averageAccuracy = useMemo(() => {

@@ -225,19 +225,18 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
   const formatLiftDate = (dateString: string) => {
     const today = new Date().toISOString().split('T')[0];
     if (dateString === today) {
-      return 'Today, ' + new Date().toLocaleTimeString('en-US', { 
-        hour: 'numeric', 
-        minute: '2-digit',
-        hour12: true 
-      });
+      // Use the same format as LiftDataContext for consistency
+      const day = String(new Date().getDate()).padStart(2, '0');
+      const month = String(new Date().getMonth() + 1).padStart(2, '0');
+      const year = new Date().getFullYear();
+      return `${day}-${month}-${year}`;
     }
-    return new Date(dateString).toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    });
+    // For other dates, also use the same format
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
   };
 
   // Helper function to generate random line graph values
