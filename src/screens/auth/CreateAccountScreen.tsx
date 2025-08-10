@@ -2,31 +2,52 @@ import React from 'react';
 import { View, Text, StyleSheet, Platform, TouchableOpacity, Image } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { GoogleSignin, GoogleSigninButton, statusCodes } from '@react-native-google-signin/google-signin';
 import * as AppleAuthentication from 'expo-apple-authentication';
+import Constants from 'expo-constants';
 import i18n from '../../utils/i18n';
 import { hapticFeedback } from '../../utils/haptic';
 import { supabase } from '../../lib/supabase';
 
 interface CreateAccountScreenProps {
   onNext: () => void;
+  isSignIn?: boolean; // Add this prop to distinguish between create account and sign in
 }
 
-export function CreateAccountScreen({ onNext }: CreateAccountScreenProps) {
+export function CreateAccountScreen({ onNext, isSignIn = false }: CreateAccountScreenProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+  
+  // Check if we're running in Expo Go
+  const isExpoGo = Constants.appOwnership === 'expo';
 
-  // Configure Google Sign-In
+  // Configure Google Sign-In only if not in Expo Go
   React.useEffect(() => {
-    GoogleSignin.configure({
-      scopes: ['https://www.googleapis.com/auth/drive.readonly'],
-      webClientId: '338047674329-5dfpj06alfpfn0phi57c4bgdg6nihv87.apps.googleusercontent.com',
-    });
-  }, []);
+    if (!isExpoGo) {
+      // Only import GoogleSignin and GoogleSigninButton if not in Expo Go
+      // This prevents a startup error if Google Sign-In is not available
+      // in the current environment.
+      import('@react-native-google-signin/google-signin').then(({ GoogleSignin }) => {
+        GoogleSignin.configure({
+          scopes: ['email', 'profile'],
+          iosClientId: '338047674329-5dfpj06alfpfn0phi57c4bgdg6nihv87.apps.googleusercontent.com',
+        });
+      }).catch(error => {
+        console.warn('Google Sign-In not available in this environment:', error);
+      });
+    }
+  }, [isExpoGo]);
 
   const handleGoogleSignIn = async () => {
     try {
       hapticFeedback.selection();
+      if (isExpoGo) {
+        console.log('Google Sign-In not available in Expo Go');
+        return;
+      }
+      
+      // Dynamically import Google Sign-In modules
+      const { GoogleSignin, statusCodes } = await import('@react-native-google-signin/google-signin');
+      
       await GoogleSignin.hasPlayServices();
       const userInfo = await GoogleSignin.signIn();
       if (userInfo.idToken) {
@@ -38,19 +59,20 @@ export function CreateAccountScreen({ onNext }: CreateAccountScreenProps) {
           console.error('Supabase auth error:', error);
         } else {
           console.log('Google sign-in successful:', data);
-          onNext();
+          onNext(); // This will navigate to main app if coming from sign-in flow
         }
       } else {
         throw new Error('no ID token present!');
       }
     } catch (error: any) {
-      if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+      // Check if we have statusCodes available (from dynamic import)
+      if (error.code === 'SIGN_IN_CANCELLED') {
         // user cancelled the login flow
         console.log('Sign-in cancelled');
-      } else if (error.code === statusCodes.IN_PROGRESS) {
+      } else if (error.code === 'IN_PROGRESS') {
         // operation (e.g. sign in) is in progress already
         console.log('Sign-in already in progress');
-      } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+      } else if (error.code === 'PLAY_SERVICES_NOT_AVAILABLE') {
         // play services not available or outdated
         console.log('Play services not available');
       } else {
@@ -81,7 +103,7 @@ export function CreateAccountScreen({ onNext }: CreateAccountScreenProps) {
           console.error('Supabase auth error:', error);
         } else {
           console.log('Apple sign-in successful:', data);
-          onNext();
+          onNext(); // This will navigate to main app if coming from sign-in flow
         }
       } else {
         throw new Error('No identityToken.');
@@ -111,23 +133,13 @@ export function CreateAccountScreen({ onNext }: CreateAccountScreenProps) {
           styles.mainTitle,
           { color: isDark ? '#FFFFFF' : '#000000' }
         ]}>
-          {i18n.t('createAccount.title')}
+          {isSignIn ? i18n.t('signIn') : i18n.t('createAccount.title')}
         </Text>
 
         {/* Button container with flex to center buttons */}
         <View style={styles.buttonWrapper}>
           {/* Sign in buttons */}
           <View style={styles.buttonContainer}>
-            {/* Sign in with Apple - iOS only */}
-            {Platform.OS === 'ios' ? (
-              <AppleAuthentication.AppleAuthenticationButton
-                buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
-                buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
-                cornerRadius={28}
-                style={styles.appleButton}
-                onPress={handleAppleSignIn}
-              />
-            ) : (
               <TouchableOpacity
                 style={[
                   styles.appleButton,
@@ -153,15 +165,36 @@ export function CreateAccountScreen({ onNext }: CreateAccountScreenProps) {
                   </Text>
                 </View>
               </TouchableOpacity>
-            )}
 
             {/* Sign in with Google */}
-            <GoogleSigninButton
-              style={styles.googleButton}
-              onPress={handleGoogleSignIn}
-              size={GoogleSigninButton.Size.Wide}
-              color={GoogleSigninButton.Color.Dark}
-            />
+            <TouchableOpacity
+              style={[
+                styles.googleButton,
+                { 
+                  backgroundColor: isDark ? '#000000' : '#FFFFFF',
+                  borderColor: isDark ? '#FFFFFF' : '#000000'
+                }
+              ]}
+              onPress={isExpoGo ? () => {
+                hapticFeedback.selection();
+                console.log('Google Sign-In not available in Expo Go');
+              } : handleGoogleSignIn}
+              activeOpacity={0.8}
+            >
+              <View style={styles.buttonContent}>
+                <Image 
+                  source={require('../../../assets/icons/google.png')}
+                  style={styles.googleIcon}
+                  resizeMode="contain"
+                />
+                <Text style={[
+                  styles.googleButtonText,
+                  { color: isDark ? '#FFFFFF' : '#000000' }
+                ]}>
+                  {isExpoGo ? 'Sign in with Google' : i18n.t('createAccount.signInWithGoogle')}
+                </Text>
+              </View>
+            </TouchableOpacity>
           </View>
         </View>
       </View>
@@ -218,7 +251,17 @@ const styles = StyleSheet.create({
     height: 32,
     marginRight: 12,
   },
+  googleIcon: {
+    width: 32,
+    height: 32,
+    marginRight: 12,
+  },
   appleButtonText: {
+    fontSize: 18,
+    fontWeight: '600',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
+  googleButtonText: {
     fontSize: 18,
     fontWeight: '600',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
