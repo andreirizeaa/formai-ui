@@ -13,6 +13,7 @@ import Animated, {
   Extrapolate
 } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
+import i18n from '../utils/i18n';
 
 interface LiftDataCardProps {
   lift: ILiftData;
@@ -162,7 +163,7 @@ export function LiftDataCard({ lift, onPress, onDelete, style, scrollViewRef }: 
                 <Text style={styles.liftDate}>{lift.liftDate}</Text>
               </View>
               <View style={styles.liftAccuracyContainer}>
-                <Text style={styles.accuracyLabel}>Accuracy</Text>
+                <Text style={styles.accuracyLabel}>{i18n.t('liftCard.accuracy')}</Text>
                 <View style={styles.accuracyPill}>
                   <Text style={styles.accuracyValue}>{lift.analysis.accuracy}%</Text>
                 </View>

@@ -65,7 +65,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
       const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
       
       if (permissionResult.granted === false) {
-        Alert.alert('Permission Required', 'Please grant permission to access your photo library.');
+        Alert.alert(i18n.t('upload.permissionRequired'), i18n.t('upload.permissionMessage'));
         return;
       }
 
@@ -96,8 +96,8 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
         
         if (durationInSeconds !== undefined && durationInSeconds !== null && durationInSeconds > 60) {
           Alert.alert(
-            'Video Too Long',
-            'Please select a video that is under 1 minute.',
+            i18n.t('upload.videoTooLong'),
+            i18n.t('upload.videoTooLongMessage'),
             [
               { text: 'OK', onPress: () => {
                 // Reopen the picker to let user select another video
@@ -113,7 +113,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
       }
     } catch (error) {
       console.error('Error picking video:', error);
-      Alert.alert('Error', 'Failed to select video. Please try again.');
+      Alert.alert(i18n.t('upload.error'), i18n.t('upload.failedToSelectVideo'));
     }
   };
 
@@ -196,7 +196,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
       onClose();
     } catch (error) {
       console.error('Error generating thumbnail:', error);
-      Alert.alert('Error', 'Failed to generate video thumbnail. Please try again.');
+      Alert.alert(i18n.t('upload.error'), i18n.t('upload.failedToGenerateThumbnail'));
     }
   };
 
@@ -254,11 +254,11 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
             // Tips Card - shown when no video is selected
             <PracticesScreen
               onUpload={handleUploadPress}
-              buttonText="Upload Video"
+              buttonText={i18n.t('upload.uploadVideo')}
               tips={[
-                "Ensure good lighting",
-                "Ensure a stable video",
-                "Have the video of yourself from the side"
+                i18n.t('upload.tips.goodLighting'),
+                i18n.t('upload.tips.stableVideo'),
+                i18n.t('upload.tips.sideView')
               ]}
             />
           ) : showMovementSelection ? (
@@ -286,7 +286,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
               onSelectNewVideo={handleSelectNewVideo}
               onContinue={handleContinue}
               onClose={handleClose}
-              selectNewVideoText="Select New Video"
+              selectNewVideoText={i18n.t('upload.selectNewVideo')}
             />
           )}
         </View>

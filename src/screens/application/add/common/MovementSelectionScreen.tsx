@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform, TextInput, ScrollView, Keyboard } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
+import i18n from '../../../../utils/i18n';
 
 interface MovementSelectionScreenProps {
   selectedMovement: string;
@@ -30,10 +31,10 @@ export function MovementSelectionScreen({
       {/* Content */}
       <View style={styles.content}>
         <View style={styles.movementSelectionContainer}>
-          <Text style={styles.movementSelectionTitle}>What exercise were you doing?</Text>
+          <Text style={styles.movementSelectionTitle}>{i18n.t('add.whatExercise')}</Text>
           <TextInput
             style={styles.searchInput}
-            placeholder="Search movements..."
+            placeholder={i18n.t('add.searchMovements')}
             value={searchQuery}
             onChangeText={onSearchChange}
             placeholderTextColor="#8E8E93"
@@ -72,7 +73,7 @@ export function MovementSelectionScreen({
       <View style={styles.bottomControls}>
         <View style={styles.buttonStack}>
           <TouchableOpacity style={styles.backButton} onPress={onBack}>
-            <Text style={styles.backButtonText}>Back</Text>
+            <Text style={styles.backButtonText}>{i18n.t('add.back')}</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={[styles.uploadButton, !selectedMovement && styles.uploadButtonDisabled]} 
@@ -80,7 +81,7 @@ export function MovementSelectionScreen({
             disabled={!selectedMovement}
           >
             <Text style={[styles.uploadButtonText, !selectedMovement && styles.uploadButtonTextDisabled]}>
-              Continue
+              {i18n.t('add.continue')}
             </Text>
           </TouchableOpacity>
         </View>
