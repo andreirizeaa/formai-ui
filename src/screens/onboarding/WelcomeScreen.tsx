@@ -31,28 +31,18 @@ export function WelcomeScreen({ onGetStarted, onSignIn }: WelcomeScreenProps) {
         { backgroundColor: isDark ? '#000000' : '#FFFFFF' }
       ]}
     >
+      {/* App overview photo */}
+      <View style={styles.photoContainer}>
+        <Image 
+          source={require('../../../assets/app-overview-photo.png')}
+          style={styles.photo}
+          resizeMode="contain"
+        />
+      </View>
+
+      {/* Content area with text and buttons */}
       <View style={styles.content}>
-        {/* FormAI Icon */}
-        <View style={styles.iconContainer}>
-          <Image 
-            source={isDark 
-              ? require('../../../assets/formai-dark-icon.png')
-              : require('../../../assets/formai-light-icon.png')
-            }
-            style={styles.icon}
-            resizeMode="contain"
-          />
-        </View>
-        
-        <Text 
-          style={[
-            styles.subtitle,
-            { 
-              color: isDark ? '#AEAEB2' : '#8E8E93',
-              fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
-            }
-          ]}
-        >
+        <Text style={styles.subtitle}>
           {i18n.t('welcome.subtitle')}
         </Text>
       </View>
@@ -66,29 +56,16 @@ export function WelcomeScreen({ onGetStarted, onSignIn }: WelcomeScreenProps) {
           onPress={handleGetStarted}
           activeOpacity={0.8}
         >
-          <Text 
-            style={[
-              styles.getStartedText,
-              { 
-                color: isDark ? '#000000' : '#FFFFFF',
-                fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto'
-              }
-            ]}
-          >
+          <Text style={[
+            styles.getStartedText,
+            { color: isDark ? '#000000' : '#FFFFFF' }
+          ]}>
             {i18n.t('getStarted')}
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity onPress={handleSignIn} activeOpacity={0.7}>
-          <Text 
-            style={[
-              styles.signInText,
-              { 
-                color: isDark ? '#AEAEB2' : '#8E8E93',
-                fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
-              }
-            ]}
-          >
+          <Text style={styles.signInText}>
             {i18n.t('signIn')}
           </Text>
         </TouchableOpacity>
@@ -101,29 +78,28 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  content: {
+  photoContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingTop: 20,
+  },
+  photo: {
+    width: '100%',
+    height: '90%',
+  },
+  content: {
     paddingHorizontal: 20,
-  },
-  iconContainer: {
-    width: 300,
-    height: 300,
-    justifyContent: 'center',
+    paddingBottom: 20,
     alignItems: 'center',
-    marginBottom: 32,
-  },
-  icon: {
-    width: 260,
-    height: 180,
   },
   subtitle: {
-    fontSize: 17,
-    fontWeight: '400',
+    fontSize: 36,
+    fontWeight: '600',
     textAlign: 'center',
-    lineHeight: 22,
     maxWidth: 280,
+    color: '#000000',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
   },
   actions: {
     paddingHorizontal: 20,
@@ -136,14 +112,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
+  getStartedButtonTheme: {
+    backgroundColor: '#000000',
+  },
   getStartedText: {
     fontSize: 17,
     fontWeight: '600',
+    color: '#FFFFFF',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
   },
   signInText: {
     fontSize: 17,
     fontWeight: '400',
     textAlign: 'center',
     textDecorationLine: 'underline',
+    color: '#8E8E93',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
 }); 

@@ -7,12 +7,14 @@ import Constants from 'expo-constants';
 import i18n from '../../utils/i18n';
 import { hapticFeedback } from '../../utils/haptic';
 import { supabase } from '../../lib/supabase';
+import { BackButton } from '../../components/ui/BackButton';
 
-interface CreateAccountScreenProps {
-  onNext: () => void;
+interface SignInScreenProps {
+  onSignIn: () => void;
+  onBack: () => void;
 }
 
-export function CreateAccountScreen({ onNext }: CreateAccountScreenProps) {
+export function SignInScreen({ onSignIn, onBack }: SignInScreenProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   
@@ -58,7 +60,7 @@ export function CreateAccountScreen({ onNext }: CreateAccountScreenProps) {
           console.error('Supabase auth error:', error);
         } else {
           console.log('Google sign-in successful:', data);
-          onNext(); // This will navigate to main app if coming from sign-in flow
+          onSignIn(); // Navigate directly to home
         }
       } else {
         throw new Error('no ID token present!');
@@ -102,7 +104,7 @@ export function CreateAccountScreen({ onNext }: CreateAccountScreenProps) {
           console.error('Supabase auth error:', error);
         } else {
           console.log('Apple sign-in successful:', data);
-          onNext(); // This will navigate to main app if coming from sign-in flow
+          onSignIn(); // Navigate directly to home
         }
       } else {
         throw new Error('No identityToken.');
@@ -125,16 +127,23 @@ export function CreateAccountScreen({ onNext }: CreateAccountScreenProps) {
         { backgroundColor: isDark ? '#000000' : '#FFFFFF' }
       ]}
     >
-      {/* Main content */}
-      <View style={styles.contentWrapper}>
-        {/* Main Title */}
+      {/* Header with back button and title */}
+      <View style={styles.header}>
+        <BackButton onPress={() => {
+          hapticFeedback.selection();
+          onBack();
+        }} />
         <Text style={[
           styles.mainTitle,
           { color: isDark ? '#FFFFFF' : '#000000' }
         ]}>
-          {i18n.t('createAccount.title')}
+          {i18n.t('signIn')}
         </Text>
+        <View style={styles.headerSpacer} />
+      </View>
 
+      {/* Main content */}
+      <View style={styles.contentWrapper}>
         {/* Button container with flex to center buttons */}
         <View style={styles.buttonWrapper}>
           {/* Sign in buttons */}
@@ -205,17 +214,29 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  contentWrapper: {
-    flex: 1,
-    paddingHorizontal: 20,
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingLeft: 16,
+    paddingRight: 20,
+    paddingBottom: 20,
+    height: 80,
+  },
+  headerSpacer: {
+    width: 40, // Same width as BackButton for proper centering
   },
   mainTitle: {
     fontSize: 36,
-    marginTop: 60,
     fontWeight: '700',
     textAlign: 'center',
     lineHeight: 38,
+    marginTop: 16,
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
+    flex: 1,
+  },
+  contentWrapper: {
+    flex: 1,
+    paddingHorizontal: 20,
   },
   buttonWrapper: {
     flex: 1,
