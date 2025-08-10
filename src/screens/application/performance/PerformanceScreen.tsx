@@ -231,7 +231,7 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
     <>
       <ScrollView style={styles.container}>
         <View style={styles.content}>
-          <Text style={styles.title}>{i18n.t('performance')}</Text>
+          <Text style={styles.title}>{i18n.t('performance.title')}</Text>
           
           {/* Date Range and Filter Pills */}
           <View style={styles.pillsContainer}>
@@ -277,7 +277,7 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
               <View style={styles.performanceCardContent}>
                 <View style={styles.performanceCardHeader}>
                   <Text style={styles.performanceCardLabel}>
-                    {i18n.t('noLiftsFound')}
+                    {i18n.t('common.noLiftsFound')}
                   </Text>
                 </View>
               </View>
@@ -331,7 +331,7 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
           >
             {/* Header */}
             <View style={styles.header}>
-              <Text style={styles.headerTitle}>{i18n.t('editDateRange')}</Text>
+              <Text style={styles.headerTitle}>{i18n.t('performance.editDateRange')}</Text>
               <TouchableOpacity style={styles.closeButton} onPress={handleCloseModal}>
                 <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
                   <Path
@@ -349,7 +349,7 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
             <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={false}>
               {/* From Date Section */}
               <View style={styles.dateSection}>
-                <Text style={styles.dateSectionTitle}>{i18n.t('from')}</Text>
+                <Text style={styles.dateSectionTitle}>{i18n.t('performance.from')}</Text>
                 <View style={styles.pickersContainer}>
                   {/* Month Picker */}
                   <View style={[styles.pickerSection, styles.monthPickerSection]}>
@@ -427,7 +427,7 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
 
               {/* To Date Section */}
               <View style={styles.dateSection}>
-                <Text style={styles.dateSectionTitle}>{i18n.t('to')}</Text>
+                <Text style={styles.dateSectionTitle}>{i18n.t('performance.to')}</Text>
                 <View style={styles.pickersContainer}>
                   {/* Month Picker */}
                   <View style={[styles.pickerSection, styles.monthPickerSection]}>
@@ -511,10 +511,10 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
                   style={styles.resetButton} 
                   onPress={handleResetDateRange}
                 >
-                  <Text style={styles.resetButtonText}>{i18n.t('reset')}</Text>
+                  <Text style={styles.resetButtonText}>{i18n.t('performance.reset')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.applyButton} onPress={handleApplyDateRange}>
-                  <Text style={styles.applyButtonText}>{i18n.t('apply')}</Text>
+                  <Text style={styles.applyButtonText}>{i18n.t('performance.apply')}</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -528,7 +528,7 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
         onClose={handleCloseFilterModal}
         onFilterSelect={handleFilterSelect}
         currentFilters={selectedMovements}
-        title={i18n.t('filterLifts')}
+        title={i18n.t('performance.filterLifts')}
       />
     </>
   );

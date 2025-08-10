@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Platform, TextInput, ScrollVi
 import Svg, { Path } from 'react-native-svg';
 import { gymMovements } from '../../../constants/gymMovements';
 import { hapticFeedback } from '../../../utils/haptic';
+import i18n from '../../../utils/i18n';
 
 interface FilterModalProps {
   isVisible: boolean;
@@ -17,7 +18,7 @@ export function FilterModal({
   onClose,
   onFilterSelect,
   currentFilters,
-  title = "Filter by movement"
+  title = i18n.t('library.filterByMovement')
 }: FilterModalProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMovements, setSelectedMovements] = useState<string[]>(currentFilters);
@@ -112,7 +113,7 @@ export function FilterModal({
               <View style={styles.searchInputContainer}>
                 <TextInput
                   style={styles.searchInput}
-                  placeholder="Search movements..."
+                  placeholder={i18n.t('library.searchMovements')}
                   value={searchQuery}
                   onChangeText={setSearchQuery}
                   placeholderTextColor="#8E8E93"
@@ -149,7 +150,7 @@ export function FilterModal({
                     styles.movementItemText,
                     selectedMovements.length === 0 && styles.movementItemTextSelected
                   ]}>
-                    All Movements
+                    {i18n.t('library.allMovements')}
                   </Text>
                   {selectedMovements.length === 0 && (
                     <Svg width={20} height={20} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="#000000">
@@ -193,10 +194,10 @@ export function FilterModal({
                 style={styles.resetButton} 
                 onPress={handleReset}
               >
-                <Text style={styles.resetButtonText}>Reset</Text>
+                <Text style={styles.resetButtonText}>{i18n.t('library.reset')}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.applyButton} onPress={handleApply}>
-                <Text style={styles.applyButtonText}>Apply</Text>
+                <Text style={styles.applyButtonText}>{i18n.t('library.apply')}</Text>
               </TouchableOpacity>
             </View>
           </View>

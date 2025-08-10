@@ -12,6 +12,7 @@ import { FilterModal } from './FilterModal';
 import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import { useLiftData } from '../../../context/LiftDataContext';
 import { Picker } from '@react-native-picker/picker';
+import i18n from '../../../utils/i18n';
 import Animated, { 
   useSharedValue, 
   useAnimatedStyle, 
@@ -134,7 +135,7 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
   // Get date range for display
   const dateRangeText = useMemo(() => {
     if (!dateRange.from || !dateRange.to) {
-      return 'Select date range';
+      return i18n.t('library.selectDateRange');
     }
 
     const formatDate = (date: { month: number; day: number; year: number }) => {
@@ -152,11 +153,11 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
   // Get filter pill text based on selected movements
   const filterPillText = useMemo(() => {
     if (filterOption.length === 0) {
-      return 'All lifts';
+      return i18n.t('library.allLifts');
     } else if (filterOption.length === 1) {
-      return '1 Lift';
+      return i18n.t('library.oneLift');
     } else {
-      return `${filterOption.length} Lifts`;
+      return i18n.t('library.liftsCount', { count: filterOption.length });
     }
   }, [filterOption]);
 
@@ -231,8 +232,18 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
 
   // Date picker helper functions
   const months = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
+    i18n.t('months.january'),
+    i18n.t('months.february'),
+    i18n.t('months.march'),
+    i18n.t('months.april'),
+    i18n.t('months.may'),
+    i18n.t('months.june'),
+    i18n.t('months.july'),
+    i18n.t('months.august'),
+    i18n.t('months.september'),
+    i18n.t('months.october'),
+    i18n.t('months.november'),
+    i18n.t('months.december')
   ];
 
   const getDaysInMonth = (month: number, year: number) => {
@@ -337,7 +348,7 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
             />
           </Svg>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Library</Text>
+        <Text style={styles.headerTitle}>{i18n.t('library.title')}</Text>
         <View style={styles.placeholder} />
       </View>
 
@@ -348,7 +359,7 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
           onPress={() => handleTabPress('all')}
         >
           <Text style={[styles.tabText, activeTab === 'all' && styles.tabTextActive]}>
-            All
+            {i18n.t('library.all')}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -356,7 +367,7 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
           onPress={() => handleTabPress('favourites')}
         >
           <Text style={[styles.tabText, activeTab === 'favourites' && styles.tabTextActive]}>
-            Favourites
+            {i18n.t('library.favourites')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -365,7 +376,7 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
       <View style={styles.controlsContainer}>
         <View style={styles.liftCountContainer}>
           <Text style={styles.liftCountText}>
-            {liftCount} lift{liftCount === 1 ? '' : 's'}
+            {liftCount} {liftCount === 1 ? i18n.t('library.lift') : i18n.t('library.lifts')}
           </Text>
         </View>
         
@@ -434,15 +445,15 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
           >
             <View style={styles.noLiftsContent}>
               <Text style={styles.noLiftsTitle}>
-                {liftData.length === 0 ? 'No lifts analysed' : 
-                 activeTab === 'favourites' ? 'No favourite lifts' : 'No lifts found'}
+                {liftData.length === 0 ? i18n.t('library.noLiftsAnalysed') : 
+                 activeTab === 'favourites' ? i18n.t('library.noFavouriteLifts') : i18n.t('library.noLiftsFound')}
               </Text>
               <Text style={styles.noLiftsSubtitle}>
                 {liftData.length === 0 
-                  ? 'Start analysing today\'s workout by taking a quick video'
+                  ? i18n.t('library.startAnalysingWorkout')
                   : activeTab === 'favourites'
-                  ? 'Mark lifts as favourites to see them here'
-                  : 'Try adjusting your filters'
+                  ? i18n.t('library.markLiftsAsFavourites')
+                  : i18n.t('library.tryAdjustingFilters')
                 }
               </Text>
             </View>
@@ -519,7 +530,7 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
           >
             {/* Header */}
             <View style={styles.modalHeader}>
-              <Text style={styles.modalHeaderTitle}>Edit date range</Text>
+              <Text style={styles.modalHeaderTitle}>{i18n.t('library.editDateRange')}</Text>
               <TouchableOpacity style={styles.closeButton} onPress={handleDateRangeModalClose}>
                 <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
                   <Path
@@ -537,7 +548,7 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
             <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={false}>
               {/* From Date Section */}
               <View style={styles.dateSection}>
-                <Text style={styles.dateSectionTitle}>From</Text>
+                <Text style={styles.dateSectionTitle}>{i18n.t('library.from')}</Text>
                 <View style={styles.pickersContainer}>
                   {/* Month Picker */}
                   <View style={[styles.pickerSection, styles.monthPickerSection]}>
@@ -615,7 +626,7 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
 
               {/* To Date Section */}
               <View style={styles.dateSection}>
-                <Text style={styles.dateSectionTitle}>To</Text>
+                <Text style={styles.dateSectionTitle}>{i18n.t('library.to')}</Text>
                 <View style={styles.pickersContainer}>
                   {/* Month Picker */}
                   <View style={[styles.pickerSection, styles.monthPickerSection]}>
@@ -699,10 +710,10 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
                   style={styles.resetButton} 
                   onPress={handleResetDateRange}
                 >
-                  <Text style={styles.resetButtonText}>Reset</Text>
+                  <Text style={styles.resetButtonText}>{i18n.t('library.reset')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.applyButton} onPress={handleApplyDateRange}>
-                  <Text style={styles.applyButtonText}>Apply</Text>
+                  <Text style={styles.applyButtonText}>{i18n.t('library.apply')}</Text>
                 </TouchableOpacity>
               </View>
             </View>
