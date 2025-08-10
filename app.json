@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "formai-ui",
-    "slug": "formai-ui",
+    "name": "Form AI",
+    "slug": "formai",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/formai-ios-icon.png",
@@ -16,7 +16,8 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/formai-ios-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.useformai.formai"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -27,12 +28,9 @@
       [
         "@react-native-google-signin/google-signin",
         {
-          "iosUrlScheme": "com.googleusercontent.apps.666171994988-pvs957q392npltdb7u9ppq86orgvj72b"
+          "iosUrlScheme": "com.googleusercontent.apps.338047674329-5dfpj06alfpfn0phi57c4bgdg6nihv87"
         }
       ]
-    ],
-    "ios": {
-      "bundleIdentifier": "com.useformai.formai"
-    }
+    ]
   }
 }
