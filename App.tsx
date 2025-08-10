@@ -15,6 +15,7 @@ import { MainAppLayout } from './src/components/layout/MainAppLayout';
 export default function App() {
   const [showOnboarding, setShowOnboarding] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [userNeedsOnboarding, setUserNeedsOnboarding] = useState(false);
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 
@@ -49,12 +50,19 @@ export default function App() {
 
   const handleOnboardingComplete = () => {
     setShowOnboarding(false);
+    setUserNeedsOnboarding(false);
     console.log('Onboarding completed - navigate to main app');
   };
 
   const handleSignIn = () => {
-    console.log('Navigate to sign in screen');
-    // TODO: Implement sign in navigation
+    console.log('User signed in successfully with complete profile - navigating to main app');
+    setShowOnboarding(false);
+    setUserNeedsOnboarding(false);
+  };
+
+  const handleUserNeedsOnboarding = () => {
+    console.log('User signed in but needs to complete onboarding');
+    setUserNeedsOnboarding(true);
   };
 
   if (isLoading) {
@@ -68,7 +76,7 @@ export default function App() {
     );
   }
 
-  if (showOnboarding) {
+  if (showOnboarding || userNeedsOnboarding) {
     return (
       <SafeAreaProvider>
         <LanguageProvider>
@@ -76,6 +84,7 @@ export default function App() {
             <OnboardingNavigator 
               onComplete={handleOnboardingComplete}
               onSignIn={handleSignIn}
+              onUserNeedsOnboarding={handleUserNeedsOnboarding}
             />
             <StatusBar style={isDark ? 'light' : 'dark'} />
           </OnboardingProvider>

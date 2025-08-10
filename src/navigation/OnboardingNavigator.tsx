@@ -33,6 +33,7 @@ import { CameraPermissionScreen } from '../screens/onboarding/CameraPermissionSc
 interface OnboardingNavigatorProps {
   onComplete: () => void;
   onSignIn: () => void;
+  onUserNeedsOnboarding: () => void;
 }
 
 export type OnboardingStackParamList = {
@@ -353,15 +354,17 @@ function SubscriptionSelectionScreenWrapper() {
   return <SubscriptionSelectionScreen onNext={handleNext} onBack={handleBack} />;
 }
 
-function SignInScreenWrapper({ onSignIn }: { onSignIn: () => void }) {
+function SignInScreenWrapper({ onSignIn, onUserNeedsOnboarding }: { onSignIn: () => void; onUserNeedsOnboarding: () => void }) {
   const navigation = useNavigation<OnboardingNavigationProp>();
   
-  const handleBack = () => {
-    navigation.navigate('Welcome');
-
+  const handleNavigateToOnboarding = () => {
+    // Call the callback to notify App.tsx that user needs onboarding
+    onUserNeedsOnboarding();
+    // Navigate to Language screen to start onboarding
+    navigation.navigate('Language');
   };
 
-  return <SignInScreen onSignIn={onSignIn} onBack={handleBack} />;
+  return <SignInScreen onSignIn={onSignIn} onBack={() => navigation.goBack()} onNavigateToOnboarding={handleNavigateToOnboarding} />;
 }
 
 function CreateAccountScreenWrapper({ onComplete, onSignIn }: { onComplete: () => void; onSignIn: () => void }) {
@@ -380,7 +383,7 @@ function CameraPermissionScreenWrapper({ onComplete }: { onComplete: () => void 
   return <CameraPermissionScreen onNext={onComplete} />;
 }
 
-export function OnboardingNavigator({ onComplete, onSignIn }: OnboardingNavigatorProps) {
+export function OnboardingNavigator({ onComplete, onSignIn, onUserNeedsOnboarding }: OnboardingNavigatorProps) {
   return (
     <NavigationContainer>
       <Stack.Navigator
@@ -480,7 +483,7 @@ export function OnboardingNavigator({ onComplete, onSignIn }: OnboardingNavigato
         </Stack.Screen>
 
         <Stack.Screen name="SignIn">
-          {() => <SignInScreenWrapper onSignIn={onSignIn} />}
+          {() => <SignInScreenWrapper onSignIn={onSignIn} onUserNeedsOnboarding={onUserNeedsOnboarding} />}
         </Stack.Screen>
 
         <Stack.Screen name="CreateAccount">

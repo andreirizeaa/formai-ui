@@ -12,9 +12,10 @@ import { BackButton } from '../../components/ui/BackButton';
 interface SignInScreenProps {
   onSignIn: () => void;
   onBack: () => void;
+  onNavigateToOnboarding?: () => void;
 }
 
-export function SignInScreen({ onSignIn, onBack }: SignInScreenProps) {
+export function SignInScreen({ onSignIn, onBack, onNavigateToOnboarding }: SignInScreenProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   
@@ -38,6 +39,56 @@ export function SignInScreen({ onSignIn, onBack }: SignInScreenProps) {
     }
   }, [isExpoGo]);
 
+  // Function to check if user profile exists in public.users schema
+  const checkUserProfileExists = async (userId: string): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // No rows returned - user profile doesn't exist
+          return false;
+        }
+        console.error('Error checking user profile:', error);
+        return false;
+      }
+
+      return !!data;
+    } catch (error) {
+      console.error('Error checking user profile:', error);
+      return false;
+    }
+  };
+
+  // Function to handle post-authentication flow
+  const handlePostAuthentication = async (userId: string) => {
+    try {
+      const profileExists = await checkUserProfileExists(userId);
+      
+      if (profileExists) {
+        // User profile exists, navigate to main app
+        onSignIn();
+      } else {
+        // User profile doesn't exist, navigate to onboarding
+        if (onNavigateToOnboarding) {
+          onNavigateToOnboarding();
+        } else {
+          // Fallback to main app if onboarding navigation is not available
+          console.warn('onNavigateToOnboarding not provided, falling back to main app');
+          onSignIn();
+        }
+      }
+    } catch (error) {
+      console.error('Error in post-authentication flow:', error);
+      // Fallback to main app on error
+      onSignIn();
+    }
+  };
+
   const handleGoogleSignIn = async () => {
     try {
       hapticFeedback.selection();
@@ -60,7 +111,12 @@ export function SignInScreen({ onSignIn, onBack }: SignInScreenProps) {
           console.error('Supabase auth error:', error);
         } else {
           console.log('Google sign-in successful:', data);
-          onSignIn(); // Navigate directly to home
+          // Check if user profile exists and navigate accordingly
+          if (data.user?.id) {
+            await handlePostAuthentication(data.user.id);
+          } else {
+            onSignIn(); // Fallback to main app
+          }
         }
       } else {
         throw new Error('no ID token present!');
@@ -104,7 +160,12 @@ export function SignInScreen({ onSignIn, onBack }: SignInScreenProps) {
           console.error('Supabase auth error:', error);
         } else {
           console.log('Apple sign-in successful:', data);
-          onSignIn(); // Navigate directly to home
+          // Check if user profile exists and navigate accordingly
+          if (data.user?.id) {
+            await handlePostAuthentication(data.user.id);
+          } else {
+            onSignIn(); // Fallback to main app
+          }
         }
       } else {
         throw new Error('No identityToken.');
