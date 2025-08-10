@@ -4,7 +4,6 @@ import { useColorScheme } from 'react-native';
 import { OnboardingLayout } from '../../components/onboarding/OnboardingLayout';
 import i18n from '../../utils/i18n';
 import { ActivityIndicator } from 'react-native';
-import { useOnboarding } from '../../context/OnboardingContext';
 
 interface SetupLoadingScreenProps {
   onNext: () => void;
@@ -16,7 +15,6 @@ export function SetupLoadingScreen({ onNext, onBack }: SetupLoadingScreenProps) 
   const isDark = colorScheme === 'dark';
   const [currentStep, setCurrentStep] = useState(0);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const { preferences, getOnboardingDataForAPI } = useOnboarding();
 
   const setupSteps = [
     i18n.t('setupLoading.step1'),
@@ -24,8 +22,6 @@ export function SetupLoadingScreen({ onNext, onBack }: SetupLoadingScreenProps) 
   ];
 
   useEffect(() => {
-    
-    const apiData = getOnboardingDataForAPI();
     let stepIndex = 0;
     
     const showNextStep = () => {
