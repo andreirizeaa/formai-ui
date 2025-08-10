@@ -18,16 +18,28 @@ export function BirthDateScreen({ onNext, onBack }: BirthDateScreenProps) {
   const { preferences, updatePreference } = useOnboarding();
 
   const currentYear = new Date().getFullYear();
-  const birthDate = preferences.birthDate || { month: null, day: null, year: null };
+  
+  // Parse birthDate string to object for picker display
+  const parseBirthDate = (birthDateString: string | null) => {
+    if (!birthDateString) return { month: null, day: null, year: null };
+    
+    const [year, month, day] = birthDateString.split('-').map(Number);
+    return { month, day, year };
+  };
+  
+  // Convert object to YYYY-MM-DD string format
+  const formatBirthDateString = (month: number | null, day: number | null, year: number | null) => {
+    if (!month || !day || !year) return null;
+    return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  };
+  
+  const birthDateObj = parseBirthDate(preferences.birthDate);
 
   // Set default birth date if not already set
   React.useEffect(() => {
-    if (!preferences.birthDate || (!preferences.birthDate.month && !preferences.birthDate.day && !preferences.birthDate.year)) {
-      updatePreference('birthDate', {
-        month: 7,  // July
-        day: 15,   // 15th
-        year: currentYear - 25 // 25 years ago
-      });
+    if (!preferences.birthDate) {
+      const defaultDate = formatBirthDateString(7, 15, currentYear - 25);
+      updatePreference('birthDate', defaultDate);
     }
   }, []);
 
@@ -42,32 +54,35 @@ export function BirthDateScreen({ onNext, onBack }: BirthDateScreenProps) {
 
   const updateBirthDate = (field: 'month' | 'day' | 'year', value: number | null) => {
     hapticFeedback.selection();
-    const updatedBirthDate = {
-      ...birthDate,
+    
+    const updatedObj = {
+      ...birthDateObj,
       [field]: value,
     };
     
     // If changing month or year, validate the day
     if (field === 'month' || field === 'year') {
-      if (updatedBirthDate.month && updatedBirthDate.year && updatedBirthDate.day) {
-        const maxDays = getDaysInMonth(updatedBirthDate.month, updatedBirthDate.year);
-        if (updatedBirthDate.day > maxDays) {
-          updatedBirthDate.day = maxDays;
+      if (updatedObj.month && updatedObj.year && updatedObj.day) {
+        const maxDays = getDaysInMonth(updatedObj.month, updatedObj.year);
+        if (updatedObj.day > maxDays) {
+          updatedObj.day = maxDays;
         }
       }
     }
     
-    updatePreference('birthDate', updatedBirthDate);
+    // Convert to string format and update
+    const dateString = formatBirthDateString(updatedObj.month, updatedObj.day, updatedObj.year);
+    updatePreference('birthDate', dateString);
   };
 
   const handleNext = () => {
-    if (birthDate.month && birthDate.day && birthDate.year) {
+    if (birthDateObj.month && birthDateObj.day && birthDateObj.year) {
       hapticFeedback.selection();
       onNext();
     }
   };
 
-  const isComplete = birthDate.month && birthDate.day && birthDate.year;
+  const isComplete = birthDateObj.month && birthDateObj.day && birthDateObj.year;
   const textColor = isDark ? '#FFFFFF' : '#000000';
 
   // Generate years from 1940 to current year - 4 (descending order for better UX)
@@ -77,8 +92,8 @@ export function BirthDateScreen({ onNext, onBack }: BirthDateScreenProps) {
   ).reverse(); // Reverse to show in ascending order
   
   // Generate days based on selected month and year
-  const maxDays = birthDate.month && birthDate.year 
-    ? getDaysInMonth(birthDate.month, birthDate.year) 
+  const maxDays = birthDateObj.month && birthDateObj.year 
+    ? getDaysInMonth(birthDateObj.month, birthDateObj.year) 
     : 31;
   const days = Array.from({ length: maxDays }, (_, i) => i + 1);
 
@@ -108,7 +123,7 @@ export function BirthDateScreen({ onNext, onBack }: BirthDateScreenProps) {
             </Text>
             <View style={styles.pickerWrapper}>
               <Picker
-                selectedValue={birthDate.month}
+                selectedValue={birthDateObj.month}
                 onValueChange={(value) => updateBirthDate('month', value)}
                 style={[styles.picker, { color: textColor }]}
                 itemStyle={Platform.OS === 'ios' ? { color: textColor, fontSize: 14 } : undefined}
@@ -133,7 +148,7 @@ export function BirthDateScreen({ onNext, onBack }: BirthDateScreenProps) {
             </Text>
             <View style={styles.pickerWrapper}>
               <Picker
-                selectedValue={birthDate.day}
+                selectedValue={birthDateObj.day}
                 onValueChange={(value) => updateBirthDate('day', value)}
                 style={[styles.picker, { color: textColor }]}
                 itemStyle={Platform.OS === 'ios' ? { color: textColor, fontSize: 14 } : undefined}
@@ -158,7 +173,7 @@ export function BirthDateScreen({ onNext, onBack }: BirthDateScreenProps) {
             </Text>
             <View style={styles.pickerWrapper}>
               <Picker
-                selectedValue={birthDate.year}
+                selectedValue={birthDateObj.year}
                 onValueChange={(value) => updateBirthDate('year', value)}
                 style={[styles.picker, { color: textColor }]}
                 itemStyle={Platform.OS === 'ios' ? { color: textColor, fontSize: 14 } : undefined}
@@ -188,7 +203,6 @@ const styles = StyleSheet.create({
   scrollContentContainer: {
     flexGrow: 1,
     justifyContent: 'center',
-    paddingHorizontal: 20,
   },
   pickersContainer: {
     flexDirection: 'row',
@@ -200,7 +214,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   monthPickerSection: {
-    flex: 1.4, // Make month picker wider
+    flex: 1.4,
   },
   pickerLabel: {
     fontSize: 18,

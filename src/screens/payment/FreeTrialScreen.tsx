@@ -4,6 +4,7 @@ import { useColorScheme } from 'react-native';
 import { PaymentLayout } from '../../components/payment/PaymentLayout';
 import i18n from '../../utils/i18n';
 import { hapticFeedback } from '../../utils/haptic';
+import { useOnboarding } from '../../context/OnboardingContext';
 
 interface FreeTrialScreenProps {
   onNext: () => void;
@@ -12,6 +13,29 @@ interface FreeTrialScreenProps {
 export function FreeTrialScreen({ onNext }: FreeTrialScreenProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const { preferences, updatePreference, getOnboardingDataForAPI } = useOnboarding();
+
+  // Handle free trial completion
+  const handleFreeTrialComplete = () => {
+    const now = new Date();
+    const startDate = now.toISOString().split('T')[0]; // YYYY-MM-DD format
+    
+    // Calculate trial end date (3 days from now)
+    const trialEndDate = new Date(now);
+    trialEndDate.setDate(trialEndDate.getDate() + 3);
+    const trialEndDateString = trialEndDate.toISOString().split('T')[0];
+    
+    // Update subscription preferences for free trial
+    updatePreference('subscriptionPlan', 'yearly'); // Free trial is for yearly plan
+    updatePreference('subscriptionActive', false); // Not active until payment
+    updatePreference('subscriptionCost', 39.99);
+    updatePreference('freeTrialActive', true);
+    updatePreference('freeTrialStartDate', startDate);
+    updatePreference('freeTrialEndDate', trialEndDateString);
+    
+    // Continue to next screen
+    onNext();
+  };
 
   return (
     <PaymentLayout
@@ -41,7 +65,7 @@ export function FreeTrialScreen({ onNext }: FreeTrialScreenProps) {
             ]}
             onPress={() => {
               hapticFeedback.selection();
-              onNext();
+              handleFreeTrialComplete();
             }}
             activeOpacity={0.8}
           >

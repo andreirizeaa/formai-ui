@@ -6,6 +6,7 @@ import Svg, { Path } from 'react-native-svg';
 import { BackButton } from '../../components/ui/BackButton';
 import i18n from '../../utils/i18n';
 import { hapticFeedback } from '../../utils/haptic';
+import { useOnboarding } from '../../context/OnboardingContext';
 
 interface NotificationReminderScreenProps {
   onNext: () => void;
@@ -31,6 +32,7 @@ export function NotificationReminderScreen({ onNext, onBack }: NotificationRemin
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const shakeAnimation = useRef(new Animated.Value(0)).current;
+  const { preferences, updatePreference, getOnboardingDataForAPI } = useOnboarding();
 
   // Shake animation effect
   useEffect(() => {
@@ -77,6 +79,28 @@ export function NotificationReminderScreen({ onNext, onBack }: NotificationRemin
     inputRange: [-1, 1],
     outputRange: ['-10deg', '10deg'],
   });
+
+  // Handle notification reminder completion
+  const handleNotificationReminderComplete = () => {
+    const now = new Date();
+    const startDate = now.toISOString().split('T')[0]; // YYYY-MM-DD format
+    
+    // Calculate trial end date (3 days from now)
+    const trialEndDate = new Date(now);
+    trialEndDate.setDate(trialEndDate.getDate() + 3);
+    const trialEndDateString = trialEndDate.toISOString().split('T')[0];
+    
+    // Update subscription preferences for notification reminder flow
+    updatePreference('subscriptionPlan', 'yearly'); // Notification reminder is for yearly plan
+    updatePreference('subscriptionActive', false); // Not active until payment
+    updatePreference('subscriptionCost', 39.99);
+    updatePreference('freeTrialActive', true);
+    updatePreference('freeTrialStartDate', startDate);
+    updatePreference('freeTrialEndDate', trialEndDateString);
+    
+    // Continue to next screen
+    onNext();
+  };
 
   return (
     <SafeAreaView 
@@ -153,7 +177,7 @@ export function NotificationReminderScreen({ onNext, onBack }: NotificationRemin
           ]}
           onPress={() => {
             hapticFeedback.selection();
-            onNext();
+            handleNotificationReminderComplete();
           }}
           activeOpacity={0.8}
         >

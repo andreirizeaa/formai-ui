@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform, Image } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
+import i18n from '../../../../utils/i18n';
 
 interface PracticesScreenProps {
   onNext?: () => void;
@@ -13,12 +14,9 @@ interface PracticesScreenProps {
 export function PracticesScreen({
   onNext,
   onUpload,
-  title = "Best recording practices",
+  title = i18n.t('add.bestRecordingPractices'),
   buttonText,
-  tips = [
-    "Ensure good lighting and a stable camera",
-    "Try to record yourself from the side"
-  ]
+  tips = i18n.t('add.recordingTips') as string[]
 }: PracticesScreenProps) {
   const handleButtonPress = () => {
     if (onNext) {
@@ -54,9 +52,9 @@ export function PracticesScreen({
 
         {/* Tips Card */}
         <View style={styles.tipsCard}>
-          <Text style={styles.tipsTitle}>General tips</Text>
+          <Text style={styles.tipsTitle}>{i18n.t('add.generalTips')}</Text>
           <View style={styles.tipsList}>
-            {tips.map((tip, index) => (
+            {(tips || []).map((tip, index) => (
               <View key={index} style={styles.tipItem}>
                 <View style={styles.tipNumber}>
                   <Text style={styles.tipNumberText}>{index + 1}</Text>

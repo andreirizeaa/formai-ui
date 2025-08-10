@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Platform } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { OnboardingLayout } from '../../components/onboarding/OnboardingLayout';
+import { AnimatedOptionButton } from '../../components/onboarding/AnimatedOptionButton';
 import { useOnboarding } from '../../context/OnboardingContext';
 import { LANGUAGES } from '../../constants/languages';
 import i18n from '../../utils/i18n';
@@ -53,22 +54,13 @@ export function LanguageScreen({ onNext, onBack }: LanguageScreenProps) {
         nestedScrollEnabled={true}
         fadingEdgeLength={Platform.OS === 'android' ? 50 : 0}
       >
-        {LANGUAGES.map((language) => (
-          <TouchableOpacity
+        {LANGUAGES.map((language, index) => (
+          <AnimatedOptionButton
             key={language.code}
-            style={[
-              styles.languageButton,
-              {
-                backgroundColor: preferences.language === language.code
-                  ? '#000000'  // Black background when selected
-                  : 'transparent',
-                borderColor: preferences.language === language.code
-                  ? '#000000'  // Black border when selected
-                  : (isDark ? '#2C2C2E' : '#E5E5EA'),
-              }
-            ]}
             onPress={() => handleLanguageSelect(language.code)}
-            activeOpacity={0.7}
+            isSelected={preferences.language === language.code}
+            isDark={isDark}
+            delay={index * 100}
           >
             <View style={styles.languageContent}>
               <Text 
@@ -86,7 +78,7 @@ export function LanguageScreen({ onNext, onBack }: LanguageScreenProps) {
               </Text>
               <Text style={styles.flag}>{language.flag}</Text>
             </View>
-          </TouchableOpacity>
+          </AnimatedOptionButton>
         ))}
       </ScrollView>
     </OnboardingLayout>
@@ -102,12 +94,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center', // Center the buttons vertically when they fit
     paddingVertical: 20,
     gap: 12,
-  },
-  languageButton: {
-    borderWidth: 1.5,
-    borderRadius: 16,
-    paddingVertical: 20,
-    paddingHorizontal: 24,
   },
   languageContent: {
     flexDirection: 'row',

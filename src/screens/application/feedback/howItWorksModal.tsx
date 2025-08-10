@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Platform, Modal } from 'react
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import { hapticFeedback } from '../../../utils/haptic';
+import i18n from '../../../utils/i18n';
 
 interface HowItWorksModalProps {
   isVisible: boolean;
@@ -32,7 +33,7 @@ export function HowItWorksModal({ isVisible, onClose, onViewFeedback }: HowItWor
         <SafeAreaView style={styles.safeArea}>
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.title}>How it works</Text>
+            <Text style={styles.title}>{i18n.t('feedback.howItWorks')}</Text>
             <TouchableOpacity 
               style={styles.closeButton} 
               onPress={handleClose}
@@ -60,7 +61,7 @@ export function HowItWorksModal({ isVisible, onClose, onViewFeedback }: HowItWor
                   </View>
                   <View style={styles.howItWorksContent}>
                     <Text style={styles.howItWorksText}>
-                      Our AI notices specific moments during your lift where your form can be improved.
+                      {i18n.t('feedback.step1')}
                     </Text>
                   </View>
                 </View>
@@ -71,7 +72,7 @@ export function HowItWorksModal({ isVisible, onClose, onViewFeedback }: HowItWor
                   </View>
                   <View style={styles.howItWorksContent}>
                     <Text style={styles.howItWorksText}>
-                      It will then explain what was not optimal.
+                      {i18n.t('feedback.step2')}
                     </Text>
                   </View>
                 </View>
@@ -82,7 +83,7 @@ export function HowItWorksModal({ isVisible, onClose, onViewFeedback }: HowItWor
                   </View>
                   <View style={styles.howItWorksContent}>
                     <Text style={styles.howItWorksText}>
-                      Tips on how to stay safe and improve will then be given!
+                      {i18n.t('feedback.step3')}
                     </Text>
                   </View>
                 </View>
@@ -93,7 +94,7 @@ export function HowItWorksModal({ isVisible, onClose, onViewFeedback }: HowItWor
                   </View>
                   <View style={styles.howItWorksContent}>
                     <Text style={styles.howItWorksText}>
-                      Then, it is up to you to improve on your form and then review in a week.
+                      {i18n.t('feedback.step4')}
                     </Text>
                   </View>
                 </View>
@@ -108,7 +109,7 @@ export function HowItWorksModal({ isVisible, onClose, onViewFeedback }: HowItWor
               onPress={handleViewFeedback}
               activeOpacity={0.7}
             >
-              <Text style={styles.viewFeedbackButtonText}>View Feedback</Text>
+              <Text style={styles.viewFeedbackButtonText}>{i18n.t('feedback.viewFeedback')}</Text>
             </TouchableOpacity>
           </View>
         </SafeAreaView>

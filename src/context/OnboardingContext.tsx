@@ -9,15 +9,26 @@ const initialPreferences: UserPreferences = {
   goal: null,
   workoutsPerWeek: null,
   discoverySource: null,
-  hasPersonalTrainer: null,
-  height: null,
-  weight: null,
-  birthDate: null,
-  unitSystem: 'metric',
   liftingGoal: null,
   formBarrier: null,
-  rating: null,
+  hasPersonalTrainer: null,
+  unitSystem: 'metric',
   referralCode: null,
+  referralCodeDiscount: null,
+  referralCodeValidOn: null,
+  metricHeight: 170,
+  metricWeight: 60,
+  birthDate: null,
+  hasRated: null,
+  subscriptionPlan: null,
+  subscriptionCost: null,
+  subscriptionActive: null,
+  subscriptionStartDate: null,
+  subscriptionRenewalDate: null,
+  freeTrialActive: null,
+  freeTrialStartDate: null,
+  freeTrialEndDate: null,
+  signInMethod: null,
 };
 
 interface OnboardingProviderProps {
@@ -42,74 +53,9 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
     setIsComplete(complete);
   };
 
-  // Function to validate if all required onboarding data is complete
-  const isOnboardingComplete = (): boolean => {
-    return !!(
-      preferences.language &&
-      preferences.unitSystem &&
-      preferences.gender &&
-      preferences.goal &&
-      preferences.workoutsPerWeek &&
-      preferences.discoverySource &&
-      preferences.hasPersonalTrainer !== null &&
-      preferences.height &&
-      preferences.weight &&
-      preferences.birthDate &&
-      preferences.liftingGoal &&
-      preferences.formBarrier &&
-      preferences.rating
-    );
-  };
-
   // Function to get all onboarding data in API-ready format
   const getOnboardingDataForAPI = () => {
-    if (!isOnboardingComplete()) {
-      throw new Error('Onboarding data is incomplete');
-    }
-
-    return {
-      language: preferences.language,
-      unitSystem: preferences.unitSystem,
-      gender: preferences.gender,
-      goal: preferences.goal,
-      workoutsPerWeek: preferences.workoutsPerWeek,
-      discoverySource: preferences.discoverySource,
-      hasPersonalTrainer: preferences.hasPersonalTrainer,
-      height: preferences.height, // Always in cm
-      weight: preferences.weight, // Always in kg
-      birthDate: preferences.birthDate,
-      liftingGoal: preferences.liftingGoal,
-      formBarrier: preferences.formBarrier,
-      rating: preferences.rating,
-      referralCode: preferences.referralCode || null,
-      // Add computed fields for API
-      age: preferences.birthDate ? calculateAge(preferences.birthDate) : null,
-      bmi: preferences.height && preferences.weight ? calculateBMI(preferences.height, preferences.weight) : null,
-    };
-  };
-
-  // Helper function to calculate age from birth date
-  const calculateAge = (birthDate: { month: number | null; day: number | null; year: number | null }) => {
-    if (!birthDate.month || !birthDate.day || !birthDate.year) {
-      return null;
-    }
-    
-    const today = new Date();
-    const birth = new Date(birthDate.year, birthDate.month - 1, birthDate.day);
-    let age = today.getFullYear() - birth.getFullYear();
-    const monthDiff = today.getMonth() - birth.getMonth();
-    
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-      age--;
-    }
-    
-    return age;
-  };
-
-  // Helper function to calculate BMI
-  const calculateBMI = (heightCm: number, weightKg: number) => {
-    const heightM = heightCm / 100;
-    return Math.round((weightKg / (heightM * heightM)) * 10) / 10;
+    return preferences;
   };
 
   // Function to reset onboarding data
@@ -127,13 +73,15 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
       'goal',
       'workoutsPerWeek',
       'discoverySource',
-      'hasPersonalTrainer',
-      'height',
-      'weight',
-      'birthDate',
       'liftingGoal',
       'formBarrier',
-      'rating'
+      'hasPersonalTrainer',
+      'metricHeight',
+      'metricWeight',
+      'birthDate',
+      'hasRated',
+      'subscriptionPlan',
+      'subscriptionActive',
     ];
     
     const completedFields = requiredFields.filter(field => 
@@ -151,7 +99,6 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
         updatePreference,
         isComplete,
         setComplete,
-        isOnboardingComplete,
         getOnboardingDataForAPI,
         resetOnboarding,
         getOnboardingProgress,
