@@ -34,6 +34,9 @@ export function PersonalTrainerScreen({ onNext, onBack }: PersonalTrainerScreenP
     }
   };
 
+  const isNextDisabled = preferences.hasPersonalTrainer === null;
+  const handleNextConditional = isNextDisabled ? () => {} : handleNext;
+
   return (
     <OnboardingLayout
       title={i18n.t('personalTrainer.title')}
@@ -41,9 +44,9 @@ export function PersonalTrainerScreen({ onNext, onBack }: PersonalTrainerScreenP
       currentStep={9}
       totalSteps={13}
       onBack={onBack}
-      onNext={handleNext}
+      onNext={handleNextConditional}
       nextTitle={i18n.t('next')}
-      nextDisabled={preferences.hasPersonalTrainer === undefined}
+      nextDisabled={isNextDisabled}
     >
       <ScrollView 
         style={styles.scrollView}

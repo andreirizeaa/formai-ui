@@ -6,6 +6,7 @@ import Svg, { Path, Circle } from 'react-native-svg';
 import { BackButton } from '../../components/ui/BackButton';
 import i18n from '../../utils/i18n';
 import { hapticFeedback } from '../../utils/haptic';
+import { useOnboarding } from '../../context/OnboardingContext';
 
 interface SubscriptionSelectionScreenProps {
   onNext: () => void;
@@ -73,6 +74,7 @@ export function SubscriptionSelectionScreen({ onNext, onBack }: SubscriptionSele
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('yearly');
+  const { preferences, updatePreference, getOnboardingDataForAPI } = useOnboarding();
 
   // Calculate billing date (today + 3 days)
   const getBillingDate = () => {
@@ -90,6 +92,40 @@ export function SubscriptionSelectionScreen({ onNext, onBack }: SubscriptionSele
   };
 
   const billingDate = getBillingDate();
+
+  // Handle payment completion and log user data
+  const handlePaymentComplete = () => {
+    const now = new Date();
+    const startDate = now.toISOString().split('T')[0]; // YYYY-MM-DD format
+    
+    // Calculate renewal date based on plan
+    const renewalDate = new Date(now);
+    if (selectedPlan === 'monthly') {
+      renewalDate.setMonth(renewalDate.getMonth() + 1);
+    } else {
+      renewalDate.setFullYear(renewalDate.getFullYear() + 1);
+    }
+    const renewalDateString = renewalDate.toISOString().split('T')[0];
+    
+    // Set subscription cost based on plan
+    const subscriptionCost = selectedPlan === 'monthly' ? 9.99 : 39.99;
+    
+    // Update subscription preferences
+    updatePreference('subscriptionPlan', selectedPlan);
+    updatePreference('subscriptionActive', false);
+    updatePreference('subscriptionCost', subscriptionCost);
+    updatePreference('subscriptionStartDate', startDate);
+    updatePreference('subscriptionRenewalDate', renewalDateString);
+    updatePreference('freeTrialActive', true);
+    
+    try {
+      const apiData = getOnboardingDataForAPI();
+      console.log('API-ready data after payment:', apiData);
+    } catch (error) {
+      console.log('Onboarding data incomplete after payment:', error);
+    }
+    onNext();
+  };
 
   return (
     <SafeAreaView 
@@ -395,7 +431,7 @@ export function SubscriptionSelectionScreen({ onNext, onBack }: SubscriptionSele
           ]}
           onPress={() => {
             hapticFeedback.selection();
-            onNext();
+            handlePaymentComplete();
           }}
           activeOpacity={0.8}
         >

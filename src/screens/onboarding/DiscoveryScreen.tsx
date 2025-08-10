@@ -110,7 +110,7 @@ export function DiscoveryScreen({ onNext, onBack }: DiscoveryScreenProps) {
             onPress={() => handleDiscoverySelect(option.key)}
             isSelected={preferences.discoverySource === option.key}
             isDark={isDark}
-            delay={imagesReady ? index * 100 : 0}
+            delay={index * 100}
             style={{ paddingVertical: 12 }}
           >
             <View style={styles.discoveryContent}>

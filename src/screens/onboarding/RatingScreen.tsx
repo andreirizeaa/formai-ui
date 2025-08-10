@@ -32,7 +32,7 @@ export function RatingScreen({ onNext, onBack }: RatingScreenProps) {
   const handleSkip = () => {
     hapticFeedback.selection();
     // Save a default rating of 5 when skipped
-    updatePreference('rating', 5);
+    updatePreference('hasRated', true);
     onNext();
   };
 
