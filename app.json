@@ -23,7 +23,16 @@
     },
     "plugins": [
       "expo-mail-composer",
-      "expo-video"
-    ]
+      "expo-video",
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.666171994988-pvs957q392npltdb7u9ppq86orgvj72b"
+        }
+      ]
+    ],
+    "ios": {
+      "bundleIdentifier": "com.useformai.formai"
+    }
   }
 }
