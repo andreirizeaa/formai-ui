@@ -27,6 +27,7 @@ import { FreeTrialScreen } from '../screens/payment/FreeTrialScreen';
 import { NotificationReminderScreen } from '../screens/payment/NotificationReminderScreen';
 import { SubscriptionSelectionScreen } from '../screens/payment/SubscriptionSelectionScreen';
 import { CreateAccountScreen } from '../screens/auth/CreateAccountScreen';
+import { SignInScreen } from '../screens/auth/SignInScreen';
 import { CameraPermissionScreen } from '../screens/onboarding/CameraPermissionScreen';
 
 interface OnboardingNavigatorProps {
@@ -56,6 +57,7 @@ export type OnboardingStackParamList = {
   FreeTrial: undefined;
   NotificationReminder: undefined;
   SubscriptionSelection: undefined;
+  SignIn: undefined;
   CreateAccount: undefined;
   CameraPermission: undefined;
 };
@@ -83,7 +85,7 @@ function WelcomeScreenWrapper({ onSignIn }: { onSignIn: () => void }) {
   };
 
   const handleSignIn = () => {
-    navigation.navigate('CreateAccount');
+    navigation.navigate('SignIn');
   };
 
   return <WelcomeScreen onGetStarted={handleGetStarted} onSignIn={handleSignIn} />;
@@ -351,23 +353,27 @@ function SubscriptionSelectionScreenWrapper() {
   return <SubscriptionSelectionScreen onNext={handleNext} onBack={handleBack} />;
 }
 
+function SignInScreenWrapper({ onSignIn }: { onSignIn: () => void }) {
+  const navigation = useNavigation<OnboardingNavigationProp>();
+  
+  const handleBack = () => {
+    navigation.navigate('Welcome');
+
+  };
+
+  return <SignInScreen onSignIn={onSignIn} onBack={handleBack} />;
+}
+
 function CreateAccountScreenWrapper({ onComplete, onSignIn }: { onComplete: () => void; onSignIn: () => void }) {
   const navigation = useNavigation<OnboardingNavigationProp>();
   
   const handleNext = () => {
-    // If we came from sign-in flow, go to main app
-    // If we came from onboarding flow, continue to camera permission
-    if (navigation.getState().routes.some(route => route.name === 'Welcome')) {
-      onSignIn(); // This will navigate to main app
-    } else {
-      navigation.navigate('CameraPermission');
-    }
+    // Continue to camera permission for onboarding flow
+    console.log('CreateAccount: Continuing to camera permission for onboarding');
+    navigation.navigate('CameraPermission');
   };
 
-  // Check if we came from sign-in flow (Welcome screen)
-  const isSignIn = navigation.getState().routes.some(route => route.name === 'Welcome');
-
-  return <CreateAccountScreen onNext={handleNext} isSignIn={isSignIn} />;
+  return <CreateAccountScreen onNext={handleNext} />;
 }
 
 function CameraPermissionScreenWrapper({ onComplete }: { onComplete: () => void }) {
@@ -471,6 +477,10 @@ export function OnboardingNavigator({ onComplete, onSignIn }: OnboardingNavigato
 
         <Stack.Screen name="SubscriptionSelection">
           {() => <SubscriptionSelectionScreenWrapper />}
+        </Stack.Screen>
+
+        <Stack.Screen name="SignIn">
+          {() => <SignInScreenWrapper onSignIn={onSignIn} />}
         </Stack.Screen>
 
         <Stack.Screen name="CreateAccount">

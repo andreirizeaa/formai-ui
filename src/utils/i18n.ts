@@ -84,7 +84,7 @@ const i18n = new I18n({
     },
     welcome: {
       title: 'FormAI',
-      subtitle: 'Transform your fitness journey with AI-powered form analysis',
+      subtitle: 'Perfect form, always',
     },
     language: {
       title: 'Language',
