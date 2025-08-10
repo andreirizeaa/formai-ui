@@ -20,7 +20,7 @@ export function CreateAccountScreen({ onNext }: CreateAccountScreenProps) {
   React.useEffect(() => {
     GoogleSignin.configure({
       scopes: ['https://www.googleapis.com/auth/drive.readonly'],
-      webClientId: '666171994988-pvs957q392npltdb7u9ppq86orgvj72b.apps.googleusercontent.com',
+      webClientId: '338047674329-5dfpj06alfpfn0phi57c4bgdg6nihv87.apps.googleusercontent.com',
     });
   }, []);
 
