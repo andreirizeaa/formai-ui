@@ -13,6 +13,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { hapticFeedback } from '../../../utils/haptic';
 import { useLoadingLifts } from '../../../context/LoadingLiftsContext';
+import i18n from '../../../utils/i18n';
 
 interface LoadingLiftCardProps {
   lift: {
@@ -110,15 +111,15 @@ export function LoadingLiftCard({ lift }: LoadingLiftCardProps) {
   const getStatusText = () => {
     switch (lift.status) {
       case 'uploading':
-        return 'Uploading video...';
+        return i18n.t('loadingLift.uploadingVideo');
       case 'processing':
-        return 'Analyzing form...';
+        return i18n.t('loadingLift.analyzingForm');
       case 'completed':
-        return 'Analyzing form...';
+        return i18n.t('loadingLift.analyzingForm');
       case 'error':
-        return 'Analysis failed';
+        return i18n.t('loadingLift.analysisFailed');
       default:
-        return 'Processing...';
+        return i18n.t('loadingLift.processing');
     }
   };
 
@@ -165,17 +166,17 @@ export function LoadingLiftCard({ lift }: LoadingLiftCardProps) {
           <View style={styles.liftContent}>
             <View style={styles.liftDetails}>
               <Text style={styles.errorTitle}>
-                An error occurred
+                {i18n.t('loadingLift.errorOccurred')}
               </Text>
               <Text style={styles.errorSubtitle}>
-                Please try again
+                {i18n.t('loadingLift.pleaseTryAgain')}
               </Text>
               <TouchableOpacity 
                 style={styles.retryButton}
                 onPress={handleRetry}
                 activeOpacity={0.7}
               >
-                <Text style={styles.retryButtonText}>Tap to retry</Text>
+                <Text style={styles.retryButtonText}>{i18n.t('loadingLift.tapToRetry')}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -216,13 +217,13 @@ export function LoadingLiftCard({ lift }: LoadingLiftCardProps) {
         {/* Content - Right 75% */}
         <View style={styles.liftContent}>
           <View style={styles.liftDetails}>
-            <Text style={styles.analyzingText}>Analyzing form...</Text>
+            <Text style={styles.analyzingText}>{i18n.t('loadingLift.analyzingForm')}</Text>
               <View style={styles.placeholderLines}>
                 <Animated.View style={[styles.placeholderLine, styles.placeholderLine1, animatedLine1Style]} />
                 <Animated.View style={[styles.placeholderLine, styles.placeholderLine2, animatedLine2Style]} />
                 <Animated.View style={[styles.placeholderLine, styles.placeholderLine3, animatedLine3Style]} />
               </View>
-            <Text style={styles.notificationText}>We'll notify you when done!</Text>
+            <Text style={styles.notificationText}>{i18n.t('loadingLift.notifyWhenDone')}</Text>
           </View>
         </View>
       </View>

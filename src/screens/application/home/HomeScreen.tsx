@@ -18,6 +18,7 @@ import Animated, {
   withSpring, 
   runOnJS 
 } from 'react-native-reanimated';
+import i18n from '../../../utils/i18n';
 
 interface HomeScreenProps {
   onShowFeedback: (liftData: ILiftData) => void;
@@ -79,9 +80,9 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
   const cardData = useMemo(() => [
     { 
       percentage: averageAccuracy, 
-      label: liftsForSelectedDate.length > 0 ? 'Daily accuracy level' : 'No lifts today'
+      label: liftsForSelectedDate.length > 0 ? i18n.t('home.dailyAccuracyLevel') : i18n.t('home.noLiftsToday')
     },
-    { percentage: allTimeAverageAccuracy, label: 'All time accuracy' }
+    { percentage: allTimeAverageAccuracy, label: i18n.t('home.allTimeAccuracy') }
   ], [averageAccuracy, allTimeAverageAccuracy, liftsForSelectedDate.length]);
 
   // Animation values for each lift card - recreate when lifts change
@@ -270,7 +271,7 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
             style={styles.testButton}
             onPress={handleAddTestLift}
           >
-            <Text style={styles.testButtonText}>Add Test Lift</Text>
+            <Text style={styles.testButtonText}>{i18n.t('home.addTestLift')}</Text>
           </TouchableOpacity>
         </View>
         
@@ -378,7 +379,7 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
                   resizeMode="cover"
                 >
                   <View style={styles.blankCardOverlay}>
-                    <Text style={styles.blankCardTitle}>Earn by Referring!</Text>
+                    <Text style={styles.blankCardTitle}>{i18n.t('home.earnByReferring')}</Text>
                   </View>
                 </ImageBackground>
               </TouchableOpacity>
@@ -389,13 +390,13 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
                 activeOpacity={0.7}
               >
                 <View style={styles.topCardContent}>
-                  <Text style={styles.topCardTitle}>Your video library</Text>
+                  <Text style={styles.topCardTitle}>{i18n.t('home.yourVideoLibrary')}</Text>
                 </View>
               </TouchableOpacity>
             </View>
           </View>
           
-          <Text style={styles.sectionTitle}>Lifts</Text>
+          <Text style={styles.sectionTitle}>{i18n.t('home.lifts')}</Text>
           <View 
             style={styles.liftsScrollView} 
           >
@@ -424,8 +425,8 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
                 activeOpacity={0.7}
               >
                 <View style={styles.noLiftsContent}>
-                  <Text style={styles.noLiftsTitle}>No recorded lifts for this date</Text>
-                  <Text style={styles.noLiftsSubtitle}>Start analysing your workout by taking a quick video</Text>
+                  <Text style={styles.noLiftsTitle}>{i18n.t('home.noRecordedLifts')}</Text>
+                  <Text style={styles.noLiftsSubtitle}>{i18n.t('home.startAnalyzingWorkout')}</Text>
                 </View>
               </TouchableOpacity>
             ) : null}
@@ -487,10 +488,10 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
             </View>
 
             {/* Streak text */}
-            <Text style={styles.streakText}>12 day streak!</Text>
+            <Text style={styles.streakText}>{i18n.t('home.dayStreak', { count: 12 })}</Text>
 
             {/* Message */}
-            <Text style={styles.message}>You're on fire! Keep up the great work with your daily streaks.</Text>
+            <Text style={styles.message}>{i18n.t('home.onFireMessage')}</Text>
 
             {/* Action button */}
             <TouchableOpacity 
@@ -500,7 +501,7 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
                 handleFirePopupClose();
               }}
             >
-              <Text style={styles.buttonText}>Continue</Text>
+              <Text style={styles.buttonText}>{i18n.t('home.continue')}</Text>
             </TouchableOpacity>
           </TouchableOpacity>
         </TouchableOpacity>
