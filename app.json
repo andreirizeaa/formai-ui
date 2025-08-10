@@ -31,6 +31,20 @@
           "iosUrlScheme": "com.googleusercontent.apps.338047674329-5dfpj06alfpfn0phi57c4bgdg6nihv87"
         }
       ]
-    ]
+    ],
+    "ios": {
+      "bundleIdentifier": "com.useformai.formai",
+      "infoPlist": {
+        "CFBundleURLTypes": [
+          {
+            "CFBundleURLName": "Google Sign-In",
+            "CFBundleURLSchemes": [
+              "com.googleusercontent.apps.338047674329-5dfpj06alfpfn0phi57c4bgdg6nihv87"
+            ]
+          }
+        ],
+        "NSCameraUsageDescription": "This app uses the camera to record workout videos for lift analysis and form feedback."
+      }
+    }
   }
 }

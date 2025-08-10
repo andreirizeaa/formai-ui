@@ -82,7 +82,11 @@ function WelcomeScreenWrapper({ onSignIn }: { onSignIn: () => void }) {
     navigation.navigate('Language');
   };
 
-  return <WelcomeScreen onGetStarted={handleGetStarted} onSignIn={onSignIn} />;
+  const handleSignIn = () => {
+    navigation.navigate('CreateAccount');
+  };
+
+  return <WelcomeScreen onGetStarted={handleGetStarted} onSignIn={handleSignIn} />;
 }
 
 function LanguageScreenWrapper() {
@@ -347,14 +351,23 @@ function SubscriptionSelectionScreenWrapper() {
   return <SubscriptionSelectionScreen onNext={handleNext} onBack={handleBack} />;
 }
 
-function CreateAccountScreenWrapper() {
+function CreateAccountScreenWrapper({ onComplete, onSignIn }: { onComplete: () => void; onSignIn: () => void }) {
   const navigation = useNavigation<OnboardingNavigationProp>();
   
   const handleNext = () => {
-    navigation.navigate('CameraPermission');
+    // If we came from sign-in flow, go to main app
+    // If we came from onboarding flow, continue to camera permission
+    if (navigation.getState().routes.some(route => route.name === 'Welcome')) {
+      onSignIn(); // This will navigate to main app
+    } else {
+      navigation.navigate('CameraPermission');
+    }
   };
 
-  return <CreateAccountScreen onNext={handleNext} />;
+  // Check if we came from sign-in flow (Welcome screen)
+  const isSignIn = navigation.getState().routes.some(route => route.name === 'Welcome');
+
+  return <CreateAccountScreen onNext={handleNext} isSignIn={isSignIn} />;
 }
 
 function CameraPermissionScreenWrapper({ onComplete }: { onComplete: () => void }) {
@@ -461,7 +474,7 @@ export function OnboardingNavigator({ onComplete, onSignIn }: OnboardingNavigato
         </Stack.Screen>
 
         <Stack.Screen name="CreateAccount">
-          {() => <CreateAccountScreenWrapper />}
+          {() => <CreateAccountScreenWrapper onComplete={onComplete} onSignIn={onSignIn} />}
         </Stack.Screen>
 
         <Stack.Screen name="CameraPermission">
