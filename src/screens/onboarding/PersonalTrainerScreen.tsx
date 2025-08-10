@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Platform } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { OnboardingLayout } from '../../components/onboarding/OnboardingLayout';
+import { AnimatedOptionButton } from '../../components/onboarding/AnimatedOptionButton';
 import { useOnboarding } from '../../context/OnboardingContext';
 import i18n from '../../utils/i18n';
 import { hapticFeedback } from '../../utils/haptic';
@@ -27,22 +28,25 @@ export function PersonalTrainerScreen({ onNext, onBack }: PersonalTrainerScreenP
   };
 
   const handleNext = () => {
-    if (preferences.hasPersonalTrainer !== null) {
+    if (preferences.hasPersonalTrainer !== undefined) {
       hapticFeedback.selection();
       onNext();
     }
   };
 
+  const isNextDisabled = preferences.hasPersonalTrainer === null;
+  const handleNextConditional = isNextDisabled ? () => {} : handleNext;
+
   return (
     <OnboardingLayout
       title={i18n.t('personalTrainer.title')}
       subtitle={i18n.t('personalTrainer.subtitle')}
-      currentStep={6}
+      currentStep={9}
       totalSteps={13}
       onBack={onBack}
-      onNext={handleNext}
+      onNext={handleNextConditional}
       nextTitle={i18n.t('next')}
-      nextDisabled={preferences.hasPersonalTrainer === null}
+      nextDisabled={isNextDisabled}
     >
       <ScrollView 
         style={styles.scrollView}
@@ -56,22 +60,13 @@ export function PersonalTrainerScreen({ onNext, onBack }: PersonalTrainerScreenP
         nestedScrollEnabled={true}
         fadingEdgeLength={Platform.OS === 'android' ? 50 : 0}
       >
-        {trainerOptions.map((option) => (
-          <TouchableOpacity
+        {trainerOptions.map((option, index) => (
+          <AnimatedOptionButton
             key={option.key.toString()}
-            style={[
-              styles.trainerButton,
-              {
-                backgroundColor: preferences.hasPersonalTrainer === option.key
-                  ? '#000000'  // Black background when selected
-                  : 'transparent',
-                borderColor: preferences.hasPersonalTrainer === option.key
-                  ? '#000000'  // Black border when selected
-                  : (isDark ? '#2C2C2E' : '#E5E5EA'),
-              }
-            ]}
             onPress={() => handleTrainerSelect(option.key)}
-            activeOpacity={0.7}
+            isSelected={preferences.hasPersonalTrainer === option.key}
+            isDark={isDark}
+            delay={index * 100}
           >
             <View style={styles.trainerContent}>
               <Text 
@@ -88,7 +83,7 @@ export function PersonalTrainerScreen({ onNext, onBack }: PersonalTrainerScreenP
                 {option.label}
               </Text>
             </View>
-          </TouchableOpacity>
+          </AnimatedOptionButton>
         ))}
       </ScrollView>
     </OnboardingLayout>
@@ -103,12 +98,6 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'center',
     gap: 12,
-  },
-  trainerButton: {
-    borderWidth: 1.5,
-    borderRadius: 16,
-    paddingVertical: 20,
-    paddingHorizontal: 24,
   },
   trainerContent: {
     alignItems: 'center',

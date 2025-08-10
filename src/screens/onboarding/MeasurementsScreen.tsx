@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, Platform, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Platform } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { OnboardingLayout } from '../../components/onboarding/OnboardingLayout';
@@ -19,42 +19,32 @@ export function MeasurementsScreen({ onNext, onBack }: MeasurementsScreenProps) 
   
   const isMetric = preferences.unitSystem === 'metric';
 
-  // Set default values if not already set
-  React.useEffect(() => {
-    if (!preferences.height) {
-      updatePreference('height', isMetric ? 170 : 67 * 2.54); // Default to 170cm or 67 inches converted to cm
-    }
-    if (!preferences.weight) {
-      updatePreference('weight', isMetric ? 60 : 130 * 0.453592); // Default to 60kg or 130 lbs converted to kg
-    }
-  }, [isMetric]);
-
   const handleHeightSelect = (height: number) => {
-    updatePreference('height', isMetric ? height : height * 2.54); // Convert to cm if imperial
+    updatePreference('metricHeight', isMetric ? height : height * 2.54); // Convert to cm if imperial
   };
 
   const handleFeetSelect = (feet: number) => {
-    const currentHeight = preferences.height || 170;
+    const currentHeight = preferences.metricHeight || 170;
     const totalInches = Math.round(currentHeight / 2.54); // Convert current cm to inches
     const currentInches = totalInches % 12;
     const newTotalInches = feet * 12 + currentInches;
-    updatePreference('height', newTotalInches * 2.54); // Convert back to cm
+    updatePreference('metricHeight', newTotalInches * 2.54); // Convert back to cm
   };
 
   const handleInchesSelect = (inches: number) => {
-    const currentHeight = preferences.height || 170;
+    const currentHeight = preferences.metricHeight || 170;
     const totalInches = Math.round(currentHeight / 2.54); // Convert current cm to inches
     const currentFeet = Math.floor(totalInches / 12);
     const newTotalInches = currentFeet * 12 + inches;
-    updatePreference('height', newTotalInches * 2.54); // Convert back to cm
+    updatePreference('metricHeight', newTotalInches * 2.54); // Convert back to cm
   };
 
   const handleWeightSelect = (weight: number) => {
-    updatePreference('weight', isMetric ? weight : weight * 0.453592); // Convert to kg if imperial
+    updatePreference('metricWeight', isMetric ? weight : weight * 0.453592); // Convert to kg if imperial
   };
 
   const handleNext = () => {
-    if (preferences.height && preferences.weight) {
+    if (preferences.metricHeight && preferences.metricWeight) {
       hapticFeedback.selection();
       onNext();
     }
@@ -73,18 +63,18 @@ export function MeasurementsScreen({ onNext, onBack }: MeasurementsScreenProps) 
     : Array.from({ length: 251 }, (_, i) => 90 + i); // 90-340 lbs
 
   const getCurrentHeight = () => {
-    if (!preferences.height) return isMetric ? 170 : { feet: 5, inches: 7, totalInches: 67 };
-    if (isMetric) return preferences.height;
-    const totalInches = Math.round(preferences.height / 2.54); // Convert cm to inches
+    if (!preferences.metricHeight) return isMetric ? 170 : { feet: 5, inches: 7, totalInches: 67 };
+    if (isMetric) return preferences.metricHeight;
+    const totalInches = Math.round(preferences.metricHeight / 2.54); // Convert cm to inches
     const feet = Math.floor(totalInches / 12);
     const inches = totalInches % 12;
     return { feet, inches, totalInches };
   };
 
   const getCurrentWeight = () => {
-    if (!preferences.weight) return isMetric ? 60 : 130;
-    if (isMetric) return preferences.weight;
-    return Math.round(preferences.weight / 0.453592); // Convert kg to lbs
+    if (!preferences.metricWeight) return isMetric ? 60 : 130;
+    if (isMetric) return preferences.metricWeight;
+    return Math.round(preferences.metricWeight / 0.453592); // Convert kg to lbs
   };
 
   return (
@@ -96,7 +86,7 @@ export function MeasurementsScreen({ onNext, onBack }: MeasurementsScreenProps) 
       onBack={onBack}
       onNext={handleNext}
       nextTitle={i18n.t('next')}
-      nextDisabled={!preferences.height || !preferences.weight}
+      nextDisabled={!preferences.metricHeight && !preferences.metricWeight}
     >
       <ScrollView 
         style={styles.scrollView}

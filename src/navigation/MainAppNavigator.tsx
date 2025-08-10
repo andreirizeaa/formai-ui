@@ -141,6 +141,22 @@ function SettingsScreenWrapper() {
   );
 }
 
+function PerformanceScreenWrapper() {
+  const handleTriggerAddOptions = () => {
+    // This will be handled by the parent component
+    // For now, we'll need to expose this through the global trigger
+    if (global.triggerAddOptions) {
+      global.triggerAddOptions();
+    }
+  };
+
+  return (
+    <PerformanceScreen 
+      onTriggerAddOptions={handleTriggerAddOptions}
+    />
+  );
+}
+
 function PersonalDetailsScreenWrapper() {
   const navigation = useNavigation<MainStackNavigationProp>();
   const { userDetails, getWeightDisplay, getHeightDisplay, getDateOfBirthDisplay } = useUserDetails();
@@ -503,7 +519,7 @@ function MainTabsNavigator() {
       case 'home':
         return <HomeScreenWrapper />;
       case 'performance':
-        return <PerformanceScreen />;
+        return <PerformanceScreenWrapper />;
       case 'settings':
         return <SettingsScreenWrapper />;
       default:

@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Platform } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { OnboardingLayout } from '../../components/onboarding/OnboardingLayout';
+import { AnimatedOptionButton } from '../../components/onboarding/AnimatedOptionButton';
 import { useOnboarding } from '../../context/OnboardingContext';
 import i18n from '../../utils/i18n';
 import { hapticFeedback } from '../../utils/haptic';
@@ -58,22 +59,13 @@ export function WorkoutsScreen({ onNext, onBack }: WorkoutsScreenProps) {
         nestedScrollEnabled={true}
         fadingEdgeLength={Platform.OS === 'android' ? 50 : 0}
       >
-        {workoutOptions.map((option) => (
-          <TouchableOpacity
+        {workoutOptions.map((option, index) => (
+          <AnimatedOptionButton
             key={option.key}
-            style={[
-              styles.workoutButton,
-              {
-                backgroundColor: preferences.workoutsPerWeek === option.key
-                  ? '#000000'  // Black background when selected
-                  : 'transparent',
-                borderColor: preferences.workoutsPerWeek === option.key
-                  ? '#000000'  // Black border when selected
-                  : (isDark ? '#2C2C2E' : '#E5E5EA'),
-              }
-            ]}
             onPress={() => handleWorkoutSelect(option.key)}
-            activeOpacity={0.7}
+            isSelected={preferences.workoutsPerWeek === option.key}
+            isDark={isDark}
+            delay={index * 100}
           >
             <View style={styles.workoutContent}>
               <Text 
@@ -103,7 +95,7 @@ export function WorkoutsScreen({ onNext, onBack }: WorkoutsScreenProps) {
                 {option.subtitle}
               </Text>
             </View>
-          </TouchableOpacity>
+          </AnimatedOptionButton>
         ))}
       </ScrollView>
     </OnboardingLayout>
@@ -118,12 +110,6 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'center',
     gap: 12,
-  },
-  workoutButton: {
-    borderWidth: 1.5,
-    borderRadius: 16,
-    paddingVertical: 20,
-    paddingHorizontal: 24,
   },
   workoutContent: {
     alignItems: 'flex-start',
