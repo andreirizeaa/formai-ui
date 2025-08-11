@@ -96,11 +96,11 @@ export function FreeTrialScreen({ onNext }: FreeTrialScreenProps) {
           {i18n.t('freeTrial.title')}
         </Text>
 
-        {/* App Icon */}
-        <View style={styles.iconContainer}>
+        {/* App overview photo */}
+        <View style={styles.photoContainer}>
           <Image
-            source={require('../../../assets/formai-light-icon.png')}
-            style={styles.appIcon}
+            source={require('../../../assets/app-overview-photo.png')}
+            style={styles.photo}
             resizeMode="contain"
           />
         </View>
@@ -114,6 +114,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     flex: 1,
+    paddingTop: 60,
   },
   mainTitle: {
     fontSize: 40,
@@ -122,15 +123,6 @@ const styles = StyleSheet.create({
     marginBottom: 40,
     lineHeight: 42,
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
-  },
-  iconContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 40,
-  },
-  appIcon: {
-    width: 260,
-    height: 260,
   },
   buttonContainer: {
     alignItems: 'center',
@@ -170,5 +162,14 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     textAlign: 'center',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
+  photoContainer: {
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  photo: {
+    width: '100%',
+    height: '95%',
   },
 }); 

@@ -27,11 +27,13 @@ import { FreeTrialScreen } from '../screens/payment/FreeTrialScreen';
 import { NotificationReminderScreen } from '../screens/payment/NotificationReminderScreen';
 import { SubscriptionSelectionScreen } from '../screens/payment/SubscriptionSelectionScreen';
 import { CreateAccountScreen } from '../screens/auth/CreateAccountScreen';
+import { SignInScreen } from '../screens/auth/SignInScreen';
 import { CameraPermissionScreen } from '../screens/onboarding/CameraPermissionScreen';
 
 interface OnboardingNavigatorProps {
   onComplete: () => void;
   onSignIn: () => void;
+  onUserNeedsOnboarding: () => void;
 }
 
 export type OnboardingStackParamList = {
@@ -56,6 +58,7 @@ export type OnboardingStackParamList = {
   FreeTrial: undefined;
   NotificationReminder: undefined;
   SubscriptionSelection: undefined;
+  SignIn: undefined;
   CreateAccount: undefined;
   CameraPermission: undefined;
 };
@@ -82,7 +85,11 @@ function WelcomeScreenWrapper({ onSignIn }: { onSignIn: () => void }) {
     navigation.navigate('Language');
   };
 
-  return <WelcomeScreen onGetStarted={handleGetStarted} onSignIn={onSignIn} />;
+  const handleSignIn = () => {
+    navigation.navigate('SignIn');
+  };
+
+  return <WelcomeScreen onGetStarted={handleGetStarted} onSignIn={handleSignIn} />;
 }
 
 function LanguageScreenWrapper() {
@@ -347,10 +354,25 @@ function SubscriptionSelectionScreenWrapper() {
   return <SubscriptionSelectionScreen onNext={handleNext} onBack={handleBack} />;
 }
 
-function CreateAccountScreenWrapper() {
+function SignInScreenWrapper({ onSignIn, onUserNeedsOnboarding }: { onSignIn: () => void; onUserNeedsOnboarding: () => void }) {
+  const navigation = useNavigation<OnboardingNavigationProp>();
+  
+  const handleNavigateToOnboarding = () => {
+    // Call the callback to notify App.tsx that user needs onboarding
+    onUserNeedsOnboarding();
+    // Navigate to Language screen to start onboarding
+    navigation.navigate('Language');
+  };
+
+  return <SignInScreen onSignIn={onSignIn} onBack={() => navigation.goBack()} onNavigateToOnboarding={handleNavigateToOnboarding} />;
+}
+
+function CreateAccountScreenWrapper({ onComplete, onSignIn }: { onComplete: () => void; onSignIn: () => void }) {
   const navigation = useNavigation<OnboardingNavigationProp>();
   
   const handleNext = () => {
+    // Continue to camera permission for onboarding flow
+    console.log('CreateAccount: Continuing to camera permission for onboarding');
     navigation.navigate('CameraPermission');
   };
 
@@ -361,7 +383,7 @@ function CameraPermissionScreenWrapper({ onComplete }: { onComplete: () => void 
   return <CameraPermissionScreen onNext={onComplete} />;
 }
 
-export function OnboardingNavigator({ onComplete, onSignIn }: OnboardingNavigatorProps) {
+export function OnboardingNavigator({ onComplete, onSignIn, onUserNeedsOnboarding }: OnboardingNavigatorProps) {
   return (
     <NavigationContainer>
       <Stack.Navigator
@@ -460,8 +482,12 @@ export function OnboardingNavigator({ onComplete, onSignIn }: OnboardingNavigato
           {() => <SubscriptionSelectionScreenWrapper />}
         </Stack.Screen>
 
+        <Stack.Screen name="SignIn">
+          {() => <SignInScreenWrapper onSignIn={onSignIn} onUserNeedsOnboarding={onUserNeedsOnboarding} />}
+        </Stack.Screen>
+
         <Stack.Screen name="CreateAccount">
-          {() => <CreateAccountScreenWrapper />}
+          {() => <CreateAccountScreenWrapper onComplete={onComplete} onSignIn={onSignIn} />}
         </Stack.Screen>
 
         <Stack.Screen name="CameraPermission">
