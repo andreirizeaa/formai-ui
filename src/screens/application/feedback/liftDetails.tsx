@@ -171,8 +171,8 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData }: Lift
         
         <View style={styles.content}>
           {/* Video Player */}
-          <View style={styles.videoContainer}>
-            <VideoPlayerComponent videoUri={require('../../../videos/video.mp4')} />
+          <View style={[styles.video]}>
+            <Text>No video available</Text>
           </View>
 
           {/* Pills Row */}
