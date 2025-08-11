@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "formai-ui",
-    "slug": "formai-ui",
+    "name": "Form AI",
+    "slug": "formai",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/formai-ios-icon.png",
@@ -16,14 +16,35 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/formai-ios-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.useformai.formai"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
       "expo-mail-composer",
-      "expo-video"
-    ]
+      "expo-video",
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.338047674329-5dfpj06alfpfn0phi57c4bgdg6nihv87"
+        }
+      ]
+    ],
+    "ios": {
+      "bundleIdentifier": "com.useformai.formai",
+      "infoPlist": {
+        "CFBundleURLTypes": [
+          {
+            "CFBundleURLName": "Google Sign-In",
+            "CFBundleURLSchemes": [
+              "com.googleusercontent.apps.338047674329-5dfpj06alfpfn0phi57c4bgdg6nihv87"
+            ]
+          }
+        ],
+        "NSCameraUsageDescription": "This app uses the camera to record workout videos for lift analysis and form feedback."
+      }
+    }
   }
 }
