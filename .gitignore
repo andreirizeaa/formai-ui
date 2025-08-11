@@ -3,7 +3,7 @@
 # dependencies
 node_modules/
 
-src/videos/
+# src/videos/
 
 # Expo
 .expo/
