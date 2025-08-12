@@ -2,27 +2,11 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator, StackNavigationProp } from '@react-navigation/stack';
 import { useNavigation } from '@react-navigation/native';
-import { useOnboarding } from '../context/OnboardingContext';
 
-// Import all onboarding screens
+// Import screens
 import { LoadingScreen } from '../screens/onboarding/LoadingScreen';
 import { WelcomeScreen } from '../screens/onboarding/WelcomeScreen';
-import { LanguageScreen } from '../screens/onboarding/LanguageScreen';
-import { UnitsScreen } from '../screens/onboarding/UnitsScreen';
-import { GenderScreen } from '../screens/onboarding/GenderScreen';
-import { TrainingReasonScreen } from '../screens/onboarding/TrainingReasonScreen';
-import { GymChallengeScreen } from '../screens/onboarding/GymChallengeScreen';
-import { WorkoutsScreen } from '../screens/onboarding/WorkoutsScreen';
-import { LifterTypeScreen } from '../screens/onboarding/LifterTypeScreen';
-import { PerfectFormGoalScreen } from '../screens/onboarding/PerfectFormGoalScreen';
-import { FormConfidenceScreen } from '../screens/onboarding/FormConfidenceScreen';
-import { ThreeMonthGoalScreen } from '../screens/onboarding/ThreeMonthGoalScreen';
-import { PersonalTrainerScreen } from '../screens/onboarding/PersonalTrainerScreen';
-import { MeasurementsScreen } from '../screens/onboarding/MeasurementsScreen';
-import { BirthDateScreen } from '../screens/onboarding/BirthDateScreen';
-import { DiscoveryScreen } from '../screens/onboarding/DiscoveryScreen';
-import { RatingScreen } from '../screens/onboarding/RatingScreen';
-import { ReferralCodeScreen } from '../screens/onboarding/ReferralCodeScreen';
+import { OnboardingUnifiedScreen } from '../screens/onboarding/OnboardingUnifiedScreen';
 import { AllDoneScreen } from '../screens/onboarding/AllDoneScreen';
 import { NotificationPermissionScreen } from '../screens/onboarding/NotificationPermissionScreen';
 import { SetupLoadingScreen } from '../screens/onboarding/SetupLoadingScreen';
@@ -42,22 +26,7 @@ interface OnboardingNavigatorProps {
 export type OnboardingStackParamList = {
   Loading: undefined;
   Welcome: undefined;
-  Language: undefined;
-  Units: undefined;
-  Gender: undefined;
-  TrainingReason: undefined;
-  GymChallenge: undefined;
-  Workouts: undefined;
-  LifterType: undefined;
-  PerfectFormGoal: undefined;
-  FormConfidence: undefined;
-  ThreeMonthGoal: undefined;
-  PersonalTrainer: undefined;
-  Measurements: undefined;
-  BirthDate: undefined;
-  Discovery: undefined;
-  Rating: undefined;
-  ReferralCode: undefined;
+  Onboarding: undefined;
   AllDone: undefined;
   NotificationPermission: undefined;
   SetupLoading: undefined;
@@ -88,7 +57,7 @@ function WelcomeScreenWrapper({ onSignIn }: { onSignIn: () => void }) {
   const navigation = useNavigation<OnboardingNavigationProp>();
   
   const handleGetStarted = () => {
-    navigation.navigate('Language');
+    navigation.navigate('Onboarding');
   };
 
   const handleSignIn = () => {
@@ -98,239 +67,82 @@ function WelcomeScreenWrapper({ onSignIn }: { onSignIn: () => void }) {
   return <WelcomeScreen onGetStarted={handleGetStarted} onSignIn={handleSignIn} />;
 }
 
-function LanguageScreenWrapper() {
-  const navigation = useNavigation<OnboardingNavigationProp>();
-  
-  const handleNext = () => {
-    navigation.navigate('Units');
-  };
-
-  const handleBack = () => {
-    navigation.navigate('Welcome');
-  };
-
-  return <LanguageScreen onNext={handleNext} onBack={handleBack} />;
+function UnifiedOnboardingScreenWrapper() {
+  return <OnboardingUnifiedScreen />;
 }
 
-function UnitsScreenWrapper() {
+function FreeTrialScreenWrapper() {
   const navigation = useNavigation<OnboardingNavigationProp>();
   
   const handleNext = () => {
-    navigation.navigate('Gender');
+    navigation.navigate('NotificationReminder');
   };
 
-  const handleBack = () => {
-    navigation.navigate('Language');
-  };
-
-  return <UnitsScreen onNext={handleNext} onBack={handleBack} />;
+  return <FreeTrialScreen onNext={handleNext} />;
 }
 
-function GenderScreenWrapper() {
+function NotificationReminderScreenWrapper() {
   const navigation = useNavigation<OnboardingNavigationProp>();
   
   const handleNext = () => {
-    navigation.navigate('TrainingReason');
+    navigation.navigate('SubscriptionSelection');
   };
 
   const handleBack = () => {
-    navigation.navigate('Units');
+    navigation.navigate('FreeTrial');
   };
 
-  return <GenderScreen onNext={handleNext} onBack={handleBack} />;
+  return <NotificationReminderScreen onNext={handleNext} onBack={handleBack} />;
 }
 
-function TrainingReasonScreenWrapper() {
+function SubscriptionSelectionScreenWrapper() {
   const navigation = useNavigation<OnboardingNavigationProp>();
   
   const handleNext = () => {
-    navigation.navigate('GymChallenge');
+    // Continue to main app or the next flow
   };
 
   const handleBack = () => {
-    navigation.navigate('Gender');
+    navigation.navigate('NotificationReminder');
   };
 
-  return <TrainingReasonScreen onNext={handleNext} onBack={handleBack} />;
+  return <SubscriptionSelectionScreen onNext={handleNext} onBack={handleBack} />;
 }
 
-function GymChallengeScreenWrapper() {
+function SignInScreenWrapper({ onSignIn, onUserNeedsOnboarding }: { onSignIn: () => void; onUserNeedsOnboarding: () => void }) {
   const navigation = useNavigation<OnboardingNavigationProp>();
   
-  const handleNext = () => {
-    navigation.navigate('Workouts');
+  const handleNavigateToOnboarding = () => {
+    onUserNeedsOnboarding();
+    navigation.navigate('Onboarding');
   };
 
-  const handleBack = () => {
-    navigation.navigate('TrainingReason');
-  };
-
-  return <GymChallengeScreen onNext={handleNext} onBack={handleBack} />;
+  return <SignInScreen onSignIn={onSignIn} onBack={() => navigation.navigate("Welcome")} onNavigateToOnboarding={handleNavigateToOnboarding} />;
 }
 
-function WorkoutsScreenWrapper() {
+function CreateAccountScreenWrapper({ onComplete, onSignIn }: { onComplete: () => void; onSignIn: () => void }) {
   const navigation = useNavigation<OnboardingNavigationProp>();
   
   const handleNext = () => {
-    navigation.navigate('LifterType');
+    navigation.navigate('CameraPermission');
   };
 
-  const handleBack = () => {
-    navigation.navigate('GymChallenge');
-  };
-
-  return <WorkoutsScreen onNext={handleNext} onBack={handleBack} />;
+  return <CreateAccountScreen onNext={handleNext} />;
 }
 
-function LifterTypeScreenWrapper() {
-  const navigation = useNavigation<OnboardingNavigationProp>();
-  
-  const handleNext = () => {
-    navigation.navigate('PerfectFormGoal');
-  };
-
-  const handleBack = () => {
-    navigation.navigate('Workouts');
-  };
-
-  return <LifterTypeScreen onNext={handleNext} onBack={handleBack} />;
-}
-
-function PerfectFormGoalScreenWrapper() {
-  const navigation = useNavigation<OnboardingNavigationProp>();
-  
-  const handleNext = () => {
-    navigation.navigate('FormConfidence');
-  };
-
-  const handleBack = () => {
-    navigation.navigate('LifterType');
-  };
-
-  return <PerfectFormGoalScreen onNext={handleNext} onBack={handleBack} />;
-}
-
-function FormConfidenceScreenWrapper() {
-  const navigation = useNavigation<OnboardingNavigationProp>();
-  
-  const handleNext = () => {
-    navigation.navigate('ThreeMonthGoal');
-  };
-
-  const handleBack = () => {
-    navigation.navigate('PerfectFormGoal');
-  };
-
-  return <FormConfidenceScreen onNext={handleNext} onBack={handleBack} />;
-}
-
-function ThreeMonthGoalScreenWrapper() {
-  const navigation = useNavigation<OnboardingNavigationProp>();
-  
-  const handleNext = () => {
-    navigation.navigate('PersonalTrainer');
-  };
-
-  const handleBack = () => {
-    navigation.navigate('FormConfidence');
-  };
-
-  return <ThreeMonthGoalScreen onNext={handleNext} onBack={handleBack} />;
-}
-
-function PersonalTrainerScreenWrapper() {
-  const navigation = useNavigation<OnboardingNavigationProp>();
-  
-  const handleNext = () => {
-    navigation.navigate('Measurements');
-  };
-
-  const handleBack = () => {
-    navigation.navigate('ThreeMonthGoal');
-  };
-
-  return <PersonalTrainerScreen onNext={handleNext} onBack={handleBack} />;
-}
-
-function MeasurementsScreenWrapper() {
-  const navigation = useNavigation<OnboardingNavigationProp>();
-  
-  const handleNext = () => {
-    navigation.navigate('BirthDate');
-  };
-
-  const handleBack = () => {
-    navigation.navigate('PersonalTrainer');
-  };
-
-  return <MeasurementsScreen onNext={handleNext} onBack={handleBack} />;
-}
-
-function BirthDateScreenWrapper() {
-  const navigation = useNavigation<OnboardingNavigationProp>();
-  
-  const handleNext = () => {
-    navigation.navigate('Discovery');
-  };
-
-  const handleBack = () => {
-    navigation.navigate('Measurements');
-  };
-
-  return <BirthDateScreen onNext={handleNext} onBack={handleBack} />;
-}
-
-function DiscoveryScreenWrapper() {
-  const navigation = useNavigation<OnboardingNavigationProp>();
-  
-  const handleNext = () => {
-    navigation.navigate('Rating');
-  };
-
-  const handleBack = () => {
-    navigation.navigate('BirthDate');
-  };
-
-  return <DiscoveryScreen onNext={handleNext} onBack={handleBack} />;
-}
-
-function RatingScreenWrapper() {
-  const navigation = useNavigation<OnboardingNavigationProp>();
-  
-  const handleNext = () => {
-    navigation.navigate('ReferralCode');
-  };
-
-  const handleBack = () => {
-    navigation.navigate('Discovery');
-  };
-
-  return <RatingScreen onNext={handleNext} onBack={handleBack} />;
-}
-
-function ReferralCodeScreenWrapper() {
-  const navigation = useNavigation<OnboardingNavigationProp>();
-  
-  const handleNext = () => {
-    navigation.navigate('AllDone');
-  };
-
-  const handleBack = () => {
-    navigation.navigate('Rating');
-  };
-
-  return <ReferralCodeScreen onNext={handleNext} onBack={handleBack} />;
+function CameraPermissionScreenWrapper({ onComplete }: { onComplete: () => void }) {
+  return <CameraPermissionScreen onNext={onComplete} />;
 }
 
 function AllDoneScreenWrapper() {
   const navigation = useNavigation<OnboardingNavigationProp>();
-  
+
   const handleNext = () => {
     navigation.navigate('NotificationPermission');
   };
 
   const handleBack = () => {
-    navigation.navigate('ReferralCode');
+    navigation.goBack();
   };
 
   return <AllDoneScreen onNext={handleNext} onBack={handleBack} />;
@@ -364,74 +176,6 @@ function SetupLoadingScreenWrapper() {
   return <SetupLoadingScreen onNext={handleNext} onBack={handleBack} />;
 }
 
-function FreeTrialScreenWrapper() {
-  const navigation = useNavigation<OnboardingNavigationProp>();
-  
-  const handleNext = () => {
-    navigation.navigate('NotificationReminder');
-  };
-
-  return <FreeTrialScreen onNext={handleNext} />;
-}
-
-function NotificationReminderScreenWrapper() {
-  const navigation = useNavigation<OnboardingNavigationProp>();
-  
-  const handleNext = () => {
-    navigation.navigate('SubscriptionSelection');
-  };
-
-  const handleBack = () => {
-    navigation.navigate('FreeTrial');
-  };
-
-  return <NotificationReminderScreen onNext={handleNext} onBack={handleBack} />;
-}
-
-function SubscriptionSelectionScreenWrapper() {
-  const navigation = useNavigation<OnboardingNavigationProp>();
-  
-  const handleNext = () => {
-    // This would typically navigate to the main app
-    // For now, we'll just complete the onboarding
-  };
-
-  const handleBack = () => {
-    navigation.navigate('NotificationReminder');
-  };
-
-  return <SubscriptionSelectionScreen onNext={handleNext} onBack={handleBack} />;
-}
-
-function SignInScreenWrapper({ onSignIn, onUserNeedsOnboarding }: { onSignIn: () => void; onUserNeedsOnboarding: () => void }) {
-  const navigation = useNavigation<OnboardingNavigationProp>();
-  
-  const handleNavigateToOnboarding = () => {
-    // Call the callback to notify App.tsx that user needs onboarding
-    onUserNeedsOnboarding();
-    // Navigate to Language screen to start onboarding
-    navigation.navigate('Language');
-  };
-
-  return <SignInScreen onSignIn={onSignIn} onBack={() => navigation.goBack()} onNavigateToOnboarding={handleNavigateToOnboarding} />;
-}
-
-function CreateAccountScreenWrapper({ onComplete, onSignIn }: { onComplete: () => void; onSignIn: () => void }) {
-  const navigation = useNavigation<OnboardingNavigationProp>();
-  
-  const handleNext = () => {
-    // Continue to camera permission for onboarding flow
-    console.log('CreateAccount: Continuing to camera permission for onboarding');
-    navigation.navigate('CameraPermission');
-  };
-
-  return <CreateAccountScreen onNext={handleNext} />;
-}
-
-function CameraPermissionScreenWrapper({ onComplete }: { onComplete: () => void }) {
-  return <CameraPermissionScreen onNext={onComplete} />;
-}
-
 export function OnboardingNavigator({ onComplete, onSignIn, onUserNeedsOnboarding }: OnboardingNavigatorProps) {
   return (
     <NavigationContainer>
@@ -455,68 +199,8 @@ export function OnboardingNavigator({ onComplete, onSignIn, onUserNeedsOnboardin
           {() => <WelcomeScreenWrapper onSignIn={onSignIn} />}
         </Stack.Screen>
 
-        <Stack.Screen name="Language">
-          {() => <LanguageScreenWrapper />}
-        </Stack.Screen>
-
-        <Stack.Screen name="Units">
-          {() => <UnitsScreenWrapper />}
-        </Stack.Screen>
-
-        <Stack.Screen name="Gender">
-          {() => <GenderScreenWrapper />}
-        </Stack.Screen>
-
-        <Stack.Screen name="TrainingReason">
-          {() => <TrainingReasonScreenWrapper />}
-        </Stack.Screen>
-
-        <Stack.Screen name="GymChallenge">
-          {() => <GymChallengeScreenWrapper />}
-        </Stack.Screen>
-
-        <Stack.Screen name="Workouts">
-          {() => <WorkoutsScreenWrapper />}
-        </Stack.Screen>
-
-        <Stack.Screen name="LifterType">
-          {() => <LifterTypeScreenWrapper />}
-        </Stack.Screen>
-
-        <Stack.Screen name="PerfectFormGoal">
-          {() => <PerfectFormGoalScreenWrapper />}
-        </Stack.Screen>
-
-        <Stack.Screen name="FormConfidence">
-          {() => <FormConfidenceScreenWrapper />}
-        </Stack.Screen>
-
-        <Stack.Screen name="ThreeMonthGoal">
-          {() => <ThreeMonthGoalScreenWrapper />}
-        </Stack.Screen>
-
-        <Stack.Screen name="PersonalTrainer">
-          {() => <PersonalTrainerScreenWrapper />}
-        </Stack.Screen>
-
-        <Stack.Screen name="Measurements">
-          {() => <MeasurementsScreenWrapper />}
-        </Stack.Screen>
-
-        <Stack.Screen name="BirthDate">
-          {() => <BirthDateScreenWrapper />}
-        </Stack.Screen>
-
-        <Stack.Screen name="Discovery">
-          {() => <DiscoveryScreenWrapper />}
-        </Stack.Screen>
-
-        <Stack.Screen name="Rating">
-          {() => <RatingScreenWrapper />}
-        </Stack.Screen>
-
-        <Stack.Screen name="ReferralCode">
-          {() => <ReferralCodeScreenWrapper />}
+        <Stack.Screen name="Onboarding">
+          {() => <UnifiedOnboardingScreenWrapper />}
         </Stack.Screen>
 
         <Stack.Screen name="AllDone">

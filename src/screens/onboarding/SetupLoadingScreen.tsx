@@ -17,8 +17,8 @@ export function SetupLoadingScreen({ onNext, onBack }: SetupLoadingScreenProps) 
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const setupSteps = [
-    i18n.t('setupLoading.step1'),
-    i18n.t('setupLoading.step2'),
+    i18n.t('onboarding.setupLoading.step1'),
+    i18n.t('onboarding.setupLoading.step2'),
   ];
 
   useEffect(() => {
@@ -49,7 +49,7 @@ export function SetupLoadingScreen({ onNext, onBack }: SetupLoadingScreenProps) 
 
   return (
     <OnboardingLayout
-      title={i18n.t('setupLoading.title')}
+      title={i18n.t('onboarding.setupLoading.title')}
       subtitle=""
       currentStep={16}
       totalSteps={16}
@@ -69,7 +69,7 @@ export function SetupLoadingScreen({ onNext, onBack }: SetupLoadingScreenProps) 
               fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto'
             }
           ]}>
-            {i18n.t('setupLoading.mainTitle')}
+            {i18n.t('onboarding.setupLoading.mainTitle')}
           </Text>
 
           {/* Current step text */}

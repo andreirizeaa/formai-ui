@@ -190,10 +190,7 @@ export function SignInScreen({ onSignIn, onBack, onNavigateToOnboarding }: SignI
     >
       {/* Header with back button and title */}
       <View style={styles.header}>
-        <BackButton onPress={() => {
-          hapticFeedback.selection();
-          onBack();
-        }} />
+        <BackButton onPress={onBack} />
         <Text style={[
           styles.mainTitle,
           { color: isDark ? '#FFFFFF' : '#000000' }
@@ -230,7 +227,7 @@ export function SignInScreen({ onSignIn, onBack, onNavigateToOnboarding }: SignI
                     styles.appleButtonText,
                     { color: isDark ? '#000000' : '#FFFFFF' }
                   ]}>
-                    {i18n.t('createAccount.signInWithApple')}
+                    {i18n.t('onboarding.createAccount.signInWithApple')}
                   </Text>
                 </View>
               </TouchableOpacity>
@@ -260,7 +257,7 @@ export function SignInScreen({ onSignIn, onBack, onNavigateToOnboarding }: SignI
                   styles.googleButtonText,
                   { color: isDark ? '#FFFFFF' : '#000000' }
                 ]}>
-                  {isExpoGo ? 'Sign in with Google' : i18n.t('createAccount.signInWithGoogle')}
+                  {isExpoGo ? 'Sign in with Google' : i18n.t('onboarding.createAccount.signInWithGoogle')}
                 </Text>
               </View>
             </TouchableOpacity>

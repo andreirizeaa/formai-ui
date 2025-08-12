@@ -27,7 +27,7 @@ export function AnimatedOptionButton({
   style,
   activeOpacity = 0.7
 }: AnimatedOptionButtonProps) {
-  const translateY = useSharedValue(delay === 0 ? 0 : 100);
+  const translateY = useSharedValue(delay === 0 ? 0 : 30);
   const opacity = useSharedValue(delay === 0 ? 1 : 0);
 
   useEffect(() => {
@@ -38,17 +38,17 @@ export function AnimatedOptionButton({
     translateY.value = withDelay(
       delay,
       withSpring(0, {
-        damping: 15,
-        stiffness: 100,
-        mass: 0.8,
+        damping: 25,
+        stiffness: 200,
+        mass: 0.6,
       })
     );
     
     opacity.value = withDelay(
       delay,
       withSpring(1, {
-        damping: 15,
-        stiffness: 100,
+        damping: 25,
+        stiffness: 200,
       })
     );
   }, [delay]);
@@ -87,8 +87,8 @@ export function AnimatedOptionButton({
 const styles = StyleSheet.create({
   button: {
     borderWidth: 1.5,
-    borderRadius: 16,
-    paddingVertical: 16,
+    borderRadius: 18,
+    paddingVertical: 22,
     paddingHorizontal: 24,
   },
 }); 

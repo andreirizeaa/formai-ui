@@ -7,10 +7,14 @@ export interface OnboardingAPIPayload {
   unitSystem: 'metric' | 'imperial';
   gender: 'male' | 'female' | null;
   goal: 'lose_weight' | 'maintain' | 'gain_weight' | null;
-  workoutsPerWeek: '0' | '1-3' | '3-5' | '5-7' | null;
+  workoutsPerWeek: '1-2' | '3-4' | '5-6' | 'every_day' | 'it_varies' | null;
   discoverySource: 'instagram' | 'tiktok' | 'facebook' | 'google' | 'other' | null;
-  liftingGoal: 'muscle_building' | 'powerlifting' | 'toning' | 'strength' | 'weight_loss' | null;
-  formBarrier: 'expensive_trainers' | 'gym_advice_scary' | 'no_time' | 'other' | null;
+  lifterType: 'beginner' | 'intermediate' | 'advanced' | 'returning_after_break' | 'injury_rehab' | null;
+  perfectFormGoal: 'lift_heavier_safely' | 'build_muscle_efficiently' | 'avoid_injuries' | 'boost_confidence' | 'train_longer_without_setbacks' | null;
+  formConfidence: '0-25' | '25-50' | '50-75' | '75-100' | null;
+  threeMonthGoal: 'lifting_heavier' | 'looking_leaner' | 'feeling_stronger_injury_free' | 'more_consistent' | 'more_confident' | null;
+  trainingReason: 'build_strength' | 'improve_physique' | 'prevent_injury' | 'train_for_sport' | 'stay_active_healthy' | null;
+  gymChallenge: 'unsure_form' | 'no_results' | 'worried_injury' | 'struggling_motivation' | 'other' | null;
   hasPersonalTrainer: boolean | null;
   referralCode: string | null;
   referralCodeDiscount: number | null;
@@ -47,15 +51,19 @@ export function validateOnboardingData(preferences: UserPreferences): boolean {
     'goal',
     'workoutsPerWeek',
     'discoverySource',
-    'liftingGoal',
-    'formBarrier',
+    'trainingReason',
+    'gymChallenge',
+    'lifterType',
+    'perfectFormGoal',
+    'formConfidence',
+    'threeMonthGoal',
     'hasPersonalTrainer',
     'metricHeight',
     'metricWeight',
     'birthDate',
     'hasRated',
     'subscriptionPlan',
-    'subscriptionActive'
+    'subscriptionActive',
   ];
 
   for (const field of requiredFields) {
@@ -66,7 +74,6 @@ export function validateOnboardingData(preferences: UserPreferences): boolean {
     }
   }
 
-  // Validate birth date format (should be YYYY-MM-DD string)
   if (preferences.birthDate) {
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
     if (!dateRegex.test(preferences.birthDate)) {
@@ -84,10 +91,7 @@ export function formatOnboardingDataForAPI(preferences: UserPreferences): Onboar
     throw new Error('Invalid onboarding data');
   }
 
-  // Calculate age from birthDate string
   const age = preferences.birthDate ? calculateAge(preferences.birthDate) : null;
-  
-  // Calculate BMI from metric height and weight
   const bmi = preferences.metricHeight && preferences.metricWeight ? calculateBMI(preferences.metricHeight, preferences.metricWeight) : null;
 
   return {
@@ -97,8 +101,12 @@ export function formatOnboardingDataForAPI(preferences: UserPreferences): Onboar
     goal: preferences.goal,
     workoutsPerWeek: preferences.workoutsPerWeek,
     discoverySource: preferences.discoverySource,
-    liftingGoal: preferences.liftingGoal,
-    formBarrier: preferences.formBarrier,
+    trainingReason: preferences.trainingReason,
+    gymChallenge: preferences.gymChallenge,
+    lifterType: preferences.lifterType,
+    perfectFormGoal: preferences.perfectFormGoal,
+    formConfidence: preferences.formConfidence,
+    threeMonthGoal: preferences.threeMonthGoal,
     hasPersonalTrainer: preferences.hasPersonalTrainer,
     referralCode: preferences.referralCode,
     referralCodeDiscount: preferences.referralCodeDiscount,
@@ -121,60 +129,44 @@ export function formatOnboardingDataForAPI(preferences: UserPreferences): Onboar
     createdAt: new Date().toISOString(),
     deviceInfo: {
       platform: Platform.OS,
-      version: Platform.Version?.toString() || 'unknown',
-      model: Platform.constants?.Brand || 'unknown',
+      version: (Platform.Version as any)?.toString?.() || String(Platform.Version) || 'unknown',
+      model: Platform.constants && (Platform.constants as any).Model ? (Platform.constants as any).Model : 'unknown',
     },
   };
 }
 
-// Helper function to calculate age from birth date
 function calculateAge(birthDate: string): number {
   const today = new Date();
   const birth = new Date(birthDate);
   let age = today.getFullYear() - birth.getFullYear();
   const monthDiff = today.getMonth() - birth.getMonth();
-  
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-    age--;
-  }
-  
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) age--;
   return age;
 }
 
-// Helper function to calculate BMI
 function calculateBMI(heightCm: number, weightKg: number): number {
   const heightM = heightCm / 100;
   return Math.round((weightKg / (heightM * heightM)) * 10) / 10;
 }
 
-// Function to submit onboarding data to API
 export async function submitOnboardingData(apiPayload: OnboardingAPIPayload, apiEndpoint: string): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
     const response = await fetch(apiEndpoint, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify(apiPayload),
     });
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
     const data = await response.json();
     return { success: true, data };
   } catch (error) {
     console.error('Error submitting onboarding data:', error);
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : 'Unknown error occurred' 
-    };
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error occurred' };
   }
 }
 
-// Function to get onboarding progress for analytics
 export function getOnboardingAnalytics(preferences: UserPreferences) {
   const totalSteps = 15;
   const completedSteps = [
@@ -184,8 +176,12 @@ export function getOnboardingAnalytics(preferences: UserPreferences) {
     preferences.goal && 1,
     preferences.workoutsPerWeek && 1,
     preferences.discoverySource && 1,
-    preferences.liftingGoal && 1,
-    preferences.formBarrier && 1,
+    preferences.trainingReason && 1,
+    preferences.gymChallenge && 1,
+    preferences.lifterType && 1,
+    preferences.perfectFormGoal && 1,
+    preferences.formConfidence && 1,
+    preferences.threeMonthGoal && 1,
     preferences.hasPersonalTrainer !== null && 1,
     preferences.metricHeight && 1,
     preferences.metricWeight && 1,
@@ -204,7 +200,6 @@ export function getOnboardingAnalytics(preferences: UserPreferences) {
   };
 }
 
-// Helper function to get missing fields
 function getMissingFields(preferences: UserPreferences): string[] {
   const requiredFields = [
     { key: 'language', label: 'Language' },
@@ -213,8 +208,12 @@ function getMissingFields(preferences: UserPreferences): string[] {
     { key: 'goal', label: 'Goal' },
     { key: 'workoutsPerWeek', label: 'Workouts per Week' },
     { key: 'discoverySource', label: 'Discovery Source' },
-    { key: 'liftingGoal', label: 'Lifting Goal' },
-    { key: 'formBarrier', label: 'Form Barrier' },
+    { key: 'trainingReason', label: 'Training Reason' },
+    { key: 'gymChallenge', label: 'Gym Challenge' },
+    { key: 'lifterType', label: 'Lifter Type' },
+    { key: 'perfectFormGoal', label: 'Perfect Form Goal' },
+    { key: 'formConfidence', label: 'Form Confidence' },
+    { key: 'threeMonthGoal', label: 'Three Month Goal' },
     { key: 'hasPersonalTrainer', label: 'Personal Trainer' },
     { key: 'metricHeight', label: 'Height' },
     { key: 'metricWeight', label: 'Weight' },

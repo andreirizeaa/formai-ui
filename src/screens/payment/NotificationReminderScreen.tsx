@@ -122,7 +122,7 @@ export function NotificationReminderScreen({ onNext, onBack }: NotificationRemin
             styles.mainTitle,
             { color: isDark ? '#FFFFFF' : '#000000' }
           ]}>
-            {i18n.t('notificationReminder.title')}
+            {i18n.t('onboarding.notificationReminder.title')}
           </Text>
 
           {/* Bell Icon */}
@@ -165,7 +165,7 @@ export function NotificationReminderScreen({ onNext, onBack }: NotificationRemin
             styles.noPaymentText,
             { color: isDark ? '#FFFFFF' : '#000000' }
           ]}>
-            {i18n.t('notificationReminder.noPaymentDue')}
+            {i18n.t('onboarding.notificationReminder.noPaymentDue')}
           </Text>
         </View>
 
@@ -185,7 +185,7 @@ export function NotificationReminderScreen({ onNext, onBack }: NotificationRemin
             styles.continueButtonText,
             { color: isDark ? '#000000' : '#FFFFFF' }
           ]}>
-            {i18n.t('notificationReminder.continueForFree')}
+            {i18n.t('onboarding.notificationReminder.continueForFree')}
           </Text>
         </TouchableOpacity>
 
@@ -194,7 +194,7 @@ export function NotificationReminderScreen({ onNext, onBack }: NotificationRemin
           styles.pricingText,
           { color: isDark ? '#8E8E93' : '#8E8E93' }
         ]}>
-          {i18n.t('notificationReminder.pricing')}
+          {i18n.t('onboarding.notificationReminder.pricing')}
         </Text>
       </View>
     </SafeAreaView>
