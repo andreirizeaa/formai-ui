@@ -81,8 +81,8 @@ export function MeasurementsScreen({ onNext, onBack }: MeasurementsScreenProps) 
     <OnboardingLayout
       title={i18n.t('measurements.title')}
       subtitle={i18n.t('measurements.subtitle')}
-      currentStep={8}
-      totalSteps={13}
+      currentStep={13}
+      totalSteps={18}
       onBack={onBack}
       onNext={handleNext}
       nextTitle={i18n.t('next')}

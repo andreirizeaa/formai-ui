@@ -41,7 +41,12 @@ export function BirthDateScreen({ onNext, onBack }: BirthDateScreenProps) {
       const defaultDate = formatBirthDateString(7, 15, currentYear - 25);
       updatePreference('birthDate', defaultDate);
     }
-  }, []);
+  }, [preferences.birthDate, currentYear, updatePreference]);
+
+  // Ensure we have valid values for the pickers
+  const effectiveBirthDate = birthDateObj.month && birthDateObj.day && birthDateObj.year 
+    ? birthDateObj 
+    : { month: 7, day: 15, year: currentYear - 25 };
 
   const months = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -56,7 +61,7 @@ export function BirthDateScreen({ onNext, onBack }: BirthDateScreenProps) {
     hapticFeedback.selection();
     
     const updatedObj = {
-      ...birthDateObj,
+      ...effectiveBirthDate,
       [field]: value,
     };
     
@@ -76,13 +81,13 @@ export function BirthDateScreen({ onNext, onBack }: BirthDateScreenProps) {
   };
 
   const handleNext = () => {
-    if (birthDateObj.month && birthDateObj.day && birthDateObj.year) {
+    if (effectiveBirthDate.month && effectiveBirthDate.day && effectiveBirthDate.year) {
       hapticFeedback.selection();
       onNext();
     }
   };
 
-  const isComplete = birthDateObj.month && birthDateObj.day && birthDateObj.year;
+  const isComplete = effectiveBirthDate.month && effectiveBirthDate.day && effectiveBirthDate.year;
   const textColor = isDark ? '#FFFFFF' : '#000000';
 
   // Generate years from 1940 to current year - 4 (descending order for better UX)
@@ -92,8 +97,8 @@ export function BirthDateScreen({ onNext, onBack }: BirthDateScreenProps) {
   ).reverse(); // Reverse to show in ascending order
   
   // Generate days based on selected month and year
-  const maxDays = birthDateObj.month && birthDateObj.year 
-    ? getDaysInMonth(birthDateObj.month, birthDateObj.year) 
+  const maxDays = effectiveBirthDate.month && effectiveBirthDate.year 
+    ? getDaysInMonth(effectiveBirthDate.month, effectiveBirthDate.year) 
     : 31;
   const days = Array.from({ length: maxDays }, (_, i) => i + 1);
 
@@ -101,8 +106,8 @@ export function BirthDateScreen({ onNext, onBack }: BirthDateScreenProps) {
     <OnboardingLayout
       title={i18n.t('birthDate.title')}
       subtitle={i18n.t('birthDate.subtitle')}
-      currentStep={9}
-      totalSteps={13}
+      currentStep={14}
+      totalSteps={18}
       onBack={onBack}
       onNext={handleNext}
       nextTitle={i18n.t('next')}
@@ -123,7 +128,7 @@ export function BirthDateScreen({ onNext, onBack }: BirthDateScreenProps) {
             </Text>
             <View style={styles.pickerWrapper}>
               <Picker
-                selectedValue={birthDateObj.month}
+                selectedValue={effectiveBirthDate.month}
                 onValueChange={(value) => updateBirthDate('month', value)}
                 style={[styles.picker, { color: textColor }]}
                 itemStyle={Platform.OS === 'ios' ? { color: textColor, fontSize: 14 } : undefined}
@@ -148,7 +153,7 @@ export function BirthDateScreen({ onNext, onBack }: BirthDateScreenProps) {
             </Text>
             <View style={styles.pickerWrapper}>
               <Picker
-                selectedValue={birthDateObj.day}
+                selectedValue={effectiveBirthDate.day}
                 onValueChange={(value) => updateBirthDate('day', value)}
                 style={[styles.picker, { color: textColor }]}
                 itemStyle={Platform.OS === 'ios' ? { color: textColor, fontSize: 14 } : undefined}
@@ -173,7 +178,7 @@ export function BirthDateScreen({ onNext, onBack }: BirthDateScreenProps) {
             </Text>
             <View style={styles.pickerWrapper}>
               <Picker
-                selectedValue={birthDateObj.year}
+                selectedValue={effectiveBirthDate.year}
                 onValueChange={(value) => updateBirthDate('year', value)}
                 style={[styles.picker, { color: textColor }]}
                 itemStyle={Platform.OS === 'ios' ? { color: textColor, fontSize: 14 } : undefined}

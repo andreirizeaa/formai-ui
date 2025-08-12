@@ -9,10 +9,14 @@ export interface UserPreferences {
   language: string;
   gender: 'male' | 'female' | null;
   goal: 'lose_weight' | 'maintain' | 'gain_weight' | null;
-  workoutsPerWeek: '0' | '1-3' | '3-5' | '5-7' | null;
+  workoutsPerWeek: '1-2' | '3-4' | '5-6' | 'every_day' | 'it_varies' | null;
   discoverySource: 'instagram' | 'tiktok' | 'facebook' | 'google' | 'other' | null;
-  liftingGoal: 'muscle_building' | 'powerlifting' | 'toning' | 'strength' | 'weight_loss' | null;
-  formBarrier: 'expensive_trainers' | 'gym_advice_scary' | 'no_time' | 'other' | null;
+  trainingReason: 'build_strength' | 'improve_physique' | 'prevent_injury' | 'train_for_sport' | 'stay_active_healthy' | null;
+  gymChallenge: 'unsure_form' | 'no_results' | 'worried_injury' | 'struggling_motivation' | 'other' | null;
+  lifterType: 'beginner' | 'intermediate' | 'advanced' | 'returning_after_break' | 'injury_rehab' | null;
+  perfectFormGoal: 'lift_heavier_safely' | 'build_muscle_efficiently' | 'avoid_injuries' | 'boost_confidence' | 'train_longer_without_setbacks' | null;
+  formConfidence: '0-25' | '25-50' | '50-75' | '75-100' | null;
+  threeMonthGoal: 'lifting_heavier' | 'looking_leaner' | 'feeling_stronger_injury_free' | 'more_consistent' | 'more_confident' | null;
   hasPersonalTrainer: boolean | null;
   unitSystem: 'metric' | 'imperial';
   referralCode: string | null;

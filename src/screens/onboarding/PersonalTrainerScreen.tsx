@@ -41,8 +41,8 @@ export function PersonalTrainerScreen({ onNext, onBack }: PersonalTrainerScreenP
     <OnboardingLayout
       title={i18n.t('personalTrainer.title')}
       subtitle={i18n.t('personalTrainer.subtitle')}
-      currentStep={9}
-      totalSteps={13}
+      currentStep={12}
+      totalSteps={18}
       onBack={onBack}
       onNext={handleNextConditional}
       nextTitle={i18n.t('next')}

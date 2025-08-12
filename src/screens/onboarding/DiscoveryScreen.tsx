@@ -85,8 +85,8 @@ export function DiscoveryScreen({ onNext, onBack }: DiscoveryScreenProps) {
     <OnboardingLayout
       title={i18n.t('discovery.title')}
       subtitle={i18n.t('discovery.subtitle')}
-      currentStep={5}
-      totalSteps={13}
+      currentStep={15}
+      totalSteps={18}
       onBack={onBack}
       onNext={handleNext}
       nextTitle={i18n.t('next')}

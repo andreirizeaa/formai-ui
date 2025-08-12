@@ -18,13 +18,14 @@ export function WorkoutsScreen({ onNext, onBack }: WorkoutsScreenProps) {
   const { preferences, updatePreference } = useOnboarding();
 
   const workoutOptions = [
-    { key: '0', label: i18n.t('workouts.zero'), subtitle: i18n.t('workouts.sedentary') },
-    { key: '1-3', label: i18n.t('workouts.oneToThree'), subtitle: i18n.t('workouts.lightlyActive') },
-    { key: '3-5', label: i18n.t('workouts.threeToFive'), subtitle: i18n.t('workouts.active') },
-    { key: '5-7', label: i18n.t('workouts.fiveToSeven'), subtitle: i18n.t('workouts.dedicatedAthlete') },
+    { key: '1-2', label: i18n.t('workouts.oneToTwo') },
+    { key: '3-4', label: i18n.t('workouts.threeToFour') },
+    { key: '5-6', label: i18n.t('workouts.fiveToSix') },
+    { key: 'every_day', label: i18n.t('workouts.everyDay') },
+    { key: 'it_varies', label: i18n.t('workouts.itVaries') },
   ] as const;
 
-  const handleWorkoutSelect = (workoutFrequency: '0' | '1-3' | '3-5' | '5-7') => {
+  const handleWorkoutSelect = (workoutFrequency: '1-2' | '3-4' | '5-6' | 'every_day' | 'it_varies') => {
     hapticFeedback.selection();
     updatePreference('workoutsPerWeek', workoutFrequency);
   };
@@ -40,8 +41,8 @@ export function WorkoutsScreen({ onNext, onBack }: WorkoutsScreenProps) {
     <OnboardingLayout
       title={i18n.t('workouts.title')}
       subtitle={i18n.t('workouts.subtitle')}
-      currentStep={4}
-      totalSteps={13}
+      currentStep={7}
+      totalSteps={18}
       onBack={onBack}
       onNext={handleNext}
       nextTitle={i18n.t('next')}
@@ -70,7 +71,7 @@ export function WorkoutsScreen({ onNext, onBack }: WorkoutsScreenProps) {
             <View style={styles.workoutContent}>
               <Text 
                 style={[
-                  styles.workoutNumber,
+                  styles.workoutLabel,
                   { 
                     color: preferences.workoutsPerWeek === option.key
                       ? '#FFFFFF'  // White text when selected
@@ -80,19 +81,6 @@ export function WorkoutsScreen({ onNext, onBack }: WorkoutsScreenProps) {
                 ]}
               >
                 {option.label}
-              </Text>
-              <Text 
-                style={[
-                  styles.workoutSubtitle,
-                  { 
-                    color: preferences.workoutsPerWeek === option.key
-                      ? '#FFFFFF'  // White text when selected
-                      : (isDark ? '#FFFFFF' : '#000000'),
-                    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
-                  }
-                ]}
-              >
-                {option.subtitle}
               </Text>
             </View>
           </AnimatedOptionButton>
@@ -112,15 +100,11 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   workoutContent: {
-    alignItems: 'flex-start',
+    alignItems: 'center',
   },
-  workoutNumber: {
+  workoutLabel: {
     fontSize: 18,
-    fontWeight: '700',
-  },
-  workoutSubtitle: {
-    fontSize: 14,
-    fontWeight: '400',
-    marginTop: 8,
+    fontWeight: '600',
+    textAlign: 'center',
   },
 }); 
