@@ -147,8 +147,8 @@ export function SubscriptionSelectionScreen({ onNext, onBack }: SubscriptionSele
           { color: isDark ? '#FFFFFF' : '#000000' }
         ]}>
           {selectedPlan === 'yearly' 
-            ? i18n.t('subscriptionSelection.title')
-            : i18n.t('subscriptionSelection.titleMonthly')
+            ? i18n.t('onboarding.subscriptionSelection.title')
+            : i18n.t('onboarding.subscriptionSelection.titleMonthly')
           }
         </Text>
 
@@ -172,13 +172,13 @@ export function SubscriptionSelectionScreen({ onNext, onBack }: SubscriptionSele
                       styles.timelineTitle,
                       { color: isDark ? '#FFFFFF' : '#000000' }
                     ]}>
-                      {i18n.t('subscriptionSelection.today')}
+                      {i18n.t('onboarding.subscriptionSelection.today')}
                     </Text>
                     <Text style={[
                       styles.timelineDescription,
                       { color: isDark ? '#8E8E93' : '#8E8E93' }
                     ]}>
-                      {i18n.t('subscriptionSelection.todayDescription')}
+                      {i18n.t('onboarding.subscriptionSelection.todayDescription')}
                     </Text>
                   </View>
                 </View>
@@ -196,13 +196,13 @@ export function SubscriptionSelectionScreen({ onNext, onBack }: SubscriptionSele
                       styles.timelineTitle,
                       { color: isDark ? '#FFFFFF' : '#000000' }
                     ]}>
-                      {i18n.t('subscriptionSelection.reminder')}
+                      {i18n.t('onboarding.subscriptionSelection.reminder')}
                     </Text>
                     <Text style={[
                       styles.timelineDescription,
                       { color: isDark ? '#8E8E93' : '#8E8E93' }
                     ]}>
-                      {i18n.t('subscriptionSelection.reminderDescription')}
+                      {i18n.t('onboarding.subscriptionSelection.reminderDescription')}
                     </Text>
                   </View>
                 </View>
@@ -220,13 +220,13 @@ export function SubscriptionSelectionScreen({ onNext, onBack }: SubscriptionSele
                       styles.timelineTitle,
                       { color: isDark ? '#FFFFFF' : '#000000' }
                     ]}>
-                      {i18n.t('subscriptionSelection.billing')}
+                      {i18n.t('onboarding.subscriptionSelection.billing')}
                     </Text>
                     <Text style={[
                       styles.timelineDescription,
                       { color: isDark ? '#8E8E93' : '#8E8E93' }
                     ]}>
-                      {i18n.t('subscriptionSelection.billingDescription', { billingDate })}
+                      {i18n.t('onboarding.subscriptionSelection.billingDescription', { billingDate })}
                     </Text>
                   </View>
                 </View>
@@ -247,13 +247,13 @@ export function SubscriptionSelectionScreen({ onNext, onBack }: SubscriptionSele
                       styles.timelineTitle,
                       { color: isDark ? '#FFFFFF' : '#000000' }
                     ]}>
-                      {i18n.t('subscriptionSelection.monthlyFeature1')}
+                      {i18n.t('onboarding.subscriptionSelection.monthlyFeature1')}
                     </Text>
                     <Text style={[
                       styles.timelineDescription,
                       { color: isDark ? '#8E8E93' : '#8E8E93' }
                     ]}>
-                      {i18n.t('subscriptionSelection.monthlyFeature1Description')}
+                      {i18n.t('onboarding.subscriptionSelection.monthlyFeature1Description')}
                     </Text>
                   </View>
                 </View>
@@ -271,13 +271,13 @@ export function SubscriptionSelectionScreen({ onNext, onBack }: SubscriptionSele
                       styles.timelineTitle,
                       { color: isDark ? '#FFFFFF' : '#000000' }
                     ]}>
-                      {i18n.t('subscriptionSelection.monthlyFeature2')}
+                      {i18n.t('onboarding.subscriptionSelection.monthlyFeature2')}
                     </Text>
                     <Text style={[
                       styles.timelineDescription,
                       { color: isDark ? '#8E8E93' : '#8E8E93' }
                     ]}>
-                      {i18n.t('subscriptionSelection.monthlyFeature2Description')}
+                      {i18n.t('onboarding.subscriptionSelection.monthlyFeature2Description')}
                     </Text>
                   </View>
                 </View>
@@ -295,13 +295,13 @@ export function SubscriptionSelectionScreen({ onNext, onBack }: SubscriptionSele
                       styles.timelineTitle,
                       { color: isDark ? '#FFFFFF' : '#000000' }
                     ]}>
-                      {i18n.t('subscriptionSelection.monthlyFeature3')}
+                      {i18n.t('onboarding.subscriptionSelection.monthlyFeature3')}
                     </Text>
                     <Text style={[
                       styles.timelineDescription,
                       { color: isDark ? '#8E8E93' : '#8E8E93' }
                     ]}>
-                      {i18n.t('subscriptionSelection.monthlyFeature3Description')}
+                      {i18n.t('onboarding.subscriptionSelection.monthlyFeature3Description')}
                     </Text>
                   </View>
                 </View>
@@ -334,13 +334,13 @@ export function SubscriptionSelectionScreen({ onNext, onBack }: SubscriptionSele
                   styles.subscriptionTitle,
                   { color: isDark ? '#FFFFFF' : '#000000' }
                 ]}>
-                  {i18n.t('subscriptionSelection.monthly')}
+                  {i18n.t('onboarding.subscriptionSelection.monthly')}
                 </Text>
                 <Text style={[
                   styles.subscriptionPrice,
                   { color: isDark ? '#FFFFFF' : '#000000' }
                 ]}>
-                  {i18n.t('subscriptionSelection.monthlyPrice')}
+                  {i18n.t('onboarding.subscriptionSelection.monthlyPrice')}
                 </Text>
               </View>
               <View style={[
@@ -373,7 +373,7 @@ export function SubscriptionSelectionScreen({ onNext, onBack }: SubscriptionSele
               { backgroundColor: isDark ? '#000000' : '#000000' }
             ]}>
               <Text style={styles.freeTagText}>
-                {i18n.t('subscriptionSelection.freeTag')}
+                {i18n.t('onboarding.subscriptionSelection.freeTag')}
               </Text>
             </View>
 
@@ -383,13 +383,13 @@ export function SubscriptionSelectionScreen({ onNext, onBack }: SubscriptionSele
                   styles.subscriptionTitle,
                   { color: isDark ? '#FFFFFF' : '#000000' }
                 ]}>
-                  {i18n.t('subscriptionSelection.yearly')}
+                  {i18n.t('onboarding.subscriptionSelection.yearly')}
                 </Text>
                 <Text style={[
                   styles.subscriptionPrice,
                   { color: isDark ? '#FFFFFF' : '#000000' }
                 ]}>
-                  {i18n.t('subscriptionSelection.yearlyPrice')}
+                  {i18n.t('onboarding.subscriptionSelection.yearlyPrice')}
                 </Text>
               </View>
               <View style={[
@@ -417,8 +417,8 @@ export function SubscriptionSelectionScreen({ onNext, onBack }: SubscriptionSele
             { color: isDark ? '#FFFFFF' : '#000000' }
           ]}>
             {selectedPlan === 'yearly' 
-              ? i18n.t('subscriptionSelection.noPaymentDue')
-              : i18n.t('subscriptionSelection.cancelAnytime')
+              ? i18n.t('onboarding.subscriptionSelection.noPaymentDue')
+              : i18n.t('onboarding.subscriptionSelection.cancelAnytime')
             }
           </Text>
         </View>
@@ -440,8 +440,8 @@ export function SubscriptionSelectionScreen({ onNext, onBack }: SubscriptionSele
             { color: isDark ? '#000000' : '#FFFFFF' }
           ]}>
             {selectedPlan === 'yearly' 
-              ? i18n.t('subscriptionSelection.startTrial')
-              : i18n.t('subscriptionSelection.startToday')
+              ? i18n.t('onboarding.subscriptionSelection.startTrial')
+              : i18n.t('onboarding.subscriptionSelection.startToday')
             }
           </Text>
         </TouchableOpacity>
@@ -452,8 +452,8 @@ export function SubscriptionSelectionScreen({ onNext, onBack }: SubscriptionSele
           { color: isDark ? '#8E8E93' : '#8E8E93' }
         ]}>
           {selectedPlan === 'yearly' 
-            ? i18n.t('subscriptionSelection.yearlyPricing')
-            : i18n.t('subscriptionSelection.monthlyPricing')
+            ? i18n.t('onboarding.subscriptionSelection.yearlyPricing')
+            : i18n.t('onboarding.subscriptionSelection.monthlyPricing')
           }
         </Text>
       </View>

@@ -53,7 +53,7 @@ export function FreeTrialScreen({ onNext }: FreeTrialScreenProps) {
               styles.noPaymentText,
               { color: isDark ? '#FFFFFF' : '#000000' }
             ]}>
-              {i18n.t('freeTrial.noPaymentDue')}
+              {i18n.t('onboarding.freeTrial.noPaymentDue')}
             </Text>
           </View>
 
@@ -73,7 +73,7 @@ export function FreeTrialScreen({ onNext }: FreeTrialScreenProps) {
               styles.tryButtonText,
               { color: isDark ? '#000000' : '#FFFFFF' }
             ]}>
-              {i18n.t('freeTrial.tryForFree')}
+              {i18n.t('onboarding.freeTrial.tryForFree')}
             </Text>
           </TouchableOpacity>
 
@@ -82,7 +82,7 @@ export function FreeTrialScreen({ onNext }: FreeTrialScreenProps) {
             styles.pricingText,
             { color: isDark ? '#8E8E93' : '#8E8E93' }
           ]}>
-            {i18n.t('freeTrial.pricing')}
+            {i18n.t('onboarding.freeTrial.pricing')}
           </Text>
         </View>
       }
@@ -93,7 +93,7 @@ export function FreeTrialScreen({ onNext }: FreeTrialScreenProps) {
           styles.mainTitle,
           { color: isDark ? '#FFFFFF' : '#000000' }
         ]}>
-          {i18n.t('freeTrial.title')}
+          {i18n.t('onboarding.freeTrial.title')}
         </Text>
 
         {/* App overview photo */}
@@ -170,6 +170,6 @@ const styles = StyleSheet.create({
   },
   photo: {
     width: '100%',
-    height: '95%',
+    height: '90%',
   },
 }); 

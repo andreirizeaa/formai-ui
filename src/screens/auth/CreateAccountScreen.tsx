@@ -132,7 +132,7 @@ export function CreateAccountScreen({ onNext }: CreateAccountScreenProps) {
           styles.mainTitle,
           { color: isDark ? '#FFFFFF' : '#000000' }
         ]}>
-          {i18n.t('createAccount.title')}
+          {i18n.t('onboarding.createAccount.title')}
         </Text>
 
         {/* Button container with flex to center buttons */}
@@ -160,7 +160,7 @@ export function CreateAccountScreen({ onNext }: CreateAccountScreenProps) {
                     styles.appleButtonText,
                     { color: isDark ? '#000000' : '#FFFFFF' }
                   ]}>
-                    {i18n.t('createAccount.signInWithApple')}
+                    {i18n.t('onboarding.createAccount.signInWithApple')}
                   </Text>
                 </View>
               </TouchableOpacity>
@@ -190,7 +190,7 @@ export function CreateAccountScreen({ onNext }: CreateAccountScreenProps) {
                   styles.googleButtonText,
                   { color: isDark ? '#FFFFFF' : '#000000' }
                 ]}>
-                  {isExpoGo ? 'Sign in with Google' : i18n.t('createAccount.signInWithGoogle')}
+                  {isExpoGo ? 'Sign in with Google' : i18n.t('onboarding.createAccount.signInWithGoogle')}
                 </Text>
               </View>
             </TouchableOpacity>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, Platform } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { OnboardingLayout } from '../../components/onboarding/OnboardingLayout';
@@ -30,9 +30,13 @@ export function AllDoneScreen({ onNext, onBack }: AllDoneScreenProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 
+  useEffect(() => {
+    hapticFeedback.success();
+  }, []);
+
   return (
     <OnboardingLayout
-      title={i18n.t('allDone.title')}
+      title={i18n.t('onboarding.allDone.title')}
       subtitle=""
       currentStep={18}
       totalSteps={18}
@@ -68,7 +72,7 @@ export function AllDoneScreen({ onNext, onBack }: AllDoneScreenProps) {
                 }
               ]}
             >
-              {i18n.t('allDone.allDone')}
+              {i18n.t('onboarding.allDone.allDone')}
             </Text>
           </View>
 
@@ -82,7 +86,7 @@ export function AllDoneScreen({ onNext, onBack }: AllDoneScreenProps) {
               }
             ]}
           >
-            {i18n.t('allDone.thankYou')}
+            {i18n.t('onboarding.allDone.thankYou')}
           </Text>
 
           {/* Privacy message */}
@@ -95,7 +99,7 @@ export function AllDoneScreen({ onNext, onBack }: AllDoneScreenProps) {
               }
             ]}
           >
-            {i18n.t('allDone.privacy')}
+            {i18n.t('onboarding.allDone.privacy')}
           </Text>
         </View>
       </View>

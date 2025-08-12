@@ -37,7 +37,7 @@ export function NotificationPermissionScreen({ onNext, onBack }: NotificationPer
 
   return (
     <OnboardingLayout
-      title={i18n.t('notificationPermission.title')}
+      title={i18n.t('onboarding.notificationPermission.title')}
       subtitle=""
       currentStep={15}
       totalSteps={16}
@@ -70,7 +70,7 @@ export function NotificationPermissionScreen({ onNext, onBack }: NotificationPer
                 fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
               }
             ]}>
-              {i18n.t('notificationPermission.dialogText')}
+              {i18n.t('onboarding.notificationPermission.dialogText')}
             </Text>
           </View>
           
@@ -100,7 +100,7 @@ export function NotificationPermissionScreen({ onNext, onBack }: NotificationPer
                   fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
                 }
               ]}>
-                {i18n.t('notificationPermission.dontAllow')}
+                {i18n.t('onboarding.notificationPermission.dontAllow')}
               </Text>
             </TouchableOpacity>
             
@@ -129,7 +129,7 @@ export function NotificationPermissionScreen({ onNext, onBack }: NotificationPer
                   fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
                 }
               ]}>
-                {i18n.t('notificationPermission.allow')}
+                {i18n.t('onboarding.notificationPermission.allow')}
               </Text>
             </TouchableOpacity>
           </View>
