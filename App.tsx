@@ -11,6 +11,7 @@ import { LiftDataProvider } from './src/context/LiftDataContext';
 import { UserDetailsProvider } from './src/context/UserDetailsContext';
 import { OnboardingNavigator } from './src/navigation/OnboardingNavigator';
 import { MainAppLayout } from './src/components/layout/MainAppLayout';
+import Purchases, { LOG_LEVEL } from 'react-native-purchases';
 
 export default function App() {
   const [showOnboarding, setShowOnboarding] = useState(true);
@@ -48,20 +49,35 @@ export default function App() {
     preloadAssets();
   }, []);
 
+  useEffect(() => {
+    Purchases.setLogLevel(LOG_LEVEL.VERBOSE);
+
+    if (Platform.OS === 'ios') {
+       Purchases.configure({apiKey: 'appl_GUYEEZQfOpAHzaNTEHKrIuRLGuY'});
+    } 
+  //   else if (Platform.OS === 'android') {
+  //     Purchases.configure({apiKey: 'helo'});
+  //  }
+    getCustomerInfo();
+  }, []); 
+
+  const getCustomerInfo = async () => {
+    const customerInfo = await Purchases.getCustomerInfo();
+    console.log('Customer info:', customerInfo);
+  };
+
+
   const handleOnboardingComplete = () => {
     setShowOnboarding(false);
     setUserNeedsOnboarding(false);
-    console.log('Onboarding completed - navigate to main app');
   };
 
   const handleSignIn = () => {
-    console.log('User signed in successfully with complete profile - navigating to main app');
     setShowOnboarding(false);
     setUserNeedsOnboarding(false);
   };
 
   const handleUserNeedsOnboarding = () => {
-    console.log('User signed in but needs to complete onboarding');
     setUserNeedsOnboarding(true);
   };
 
