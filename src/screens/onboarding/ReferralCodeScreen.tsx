@@ -54,8 +54,8 @@ export function ReferralCodeScreen({ onNext, onBack }: ReferralCodeScreenProps) 
     <OnboardingLayout
       title={i18n.t('referralCode.title')}
       subtitle={i18n.t('referralCode.subtitle')}
-      currentStep={13}
-      totalSteps={13}
+      currentStep={17}
+      totalSteps={18}
       onBack={onBack}
       onNext={() => {
         hapticFeedback.selection();

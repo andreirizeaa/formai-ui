@@ -33,8 +33,8 @@ export function AllDoneScreen({ onNext, onBack }: AllDoneScreenProps) {
     <OnboardingLayout
       title={i18n.t('allDone.title')}
       subtitle=""
-      currentStep={14}
-      totalSteps={16}
+      currentStep={18}
+      totalSteps={18}
       onBack={onBack}
       onNext={() => {
         hapticFeedback.selection();
