@@ -5,6 +5,7 @@ import { OnboardingLayout } from '../../components/onboarding/OnboardingLayout';
 import i18n from '../../utils/i18n';
 import { hapticFeedback } from '../../utils/haptic';
 import Svg, { Circle, Path } from 'react-native-svg';
+import LottieView from 'lottie-react-native';
 
 interface AllDoneScreenProps {
   onNext: () => void;
@@ -44,6 +45,16 @@ export function AllDoneScreen({ onNext, onBack }: AllDoneScreenProps) {
       nextDisabled={false}
     > 
       <View style={styles.container}>
+        {/* Confetti animation positioned behind content */}
+        <View style={styles.animationContainer}>
+          <LottieView
+            source={require('../../../assets/animations/confetti.json')}
+            autoPlay
+            speed={0.6}
+            style={styles.confettiAnimation}
+          />
+        </View>
+
         <View style={styles.content}>
           {/* Header with checkmark and "All done!" text */}
           <View style={styles.header}>
@@ -99,9 +110,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
   },
+  animationContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: -10,
+  },
+  confettiAnimation: {
+    width: 700,
+    height: 700,
+  },
   content: {
     alignItems: 'center',
     maxWidth: 300,
+    zIndex: 2,
   },
   header: {
     flexDirection: 'row',

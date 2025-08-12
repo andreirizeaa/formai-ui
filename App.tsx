@@ -38,6 +38,7 @@ export default function App() {
           // Auth and other icons
           require('./assets/icons/apple.png'),
           require('./assets/icons/fire.png'),
+          require('./assets/animations/confetti.json'),
         ]);
       } catch (error) {
         console.warn('Error preloading assets:', error);
