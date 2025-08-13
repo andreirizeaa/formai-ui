@@ -62,7 +62,7 @@ function translatePersonalDataValue(key: string, value: string): string {
         const heightMatch = value.match(/(\d+)\s*cm/);
         if (heightMatch) {
           const [, number] = heightMatch;
-          return `${number} ${i18n.t('measurements.cm')}`;
+          return `${number} ${i18n.t('onboarding.measurements.cm')}`;
         }
       } else if (value.includes("'") && value.includes('"')) {
         // Keep feet/inches format as is since it's universal
