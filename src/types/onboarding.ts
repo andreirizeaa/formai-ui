@@ -45,4 +45,5 @@ export interface OnboardingContextType {
   getOnboardingDataForAPI: () => UserPreferences;
   resetOnboarding: () => void;
   getOnboardingProgress: () => number;
+  persistOnboardingData: (apiEndpoint?: string) => Promise<{ success: boolean; error?: string }>;
 } 

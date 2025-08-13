@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { OnboardingContextType, UserPreferences } from '../types/onboarding';
+import { formatOnboardingDataForAPI, submitOnboardingData } from '../utils/onboardingAPI';
 
 const OnboardingContext = createContext<OnboardingContextType | undefined>(undefined);
 
@@ -100,6 +101,32 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
     return Math.round((completedFields.length / requiredFields.length) * 100);
   };
 
+  // Function to persist onboarding data to API/database
+  const persistOnboardingData = async (apiEndpoint?: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      // Format data for API
+      const apiPayload = formatOnboardingDataForAPI(preferences);
+      
+      // Use provided endpoint or default
+      const endpoint = apiEndpoint || 'https://api.yourapp.com/onboarding';
+      
+      // Submit to API
+      const result = await submitOnboardingData(apiPayload, endpoint);
+      
+      if (result.success) {
+        console.log('Onboarding data persisted successfully');
+        return { success: true };
+      } else {
+        console.error('Failed to persist onboarding data:', result.error);
+        return { success: false, error: result.error };
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      console.error('Error persisting onboarding data:', errorMessage);
+      return { success: false, error: errorMessage };
+    }
+  };
+
   return (
     <OnboardingContext.Provider
       value={{
@@ -110,6 +137,7 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
         getOnboardingDataForAPI,
         resetOnboarding,
         getOnboardingProgress,
+        persistOnboardingData,
       }}
     >
       {children}

@@ -99,7 +99,8 @@ function SubscriptionSelectionScreenWrapper() {
   const navigation = useNavigation<OnboardingNavigationProp>();
   
   const handleNext = () => {
-    // Continue to main app or the next flow
+    navigation.navigate('CreateAccount');
+
   };
 
   const handleBack = () => {

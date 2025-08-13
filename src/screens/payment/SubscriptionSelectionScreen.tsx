@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Platform, TouchableOpacity } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -7,6 +7,7 @@ import { BackButton } from '../../components/ui/BackButton';
 import i18n from '../../utils/i18n';
 import { hapticFeedback } from '../../utils/haptic';
 import { useOnboarding } from '../../context/OnboardingContext';
+import Purchases, { PurchasesOffering, PurchasesPackage } from 'react-native-purchases';
 
 interface SubscriptionSelectionScreenProps {
   onNext: () => void;
@@ -73,8 +74,13 @@ function CheckmarkIcon({ color, size }: { color: string; size: number }) {
 export function SubscriptionSelectionScreen({ onNext, onBack }: SubscriptionSelectionScreenProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
-  const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('yearly');
+  const [selectedPlan, setSelectedPlan] = useState<PurchasesPackage | null>(null);
   const { preferences, updatePreference, getOnboardingDataForAPI } = useOnboarding();
+  const [packages, setPackages] = useState<PurchasesPackage[]>([]);
+
+  useEffect(() => {
+    getRevenueCatOfferings();
+  }, []);
 
   // Calculate billing date (today + 3 days)
   const getBillingDate = () => {
@@ -94,39 +100,148 @@ export function SubscriptionSelectionScreen({ onNext, onBack }: SubscriptionSele
   const billingDate = getBillingDate();
 
   // Handle payment completion and log user data
-  const handlePaymentComplete = () => {
-    const now = new Date();
-    const startDate = now.toISOString().split('T')[0]; // YYYY-MM-DD format
-    
-    // Calculate renewal date based on plan
-    const renewalDate = new Date(now);
-    if (selectedPlan === 'monthly') {
-      renewalDate.setMonth(renewalDate.getMonth() + 1);
+  const handlePaymentComplete = async () => {
+    if (selectedPlan) {
+      try {
+        const {customerInfo} = await Purchases.purchasePackage(selectedPlan);
+        if (
+          typeof customerInfo.entitlements.active[selectedPlan.identifier] !== 'undefined'
+        ) {
+          // Purchase successful - update subscription preferences
+          const subscriptionType = selectedPlan.packageType === 'ANNUAL' ? 'yearly' : 'monthly';
+          const now = new Date();
+          
+          // Set subscription preferences
+          updatePreference('subscriptionPlan', subscriptionType);
+          updatePreference('subscriptionCost', selectedPlan.product.price);
+          updatePreference('subscriptionActive', true);
+          updatePreference('subscriptionStartDate', now.toISOString());
+          
+          // Calculate renewal date
+          const renewalDate = new Date(now);
+          if (subscriptionType === 'yearly') {
+            renewalDate.setFullYear(renewalDate.getFullYear() + 1);
+            // For yearly plans, set free trial info if it's a 3-day trial
+            updatePreference('freeTrialActive', true);
+            updatePreference('freeTrialStartDate', now.toISOString());
+            const trialEndDate = new Date(now);
+            trialEndDate.setDate(trialEndDate.getDate() + 3);
+            updatePreference('freeTrialEndDate', trialEndDate.toISOString());
+          } else {
+            renewalDate.setMonth(renewalDate.getMonth() + 1);
+            // Monthly plans don't have free trials
+            updatePreference('freeTrialActive', false);
+            updatePreference('freeTrialStartDate', null);
+            updatePreference('freeTrialEndDate', null);
+          }
+          updatePreference('subscriptionRenewalDate', renewalDate.toISOString());
+          
+          console.log('Purchase successful, subscription preferences updated');
+          onNext();
+        } else {
+          // Purchase failed or entitlement not found
+          console.error('Purchase completed but entitlement not found');
+          onNext(); // Still proceed with onboarding
+        }
+      } catch (error) {
+        console.error('Error purchasing package:', error);
+        onNext(); // Proceed with onboarding even if purchase fails
+      }
     } else {
-      renewalDate.setFullYear(renewalDate.getFullYear() + 1);
+      // No package selected, just proceed
+      onNext();
     }
-    const renewalDateString = renewalDate.toISOString().split('T')[0];
-    
-    // Set subscription cost based on plan
-    const subscriptionCost = selectedPlan === 'monthly' ? 9.99 : 39.99;
-    
-    // Update subscription preferences
-    updatePreference('subscriptionPlan', selectedPlan);
-    updatePreference('subscriptionActive', false);
-    updatePreference('subscriptionCost', subscriptionCost);
-    updatePreference('subscriptionStartDate', startDate);
-    updatePreference('subscriptionRenewalDate', renewalDateString);
-    updatePreference('freeTrialActive', true);
-    
-    try {
-      const apiData = getOnboardingDataForAPI();
-      console.log('API-ready data after payment:', apiData);
-    } catch (error) {
-      console.log('Onboarding data incomplete after payment:', error);
-    }
-    onNext();
   };
 
+  const getRevenueCatOfferings = async () => {
+    try {
+      const offerings = await Purchases.getOfferings();
+      if (
+        offerings.current !== null &&
+        offerings.current.availablePackages.length !== 0
+      ) {
+        setPackages(offerings.current.availablePackages);
+        // Set default selection to yearly if available, otherwise first package
+        const yearlyPackage = offerings.current.availablePackages.find(
+          pkg => pkg.packageType === 'ANNUAL'
+        );
+        if (yearlyPackage) {
+          setSelectedPlan(yearlyPackage);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching RevenueCat offerings:', error);
+    }
+  };
+
+  // Helper function to get package type display name
+  const getPackageDisplayName = (packageType: string) => {
+    switch (packageType) {
+      case 'ANNUAL':
+        return i18n.t('onboarding.subscriptionSelection.yearly');
+      case 'MONTHLY':
+        return i18n.t('onboarding.subscriptionSelection.monthly');
+      default:
+        return packageType;
+    }
+  };
+
+  // Helper function to format package price
+  const getPackagePriceDisplay = (pkg: PurchasesPackage) => {
+    if (pkg.packageType === 'ANNUAL') {
+      // For yearly: (price/12)/mo
+      const monthlyPrice = (pkg.product.price / 12).toFixed(2);
+      // Use the currency code from the product to format properly
+      const formatter = new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: pkg.product.currencyCode,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+      return `${formatter.format(parseFloat(monthlyPrice))}/mo`;
+    } else {
+      // For monthly: price/mo - use the existing priceString and add /mo
+      return `${pkg.product.priceString}/mo`;
+    }
+  };
+
+  // Sort packages to ensure monthly is first, yearly is second
+  const sortedPackages = packages.sort((a, b) => {
+    if (a.packageType === 'MONTHLY' && b.packageType === 'ANNUAL') return -1;
+    if (a.packageType === 'ANNUAL' && b.packageType === 'MONTHLY') return 1;
+    return 0;
+  });
+
+  // Helper function to generate dynamic pricing text
+  const getPricingText = () => {
+    const selectedPackage = packages.find(pkg => pkg.identifier === selectedPlan?.identifier);
+    if (!selectedPackage) return '';
+
+    if (selectedPackage.packageType === 'ANNUAL') {
+      // For yearly: "3 days free, then $39.99 per year ($3.33/mo)"
+      const monthlyEquivalent = (selectedPackage.product.price / 12).toFixed(2);
+      const formatter = new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: selectedPackage.product.currencyCode,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+      return `3 days free, then ${selectedPackage.product.priceString} per year (${formatter.format(parseFloat(monthlyEquivalent))}/mo)`;
+    } else {
+      // For monthly: "Just $9.99/mo ($120/year)"
+      const yearlyEquivalent = (selectedPackage.product.price * 12).toFixed(2);
+      const formatter = new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: selectedPackage.product.currencyCode,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+      return `Just ${selectedPackage.product.priceString}/mo (${formatter.format(parseFloat(yearlyEquivalent))}/year)`;
+    }
+  };
+
+  // Check if selected plan is yearly for timeline display
+  const isYearlySelected = packages.find(pkg => pkg.identifier === selectedPlan?.identifier)?.packageType === 'ANNUAL';
   return (
     <SafeAreaView 
       style={[
@@ -146,7 +261,7 @@ export function SubscriptionSelectionScreen({ onNext, onBack }: SubscriptionSele
           styles.mainTitle,
           { color: isDark ? '#FFFFFF' : '#000000' }
         ]}>
-          {selectedPlan === 'yearly' 
+          {isYearlySelected 
             ? i18n.t('onboarding.subscriptionSelection.title')
             : i18n.t('onboarding.subscriptionSelection.titleMonthly')
           }
@@ -156,7 +271,7 @@ export function SubscriptionSelectionScreen({ onNext, onBack }: SubscriptionSele
         <View style={styles.timelineContainer}>
           {/* Timeline Items */}
           <View style={styles.timelineItems}>
-            {selectedPlan === 'yearly' ? (
+            {isYearlySelected ? (
               // Yearly timeline (trial period)
               <>
                 {/* Today */}
@@ -315,93 +430,58 @@ export function SubscriptionSelectionScreen({ onNext, onBack }: SubscriptionSele
       <View style={styles.buttonContainer}>
         {/* Subscription Options */}
         <View style={styles.subscriptionContainer}>
-          {/* Monthly Option */}
-          <TouchableOpacity
-            style={[
-              styles.subscriptionButton,
-              selectedPlan === 'monthly' && styles.selectedButton,
-              { borderColor: isDark ? '#FFFFFF' : '#000000' }
-            ]}
-            onPress={() => {
-              hapticFeedback.selection();
-              setSelectedPlan('monthly');
-            }}
-            activeOpacity={0.8}
-          >
-            <View style={styles.subscriptionContent}>
-              <View style={styles.subscriptionTextContainer}>
-                <Text style={[
-                  styles.subscriptionTitle,
-                  { color: isDark ? '#FFFFFF' : '#000000' }
+          {sortedPackages.map((pkg) => (
+            <TouchableOpacity
+              key={pkg.identifier}
+              style={[
+                styles.subscriptionButton,
+                selectedPlan?.identifier === pkg.identifier && styles.selectedButton,
+                { borderColor: isDark ? '#FFFFFF' : '#000000' }
+              ]}
+              onPress={() => {
+                hapticFeedback.selection();
+                setSelectedPlan(pkg);
+              }}
+              activeOpacity={0.8}
+            >
+              {/* 3 Days Free Tag for yearly */}
+              {pkg.packageType === 'ANNUAL' && (
+                <View style={[
+                  styles.freeTag,
+                  { backgroundColor: isDark ? '#000000' : '#000000' }
                 ]}>
-                  {i18n.t('onboarding.subscriptionSelection.monthly')}
-                </Text>
-                <Text style={[
-                  styles.subscriptionPrice,
-                  { color: isDark ? '#FFFFFF' : '#000000' }
-                ]}>
-                  {i18n.t('onboarding.subscriptionSelection.monthlyPrice')}
-                </Text>
-              </View>
-              <View style={[
-                styles.radioButton,
-                selectedPlan === 'monthly' && styles.selectedRadio
-              ]}>
-                {selectedPlan === 'monthly' && (
-                  <View style={styles.radioInner} />
-                )}
-              </View>
-            </View>
-          </TouchableOpacity>
+                  <Text style={styles.freeTagText}>
+                    {i18n.t('onboarding.subscriptionSelection.freeTag')}
+                  </Text>
+                </View>
+              )}
 
-          {/* Yearly Option */}
-          <TouchableOpacity
-            style={[
-              styles.subscriptionButton,
-              selectedPlan === 'yearly' && styles.selectedButton,
-              { borderColor: isDark ? '#FFFFFF' : '#000000' }
-            ]}
-            onPress={() => {
-              hapticFeedback.selection();
-              setSelectedPlan('yearly');
-            }}
-            activeOpacity={0.8}
-          >
-            {/* 3 Days Free Tag */}
-            <View style={[
-              styles.freeTag,
-              { backgroundColor: isDark ? '#000000' : '#000000' }
-            ]}>
-              <Text style={styles.freeTagText}>
-                {i18n.t('onboarding.subscriptionSelection.freeTag')}
-              </Text>
-            </View>
-
-            <View style={styles.subscriptionContent}>
-              <View style={styles.subscriptionTextContainer}>
-                <Text style={[
-                  styles.subscriptionTitle,
-                  { color: isDark ? '#FFFFFF' : '#000000' }
+              <View style={styles.subscriptionContent}>
+                <View style={styles.subscriptionTextContainer}>
+                  <Text style={[
+                    styles.subscriptionTitle,
+                    { color: isDark ? '#FFFFFF' : '#000000' }
+                  ]}>
+                    {getPackageDisplayName(pkg.packageType)}
+                  </Text>
+                  <Text style={[
+                    styles.subscriptionPrice,
+                    { color: isDark ? '#FFFFFF' : '#000000' }
+                  ]}>
+                    {getPackagePriceDisplay(pkg)}
+                  </Text>
+                </View>
+                <View style={[
+                  styles.radioButton,
+                  selectedPlan?.identifier === pkg.identifier && styles.selectedRadio
                 ]}>
-                  {i18n.t('onboarding.subscriptionSelection.yearly')}
-                </Text>
-                <Text style={[
-                  styles.subscriptionPrice,
-                  { color: isDark ? '#FFFFFF' : '#000000' }
-                ]}>
-                  {i18n.t('onboarding.subscriptionSelection.yearlyPrice')}
-                </Text>
+                  {selectedPlan?.identifier === pkg.identifier && (
+                    <View style={styles.radioInner} />
+                  )}
+                </View>
               </View>
-              <View style={[
-                styles.radioButton,
-                selectedPlan === 'yearly' && styles.selectedRadio
-              ]}>
-                {selectedPlan === 'yearly' && (
-                  <View style={styles.radioInner} />
-                )}
-              </View>
-            </View>
-          </TouchableOpacity>
+            </TouchableOpacity>
+          ))}
         </View>
 
         {/* Payment Text (shows for both plans) */}
@@ -416,7 +496,7 @@ export function SubscriptionSelectionScreen({ onNext, onBack }: SubscriptionSele
             styles.noPaymentText,
             { color: isDark ? '#FFFFFF' : '#000000' }
           ]}>
-            {selectedPlan === 'yearly' 
+            {isYearlySelected 
               ? i18n.t('onboarding.subscriptionSelection.noPaymentDue')
               : i18n.t('onboarding.subscriptionSelection.cancelAnytime')
             }
@@ -439,7 +519,7 @@ export function SubscriptionSelectionScreen({ onNext, onBack }: SubscriptionSele
             styles.startButtonText,
             { color: isDark ? '#000000' : '#FFFFFF' }
           ]}>
-            {selectedPlan === 'yearly' 
+            {isYearlySelected 
               ? i18n.t('onboarding.subscriptionSelection.startTrial')
               : i18n.t('onboarding.subscriptionSelection.startToday')
             }
@@ -451,10 +531,7 @@ export function SubscriptionSelectionScreen({ onNext, onBack }: SubscriptionSele
           styles.pricingText,
           { color: isDark ? '#8E8E93' : '#8E8E93' }
         ]}>
-          {selectedPlan === 'yearly' 
-            ? i18n.t('onboarding.subscriptionSelection.yearlyPricing')
-            : i18n.t('onboarding.subscriptionSelection.monthlyPricing')
-          }
+          {getPricingText()}
         </Text>
       </View>
     </SafeAreaView>
@@ -635,4 +712,4 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
-}); 
+});
