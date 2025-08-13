@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, Dimensions, Text, Platform, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Svg, { Path } from 'react-native-svg';
+import { CloseIcon, BackIcon, PlayIcon, ForwardIcon, ChevronUpIcon, ChevronDownIcon } from '../../../components/icons/icons';
 import { hapticFeedback } from '../../../utils/haptic';
 
 interface FeedbackSlideshowProps {
@@ -157,17 +157,8 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, liftData }
           <TouchableOpacity 
             style={styles.closeButton} 
             onPress={handleClose}
-            activeOpacity={0.7}
           >
-            <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-              <Path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M6 18L18 6M6 6l12 12"
-                stroke="#000000"
-                strokeWidth={2}
-              />
-            </Svg>
+            <CloseIcon width={24} height={24} color="#000000" />
           </TouchableOpacity>
         </View>
 
@@ -200,15 +191,7 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, liftData }
               onPress={handleLeftChevron}
               activeOpacity={0.7}
             >
-              <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-                <Path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M15.75 19.5 8.25 12l7.5-7.5"
-                  stroke="#000000"
-                  strokeWidth={1.5}
-                />
-              </Svg>
+              <BackIcon width={24} height={24} color="#000000" />
             </TouchableOpacity>
 
             {/* Center Column - Page Indicator and Expand/Collapse */}
@@ -220,19 +203,11 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, liftData }
                   onPress={handleExpandCollapse}
                   activeOpacity={0.7}
                 >
-                  <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-                    <Path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d={
-                        isBottomExpanded 
-                          ? "m19.5 8.25-7.5 7.5-7.5-7.5"
-                          : "m4.5 15.75 7.5-7.5 7.5 7.5"
-                      }
-                      stroke={"#FFFFFF"}
-                      strokeWidth={1.5}
-                    />
-                  </Svg>
+                  {isBottomExpanded ? (
+                    <ChevronDownIcon width={24} height={24} color="#FFFFFF" />
+                  ) : (
+                    <ChevronUpIcon width={24} height={24} color="#FFFFFF" />
+                  )}
                 </TouchableOpacity>
               )}
 
@@ -250,15 +225,7 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, liftData }
               onPress={handleRightChevron}
               activeOpacity={0.7}
             >
-              <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-                <Path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="m8.25 4.5 7.5 7.5-7.5 7.5"
-                  stroke="#000000"
-                  strokeWidth={1.5}
-                />
-              </Svg>
+              <ForwardIcon width={24} height={24} color="#000000" />
             </TouchableOpacity>
           </View>
         </View>

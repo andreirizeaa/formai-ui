@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Svg, { Path } from 'react-native-svg';
 import i18n from '../../../utils/i18n';
 import { hapticFeedback } from '../../../utils/haptic';
 import { useUserDetails } from '../../../context/UserDetailsContext';
+import { BackIcon, EditIcon } from '../../../components/icons/icons';
 
 interface PersonalDetailsScreenProps {
   onBack: () => void;
@@ -35,15 +35,7 @@ function PersonalDetailOption({ title, value, onPress }: PersonalDetailOptionPro
         <Text style={styles.optionValue}>{value}</Text>
       </View>
       <View style={styles.iconContainer}>
-        <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-          <Path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125"
-            stroke="#8E8E93"
-            strokeWidth={1.5}
-          />
-        </Svg>
+        <EditIcon width={20} height={20} color="#8E8E93" />
       </View>
     </TouchableOpacity>
   );
@@ -59,7 +51,7 @@ function translatePersonalDataValue(key: string, value: string): string {
       const weightMatch = value.match(/(\d+(?:\.\d+)?)\s*(kg|lbs)/);
       if (weightMatch) {
         const [, number, unit] = weightMatch;
-        const translatedUnit = unit === 'kg' ? i18n.t('measurements.kg') : i18n.t('measurements.lbs');
+        const translatedUnit = unit === 'kg' ? i18n.t('onboarding.measurements.kg') : i18n.t('onboarding.measurements.lbs');
         return `${number} ${translatedUnit}`;
       }
       return value;
@@ -152,15 +144,7 @@ export function PersonalDetailsScreen({
             onBack();
           }}
         >
-          <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-            <Path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M15.75 19.5L8.25 12l7.5-7.5"
-              stroke="#000000"
-              strokeWidth={2}
-            />
-          </Svg>
+          <BackIcon width={20} height={20} color="#000000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{i18n.t('settings.personalDetails')}</Text>
         <View style={styles.placeholder} />

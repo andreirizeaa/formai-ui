@@ -4,7 +4,7 @@ import { useColorScheme } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Picker } from '@react-native-picker/picker';
 import * as StoreReview from 'expo-store-review';
-import Svg, { Path } from 'react-native-svg';
+import { CloseIcon } from '../../components/icons/icons';
 import { ReferralService } from '../../services/referralService';
 import { OnboardingLayout } from '../../components/onboarding/OnboardingLayout';
 import { AnimatedOptionButton } from '../../components/onboarding/AnimatedOptionButton';
@@ -899,18 +899,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                   activeOpacity={0.7}
                 >
                   <View style={styles.clearIconContainer}>
-                    <Svg
-                      width={34}
-                      height={34}
-                      viewBox="0 0 24 24"
-                    >
-                      <Path
-                        fillRule="evenodd"
-                        d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25Zm-1.72 6.97a.75.75 0 1 0-1.06 1.06L10.94 12l-1.72 1.72a.75.75 0 1 0 1.06 1.06L12 13.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L13.06 12l1.72-1.72a.75.75 0 1 0-1.06-1.06L12 10.94l-1.72-1.72Z"
-                        clipRule="evenodd"
-                        fill={isDark ? '#FFFFFF' : '#8E8E93'}
-                      />
-                    </Svg>
+                    <CloseIcon width={24} height={24} color={isDark ? '#FFFFFF' : '#8E8E93'} />
                   </View>
                 </TouchableOpacity>
               )}

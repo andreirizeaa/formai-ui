@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Svg, { Path } from 'react-native-svg';
+import { BackIcon } from '../../../components/icons/icons';
 import { useColorScheme } from 'react-native';
 import i18n from '../../../utils/i18n';
 import { hapticFeedback } from '../../../utils/haptic';
@@ -41,15 +41,7 @@ export function UnitsDetailsScreen({ onBack }: UnitsDetailsScreenProps) {
             onBack();
           }}
         >
-          <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-            <Path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M15.75 19.5L8.25 12l7.5-7.5"
-              stroke="#000000"
-              strokeWidth={2}
-            />
-          </Svg>
+          <BackIcon width={24} height={24} color="#000000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{i18n.t('settings.units')}</Text>
         <View style={styles.placeholder} />
@@ -86,10 +78,10 @@ export function UnitsDetailsScreen({ onBack }: UnitsDetailsScreenProps) {
                   }
                 ]}
               >
-                {i18n.t('units.metric')}
+                {i18n.t('onboarding.units.metric')}
               </Text>
               <Text style={styles.unitDescription}>
-                {i18n.t('units.metricDescription')}
+                {i18n.t('onboarding.units.metricDescription')}
               </Text>
             </View>
           </TouchableOpacity>
@@ -121,10 +113,10 @@ export function UnitsDetailsScreen({ onBack }: UnitsDetailsScreenProps) {
                   }
                 ]}
               >
-                {i18n.t('units.imperial')}
+                {i18n.t('onboarding.units.imperial')}
               </Text>
               <Text style={styles.unitDescription}>
-                {i18n.t('units.imperialDescription')}
+                {i18n.t('onboarding.units.imperialDescription')}
               </Text>
             </View>
           </TouchableOpacity>

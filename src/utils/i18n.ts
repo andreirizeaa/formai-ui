@@ -16,6 +16,7 @@ const i18n = new I18n({
     settings: {
       personalDetails: 'Personal Details',
       language: 'Language',
+      selectLanguage: 'Select language',
       units: 'Units',
       appTheme: 'App theme',
       referFriends: 'Refer Friends',

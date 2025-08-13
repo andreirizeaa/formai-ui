@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, ScrollView, Dimensions, Image, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Svg, { Path } from 'react-native-svg';
 import { hapticFeedback } from '../../../utils/haptic';
 import { ILiftData } from '../feedback/liftDetails';
 import { LiftDataCard } from '../../../components/LiftDataCard';
@@ -23,6 +22,15 @@ import Animated, {
   interpolate,
   Extrapolate
 } from 'react-native-reanimated';
+import { 
+  ClockIcon, 
+  SortUpIcon, 
+  SortDownIcon, 
+  FilterIcon, 
+  EditIcon, 
+  CloseIcon,
+  BackIcon 
+} from '../../../components/icons/icons';
 
 interface LibraryScreenProps {
   onBack: () => void;
@@ -338,15 +346,7 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
           style={styles.backButton} 
           onPress={handleBackPress}
         >
-          <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-            <Path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M15.75 19.5L8.25 12l7.5-7.5"
-              stroke="#000000"
-              strokeWidth={2}
-            />
-          </Svg>
+          <BackIcon width={24} height={24} color="#000000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{i18n.t('library.title')}</Text>
         <View style={styles.placeholder} />
@@ -383,40 +383,17 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
         <View style={styles.controlsRightContainer}>
           <TouchableOpacity style={styles.controlButton} onPress={handleSortPress}>
             <View style={styles.sortIconsContainer}>
-              <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-                <Path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-                  stroke="#000000"
-                  strokeWidth={2}
-                />
-              </Svg>
-              <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-                <Path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d={sortOption === 'newest' 
-                    ? "M4.5 10.5 12 3m0 0 7.5 7.5M12 3v18"
-                    : "M19.5 13.5 12 21m0 0-7.5-7.5M12 21V3"
-                  }
-                  stroke="#000000"
-                  strokeWidth={2}
-                />
-              </Svg>
+              <ClockIcon width={20} height={20} color="#000000" />
+              {sortOption === 'newest' ? (
+                <SortUpIcon width={20} height={20} color="#000000" />
+              ) : (
+                <SortDownIcon width={20} height={20} color="#000000" />
+              )}
             </View>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.controlButton} onPress={handleFilterPress}>
-            <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-              <Path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75"
-                stroke="#000000"
-                strokeWidth={2}
-              />
-            </Svg>
+            <FilterIcon width={20} height={20} color="#000000" />
           </TouchableOpacity>
         </View>
       </View>
@@ -475,12 +452,7 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
               activeOpacity={0.7}
             >
               <Text style={styles.popupOptionText}>{dateRangeText}</Text>
-              <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-                <Path
-                  d="M21.731 2.269a2.625 2.625 0 0 0-3.712 0l-1.157 1.157 3.712 3.712 1.157-1.157a2.625 2.625 0 0 0 0-3.712ZM19.513 8.199l-3.712-3.712-12.15 12.15a5.25 5.25 0 0 0-1.32 2.214l-.8 2.685a.75.75 0 0 0 .933.933l2.685-.8a5.25 5.25 0 0 0 2.214-1.32L19.513 8.2Z"
-                  fill="#000000"
-                />
-              </Svg>
+              <EditIcon width={20} height={20} color="#000000" />
             </TouchableOpacity>
             <View style={styles.popupDivider} />
             <TouchableOpacity 
@@ -489,12 +461,7 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
               activeOpacity={0.7}
             >
               <Text style={styles.popupOptionText}>{filterPillText}</Text>
-              <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-                <Path
-                  d="M21.731 2.269a2.625 2.625 0 0 0-3.712 0l-1.157 1.157 3.712 3.712 1.157-1.157a2.625 2.625 0 0 0 0-3.712ZM19.513 8.199l-3.712-3.712-12.15 12.15a5.25 5.25 0 0 0-1.32 2.214l-.8 2.685a.75.75 0 0 0 .933.933l2.685-.8a5.25 5.25 0 0 0 2.214-1.32L19.513 8.2Z"
-                  fill="#000000"
-                />
-              </Svg>
+              <EditIcon width={20} height={20} color="#000000" />
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
@@ -532,15 +499,7 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
             <View style={styles.modalHeader}>
               <Text style={styles.modalHeaderTitle}>{i18n.t('library.editDateRange')}</Text>
               <TouchableOpacity style={styles.closeButton} onPress={handleDateRangeModalClose}>
-                <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-                  <Path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M6 18L18 6M6 6l12 12"
-                    stroke="#000000"
-                    strokeWidth={2}
-                  />
-                </Svg>
+                <CloseIcon width={20} height={20} color="#000000" />
               </TouchableOpacity>
             </View>
 

@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, Image } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, Image } from 'react-native';
+import { CheckmarkCircleIcon } from '../../../../components/icons/icons';
+import { hapticFeedback } from '../../../../utils/haptic';
 import i18n from '../../../../utils/i18n';
 
 interface PracticesScreenProps {
@@ -19,6 +20,7 @@ export function PracticesScreen({
   tips = i18n.t('add.recordingTips') as string[]
 }: PracticesScreenProps) {
   const handleButtonPress = () => {
+    hapticFeedback.selection();
     if (onNext) {
       onNext();
     } else if (onUpload) {
@@ -37,9 +39,7 @@ export function PracticesScreen({
         <View style={styles.tipImageWrapper}>
           {/* Checkmark Icon */}
           <View style={styles.simpleIconContainer}>
-            <Svg width={48} height={48} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="#000000">
-              <Path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-            </Svg>
+            <CheckmarkCircleIcon width={48} height={48} color="#000000" />
           </View>
           <View style={styles.tipImageContainer}>
             <Image

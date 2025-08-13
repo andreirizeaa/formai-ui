@@ -1,6 +1,8 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, TextInput, ScrollView, Keyboard } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
+import React, { useState, useMemo } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Platform } from 'react-native';
+import { CheckmarkIcon } from '../../../../components/icons/icons';
+import { gymMovements } from '../../../../constants/gymMovements';
+import { hapticFeedback } from '../../../../utils/haptic';
 import i18n from '../../../../utils/i18n';
 
 interface MovementSelectionScreenProps {
@@ -59,9 +61,9 @@ export function MovementSelectionScreen({
                   {movement}
                 </Text>
                 {selectedMovement === movement && (
-                  <Svg width={20} height={20} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="#000000">
-                    <Path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </Svg>
+                  <View style={styles.checkmark}>
+                    <CheckmarkIcon width={20} height={20} color="#000000" />
+                  </View>
                 )}
               </TouchableOpacity>
             ))}
@@ -195,5 +197,8 @@ const styles = StyleSheet.create({
   },
   uploadButtonTextDisabled: {
     color: '#C7C7CC',
+  },
+  checkmark: {
+    marginLeft: 10,
   },
 }); 
