@@ -1,7 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Svg, { Path } from 'react-native-svg';
+import { CloseIcon } from '../../../components/icons/icons';
 import { hapticFeedback } from '../../../utils/haptic';
 import i18n from '../../../utils/i18n';
 
@@ -36,18 +36,12 @@ export function HowItWorksModal({ isVisible, onClose, onViewFeedback }: HowItWor
             <Text style={styles.title}>{i18n.t('feedback.howItWorks')}</Text>
             <TouchableOpacity 
               style={styles.closeButton} 
-              onPress={handleClose}
-              activeOpacity={0.7}
+              onPress={() => {
+                hapticFeedback.selection();
+                onClose();
+              }}
             >
-              <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-                <Path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M6 18L18 6M6 6l12 12"
-                  stroke="#000000"
-                  strokeWidth={2}
-                />
-              </Svg>
+              <CloseIcon width={24} height={24} color="#000000" />
             </TouchableOpacity>
           </View>
 

@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Platform, TouchableOpacity, Animated } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Svg, { Path } from 'react-native-svg';
+import { NotificationIcon } from '../../components/icons/icons';
 import { BackButton } from '../../components/ui/BackButton';
 import i18n from '../../utils/i18n';
 import { hapticFeedback } from '../../utils/haptic';
@@ -13,19 +13,8 @@ interface NotificationReminderScreenProps {
   onBack: () => void;
 }
 
-// Bell Icon Component
-function BellIcon({ color, size }: { color: string; size: number }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"
-        stroke={color}
-        strokeWidth={1.5}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
+function NotificationIconComponent({ color, size }: { color: string; size: number }) {
+  return <NotificationIcon width={size} height={size} color={color} />;
 }
 
 export function NotificationReminderScreen({ onNext, onBack }: NotificationReminderScreenProps) {
@@ -138,7 +127,7 @@ export function NotificationReminderScreen({ onNext, onBack }: NotificationRemin
                 }
               ]}
             >
-              <BellIcon 
+              <NotificationIconComponent 
                 color={isDark ? '#8E8E93' : '#8E8E93'} 
                 size={160}
               />

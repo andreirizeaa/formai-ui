@@ -1,30 +1,17 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, Platform } from 'react-native';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, Dimensions } from 'react-native';
 import { useColorScheme } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { OnboardingLayout } from '../../components/onboarding/OnboardingLayout';
 import i18n from '../../utils/i18n';
 import { hapticFeedback } from '../../utils/haptic';
-import Svg, { Circle, Path } from 'react-native-svg';
 import LottieView from 'lottie-react-native';
+import { CheckmarkWithCircleIcon } from '../../components/icons/icons';
 
 interface AllDoneScreenProps {
   onNext: () => void;
   onBack: () => void;
 }
-
-// Checkmark icon component
-const CheckmarkIcon = () => (
-  <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-    <Circle cx="12" cy="12" r="12" fill="#34C759" />
-    <Path 
-      d="M9 12L11 14L15 10" 
-      stroke="white" 
-      strokeWidth="2" 
-      strokeLinecap="round" 
-      strokeLinejoin="round"
-    />
-  </Svg>
-);
 
 export function AllDoneScreen({ onNext, onBack }: AllDoneScreenProps) {
   const colorScheme = useColorScheme();
@@ -62,7 +49,7 @@ export function AllDoneScreen({ onNext, onBack }: AllDoneScreenProps) {
         <View style={styles.content}>
           {/* Header with checkmark and "All done!" text */}
           <View style={styles.header}>
-            <CheckmarkIcon />
+            <CheckmarkWithCircleIcon width={36} height={36} />
             <Text 
               style={[
                 styles.allDoneText,

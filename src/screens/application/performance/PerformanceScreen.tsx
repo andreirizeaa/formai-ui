@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Platform, ScrollView, TouchableOpacity, Modal } from 'react-native';
+import { View, Text, StyleSheet, Platform, ScrollView, TouchableOpacity, Modal, Dimensions } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { SwipeableLineGraphCard } from '../../../components/ui/SwipeableLineGraphCard';
 import { SwipeableSummaryCard } from '../../../components/ui/SwipeableSummaryCard';
@@ -7,8 +7,8 @@ import { FilterModal } from '../library/FilterModal';
 import { useLiftData } from '../../../context/LiftDataContext';
 import { useUserDetails } from '../../../context/UserDetailsContext';
 import { hapticFeedback } from '../../../utils/haptic';
-import Svg, { Path, Circle } from 'react-native-svg';
 import i18n from '../../../utils/i18n';
+import { ArrowUpIcon, ArrowDownIcon, FilterIcon, EditIcon, CloseIcon } from '../../../components/icons/icons';
 
 interface PerformanceScreenProps {
   onTriggerAddOptions?: () => void;
@@ -242,12 +242,7 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
             >
               <View style={styles.pillContent}>
                 <Text style={styles.pillText}>{dateRangeText}</Text>
-                <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
-                  <Path
-                    d="M21.731 2.269a2.625 2.625 0 0 0-3.712 0l-1.157 1.157 3.712 3.712 1.157-1.157a2.625 2.625 0 0 0 0-3.712ZM19.513 8.199l-3.712-3.712-12.15 12.15a5.25 5.25 0 0 0-1.32 2.214l-.8 2.685a.75.75 0 0 0 .933.933l2.685-.8a5.25 5.25 0 0 0 2.214-1.32L19.513 8.2Z"
-                    fill="#000000"
-                  />
-                </Svg>
+                <EditIcon width={16} height={16} color="#000000" />
               </View>
             </TouchableOpacity>
             
@@ -258,12 +253,7 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
             >
               <View style={styles.pillContent}>
                 <Text style={styles.pillText}>{filterPillText}</Text>
-                <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
-                  <Path
-                    d="M21.731 2.269a2.625 2.625 0 0 0-3.712 0l-1.157 1.157 3.712 3.712 1.157-1.157a2.625 2.625 0 0 0 0-3.712ZM19.513 8.199l-3.712-3.712-12.15 12.15a5.25 5.25 0 0 0-1.32 2.214l-.8 2.685a.75.75 0 0 0 .933.933l2.685-.8a5.25 5.25 0 0 0 2.214-1.32L19.513 8.2Z"
-                    fill="#000000"
-                  />
-                </Svg>
+                <EditIcon width={16} height={16} color="#000000" />
               </View>
             </TouchableOpacity>
           </View>
@@ -333,15 +323,7 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
             <View style={styles.header}>
               <Text style={styles.headerTitle}>{i18n.t('performance.editDateRange')}</Text>
               <TouchableOpacity style={styles.closeButton} onPress={handleCloseModal}>
-                <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-                  <Path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M6 18L18 6M6 6l12 12"
-                    stroke="#000000"
-                    strokeWidth={2}
-                  />
-                </Svg>
+                <CloseIcon width={20} height={20} color="#000000" />
               </TouchableOpacity>
             </View>
 

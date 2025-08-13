@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform, TextInput, ScrollView, Modal } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
+import { CloseIcon, CheckmarkIcon } from '../../../components/icons/icons';
 import { gymMovements } from '../../../constants/gymMovements';
 import { hapticFeedback } from '../../../utils/haptic';
 import i18n from '../../../utils/i18n';
@@ -95,15 +95,7 @@ export function FilterModal({
           <View style={styles.header}>
             <Text style={styles.headerTitle}>{title}</Text>
             <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
-              <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-                <Path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M6 18L18 6M6 6l12 12"
-                  stroke="#000000"
-                  strokeWidth={2}
-                />
-              </Svg>
+              <CloseIcon width={20} height={20} color="#000000" />
             </TouchableOpacity>
           </View>
 
@@ -123,15 +115,7 @@ export function FilterModal({
                     style={styles.clearButton} 
                     onPress={handleClearSearch}
                   >
-                    <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
-                      <Path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M6 18L18 6M6 6l12 12"
-                        stroke="#8E8E93"
-                        strokeWidth={2}
-                      />
-                    </Svg>
+                    <CloseIcon width={16} height={16} color="#8E8E93" />
                   </TouchableOpacity>
                 )}
               </View>
@@ -153,9 +137,7 @@ export function FilterModal({
                     {i18n.t('library.allMovements')}
                   </Text>
                   {selectedMovements.length === 0 && (
-                    <Svg width={20} height={20} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="#000000">
-                      <Path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                    </Svg>
+                    <CheckmarkIcon width={20} height={20} color="#000000" />
                   )}
                 </TouchableOpacity>
                 
@@ -177,9 +159,7 @@ export function FilterModal({
                       {movement}
                     </Text>
                     {isMovementSelected(movement) && (
-                      <Svg width={20} height={20} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="#000000">
-                        <Path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </Svg>
+                      <CheckmarkIcon width={20} height={20} color="#000000" />
                     )}
                   </TouchableOpacity>
                 ))}

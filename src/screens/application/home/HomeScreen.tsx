@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, Dimensions, ImageSourcePropType, ImageBackground, Modal, Animated as RNAnimated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Svg, { Path, Circle } from 'react-native-svg';
 import { hapticFeedback } from '../../../utils/haptic';
 import { useLoadingLifts } from '../../../context/LoadingLiftsContext';
 import { useLiftData } from '../../../context/LiftDataContext';
@@ -19,6 +18,7 @@ import Animated, {
   runOnJS 
 } from 'react-native-reanimated';
 import i18n from '../../../utils/i18n';
+import { CloseIcon, CircularProgressChart } from '../../../components/icons/icons';
 
 interface HomeScreenProps {
   onShowFeedback: (liftData: ILiftData) => void;
@@ -293,37 +293,15 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
                     <Text style={styles.accuracyCardLabel}>{cardData[currentCardIndex].label}</Text>
                   </View>
                   <View style={styles.accuracyCardRightSection}>
-                    <Svg width={120} height={120} viewBox="0 0 120 120">
-                      {/* Background circle */}
-                      <Circle
-                        cx="60"
-                        cy="60"
-                        r="48"
-                        stroke="#E5E5E5"
-                        strokeWidth="8"
-                        fill="none"
-                      />
-                      {/* Progress circle - percentage filled */}
-                      <Circle
-                        cx="60"
-                        cy="60"
-                        r="48"
-                        stroke="#000000"
-                        strokeWidth="8"
-                        fill="none"
-                        strokeDasharray={`${2 * Math.PI * 48}`}
-                        strokeDashoffset={`${2 * Math.PI * 48 * (1 - cardData[currentCardIndex].percentage / 100)}`}
-                        strokeLinecap="round"
-                        transform="rotate(-90 60 60)"
-                      />
-                      {/* Inner circle */}
-                      <Circle
-                        cx="60"
-                        cy="60"
-                        r="40"
-                        fill="#FFFFFF"
-                      />
-                    </Svg>
+                    <CircularProgressChart
+                      width={120}
+                      height={120}
+                      percentage={cardData[currentCardIndex].percentage}
+                      progressColor="#000000"
+                      backgroundColor="#E5E5E5"
+                      strokeWidth={8}
+                      radius={48}
+                    />
                   </View>
                 </View>
               </View>
@@ -458,15 +436,7 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
                 handleFirePopupClose();
               }}
             >
-              <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-                <Path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M6 18L18 6M6 6l12 12"
-                  stroke="#000000"
-                  strokeWidth={2}
-                />
-              </Svg>
+              <CloseIcon width={20} height={20} color="#000000" />
             </TouchableOpacity>
 
             {/* Title with FormAI logo */}

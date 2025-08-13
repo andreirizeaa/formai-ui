@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import { createStackNavigator, StackNavigationProp } from '@react-navigation/stack';
+import { createStackNavigator, StackNavigationProp, CardStyleInterpolators } from '@react-navigation/stack';
 import { useNavigation } from '@react-navigation/native';
 
 // Import screens
@@ -216,11 +216,18 @@ export function OnboardingNavigator({ onComplete, onSignIn, onUserNeedsOnboardin
           {() => <SetupLoadingScreenWrapper />}
         </Stack.Screen>
 
-        <Stack.Screen name="FreeTrial">
+        <Stack.Screen 
+          name="FreeTrial"
+          options={{
+            cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+          }}
+        >
           {() => <FreeTrialScreenWrapper />}
         </Stack.Screen>
 
-        <Stack.Screen name="NotificationReminder">
+        <Stack.Screen 
+          name="NotificationReminder"
+        >
           {() => <NotificationReminderScreenWrapper />}
         </Stack.Screen>
 

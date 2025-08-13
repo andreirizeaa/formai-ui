@@ -8,7 +8,7 @@ import Animated, {
   withSpring, 
   runOnJS 
 } from 'react-native-reanimated';
-import Svg, { Circle } from 'react-native-svg';
+import { CircularProgressChartWithCustomInner } from '../icons/icons';
 import { hapticFeedback } from '../../utils/haptic';
 
 interface SummaryCardData {
@@ -191,37 +191,16 @@ export function SwipeableSummaryCard({ cardData, onTriggerAddOptions, hasNoLifts
                     </Text>
                   </View>
                   <View style={styles.performanceSummaryCardRightSection}>
-                    <Svg width={120} height={120} viewBox="0 0 120 120">
-                      {/* Background circle */}
-                      <Circle
-                        cx="60"
-                        cy="60"
-                        r="36"
-                        stroke="#E5E5E5"
-                        strokeWidth="8"
-                        fill="none"
-                      />
-                      {/* Progress circle - percentage filled */}
-                      <Circle
-                        cx="60"
-                        cy="60"
-                        r="36"
-                        stroke={processedCardData[currentCardIndex]?.color || "#E5E5E5"}
-                        strokeWidth="8"
-                        fill="none"
-                        strokeDasharray={`${2 * Math.PI * 36}`}
-                        strokeDashoffset={`${2 * Math.PI * 36 * (1 - (processedCardData[currentCardIndex]?.value || 0) / 100)}`}
-                        strokeLinecap="round"
-                        transform="rotate(-90 60 60)"
-                      />
-                      {/* Inner circle */}
-                      <Circle
-                        cx="60"
-                        cy="60"
-                        r="28"
-                        fill="#FFFFFF"
-                      />
-                    </Svg>
+                    <CircularProgressChartWithCustomInner
+                      width={120}
+                      height={120}
+                      percentage={processedCardData[currentCardIndex]?.value || 0}
+                      progressColor={processedCardData[currentCardIndex]?.color || "#E5E5E5"}
+                      backgroundColor="#E5E5E5"
+                      strokeWidth={8}
+                      radius={36}
+                      innerRadius={28}
+                    />
                   </View>
                 </View>
               </View>

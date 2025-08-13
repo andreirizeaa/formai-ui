@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Platform, TouchableOpacity } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Svg, { Path, Circle } from 'react-native-svg';
 import { BackButton } from '../../components/ui/BackButton';
+import { TrendingUpwardsIcon, CheckmarkSmallIcon, UnlockIcon, BellIcon } from '../../components/icons/icons';
 import i18n from '../../utils/i18n';
 import { hapticFeedback } from '../../utils/haptic';
 import { useOnboarding } from '../../context/OnboardingContext';
@@ -12,63 +12,6 @@ import Purchases, { PurchasesOffering, PurchasesPackage } from 'react-native-pur
 interface SubscriptionSelectionScreenProps {
   onNext: () => void;
   onBack: () => void;
-}
-
-// Icon Components
-function UnlockIcon({ color, size }: { color: string; size: number }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M13.5 10.5V6.75a4.5 4.5 0 1 1 9 0v3.75M3.75 21.75h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H3.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"
-        stroke={color}
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
-}
-
-function BellIcon({ color, size }: { color: string; size: number }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0M3.124 7.5A8.969 8.969 0 0 1 5.292 3m13.416 0a8.969 8.969 0 0 1 2.168 4.5"
-        stroke={color}
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
-}
-
-function CrownIcon({ color, size }: { color: string; size: number }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941"
-        stroke={color}
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
-}
-
-function CheckmarkIcon({ color, size }: { color: string; size: number }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="m4.5 12.75 6 6 9-13.5"
-        stroke={color}
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
 }
 
 export function SubscriptionSelectionScreen({ onNext, onBack }: SubscriptionSelectionScreenProps) {
@@ -280,7 +223,7 @@ export function SubscriptionSelectionScreen({ onNext, onBack }: SubscriptionSele
                     styles.timelineIcon,
                     { backgroundColor: isDark ? '#FF9500' : '#FF9500' }
                   ]}>
-                    <UnlockIcon color="#FFFFFF" size={20} />
+                    <UnlockIcon width={20} height={20} color="#FFFFFF" />
                   </View>
                   <View style={styles.timelineContent}>
                     <Text style={[
@@ -304,7 +247,7 @@ export function SubscriptionSelectionScreen({ onNext, onBack }: SubscriptionSele
                     styles.timelineIcon,
                     { backgroundColor: isDark ? '#FF9500' : '#FF9500' }
                   ]}>
-                    <BellIcon color="#FFFFFF" size={20} />
+                    <BellIcon width={20} height={20} color="#FFFFFF" />
                   </View>
                   <View style={styles.timelineContent}>
                     <Text style={[
@@ -328,7 +271,7 @@ export function SubscriptionSelectionScreen({ onNext, onBack }: SubscriptionSele
                     styles.timelineIcon,
                     { backgroundColor: isDark ? '#000000' : '#000000' }
                   ]}>
-                    <CrownIcon color="#FFFFFF" size={20} />
+                    <TrendingUpwardsIcon width={20} height={20} color="#FFFFFF" />
                   </View>
                   <View style={styles.timelineContent}>
                     <Text style={[
@@ -355,7 +298,7 @@ export function SubscriptionSelectionScreen({ onNext, onBack }: SubscriptionSele
                     styles.timelineIcon,
                     { backgroundColor: isDark ? '#FF9500' : '#FF9500' }
                   ]}>
-                    <CheckmarkIcon color="#FFFFFF" size={20} />
+                    <CheckmarkSmallIcon width={20} height={20} color="#FFFFFF" />
                   </View>
                   <View style={styles.timelineContent}>
                     <Text style={[
@@ -379,7 +322,7 @@ export function SubscriptionSelectionScreen({ onNext, onBack }: SubscriptionSele
                     styles.timelineIcon,
                     { backgroundColor: isDark ? '#FF9500' : '#FF9500' }
                   ]}>
-                    <CheckmarkIcon color="#FFFFFF" size={20} />
+                    <CheckmarkSmallIcon width={20} height={20} color="#FFFFFF" />
                   </View>
                   <View style={styles.timelineContent}>
                     <Text style={[
@@ -403,7 +346,7 @@ export function SubscriptionSelectionScreen({ onNext, onBack }: SubscriptionSele
                     styles.timelineIcon,
                     { backgroundColor: isDark ? '#FF9500' : '#FF9500' }
                   ]}>
-                    <CheckmarkIcon color="#FFFFFF" size={20} />
+                    <CheckmarkSmallIcon width={20} height={20} color="#FFFFFF" />
                   </View>
                   <View style={styles.timelineContent}>
                     <Text style={[

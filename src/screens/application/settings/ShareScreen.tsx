@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, Share, Alert, Clipboard, Image } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
-import i18n from '../../../utils/i18n';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Share, Platform, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { BackIcon, CheckmarkCircleIcon, CopyIcon } from '../../../components/icons/icons';
+import * as Clipboard from 'expo-clipboard';
 import { hapticFeedback } from '../../../utils/haptic';
+import i18n from '../../../utils/i18n';
 
 interface ShareScreenProps {
   onBack: () => void;
@@ -42,7 +44,6 @@ export function ShareScreen({ onBack }: ShareScreenProps) {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity 
@@ -52,15 +53,7 @@ export function ShareScreen({ onBack }: ShareScreenProps) {
             onBack();
           }}
         >
-          <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-            <Path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M15.75 19.5L8.25 12l7.5-7.5"
-              stroke="#000000"
-              strokeWidth={2}
-            />
-          </Svg>
+          <BackIcon width={24} height={24} color="#000000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{i18n.t('share.referYourFriends')}</Text>
         <View style={styles.placeholder} />
@@ -88,25 +81,11 @@ export function ShareScreen({ onBack }: ShareScreenProps) {
               style={styles.copyButton}
               onPress={handleCopyPromoCode}
             >
-              <Svg width={28} height={28} viewBox="0 0 24 24" fill="none">
-                {isCopied ? (
-                  <Path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"
-                    stroke="#000000"
-                    strokeWidth={2}
-                  />
-                ) : (
-                  <Path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M8.25 7.5V6.108c0-1.135.845-2.098 1.976-2.192.373-.03.748-.057 1.123-.08M15.75 18H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08M15.75 18.75v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5A3.375 3.375 0 0 0 6.375 7.5H5.25m11.9-3.664A2.251 2.251 0 0 0 15 2.25h-1.5a2.251 2.251 0 0 0-2.15 1.586m5.8 0c.065.21.1.433.1.664v.75h-6V4.5c0-.231.035-.454.1-.664M6.75 7.5H4.875c-.621 0-1.125.504-1.125 1.125v12c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V16.5a9 9 0 0 0-9-9Z"
-                    stroke="#000000"
-                    strokeWidth={1.5}
-                  />
-                )}
-              </Svg>
+              {isCopied ? (
+                <CheckmarkCircleIcon width={28} height={28} color="#000000" />
+              ) : (
+                <CopyIcon width={28} height={28} color="#000000" />
+              )}
             </TouchableOpacity>
           </View>
         </View>

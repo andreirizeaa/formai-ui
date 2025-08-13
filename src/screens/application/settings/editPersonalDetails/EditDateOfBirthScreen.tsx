@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
-import Svg, { Path } from 'react-native-svg';
 import i18n from '../../../../utils/i18n';
 import { hapticFeedback } from '../../../../utils/haptic';
+import { BackIcon } from '../../../../components/icons/icons';
 
 interface EditDateOfBirthScreenProps {
   onBack: () => void;
@@ -150,15 +150,7 @@ export function EditDateOfBirthScreen({ onBack, currentValue, onSave }: EditDate
             onBack();
           }}
         >
-          <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-            <Path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M15.75 19.5L8.25 12l7.5-7.5"
-              stroke="#000000"
-              strokeWidth={2}
-            />
-          </Svg>
+          <BackIcon width={24} height={24} color="#000000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{i18n.t('personalDetails.editDateOfBirth')}</Text>
         <View style={styles.placeholder} />
@@ -170,7 +162,7 @@ export function EditDateOfBirthScreen({ onBack, currentValue, onSave }: EditDate
           {/* Month Picker */}
           <View style={[styles.pickerSection, styles.monthPickerSection]}>
             <Text style={styles.pickerLabel}>
-              {i18n.t('birthDate.month')}
+              {i18n.t('onboarding.birthDate.month')}
             </Text>
             <View style={styles.pickerWrapper}>
               <Picker
@@ -193,7 +185,7 @@ export function EditDateOfBirthScreen({ onBack, currentValue, onSave }: EditDate
           {/* Day Picker */}
           <View style={styles.pickerSection}>
             <Text style={styles.pickerLabel}>
-              {i18n.t('birthDate.day')}
+              {i18n.t('onboarding.birthDate.day')}
             </Text>
             <View style={styles.pickerWrapper}>
               <Picker
@@ -216,7 +208,7 @@ export function EditDateOfBirthScreen({ onBack, currentValue, onSave }: EditDate
           {/* Year Picker */}
           <View style={styles.pickerSection}>
             <Text style={styles.pickerLabel}>
-              {i18n.t('birthDate.year')}
+              {i18n.t('onboarding.birthDate.year')}
             </Text>
             <View style={styles.pickerWrapper}>
               <Picker
