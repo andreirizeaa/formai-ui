@@ -8,7 +8,6 @@ export interface Language {
 export interface UserPreferences {
   language: string;
   gender: 'male' | 'female' | null;
-  goal: 'lose_weight' | 'maintain' | 'gain_weight' | null;
   workoutsPerWeek: '1-2' | '3-4' | '5-6' | 'every_day' | 'it_varies' | null;
   discoverySource: 'instagram' | 'tiktok' | 'facebook' | 'google' | 'other' | null;
   trainingReason: 'build_strength' | 'improve_physique' | 'prevent_injury' | 'train_for_sport' | 'stay_active_healthy' | null;

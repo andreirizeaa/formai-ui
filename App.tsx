@@ -14,7 +14,7 @@ import { MainAppLayout } from './src/components/layout/MainAppLayout';
 import Purchases, { LOG_LEVEL } from 'react-native-purchases';
 
 export default function App() {
-  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [userNeedsOnboarding, setUserNeedsOnboarding] = useState(false);
   const colorScheme = useColorScheme();

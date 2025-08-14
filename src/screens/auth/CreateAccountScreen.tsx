@@ -16,7 +16,7 @@ interface CreateAccountScreenProps {
 export function CreateAccountScreen({ onNext }: CreateAccountScreenProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
-  const { updatePreference, persistOnboardingData } = useOnboarding();
+  const { preferences, updatePreference, persistOnboardingData } = useOnboarding();
   
   // Check if we're running in Expo Go
   const isExpoGo = Constants.appOwnership === 'expo';
@@ -43,14 +43,16 @@ export function CreateAccountScreen({ onNext }: CreateAccountScreenProps) {
     try {
       // Set the sign-in method preference
       updatePreference('signInMethod', signInMethod);
+
+      console.log('Persisting onboarding data with:', preferences);
       
-      // Persist onboarding data to API/database
-      const result = await persistOnboardingData();
+      // // Persist onboarding data to API/database
+      // const result = await persistOnboardingData();
       
-      if (!result.success) {
-        console.warn('Failed to persist onboarding data:', result.error);
-        // Continue with onboarding flow even if persistence fails
-      }
+      // if (!result.success) {
+      //   console.warn('Failed to persist onboarding data:', result.error);
+      //   // Continue with onboarding flow even if persistence fails
+      // }
     } catch (error) {
       console.error('Error persisting onboarding data:', error);
       // Continue with onboarding flow even if persistence fails
@@ -83,7 +85,6 @@ export function CreateAccountScreen({ onNext }: CreateAccountScreenProps) {
           // Persist onboarding data with Google as sign-in method
           await handlePersistOnboardingData('google');
           
-          onNext(); // This will navigate to main app if coming from sign-in flow
         }
       } else {
         throw new Error('no ID token present!');
@@ -131,7 +132,6 @@ export function CreateAccountScreen({ onNext }: CreateAccountScreenProps) {
           // Persist onboarding data with Apple as sign-in method
           await handlePersistOnboardingData('apple');
           
-          onNext(); // This will navigate to main app if coming from sign-in flow
         }
       } else {
         throw new Error('No identityToken.');

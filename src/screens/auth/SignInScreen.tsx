@@ -122,18 +122,13 @@ export function SignInScreen({ onSignIn, onBack, onNavigateToOnboarding }: SignI
         throw new Error('no ID token present!');
       }
     } catch (error: any) {
-      // Check if we have statusCodes available (from dynamic import)
       if (error.code === 'SIGN_IN_CANCELLED') {
-        // user cancelled the login flow
         console.log('Sign-in cancelled');
       } else if (error.code === 'IN_PROGRESS') {
-        // operation (e.g. sign in) is in progress already
         console.log('Sign-in already in progress');
       } else if (error.code === 'PLAY_SERVICES_NOT_AVAILABLE') {
-        // play services not available or outdated
         console.log('Play services not available');
       } else {
-        // some other error happened
         console.error('Google sign-in error:', error);
       }
     }
@@ -172,10 +167,8 @@ export function SignInScreen({ onSignIn, onBack, onNavigateToOnboarding }: SignI
       }
     } catch (e: any) {
       if (e.code === 'ERR_REQUEST_CANCELED') {
-        // handle that the user canceled the sign-in flow
         console.log('Apple sign-in cancelled');
       } else {
-        // handle other errors
         console.error('Apple sign-in error:', e);
       }
     }
