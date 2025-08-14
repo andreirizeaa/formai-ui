@@ -220,7 +220,7 @@ const i18n = new I18n({
         middleText: 'FormAI was made for gym lovers like you!',
       },
       referralCode: {
-        title: 'Do you have a referral code?',
+        title: 'Enter referral code (Optional)',
         subtitle: 'You can skip this step.',
         placeholder: 'Referral Code',
         skip: 'Skip',

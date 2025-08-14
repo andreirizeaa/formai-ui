@@ -25,6 +25,7 @@
     "plugins": [
       "expo-mail-composer",
       "expo-video",
+      "expo-apple-authentication",
       [
         "@react-native-google-signin/google-signin",
         {
@@ -34,14 +35,9 @@
     ],
     "ios": {
       "bundleIdentifier": "com.useformai.formai",
+      
       "infoPlist": {
         "CFBundleURLTypes": [
-          {
-            "CFBundleURLName": "Google Sign-In",
-            "CFBundleURLSchemes": [
-              "com.googleusercontent.apps.338047674329-5dfpj06alfpfn0phi57c4bgdg6nihv87"
-            ]
-          },
           {
             "CFBundleURLName": "Google Sign-In",
             "CFBundleURLSchemes": [

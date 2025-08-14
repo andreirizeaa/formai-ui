@@ -7,7 +7,6 @@ const OnboardingContext = createContext<OnboardingContextType | undefined>(undef
 const initialPreferences: UserPreferences = {
   language: 'en',
   gender: null,
-  goal: null,
   workoutsPerWeek: null,
   discoverySource: null,
   trainingReason: null,
