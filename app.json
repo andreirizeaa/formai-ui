@@ -20,8 +20,10 @@
       "package": "com.useformai.formai"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "proxy": "http://172.20.10.2:8000"
     },
+    
     "plugins": [
       "expo-mail-composer",
       "expo-video",

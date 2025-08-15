@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, Platform } from 'react-native';
+import { StyleSheet, Text, View, Platform, Animated, Dimensions } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import { Asset } from 'expo-asset';
@@ -11,14 +11,19 @@ import { LiftDataProvider } from './src/context/LiftDataContext';
 import { UserDetailsProvider } from './src/context/UserDetailsContext';
 import { OnboardingNavigator } from './src/navigation/OnboardingNavigator';
 import { MainAppLayout } from './src/components/layout/MainAppLayout';
-import Purchases, { LOG_LEVEL } from 'react-native-purchases';
+import { PurchasesProvider } from './src/context/PurchasesContext';
+
+const { width } = Dimensions.get('window');
 
 export default function App() {
   const [showOnboarding, setShowOnboarding] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [userNeedsOnboarding, setUserNeedsOnboarding] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+  
+  const slideAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     async function preloadAssets() {
@@ -50,32 +55,36 @@ export default function App() {
     preloadAssets();
   }, []);
 
-  useEffect(() => {
-    Purchases.setLogLevel(LOG_LEVEL.VERBOSE);
-
-    if (Platform.OS === 'ios') {
-       Purchases.configure({apiKey: 'appl_GUYEEZQfOpAHzaNTEHKrIuRLGuY'});
-    } 
-  //   else if (Platform.OS === 'android') {
-  //     Purchases.configure({apiKey: 'helo'});
-  //  }
-    getCustomerInfo();
-  }, []); 
-
-  const getCustomerInfo = async () => {
-    const customerInfo = await Purchases.getCustomerInfo();
-    console.log('Customer info:', customerInfo);
-  };
-
-
   const handleOnboardingComplete = () => {
-    setShowOnboarding(false);
-    setUserNeedsOnboarding(false);
+    setIsTransitioning(true);
+    
+    // Animate the transition from right to left
+    Animated.timing(slideAnim, {
+      toValue: -width,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => {
+      setShowOnboarding(false);
+      setUserNeedsOnboarding(false);
+      setIsTransitioning(false);
+      slideAnim.setValue(0);
+    });
   };
 
   const handleSignIn = () => {
-    setShowOnboarding(false);
-    setUserNeedsOnboarding(false);
+    setIsTransitioning(true);
+    
+    // Animate the transition from right to left
+    Animated.timing(slideAnim, {
+      toValue: -width,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => {
+      setShowOnboarding(false);
+      setUserNeedsOnboarding(false);
+      setIsTransitioning(false);
+      slideAnim.setValue(0);
+    });
   };
 
   const handleUserNeedsOnboarding = () => {
@@ -93,38 +102,74 @@ export default function App() {
     );
   }
 
-  if (showOnboarding || userNeedsOnboarding) {
-    return (
-      <SafeAreaProvider>
-        <LanguageProvider>
-          <OnboardingProvider>
+  // Main app content
+  const mainAppContent = (
+    <SafeAreaProvider>
+      <LanguageProvider>
+        <OnboardingProvider>
+          <PurchasesProvider>
+            <UserDetailsProvider>
+              <LoadingLiftsProvider>
+                <LiftDataProvider>
+                  <MainAppLayout />
+                </LiftDataProvider>
+              </LoadingLiftsProvider>
+            </UserDetailsProvider>
+            <StatusBar style={isDark ? 'light' : 'dark'} />
+          </PurchasesProvider>
+        </OnboardingProvider>
+      </LanguageProvider>
+    </SafeAreaProvider>
+  );
+
+  const onboardingContent = (
+    <SafeAreaProvider>
+      <LanguageProvider>
+        <OnboardingProvider>
+          <PurchasesProvider>
             <OnboardingNavigator 
               onComplete={handleOnboardingComplete}
               onSignIn={handleSignIn}
               onUserNeedsOnboarding={handleUserNeedsOnboarding}
             />
             <StatusBar style={isDark ? 'light' : 'dark'} />
-          </OnboardingProvider>
-        </LanguageProvider>
-      </SafeAreaProvider>
+          </PurchasesProvider>
+        </OnboardingProvider>
+      </LanguageProvider>
+    </SafeAreaProvider>
+  );
+
+  if (showOnboarding || userNeedsOnboarding) {
+    return (
+      <View style={styles.transitionContainer}>
+        <Animated.View
+          style={[
+            styles.animatedContainer,
+            {
+              transform: [{ translateX: slideAnim }],
+            },
+          ]}
+        >
+          {onboardingContent}
+        </Animated.View>
+        {isTransitioning && (
+          <Animated.View
+            style={[
+              styles.animatedContainer,
+              {
+                transform: [{ translateX: Animated.add(slideAnim, width) }],
+              },
+            ]}
+          >
+            {mainAppContent}
+          </Animated.View>
+        )}
+      </View>
     );
   }
 
   // Main app with bottom navigation
-  return (
-    <SafeAreaProvider>
-      <LanguageProvider>
-        <UserDetailsProvider>
-          <LoadingLiftsProvider>
-            <LiftDataProvider>
-              <MainAppLayout />
-            </LiftDataProvider>
-          </LoadingLiftsProvider>
-        </UserDetailsProvider>
-        <StatusBar style={isDark ? 'light' : 'dark'} />
-      </LanguageProvider>
-    </SafeAreaProvider>
-  );
+  return mainAppContent;
 }
 
 const styles = StyleSheet.create({
@@ -144,5 +189,15 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '400',
     textAlign: 'center',
+  },
+  transitionContainer: {
+    flex: 1,
+  },
+  animatedContainer: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
   },
 });

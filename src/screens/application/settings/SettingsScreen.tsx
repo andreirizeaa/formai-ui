@@ -145,7 +145,6 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onSharePr
 
   const handleConfirmDeleteAccount = () => {
     // TODO: Implement actual account deletion logic
-    console.log('Account deletion confirmed');
     setShowDeleteModal(false);
     // Here you would typically call an API to delete the account
   };
@@ -160,7 +159,6 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onSharePr
 
   const handleConfirmLogout = () => {
     // TODO: Implement actual logout logic
-    console.log('Logout confirmed');
     setShowLogoutModal(false);
     // Here you would typically:
     // 1. Clear user session/tokens
