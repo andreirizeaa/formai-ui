@@ -145,6 +145,13 @@ export function PurchasesProvider({ children, onSubscriptionUpdate }: PurchasesP
   async function restorePurchases() {
     try {
       const restoredInfo = await Purchases.restorePurchases();
+      console.log('Restored info:', restoredInfo);
+      
+      // If there are active subscriptions, store the payment info
+      if (restoredInfo.activeSubscriptions.length > 0) {
+        await storePaymentInfo(restoredInfo);
+      }
+      
       setCustomerInfo(restoredInfo);
       return restoredInfo;
     } catch (error) {

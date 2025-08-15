@@ -110,7 +110,6 @@ export function SignInScreen({ onSignIn, onBack, onNavigateToOnboarding }: SignI
         if (error) {
           console.error('Supabase auth error:', error);
         } else {
-          console.log('Google sign-in successful:', data);
           // Check if user profile exists and navigate accordingly
           if (data.user?.id) {
             await handlePostAuthentication(data.user.id);

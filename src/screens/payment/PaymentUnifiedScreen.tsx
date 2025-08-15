@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import i18n from '../../utils/i18n';
 import { hapticFeedback } from '../../utils/haptic';
 import { BackButton } from '../../components/ui/BackButton';
+import { LoadingOverlay } from '../../components/ui/LoadingOverlay';
 import { TrendingUpwardsIcon, CheckmarkSmallIcon, UnlockIcon, BellIcon, NotificationIcon } from '../../components/icons/icons';
 import { usePurchases } from '../../context/PurchasesContext';
 import type { PurchasesPackage } from 'react-native-purchases';
@@ -20,6 +21,8 @@ export function PaymentUnifiedScreen({ onComplete }: PaymentUnifiedScreenProps) 
   const isDark = colorScheme === 'dark';
 
   const [currentStep, setCurrentStep] = useState<PaymentStep>('freeTrial');
+  const [isRestoring, setIsRestoring] = useState(false);
+  const [isPurchasing, setIsPurchasing] = useState(false);
 
   // Notification animation
   const shakeAnimation = useRef(new Animated.Value(0)).current;
@@ -42,7 +45,7 @@ export function PaymentUnifiedScreen({ onComplete }: PaymentUnifiedScreenProps) 
   const shakeInterpolate = shakeAnimation.interpolate({ inputRange: [-1, 1], outputRange: ['-10deg', '10deg'] });
 
   // Purchases state
-  const { packages, purchasePackage } = usePurchases();
+  const { packages, purchasePackage, restorePurchases } = usePurchases();
 
   // Select monthly and yearly packages explicitly
   const monthlyPackage: PurchasesPackage | null = useMemo(() => {
@@ -177,27 +180,54 @@ export function PaymentUnifiedScreen({ onComplete }: PaymentUnifiedScreenProps) 
     if (!selectedPlan) {
       return;
     }
+    setIsPurchasing(true);
     try {
         await purchasePackage(selectedPlan);
         onComplete();
     } catch (e) {
         console.error('Purchase failed or was cancelled', e);
+    } finally {
+        setIsPurchasing(false);
     }
+  }
 
+  async function handleRestore() {
+    setIsRestoring(true);
+    try {
+      await restorePurchases();
+      // If restore is successful and user has active subscription, complete the flow
+      onComplete();
+    } catch (e) {
+      console.error('Restore failed', e);
+    } finally {
+      setIsRestoring(false);
+    }
   }
 
   // Header with optional back
   function renderHeader() {
-    if (currentStep === 'freeTrial') return <View style={styles.header} />;
-
-    const goBack = () => {
-      if (currentStep === 'notificationReminder') setCurrentStep('freeTrial');
-      else if (currentStep === 'subscriptionSelection') setCurrentStep('notificationReminder');
-    };
-
     return (
       <View style={styles.header}>
-        <BackButton onPress={goBack} />
+        {currentStep !== 'freeTrial' && (
+          <BackButton onPress={() => {
+            if (currentStep === 'notificationReminder') setCurrentStep('freeTrial');
+            else if (currentStep === 'subscriptionSelection') setCurrentStep('notificationReminder');
+          }} />
+        )}
+        
+        <View style={styles.headerSpacer} />
+        
+        <TouchableOpacity
+          onPress={() => {
+            hapticFeedback.selection();
+            handleRestore();
+          }}
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.restoreText, { color: '#8E8E93' }]}>
+            Restore
+          </Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -470,6 +500,8 @@ export function PaymentUnifiedScreen({ onComplete }: PaymentUnifiedScreenProps) 
       <View style={styles.contentWrapper}>{renderContent()}</View>
 
       <View style={styles.bottomWrapper}>{renderBottom()}</View>
+      
+      <LoadingOverlay visible={isRestoring || isPurchasing} />
     </SafeAreaView>
   );
 }
@@ -486,6 +518,14 @@ const styles = StyleSheet.create({
     paddingRight: 20,
     paddingBottom: 20,
     height: 64,
+  },
+  headerSpacer: {
+    flex: 1,
+  },
+  restoreText: {
+    fontSize: 14,
+    fontWeight: '600',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
   contentWrapper: {
     flex: 1,
@@ -709,6 +749,6 @@ const styles = StyleSheet.create({
   },
   photo: {
     width: '100%',
-    height: '90%',
+    height: '85%',
   },
 }); 
