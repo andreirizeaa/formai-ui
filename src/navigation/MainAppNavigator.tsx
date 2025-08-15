@@ -233,7 +233,6 @@ function EditCurrentWeightScreenWrapper() {
       const weight = parseFloat(number);
       const weightKg = unit === 'kg' ? Math.round(weight) : Math.round(weight * 0.453592);
       updateWeight(weightKg);
-      console.log('Weight updated:', weightKg, 'kg');
     }
     navigation.goBack();
   };
@@ -281,7 +280,6 @@ function EditHeightScreenWrapper() {
     }
     
     updateHeight(heightCm);
-    console.log('Height updated:', heightCm, 'cm');
     navigation.goBack();
   };
 
@@ -309,7 +307,6 @@ function EditDateOfBirthScreenWrapper() {
     const dateRegex = /^\d{2}-\d{2}-\d{4}$/;
     if (dateRegex.test(newValue)) {
       updateUserDetails('dateOfBirth', newValue);
-      console.log('Date of birth updated:', newValue);
     } else {
       console.error('Invalid date format received:', newValue);
     }
@@ -336,7 +333,6 @@ function EditGenderScreenWrapper() {
 
   const handleSave = (newValue: string) => {
     updateUserDetails('gender', newValue);
-    console.log('Gender updated:', newValue);
     navigation.goBack();
   };
 

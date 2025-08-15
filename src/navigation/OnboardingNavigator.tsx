@@ -7,15 +7,12 @@ import { useNavigation } from '@react-navigation/native';
 import { LoadingScreen } from '../screens/onboarding/LoadingScreen';
 import { WelcomeScreen } from '../screens/onboarding/WelcomeScreen';
 import { OnboardingUnifiedScreen } from '../screens/onboarding/OnboardingUnifiedScreen';
-import { AllDoneScreen } from '../screens/onboarding/AllDoneScreen';
 import { NotificationPermissionScreen } from '../screens/onboarding/NotificationPermissionScreen';
 import { SetupLoadingScreen } from '../screens/onboarding/SetupLoadingScreen';
-import { FreeTrialScreen } from '../screens/payment/FreeTrialScreen';
-import { NotificationReminderScreen } from '../screens/payment/NotificationReminderScreen';
-import { SubscriptionSelectionScreen } from '../screens/payment/SubscriptionSelectionScreen';
-import { CreateAccountScreen } from '../screens/auth/CreateAccountScreen';
+import { PaymentUnifiedScreen } from '../screens/payment/PaymentUnifiedScreen';
 import { SignInScreen } from '../screens/auth/SignInScreen';
 import { CameraPermissionScreen } from '../screens/onboarding/CameraPermissionScreen';
+import { useOnboarding } from '../context/OnboardingContext';
 
 interface OnboardingNavigatorProps {
   onComplete: () => void;
@@ -27,14 +24,10 @@ export type OnboardingStackParamList = {
   Loading: undefined;
   Welcome: undefined;
   Onboarding: undefined;
-  AllDone: undefined;
   NotificationPermission: undefined;
   SetupLoading: undefined;
-  FreeTrial: undefined;
-  NotificationReminder: undefined;
-  SubscriptionSelection: undefined;
+  Payment: undefined;
   SignIn: undefined;
-  CreateAccount: undefined;
   CameraPermission: undefined;
 };
 
@@ -47,7 +40,7 @@ function LoadingScreenWrapper({ onComplete }: { onComplete: () => void }) {
   const navigation = useNavigation<OnboardingNavigationProp>();
   
   const handleLoadComplete = () => {
-    navigation.navigate('Welcome');
+    navigation.navigate('Onboarding');
   };
 
   return <LoadingScreen onLoadComplete={handleLoadComplete} />;
@@ -71,43 +64,17 @@ function UnifiedOnboardingScreenWrapper() {
   return <OnboardingUnifiedScreen />;
 }
 
-function FreeTrialScreenWrapper() {
+function PaymentUnifiedScreenWrapper() {
   const navigation = useNavigation<OnboardingNavigationProp>();
   
-  const handleNext = () => {
-    navigation.navigate('NotificationReminder');
-  };
-
-  return <FreeTrialScreen onNext={handleNext} />;
-}
-
-function NotificationReminderScreenWrapper() {
-  const navigation = useNavigation<OnboardingNavigationProp>();
-  
-  const handleNext = () => {
-    navigation.navigate('SubscriptionSelection');
-  };
-
-  const handleBack = () => {
-    navigation.navigate('FreeTrial');
-  };
-
-  return <NotificationReminderScreen onNext={handleNext} onBack={handleBack} />;
-}
-
-function SubscriptionSelectionScreenWrapper() {
-  const navigation = useNavigation<OnboardingNavigationProp>();
-  
-  const handleNext = () => {
-    navigation.navigate('CreateAccount');
-
-  };
-
-  const handleBack = () => {
-    navigation.navigate('NotificationReminder');
-  };
-
-  return <SubscriptionSelectionScreen onNext={handleNext} onBack={handleBack} />;
+  return (
+    <PaymentUnifiedScreen
+      onComplete={() => {
+        // After payment completion, go directly to camera permission
+        navigation.navigate('CameraPermission');
+      }}
+    />
+  );
 }
 
 function SignInScreenWrapper({ onSignIn, onUserNeedsOnboarding }: { onSignIn: () => void; onUserNeedsOnboarding: () => void }) {
@@ -121,32 +88,8 @@ function SignInScreenWrapper({ onSignIn, onUserNeedsOnboarding }: { onSignIn: ()
   return <SignInScreen onSignIn={onSignIn} onBack={() => navigation.navigate("Welcome")} onNavigateToOnboarding={handleNavigateToOnboarding} />;
 }
 
-function CreateAccountScreenWrapper({ onComplete, onSignIn }: { onComplete: () => void; onSignIn: () => void }) {
-  const navigation = useNavigation<OnboardingNavigationProp>();
-  
-  const handleNext = () => {
-    navigation.navigate('CameraPermission');
-  };
-
-  return <CreateAccountScreen onNext={handleNext} />;
-}
-
 function CameraPermissionScreenWrapper({ onComplete }: { onComplete: () => void }) {
   return <CameraPermissionScreen onNext={onComplete} />;
-}
-
-function AllDoneScreenWrapper() {
-  const navigation = useNavigation<OnboardingNavigationProp>();
-
-  const handleNext = () => {
-    navigation.navigate('NotificationPermission');
-  };
-
-  const handleBack = () => {
-    navigation.goBack();
-  };
-
-  return <AllDoneScreen onNext={handleNext} onBack={handleBack} />;
 }
 
 function NotificationPermissionScreenWrapper() {
@@ -157,7 +100,7 @@ function NotificationPermissionScreenWrapper() {
   };
 
   const handleBack = () => {
-    navigation.navigate('AllDone');
+    navigation.navigate('Onboarding');
   };
 
   return <NotificationPermissionScreen onNext={handleNext} onBack={handleBack} />;
@@ -167,7 +110,7 @@ function SetupLoadingScreenWrapper() {
   const navigation = useNavigation<OnboardingNavigationProp>();
   
   const handleNext = () => {
-    navigation.navigate('FreeTrial');
+    navigation.navigate('Payment');
   };
 
   const handleBack = () => {
@@ -181,7 +124,7 @@ export function OnboardingNavigator({ onComplete, onSignIn, onUserNeedsOnboardin
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName="Loading"
+        initialRouteName="Welcome"
         screenOptions={{
           headerShown: false,
           gestureEnabled: false,
@@ -204,10 +147,6 @@ export function OnboardingNavigator({ onComplete, onSignIn, onUserNeedsOnboardin
           {() => <UnifiedOnboardingScreenWrapper />}
         </Stack.Screen>
 
-        <Stack.Screen name="AllDone">
-          {() => <AllDoneScreenWrapper />}
-        </Stack.Screen>
-
         <Stack.Screen name="NotificationPermission">
           {() => <NotificationPermissionScreenWrapper />}
         </Stack.Screen>
@@ -217,33 +156,29 @@ export function OnboardingNavigator({ onComplete, onSignIn, onUserNeedsOnboardin
         </Stack.Screen>
 
         <Stack.Screen 
-          name="FreeTrial"
+          name="Payment"
           options={{
             cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
           }}
         >
-          {() => <FreeTrialScreenWrapper />}
+          {() => <PaymentUnifiedScreenWrapper />}
         </Stack.Screen>
 
         <Stack.Screen 
-          name="NotificationReminder"
+          name="SignIn"
+          options={{
+            cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+          }}
         >
-          {() => <NotificationReminderScreenWrapper />}
-        </Stack.Screen>
-
-        <Stack.Screen name="SubscriptionSelection">
-          {() => <SubscriptionSelectionScreenWrapper />}
-        </Stack.Screen>
-
-        <Stack.Screen name="SignIn">
           {() => <SignInScreenWrapper onSignIn={onSignIn} onUserNeedsOnboarding={onUserNeedsOnboarding} />}
         </Stack.Screen>
 
-        <Stack.Screen name="CreateAccount">
-          {() => <CreateAccountScreenWrapper onComplete={onComplete} onSignIn={onSignIn} />}
-        </Stack.Screen>
-
-        <Stack.Screen name="CameraPermission">
+        <Stack.Screen 
+          name="CameraPermission" 
+          options={{ 
+            cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+          }}
+        >
           {() => <CameraPermissionScreenWrapper onComplete={onComplete} />}
         </Stack.Screen>
       </Stack.Navigator>

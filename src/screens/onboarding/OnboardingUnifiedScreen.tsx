@@ -9,10 +9,13 @@ import { ReferralService } from '../../services/referralService';
 import { OnboardingLayout } from '../../components/onboarding/OnboardingLayout';
 import { AnimatedOptionButton } from '../../components/onboarding/AnimatedOptionButton';
 import { useOnboarding } from '../../context/OnboardingContext';
-import { UserPreferences } from '../../types/onboarding';
+import { OnboardingData } from '../../types/onboarding';
 import i18n from '../../utils/i18n';
 import { hapticFeedback } from '../../utils/haptic';
 import { LANGUAGES } from '../../constants/languages';
+import { CreateAccountScreen } from '../../components/onboarding/CreateAccountScreen';
+import LottieView from 'lottie-react-native';
+import { CheckmarkWithCircleIcon } from '../../components/icons/icons';
 
 interface OnboardingUnifiedScreenProps {}
 
@@ -25,13 +28,13 @@ interface StepOption<V> {
   iconHeight?: number; // Custom icon height
 }
 
-type OptionsStepConfig<K extends keyof UserPreferences> = {
+type OptionsStepConfig<K extends keyof OnboardingData> = {
   type: 'options';
   id: string;
   title: string;
   subtitle?: string;
   preferenceKey: K;
-  options: Array<StepOption<UserPreferences[K]>>;
+  options: Array<StepOption<OnboardingData[K]>>;
 };
 
 interface MeasurementsStepConfig {
@@ -62,18 +65,34 @@ interface ReferralStepConfig {
   subtitle?: string;
 }
 
+interface CreateAccountStepConfig {
+  type: 'saveProgress';
+  id: string;
+  title: string;
+  subtitle?: string;
+}
+
+interface AllDoneStepConfig {
+  type: 'allDone';
+  id: string;
+  title: string;
+  subtitle?: string;
+}
+
 type StepConfig =
-  | OptionsStepConfig<keyof UserPreferences>
+  | OptionsStepConfig<keyof OnboardingData>
   | MeasurementsStepConfig
   | BirthDateStepConfig
   | RatingStepConfig
-  | ReferralStepConfig;
+  | ReferralStepConfig
+  | CreateAccountStepConfig
+  | AllDoneStepConfig;
 
 export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
   const navigation = useNavigation();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
-  const { preferences, updatePreference } = useOnboarding();
+  const { onboardingData, updateOnboardingData } = useOnboarding();
 
   const steps: ReadonlyArray<StepConfig> = useMemo(() => [
     {
@@ -233,10 +252,10 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       subtitle: i18n.t('onboarding.discovery.subtitle'),
       preferenceKey: 'discoverySource',
       options: [
-        { value: 'instagram', label: i18n.t('onboarding.discovery.instagram'), iconHeight: 40, iconWidth: 40 , iconImage: require('../../../assets/icons/instagram.png') },
-        { value: 'tiktok', label: i18n.t('onboarding.discovery.tiktok'), iconHeight: 40, iconWidth: 40 , iconImage: require('../../../assets/icons/tiktok.png') },
-        { value: 'facebook', label: i18n.t('onboarding.discovery.facebook'), iconHeight: 40, iconWidth: 40 , iconImage: require('../../../assets/icons/fasebook.png') },
-        { value: 'google', label: i18n.t('onboarding.discovery.google'), iconHeight: 40, iconWidth: 40 , iconImage: require('../../../assets/icons/google.png') },
+        { value: 'instagram', label: i18n.t('onboarding.discovery.instagram'), iconHeight: 24, iconWidth: 24 , iconImage: require('../../../assets/icons/instagram.png') },
+        { value: 'tiktok', label: i18n.t('onboarding.discovery.tiktok'), iconHeight: 24, iconWidth: 24 , iconImage: require('../../../assets/icons/tiktok.png') },
+        { value: 'facebook', label: i18n.t('onboarding.discovery.facebook'), iconHeight: 24, iconWidth: 24 , iconImage: require('../../../assets/icons/fasebook.png') },
+        { value: 'google', label: i18n.t('onboarding.discovery.google'), iconHeight: 24, iconWidth: 24 , iconImage: require('../../../assets/icons/google.png') },
         { value: 'other', label: i18n.t('onboarding.discovery.other') },
       ],
     },
@@ -252,6 +271,18 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       title: i18n.t('onboarding.referralCode.title'),
       subtitle: i18n.t('onboarding.referralCode.subtitle'),
     },
+    {
+      type: 'allDone',
+      id: 'allDone',
+      title: i18n.t('onboarding.allDone.title'),
+      subtitle: '',
+    },
+    {
+      type: 'saveProgress',
+      id: 'saveProgress',
+      title: 'Create an account',
+      subtitle: '',
+    },
   ], [i18n.locale]);
 
   const totalSteps = steps.length;
@@ -259,12 +290,12 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
   const currentStep = steps[currentStepIndex];
 
   // Local state for referral step
-  const [referralCode, setReferralCode] = useState(preferences.referralCode || '');
+  const [referralCode, setReferralCode] = useState(onboardingData.referralCode || '');
   const [referralValidating, setReferralValidating] = useState(false);
   const [referralError, setReferralError] = useState(false);
 
   // Helpers for measurements
-  const isMetric = preferences.unitSystem === 'metric';
+  const isMetric = onboardingData.unitSystem === 'metric';
   const heightOptions = Array.from({ length: 151 }, (_, i) => 100 + i); // 100-250 cm
   const feetOptions = Array.from({ length: 8 }, (_, i) => 1 + i); // 1-8 feet
   const inchesOptions = Array.from({ length: 12 }, (_, i) => i); // 0-11 inches
@@ -273,42 +304,42 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
     : Array.from({ length: 251 }, (_, i) => 90 + i); // 90-340 lbs
 
   function getCurrentHeight() {
-    if (!preferences.metricHeight) return isMetric ? 170 : { feet: 5, inches: 7, totalInches: 67 };
-    if (isMetric) return preferences.metricHeight;
-    const totalInches = Math.round(preferences.metricHeight / 2.54);
+    if (!onboardingData.metricHeight) return isMetric ? 170 : { feet: 5, inches: 7, totalInches: 67 };
+    if (isMetric) return onboardingData.metricHeight;
+    const totalInches = Math.round(onboardingData.metricHeight / 2.54);
     const feet = Math.floor(totalInches / 12);
     const inches = totalInches % 12;
     return { feet, inches, totalInches };
   }
 
   function getCurrentWeight() {
-    if (!preferences.metricWeight) return isMetric ? 60 : 130;
-    if (isMetric) return preferences.metricWeight;
-    return Math.round(preferences.metricWeight / 0.453592);
+    if (!onboardingData.metricWeight) return isMetric ? 60 : 130;
+    if (isMetric) return onboardingData.metricWeight;
+    return Math.round(onboardingData.metricWeight / 0.453592);
   }
 
   function handleHeightSelect(height: number) {
-    updatePreference('metricHeight', isMetric ? height : height * 2.54);
+    updateOnboardingData('metricHeight', isMetric ? height : height * 2.54);
   }
 
   function handleFeetSelect(feet: number) {
-    const currentHeight = preferences.metricHeight || 170;
+    const currentHeight = onboardingData.metricHeight || 170;
     const totalInches = Math.round(currentHeight / 2.54);
     const currentInches = totalInches % 12;
     const newTotalInches = feet * 12 + currentInches;
-    updatePreference('metricHeight', newTotalInches * 2.54);
+    updateOnboardingData('metricHeight', newTotalInches * 2.54);
   }
 
   function handleInchesSelect(inches: number) {
-    const currentHeight = preferences.metricHeight || 170;
+    const currentHeight = onboardingData.metricHeight || 170;
     const totalInches = Math.round(currentHeight / 2.54);
     const currentFeet = Math.floor(totalInches / 12);
     const newTotalInches = currentFeet * 12 + inches;
-    updatePreference('metricHeight', newTotalInches * 2.54);
+    updateOnboardingData('metricHeight', newTotalInches * 2.54);
   }
 
   function handleWeightSelect(weight: number) {
-    updatePreference('metricWeight', isMetric ? weight : weight * 0.453592);
+    updateOnboardingData('metricWeight', isMetric ? weight : weight * 0.453592);
   }
 
   // Birthdate helpers
@@ -326,13 +357,19 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
   }
 
   useEffect(() => {
-    if (currentStep.type === 'birthdate' && !preferences.birthDate) {
+    if (currentStep.type === 'birthdate' && !onboardingData.birthDate) {
       const defaultDate = formatBirthDateString(7, 15, currentYear - 25);
-      updatePreference('birthDate', defaultDate);
+      updateOnboardingData('birthDate', defaultDate);
     }
-  }, [currentStep.type, preferences.birthDate, currentYear, updatePreference]);
+  }, [currentStep.type, onboardingData.birthDate, currentYear, updateOnboardingData]);
 
-  const birthDateObj = parseBirthDate(preferences.birthDate);
+  useEffect(() => {
+    if (currentStep.type === 'allDone') {
+      hapticFeedback.success();
+    }
+  }, [currentStep.type]);
+
+  const birthDateObj = parseBirthDate(onboardingData.birthDate);
   const effectiveBirthDate = birthDateObj.month && birthDateObj.day && birthDateObj.year
     ? birthDateObj
     : { month: 7, day: 15, year: currentYear - 25 };
@@ -355,13 +392,13 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       }
     }
     const dateString = formatBirthDateString(updatedObj.month, updatedObj.day, updatedObj.year);
-    updatePreference('birthDate', dateString);
+    updateOnboardingData('birthDate', dateString);
   }
 
   function handleSelectOptionStep(value: any) {
     hapticFeedback.selection();
-    const step = currentStep as OptionsStepConfig<keyof UserPreferences>;
-    updatePreference(step.preferenceKey as any, value);
+    const step = currentStep as OptionsStepConfig<keyof OnboardingData>;
+    updateOnboardingData(step.preferenceKey as any, value);
     if (step.preferenceKey === 'language' && typeof value === 'string') i18n.locale = value;
   }
 
@@ -372,11 +409,11 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       if (isAvailable) {
         await StoreReview.requestReview();
       }
-      updatePreference('hasRated', true);
+      updateOnboardingData('hasRated', true);
       // Navigate to next screen after rating dialog
       handleNext();
     } catch (e) {
-      updatePreference('hasRated', true);
+      updateOnboardingData('hasRated', true);
       // Navigate to next screen even if rating fails
       handleNext();
     }
@@ -405,9 +442,9 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
           // Check if code exists by checking if data is returned
           if (result.isValid) {
             // Valid referral code found
-            updatePreference('referralCode', referralCode.trim().toUpperCase());
+            updateOnboardingData('referralCode', referralCode.trim().toUpperCase());
             // Continue to next step
-            navigation.navigate('AllDone' as never);
+            setCurrentStepIndex(i => i + 1);
 
           } else {
             // Invalid referral code
@@ -431,9 +468,15 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       setCurrentStepIndex(i => i + 1);
       return;
     }
-    // When finished, continue the original flow
-    // @ts-ignore
-    navigation.navigate('AllDone' as never);
+    
+    // When finished, check if it's the save progress step
+    if (currentStep.type === 'saveProgress') {
+      // Navigate to payment screens
+      navigation.navigate('Payment' as never);
+    } else {
+      // Continue the original flow
+      navigation.navigate('AllDone' as never);
+    }
   }
 
   function handleBack() {
@@ -450,17 +493,19 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
   let nextDisabled = false;
   let nextLoading = false;
   if (currentStep.type === 'options') {
-    const step = currentStep as OptionsStepConfig<keyof UserPreferences>;
-    const selectedValue = preferences[step.preferenceKey as keyof UserPreferences] as any;
+    const step = currentStep as OptionsStepConfig<keyof OnboardingData>;
+    const selectedValue = onboardingData[step.preferenceKey as keyof OnboardingData] as any;
     nextDisabled = selectedValue === null || selectedValue === undefined || selectedValue === '';
   } else if (currentStep.type === 'measurements') {
-    nextDisabled = !preferences.metricHeight || !preferences.metricWeight;
+    nextDisabled = !onboardingData.metricHeight || !onboardingData.metricWeight;
   } else if (currentStep.type === 'birthdate') {
-    nextDisabled = !preferences.birthDate;
+    nextDisabled = !onboardingData.birthDate;
   } else if (currentStep.type === 'rating') {
     nextDisabled = true; // custom buttons control flow
   } else if (currentStep.type === 'referral') {
     nextLoading = referralValidating; // show loading while validating
+  } else if (currentStep.type === 'allDone') {
+    nextDisabled = false; // always enabled for allDone step
   }
 
   return (
@@ -474,6 +519,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       nextTitle={i18n.t('next')}
       nextDisabled={nextDisabled}
       nextLoading={nextLoading}
+      hideNextButton={currentStep.type === 'saveProgress'}
       customButtons={currentStep.type === 'rating' ? (
         <View style={{ alignItems: 'center' }}>
           <TouchableOpacity
@@ -498,10 +544,10 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       {currentStep.type === 'options' && (
         currentStep.id === 'language' ? (
           <FlatList
-            data={(currentStep as OptionsStepConfig<keyof UserPreferences>).options}
+            data={(currentStep as OptionsStepConfig<keyof OnboardingData>).options}
             keyExtractor={item => String(item.value)}
             renderItem={({ item }) => {
-              const selectedValue = preferences['language'] as any;
+              const selectedValue = onboardingData['language'] as any;
               return (
                 <AnimatedOptionButton
                   onPress={() => handleSelectOptionStep(item.value)}
@@ -559,9 +605,9 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
             alwaysBounceVertical={false}
             nestedScrollEnabled
           >
-            {(currentStep as OptionsStepConfig<keyof UserPreferences>).options.map((option, index) => {
-              const step = currentStep as OptionsStepConfig<keyof UserPreferences>;
-              const selectedValue = preferences[step.preferenceKey as keyof UserPreferences] as any;
+            {(currentStep as OptionsStepConfig<keyof OnboardingData>).options.map((option, index) => {
+              const step = currentStep as OptionsStepConfig<keyof OnboardingData>;
+              const selectedValue = onboardingData[step.preferenceKey as keyof OnboardingData] as any;
               return (
                 <AnimatedOptionButton
                   key={String(option.value)}
@@ -864,8 +910,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
 
       {currentStep.type === 'referral' && (
         <View style={styles.referralContainer}>
-          <View style={styles.inputContainer}>
-            <View style={[
+          <View style={[
               styles.inputWrapper,
               {
                 borderColor: isDark ? '#FFF' : '#000',
@@ -905,12 +950,89 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
               )}
             </View>
             {referralError && (
-              <Text style={[styles.errorText, { color: '#FF3B30' }]}>
+              <Text style={[
+                styles.errorText,
+                { color: '#FF3B30' }
+              ]}>
                 {i18n.t('onboarding.referralCode.error') || 'Invalid referral code'}
               </Text>
             )}
           </View>
+      )}
+
+      {currentStep.type === 'allDone' && (
+        <View style={styles.allDoneContainer}>
+          {/* Confetti animation positioned behind content */}
+          <View style={styles.animationContainer}>
+            <LottieView
+              source={require('../../../assets/animations/confetti.json')}
+              autoPlay
+              speed={0.6}
+              style={styles.confettiAnimation}
+            />
+          </View>
+
+          <View style={styles.allDoneContent}>
+            {/* Header with checkmark and "All done!" text */}
+            <View style={styles.header}>
+              <CheckmarkWithCircleIcon width={36} height={36} />
+              <Text 
+                style={[
+                  styles.allDoneText,
+                  { 
+                    color: isDark ? '#FFFFFF' : '#000000',
+                    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
+                  }
+                ]}
+              >
+                {i18n.t('onboarding.allDone.allDone')}
+              </Text>
+            </View>
+
+            {/* Main thank you message */}
+            <Text 
+              style={[
+                styles.thankYouText,
+                { 
+                  color: isDark ? '#FFFFFF' : '#000000',
+                  fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto'
+                }
+              ]}
+            >
+              {i18n.t('onboarding.allDone.thankYou')}
+            </Text>
+
+            {/* Privacy message */}
+            <Text 
+              style={[
+                styles.privacyText,
+                { 
+                  color: isDark ? '#FFFFFF' : '#000000',
+                  fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
+                }
+              ]}
+            >
+              {i18n.t('onboarding.allDone.privacy')}
+            </Text>
+          </View>
         </View>
+      )}
+
+      {currentStep.type === 'saveProgress' && (
+        <CreateAccountScreen
+          onNext={() => {
+            // Navigate to payment screens
+            navigation.navigate('Payment' as never);
+          }}
+          onBack={() => {
+            // Navigate to AllDone screen
+            navigation.navigate('AllDone' as never);
+          }}
+          onSignIn={() => {
+            // Navigate to sign in screen
+            navigation.navigate('SignIn' as never);
+          }}
+        />
       )}
     </OnboardingLayout>
   );
@@ -1120,5 +1242,53 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  allDoneContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  allDoneContent: {
+    alignItems: 'center',
+    maxWidth: 300,
+    zIndex: 2,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  allDoneText: {
+    fontSize: 24,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  thankYouText: {
+    fontSize: 28,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 16,
+    lineHeight: 34,
+  },
+  privacyText: {
+    fontSize: 16,
+    fontWeight: '400',
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  animationContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: -10,
+  },
+  confettiAnimation: {
+    width: 700,
+    height: 700,
   },
 }); 
