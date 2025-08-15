@@ -6,6 +6,7 @@ import Constants from 'expo-constants';
 import { hapticFeedback } from '../../utils/haptic';
 import { supabase } from '../../lib/supabase';
 import { useOnboarding } from '../../context/OnboardingContext';
+import { LoadingOverlay } from '../ui/LoadingOverlay';
 
 interface CreateAccountScreenProps {
   onNext: () => void;
@@ -17,6 +18,7 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const { onboardingData, updateOnboardingData, persistOnboardingData } = useOnboarding();
+  const [isSigningIn, setIsSigningIn] = React.useState(false);
   
   // Check if we're running in Expo Go
   const isExpoGo = Constants.appOwnership === 'expo';
@@ -46,19 +48,30 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
         return;
       }
       
+      console.log('Starting Google Sign-In process...');
+      
       // Dynamically import Google Sign-In modules
       const { GoogleSignin } = await import('@react-native-google-signin/google-signin');
       
+      console.log('Checking Play Services...');
       await GoogleSignin.hasPlayServices();
+      
+      // Set loading state just before the actual sign-in
+      setIsSigningIn(true);
+      
       const userInfo = await GoogleSignin.signIn();
+      
       if (userInfo.idToken) {
+        console.log('ID token found, signing in with Supabase...');
         const { data, error } = await supabase.auth.signInWithIdToken({
           provider: 'google',
           token: userInfo.idToken,
         });
         if (error) {
           console.error('Supabase auth error:', error);
+          setIsSigningIn(false);
         } else {
+          console.log('Supabase auth successful, updating onboarding data...');
           updateOnboardingData('signInMethod', 'google');
           updateOnboardingData('onboardingCompleted', true);
     
@@ -67,8 +80,10 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
             try {
               updateOnboardingData('userId', data.user.id);
               handleNewAccount(data);
+              // Don't set loading to false here - onNext() will handle navigation
             } catch (persistError) {
               console.error('Error persisting onboarding data:', persistError);
+              setIsSigningIn(false);
             }
           }
         }
@@ -79,7 +94,7 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
       // Check if we have statusCodes available (from dynamic import)
       if (error.code === 'SIGN_IN_CANCELLED') {
         // user cancelled the login flow
-        console.log('Sign-in cancelled');
+        console.log('Sign-in cancelled by user');
       } else if (error.code === 'IN_PROGRESS') {
         // operation (e.g. sign in) is in progress already
         console.log('Sign-in already in progress');
@@ -90,10 +105,12 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
         // some other error happened
         console.error('Google sign-in error:', error);
       }
+      setIsSigningIn(false);
     }
   };
 
   const handleAppleSignIn = async () => {
+    setIsSigningIn(true);
     try {
       hapticFeedback.selection();
       const credential = await AppleAuthentication.signInAsync({
@@ -112,6 +129,7 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
         
         if (error) {
           console.error('Supabase auth error:', error);
+          setIsSigningIn(false);
         } else {
           updateOnboardingData('signInMethod', 'apple');
           updateOnboardingData('onboardingCompleted', true);
@@ -120,8 +138,10 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
             try {
               updateOnboardingData('userId', data.user.id);
               handleNewAccount(data);
+              // Don't set loading to false here - onNext() will handle navigation
             } catch (persistError) {
               console.error('Error persisting onboarding data:', persistError);
+              setIsSigningIn(false);
             }
           }
         }
@@ -136,6 +156,7 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
         // handle other errors
         console.error('Apple sign-in error:', e);
       }
+      setIsSigningIn(false);
     }
   };
 
@@ -159,18 +180,20 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
     // Persist the updated data immediately using the built object
     if (data.user?.id) {
       try {
-        console.log("Persisting onboarding data:", updatedData);
-        
         // We need to call the service directly with the updated data
         // since persistOnboardingData uses the context state which hasn't updated yet
         const { saveOnboardingProgress } = await import('../../services/onboardingService');
         const response = await saveOnboardingProgress(updatedData);
         
         console.log("API response:", response);
+        setIsSigningIn(false); // Reset loading state before navigation
         onNext();
       } catch (persistError) {
         console.error('Error persisting onboarding data:', persistError);
+        setIsSigningIn(false);
       }
+    } else {
+      setIsSigningIn(false);
     }
   }
 
@@ -261,6 +284,8 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
           </Text>
         </View>
       </View>
+      
+      <LoadingOverlay visible={isSigningIn} />
     </View>
   );
 }
