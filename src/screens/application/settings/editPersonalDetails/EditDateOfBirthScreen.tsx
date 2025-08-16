@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, ActivityIndicator } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import i18n from '../../../../utils/i18n';
 import { hapticFeedback } from '../../../../utils/haptic';
 import { BackIcon } from '../../../../components/icons/icons';
+import { useUserDetails } from '../../../../context/UserDetailsContext';
+import { editUserDetails } from '../../../../services/userService';
 
 interface EditDateOfBirthScreenProps {
   onBack: () => void;
@@ -12,6 +14,8 @@ interface EditDateOfBirthScreenProps {
 }
 
 export function EditDateOfBirthScreen({ onBack, currentValue, onSave }: EditDateOfBirthScreenProps) {
+  const { updateUserDetails, refetchUserDetails } = useUserDetails();
+  const [isSaving, setIsSaving] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(7); // Default July
   const [selectedDay, setSelectedDay] = useState(15); // Default 15th
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear() - 25); // Default 25 years ago
@@ -121,10 +125,24 @@ export function EditDateOfBirthScreen({ onBack, currentValue, onSave }: EditDate
     }
   };
 
-  const handleSave = () => {
-    hapticFeedback.success();
-    // Return the date in DD-MM-YYYY format
+  const handleSave = async () => {
+    if (isSaving) return;
+    hapticFeedback.selection();
+    setIsSaving(true);
+    // Return the date in DD-MM-YYYY format for UI
     const formattedDate = `${String(selectedDay).padStart(2, '0')}-${String(selectedMonth).padStart(2, '0')}-${selectedYear}`;
+    // Convert to YYYY-MM-DD for API
+    const isoDate = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-${String(selectedDay).padStart(2, '0')}`;
+    try {
+      await editUserDetails({ birth_date: isoDate });
+      updateUserDetails('dateOfBirth', formattedDate);
+      await refetchUserDetails();
+      hapticFeedback.success();
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to update birth date', e);
+    }
+    setIsSaving(false);
     onSave(formattedDate);
   };
 
@@ -232,8 +250,12 @@ export function EditDateOfBirthScreen({ onBack, currentValue, onSave }: EditDate
 
       {/* Save Button */}
       <View style={styles.bottomContainer}>
-        <TouchableOpacity style={styles.saveButton} onPress={handleSave} activeOpacity={0.8}>
-          <Text style={styles.saveButtonText}>{i18n.t('settings.save')}</Text>
+        <TouchableOpacity style={[styles.saveButton, isSaving && { opacity: 0.7 }]} onPress={handleSave} activeOpacity={0.8} disabled={isSaving}>
+          {isSaving ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <Text style={styles.saveButtonText}>{i18n.t('settings.save')}</Text>
+          )}
         </TouchableOpacity>
       </View>
     </View>

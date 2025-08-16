@@ -166,20 +166,20 @@ function PersonalDetailsScreenWrapper() {
     navigation.goBack();
   };
 
-  const handleEditCurrentWeight = () => {
-    navigation.navigate('EditCurrentWeight', { currentValue: getWeightDisplay() });
+  const handleEditCurrentWeight = (currentValue: string) => {
+    navigation.navigate('EditCurrentWeight', { currentValue });
   };
 
-  const handleEditHeight = () => {
-    navigation.navigate('EditHeight', { currentValue: getHeightDisplay() });
+  const handleEditHeight = (currentValue: string) => {
+    navigation.navigate('EditHeight', { currentValue });
   };
 
-  const handleEditDateOfBirth = () => {
-    navigation.navigate('EditDateOfBirth', { currentValue: getDateOfBirthDisplay() });
+  const handleEditDateOfBirth = (currentValue: string) => {
+    navigation.navigate('EditDateOfBirth', { currentValue });
   };
 
-  const handleEditGender = () => {
-    navigation.navigate('EditGender', { currentValue: userDetails.gender });
+  const handleEditGender = (currentValue: string) => {
+    navigation.navigate('EditGender', { currentValue });
   };
 
   return (
