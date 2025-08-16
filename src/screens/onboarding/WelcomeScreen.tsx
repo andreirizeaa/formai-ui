@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform, Image } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import i18n from '../../utils/i18n';
 import { hapticFeedback } from '../../utils/haptic';
+import { getUserId } from '../../services/storageService';
 
 interface WelcomeScreenProps {
   onGetStarted: () => void;
@@ -13,6 +14,15 @@ interface WelcomeScreenProps {
 export function WelcomeScreen({ onGetStarted, onSignIn }: WelcomeScreenProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchUserId = async () => {
+      const userId = await getUserId();
+      setUserId(userId);
+    };
+    fetchUserId();
+  }, []);
 
   const handleGetStarted = () => {
     hapticFeedback.selection();
@@ -64,11 +74,13 @@ export function WelcomeScreen({ onGetStarted, onSignIn }: WelcomeScreenProps) {
           </Text>
         </TouchableOpacity>
 
+        {!userId && (
         <TouchableOpacity onPress={handleSignIn} activeOpacity={0.7}>
           <Text style={styles.signInText}>
             {i18n.t('signIn')}
           </Text>
         </TouchableOpacity>
+        )}
       </View>
     </SafeAreaView>
   );

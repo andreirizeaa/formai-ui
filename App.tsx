@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, Platform, Animated, Dimensions } from 'react-native';
+import { StyleSheet, Text, View, Platform, Animated, Dimensions, InteractionManager } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import { Asset } from 'expo-asset';
@@ -12,21 +12,32 @@ import { UserDetailsProvider } from './src/context/UserDetailsContext';
 import { OnboardingNavigator } from './src/navigation/OnboardingNavigator';
 import { MainAppLayout } from './src/components/layout/MainAppLayout';
 import { PurchasesProvider } from './src/context/PurchasesContext';
+import { getUserId, setUserId, removeUserId } from './src/services/storageService';
+import { fetchUserById, requiresOnboarding, requiresPayment } from './src/services/userService';
+import { supabase } from './src/lib/supabase';
 
 const { width } = Dimensions.get('window');
 
 export default function App() {
   const [showOnboarding, setShowOnboarding] = useState(true);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [userNeedsOnboarding, setUserNeedsOnboarding] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [onboardingInitialRoute, setOnboardingInitialRoute] = useState<'Welcome' | 'Payment'>('Welcome');
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   
   const slideAnim = useRef(new Animated.Value(0)).current;
+  const isMountedRef = useRef(true);
 
   useEffect(() => {
-    async function preloadAssets() {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    async function preloadAndBootstrap() {
       try {
         await Asset.loadAsync([
           require('./assets/recording-tip.jpg'),
@@ -48,47 +59,114 @@ export default function App() {
       } catch (error) {
         console.warn('Error preloading assets:', error);
       } finally {
+        // continue to bootstrap auth state
+      }
+
+      try {
+        const storedUserId = await getUserId();
+        if (!storedUserId) {
+          setShowOnboarding(true);
+          setOnboardingInitialRoute('Welcome');
+          return;
+        }
+        const { user } = await fetchUserById(storedUserId);
+        if (!user) {
+          // user not found, send to welcome to re-onboard/sign-in
+          setShowOnboarding(true);
+          setOnboardingInitialRoute('Welcome');
+          return;
+        }
+        if (requiresOnboarding(user)) {
+          setShowOnboarding(true);
+          return;
+        }
+        if (requiresPayment(user)) {
+          setShowOnboarding(true);
+          setOnboardingInitialRoute('Payment');
+          return;
+        }
+        // user has active subscription
+        setShowOnboarding(false);
+      } catch (e) {
+        console.warn('Bootstrap error:', e);
+        setShowOnboarding(true);
+        setOnboardingInitialRoute('Welcome');
+      } finally {
         setIsLoading(false);
       }
     }
 
-    preloadAssets();
+    preloadAndBootstrap();
   }, []);
 
   const handleOnboardingComplete = () => {
     setIsTransitioning(true);
     
-    // Animate the transition from right to left
     Animated.timing(slideAnim, {
       toValue: -width,
       duration: 300,
       useNativeDriver: true,
     }).start(() => {
-      setShowOnboarding(false);
-      setUserNeedsOnboarding(false);
-      setIsTransitioning(false);
-      slideAnim.setValue(0);
+      InteractionManager.runAfterInteractions(() => {
+        if (!isMountedRef.current) return;
+        setShowOnboarding(false);
+        setUserNeedsOnboarding(false);
+        setIsTransitioning(false);
+        slideAnim.setValue(0);
+      });
     });
   };
 
   const handleSignIn = () => {
     setIsTransitioning(true);
     
-    // Animate the transition from right to left
     Animated.timing(slideAnim, {
       toValue: -width,
       duration: 300,
       useNativeDriver: true,
     }).start(() => {
-      setShowOnboarding(false);
-      setUserNeedsOnboarding(false);
-      setIsTransitioning(false);
-      slideAnim.setValue(0);
+      InteractionManager.runAfterInteractions(() => {
+        if (!isMountedRef.current) return;
+        setShowOnboarding(false);
+        setUserNeedsOnboarding(false);
+        setIsTransitioning(false);
+        slideAnim.setValue(0);
+      });
     });
+  };
+
+  const handlePaymentComplete = () => {
+    handleOnboardingComplete();
   };
 
   const handleUserNeedsOnboarding = () => {
     setUserNeedsOnboarding(true);
+  };
+
+  const handleLogout = async () => {
+    try {
+      // Sign out from Supabase
+      await supabase.auth.signOut();
+      
+      // Sign out from Google if available
+      try {
+        const { GoogleSignin } = await import('@react-native-google-signin/google-signin');
+        const isSignedIn = await GoogleSignin.isSignedIn();
+        if (isSignedIn) {
+          await GoogleSignin.signOut();
+        }
+      } catch (googleError) {
+        console.warn('Google Sign-In not available or error signing out:', googleError);
+      }
+      
+      // Remove user ID from local storage
+      await removeUserId();
+      // Navigate back to welcome screen
+      setShowOnboarding(true);
+      setOnboardingInitialRoute('Welcome');
+    } catch (error) {
+      console.error('Error during logout:', error);
+    }
   };
 
   if (isLoading) {
@@ -102,7 +180,6 @@ export default function App() {
     );
   }
 
-  // Main app content
   const mainAppContent = (
     <SafeAreaProvider>
       <LanguageProvider>
@@ -111,7 +188,7 @@ export default function App() {
             <UserDetailsProvider>
               <LoadingLiftsProvider>
                 <LiftDataProvider>
-                  <MainAppLayout />
+                  <MainAppLayout onLogout={handleLogout} />
                 </LiftDataProvider>
               </LoadingLiftsProvider>
             </UserDetailsProvider>
@@ -128,9 +205,10 @@ export default function App() {
         <OnboardingProvider>
           <PurchasesProvider>
             <OnboardingNavigator 
-              onComplete={handleOnboardingComplete}
+              onComplete={handlePaymentComplete}
               onSignIn={handleSignIn}
               onUserNeedsOnboarding={handleUserNeedsOnboarding}
+              initialRouteName={onboardingInitialRoute}
             />
             <StatusBar style={isDark ? 'light' : 'dark'} />
           </PurchasesProvider>
@@ -168,7 +246,6 @@ export default function App() {
     );
   }
 
-  // Main app with bottom navigation
   return mainAppContent;
 }
 

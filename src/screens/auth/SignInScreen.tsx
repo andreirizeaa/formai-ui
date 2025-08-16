@@ -8,16 +8,21 @@ import i18n from '../../utils/i18n';
 import { hapticFeedback } from '../../utils/haptic';
 import { supabase } from '../../lib/supabase';
 import { BackButton } from '../../components/ui/BackButton';
+import { LoadingOverlay } from '../../components/ui/LoadingOverlay';
+import { removeUserId, setUserId } from '../../services/storageService';
+import { fetchUserById, requiresOnboarding, requiresPayment } from '../../services/userService';
 
 interface SignInScreenProps {
   onSignIn: () => void;
   onBack: () => void;
   onNavigateToOnboarding?: () => void;
+  onRequirePayment?: () => void;
 }
 
-export function SignInScreen({ onSignIn, onBack, onNavigateToOnboarding }: SignInScreenProps) {
+export function SignInScreen({ onSignIn, onBack, onNavigateToOnboarding, onRequirePayment }: SignInScreenProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const [isSigningIn, setIsSigningIn] = React.useState(false);
   
   // Check if we're running in Expo Go
   const isExpoGo = Constants.appOwnership === 'expo';
@@ -25,66 +30,45 @@ export function SignInScreen({ onSignIn, onBack, onNavigateToOnboarding }: SignI
   // Configure Google Sign-In only if not in Expo Go
   React.useEffect(() => {
     if (!isExpoGo) {
-      // Only import GoogleSignin and GoogleSigninButton if not in Expo Go
-      // This prevents a startup error if Google Sign-In is not available
-      // in the current environment.
       import('@react-native-google-signin/google-signin').then(({ GoogleSignin }) => {
         GoogleSignin.configure({
           scopes: ['email', 'profile'],
           iosClientId: '338047674329-5dfpj06alfpfn0phi57c4bgdg6nihv87.apps.googleusercontent.com',
         });
-      }).catch(error => {
-        console.warn('Google Sign-In not available in this environment:', error);
+      }).catch(() => {
+        // Intentionally no logs
       });
     }
   }, [isExpoGo]);
 
-  // Function to check if user profile exists in public.users schema
-  const checkUserProfileExists = async (userId: string): Promise<boolean> => {
-    try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('id')
-        .eq('id', userId)
-        .single();
-
-      if (error) {
-        if (error.code === 'PGRST116') {
-          // No rows returned - user profile doesn't exist
-          return false;
-        }
-        console.error('Error checking user profile:', error);
-        return false;
-      }
-
-      return !!data;
-    } catch (error) {
-      console.error('Error checking user profile:', error);
-      return false;
-    }
-  };
-
-  // Function to handle post-authentication flow
   const handlePostAuthentication = async (userId: string) => {
     try {
-      const profileExists = await checkUserProfileExists(userId);
-      
-      if (profileExists) {
-        // User profile exists, navigate to main app
-        onSignIn();
-      } else {
-        // User profile doesn't exist, navigate to onboarding
-        if (onNavigateToOnboarding) {
-          onNavigateToOnboarding();
-        } else {
-          // Fallback to main app if onboarding navigation is not available
-          console.warn('onNavigateToOnboarding not provided, falling back to main app');
-          onSignIn();
-        }
+      await setUserId(userId);
+      const { user } = await fetchUserById(userId);
+
+      if (!user) {
+        if (onNavigateToOnboarding) onNavigateToOnboarding();
+        else onSignIn();
+        return;
       }
-    } catch (error) {
-      console.error('Error in post-authentication flow:', error);
-      // Fallback to main app on error
+
+      if (requiresOnboarding(user)) {
+        hapticFeedback.error();
+        await removeUserId();
+        if (onNavigateToOnboarding) onNavigateToOnboarding();
+        else onSignIn();
+        return;
+      }
+
+      if (requiresPayment(user)) {
+        hapticFeedback.success();
+        if (onRequirePayment) onRequirePayment();
+        else onSignIn();
+        return;
+      }
+
+      onSignIn();
+    } catch {
       onSignIn();
     }
   };
@@ -92,50 +76,40 @@ export function SignInScreen({ onSignIn, onBack, onNavigateToOnboarding }: SignI
   const handleGoogleSignIn = async () => {
     try {
       hapticFeedback.selection();
-      if (isExpoGo) {
-        console.log('Google Sign-In not available in Expo Go');
-        return;
-      }
+      if (isExpoGo) return;
       
-      // Dynamically import Google Sign-In modules
-      const { GoogleSignin, statusCodes } = await import('@react-native-google-signin/google-signin');
-      
+      const { GoogleSignin } = await import('@react-native-google-signin/google-signin');
       await GoogleSignin.hasPlayServices();
+      setIsSigningIn(true);
       const userInfo = await GoogleSignin.signIn();
+      
       if (userInfo.idToken) {
         const { data, error } = await supabase.auth.signInWithIdToken({
           provider: 'google',
           token: userInfo.idToken,
         });
         if (error) {
-          console.error('Supabase auth error:', error);
+          setIsSigningIn(false);
+        } else if (data.user?.id) {
+          await handlePostAuthentication(data.user.id);
+          setIsSigningIn(false);
         } else {
-          // Check if user profile exists and navigate accordingly
-          if (data.user?.id) {
-            await handlePostAuthentication(data.user.id);
-          } else {
-            onSignIn(); // Fallback to main app
-          }
+          setIsSigningIn(false);
+          onSignIn();
         }
       } else {
-        throw new Error('no ID token present!');
+        setIsSigningIn(false);
       }
     } catch (error: any) {
-      if (error.code === 'SIGN_IN_CANCELLED') {
-        console.log('Sign-in cancelled');
-      } else if (error.code === 'IN_PROGRESS') {
-        console.log('Sign-in already in progress');
-      } else if (error.code === 'PLAY_SERVICES_NOT_AVAILABLE') {
-        console.log('Play services not available');
-      } else {
-        console.error('Google sign-in error:', error);
-      }
+      setIsSigningIn(false);
+      // Swallow non-critical codes like user cancellation
     }
   };
 
   const handleAppleSignIn = async () => {
     try {
       hapticFeedback.selection();
+      setIsSigningIn(true);
       const credential = await AppleAuthentication.signInAsync({
         requestedScopes: [
           AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
@@ -143,7 +117,6 @@ export function SignInScreen({ onSignIn, onBack, onNavigateToOnboarding }: SignI
         ],
       });
       
-      // Sign in via Supabase Auth
       if (credential.identityToken) {
         const { error, data } = await supabase.auth.signInWithIdToken({
           provider: 'apple',
@@ -151,25 +124,19 @@ export function SignInScreen({ onSignIn, onBack, onNavigateToOnboarding }: SignI
         });
         
         if (error) {
-          console.error('Supabase auth error:', error);
+          setIsSigningIn(false);
+        } else if (data.user?.id) {
+          await handlePostAuthentication(data.user.id);
+          setIsSigningIn(false);
         } else {
-          console.log('Apple sign-in successful:', data);
-          // Check if user profile exists and navigate accordingly
-          if (data.user?.id) {
-            await handlePostAuthentication(data.user.id);
-          } else {
-            onSignIn(); // Fallback to main app
-          }
+          setIsSigningIn(false);
+          onSignIn();
         }
       } else {
-        throw new Error('No identityToken.');
+        setIsSigningIn(false);
       }
-    } catch (e: any) {
-      if (e.code === 'ERR_REQUEST_CANCELED') {
-        console.log('Apple sign-in cancelled');
-      } else {
-        console.error('Apple sign-in error:', e);
-      }
+    } catch {
+      setIsSigningIn(false);
     }
   };
 
@@ -233,10 +200,7 @@ export function SignInScreen({ onSignIn, onBack, onNavigateToOnboarding }: SignI
                   borderColor: isDark ? '#FFFFFF' : '#000000'
                 }
               ]}
-              onPress={isExpoGo ? () => {
-                hapticFeedback.selection();
-                console.log('Google Sign-In not available in Expo Go');
-              } : handleGoogleSignIn}
+              onPress={handleGoogleSignIn}
               activeOpacity={0.8}
             >
               <View style={styles.buttonContent}>
@@ -249,13 +213,35 @@ export function SignInScreen({ onSignIn, onBack, onNavigateToOnboarding }: SignI
                   styles.googleButtonText,
                   { color: isDark ? '#FFFFFF' : '#000000' }
                 ]}>
-                  {isExpoGo ? 'Sign in with Google' : i18n.t('onboarding.createAccount.signInWithGoogle')}
+                  {i18n.t('onboarding.createAccount.signInWithGoogle')}
                 </Text>
               </View>
             </TouchableOpacity>
+
+            {/* Don't have an account text */}
+            <View style={styles.noAccountContainer}>
+              <Text style={[
+                styles.noAccountText,
+                { color: isDark ? '#8E8E93' : '#8E8E93' }
+              ]}>
+                Don't have an account?{' '}
+              </Text>
+              <TouchableOpacity onPress={() => {
+                hapticFeedback.selection();
+                onNavigateToOnboarding?.()
+              }}>
+                <Text style={[
+                  styles.startTodayLink,
+                  { color: isDark ? '#007AFF' : '#007AFF' }
+                ]}>
+                  Start today
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </View>
+      <LoadingOverlay visible={isSigningIn} />
     </SafeAreaView>
   );
 }
@@ -273,10 +259,10 @@ const styles = StyleSheet.create({
     height: 80,
   },
   headerSpacer: {
-    width: 40, // Same width as BackButton for proper centering
+    width: 40,
   },
   mainTitle: {
-    fontSize: 36,
+    fontSize: 32,
     fontWeight: '700',
     textAlign: 'center',
     lineHeight: 38,
@@ -286,7 +272,6 @@ const styles = StyleSheet.create({
   },
   contentWrapper: {
     flex: 1,
-    paddingHorizontal: 20,
   },
   buttonWrapper: {
     flex: 1,
@@ -295,6 +280,7 @@ const styles = StyleSheet.create({
   buttonContainer: {
     gap: 16,
     alignItems: 'center',
+    width: '100%',
   },
   appleButton: {
     width: '80%',
@@ -327,13 +313,27 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   appleButtonText: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '600',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
   googleButtonText: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '600',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
+  noAccountContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  noAccountText: {
+    fontSize: 16,
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
+  startTodayLink: {
+    fontSize: 16,
+    fontWeight: '600',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+    textDecorationLine: 'underline',
   },
 }); 

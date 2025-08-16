@@ -76,6 +76,7 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
 
   // Function to persist onboarding data to API/database
   const persistOnboardingData = async (authToken?: string): Promise<any> => {
+    console.log('persisting onboarding data', onboardingData);
     try {
       // Submit the data to the API
       const response = await saveOnboardingProgress(onboardingData, authToken);
