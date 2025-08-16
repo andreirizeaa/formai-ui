@@ -18,10 +18,8 @@ export function CameraPermissionScreen({ onNext }: CameraPermissionScreenProps) 
   const handleAllowCamera = async () => {
     hapticFeedback.selection();
     try {
-      onNext();
       const result = await requestPermission();
       if (result.granted) {
-        console.log('Camera permission granted');
         onNext();
       } else {
         console.log('Camera permission denied');

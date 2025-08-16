@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, Platform, TouchableOpacity, Alert, ImageBackground, ScrollView, Animated, Image } from 'react-native';
 import * as MailComposer from 'expo-mail-composer';
 import Constants from 'expo-constants';
@@ -7,6 +7,8 @@ import { hapticFeedback } from '../../../utils/haptic';
 import { DeleteAccountModal } from './DeleteAccountModal';
 import { LogoutModal } from './LogoutModal';
 import { LanguageModal } from './LanguageModal';
+import { removeUserId, getUserId } from '../../../services/storageService';
+import { deleteUserAccount } from '../../../services/authService';
 import {
   PersonIcon,
   LanguageIcon,
@@ -24,6 +26,7 @@ interface SettingsScreenProps {
   onPersonalDetailsPress: () => void;
   onUnitsPress: () => void;
   onSharePress: () => void;
+  onLogout?: () => void;
 }
 
 interface SettingsOptionProps {
@@ -66,7 +69,7 @@ function ReferFriendOption({ icon, title, subtitle, onPress, onSharePress }: Ref
   // Animation value for pump effect
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
-  // Pump animation on mount
+  // Pump animation on mount - only run once
   useEffect(() => {
     const pumpAnimation = Animated.loop(
       Animated.sequence([
@@ -86,7 +89,39 @@ function ReferFriendOption({ icon, title, subtitle, onPress, onSharePress }: Ref
 
     // Start animation immediately
     pumpAnimation.start();
-  }, []);
+
+    // Cleanup function to stop animation if component unmounts
+    return () => {
+      pumpAnimation.stop();
+    };
+  }, []); // Empty dependency array - only run once
+
+  // Memoize the animated view to prevent unnecessary re-renders
+  const animatedView = useMemo(() => (
+    <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+      <ImageBackground 
+        source={require('../../../../assets/refer-friends.jpg')}
+        style={styles.nestedCard}
+        imageStyle={styles.nestedCardImage}
+      >
+        <View style={styles.opacityLayer}>
+          <Text style={styles.nestedCardTitle}>{i18n.t('settings.growStrongerTogether')}</Text>
+          <Text style={styles.nestedCardSubtitle}>{i18n.t('settings.currentBalance')}</Text>
+          <Text style={styles.balanceAmount}>$0</Text>
+          <TouchableOpacity 
+            style={styles.shareButton}
+            onPress={() => {
+              hapticFeedback.selection();
+              onSharePress();
+            }}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.shareButtonText}>{i18n.t('settings.shareNow')}</Text>
+          </TouchableOpacity>
+        </View>
+      </ImageBackground>
+    </Animated.View>
+  ), [scaleAnim, onSharePress]);
 
   return (
     <View>
@@ -101,52 +136,62 @@ function ReferFriendOption({ icon, title, subtitle, onPress, onSharePress }: Ref
       </View>
       
       {/* Nested Card */}
-      <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
-        <ImageBackground 
-          source={require('../../../../assets/refer-friends.jpg')}
-          style={styles.nestedCard}
-          imageStyle={styles.nestedCardImage}
-        >
-          <View style={styles.opacityLayer}>
-            <Text style={styles.nestedCardTitle}>{i18n.t('settings.growStrongerTogether')}</Text>
-            <Text style={styles.nestedCardSubtitle}>{i18n.t('settings.currentBalance')}</Text>
-            <Text style={styles.balanceAmount}>$0</Text>
-            <TouchableOpacity 
-              style={styles.shareButton}
-              onPress={() => {
-                hapticFeedback.selection();
-                onSharePress();
-              }}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.shareButtonText}>{i18n.t('settings.shareNow')}</Text>
-            </TouchableOpacity>
-          </View>
-        </ImageBackground>
-      </Animated.View>
+      {animatedView}
     </View>
   );
 }
 
-export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onSharePress }: SettingsScreenProps) {
+// Memoize the ReferFriendOption component to prevent unnecessary re-renders
+const MemoizedReferFriendOption = React.memo(ReferFriendOption);
+
+export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onSharePress, onLogout }: SettingsScreenProps) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showLanguageModal, setShowLanguageModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const iconSize = 26;
   const iconColor = '#000000';
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchUserId = async () => {
+      const userId = await getUserId();
+      setUserId(userId);
+    };
+    fetchUserId();
+  }, []);
 
   const handleDeleteAccountPress = () => {
     setShowDeleteModal(true);
   };
 
   const handleCloseDeleteModal = () => {
+    if (isDeleting) return; // prevent closing while deleting
     setShowDeleteModal(false);
   };
 
-  const handleConfirmDeleteAccount = () => {
-    // TODO: Implement actual account deletion logic
-    setShowDeleteModal(false);
-    // Here you would typically call an API to delete the account
+  const handleConfirmDeleteAccount = async () => {
+    try {
+      hapticFeedback.selection();
+      setIsDeleting(true);
+      const userId = await getUserId();
+      if (!userId) {
+        setIsDeleting(false);
+        hapticFeedback.error();
+        return;
+      }
+
+      const res = await deleteUserAccount(userId);
+      if (!res?.success) throw new Error(res?.message || 'Delete failed');
+
+      await removeUserId();
+      setShowDeleteModal(false);
+      if (onLogout) onLogout();
+    } catch (e: any) {
+      Alert.alert('Delete failed', e?.message || 'Please try again later');
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const handleLogoutPress = () => {
@@ -157,14 +202,11 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onSharePr
     setShowLogoutModal(false);
   };
 
-  const handleConfirmLogout = () => {
-    // TODO: Implement actual logout logic
+  const handleConfirmLogout = async () => {
     setShowLogoutModal(false);
-    // Here you would typically:
-    // 1. Clear user session/tokens
-    // 2. Clear local storage
-    // 3. Navigate to login screen
-    // 4. Reset app state
+    if (onLogout) {
+      onLogout();
+    }
   };
 
   const handleLanguagePress = () => {
@@ -204,19 +246,18 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onSharePr
         subject: 'FormAI Support Request',
         body: `Hello FormAI Support Team,
 
-I'm reaching out for assistance with the FormAI app.
 
-Issue Description:
-[Please describe your issue here]
 
-Device Information:
-- Platform: ${Platform.OS}
-- Version: ${Platform.Version}
+        
 
-Thank you for your help!
 
-Best regards,
-[Your name]`,
+
+              Meta data (Please do not remove this as it will help us identify your account)
+
+              - Platform: ${Platform.OS}
+              - Device Version: ${Platform.Version}
+              - User ID: ${userId}
+          `,
       });
     } catch (error) {
       console.error('Error opening email composer:', error);
@@ -228,8 +269,13 @@ Best regards,
     }
   };
 
+  // Memoize the share press handler to prevent unnecessary re-renders
+  const handleSharePress = useCallback(() => {
+    onSharePress();
+  }, [onSharePress]);
+
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
       <View style={styles.content}>
         <Text style={styles.title}>{i18n.t('tabs.settings')}</Text>
         
@@ -262,11 +308,11 @@ Best regards,
 
         {/* Second Card */}
         <View style={styles.card}>
-          <ReferFriendOption
+          <MemoizedReferFriendOption
             icon={<ReferFriendIcon width={iconSize} height={iconSize} color={iconColor} />}
             title={i18n.t('settings.referFriends')}
             onPress={handleReferFriendPress}
-            onSharePress={onSharePress}
+            onSharePress={handleSharePress}
           />
         </View>
 

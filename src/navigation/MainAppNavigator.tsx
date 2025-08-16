@@ -117,7 +117,7 @@ function HomeScreenWrapper() {
   );
 }
 
-function SettingsScreenWrapper() {
+function SettingsScreenWrapper({ onLogout }: { onLogout?: () => void }) {
   const navigation = useNavigation<MainStackNavigationProp>();
   
   const handlePersonalDetailsPress = () => {
@@ -137,6 +137,7 @@ function SettingsScreenWrapper() {
       onPersonalDetailsPress={handlePersonalDetailsPress}
       onUnitsPress={handleUnitsPress}
       onSharePress={handleSharePress}
+      onLogout={onLogout}
     />
   );
 }
@@ -477,7 +478,7 @@ function LibraryScreenWrapperWithProps() {
 }
 
 // Main tabs navigator with custom bottom navigation
-function MainTabsNavigator() {
+function MainTabsNavigator({ onLogout }: { onLogout?: () => void }) {
   const [activeTab, setActiveTab] = React.useState<'home' | 'performance' | 'settings'>('home');
   const [showAddOptions, setShowAddOptions] = React.useState(false);
   const navigation = useNavigation<MainStackNavigationProp>();
@@ -517,7 +518,7 @@ function MainTabsNavigator() {
       case 'performance':
         return <PerformanceScreenWrapper />;
       case 'settings':
-        return <SettingsScreenWrapper />;
+        return <SettingsScreenWrapper onLogout={onLogout} />;
       default:
         return <HomeScreenWrapper />;
     }
@@ -554,7 +555,7 @@ function MainTabsNavigator() {
 }
 
 // Main stack navigator
-export function MainAppNavigator() {
+export function MainAppNavigator({ onLogout }: { onLogout?: () => void }) {
   const [showAddOptions, setShowAddOptions] = React.useState(false);
 
   const handleAddPress = () => {
@@ -578,7 +579,9 @@ export function MainAppNavigator() {
             headerShown: false,
           }}
         >
-          <Stack.Screen name="MainTabs" component={MainTabsNavigator} />
+          <Stack.Screen name="MainTabs">
+            {() => <MainTabsNavigator onLogout={onLogout} />}
+          </Stack.Screen>
           <Stack.Screen 
             name="PersonalDetails" 
             component={PersonalDetailsScreenWrapper}

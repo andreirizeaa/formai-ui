@@ -18,6 +18,7 @@ interface OnboardingNavigatorProps {
   onComplete: () => void;
   onSignIn: () => void;
   onUserNeedsOnboarding: () => void;
+  initialRouteName?: 'Welcome' | 'Payment';
 }
 
 export type OnboardingStackParamList = {
@@ -85,7 +86,11 @@ function SignInScreenWrapper({ onSignIn, onUserNeedsOnboarding }: { onSignIn: ()
     navigation.navigate('Onboarding');
   };
 
-  return <SignInScreen onSignIn={onSignIn} onBack={() => navigation.navigate("Welcome")} onNavigateToOnboarding={handleNavigateToOnboarding} />;
+  const handleRequirePayment = () => {
+    navigation.navigate('Payment');
+  };
+
+  return <SignInScreen onSignIn={onSignIn} onBack={() => navigation.goBack()} onNavigateToOnboarding={handleNavigateToOnboarding} onRequirePayment={handleRequirePayment} />;
 }
 
 function CameraPermissionScreenWrapper({ onComplete }: { onComplete: () => void }) {
@@ -120,19 +125,13 @@ function SetupLoadingScreenWrapper() {
   return <SetupLoadingScreen onNext={handleNext} onBack={handleBack} />;
 }
 
-export function OnboardingNavigator({ onComplete, onSignIn, onUserNeedsOnboarding }: OnboardingNavigatorProps) {
+export function OnboardingNavigator({ onComplete, onSignIn, onUserNeedsOnboarding, initialRouteName = 'Welcome' }: OnboardingNavigatorProps) {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName="Welcome"
+        initialRouteName={initialRouteName}
         screenOptions={{
           headerShown: false,
-          gestureEnabled: false,
-          cardStyleInterpolator: () => ({
-            cardStyle: {
-              transform: [{ translateX: 0 }],
-            },
-          }),
         }}
       >
         <Stack.Screen name="Loading">

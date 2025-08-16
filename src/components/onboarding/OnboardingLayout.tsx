@@ -19,6 +19,7 @@ interface OnboardingLayoutProps {
   nextDisabled?: boolean;
   nextLoading?: boolean;
   hideNextButton?: boolean;
+  hideBackButton?: boolean;
   customButtons?: React.ReactNode;
 }
 
@@ -34,8 +35,10 @@ export function OnboardingLayout({
   nextDisabled = false,
   nextLoading = false,
   hideNextButton = false,
+  hideBackButton = false,
   customButtons,
 }: OnboardingLayoutProps) {
+  
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 
@@ -48,11 +51,13 @@ export function OnboardingLayout({
     >
       {/* Header with back button and progress bar */}
       <View style={styles.header}>
-        <BackButton onPress={() => {
-          hapticFeedback.selection();
-          onBack();
-        }} />
-        <View style={styles.progressContainer}>
+        {!hideBackButton && (
+          <BackButton onPress={() => {
+            hapticFeedback.selection();
+            onBack();
+          }} />
+        )}
+        <View style={[styles.progressContainer, hideBackButton && styles.progressContainerFullWidth]}>
           <ProgressBar currentStep={currentStep} totalSteps={totalSteps} />
         </View>
       </View>
@@ -127,6 +132,9 @@ const styles = StyleSheet.create({
     marginLeft: 12,
     paddingTop: 6,
     justifyContent: 'center',
+  },
+  progressContainerFullWidth: {
+    marginLeft: 0,
   },
   headerContent: {
     paddingHorizontal: 20,

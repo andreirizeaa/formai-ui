@@ -484,9 +484,8 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       setCurrentStepIndex(i => i - 1);
       return;
     }
-    // Navigate explicitly to Welcome for instant back on first step
-    // @ts-ignore
-    navigation.navigate('Welcome' as never);
+    // Navigate back to previous screen in stack
+    navigation.goBack();
   }
 
   // Compute next disabled based on step type

@@ -7,6 +7,8 @@ import { hapticFeedback } from '../../utils/haptic';
 import { supabase } from '../../lib/supabase';
 import { useOnboarding } from '../../context/OnboardingContext';
 import { LoadingOverlay } from '../ui/LoadingOverlay';
+import { setUserId } from '../../services/storageService';
+import i18n from '../../utils/i18n';
 
 interface CreateAccountScreenProps {
   onNext: () => void;
@@ -20,15 +22,10 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
   const { onboardingData, updateOnboardingData, persistOnboardingData } = useOnboarding();
   const [isSigningIn, setIsSigningIn] = React.useState(false);
   
-  // Check if we're running in Expo Go
   const isExpoGo = Constants.appOwnership === 'expo';
 
-  // Configure Google Sign-In only if not in Expo Go
   React.useEffect(() => {
     if (!isExpoGo) {
-      // Only import GoogleSignin and GoogleSigninButton if not in Expo Go
-      // This prevents a startup error if Google Sign-In is not available
-      // in the current environment.
       import('@react-native-google-signin/google-signin').then(({ GoogleSignin }) => {
         GoogleSignin.configure({
           scopes: ['email', 'profile'],
@@ -49,16 +46,10 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
       }
       
       console.log('Starting Google Sign-In process...');
-      
-      // Dynamically import Google Sign-In modules
       const { GoogleSignin } = await import('@react-native-google-signin/google-signin');
-      
       console.log('Checking Play Services...');
       await GoogleSignin.hasPlayServices();
-      
-      // Set loading state just before the actual sign-in
       setIsSigningIn(true);
-      
       const userInfo = await GoogleSignin.signIn();
       
       if (userInfo.idToken) {
@@ -75,12 +66,11 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
           updateOnboardingData('signInMethod', 'google');
           updateOnboardingData('onboardingCompleted', true);
     
-          // Persist onboarding data to API
           if (data.user?.id) {
             try {
               updateOnboardingData('userId', data.user.id);
+              await setUserId(data.user.id);
               handleNewAccount(data);
-              // Don't set loading to false here - onNext() will handle navigation
             } catch (persistError) {
               console.error('Error persisting onboarding data:', persistError);
               setIsSigningIn(false);
@@ -91,18 +81,13 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
         throw new Error('no ID token present!');
       }
     } catch (error: any) {
-      // Check if we have statusCodes available (from dynamic import)
       if (error.code === 'SIGN_IN_CANCELLED') {
-        // user cancelled the login flow
         console.log('Sign-in cancelled by user');
       } else if (error.code === 'IN_PROGRESS') {
-        // operation (e.g. sign in) is in progress already
         console.log('Sign-in already in progress');
       } else if (error.code === 'PLAY_SERVICES_NOT_AVAILABLE') {
-        // play services not available or outdated
         console.log('Play services not available');
       } else {
-        // some other error happened
         console.error('Google sign-in error:', error);
       }
       setIsSigningIn(false);
@@ -120,7 +105,6 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
         ],
       });
       
-      // Sign in via Supabase Auth
       if (credential.identityToken) {
         const { error, data } = await supabase.auth.signInWithIdToken({
           provider: 'apple',
@@ -133,12 +117,11 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
         } else {
           updateOnboardingData('signInMethod', 'apple');
           updateOnboardingData('onboardingCompleted', true);
-          // Persist onboarding data to API
           if (data.user?.id) {
             try {
               updateOnboardingData('userId', data.user.id);
+              await setUserId(data.user.id);
               handleNewAccount(data);
-              // Don't set loading to false here - onNext() will handle navigation
             } catch (persistError) {
               console.error('Error persisting onboarding data:', persistError);
               setIsSigningIn(false);
@@ -150,10 +133,8 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
       }
     } catch (e: any) {
       if (e.code === 'ERR_REQUEST_CANCELED') {
-        // handle that the user canceled the sign-in flow
         console.log('Apple sign-in cancelled');
       } else {
-        // handle other errors
         console.error('Apple sign-in error:', e);
       }
       setIsSigningIn(false);
@@ -161,10 +142,8 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
   };
 
   const handleNewAccount = async (data: any) => {
-    // Determine the sign-in method based on the provider in data
     const signInMethod = data.user?.app_metadata?.provider || 'apple';
     
-    // Build the updated onboarding data with the new values
     const updatedData = {
       ...onboardingData,
       signInMethod: signInMethod,
@@ -172,21 +151,15 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
       userId: data.user?.id
     };
 
-    // Update the context state (these will update eventually)
     updateOnboardingData('signInMethod', signInMethod);
     updateOnboardingData('onboardingCompleted', true);
     updateOnboardingData('userId', data.user.id);
     
-    // Persist the updated data immediately using the built object
     if (data.user?.id) {
       try {
-        // We need to call the service directly with the updated data
-        // since persistOnboardingData uses the context state which hasn't updated yet
         const { saveOnboardingProgress } = await import('../../services/onboardingService');
         const response = await saveOnboardingProgress(updatedData);
-        
-        console.log("API response:", response);
-        setIsSigningIn(false); // Reset loading state before navigation
+        setIsSigningIn(false);
         onNext();
       } catch (persistError) {
         console.error('Error persisting onboarding data:', persistError);
@@ -229,7 +202,7 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
                 styles.appleButtonText,
                 { color: isDark ? '#000000' : '#FFFFFF' }
               ]}>
-                Sign in with Apple
+                Sign up with Apple
               </Text>
             </View>
           </TouchableOpacity>
@@ -259,30 +232,35 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
                 styles.googleButtonText,
                 { color: isDark ? '#FFFFFF' : '#000000' }
               ]}>
-                Sign in with Google
+                {i18n.t('onboarding.createAccount.signInWithGoogle')}
               </Text>
             </View>
           </TouchableOpacity>
-        </View>
 
-        {/* Sign in text */}
-        <View style={styles.signInContainer}>
-          <Text style={[
-            styles.signInText,
-            { color: isDark ? '#8E8E93' : '#8E8E93' }
-          ]}>
-            Already have an account?{' '}
-            <Text 
-              style={[
+          {/* Already have an account text */}
+          <View style={styles.haveAccountContainer}>
+            <Text style={[
+              styles.haveAccountText,
+              { color: isDark ? '#8E8E93' : '#8E8E93' }
+            ]}>
+              Already have an account?{' '}
+            </Text>
+            <TouchableOpacity onPress={() => {
+              hapticFeedback.selection();
+              onSignIn();
+            }}>
+              <Text style={[
                 styles.signInLink,
                 { color: isDark ? '#007AFF' : '#007AFF' }
-              ]}
-              onPress={handleSignInPress}
-            >
-              Sign In
-            </Text>
-          </Text>
+              ]}>
+                Sign in
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
+
+        {/* Sign in text placeholder */}
+        <View />
       </View>
       
       <LoadingOverlay visible={isSigningIn} />
@@ -346,18 +324,17 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
-  signInContainer: {
-    alignItems: 'center',
+  haveAccountContainer: {
+    flexDirection: 'row',
   },
-  signInText: {
-    fontSize: 17,
-    fontWeight: '400',
-    textAlign: 'center',
-    lineHeight: 22,
+  haveAccountText: {
+    fontSize: 16,
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
   signInLink: {
+    fontSize: 16,
     fontWeight: '600',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
     textDecorationLine: 'underline',
   },
 }); 
