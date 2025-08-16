@@ -1,14 +1,16 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, Image, Animated } from 'react-native';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, Image } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import i18n from '../../utils/i18n';
 import { hapticFeedback } from '../../utils/haptic';
 import { BackButton } from '../../components/ui/BackButton';
 import { LoadingOverlay } from '../../components/ui/LoadingOverlay';
-import { TrendingUpwardsIcon, CheckmarkSmallIcon, UnlockIcon, BellIcon, NotificationIcon } from '../../components/icons/icons';
+import { TrendingUpwardsIcon, CheckmarkSmallIcon, UnlockIcon, BellIcon } from '../../components/icons/icons';
 import { usePurchases } from '../../context/PurchasesContext';
-import type { PurchasesPackage } from 'react-native-purchases';
+import type { PurchasesPackage, PurchasesError } from 'react-native-purchases';
+import { PURCHASES_ERROR_CODE } from 'react-native-purchases';
+import LottieView from 'lottie-react-native';
 
 interface PaymentUnifiedScreenProps {
   onComplete: () => void;
@@ -24,25 +26,7 @@ export function PaymentUnifiedScreen({ onComplete }: PaymentUnifiedScreenProps) 
   const [isRestoring, setIsRestoring] = useState(false);
   const [isPurchasing, setIsPurchasing] = useState(false);
 
-  // Notification animation
-  const shakeAnimation = useRef(new Animated.Value(0)).current;
-  useEffect(() => {
-    if (currentStep !== 'notificationReminder') return;
-
-    const shakeSequence = Animated.sequence([
-      Animated.timing(shakeAnimation, { toValue: -1, duration: 100, useNativeDriver: true }),
-      Animated.timing(shakeAnimation, { toValue: 1, duration: 100, useNativeDriver: true }),
-      Animated.timing(shakeAnimation, { toValue: -1, duration: 100, useNativeDriver: true }),
-      Animated.timing(shakeAnimation, { toValue: 1, duration: 100, useNativeDriver: true }),
-    ]);
-
-    const repeatShake = Animated.loop(shakeSequence, { iterations: 8 });
-    repeatShake.start();
-    const timer = setTimeout(() => repeatShake.stop(), 2000);
-    return () => clearTimeout(timer);
-  }, [currentStep]);
-
-  const shakeInterpolate = shakeAnimation.interpolate({ inputRange: [-1, 1], outputRange: ['-10deg', '10deg'] });
+  // Notification animation now uses Lottie bell
 
   // Purchases state
   const { packages, purchasePackage, restorePurchases } = usePurchases();
@@ -182,10 +166,15 @@ export function PaymentUnifiedScreen({ onComplete }: PaymentUnifiedScreenProps) 
     }
     setIsPurchasing(true);
     try {
-        await purchasePackage(selectedPlan);
-        onComplete();
-    } catch (e) {
-        console.error('Purchase failed or was cancelled', e);
+        const response = await purchasePackage(selectedPlan);
+        console.log(response);
+        response !== null && onComplete();
+    } catch (e: any) {
+        const err = e as PurchasesError;
+        if (err?.code === PURCHASES_ERROR_CODE.PURCHASE_CANCELLED_ERROR) {
+          // User cancelled; do not navigate
+          hapticFeedback.error();
+        }
     } finally {
         setIsPurchasing(false);
     }
@@ -258,12 +247,12 @@ export function PaymentUnifiedScreen({ onComplete }: PaymentUnifiedScreenProps) 
             {i18n.t('onboarding.notificationReminder.title')}
           </Text>
           <View style={styles.bellContainer}>
-            <Animated.View style={[styles.bellIcon, { transform: [{ rotate: shakeInterpolate }, { rotate: '15deg' }] }]}> 
-              <NotificationIcon width={160} height={160} color={isDark ? '#8E8E93' : '#8E8E93'} />
-              <View style={styles.notificationBadge}>
-                <Text style={styles.badgeText}>1</Text>
-              </View>
-            </Animated.View>
+            <LottieView
+              source={require('../../../assets/animations/bell.json')}
+              autoPlay
+              loop
+              style={{ width: 200, height: 200 }}
+            />
           </View>
         </View>
       );
@@ -272,6 +261,17 @@ export function PaymentUnifiedScreen({ onComplete }: PaymentUnifiedScreenProps) 
     // subscriptionSelection main content
     return (
       <View>
+        {/* App icon above title */}
+        <View style={styles.appIconContainer}>
+          <View style={styles.appIconCard}>
+            <Image
+              source={require('../../../assets/formai-ios-icon.png')}
+              style={styles.appIcon}
+              resizeMode="contain"
+            />
+          </View>
+        </View>
+
         <Text style={[styles.mainTitle, { color: isDark ? '#FFFFFF' : '#000000' }]}>
           {isYearlySelected ? i18n.t('onboarding.subscriptionSelection.title') : i18n.t('onboarding.subscriptionSelection.titleMonthly')}
         </Text>
@@ -564,37 +564,34 @@ const styles = StyleSheet.create({
     lineHeight: 34,
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
   },
+  appIconContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+    marginTop: -24,
+  },
+  appIconCard: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    ...Platform.select({ android: { elevation: 4 }, ios: { elevation: 8 } }),
+  },
+  appIcon: {
+    width: 80,
+    height: 80,
+    borderRadius: 16,
+  },
   // Notification reminder visuals
   bellContainer: {
-    position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 80,
-  },
-  bellIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    transform: [{ rotate: '15deg' }],
-  },
-  notificationBadge: {
-    position: 'absolute',
-    top: -32,
-    right: -32,
-    backgroundColor: '#FF3B30',
-    borderRadius: 40,
-    width: 60,
-    height: 60,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  badgeText: {
-    color: '#FFFFFF',
-    fontSize: 24,
-    fontWeight: '600',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
   // Subscription selection visuals
   timelineContainer: {
