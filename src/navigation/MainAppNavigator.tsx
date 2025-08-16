@@ -117,7 +117,7 @@ function HomeScreenWrapper() {
   );
 }
 
-function SettingsScreenWrapper() {
+function SettingsScreenWrapper({ onLogout }: { onLogout?: () => void }) {
   const navigation = useNavigation<MainStackNavigationProp>();
   
   const handlePersonalDetailsPress = () => {
@@ -137,6 +137,7 @@ function SettingsScreenWrapper() {
       onPersonalDetailsPress={handlePersonalDetailsPress}
       onUnitsPress={handleUnitsPress}
       onSharePress={handleSharePress}
+      onLogout={onLogout}
     />
   );
 }
@@ -233,7 +234,6 @@ function EditCurrentWeightScreenWrapper() {
       const weight = parseFloat(number);
       const weightKg = unit === 'kg' ? Math.round(weight) : Math.round(weight * 0.453592);
       updateWeight(weightKg);
-      console.log('Weight updated:', weightKg, 'kg');
     }
     navigation.goBack();
   };
@@ -281,7 +281,6 @@ function EditHeightScreenWrapper() {
     }
     
     updateHeight(heightCm);
-    console.log('Height updated:', heightCm, 'cm');
     navigation.goBack();
   };
 
@@ -309,7 +308,6 @@ function EditDateOfBirthScreenWrapper() {
     const dateRegex = /^\d{2}-\d{2}-\d{4}$/;
     if (dateRegex.test(newValue)) {
       updateUserDetails('dateOfBirth', newValue);
-      console.log('Date of birth updated:', newValue);
     } else {
       console.error('Invalid date format received:', newValue);
     }
@@ -336,7 +334,6 @@ function EditGenderScreenWrapper() {
 
   const handleSave = (newValue: string) => {
     updateUserDetails('gender', newValue);
-    console.log('Gender updated:', newValue);
     navigation.goBack();
   };
 
@@ -481,7 +478,7 @@ function LibraryScreenWrapperWithProps() {
 }
 
 // Main tabs navigator with custom bottom navigation
-function MainTabsNavigator() {
+function MainTabsNavigator({ onLogout }: { onLogout?: () => void }) {
   const [activeTab, setActiveTab] = React.useState<'home' | 'performance' | 'settings'>('home');
   const [showAddOptions, setShowAddOptions] = React.useState(false);
   const navigation = useNavigation<MainStackNavigationProp>();
@@ -521,7 +518,7 @@ function MainTabsNavigator() {
       case 'performance':
         return <PerformanceScreenWrapper />;
       case 'settings':
-        return <SettingsScreenWrapper />;
+        return <SettingsScreenWrapper onLogout={onLogout} />;
       default:
         return <HomeScreenWrapper />;
     }
@@ -558,7 +555,7 @@ function MainTabsNavigator() {
 }
 
 // Main stack navigator
-export function MainAppNavigator() {
+export function MainAppNavigator({ onLogout }: { onLogout?: () => void }) {
   const [showAddOptions, setShowAddOptions] = React.useState(false);
 
   const handleAddPress = () => {
@@ -582,7 +579,9 @@ export function MainAppNavigator() {
             headerShown: false,
           }}
         >
-          <Stack.Screen name="MainTabs" component={MainTabsNavigator} />
+          <Stack.Screen name="MainTabs">
+            {() => <MainTabsNavigator onLogout={onLogout} />}
+          </Stack.Screen>
           <Stack.Screen 
             name="PersonalDetails" 
             component={PersonalDetailsScreenWrapper}

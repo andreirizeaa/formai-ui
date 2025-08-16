@@ -20,11 +20,14 @@
       "package": "com.useformai.formai"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "proxy": "http://192.168.1.224:8000"
     },
+    
     "plugins": [
       "expo-mail-composer",
       "expo-video",
+      "expo-apple-authentication",
       [
         "@react-native-google-signin/google-signin",
         {
@@ -34,6 +37,7 @@
     ],
     "ios": {
       "bundleIdentifier": "com.useformai.formai",
+      
       "infoPlist": {
         "CFBundleURLTypes": [
           {
@@ -43,7 +47,13 @@
             ]
           }
         ],
-        "NSCameraUsageDescription": "This app uses the camera to record workout videos for lift analysis and form feedback."
+        "NSCameraUsageDescription": "This app uses the camera to record workout videos for lift analysis and form feedback.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "cbbfb6a7-e285-419f-af75-79337f5c77f9"
       }
     }
   }

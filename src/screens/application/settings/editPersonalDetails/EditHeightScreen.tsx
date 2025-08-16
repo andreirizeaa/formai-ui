@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
-import Svg, { Path } from 'react-native-svg';
 import i18n from '../../../../utils/i18n';
 import { hapticFeedback } from '../../../../utils/haptic';
 import { useUserDetails } from '../../../../context/UserDetailsContext';
@@ -10,6 +9,7 @@ import {
   convertMetricHeightToImperial, 
   convertImperialHeightToMetric 
 } from '../../../../utils/unitConversions';
+import { BackIcon } from '../../../../components/icons/icons';
 
 interface EditHeightScreenProps {
   onBack: () => void;
@@ -61,7 +61,7 @@ export function EditHeightScreen({ onBack, currentValue, onSave }: EditHeightScr
     
     if (isMetric) {
       heightCm = selectedHeight;
-      displayValue = `${Math.round(heightCm)} ${i18n.t('measurements.cm')}`;
+      displayValue = `${Math.round(heightCm)} ${i18n.t('onboarding.measurements.cm')}`;
     } else {
       // Convert feet/inches to cm for storage
       heightCm = convertImperialHeightToMetric(selectedFeet, selectedInches);
@@ -88,15 +88,7 @@ export function EditHeightScreen({ onBack, currentValue, onSave }: EditHeightScr
             onBack();
           }}
         >
-          <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-            <Path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M15.75 19.5L8.25 12l7.5-7.5"
-              stroke="#000000"
-              strokeWidth={2}
-            />
-          </Svg>
+          <BackIcon width={24} height={24} color="#000000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{i18n.t('personalDetails.editHeight')}</Text>
         <View style={styles.placeholder} />
@@ -107,7 +99,7 @@ export function EditHeightScreen({ onBack, currentValue, onSave }: EditHeightScr
         {/* Height Picker */}
         <View style={styles.pickerContainer}>
           <Text style={styles.pickerLabel}>
-            {i18n.t('measurements.height')}
+            {i18n.t('onboarding.measurements.height')}
           </Text>
           <View style={styles.pickerWrapper}>
             {isMetric ? (
@@ -121,7 +113,7 @@ export function EditHeightScreen({ onBack, currentValue, onSave }: EditHeightScr
                 {heightOptions.map(height => (
                   <Picker.Item 
                     key={height} 
-                    label={`${height} ${i18n.t('measurements.cm')}`} 
+                    label={`${height} ${i18n.t('onboarding.measurements.cm')}`} 
                     value={height}
                   />
                 ))}

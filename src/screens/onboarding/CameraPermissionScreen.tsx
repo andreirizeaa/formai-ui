@@ -18,10 +18,8 @@ export function CameraPermissionScreen({ onNext }: CameraPermissionScreenProps) 
   const handleAllowCamera = async () => {
     hapticFeedback.selection();
     try {
-      onNext();
       const result = await requestPermission();
       if (result.granted) {
-        console.log('Camera permission granted');
         onNext();
       } else {
         console.log('Camera permission denied');
@@ -49,7 +47,7 @@ export function CameraPermissionScreen({ onNext }: CameraPermissionScreenProps) 
           styles.mainTitle,
           { color: isDark ? '#FFFFFF' : '#000000' }
         ]}>
-          {i18n.t('cameraPermission.title')}
+          {i18n.t('onboarding.cameraPermission.title')}
         </Text>
 
         {/* Subtitle */}
@@ -57,7 +55,7 @@ export function CameraPermissionScreen({ onNext }: CameraPermissionScreenProps) 
           styles.subtitle,
           { color: isDark ? '#8E8E93' : '#8E8E93' }
         ]}>
-          {i18n.t('cameraPermission.subtitle')}
+          {i18n.t('onboarding.cameraPermission.subtitle')}
         </Text>
 
         {/* Dialog container with flex to center dialog */}
@@ -84,7 +82,7 @@ export function CameraPermissionScreen({ onNext }: CameraPermissionScreenProps) 
                   fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
                 }
               ]}>
-                {i18n.t('cameraPermission.dialogText')}
+                {i18n.t('onboarding.cameraPermission.dialogText')}
               </Text>
             </View>
             
@@ -114,7 +112,7 @@ export function CameraPermissionScreen({ onNext }: CameraPermissionScreenProps) 
                     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
                   }
                 ]}>
-                  {i18n.t('cameraPermission.dontAllow')}
+                  {i18n.t('onboarding.cameraPermission.dontAllow')}
                 </Text>
               </TouchableOpacity>
               
@@ -143,7 +141,7 @@ export function CameraPermissionScreen({ onNext }: CameraPermissionScreenProps) 
                     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
                   }
                 ]}>
-                  {i18n.t('cameraPermission.allow')}
+                  {i18n.t('onboarding.cameraPermission.allow')}
                 </Text>
               </TouchableOpacity>
             </View>

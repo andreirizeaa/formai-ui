@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, ScrollView, Platform } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
+import { CloseIcon } from '../../../components/icons/icons';
 import i18n from '../../../utils/i18n';
 import { LANGUAGES } from '../../../constants/languages';
 import { hapticFeedback } from '../../../utils/haptic';
@@ -44,19 +44,11 @@ export function LanguageModal({ isVisible, onClose }: LanguageModalProps) {
               onClose();
             }}
           >
-            <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-              <Path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M6 18L18 6M6 6l12 12"
-                stroke="#000000"
-                strokeWidth={2}
-              />
-            </Svg>
+            <CloseIcon width={20} height={20} color="#000000" />
           </TouchableOpacity>
 
           {/* Title */}
-          <Text style={styles.title}>{i18n.t('language.selectLanguage')}</Text>
+          <Text style={styles.title}>{i18n.t('settings.selectLanguage')}</Text>
 
           {/* Language options */}
           <ScrollView 

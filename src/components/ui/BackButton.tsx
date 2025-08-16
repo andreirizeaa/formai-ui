@@ -13,8 +13,10 @@ export function BackButton({ onPress }: BackButtonProps) {
   const isDark = colorScheme === 'dark';
 
   const handlePress = () => {
-    hapticFeedback.selection();
+    // Call onPress immediately for responsive navigation
     onPress();
+    // Run haptic feedback asynchronously to avoid blocking
+    hapticFeedback.selection();
   };
 
   return (

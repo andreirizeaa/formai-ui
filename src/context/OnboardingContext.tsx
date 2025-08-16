@@ -1,34 +1,32 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { OnboardingContextType, UserPreferences } from '../types/onboarding';
+import { OnboardingContextType, OnboardingData } from '../types/onboarding';
+import { saveOnboardingProgress } from '../services/onboardingService';
 
 const OnboardingContext = createContext<OnboardingContextType | undefined>(undefined);
 
-const initialPreferences: UserPreferences = {
+const initialOnboardingData: OnboardingData = {
+  userId: null,
   language: 'en',
   gender: null,
-  goal: null,
   workoutsPerWeek: null,
   discoverySource: null,
-  liftingGoal: null,
-  formBarrier: null,
+  trainingReason: null,
+  gymChallenge: null,
+  lifterType: null,
+  perfectFormGoal: null,
+  formConfidence: null,
+  threeMonthGoal: null,
   hasPersonalTrainer: null,
   unitSystem: 'metric',
   referralCode: null,
-  referralCodeDiscount: null,
-  referralCodeValidOn: null,
   metricHeight: 170,
   metricWeight: 60,
   birthDate: null,
   hasRated: null,
-  subscriptionPlan: null,
-  subscriptionCost: null,
-  subscriptionActive: null,
-  subscriptionStartDate: null,
-  subscriptionRenewalDate: null,
-  freeTrialActive: null,
-  freeTrialStartDate: null,
-  freeTrialEndDate: null,
   signInMethod: null,
+  onboardingCompleted: false,
+  storeTransactionId: null,
+  activeSubscription: null,
 };
 
 interface OnboardingProviderProps {
@@ -36,14 +34,14 @@ interface OnboardingProviderProps {
 }
 
 export function OnboardingProvider({ children }: OnboardingProviderProps) {
-  const [preferences, setPreferences] = useState<UserPreferences>(initialPreferences);
+  const [onboardingData, setOnboardingData] = useState<OnboardingData>(initialOnboardingData);
   const [isComplete, setIsComplete] = useState(false);
 
-  const updatePreference = <K extends keyof UserPreferences>(
+  const updateOnboardingData = <K extends keyof OnboardingData>(
     key: K,
-    value: UserPreferences[K]
+    value: OnboardingData[K]
   ) => {
-    setPreferences(prev => ({
+    setOnboardingData((prev: OnboardingData) => ({
       ...prev,
       [key]: value,
     }));
@@ -55,53 +53,58 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
 
   // Function to get all onboarding data in API-ready format
   const getOnboardingDataForAPI = () => {
-    return preferences;
+    return onboardingData;
   };
 
   // Function to reset onboarding data
   const resetOnboarding = () => {
-    setPreferences(initialPreferences);
+    setOnboardingData(onboardingData);
     setIsComplete(false);
   };
 
   // Function to get onboarding progress percentage
   const getOnboardingProgress = (): number => {
-    const requiredFields = [
-      'language',
-      'unitSystem', 
-      'gender',
-      'goal',
-      'workoutsPerWeek',
-      'discoverySource',
-      'liftingGoal',
-      'formBarrier',
-      'hasPersonalTrainer',
-      'metricHeight',
-      'metricWeight',
-      'birthDate',
-      'hasRated',
-      'subscriptionPlan',
-      'subscriptionActive',
-    ];
+    const fields = Object.keys(onboardingData);
     
-    const completedFields = requiredFields.filter(field => 
-      preferences[field as keyof UserPreferences] !== null && 
-      preferences[field as keyof UserPreferences] !== undefined
+    const completedFields = fields.filter(field => 
+      onboardingData[field as keyof OnboardingData] !== null && 
+      onboardingData[field as keyof OnboardingData] !== undefined
     );
     
-    return Math.round((completedFields.length / requiredFields.length) * 100);
+    return Math.round((completedFields.length / fields.length) * 100);
+  };
+
+  // Function to persist onboarding data to API/database
+  const persistOnboardingData = async (authToken?: string): Promise<any> => {
+    console.log('persisting onboarding data', onboardingData);
+    try {
+      // Submit the data to the API
+      const response = await saveOnboardingProgress(onboardingData, authToken);
+      
+      // Return the API response
+      return {
+        success: response.success,
+        message: response.message,
+        user_id: response.user_id,
+      };
+      
+    } catch (error) {
+      console.error("Error persisting onboarding data:", error);
+      throw error;
+    }
   };
 
   return (
     <OnboardingContext.Provider
       value={{
-        preferences,
-        updatePreference,
+        onboardingData,
+        updateOnboardingData,
         isComplete,
         setComplete,
         getOnboardingDataForAPI,
         resetOnboarding,
         getOnboardingProgress,
+        persistOnboardingData,
       }}
     >
       {children}
