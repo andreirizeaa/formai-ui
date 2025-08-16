@@ -20,7 +20,6 @@ interface OnboardingLayoutProps {
   nextLoading?: boolean;
   hideNextButton?: boolean;
   hideBackButton?: boolean;
-  customButtons?: React.ReactNode;
 }
 
 export function OnboardingLayout({
@@ -36,7 +35,6 @@ export function OnboardingLayout({
   nextLoading = false,
   hideNextButton = false,
   hideBackButton = false,
-  customButtons,
 }: OnboardingLayoutProps) {
   
   const colorScheme = useColorScheme();
@@ -97,18 +95,16 @@ export function OnboardingLayout({
         </View>
       </View>
 
-      {/* Show custom buttons if provided, otherwise show default Next button */}
-      {customButtons ? (
-        <View style={styles.customButtonsContainer}>
-          {customButtons}
+      {/* Bottom Next button */}
+      {!hideNextButton ? (
+        <View style={styles.bottomBar}>
+          <NextButton 
+            title={nextTitle}
+            onPress={onNext}
+            disabled={nextDisabled}
+            loading={nextLoading}
+          />
         </View>
-      ) : !hideNextButton ? (
-        <NextButton 
-          title={nextTitle}
-          onPress={onNext}
-          disabled={nextDisabled}
-          loading={nextLoading}
-        />
       ) : null}
     </SafeAreaView>
   );
@@ -160,8 +156,16 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center', // Center the buttons vertically within the available space
   },
-  customButtonsContainer: {
-    paddingHorizontal: 20,
-    paddingBottom: 34,
+  bottomBar: {
+    bottom: 0,
+    marginBottom: -32,
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    ...Platform.select({ android: { elevation: 4 } }),
   },
 });
