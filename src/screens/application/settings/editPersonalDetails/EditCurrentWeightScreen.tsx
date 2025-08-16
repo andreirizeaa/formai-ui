@@ -1,9 +1,10 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, TextInput } from 'react-native';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, TextInput, ActivityIndicator } from 'react-native';
 import { RulerPicker } from 'react-native-ruler-picker';
 import i18n from '../../../../utils/i18n';
 import { hapticFeedback } from '../../../../utils/haptic';
 import { useUserDetails } from '../../../../context/UserDetailsContext';
+import { editUserDetails } from '../../../../services/userService';
 import { 
   parseWeightToMetric, 
   convertMetricWeightToImperial, 
@@ -18,9 +19,11 @@ interface EditCurrentWeightScreenProps {
 }
 
 export function EditCurrentWeightScreen({ onBack, currentValue, onSave }: EditCurrentWeightScreenProps) {
-  const { userDetails } = useUserDetails();
-  const isMetric = userDetails.unitSystem === 'metric';
+  const { userDetails, updateWeight, refetchUserDetails } = useUserDetails();
+  const unitSystem = userDetails?.unitSystem ?? 'metric';
+  const isMetric = unitSystem === 'metric';
   const [selectedWeight, setSelectedWeight] = useState(60); // Default 60kg
+  const [isSaving, setIsSaving] = useState(false);
 
   // Parse current value to determine initial state
   React.useEffect(() => {
@@ -42,17 +45,31 @@ export function EditCurrentWeightScreen({ onBack, currentValue, onSave }: EditCu
     setSelectedWeight(numWeight);
   };
 
-  const handleSave = () => {
-    hapticFeedback.success();
+  const handleSave = async () => {
+    if (isSaving) return;
+    hapticFeedback.selection();
+    setIsSaving(true);
     
     // Convert to metric for storage
     const weightKg = isMetric ? selectedWeight : convertImperialWeightToMetric(selectedWeight);
+    
+    try {
+      await editUserDetails({ weight: weightKg });
+      updateWeight(weightKg);
+      await refetchUserDetails();
+      hapticFeedback.success();
+    } catch (e) {
+      // Soft-fail: keep local UX flowing
+      // eslint-disable-next-line no-console
+      console.error('Failed to update weight', e);
+    }
     
     // Format for display based on user's unit system
     const unit = isMetric ? 'kg' : 'lbs';
     const formattedWeight = isMetric ? Math.round(weightKg) : Math.round(selectedWeight);
     const displayValue = `${formattedWeight} ${unit}`;
     
+    setIsSaving(false);
     onSave(displayValue);
   };
 
@@ -99,8 +116,12 @@ export function EditCurrentWeightScreen({ onBack, currentValue, onSave }: EditCu
 
       {/* Save Button */}
       <View style={styles.bottomContainer}>
-        <TouchableOpacity style={styles.saveButton} onPress={handleSave} activeOpacity={0.8}>
-          <Text style={styles.saveButtonText}>{i18n.t('settings.save')}</Text>
+        <TouchableOpacity style={[styles.saveButton, isSaving && { opacity: 0.7 }]} onPress={handleSave} activeOpacity={0.8} disabled={isSaving}>
+          {isSaving ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <Text style={styles.saveButtonText}>{i18n.t('settings.save')}</Text>
+          )}
         </TouchableOpacity>
       </View>
     </View>

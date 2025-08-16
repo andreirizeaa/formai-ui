@@ -1,23 +1,24 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { getUserId } from '../services/storageService';
+import { fetchUserDetailsById } from '../services/userService';
 import { 
   formatWeightForDisplay, 
-  formatHeightForDisplay, 
-  parseWeightToMetric, 
-  parseHeightToMetric 
+  formatHeightForDisplay 
 } from '../utils/unitConversions';
 
 interface UserDetails {
-  unitSystem: 'metric' | 'imperial';
-  currentWeightKG: number; 
-  heightCM: number; 
-  dateOfBirth: string; 
-  gender: string;
-  language: string;
-  daysLogged: string[]; // Format: MM-DD-YYYY
+  unitSystem: 'metric' | 'imperial' | null;
+  currentWeightKG: number | null; 
+  heightCM: number | null; 
+  dateOfBirth: string | null; 
+  gender: string | null;
+  language: string | null;
+  currentStreak: number | null;
 }
 
 interface UserDetailsContextType {
-  userDetails: UserDetails;
+  userDetails: UserDetails | null;
   updateUserDetails: <K extends keyof UserDetails>(key: K, value: UserDetails[K]) => void;
   updateUnitSystem: (unitSystem: 'metric' | 'imperial') => void;
   // Helper methods for weight and height
@@ -27,63 +28,117 @@ interface UserDetailsContextType {
   getHeightDisplay: () => string;
   getDateOfBirthDisplay: () => string;
   formatDateForDisplay: (dateString: string) => string;
+  refetchUserDetails: () => Promise<void>;
 }
 
 const UserDetailsContext = createContext<UserDetailsContextType | undefined>(undefined);
 
-const initialUserDetails: UserDetails = {
-  unitSystem: 'metric',
-  currentWeightKG: 70,
-  heightCM: 175,
-  dateOfBirth: '15-01-1990',
-  gender: 'Male',
-  language: 'en',
-  daysLogged: ["03-08-2025", "04-08-2025", "05-08-2025"],
-};
+const initialUserDetails: UserDetails | null = null;
 
 interface UserDetailsProviderProps {
   children: ReactNode;
 }
 
 export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
-  const [userDetails, setUserDetails] = useState<UserDetails>(initialUserDetails);
+  const [userDetails, setUserDetails] = useState<UserDetails | null>(initialUserDetails);
+  const queryClient = useQueryClient();
+  const [userId, setUserIdState] = useState<string | null>(null);
+
+  useEffect(() => {
+    getUserId().then(setUserIdState).catch(() => setUserIdState(null));
+  }, []);
+
+  useQuery({
+    queryKey: ['user-details', userId],
+    enabled: !!userId,
+    queryFn: async () => {
+      if (!userId) return null;
+      const row = await fetchUserDetailsById(userId);
+      if (!row) return null;
+      // Map server values to context state; do not hardcode defaults
+      setUserDetails({
+        unitSystem: row.unit_system ?? null,
+        currentWeightKG: row.metric_weight ?? null,
+        heightCM: row.metric_height ?? null,
+        dateOfBirth: row.birth_date ? formatDateFromIso(row.birth_date) : null,
+        gender: row.gender ?? null,
+        language: row.language ?? null,
+        currentStreak: row.current_streak ?? null,
+      });
+      return row;
+    },
+  });
 
   const updateUserDetails = <K extends keyof UserDetails>(
     key: K,
     value: UserDetails[K]
   ) => {
-    setUserDetails(prev => ({
-      ...prev,
-      [key]: value,
-    }));
+    setUserDetails(prev => {
+      const base: UserDetails = prev ?? {
+        unitSystem: null,
+        currentWeightKG: null,
+        heightCM: null,
+        dateOfBirth: null,
+        gender: null,
+        language: null,
+        currentStreak: null,
+      };
+      return { ...base, [key]: value };
+    });
   };
 
   const updateUnitSystem = (unitSystem: 'metric' | 'imperial') => {
-    setUserDetails(prev => ({
-      ...prev,
-      unitSystem,
-    }));
+    setUserDetails(prev => {
+      const base: UserDetails = prev ?? {
+        unitSystem: null,
+        currentWeightKG: null,
+        heightCM: null,
+        dateOfBirth: null,
+        gender: null,
+        language: null,
+        currentStreak: null,
+      };
+      return { ...base, unitSystem };
+    });
   };
 
   const updateWeight = (weightKg: number) => {
-    setUserDetails(prev => ({
-      ...prev,
-      currentWeightKG: weightKg,
-    }));
+    setUserDetails(prev => {
+      const base: UserDetails = prev ?? {
+        unitSystem: null,
+        currentWeightKG: null,
+        heightCM: null,
+        dateOfBirth: null,
+        gender: null,
+        language: null,
+        currentStreak: null,
+      };
+      return { ...base, currentWeightKG: weightKg };
+    });
   };
 
   const updateHeight = (heightCm: number) => {
-    setUserDetails(prev => ({
-      ...prev,
-      heightCM: heightCm,
-    }));
+    setUserDetails(prev => {
+      const base: UserDetails = prev ?? {
+        unitSystem: null,
+        currentWeightKG: null,
+        heightCM: null,
+        dateOfBirth: null,
+        gender: null,
+        language: null,
+        currentStreak: null,
+      };
+      return { ...base, heightCM: heightCm };
+    });
   };
 
   const getWeightDisplay = (): string => {
+    if (!userDetails || userDetails.currentWeightKG == null || !userDetails.unitSystem) return '';
     return formatWeightForDisplay(userDetails.currentWeightKG, userDetails.unitSystem);
   };
 
   const getHeightDisplay = (): string => {
+    if (!userDetails || userDetails.heightCM == null || !userDetails.unitSystem) return '';
     return formatHeightForDisplay(userDetails.heightCM, userDetails.unitSystem);
   };
 
@@ -110,23 +165,49 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
   };
 
   const getDateOfBirthDisplay = (): string => {
+    if (!userDetails || !userDetails.dateOfBirth) return '';
     return formatDateForDisplay(userDetails.dateOfBirth);
   };
 
+  function formatDateFromIso(iso: string): string {
+    // iso: YYYY-MM-DD -> DD-MM-YYYY
+    const [y, m, d] = iso.split('-');
+    if (!y || !m || !d) return userDetails?.dateOfBirth ?? '01-01-2000';
+    return `${d}-${m}-${y}`;
+  }
+
+  const refetchUserDetails = async () => {
+    await queryClient.invalidateQueries({ queryKey: ['user-details', userId] });
+  };
+
+  const value = useMemo(
+    () => ({
+      userDetails,
+      updateUserDetails,
+      updateUnitSystem,
+      updateWeight,
+      updateHeight,
+      getWeightDisplay,
+      getHeightDisplay,
+      getDateOfBirthDisplay,
+      formatDateForDisplay,
+      refetchUserDetails,
+    }), [
+      userDetails,
+      updateUserDetails,
+      updateUnitSystem,
+      updateWeight,
+      updateHeight,
+      getWeightDisplay,
+      getHeightDisplay,
+      getDateOfBirthDisplay,
+      formatDateForDisplay,
+      refetchUserDetails,
+    ]
+  );
+
   return (
-    <UserDetailsContext.Provider
-      value={{
-        userDetails,
-        updateUserDetails,
-        updateUnitSystem,
-        updateWeight,
-        updateHeight,
-        getWeightDisplay,
-        getHeightDisplay,
-        getDateOfBirthDisplay,
-        formatDateForDisplay,
-      }}
-    >
+    <UserDetailsContext.Provider value={value}>
       {children}
     </UserDetailsContext.Provider>
   );

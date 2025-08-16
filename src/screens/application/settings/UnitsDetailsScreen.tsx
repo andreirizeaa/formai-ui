@@ -1,11 +1,12 @@
 import React from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BackIcon } from '../../../components/icons/icons';
 import { useColorScheme } from 'react-native';
 import i18n from '../../../utils/i18n';
 import { hapticFeedback } from '../../../utils/haptic';
 import { useUserDetails } from '../../../context/UserDetailsContext';
+import { editUserDetails } from '../../../services/userService';
 
 interface UnitsDetailsScreenProps {
   onBack: () => void;
@@ -15,15 +16,27 @@ export function UnitsDetailsScreen({ onBack }: UnitsDetailsScreenProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const { userDetails, updateUnitSystem } = useUserDetails();
-  const selectedUnit = userDetails.unitSystem;
+  const selectedUnit = userDetails?.unitSystem ?? 'metric';
+  const [isSaving, setIsSaving] = React.useState(false);
 
   const handleUnitSelect = (unitSystem: 'metric' | 'imperial') => {
     hapticFeedback.selection();
     updateUnitSystem(unitSystem);
   };
 
-  const handleSave = () => {
-    hapticFeedback.success();
+  const handleSave = async () => {
+    if (isSaving) return;
+    hapticFeedback.selection();
+    setIsSaving(true);
+    try {
+      const unit = (selectedUnit as 'metric' | 'imperial') ?? 'metric';
+      await editUserDetails({ unit_system: unit });
+      hapticFeedback.success();
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to update unit system', e);
+    }
+    setIsSaving(false);
     onBack();
   };
 
@@ -124,11 +137,16 @@ export function UnitsDetailsScreen({ onBack }: UnitsDetailsScreenProps) {
       {/* Save Button - Stuck to bottom */}
       <View style={styles.saveButtonContainer}>
         <TouchableOpacity
-          style={styles.saveButton}
+          style={[styles.saveButton, isSaving && { opacity: 0.7 }]}
           onPress={handleSave}
           activeOpacity={0.7}
+          disabled={isSaving}
         >
-          <Text style={styles.saveButtonText}>{i18n.t('settings.save')}</Text>
+          {isSaving ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <Text style={styles.saveButtonText}>{i18n.t('settings.save')}</Text>
+          )}
         </TouchableOpacity>
       </View>
     </SafeAreaView>
