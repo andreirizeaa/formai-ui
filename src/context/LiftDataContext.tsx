@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useCallback, useMemo } from 'react';
 
 export interface ILiftData {
   id: string;
@@ -48,79 +48,92 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
   const [liftData, setLiftData] = useState<ILiftData[]>(initialLiftData);
 
   // Helper function to format date consistently
-  const formatDateForLift = (date: Date): string => {
+  const formatDateForLift = useCallback((date: Date): string => {
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const year = date.getFullYear();
     return `${day}-${month}-${year}`;
-  };
+  }, []);
 
-  const addLift = (lift: ILiftData) => {
+  const addLift = useCallback((lift: ILiftData) => {
     setLiftData(prev => [...prev, lift]);
-  };
+  }, []);
 
-  const updateLift = (id: string, updatedLift: Partial<ILiftData>) => {
+  const updateLift = useCallback((id: string, updatedLift: Partial<ILiftData>) => {
     setLiftData(prev => 
       prev.map(lift => 
         lift.id === id ? { ...lift, ...updatedLift } : lift
       )
     );
-  };
+  }, []);
 
-  const removeLift = (id: string) => {
+  const removeLift = useCallback((id: string) => {
     setLiftData(prev => prev.filter(lift => lift.id !== id));
-  };
+  }, []);
 
-  const toggleFavourite = (id: string) => {
+  const toggleFavourite = useCallback((id: string) => {
     setLiftData(prev => 
       prev.map(lift => 
         lift.id === id ? { ...lift, isFavourite: !lift.isFavourite } : lift
       )
     );
-  };
+  }, []);
 
-  const getLiftById = (id: string): ILiftData | undefined => {
+  const getLiftById = useCallback((id: string): ILiftData | undefined => {
     return liftData.find(lift => lift.id === id);
-  };
+  }, [liftData]);
 
-  const getFavouriteLifts = (): ILiftData[] => {
+  const getFavouriteLifts = useCallback((): ILiftData[] => {
     return liftData.filter(lift => lift.isFavourite);
-  };
+  }, [liftData]);
 
-  const getLiftsByType = (liftType: string): ILiftData[] => {
+  const getLiftsByType = useCallback((liftType: string): ILiftData[] => {
     return liftData.filter(lift => lift.liftType === liftType);
-  };
+  }, [liftData]);
 
-  const getLiftsByDate = (date: Date): ILiftData[] => {
+  const getLiftsByDate = useCallback((date: Date): ILiftData[] => {
     const dateString = formatDateForLift(date);
     return liftData.filter(lift => lift.liftDate === dateString);
-  };
+  }, [liftData, formatDateForLift]);
 
-  const getLiftsByDateString = (dateString: string): ILiftData[] => {
+  const getLiftsByDateString = useCallback((dateString: string): ILiftData[] => {
     return liftData.filter(lift => lift.liftDate === dateString);
-  };
+  }, [liftData]);
 
-  const clearAllLifts = () => {
+  const clearAllLifts = useCallback(() => {
     setLiftData([]);
-  };
+  }, []);
+
+  const value = useMemo(() => ({
+    liftData,
+    addLift,
+    updateLift,
+    removeLift,
+    toggleFavourite,
+    getLiftById,
+    getFavouriteLifts,
+    getLiftsByType,
+    getLiftsByDate,
+    getLiftsByDateString,
+    clearAllLifts,
+    formatDateForLift,
+  }), [
+    liftData,
+    addLift,
+    updateLift,
+    removeLift,
+    toggleFavourite,
+    getLiftById,
+    getFavouriteLifts,
+    getLiftsByType,
+    getLiftsByDate,
+    getLiftsByDateString,
+    clearAllLifts,
+    formatDateForLift,
+  ]);
 
   return (
-    <LiftDataContext.Provider
-      value={{
-        liftData,
-        addLift,
-        updateLift,
-        removeLift,
-        toggleFavourite,
-        getLiftById,
-        getFavouriteLifts,
-        getLiftsByType,
-        getLiftsByDate,
-        getLiftsByDateString,
-        clearAllLifts,
-        formatDateForLift,
-      }}
-    >
+    <LiftDataContext.Provider value={value}>
       {children}
     </LiftDataContext.Provider>
   );

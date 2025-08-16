@@ -13,7 +13,7 @@ import { hapticFeedback } from '../../utils/haptic';
 interface SwipeableCalendarProps {
   onDateSelect?: (date: Date) => void;
   initialSelectedDate?: Date;
-  daysLogged?: string[]; // Format: MM-DD-YYYY
+  daysLogged?: string[]; // Format: DD-MM-YYYY
 }
 
 interface DayData {

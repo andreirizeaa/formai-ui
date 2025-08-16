@@ -1,10 +1,12 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal, ScrollView, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Modal, ScrollView, Platform, ActivityIndicator } from 'react-native';
 import { CloseIcon } from '../../../components/icons/icons';
 import i18n from '../../../utils/i18n';
 import { LANGUAGES } from '../../../constants/languages';
 import { hapticFeedback } from '../../../utils/haptic';
 import { useLanguage } from '../../../context/LanguageContext';
+import { useUserDetails } from '../../../context/UserDetailsContext';
+import { editUserDetails } from '../../../services/userService';
 
 interface LanguageModalProps {
   isVisible: boolean;
@@ -13,11 +15,28 @@ interface LanguageModalProps {
 
 export function LanguageModal({ isVisible, onClose }: LanguageModalProps) {
   const { currentLanguage, setLanguage } = useLanguage();
+  const { refetchUserDetails } = useUserDetails();
+  const [pendingCode, setPendingCode] = React.useState<string | null>(null);
+  const [savingCode, setSavingCode] = React.useState<string | null>(null);
 
-  const handleLanguageSelect = (languageCode: string) => {
-    hapticFeedback.success();
-    setLanguage(languageCode);
-    onClose();
+  const handleLanguageSelect = async (languageCode: string) => {
+    if (savingCode) return;
+    hapticFeedback.selection();
+    setPendingCode(languageCode);
+    setSavingCode(languageCode);
+    try {
+      await editUserDetails({ language: languageCode });
+      setLanguage(languageCode);
+      await refetchUserDetails();
+      hapticFeedback.success();
+      onClose();
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to update language', e);
+    } finally {
+      setSavingCode(null);
+      setPendingCode(null);
+    }
   };
 
   return (
@@ -63,41 +82,43 @@ export function LanguageModal({ isVisible, onClose }: LanguageModalProps) {
             nestedScrollEnabled={true}
             fadingEdgeLength={Platform.OS === 'android' ? 50 : 0}
           >
-            {LANGUAGES.map((language) => (
-              <TouchableOpacity
-                key={language.code}
-                style={[
-                  styles.languageButton,
-                  {
-                    backgroundColor: currentLanguage === language.code
-                      ? '#000000'  // Black background when selected
-                      : 'transparent',
-                    borderColor: currentLanguage === language.code
-                      ? '#000000'  // Black border when selected
-                      : '#E5E5EA',
-                  }
-                ]}
-                onPress={() => handleLanguageSelect(language.code)}
-                activeOpacity={0.7}
-              >
-                <View style={styles.languageContent}>
-                  <Text 
-                    style={[
-                      styles.languageName,
-                      { 
-                        color: currentLanguage === language.code
-                          ? '#FFFFFF'  // White text when selected
-                          : '#000000',
-                        fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
-                      }
-                    ]}
-                  >
-                    {language.nativeName}
-                  </Text>
-                  <Text style={styles.flag}>{language.flag}</Text>
-                </View>
-              </TouchableOpacity>
-            ))}
+            {LANGUAGES.map((language) => {
+              const isSelected = (currentLanguage === language.code) || (pendingCode === language.code);
+              const isSavingThis = savingCode === language.code;
+              return (
+                <TouchableOpacity
+                  key={language.code}
+                  style={[
+                    styles.languageButton,
+                    {
+                      backgroundColor: isSelected ? '#000000' : 'transparent',
+                      borderColor: isSelected ? '#000000' : '#E5E5EA',
+                    }
+                  ]}
+                  onPress={() => handleLanguageSelect(language.code)}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.languageContent}>
+                    <Text 
+                      style={[
+                        styles.languageName,
+                        { 
+                          color: isSelected ? '#FFFFFF' : '#000000',
+                          fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
+                        }
+                      ]}
+                    >
+                      {language.nativeName}
+                    </Text>
+                    {isSavingThis ? (
+                      <ActivityIndicator style={{ marginLeft: 8 }} color={isSelected ? '#FFFFFF' : '#000000'} />
+                    ) : (
+                      <Text style={styles.flag}>{language.flag}</Text>
+                    )}
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
           </ScrollView>
         </TouchableOpacity>
       </TouchableOpacity>
