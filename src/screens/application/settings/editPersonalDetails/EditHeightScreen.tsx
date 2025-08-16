@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, ActivityIndicator } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import i18n from '../../../../utils/i18n';
 import { hapticFeedback } from '../../../../utils/haptic';
@@ -10,6 +10,7 @@ import {
   convertImperialHeightToMetric 
 } from '../../../../utils/unitConversions';
 import { BackIcon } from '../../../../components/icons/icons';
+import { editUserDetails } from '../../../../services/userService';
 
 interface EditHeightScreenProps {
   onBack: () => void;
@@ -18,11 +19,13 @@ interface EditHeightScreenProps {
 }
 
 export function EditHeightScreen({ onBack, currentValue, onSave }: EditHeightScreenProps) {
-  const { userDetails } = useUserDetails();
-  const isMetric = userDetails.unitSystem === 'metric';
+  const { userDetails, updateHeight, refetchUserDetails } = useUserDetails();
+  const unitSystem = userDetails?.unitSystem ?? 'metric';
+  const isMetric = unitSystem === 'metric';
   const [selectedHeight, setSelectedHeight] = useState(170); // Default 170cm
   const [selectedFeet, setSelectedFeet] = useState(5); // Default 5 feet
   const [selectedInches, setSelectedInches] = useState(7); // Default 7 inches
+  const [isSaving, setIsSaving] = useState(false);
 
   // Parse current value to determine initial state
   React.useEffect(() => {
@@ -53,8 +56,10 @@ export function EditHeightScreen({ onBack, currentValue, onSave }: EditHeightScr
     setSelectedInches(inches);
   };
 
-  const handleSave = () => {
-    hapticFeedback.success();
+  const handleSave = async () => {
+    if (isSaving) return;
+    hapticFeedback.selection();
+    setIsSaving(true);
     
     let heightCm: number;
     let displayValue: string;
@@ -68,6 +73,17 @@ export function EditHeightScreen({ onBack, currentValue, onSave }: EditHeightScr
       displayValue = `${selectedFeet}' ${selectedInches}"`;
     }
     
+    try {
+      await editUserDetails({ height: heightCm });
+      updateHeight(heightCm);
+      await refetchUserDetails();
+      hapticFeedback.success();
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to update height', e);
+    }
+    
+    setIsSaving(false);
     onSave(displayValue);
   };
 
@@ -161,8 +177,12 @@ export function EditHeightScreen({ onBack, currentValue, onSave }: EditHeightScr
 
       {/* Save Button */}
       <View style={styles.bottomContainer}>
-        <TouchableOpacity style={styles.saveButton} onPress={handleSave} activeOpacity={0.8}>
-          <Text style={styles.saveButtonText}>{i18n.t('settings.save')}</Text>
+        <TouchableOpacity style={[styles.saveButton, isSaving && { opacity: 0.7 }]} onPress={handleSave} activeOpacity={0.8} disabled={isSaving}>
+          {isSaving ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <Text style={styles.saveButtonText}>{i18n.t('settings.save')}</Text>
+          )}
         </TouchableOpacity>
       </View>
     </View>

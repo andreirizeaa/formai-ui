@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, ActivityIndicator } from 'react-native';
 import { BackIcon } from '../../../../components/icons/icons';
 import { useUserDetails } from '../../../../context/UserDetailsContext';
+import { editUserDetails } from '../../../../services/userService';
 import { hapticFeedback } from '../../../../utils/haptic';
 import i18n from '../../../../utils/i18n';
 
@@ -13,10 +13,24 @@ interface EditGenderScreenProps {
 }
 
 export function EditGenderScreen({ onBack, currentValue, onSave }: EditGenderScreenProps) {
+  const { updateUserDetails, refetchUserDetails } = useUserDetails();
   const [selectedGender, setSelectedGender] = useState(currentValue);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const handleNext = () => {
-    hapticFeedback.success();
+  const handleNext = async () => {
+    if (isSaving) return;
+    hapticFeedback.selection();
+    setIsSaving(true);
+    try {
+      await editUserDetails({ gender: selectedGender });
+      updateUserDetails('gender', selectedGender);
+      await refetchUserDetails();
+      hapticFeedback.success();
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to update gender', e);
+    }
+    setIsSaving(false);
     onSave(selectedGender);
   };
 
@@ -50,18 +64,18 @@ export function EditGenderScreen({ onBack, currentValue, onSave }: EditGenderScr
           <TouchableOpacity
             style={[
               styles.optionButton,
-              selectedGender === i18n.t('onboarding.gender.male') && styles.selectedOption,
+              selectedGender === 'male' && styles.selectedOption,
             ]}
             onPress={() => {
               hapticFeedback.selection();
-              setSelectedGender(i18n.t('onboarding.gender.male'));
+              setSelectedGender('male');
             }}
             activeOpacity={0.7}
           >
             <Text
               style={[
                 styles.optionText,
-                selectedGender === i18n.t('onboarding.gender.male') && styles.selectedOptionText,
+                selectedGender === 'male' && styles.selectedOptionText,
               ]}
             >
               {i18n.t('onboarding.gender.male')}
@@ -71,18 +85,18 @@ export function EditGenderScreen({ onBack, currentValue, onSave }: EditGenderScr
           <TouchableOpacity
             style={[
               styles.optionButton,
-              selectedGender === i18n.t('onboarding.gender.female') && styles.selectedOption,
+              selectedGender === 'female' && styles.selectedOption,
             ]}
             onPress={() => {
               hapticFeedback.selection();
-              setSelectedGender(i18n.t('onboarding.gender.female'));
+              setSelectedGender('female');
             }}
             activeOpacity={0.7}
           >
             <Text
               style={[
                 styles.optionText,
-                selectedGender === i18n.t('onboarding.gender.female') && styles.selectedOptionText,
+                selectedGender === 'female' && styles.selectedOptionText,
               ]}
             >
               {i18n.t('onboarding.gender.female')}
@@ -93,8 +107,12 @@ export function EditGenderScreen({ onBack, currentValue, onSave }: EditGenderScr
 
       {/* Next Button */}
       <View style={styles.bottomContainer}>
-        <TouchableOpacity style={styles.nextButton} onPress={handleNext} activeOpacity={0.8}>
-          <Text style={styles.nextButtonText}>{i18n.t('settings.save')}</Text>
+        <TouchableOpacity style={[styles.nextButton, isSaving && { opacity: 0.7 }]} onPress={handleNext} activeOpacity={0.8} disabled={isSaving}>
+          {isSaving ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <Text style={styles.nextButtonText}>{i18n.t('settings.save')}</Text>
+          )}
         </TouchableOpacity>
       </View>
     </View>

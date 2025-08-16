@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, Platform, Animated, Dimensions, InteractionManager } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { QueryClient, QueryClientProvider, focusManager } from '@tanstack/react-query';
+import { AppState } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { Asset } from 'expo-asset';
 import { OnboardingProvider } from './src/context/OnboardingContext';
@@ -12,13 +13,26 @@ import { UserDetailsProvider } from './src/context/UserDetailsContext';
 import { OnboardingNavigator } from './src/navigation/OnboardingNavigator';
 import { MainAppLayout } from './src/components/layout/MainAppLayout';
 import { PurchasesProvider } from './src/context/PurchasesContext';
-import { getUserId, setUserId, removeUserId } from './src/services/storageService';
+import { StreakProvider } from './src/context/StreakContext';
+import { WalletCreditProvider } from './src/context/WalletCreditContext';
+import { getUserId, removeUserId } from './src/services/storageService';
 import { fetchUserById, requiresOnboarding, requiresPayment } from './src/services/userService';
 import { supabase } from './src/lib/supabase';
 
 const { width } = Dimensions.get('window');
 
 export default function App() {
+  const queryClientRef = React.useRef<QueryClient | null>(null);
+  if (!queryClientRef.current) {
+    queryClientRef.current = new QueryClient();
+  }
+
+  React.useEffect(() => {
+    const subscription = AppState.addEventListener('change', (status) => {
+      focusManager.setFocused(status === 'active');
+    });
+    return () => subscription.remove();
+  }, []);
   const [showOnboarding, setShowOnboarding] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [userNeedsOnboarding, setUserNeedsOnboarding] = useState(false);
@@ -51,10 +65,8 @@ export default function App() {
           require('./assets/icons/tiktok.png'),
           require('./assets/icons/fasebook.png'),
           require('./assets/icons/google.png'),
-          // Auth and other icons
           require('./assets/icons/apple.png'),
           require('./assets/icons/fire.png'),
-          require('./assets/animations/confetti.json'),
         ]);
       } catch (error) {
         console.warn('Error preloading assets:', error);
@@ -175,27 +187,27 @@ export default function App() {
         <View style={styles.container}>
           <Text style={styles.text}>Loading...</Text>
         </View>
-        <StatusBar style={isDark ? 'light' : 'dark'} />
       </SafeAreaProvider>
     );
   }
 
   const mainAppContent = (
     <SafeAreaProvider>
-      <LanguageProvider>
-        <OnboardingProvider>
-          <PurchasesProvider>
+      <QueryClientProvider client={queryClientRef.current}>
+        <LanguageProvider>
+          <WalletCreditProvider>
             <UserDetailsProvider>
               <LoadingLiftsProvider>
                 <LiftDataProvider>
-                  <MainAppLayout onLogout={handleLogout} />
+                  <StreakProvider>
+                    <MainAppLayout onLogout={handleLogout} />
+                  </StreakProvider>
                 </LiftDataProvider>
               </LoadingLiftsProvider>
             </UserDetailsProvider>
-            <StatusBar style={isDark ? 'light' : 'dark'} />
-          </PurchasesProvider>
-        </OnboardingProvider>
-      </LanguageProvider>
+          </WalletCreditProvider>
+        </LanguageProvider>
+      </QueryClientProvider>
     </SafeAreaProvider>
   );
 
@@ -210,7 +222,6 @@ export default function App() {
               onUserNeedsOnboarding={handleUserNeedsOnboarding}
               initialRouteName={onboardingInitialRoute}
             />
-            <StatusBar style={isDark ? 'light' : 'dark'} />
           </PurchasesProvider>
         </OnboardingProvider>
       </LanguageProvider>

@@ -9,6 +9,7 @@ import { ILiftData } from '../feedback/liftDetails';
 import { LiftDataCard } from '../../../components/LiftDataCard';
 import { SwipeableCalendar } from '../../../components/ui/SwipeableCalendar';
 import { useUserDetails } from '../../../context/UserDetailsContext';
+import { useStreak } from '../../../context/StreakContext';
 import { PanGestureHandler } from 'react-native-gesture-handler';
 import Animated, { 
   useSharedValue, 
@@ -33,6 +34,7 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
   const { loadingLifts, completedLifts } = useLoadingLifts();
   const { liftData, addLift, removeLift, getLiftsByDate, formatDateForLift } = useLiftData();
   const { userDetails } = useUserDetails();
+  const { daysLogged } = useStreak();
   
   // Selected date state for calendar
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -279,7 +281,7 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
         <SwipeableCalendar 
           onDateSelect={handleDateSelect} 
           initialSelectedDate={selectedDate}
-          daysLogged={userDetails.daysLogged}
+          daysLogged={daysLogged}
         />
         
         {/* Swipeable Accuracy Card */}
@@ -340,7 +342,7 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
                   style={styles.fireIcon}
                   resizeMode="contain"
                 />
-                <Text style={styles.fireNumber}>12</Text>
+                <Text style={styles.fireNumber}>{userDetails?.currentStreak ?? 0}</Text>
               </View>
             </TouchableOpacity>
             
@@ -458,7 +460,7 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
             </View>
 
             {/* Streak text */}
-            <Text style={styles.streakText}>{i18n.t('home.dayStreak', { count: 12 })}</Text>
+            <Text style={styles.streakText}>{i18n.t('home.dayStreak', { count: userDetails?.currentStreak ?? 0 })}</Text>
 
             {/* Message */}
             <Text style={styles.message}>{i18n.t('home.onFireMessage')}</Text>

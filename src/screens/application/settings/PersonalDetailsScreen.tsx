@@ -8,10 +8,10 @@ import { BackIcon, EditIcon } from '../../../components/icons/icons';
 
 interface PersonalDetailsScreenProps {
   onBack: () => void;
-  onEditCurrentWeight: () => void;
-  onEditHeight: () => void;
-  onEditDateOfBirth: () => void;
-  onEditGender: () => void;
+  onEditCurrentWeight: (currentValue: string) => void;
+  onEditHeight: (currentValue: string) => void;
+  onEditDateOfBirth: (currentValue: string) => void;
+  onEditGender: (currentValue: string) => void;
 }
 
 interface PersonalDetailOptionProps {
@@ -96,9 +96,8 @@ function translatePersonalDataValue(key: string, value: string): string {
     case 'gender':
       // Translate gender values
       const genderTranslations = {
-        'Male': i18n.t('personalDetails.male'),
-        'Female': i18n.t('personalDetails.female'),
-        'Other': i18n.t('personalDetails.other'),
+        'male': i18n.t('personalDetails.male'),
+        'female': i18n.t('personalDetails.female'),
       };
       return genderTranslations[value as keyof typeof genderTranslations] || value;
       
@@ -117,19 +116,19 @@ export function PersonalDetailsScreen({
   const { userDetails, getWeightDisplay, getHeightDisplay, getDateOfBirthDisplay } = useUserDetails();
 
   const handleEditCurrentWeight = () => {
-    onEditCurrentWeight();
+    onEditCurrentWeight(getWeightDisplay());
   };
 
   const handleEditHeight = () => {
-    onEditHeight();
+    onEditHeight(getHeightDisplay());
   };
 
   const handleEditDateOfBirth = () => {
-    onEditDateOfBirth();
+    onEditDateOfBirth(getDateOfBirthDisplay());
   };
 
   const handleEditGender = () => {
-    onEditGender();
+    onEditGender(userDetails?.gender ?? '');
   };
 
   return (
@@ -174,7 +173,7 @@ export function PersonalDetailsScreen({
           <View style={styles.separator} />
           <PersonalDetailOption
             title={i18n.t('personalDetails.gender')}
-            value={translatePersonalDataValue('gender', userDetails.gender)}
+            value={translatePersonalDataValue('gender', userDetails?.gender ?? '')}
             onPress={handleEditGender}
           />
         </View>
