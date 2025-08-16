@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, TextInput, Switch, Keyboard, KeyboardAvoidingView, TouchableWithoutFeedback } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Svg, { Path } from 'react-native-svg';
 import { hapticFeedback } from '../../../../utils/haptic';
 
 interface WeightRepsScreenProps {

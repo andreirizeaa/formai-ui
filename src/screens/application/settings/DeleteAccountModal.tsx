@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
+import { View, Text, TouchableOpacity, StyleSheet, Modal, ActivityIndicator } from 'react-native';
+import { CloseIcon } from '../../../components/icons/icons';
 import i18n from '../../../utils/i18n';
 import { hapticFeedback } from '../../../utils/haptic';
 
@@ -11,6 +11,33 @@ interface DeleteAccountModalProps {
 }
 
 export function DeleteAccountModal({ isVisible, onClose, onConfirm }: DeleteAccountModalProps) {
+  const [isAcknowledgementStep, setIsAcknowledgementStep] = React.useState(false);
+  const [hasAcknowledged, setHasAcknowledged] = React.useState(false);
+  const [isDeleting, setIsDeleting] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!isVisible) {
+      setIsAcknowledgementStep(false);
+      setHasAcknowledged(false);
+      setIsDeleting(false);
+    }
+  }, [isVisible]);
+
+  const handleAcknowledge = () => {
+    hapticFeedback.selection();
+    setHasAcknowledged(true);
+  };
+
+  const handleDelete = async () => {
+    hapticFeedback.success();
+    setIsDeleting(true);
+    try {
+      await onConfirm();
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <Modal
       visible={isVisible}
@@ -35,44 +62,67 @@ export function DeleteAccountModal({ isVisible, onClose, onConfirm }: DeleteAcco
               onClose();
             }}
           >
-            <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-              <Path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M6 18L18 6M6 6l12 12"
-                stroke="#000000"
-                strokeWidth={2}
-              />
-            </Svg>
+            <CloseIcon width={20} height={20} color="#000000" />
           </TouchableOpacity>
 
           {/* Title */}
           <Text style={styles.title}>{i18n.t('settings.deleteAccountTitle')}</Text>
 
           {/* Message */}
-          <Text style={styles.message}>{i18n.t('settings.deleteAccountMessage')}</Text>
+          {isAcknowledgementStep ? (
+            <Text style={styles.message}>
+              Deleting your Form AI account through the app does not cancel your subscription. Please remember to cancel your subscription separately in your device's subscription settings so you aren't charged again.
+            </Text>
+          ) : (
+            <Text style={styles.message}>{i18n.t('settings.deleteAccountMessage')}</Text>
+          )}
 
           {/* Action buttons */}
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity 
-              style={styles.button} 
-              onPress={() => {
-                hapticFeedback.selection();
-                onClose();
-              }}
-            >
-              <Text style={styles.buttonText}>{i18n.t('settings.no')}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.button} 
-              onPress={() => {
-                hapticFeedback.success();
-                onConfirm();
-              }}
-            >
-              <Text style={styles.buttonText}>{i18n.t('settings.yes')}</Text>
-            </TouchableOpacity>
-          </View>
+          {isAcknowledgementStep ? (
+            <View style={styles.acknowledgeContainer}>
+              <TouchableOpacity 
+                style={[
+                  styles.acknowledgeButton,
+                  hasAcknowledged && styles.deleteButton
+                ]}
+                onPress={hasAcknowledged ? handleDelete : handleAcknowledge}
+                activeOpacity={0.8}
+                disabled={isDeleting}
+              >
+                {hasAcknowledged && isDeleting ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Text style={[
+                    styles.acknowledgeButtonText,
+                    hasAcknowledged && styles.deleteButtonText
+                  ]}>
+                    {hasAcknowledged ? 'Delete account' : 'I acknowledge'}
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity 
+                style={styles.button} 
+                onPress={() => {
+                  hapticFeedback.selection();
+                  onClose();
+                }}
+              >
+                <Text style={styles.buttonText}>{i18n.t('settings.no')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.button} 
+                onPress={() => {
+                  hapticFeedback.selection();
+                  setIsAcknowledgementStep(true);
+                }}
+              >
+                <Text style={styles.buttonText}>{i18n.t('settings.yes')}</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </TouchableOpacity>
       </TouchableOpacity>
     </Modal>
@@ -123,30 +173,50 @@ const styles = StyleSheet.create({
     textAlign: 'left',
   },
   message: {
-    fontSize: 16,
-    fontWeight: '400',
-    color: '#000000',
-    marginBottom: 24,
-    textAlign: 'left',
-    lineHeight: 22,
+    fontSize: 14,
+    color: '#1C1C1E',
+    lineHeight: 20,
+    marginBottom: 20,
   },
   buttonContainer: {
     flexDirection: 'row',
-    gap: 12,
+    justifyContent: 'space-between',
   },
   button: {
     flex: 1,
-    height: 44,
-    borderRadius: 8,
+    paddingVertical: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: '#E5E5EA',
-    backgroundColor: '#FFFFFF',
-    justifyContent: 'center',
-    alignItems: 'center',
+    marginHorizontal: 4,
   },
   buttonText: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '600',
     color: '#000000',
+  },
+  acknowledgeContainer: {
+    marginTop: 4,
+  },
+  acknowledgeButton: {
+    width: '100%',
+    paddingVertical: 16,
+    borderRadius: 14,
+    backgroundColor: '#000000',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  acknowledgeButtonText: {
+    color: '#FFFFFF',
+    fontSize: 17,
+    fontWeight: '600',
+  },
+  deleteButton: {
+    backgroundColor: '#fb2c36',
+  },
+  deleteButtonText: {
+    color: '#FFFFFF',
   },
 }); 

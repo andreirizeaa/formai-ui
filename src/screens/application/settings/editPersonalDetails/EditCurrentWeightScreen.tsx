@@ -1,6 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, TextInput } from 'react-native';
 import { RulerPicker } from 'react-native-ruler-picker';
 import i18n from '../../../../utils/i18n';
 import { hapticFeedback } from '../../../../utils/haptic';
@@ -10,6 +9,7 @@ import {
   convertMetricWeightToImperial, 
   convertImperialWeightToMetric 
 } from '../../../../utils/unitConversions';
+import { BackIcon } from '../../../../components/icons/icons';
 
 interface EditCurrentWeightScreenProps {
   onBack: () => void;
@@ -73,15 +73,7 @@ export function EditCurrentWeightScreen({ onBack, currentValue, onSave }: EditCu
             onBack();
           }}
         >
-          <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-            <Path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M15.75 19.5L8.25 12l7.5-7.5"
-              stroke="#000000"
-              strokeWidth={2}
-            />
-          </Svg>
+          <BackIcon width={24} height={24} color="#000000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{i18n.t('personalDetails.editCurrentWeight')}</Text>
         <View style={styles.placeholder} />

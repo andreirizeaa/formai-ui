@@ -5,7 +5,8 @@ import Animated, {
   useAnimatedStyle, 
   withSpring, 
   withDelay,
-  runOnJS
+  runOnJS,
+  withSequence
 } from 'react-native-reanimated';
 
 interface AnimatedOptionButtonProps {
@@ -27,8 +28,9 @@ export function AnimatedOptionButton({
   style,
   activeOpacity = 0.7
 }: AnimatedOptionButtonProps) {
-  const translateY = useSharedValue(delay === 0 ? 0 : 100);
+  const translateY = useSharedValue(delay === 0 ? 0 : 30);
   const opacity = useSharedValue(delay === 0 ? 1 : 0);
+  const scale = useSharedValue(1);
 
   useEffect(() => {
     // If delay is 0, don't animate - show immediately
@@ -38,27 +40,49 @@ export function AnimatedOptionButton({
     translateY.value = withDelay(
       delay,
       withSpring(0, {
-        damping: 15,
-        stiffness: 100,
-        mass: 0.8,
+        damping: 25,
+        stiffness: 200,
+        mass: 0.6,
       })
     );
     
     opacity.value = withDelay(
       delay,
       withSpring(1, {
-        damping: 15,
-        stiffness: 100,
+        damping: 25,
+        stiffness: 200,
       })
     );
   }, [delay]);
 
   const animatedStyle = useAnimatedStyle(() => {
     return {
-      transform: [{ translateY: translateY.value }],
+      transform: [
+        { translateY: translateY.value },
+        { scale: scale.value }
+      ],
       opacity: opacity.value,
     };
   });
+
+  const handlePress = () => {
+    // Bounce animation: scale down to 0.95, then back to 1 (slightly faster)
+    scale.value = withSequence(
+      withSpring(0.95, {
+        damping: 18,
+        stiffness: 250,
+        mass: 0.6,
+      }),
+      withSpring(1, {
+        damping: 18,
+        stiffness: 250,
+        mass: 0.6,
+      })
+    );
+    
+    // Call the original onPress function
+    onPress();
+  };
 
   return (
     <Animated.View style={animatedStyle}>
@@ -75,7 +99,7 @@ export function AnimatedOptionButton({
           },
           style
         ]}
-        onPress={onPress}
+        onPress={handlePress}
         activeOpacity={activeOpacity}
       >
         {children}
@@ -87,8 +111,8 @@ export function AnimatedOptionButton({
 const styles = StyleSheet.create({
   button: {
     borderWidth: 1.5,
-    borderRadius: 16,
-    paddingVertical: 16,
+    borderRadius: 18,
+    paddingVertical: 22,
     paddingHorizontal: 24,
   },
 }); 

@@ -1,0 +1,340 @@
+import React from 'react';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, Image } from 'react-native';
+import { useColorScheme } from 'react-native';
+import * as AppleAuthentication from 'expo-apple-authentication';
+import Constants from 'expo-constants';
+import { hapticFeedback } from '../../utils/haptic';
+import { supabase } from '../../lib/supabase';
+import { useOnboarding } from '../../context/OnboardingContext';
+import { LoadingOverlay } from '../ui/LoadingOverlay';
+import { setUserId } from '../../services/storageService';
+import i18n from '../../utils/i18n';
+
+interface CreateAccountScreenProps {
+  onNext: () => void;
+  onBack: () => void;
+  onSignIn: () => void;
+}
+
+export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountScreenProps) {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+  const { onboardingData, updateOnboardingData, persistOnboardingData } = useOnboarding();
+  const [isSigningIn, setIsSigningIn] = React.useState(false);
+  
+  const isExpoGo = Constants.appOwnership === 'expo';
+
+  React.useEffect(() => {
+    if (!isExpoGo) {
+      import('@react-native-google-signin/google-signin').then(({ GoogleSignin }) => {
+        GoogleSignin.configure({
+          scopes: ['email', 'profile'],
+          iosClientId: '338047674329-5dfpj06alfpfn0phi57c4bgdg6nihv87.apps.googleusercontent.com',
+        });
+      }).catch(error => {
+        console.warn('Google Sign-In not available in this environment:', error);
+      });
+    }
+  }, [isExpoGo]);
+
+  const handleGoogleSignIn = async () => {
+    try {
+      hapticFeedback.selection();
+      if (isExpoGo) {
+        console.log('Google Sign-In not available in Expo Go');
+        return;
+      }
+      
+      console.log('Starting Google Sign-In process...');
+      const { GoogleSignin } = await import('@react-native-google-signin/google-signin');
+      console.log('Checking Play Services...');
+      await GoogleSignin.hasPlayServices();
+      setIsSigningIn(true);
+      const userInfo = await GoogleSignin.signIn();
+      
+      if (userInfo.idToken) {
+        console.log('ID token found, signing in with Supabase...');
+        const { data, error } = await supabase.auth.signInWithIdToken({
+          provider: 'google',
+          token: userInfo.idToken,
+        });
+        if (error) {
+          console.error('Supabase auth error:', error);
+          setIsSigningIn(false);
+        } else {
+          console.log('Supabase auth successful, updating onboarding data...');
+          updateOnboardingData('signInMethod', 'google');
+          updateOnboardingData('onboardingCompleted', true);
+    
+          if (data.user?.id) {
+            try {
+              updateOnboardingData('userId', data.user.id);
+              await setUserId(data.user.id);
+              handleNewAccount(data);
+            } catch (persistError) {
+              console.error('Error persisting onboarding data:', persistError);
+              setIsSigningIn(false);
+            }
+          }
+        }
+      } else {
+        throw new Error('no ID token present!');
+      }
+    } catch (error: any) {
+      if (error.code === 'SIGN_IN_CANCELLED') {
+        console.log('Sign-in cancelled by user');
+      } else if (error.code === 'IN_PROGRESS') {
+        console.log('Sign-in already in progress');
+      } else if (error.code === 'PLAY_SERVICES_NOT_AVAILABLE') {
+        console.log('Play services not available');
+      } else {
+        console.error('Google sign-in error:', error);
+      }
+      setIsSigningIn(false);
+    }
+  };
+
+  const handleAppleSignIn = async () => {
+    setIsSigningIn(true);
+    try {
+      hapticFeedback.selection();
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+      
+      if (credential.identityToken) {
+        const { error, data } = await supabase.auth.signInWithIdToken({
+          provider: 'apple',
+          token: credential.identityToken,
+        });
+        
+        if (error) {
+          console.error('Supabase auth error:', error);
+          setIsSigningIn(false);
+        } else {
+          updateOnboardingData('signInMethod', 'apple');
+          updateOnboardingData('onboardingCompleted', true);
+          if (data.user?.id) {
+            try {
+              updateOnboardingData('userId', data.user.id);
+              await setUserId(data.user.id);
+              handleNewAccount(data);
+            } catch (persistError) {
+              console.error('Error persisting onboarding data:', persistError);
+              setIsSigningIn(false);
+            }
+          }
+        }
+      } else {
+        throw new Error('No identityToken.');
+      }
+    } catch (e: any) {
+      if (e.code === 'ERR_REQUEST_CANCELED') {
+        console.log('Apple sign-in cancelled');
+      } else {
+        console.error('Apple sign-in error:', e);
+      }
+      setIsSigningIn(false);
+    }
+  };
+
+  const handleNewAccount = async (data: any) => {
+    const signInMethod = data.user?.app_metadata?.provider || 'apple';
+    
+    const updatedData = {
+      ...onboardingData,
+      signInMethod: signInMethod,
+      onboardingCompleted: true,
+      userId: data.user?.id
+    };
+
+    updateOnboardingData('signInMethod', signInMethod);
+    updateOnboardingData('onboardingCompleted', true);
+    updateOnboardingData('userId', data.user.id);
+    
+    if (data.user?.id) {
+      try {
+        const { saveOnboardingProgress } = await import('../../services/onboardingService');
+        const response = await saveOnboardingProgress(updatedData);
+        setIsSigningIn(false);
+        onNext();
+      } catch (persistError) {
+        console.error('Error persisting onboarding data:', persistError);
+        setIsSigningIn(false);
+      }
+    } else {
+      setIsSigningIn(false);
+    }
+  }
+
+  const handleSignInPress = () => {
+    hapticFeedback.selection();
+    onSignIn();
+  };
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.content}>
+        {/* Button container */}
+        <View style={styles.buttonContainer}>
+          {/* Sign in with Apple */}
+          <TouchableOpacity
+            style={[
+              styles.appleButton,
+              { backgroundColor: isDark ? '#FFFFFF' : '#000000' }
+            ]}
+            onPress={handleAppleSignIn}
+            activeOpacity={0.8}
+          >
+            <View style={styles.buttonContent}>
+              <Image 
+                source={require('../../../assets/icons/apple.png')}
+                style={[
+                  styles.appleIcon,
+                  { tintColor: isDark ? '#000000' : '#FFFFFF' }
+                ]}
+                resizeMode="contain"
+              />
+              <Text style={[
+                styles.appleButtonText,
+                { color: isDark ? '#000000' : '#FFFFFF' }
+              ]}>
+                Sign up with Apple
+              </Text>
+            </View>
+          </TouchableOpacity>
+
+          {/* Sign in with Google */}
+          <TouchableOpacity
+            style={[
+              styles.googleButton,
+              { 
+                backgroundColor: isDark ? '#000000' : '#FFFFFF',
+                borderColor: isDark ? '#FFFFFF' : '#000000'
+              }
+            ]}
+            onPress={isExpoGo ? () => {
+              hapticFeedback.selection();
+              console.log('Google Sign-In not available in Expo Go');
+            } : handleGoogleSignIn}
+            activeOpacity={0.8}
+          >
+            <View style={styles.buttonContent}>
+              <Image 
+                source={require('../../../assets/icons/google.png')}
+                style={styles.googleIcon}
+                resizeMode="contain"
+              />
+              <Text style={[
+                styles.googleButtonText,
+                { color: isDark ? '#FFFFFF' : '#000000' }
+              ]}>
+                {i18n.t('onboarding.createAccount.signInWithGoogle')}
+              </Text>
+            </View>
+          </TouchableOpacity>
+
+          {/* Already have an account text */}
+          <View style={styles.haveAccountContainer}>
+            <Text style={[
+              styles.haveAccountText,
+              { color: isDark ? '#8E8E93' : '#8E8E93' }
+            ]}>
+              Already have an account?{' '}
+            </Text>
+            <TouchableOpacity onPress={() => {
+              hapticFeedback.selection();
+              onSignIn();
+            }}>
+              <Text style={[
+                styles.signInLink,
+                { color: isDark ? '#007AFF' : '#007AFF' }
+              ]}>
+                Sign in
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Sign in text placeholder */}
+        <View />
+      </View>
+      
+      <LoadingOverlay visible={isSigningIn} />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  content: {
+    alignItems: 'center',
+    width: '100%',
+  },
+  buttonContainer: {
+    gap: 16,
+    alignItems: 'center',
+    marginBottom: 16,
+    width: '100%',
+  },
+  appleButton: {
+    width: '100%',
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  googleButton: {
+    width: '100%',
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  appleIcon: {
+    width: 32,
+    height: 32,
+    marginRight: 12,
+  },
+  googleIcon: {
+    width: 32,
+    height: 32,
+    marginRight: 12,
+  },
+  appleButtonText: {
+    fontSize: 20,
+    fontWeight: '600',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
+  googleButtonText: {
+    fontSize: 20,
+    fontWeight: '600',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
+  haveAccountContainer: {
+    flexDirection: 'row',
+  },
+  haveAccountText: {
+    fontSize: 16,
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
+  signInLink: {
+    fontSize: 16,
+    fontWeight: '600',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+    textDecorationLine: 'underline',
+  },
+}); 

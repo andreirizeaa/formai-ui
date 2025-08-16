@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity, Platform, Alert, Image, TextInput, ScrollView, Keyboard } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Svg, { Path } from 'react-native-svg';
 import * as ImagePicker from 'expo-image-picker';
 import i18n from '../../../../utils/i18n';
 import { hapticFeedback } from '../../../../utils/haptic';
@@ -12,6 +11,7 @@ import { PracticesScreen } from '../common/PracticesScreen';
 import { WeightRepsScreen } from '../common/WeightRepsScreen';
 import { useLoadingLifts } from '../../../../context/LoadingLiftsContext';
 import { gymMovements } from '../../../../constants/gymMovements';
+import { CloseIcon } from '../../../../components/icons/icons';
 
 interface UploadModalProps {
   isVisible: boolean;
@@ -238,13 +238,8 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
           <View style={styles.titleContainer}>
             <Text style={styles.title}>Upload Video</Text>
           </View>
-          <TouchableOpacity onPress={() => {
-            hapticFeedback.selection();
-            onClose();
-          }} style={styles.closeButton}>
-            <Svg width={24} height={24} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="#8E8E93">
-              <Path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-            </Svg>
+          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+            <CloseIcon width={24} height={24} color="#8E8E93" />
           </TouchableOpacity>
         </View>
 

@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
-import i18n from '../../../../utils/i18n';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { BackIcon } from '../../../../components/icons/icons';
+import { useUserDetails } from '../../../../context/UserDetailsContext';
 import { hapticFeedback } from '../../../../utils/haptic';
+import i18n from '../../../../utils/i18n';
 
 interface EditGenderScreenProps {
   onBack: () => void;
@@ -30,15 +32,7 @@ export function EditGenderScreen({ onBack, currentValue, onSave }: EditGenderScr
             onBack();
           }}
         >
-          <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-            <Path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M15.75 19.5L8.25 12l7.5-7.5"
-              stroke="#000000"
-              strokeWidth={2}
-            />
-          </Svg>
+          <BackIcon width={24} height={24} color="#000000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{i18n.t('personalDetails.editGender')}</Text>
         <View style={styles.placeholder} />
@@ -46,7 +40,7 @@ export function EditGenderScreen({ onBack, currentValue, onSave }: EditGenderScr
 
       {/* Title */}
       <View style={styles.titleContainer}>
-        <Text style={styles.title}>{i18n.t('gender.title')}</Text>
+        <Text style={styles.title}>{i18n.t('onboarding.gender.title')}</Text>
       </View>
 
       {/* Content */}
@@ -56,42 +50,42 @@ export function EditGenderScreen({ onBack, currentValue, onSave }: EditGenderScr
           <TouchableOpacity
             style={[
               styles.optionButton,
-              selectedGender === i18n.t('gender.male') && styles.selectedOption,
+              selectedGender === i18n.t('onboarding.gender.male') && styles.selectedOption,
             ]}
             onPress={() => {
               hapticFeedback.selection();
-              setSelectedGender(i18n.t('gender.male'));
+              setSelectedGender(i18n.t('onboarding.gender.male'));
             }}
             activeOpacity={0.7}
           >
             <Text
               style={[
                 styles.optionText,
-                selectedGender === i18n.t('gender.male') && styles.selectedOptionText,
+                selectedGender === i18n.t('onboarding.gender.male') && styles.selectedOptionText,
               ]}
             >
-              {i18n.t('gender.male')}
+              {i18n.t('onboarding.gender.male')}
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[
               styles.optionButton,
-              selectedGender === i18n.t('gender.female') && styles.selectedOption,
+              selectedGender === i18n.t('onboarding.gender.female') && styles.selectedOption,
             ]}
             onPress={() => {
               hapticFeedback.selection();
-              setSelectedGender(i18n.t('gender.female'));
+              setSelectedGender(i18n.t('onboarding.gender.female'));
             }}
             activeOpacity={0.7}
           >
             <Text
               style={[
                 styles.optionText,
-                selectedGender === i18n.t('gender.female') && styles.selectedOptionText,
+                selectedGender === i18n.t('onboarding.gender.female') && styles.selectedOptionText,
               ]}
             >
-              {i18n.t('gender.female')}
+              {i18n.t('onboarding.gender.female')}
             </Text>
           </TouchableOpacity>
         </View>
