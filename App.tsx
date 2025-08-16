@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, Text, View, Platform, Animated, Dimensions, InteractionManager } from 'react-native';
+import { StyleSheet, Text, View, Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { QueryClient, QueryClientProvider, focusManager } from '@tanstack/react-query';
 import { AppState } from 'react-native';
@@ -18,8 +18,6 @@ import { WalletCreditProvider } from './src/context/WalletCreditContext';
 import { getUserId, removeUserId } from './src/services/storageService';
 import { fetchUserById, requiresOnboarding, requiresPayment } from './src/services/userService';
 import { supabase } from './src/lib/supabase';
-
-const { width } = Dimensions.get('window');
 
 export default function App() {
   const queryClientRef = React.useRef<QueryClient | null>(null);
@@ -41,7 +39,6 @@ export default function App() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   
-  const slideAnim = useRef(new Animated.Value(0)).current;
   const isMountedRef = useRef(true);
 
   useEffect(() => {
@@ -67,6 +64,8 @@ export default function App() {
           require('./assets/icons/google.png'),
           require('./assets/icons/apple.png'),
           require('./assets/icons/fire.png'),
+          require('./assets/animations/confetti.json'),
+          require('./assets/animations/star-rating.json'),
         ]);
       } catch (error) {
         console.warn('Error preloading assets:', error);
@@ -112,39 +111,13 @@ export default function App() {
   }, []);
 
   const handleOnboardingComplete = () => {
-    setIsTransitioning(true);
-    
-    Animated.timing(slideAnim, {
-      toValue: -width,
-      duration: 300,
-      useNativeDriver: true,
-    }).start(() => {
-      InteractionManager.runAfterInteractions(() => {
-        if (!isMountedRef.current) return;
-        setShowOnboarding(false);
-        setUserNeedsOnboarding(false);
-        setIsTransitioning(false);
-        slideAnim.setValue(0);
-      });
-    });
+    setShowOnboarding(false);
+    setUserNeedsOnboarding(false);
   };
 
   const handleSignIn = () => {
-    setIsTransitioning(true);
-    
-    Animated.timing(slideAnim, {
-      toValue: -width,
-      duration: 300,
-      useNativeDriver: true,
-    }).start(() => {
-      InteractionManager.runAfterInteractions(() => {
-        if (!isMountedRef.current) return;
-        setShowOnboarding(false);
-        setUserNeedsOnboarding(false);
-        setIsTransitioning(false);
-        slideAnim.setValue(0);
-      });
-    });
+    setShowOnboarding(false);
+    setUserNeedsOnboarding(false);
   };
 
   const handlePaymentComplete = () => {
@@ -229,32 +202,7 @@ export default function App() {
   );
 
   if (showOnboarding || userNeedsOnboarding) {
-    return (
-      <View style={styles.transitionContainer}>
-        <Animated.View
-          style={[
-            styles.animatedContainer,
-            {
-              transform: [{ translateX: slideAnim }],
-            },
-          ]}
-        >
-          {onboardingContent}
-        </Animated.View>
-        {isTransitioning && (
-          <Animated.View
-            style={[
-              styles.animatedContainer,
-              {
-                transform: [{ translateX: Animated.add(slideAnim, width) }],
-              },
-            ]}
-          >
-            {mainAppContent}
-          </Animated.View>
-        )}
-      </View>
-    );
+    return onboardingContent;
   }
 
   return mainAppContent;
@@ -277,15 +225,5 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '400',
     textAlign: 'center',
-  },
-  transitionContainer: {
-    flex: 1,
-  },
-  animatedContainer: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    left: 0,
-    right: 0,
   },
 });

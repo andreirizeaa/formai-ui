@@ -56,8 +56,8 @@ export function NextButton({ title, onPress, disabled = false, loading = false }
 const styles = StyleSheet.create({
   container: {
     marginHorizontal: 20,
-    marginTop: 34,
-    marginBottom: 34,
+    marginTop: 16,
+    marginBottom: 48,
     height: 56,
     borderRadius: 28,
     justifyContent: 'center',

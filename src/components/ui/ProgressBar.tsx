@@ -33,7 +33,7 @@ export function ProgressBar({ currentStep, totalSteps }: ProgressBarProps) {
 
 const styles = StyleSheet.create({
   track: {
-    height: 4,
+    height: 3,
     borderRadius: 2,
     overflow: 'hidden',
   },

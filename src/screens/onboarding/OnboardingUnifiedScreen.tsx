@@ -500,12 +500,15 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
   } else if (currentStep.type === 'birthdate') {
     nextDisabled = !onboardingData.birthDate;
   } else if (currentStep.type === 'rating') {
-    nextDisabled = true; // custom buttons control flow
+    nextDisabled = false; // enable default next for rating step
   } else if (currentStep.type === 'referral') {
     nextLoading = referralValidating; // show loading while validating
   } else if (currentStep.type === 'allDone') {
     nextDisabled = false; // always enabled for allDone step
   }
+
+  const nextHandler = currentStep.type === 'rating' ? handleRateFormAI : handleNext;
+  const nextLabel = currentStep.type === 'rating' ? 'Rate FormAI' : i18n.t('next');
 
   return (
     <OnboardingLayout
@@ -514,31 +517,12 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       currentStep={currentStepIndex + 1}
       totalSteps={totalSteps}
       onBack={handleBack}
-      onNext={handleNext}
-      nextTitle={i18n.t('next')}
+      onNext={nextHandler}
+      nextTitle={nextLabel}
       nextDisabled={nextDisabled}
       nextLoading={nextLoading}
       hideNextButton={currentStep.type === 'saveProgress'}
-      customButtons={currentStep.type === 'rating' ? (
-        <View style={{ alignItems: 'center' }}>
-          <TouchableOpacity
-            style={{
-              height: 56,
-              borderRadius: 28,
-              justifyContent: 'center',
-              alignItems: 'center',
-              width: '100%',
-              backgroundColor: isDark ? '#FFFFFF' : '#000000',
-            }}
-            onPress={handleRateFormAI}
-            activeOpacity={0.8}
-          >
-            <Text style={{ fontSize: 17, fontWeight: '600', color: isDark ? '#000000' : '#FFFFFF' }}>
-              Rate FormAI
-            </Text>
-          </TouchableOpacity>
-        </View>
-      ) : undefined}
+      
     >
       {currentStep.type === 'options' && (
         currentStep.id === 'language' ? (
@@ -809,11 +793,15 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
 
       {currentStep.type === 'rating' && (
         <View style={styles.ratingContainer}> 
-          <View style={[styles.starsBox, { borderColor: isDark ? '#FFFFFF' : 'rgba(226, 232, 240, 1)' }]}> 
-            <Text style={{ fontSize: 36 }}>⭐⭐⭐⭐⭐</Text>
+          <View style={styles.lottieContainer}>
+            <LottieView
+              source={require('../../../assets/animations/star-rating.json')}
+              autoPlay
+              loop={false}
+              style={{ width: 320, height: 300 }}
+            />
           </View>
-          <View style={{ height: 40 }} />
-          <View style={{ alignItems: 'center', justifyContent: 'center', marginBottom: 40 }}>
+          <View style={{ alignItems: 'center', justifyContent: 'center', marginBottom: 20, marginTop: -80 }}>
             <Text style={{ fontSize: 24, fontWeight: '500', textAlign: 'center', width: '80%', color: isDark ? '#FFFFFF' : '#000000' }}>
               {i18n.t('onboarding.rating.middleText')}
             </Text>
@@ -1136,13 +1124,9 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 20,
   },
-  starsBox: {
+  lottieContainer: {
     alignItems: 'center',
-    borderWidth: 1,
-    borderRadius: 18,
-    paddingHorizontal: 20,
-    paddingVertical: 20,
-    width: '100%',
+    marginTop: -120,
   },
   // Referral styles
   referralContainer: {
@@ -1230,6 +1214,7 @@ const styles = StyleSheet.create({
   },
   testimonialsScrollView: {
     flexGrow: 1,
+    marginBottom: -22,
   },
   testimonialsContentContainer: {
     flexGrow: 1,
