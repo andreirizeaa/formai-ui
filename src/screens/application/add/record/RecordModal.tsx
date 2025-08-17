@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity, Platform, Alert, Image, TextInput, ScrollView, Keyboard } from 'react-native';
+import { View, Text, StyleSheet, Modal, TouchableOpacity, Platform, Alert, Image, TextInput, ScrollView, Keyboard, useColorScheme, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { CameraView, useCameraPermissions, CameraType, VideoQuality } from 'expo-camera';
-import { VideoView, useVideoPlayer } from 'expo-video';
+import { Camera, useCameraDevice, type VideoFile } from 'react-native-vision-camera';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import i18n from '../../../../utils/i18n';
 import { hapticFeedback } from '../../../../utils/haptic';
 import { generateVideoThumbnail } from '../../../../utils/generateVideoThumbnail';
@@ -13,6 +13,7 @@ import { WeightRepsScreen } from '../common/WeightRepsScreen';
 import { useLoadingLifts } from '../../../../context/LoadingLiftsContext';
 import { gymMovements } from '../../../../constants/gymMovements';
 import { CloseIcon } from '../../../../components/icons/icons';
+import { useCameraPermissions } from 'expo-camera';
 
 interface RecordModalProps {
   isVisible: boolean;
@@ -21,7 +22,8 @@ interface RecordModalProps {
 
 export function RecordModal({ isVisible, onClose }: RecordModalProps) {
   const { addLoadingLift } = useLoadingLifts();
-  const [permission, requestPermission] = useCameraPermissions();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
   const [isRecording, setIsRecording] = useState(false);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [recordingTime, setRecordingTime] = useState(0);
@@ -35,8 +37,13 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
   const [isCameraReady, setIsCameraReady] = useState(false);
   const [showCamera, setShowCamera] = useState(true);
   const [cameraKey, setCameraKey] = useState(0);
-  const cameraRef = useRef<CameraView>(null);
-  const recordingPromise = useRef<Promise<any> | null>(null);
+  const cameraRef = useRef<Camera>(null);
+  const [cameraFacing, setCameraFacing] = useState<'back' | 'front'>('back');
+  const [isTorchOn, setIsTorchOn] = useState(false);
+  const [isAudioEnabled, setIsAudioEnabled] = useState(false);
+  const device = useCameraDevice(cameraFacing);
+  const [permission, requestPermission] = useCameraPermissions();
+
 
   // Screen states
   const [showWeightReps, setShowWeightReps] = useState(false);
@@ -57,6 +64,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
 
   useEffect(() => {
     if (isVisible) {
+      // reflect current permission state, don't request automatically
       checkCameraPermission();
       setShowPractices(true);
       setShowVideoPreview(false);
@@ -69,7 +77,6 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
       setFilteredMovements([...gymMovements]);
       setIsCameraReady(false);
       setShowCamera(true);
-      recordingPromise.current = null;
       setUploadData(null);
     } else {
       // Reset states when modal becomes invisible
@@ -86,6 +93,11 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
       setUploadData(null);
     }
   }, [isVisible]);
+
+  // keep permission in sync when the hook updates
+  useEffect(() => {
+    checkCameraPermission();
+  }, [permission]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -115,12 +127,43 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
     setShowCamera(true);
   };
 
-  const checkCameraPermission = async () => {
-    if (permission?.granted) {
-      setHasPermission(true);
-    } else {
+  const checkCameraPermission = () => {
+    try {
+      if (permission == null) return;
+      setHasPermission(permission.granted);
+    } catch (e) {
+      console.error('Permission check failed:', e);
+      setHasPermission(false);
+    }
+  };
+
+  const requestCameraPermissionFromUser = async () => {
+    try {
       const result = await requestPermission();
+      if (!result.granted && result.canAskAgain === false) {
+        Linking.openSettings();
+        setHasPermission(false);
+        return;
+      }
       setHasPermission(result.granted);
+    } catch (e) {
+      console.error('Permission request failed:', e);
+      setHasPermission(false);
+    }
+  };
+
+  const requestCameraPermission = async () => {
+    try {
+      const result = await requestPermission();
+      if (!result.granted && result.canAskAgain === false) {
+        Linking.openSettings();
+        setHasPermission(false);
+        return;
+      }
+      setHasPermission(result.granted);
+    } catch (e) {
+      console.error('Permission check failed:', e);
+      setHasPermission(false);
     }
   };
 
@@ -134,9 +177,19 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
       hapticFeedback.selection();
       setIsRecording(true);
 
-      // Kick off recordAsync, but DON'T await it here:
-      recordingPromise.current = cameraRef.current.recordAsync({
-        maxDuration: 60,
+      cameraRef.current.startRecording({
+        fileType: Platform.OS === 'ios' ? 'mov' : 'mp4',
+        onRecordingFinished: (video: VideoFile) => {
+          const path = video.path as string;
+          const uri = path.startsWith('file://') ? path : `file://${path}`;
+          setRecordedVideoUri(uri);
+          setShowVideoPreview(true);
+        },
+        onRecordingError: error => {
+          console.error('Recording error:', error);
+          Alert.alert('Error', 'Recording failed. Please try again.');
+          setIsRecording(false);
+        },
       });
     } catch (error) {
       console.error('Error starting recording:', error);
@@ -146,21 +199,14 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
   };
 
   const handleStopRecording = async () => {
-    if (!cameraRef.current || !recordingPromise.current) {
+    if (!cameraRef.current || !isRecording) {
       console.log('Camera not ready or no recording in progress');
       return;
     }
 
     try {
       hapticFeedback.selection();
-      // Tell the Camera to stop
       cameraRef.current.stopRecording();
-      setIsRecording(false);
-
-      // Now await the same promise you saved
-      const video = await recordingPromise.current;
-      setRecordedVideoUri(video.uri);
-      setShowVideoPreview(true);
     } catch (e) {
       console.error('Failed to finish recording:', e);
       Alert.alert('Error', 'Recording failed to finish. Please try again.');
@@ -168,7 +214,6 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
       setIsRecording(false);
       setRecordingTime(0);
       setIsCameraReady(false);
-      recordingPromise.current = null;
       setCameraKey(prevKey => prevKey + 1);
     }
   };
@@ -322,25 +367,85 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
           onClose();
         }}
       >
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView 
+          style={[
+            styles.container,
+            { backgroundColor: isDark ? '#000000' : '#FFFFFF' }
+          ]}
+        >
           {/* Close Button */}
           <View style={styles.permissionTopControls}>
             <TouchableOpacity onPress={() => {
               hapticFeedback.selection();
               onClose();
-            }} style={styles.closeButton}>
-              <CloseIcon width={24} height={24} color="#8E8E93" />
+            }} style={[styles.closeButton]}>
+              <CloseIcon width={24} height={24} color={isDark ? '#8E8E93' : '#8E8E93'} />
             </TouchableOpacity>
           </View>
-          
-          <View style={styles.permissionContainer}>
-            <Text style={styles.permissionTitle}>Camera Permission Required</Text>
-            <Text style={styles.permissionDescription}>
-              Please grant camera permission to record videos.
+
+          {/* Main content */}
+          <View style={styles.permissionContentWrapper}>
+            {/* Title */}
+            <Text style={[styles.permissionMainTitle, { color: isDark ? '#FFFFFF' : '#000000' }]}>
+              {i18n.t('onboarding.cameraPermission.title')}
             </Text>
-            <TouchableOpacity style={styles.permissionButton} onPress={checkCameraPermission}>
-              <Text style={styles.permissionButtonText}>Grant Permission</Text>
-            </TouchableOpacity>
+
+            {/* Subtitle */}
+            <Text style={[styles.permissionSubtitle, { color: '#8E8E93' }]}>
+              {i18n.t('onboarding.cameraPermission.subtitle')}
+            </Text>
+
+            {/* Dialog */}
+            <View style={styles.permissionDialogWrapper}>
+              <View style={[
+                styles.permissionDialog,
+                {
+                  backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF',
+                  shadowColor: '#000000',
+                }
+              ]}>
+                <View style={[
+                  styles.permissionTextArea,
+                  { backgroundColor: isDark ? '#2C2C2E' : '#F2F2F7' }
+                ]}>
+                  <Text style={[
+                    styles.permissionDialogText,
+                    { color: isDark ? '#FFFFFF' : '#000000', fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto' }
+                  ]}>
+                    {i18n.t('onboarding.cameraPermission.dialogText')}
+                  </Text>
+                </View>
+
+                <View style={[
+                  styles.permissionButtonContainer,
+                  { borderTopColor: isDark ? '#2C2C2E' : '#E5E5EA', borderTopWidth: 1 }
+                ]}>
+                  <TouchableOpacity
+                    style={[styles.permissionButtonCommon, styles.permissionDontAllowButton, { backgroundColor: isDark ? '#2C2C2E' : '#F2F2F7' }]}
+                    onPress={() => hapticFeedback.selection()}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.permissionButtonText, { color: isDark ? '#FFFFFF' : '#000000', fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto' }]}>
+                      {i18n.t('onboarding.cameraPermission.dontAllow')}
+                    </Text>
+                  </TouchableOpacity>
+
+                  <View style={[styles.permissionButtonDivider, { backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF' }]} />
+
+                  <TouchableOpacity
+                    style={[styles.permissionButtonCommon, styles.permissionAllowButton, { backgroundColor: isDark ? '#FFFFFF' : '#000000' }]}
+                    onPress={requestCameraPermissionFromUser}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.permissionButtonText, { color: isDark ? '#000000' : '#FFFFFF', fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto' }]}>
+                      {i18n.t('onboarding.cameraPermission.allow')}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <Text style={styles.permissionPointingEmoji}>👆</Text>
+            </View>
           </View>
         </SafeAreaView>
       </Modal>
@@ -367,7 +472,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
             <TouchableOpacity onPress={() => {
               hapticFeedback.selection();
               onClose();
-            }} style={styles.closeButton}>
+            }} style={[styles.closeButton]}>
               <CloseIcon width={24} height={24} color="#8E8E93" />
             </TouchableOpacity>
           </View>
@@ -392,7 +497,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
             <View style={styles.titleContainer}>
               <Text style={styles.title}>Record Video</Text>
             </View>
-            <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
+            <TouchableOpacity onPress={handleClose} style={[styles.closeButton]}>
               <CloseIcon width={24} height={24} color="white" />
             </TouchableOpacity>
           </View>
@@ -416,7 +521,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
             <View style={styles.titleContainer}>
               <Text style={styles.title}>Record Video</Text>
             </View>
-            <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
+            <TouchableOpacity onPress={handleClose} style={[styles.closeButton]}>
               <CloseIcon width={24} height={24} color="#8E8E93" />
             </TouchableOpacity>
           </View>
@@ -443,7 +548,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
             <View style={styles.titleContainer}>
               <Text style={styles.title}>Record Video</Text>
             </View>
-            <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
+            <TouchableOpacity onPress={handleClose} style={[styles.closeButton]}>
               <CloseIcon width={24} height={24} color="#8E8E93" />
             </TouchableOpacity>
           </View>
@@ -460,14 +565,17 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
         // Camera Content
         <SafeAreaView style={styles.cameraSafeArea}>
           <View style={styles.cameraContainer}>
-            {showCamera && (
-              <CameraView
+            {showCamera && device && (
+              <Camera
                 key={cameraKey}
                 ref={cameraRef}
                 style={styles.camera}
-                facing="back"
-                mode='video'
-                onCameraReady={() => setIsCameraReady(true)}
+                device={device}
+                isActive={showCamera}
+                video={true}
+                audio={isAudioEnabled}
+                torch={isTorchOn ? 'on' : 'off'}
+                onInitialized={() => setIsCameraReady(true)}
               />
             )}
             
@@ -486,32 +594,32 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
                 </View>
               </View>
 
-              {/* Corner Guides */}
+              {/* Corner Guides
               <View style={styles.cornerGuides}>
                 {/* Top Left Corner */}
-                <View style={[styles.cornerGuide, styles.cornerTopLeft]}>
+                {/* <View style={[styles.cornerGuide, styles.cornerTopLeft]}>
                   <View style={[styles.cornerLine, styles.cornerLineHorizontal, styles.cornerLineTop, { borderTopLeftRadius: 4, borderTopRightRadius: 4 }]} />
                   <View style={[styles.cornerLine, styles.cornerLineVertical, styles.cornerLineLeft, { borderTopLeftRadius: 4, borderBottomLeftRadius: 4 }]} />
-                </View>
+                </View> */}
                 
                 {/* Top Right Corner */}
-                <View style={[styles.cornerGuide, styles.cornerTopRight]}>
+                {/* <View style={[styles.cornerGuide, styles.cornerTopRight]}>
                   <View style={[styles.cornerLine, styles.cornerLineHorizontal, styles.cornerLineTop, { borderTopLeftRadius: 4, borderTopRightRadius: 4 }]} />
                   <View style={[styles.cornerLine, styles.cornerLineVertical, styles.cornerLineRight, { borderTopRightRadius: 4, borderBottomRightRadius: 4 }]} />
-                </View>
+                </View> */}
                 
                 {/* Bottom Left Corner */}
-                <View style={[styles.cornerGuide, styles.cornerBottomLeft]}>
+                {/* <View style={[styles.cornerGuide, styles.cornerBottomLeft]}>
                   <View style={[styles.cornerLine, styles.cornerLineHorizontal, styles.cornerLineBottom, { borderBottomLeftRadius: 4, borderBottomRightRadius: 4 }]} />
                   <View style={[styles.cornerLine, styles.cornerLineVertical, styles.cornerLineLeft, { borderTopLeftRadius: 4, borderBottomLeftRadius: 4 }]} />
                 </View>
-                
+                 */}
                 {/* Bottom Right Corner */}
-                <View style={[styles.cornerGuide, styles.cornerBottomRight]}>
+                {/* <View style={[styles.cornerGuide, styles.cornerBottomRight]}>
                   <View style={[styles.cornerLine, styles.cornerLineHorizontal, styles.cornerLineBottom, { borderBottomLeftRadius: 4, borderBottomRightRadius: 4 }]} />
                   <View style={[styles.cornerLine, styles.cornerLineVertical, styles.cornerLineRight, { borderTopRightRadius: 4, borderBottomRightRadius: 4 }]} />
-                </View>
-              </View>
+                </View> */}
+              {/* </View> */}
 
               {/* Top Controls */}
               <View style={styles.topControls}>
@@ -521,6 +629,40 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
                   onClose();
                 }} style={styles.closeButton}>
                   <CloseIcon width={24} height={24} color="white" />
+                </TouchableOpacity>
+              </View>
+
+              {/* Side Toggles (Vision Camera style) */}
+              <View style={styles.sideToggles}>
+                <TouchableOpacity
+                  accessibilityLabel="Flip camera"
+                  onPress={() => {
+                    hapticFeedback.selection();
+                    setCameraFacing(prev => (prev === 'back' ? 'front' : 'back'));
+                  }}
+                  style={styles.toggleButton}
+                >
+                  <Ionicons name="camera-reverse" size={20} color="#FFFFFF" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  accessibilityLabel="Toggle torch"
+                  onPress={() => {
+                    hapticFeedback.selection();
+                    setIsTorchOn(v => !v);
+                  }}
+                  style={styles.toggleButton}
+                >
+                  <Ionicons name={isTorchOn ? 'flash' : 'flash-off'} size={20} color="#FFFFFF" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  accessibilityLabel="Toggle mic"
+                  onPress={() => {
+                    hapticFeedback.selection();
+                    setIsAudioEnabled(v => !v);
+                  }}
+                  style={styles.toggleButton}
+                >
+                  <Ionicons name={isAudioEnabled ? 'mic' : 'mic-off'} size={20} color="#FFFFFF" />
                 </TouchableOpacity>
               </View>
 
@@ -712,12 +854,98 @@ const styles = StyleSheet.create({
     bottom: 120,
     right: 30,
   },
+  sideToggles: {
+    position: 'absolute',
+    right: 20,
+    top: 80,
+    display: 'flex',
+    gap: 12,
+  },
+  toggleButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  toggleDisabled: {
+    opacity: 0.4,
+  },
   permissionContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 20,
-    backgroundColor: '#000000',
+    width: '100%',
+  },
+  permissionContentWrapper: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
+  permissionMainTitle: {
+    fontSize: 32,
+    marginTop: 60,
+    fontWeight: '700',
+    textAlign: 'center',
+    lineHeight: 38,
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
+  },
+  permissionSubtitle: {
+    fontSize: 17,
+    marginTop: 8,
+    textAlign: 'center',
+    lineHeight: 22,
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
+  permissionDialogWrapper: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  permissionDialog: {
+    width: '100%',
+    maxWidth: 320,
+    borderRadius: 16,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 8,
+    overflow: 'hidden',
+  },
+  permissionTextArea: {
+    padding: 24,
+    paddingBottom: 20,
+  },
+  permissionDialogText: {
+    fontSize: 17,
+    fontWeight: '600',
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  permissionButtonContainer: {
+    flexDirection: 'row',
+    height: 44,
+  },
+  permissionButtonCommon: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  permissionDontAllowButton: {},
+  permissionAllowButton: {},
+  permissionButtonText: {
+    fontSize: 17,
+    fontWeight: '600',
+  },
+  permissionButtonDivider: {
+    width: 1,
+    height: '100%',
+  },
+  permissionPointingEmoji: {
+    fontSize: 40,
+    marginTop: 20,
+    marginLeft: '55%',
   },
   permissionTitle: {
     fontSize: 24,
@@ -728,9 +956,9 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
   },
   permissionDescription: {
-    fontSize: 17,
-    fontWeight: '400',
-    color: '#8E8E93',
+    fontSize: 26,
+    fontWeight: '600',
+    color: '#000000',
     textAlign: 'center',
     lineHeight: 24,
     marginBottom: 32,
@@ -741,8 +969,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
   },
-  permissionButtonText: {
+  permissionButtonTextAlt: {
     color: 'white',
     fontSize: 17,
     fontWeight: '600',

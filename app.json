@@ -28,10 +28,17 @@
       "expo-mail-composer",
       "expo-video",
       "expo-apple-authentication",
+      "react-native-vision-camera",
       [
         "@react-native-google-signin/google-signin",
         {
           "iosUrlScheme": "com.googleusercontent.apps.338047674329-5dfpj06alfpfn0phi57c4bgdg6nihv87"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app accesses your photos to let you share them with your friends."
         }
       ]
     ],
@@ -48,6 +55,7 @@
           }
         ],
         "NSCameraUsageDescription": "This app uses the camera to record workout videos for lift analysis and form feedback.",
+        "NSMicrophoneUsageDescription": "This app uses the microphone while recording workout videos.",
         "ITSAppUsesNonExemptEncryption": false
       }
     },
