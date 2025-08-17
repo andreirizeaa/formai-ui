@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
   },
   tipImageContainer: {
     width: '60%',
-    height: 260,
+    height: 330,
     borderRadius: 12,
     overflow: 'hidden',
     backgroundColor: '#F0F0F0',

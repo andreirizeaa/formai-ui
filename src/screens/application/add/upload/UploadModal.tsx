@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity, Platform, Alert, Image, TextInput, ScrollView, Keyboard } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
+import { Camera } from 'expo-camera';
 import i18n from '../../../../utils/i18n';
 import { hapticFeedback } from '../../../../utils/haptic';
 import { generateVideoThumbnail } from '../../../../utils/generateVideoThumbnail';
@@ -61,16 +62,8 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
     hapticFeedback.selection();
     
     try {
-      // Request permission first
-      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      
-      if (permissionResult.granted === false) {
-        Alert.alert(i18n.t('upload.permissionRequired'), i18n.t('upload.permissionMessage'));
-        return;
-      }
-
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+        mediaTypes: 'videos',
         allowsEditing: true,
         aspect: [16, 9],
         quality: 1,
@@ -113,7 +106,17 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
       }
     } catch (error) {
       console.error('Error picking video:', error);
-      Alert.alert(i18n.t('upload.error'), i18n.t('upload.failedToSelectVideo'));
+      
+      // Handle permission errors specifically
+      if (error instanceof Error && error.message.includes('permission')) {
+        Alert.alert(
+          'Permission Required',
+          'Please allow access to your photo library to select videos.',
+          [{ text: 'OK' }]
+        );
+      } else {
+        Alert.alert('Error', 'Failed to select video. Please try again.');
+      }
     }
   };
 
@@ -252,7 +255,6 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
               buttonText={i18n.t('upload.uploadVideo')}
               tips={[
                 i18n.t('upload.tips.goodLighting'),
-                i18n.t('upload.tips.stableVideo'),
                 i18n.t('upload.tips.sideView')
               ]}
             />
