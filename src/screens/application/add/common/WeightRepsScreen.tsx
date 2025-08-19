@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, TextInput, Switch, Keyboard, KeyboardAvoidingView, TouchableWithoutFeedback } from 'react-native';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, TextInput, Keyboard, KeyboardAvoidingView, TouchableWithoutFeedback } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { hapticFeedback } from '../../../../utils/haptic';
+import { useUserDetails } from '../../../../context/UserDetailsContext';
 
 interface WeightRepsScreenProps {
   onBack: () => void;
@@ -11,13 +12,13 @@ interface WeightRepsScreenProps {
 
 export function WeightRepsScreen({ 
   onBack, 
-  onUpload, 
-  initialUnit = 'kg', 
+  onUpload,
 }: WeightRepsScreenProps) {
   const [weight, setWeight] = useState('');
-  const [unit, setUnit] = useState<'kg' | 'lbs'>(initialUnit);
   const [reps, setReps] = useState('');
   const [focusedInput, setFocusedInput] = useState<'weight' | 'reps' | null>(null);
+  const { userDetails } = useUserDetails();
+  const unit: 'kg' | 'lbs' = userDetails?.unitSystem === 'imperial' ? 'lbs' : 'kg';
   
   const weightInputRef = useRef<TextInput>(null);
   const repsInputRef = useRef<TextInput>(null);
@@ -29,11 +30,6 @@ export function WeightRepsScreen({
     }, 100);
     return () => clearTimeout(timer);
   }, []);
-
-  const handleUnitToggle = (value: boolean) => {
-    hapticFeedback.selection();
-    setUnit(value ? 'kg' : 'lbs');
-  };
 
   const handleBack = () => {
     hapticFeedback.selection();
@@ -65,6 +61,7 @@ export function WeightRepsScreen({
   };
 
   const handleKeyboardButtonPress = () => {
+    hapticFeedback.selection();
     if (focusedInput === 'weight') {
       handleWeightSubmit();
     } else if (focusedInput === 'reps') {
@@ -74,11 +71,6 @@ export function WeightRepsScreen({
 
   const handleInputFocus = (inputType: 'weight' | 'reps') => {
     setFocusedInput(inputType);
-  };
-
-  const handleDismissKeyboard = () => {
-    Keyboard.dismiss();
-    setFocusedInput(null);
   };
 
   const isUploadDisabled = !weight || parseFloat(weight) <= 0 || !reps || parseInt(reps) <= 0;
@@ -105,20 +97,6 @@ export function WeightRepsScreen({
             {/* Weight Section */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Weight</Text>
-              
-              {/* Unit Toggle */}
-              <View style={styles.unitToggleContainer}>
-                <Text style={styles.unitLabel}>lbs</Text>
-                <Switch
-                  value={unit === 'kg'}
-                  onValueChange={handleUnitToggle}
-                  trackColor={{ false: '#767577', true: '#000000' }}
-                  thumbColor="#f4f3f4"
-                  ios_backgroundColor="#767577"
-                  style={styles.switch}
-                />
-                <Text style={styles.unitLabel}>kg</Text>
-              </View>
 
               {/* Weight Input */}
               <View style={styles.inputContainer}>
@@ -229,22 +207,6 @@ const styles = StyleSheet.create({
     color: '#000000',
     marginBottom: 16,
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
-  },
-  unitToggleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 20,
-    gap: 16,
-  },
-  unitLabel: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#000000',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
-  },
-  switch: {
-    transform: [{ scaleX: 1.1 }, { scaleY: 1.1 }],
   },
   inputContainer: {
     flexDirection: 'row',
