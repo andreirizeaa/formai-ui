@@ -1,8 +1,7 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, Platform, Image } from 'react-native';
+import { View, StyleSheet, Platform, Image } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import i18n from '../../utils/i18n';
 
 interface LoadingScreenProps {
   onLoadComplete: () => void;
@@ -16,7 +15,7 @@ export function LoadingScreen({ onLoadComplete }: LoadingScreenProps) {
     // Simulate loading time
     const timer = setTimeout(() => {
       onLoadComplete();
-    }, 2000);
+    }, 3000);
 
     return () => clearTimeout(timer);
   }, [onLoadComplete]);
@@ -41,20 +40,6 @@ export function LoadingScreen({ onLoadComplete }: LoadingScreenProps) {
           />
         </View>
       </View>
-      
-      <View style={styles.bottomContainer}>
-        <Text 
-          style={[
-            styles.loadingText,
-            { 
-              color: isDark ? '#AEAEB2' : '#8E8E93',
-              fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
-            }
-          ]}
-        >
-          {i18n.t('loading')}
-        </Text>
-      </View>
     </SafeAreaView>
   );
 }
@@ -77,13 +62,5 @@ const styles = StyleSheet.create({
   icon: {
     width: 260,
     height: 260,
-  },
-  bottomContainer: {
-    paddingBottom: 50,
-    alignItems: 'center',
-  },
-  loadingText: {
-    fontSize: 14,
-    fontWeight: '400',
   },
 }); 

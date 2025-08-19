@@ -1,22 +1,32 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Platform, Alert, ActionSheetIOS, Modal, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Platform, Alert, ActionSheetIOS, Modal, Image, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BackIcon, MoreHorizontalIcon, ShareIcon, StarIcon, HeartIcon, TrashIcon, CloseIcon, InfoIcon } from '../../../components/icons/icons';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { LineChart } from 'react-native-chart-kit';
 import { hapticFeedback } from '../../../utils/haptic';
-import { useLiftData } from '../../../context/LiftDataContext';
+import { useLiftData, ILiftData } from '../../../context/LiftDataContext';
+import { deleteLift as deleteLiftApi, favouriteLift as favouriteLiftApi } from '../../../services/liftService';
 import i18n from '../../../utils/i18n';
 
 interface VideoPlayerComponentProps {
   videoUri: string;
+  onReady: () => void;
 }
 
-function VideoPlayerComponent({ videoUri }: VideoPlayerComponentProps) {
+function VideoPlayerComponent({ videoUri, onReady }: VideoPlayerComponentProps) {
   const player = useVideoPlayer(videoUri, (player) => {
     player.loop = false;
     player.showNowPlayingNotification = false;
+    player.play();
   });
+
+  React.useEffect(() => {
+    const timeout = setTimeout(() => {
+      onReady();
+    }, 1000);
+    return () => clearTimeout(timeout);
+  }, [onReady]);
 
   return (
     <VideoView
@@ -26,37 +36,31 @@ function VideoPlayerComponent({ videoUri }: VideoPlayerComponentProps) {
   );
 }
 
-export interface ILiftData {
-  id: string;
-  isFavourite: boolean;
-  liftType: string;
-  liftDate: string;
-  weightValue: number;
-  weightUnit: string;
-  reps: number;
-  videoURL: any;
-  thumbnailURL?: any;
-  analysis: {
-    accuracy: number;
-    lineGraphValues: number[];
-    feedback: Array<{
-      imageURL: any;
-      flaws: string;
-      improvement: string;
-    }>;
-  };
-}
-
 interface LiftDetailsProps {
   onClose: () => void;
   onShowFeedbackSlideshow: () => void;
   liftData: ILiftData;
 }
 
-export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData }: LiftDetailsProps) {
-  const { removeLift, updateLift } = useLiftData();
+export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initialLiftData }: LiftDetailsProps) {
+  const { removeLift, updateLift, refreshLifts, liftData: contextLiftData, favouriteLiftAndRefresh } = useLiftData();
   const [showDropdown, setShowDropdown] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isVideoLoading, setIsVideoLoading] = useState(true);
+  
+  // Simple boolean for favourite state - starts with the initial value
+  const [isFavourite, setIsFavourite] = useState(initialLiftData.isFavourite);
+
+  // Get the current lift data from context, falling back to the prop if not found
+  const currentLiftData = contextLiftData.find(lift => lift.id === initialLiftData.id) || initialLiftData;
+
+  // Update local state when context data changes
+  useEffect(() => {
+    const freshData = contextLiftData.find(lift => lift.id === initialLiftData.id);
+    if (freshData) {
+      setIsFavourite(freshData.isFavourite);
+    }
+  }, [contextLiftData, initialLiftData.id]);
 
   const handleClose = () => {
     hapticFeedback.selection();
@@ -75,13 +79,14 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData }: Lift
     setShowDeleteModal(true);
   };
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     hapticFeedback.success();
-    
-    // Remove the lift from the context
-    removeLift(liftData.id);
-    setShowDeleteModal(false);
-    onClose(); // Close the lift details screen after deletion
+    const ok = await deleteLiftApi(currentLiftData.id);
+    if (ok) {
+      removeLift(currentLiftData.id);
+      setShowDeleteModal(false);
+      onClose();
+    }
   };
 
   const handleDeleteCancel = () => {
@@ -89,10 +94,14 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData }: Lift
     setShowDeleteModal(false);
   };
 
-  const handleStarPress = () => {
+  const handleStarPress = async () => {
     hapticFeedback.selection();
-    const newFavouriteState = !liftData.isFavourite;
-    updateLift(liftData.id, { isFavourite: newFavouriteState });
+    
+    // Immediately toggle the favourite state
+    setIsFavourite(prev => !prev);
+    
+    // Make API call in background - no need to wait for response
+    favouriteLiftAndRefresh(currentLiftData.id);
   };
 
   const handleActionSheet = () => {
@@ -112,12 +121,21 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData }: Lift
     handleDeleteLift();
   };
 
-  // Form score data using liftData
+  // Form score data using currentLiftData
+  const repsCount = Math.max(1, Number(currentLiftData.reps || 0));
+  const labels = Array.from({ length: repsCount }, (_, i) => String(i + 1));
+  const dataArray = Array.isArray(currentLiftData.analysis.lineGraphValues)
+    ? currentLiftData.analysis.lineGraphValues
+    : [];
+  const paddedData = dataArray.length >= repsCount
+    ? dataArray.slice(0, repsCount)
+    : [...dataArray, ...Array(repsCount - dataArray.length).fill(0)];
+
   const formScoreData = {
-    labels: ['1', '2', '3', '4', '5', '6', '7', '8'],
+    labels,
     datasets: [
       {
-        data: liftData.analysis.lineGraphValues,
+        data: paddedData,
         color: (opacity = 1) => `#000000`,
         strokeWidth: 2,
       },
@@ -156,22 +174,38 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData }: Lift
         
         <View style={styles.content}>
           {/* Video Player */}
-          <View style={[styles.video]}>
-            <Text>No video available</Text>
+          <View style={styles.videoContainer}>
+            {currentLiftData.poseVideoURL ? (
+              <>
+                <VideoPlayerComponent 
+                  videoUri={currentLiftData.poseVideoURL}
+                  onReady={() => setIsVideoLoading(false)}
+                />
+                {isVideoLoading && (
+                  <View style={styles.videoLoadingOverlay}>
+                    <ActivityIndicator size="large" color="#FFFFFF" />
+                  </View>
+                )}
+              </>
+            ) : (
+              <View style={styles.noVideoContainer}>
+                <Text style={styles.noVideoText}>No video available</Text>
+              </View>
+            )}
           </View>
 
           {/* Pills Row */}
           <View style={styles.pillsRow}>
             <View style={styles.leftPills}>
               <View style={styles.pill}>
-                <Text style={styles.pillText}>{liftData.liftType || 'Bench Press'}</Text>
+                <Text style={styles.pillText}>{currentLiftData.liftType || 'Bench Press'}</Text>
               </View>
               <View style={styles.pill}>
-                <Text style={styles.pillText}>{liftData.liftDate || '4 Sep, 2025'}</Text>
+                <Text style={styles.pillText}>{currentLiftData.liftDate || '4 Sep, 2025'}</Text>
               </View>
             </View>
             <View style={styles.orangePill}>
-              <Text style={styles.pillText}>{liftData.analysis.accuracy || 91}%</Text>
+              <Text style={styles.pillText}>{currentLiftData.analysis.accuracy || 91}%</Text>
             </View>
           </View>
 
@@ -221,7 +255,7 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData }: Lift
             <View style={styles.halfCard}>
               <Text style={styles.halfCardTitle}>Weight</Text>
               <Text style={styles.halfCardValue}>
-                {liftData.weightValue || '--'} {liftData.weightUnit || ''}
+                {currentLiftData.weightValue || '--'}
               </Text>
             </View>
             
@@ -229,7 +263,7 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData }: Lift
             <View style={styles.halfCard}>
               <Text style={styles.halfCardTitle}>Reps</Text>
               <Text style={styles.halfCardValue}>
-                {liftData.reps || '--'}
+                {currentLiftData.reps || '--'}
               </Text>
             </View>
           </View>
@@ -263,7 +297,7 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData }: Lift
               activeOpacity={0.7}
             >
               <Text style={styles.dropdownOptionText}>Favourite</Text>
-              <HeartIcon width={20} height={20} color="#000000" filled={liftData.isFavourite} />
+              <HeartIcon width={20} height={20} color="#FF3B30" filled={isFavourite} />
             </TouchableOpacity>
             <View style={styles.dropdownDivider} />
             <TouchableOpacity 
@@ -397,6 +431,28 @@ const styles = StyleSheet.create({
   video: {
     width: '100%',
     height: 200,
+  },
+  videoLoadingOverlay: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.3)'
+  },
+  noVideoContainer: {
+    width: '100%',
+    height: 200,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#000000'
+  },
+  noVideoText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600'
   },
   optionRow: {
     flexDirection: 'row',

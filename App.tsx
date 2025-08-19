@@ -18,6 +18,7 @@ import { WalletCreditProvider } from './src/context/WalletCreditContext';
 import { getUserId, removeUserId } from './src/services/storageService';
 import { fetchUserById, requiresOnboarding, requiresPayment } from './src/services/userService';
 import { supabase } from './src/lib/supabase';
+import { LoadingScreen } from './src/screens/onboarding/LoadingScreen';
 
 export default function App() {
   const queryClientRef = React.useRef<QueryClient | null>(null);
@@ -100,10 +101,13 @@ export default function App() {
         setShowOnboarding(false);
       } catch (e) {
         console.warn('Bootstrap error:', e);
-        setShowOnboarding(true);
+      setShowOnboarding(true);
         setOnboardingInitialRoute('Welcome');
       } finally {
-        setIsLoading(false);
+        // Add extra 1 second delay before hiding loading screen
+        setTimeout(() => {
+          setIsLoading(false);
+        }, 2000);
       }
     }
 
@@ -157,9 +161,7 @@ export default function App() {
   if (isLoading) {
     return (
       <SafeAreaProvider>
-        <View style={styles.container}>
-          <Text style={styles.text}>Loading...</Text>
-        </View>
+        <LoadingScreen onLoadComplete={() => {}} />
       </SafeAreaProvider>
     );
   }
@@ -170,13 +172,13 @@ export default function App() {
         <LanguageProvider>
           <WalletCreditProvider>
             <UserDetailsProvider>
-              <LoadingLiftsProvider>
-                <LiftDataProvider>
+              <LiftDataProvider>
+                <LoadingLiftsProvider>
                   <StreakProvider>
                     <MainAppLayout onLogout={handleLogout} />
                   </StreakProvider>
-                </LiftDataProvider>
-              </LoadingLiftsProvider>
+                </LoadingLiftsProvider>
+              </LiftDataProvider>
             </UserDetailsProvider>
           </WalletCreditProvider>
         </LanguageProvider>

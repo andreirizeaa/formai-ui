@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Platform, TouchableOpacity, Image, Dimensions, ScrollView } from 'react-native';
-import { ILiftData } from '../screens/application/feedback/liftDetails';
-import { PanGestureHandler, State } from 'react-native-gesture-handler';
+import { ILiftData, useLiftData } from '../context/LiftDataContext';
+import { PanGestureHandler } from 'react-native-gesture-handler';
 import Animated, { 
   useSharedValue, 
   useAnimatedStyle, 
@@ -9,12 +9,12 @@ import Animated, {
   runOnJS,
   withSpring,
   withTiming,
-  interpolate,
-  Extrapolate
+  Easing
 } from 'react-native-reanimated';
 import i18n from '../utils/i18n';
-import { CloseIcon } from './icons/icons';
+import { TrashIcon } from './icons/icons';
 import { hapticFeedback } from '../utils/haptic';
+import { deleteLift as deleteLiftApi } from '../services/liftService';
 
 interface LiftDataCardProps {
   lift: ILiftData;
@@ -25,146 +25,204 @@ interface LiftDataCardProps {
 }
 
 export function LiftDataCard({ lift, onPress, onDelete, style, scrollViewRef }: LiftDataCardProps) {
+  // Pager translate between 0 (page 1) and -pageWidth (page 2)
   const translateX = useSharedValue(0);
-  const deleteButtonOpacity = useSharedValue(0);
+  const pageWidth = useSharedValue(0);
+  const loadingProgress = useSharedValue(0);
+  const autoResetTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const countdownTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
+  const { removeLift } = useLiftData();
 
-  const handlePress = () => {
-    if (onPress) {
-      onPress(lift);
-    }
-  };
+  // Circle sizing to guarantee perfect overlap between base ring and progress ring
+  const CIRCLE_SIZE = 44;
+  const STROKE = 3;
+  const circleBaseStyle = { width: CIRCLE_SIZE, height: CIRCLE_SIZE, borderRadius: CIRCLE_SIZE / 2, borderWidth: STROKE } as const;
+  const progressBaseStyle = { position: 'absolute' as const, top: -STROKE, left: -STROKE, right: -STROKE, bottom: -STROKE, borderRadius: CIRCLE_SIZE / 2 + STROKE, borderWidth: STROKE };
 
-  const handleDelete = () => {
-    if (onDelete) {
-      onDelete(lift.id);
+  function handlePress() {
+    onPress?.(lift);
+  }
+
+  function handleDelete() {
+    const liftId = lift.id;
+    hapticFeedback.success();
+    // Optimistically remove from context
+    removeLift(liftId);
+    // Fire-and-forget API call
+    deleteLiftApi(liftId).catch(() => {});
+  }
+
+  function startAutoReset() {
+    if (autoResetTimeoutRef.current) clearTimeout(autoResetTimeoutRef.current);
+    if (countdownTimeoutRef.current) clearTimeout(countdownTimeoutRef.current);
+    setRemainingSeconds(2);
+    loadingProgress.value = withTiming(100, { duration: 2000, easing: Easing.linear });
+    autoResetTimeoutRef.current = setTimeout(() => {
+      resetCard();
+    }, 2000);
+    countdownTimeoutRef.current = setTimeout(() => {
+      setRemainingSeconds(1);
+    }, 1000);
+  }
+
+  function resetCard() {
+    hapticFeedback.error();
+    translateX.value = withTiming(0, { duration: 0 });
+    loadingProgress.value = withTiming(0, { duration: 0 });
+    if (autoResetTimeoutRef.current) {
+      clearTimeout(autoResetTimeoutRef.current);
+      autoResetTimeoutRef.current = null;
     }
-  };
+    if (countdownTimeoutRef.current) {
+      clearTimeout(countdownTimeoutRef.current);
+      countdownTimeoutRef.current = null;
+    }
+    setRemainingSeconds(null);
+  }
 
   const gestureHandler = useAnimatedGestureHandler({
     onStart: (_, context: any) => {
       context.startX = translateX.value;
     },
     onActive: (event, context: any) => {
-      // Only respond to horizontal gestures (ignore vertical scrolling)
-      const horizontalThreshold = 10; // Minimum horizontal movement to start gesture
-      const verticalThreshold = 20; // Maximum vertical movement allowed
-      
-      // If vertical movement is greater than horizontal, ignore the gesture
-      if (Math.abs(event.translationY) > Math.abs(event.translationX) + verticalThreshold) {
-        return;
-      }
-      
-      // Only start gesture if horizontal movement exceeds threshold
-      if (Math.abs(event.translationX) < horizontalThreshold) {
-        return;
-      }
-      
-      const newTranslateX = context.startX + event.translationX;
-      translateX.value = Math.min(0, Math.max(-100, newTranslateX));
-      
-      // Show delete button when swiping left
-      if (translateX.value < -20) {
-        deleteButtonOpacity.value = withTiming(1, { duration: 200 });
-      } else {
-        deleteButtonOpacity.value = withTiming(0, { duration: 200 });
-      }
+      const horizontalThreshold = 10;
+      const verticalThreshold = 20;
+      if (Math.abs(event.translationY) > Math.abs(event.translationX) + verticalThreshold) return;
+      if (Math.abs(event.translationX) < horizontalThreshold) return;
+
+      const minX = -pageWidth.value;
+      const maxX = 0;
+      const next = context.startX + event.translationX;
+      translateX.value = Math.max(minX, Math.min(maxX, next));
     },
     onEnd: (event) => {
-      // If swiped far enough, delete the item
-      if (translateX.value < -80) {
-        translateX.value = withTiming(-100, { duration: 200 });
-        runOnJS(handleDelete)();
-      } else {
-        // Snap back to original position
+      const threshold = 50;
+      const goLeft = event.translationX < -threshold;
+      const goRight = event.translationX > threshold;
+      if (goLeft) {
+        translateX.value = withSpring(-pageWidth.value);
+        runOnJS(hapticFeedback.selection)();
+        runOnJS(startAutoReset)();
+      } else if (goRight) {
         translateX.value = withSpring(0);
-        deleteButtonOpacity.value = withTiming(0, { duration: 200 });
+        runOnJS(hapticFeedback.selection)();
+      } else {
+        // snap to nearest page
+        const mid = -pageWidth.value / 2;
+        const goDelete = translateX.value < mid;
+        translateX.value = withSpring(goDelete ? -pageWidth.value : 0);
+        if (goDelete) {
+          runOnJS(hapticFeedback.selection)();
+          runOnJS(startAutoReset)();
+        } else {
+          runOnJS(hapticFeedback.selection)();
+        }
       }
     },
   });
 
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ translateX: translateX.value }],
+  useEffect(() => {
+    return () => {
+      if (autoResetTimeoutRef.current) clearTimeout(autoResetTimeoutRef.current);
+      if (countdownTimeoutRef.current) clearTimeout(countdownTimeoutRef.current);
     };
-  });
+  }, []);
 
-  const deleteButtonStyle = useAnimatedStyle(() => {
-    return {
-      opacity: deleteButtonOpacity.value,
-      transform: [{ translateX: translateX.value }],
-    };
-  });
+  const pagerStyle = useAnimatedStyle(() => ({
+    width: pageWidth.value * 2,
+    transform: [{ translateX: translateX.value }],
+  }));
 
-  const cardStyle = [
-    styles.liftCard,
-    style,
-  ];
+  const loadingProgressStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${(loadingProgress.value / 100) * 360}deg` }],
+  }));
 
   return (
-    <View style={styles.container}>
-      {/* Delete Button Background */}
-      <Animated.View style={[styles.deleteButton, deleteButtonStyle]}>
-        <TouchableOpacity 
-          style={styles.deleteButtonContent}
-          onPress={handleDelete}
-          activeOpacity={0.8}
+    <View style={[styles.cardWrapper, style]}
+      onLayout={(e) => {
+        const w = e.nativeEvent.layout.width;
+        if (w && w !== pageWidth.value) {
+          pageWidth.value = w;
+        }
+      }}
+    >
+      <View style={styles.clipper}>
+        <PanGestureHandler 
+          onGestureEvent={gestureHandler}
+          shouldCancelWhenOutside={true}
+          activeOffsetX={[-10, 10]}
+          failOffsetY={[-5, 5]}
         >
-          <CloseIcon width={24} height={24} color="#FFFFFF" />
-        </TouchableOpacity>
-      </Animated.View>
-
-      {/* Main Card */}
-      <PanGestureHandler 
-        onGestureEvent={gestureHandler}
-        shouldCancelWhenOutside={true}
-        activeOffsetX={[-10, 10]}
-        failOffsetY={[-5, 5]}
-      >
-        <Animated.View style={[cardStyle, animatedStyle]}>
-          <TouchableOpacity 
-            onPress={handlePress}
-            activeOpacity={0.7}
-            style={styles.liftCardContent}
-            disabled={!onPress}
-          >
-            {/* Video Thumbnail - Left 25% */}
-            <View style={styles.videoThumbnailContainer}>
-              {lift.thumbnailURL ? (
-                <Image
-                  source={{ uri: lift.thumbnailURL }}
-                  style={styles.videoThumbnail}
-                  resizeMode="cover"
-                  onError={() => {
-                    console.warn('Failed to load thumbnail:', lift.thumbnailURL);
-                  }}
-                />
-              ) : (
-                <Image
-                  source={require('../../assets/placeholder-thumbnail.png')}
-                  style={styles.videoThumbnail}
-                  resizeMode="cover"
-                />
-              )}
-            </View>
-            
-            {/* Content - Right 75% */}
-            <View style={styles.liftContent}>
-              <View style={styles.liftHeader}>
-                <Text style={styles.liftName} numberOfLines={1} ellipsizeMode="tail">
-                  {lift.liftType}
-                </Text>
-                <Text style={styles.liftDate}>{lift.liftDate}</Text>
-              </View>
-              <View style={styles.liftAccuracyContainer}>
-                <Text style={styles.accuracyLabel}>{i18n.t('liftCard.accuracy')}</Text>
-                <View style={styles.accuracyPill}>
-                  <Text style={styles.accuracyValue}>{lift.analysis.accuracy}%</Text>
+          <Animated.View style={[styles.pager, pagerStyle]}>
+            {/* Page 1: Lift Data */}
+            <View style={[styles.page, styles.pageLift, { width: '50%' }]}> 
+              <TouchableOpacity 
+                onPress={handlePress}
+                activeOpacity={0.7}
+                style={styles.liftCardContent}
+                disabled={!onPress}
+              >
+                {/* Video Thumbnail - Left 25% */}
+                <View style={styles.videoThumbnailContainer}>
+                  {lift.thumbnailURL ? (
+                    <Image
+                      source={{ uri: lift.thumbnailURL }}
+                      style={styles.videoThumbnail}
+                      resizeMode="cover"
+                      onError={() => {
+                        console.warn('Failed to load thumbnail:', lift.thumbnailURL);
+                      }}
+                    />
+                  ) : (
+                    <Image
+                      source={require('../../assets/placeholder-thumbnail.png')}
+                      style={styles.videoThumbnail}
+                      resizeMode="cover"
+                    />
+                  )}
                 </View>
+                
+                {/* Content - Right 75% */}
+                <View style={styles.liftContent}>
+                  <View style={styles.liftHeader}>
+                    <Text style={styles.liftName} numberOfLines={1} ellipsizeMode="tail">
+                      {lift.liftType}
+                    </Text>
+                    <Text style={styles.liftDate}>{lift.liftDate}</Text>
+                  </View>
+                  <View style={styles.liftAccuracyContainer}>
+                    <Text style={styles.accuracyLabel}>{i18n.t('liftCard.accuracy')}</Text>
+                    <View style={styles.accuracyPill}>
+                      <Text style={styles.accuracyValue}>{lift.analysis.accuracy}%</Text>
+                    </View>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            </View>
+
+            {/* Page 2: Delete */}
+            <View style={[styles.page, styles.pageDelete, { width: '50%' }]}> 
+              <View style={styles.deleteCardContent}>
+                <TouchableOpacity 
+                  onPress={handleDelete}
+                  activeOpacity={0.8}
+                  accessibilityRole="button"
+                  accessibilityLabel="Delete lift"
+                >
+                  <View style={[styles.loadingCircle, circleBaseStyle]}>
+                    {/* Animated ring (below icon so icon appears on top) */}
+                    <Animated.View style={[styles.loadingProgress, progressBaseStyle, loadingProgressStyle]} />
+                    {/* Centered trash icon inside the circle */}
+                    <TrashIcon width={20} height={20} color="#FFFFFF" />
+                  </View>
+                </TouchableOpacity>
+                <Text style={styles.loadingText}>{(remainingSeconds ?? 2)}s</Text>
               </View>
             </View>
-          </TouchableOpacity>
-        </Animated.View>
-      </PanGestureHandler>
+          </Animated.View>
+        </PanGestureHandler>
+      </View>
     </View>
   );
 }
@@ -172,50 +230,48 @@ export function LiftDataCard({ lift, onPress, onDelete, style, scrollViewRef }: 
 const { width } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
-  container: {
-    position: 'relative',
-  },
-  deleteButton: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 120, // Reduced height to be smaller than the card
-    backgroundColor: '#000000', // Black background for delete button
-    borderRadius: 18, // Match card border radius
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1,
-  },
-  deleteButtonContent: {
-    padding: 10,
-  },
-  liftCard: {
+  cardWrapper: {
     backgroundColor: '#FFFFFF',
     borderRadius: 18,
-    padding: 20,
+    padding: 0,
     marginBottom: 16,
     shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 8,
   },
+  clipper: {
+    borderRadius: 18,
+    overflow: 'hidden',
+  },
+  pager: {
+    flexDirection: 'row',
+  },
+  page: {
+    height: 120,
+    justifyContent: 'center',
+  },
+  pageLift: {
+    backgroundColor: '#FFFFFF',
+    padding: 20,
+  },
+  pageDelete: {
+    backgroundColor: '#fb2c36',
+    alignItems: 'center',
+  },
   liftCardContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: -20, // Extend beyond card padding
+    marginHorizontal: -20,
   },
   videoThumbnailContainer: {
     height: 120,
-    width: width * 0.25, // 25% of screen width
+    width: width * 0.25,
     overflow: 'hidden',
-    borderTopLeftRadius: 18, // Only left side border radius
-    borderBottomLeftRadius: 18, // Only left side border radius
-    marginVertical: -20, // Extend beyond card padding
+    borderTopLeftRadius: 18,
+    borderBottomLeftRadius: 18,
+    marginVertical: -20,
   },
   videoThumbnail: {
     width: '100%',
@@ -224,8 +280,8 @@ const styles = StyleSheet.create({
   },
   liftContent: {
     flex: 1,
-    paddingLeft: 16, // Add padding to separate from video
-    paddingRight: 16, // Add padding to prevent text from touching right edge
+    paddingLeft: 16,
+    paddingRight: 16,
   },
   liftHeader: {
     flexDirection: 'row',
@@ -270,5 +326,28 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     paddingHorizontal: 10,
     paddingVertical: 5,
+  },
+  deleteCardContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: '100%',
+  },
+  loadingCircle: {
+    borderColor: 'rgba(255, 255, 255, 0.35)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  loadingProgress: {
+    borderColor: '#FFFFFF',
+    borderTopColor: 'transparent',
+    borderLeftColor: 'transparent',
+  },
+  loadingText: {
+    fontSize: 10,
+    color: '#FFFFFF',
+    fontWeight: '600',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+    marginTop: 6,
   },
 }); 

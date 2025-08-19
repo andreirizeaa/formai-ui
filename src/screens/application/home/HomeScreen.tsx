@@ -3,9 +3,9 @@ import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, Dimensions
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { hapticFeedback } from '../../../utils/haptic';
 import { useLoadingLifts } from '../../../context/LoadingLiftsContext';
-import { useLiftData } from '../../../context/LiftDataContext';
+import { useLiftData, ILiftData } from '../../../context/LiftDataContext';
+import { deleteLift as deleteLiftApi } from '../../../services/liftService';
 import { LoadingLiftCard } from './LoadingLiftCard';
-import { ILiftData } from '../feedback/liftDetails';
 import { LiftDataCard } from '../../../components/LiftDataCard';
 import { SwipeableCalendar } from '../../../components/ui/SwipeableCalendar';
 import { useUserDetails } from '../../../context/UserDetailsContext';
@@ -31,8 +31,8 @@ interface HomeScreenProps {
 }
 
 export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibrary, onShowShare, onTriggerAddOptions, onNavigateToPerformance }: HomeScreenProps) {
-  const { loadingLifts, completedLifts } = useLoadingLifts();
-  const { liftData, addLift, removeLift, getLiftsByDate, formatDateForLift } = useLiftData();
+  const { loadingLifts } = useLoadingLifts();
+  const { liftData, removeLift, getLiftsByDate, formatDateForLift, refreshLifts } = useLiftData();
   const { userDetails } = useUserDetails();
   const { daysLogged } = useStreak();
   
@@ -52,17 +52,8 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
   // ScrollView ref for gesture handling
   const scrollViewRef = useRef<ScrollView>(null);
   
-  // Get lifts for the selected date from both contexts
-  const liftsForSelectedDateFromContext: ILiftData[] = getLiftsByDate(selectedDate);
-  
-  // Filter completed lifts for the selected date
-  const selectedDateString = formatDateForLift(selectedDate);
-  const completedLiftsForSelectedDate: ILiftData[] = completedLifts.filter(lift => 
-    lift.liftDate === selectedDateString
-  );
-  
-  // Combine both sources of lift data
-  const liftsForSelectedDate: ILiftData[] = [...completedLiftsForSelectedDate, ...liftsForSelectedDateFromContext];
+  // Lifts for the selected date from LiftDataContext only
+  const liftsForSelectedDate: ILiftData[] = getLiftsByDate(selectedDate);
   
   // Calculate average accuracy for the selected date
   const averageAccuracy = useMemo(() => {
@@ -129,9 +120,13 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
     onShowFeedback(lift);
   };
 
-  const handleDeleteLift = (liftId: string) => {
+  const handleDeleteLift = async (liftId: string) => {
     hapticFeedback.success();
-    removeLift(liftId);
+    const ok = await deleteLiftApi(liftId);
+    if (ok) {
+      // Refresh data from backend after successful deletion
+      await refreshLifts();
+    }
   };
 
   const handleLibraryPress = () => {
@@ -210,49 +205,10 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
     };
   });
 
-  // Test function to add sample lifts with the selected date
-  const handleAddTestLift = async () => {
-    hapticFeedback.selection();
-    
-    // Generate a random lift type
-    const liftTypes = ['Bench Press', 'Squat', 'Deadlift', 'Overhead Press', 'Pull-up'];
-    const randomLiftType = liftTypes[Math.floor(Math.random() * liftTypes.length)];
-    
-    // Generate random weight and reps
-    const randomWeight = Math.floor(Math.random() * 200) + 50;
-    const randomReps = Math.floor(Math.random() * 10) + 1;
-    const randomAccuracy = Math.floor(Math.random() * 40) + 60; // 60-100%
-    
-    const testLift: ILiftData = {
-      id: Date.now().toString(),
-      isFavourite: false,
-      liftType: randomLiftType,
-      liftDate: formatDateForLift(selectedDate),
-      weightValue: randomWeight,
-      weightUnit: 'lbs',
-      reps: randomReps,
-      videoURL: 'https://example.com/video.mp4',
-      thumbnailURL: 'https://picsum.photos/200/300',
-      analysis: {
-        accuracy: randomAccuracy,
-        lineGraphValues: Array.from({ length: 10 }, () => Math.random() * 100),
-        feedback: [
-          { 
-            imageURL: require('../../../../assets/feedback.png'), 
-            flaws: 'Incorrect form - back not straight', 
-            improvement: 'Keep your back straight and engage your core' 
-          },
-          { 
-            imageURL: require('../../../../assets/feedback.png'), 
-            flaws: 'Weight dropped too quickly', 
-            improvement: 'Control the descent and maintain tension throughout the movement' 
-          }
-        ]
-      }
-    };
-    
-    addLift(testLift);
-  };
+  // Ensure we load lifts from backend on first mount
+  useEffect(() => {
+    void refreshLifts();
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -268,13 +224,6 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
             style={styles.logo}
             resizeMode="contain"
           />
-          {/* Test button - remove this in production */}
-          <TouchableOpacity 
-            style={styles.testButton}
-            onPress={handleAddTestLift}
-          >
-            <Text style={styles.testButtonText}>{i18n.t('home.addTestLift')}</Text>
-          </TouchableOpacity>
         </View>
         
         {/* Swipeable Calendar */}
@@ -499,18 +448,6 @@ const styles = StyleSheet.create({
   logo: {
     width: 160,
     height: 40,
-  },
-  testButton: {
-    backgroundColor: 'transparent',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  testButtonText: {
-    color: 'transparent',
-    fontSize: 14,
-    fontWeight: '600',
-    fontFamily: 'SF Pro Text',
   },
   scrollView: {
     flex: 1,

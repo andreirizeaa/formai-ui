@@ -10,6 +10,7 @@ import { RouteProp } from '@react-navigation/native';
 import { FilterModal } from './FilterModal';
 import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import { useLiftData } from '../../../context/LiftDataContext';
+import { deleteLift as deleteLiftApi } from '../../../services/liftService';
 import { Picker } from '@react-native-picker/picker';
 import i18n from '../../../utils/i18n';
 import Animated, { 
@@ -59,7 +60,7 @@ type LibraryRouteProp = RouteProp<MainStackParamList, 'Library'>;
 export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProps) {
   const navigation = useNavigation<LibraryNavigationProp>();
   const route = useRoute<LibraryRouteProp>();
-  const { liftData, removeLift, toggleFavourite } = useLiftData();
+  const { liftData, removeLift, toggleFavourite, refreshLifts } = useLiftData();
   
   const [sortOption, setSortOption] = useState<SortOption>('newest');
   const [filterOption, setFilterOption] = useState<FilterOption>(route.params?.selectedFilters || []);
@@ -97,10 +98,14 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
   }, [route.params?.selectedFilters]);
 
   // Memoize handlers to prevent unnecessary re-renders
-  const handleDeleteLift = useCallback((liftId: string) => {
+  const handleDeleteLift = useCallback(async (liftId: string) => {
     hapticFeedback.success();
-    removeLift(liftId);
-  }, [removeLift]);
+    const ok = await deleteLiftApi(liftId);
+    if (ok) {
+      // Refresh data from backend after successful deletion
+      await refreshLifts();
+    }
+  }, [refreshLifts]);
 
   // Filter lift data based on date range
   const filteredByDateLiftData = useMemo(() => {

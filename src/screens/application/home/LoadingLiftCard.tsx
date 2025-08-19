@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Animated, { 
   useSharedValue, 
   useAnimatedStyle, 
-  withRepeat, 
+  withRepeat,
   withTiming,
   withSequence,
   interpolate
@@ -21,13 +21,23 @@ interface LoadingLiftCardProps {
     thumbnailUri: string;
     movementType: string;
     weightValue: number;
-    weightUnit: 'kg' | 'lbs';
+    weightUnit?: 'kg' | 'lbs';
     reps: number;
     dateToday: string;
     progress: number;
     isComplete: boolean;
     status: 'uploading' | 'processing' | 'completed' | 'error';
     errorMessage?: string;
+    finalData?: {
+      id: string;
+      isFavourite: boolean;
+      liftType: string;
+      liftDate: string;
+      weightValue: number;
+      reps: number;
+      thumbnailURL?: string;
+      analysis: { accuracy: number };
+    };
   };
 }
 
@@ -37,6 +47,7 @@ export function LoadingLiftCard({ lift }: LoadingLiftCardProps) {
   const line1Anim = useSharedValue(0);
   const line2Anim = useSharedValue(0);
   const line3Anim = useSharedValue(0);
+  const fadeAnim = useSharedValue(1);
 
   useEffect(() => {
     // Only animate if not in error state
@@ -76,6 +87,11 @@ export function LoadingLiftCard({ lift }: LoadingLiftCardProps) {
         -1,
         true
       );
+    }
+
+    // Add fade transition when status changes to completed
+    if (lift.status === 'completed') {
+      fadeAnim.value = withTiming(0.8, { duration: 300 });
     }
   }, [lift.status]);
 
@@ -182,6 +198,51 @@ export function LoadingLiftCard({ lift }: LoadingLiftCardProps) {
           </View>
         </View>
       </View>
+    );
+  }
+
+  // Show completed state with final data if available
+  if (lift.status === 'completed' && lift.finalData && lift.finalData.id) {
+    const finalData = lift.finalData;
+    const fadeStyle = useAnimatedStyle(() => ({
+      opacity: fadeAnim.value,
+    }));
+    
+    return (
+      <Animated.View style={[styles.liftCard, fadeStyle]}>
+        <View style={styles.liftCardContent}>
+          {/* Video Thumbnail - Left 25% */}
+          <View style={styles.videoThumbnailContainer}>
+            <Image
+              source={{ uri: finalData.thumbnailURL || lift.thumbnailUri }}
+              style={styles.videoThumbnail}
+              resizeMode="cover"
+              onError={() => {
+                console.warn('Failed to load thumbnail:', finalData.thumbnailURL || lift.thumbnailUri);
+              }}
+            />
+            {/* Success overlay */}
+            <View style={styles.successOverlay}>
+              <Ionicons name="checkmark-circle" size={32} color="#34C759" />
+            </View>
+          </View>
+          
+          {/* Content - Right 75% */}
+          <View style={styles.liftContent}>
+            <View style={styles.liftDetails}>
+              <Text style={styles.completedTitle}>
+                {finalData.liftType}
+              </Text>
+              <Text style={styles.completedSubtitle}>
+                {finalData.weightValue} {lift.weightUnit || 'kg'} × {finalData.reps} reps
+              </Text>
+              <Text style={styles.accuracyText}>
+                Accuracy: {finalData.analysis.accuracy}%
+              </Text>
+            </View>
+          </View>
+        </View>
+      </Animated.View>
     );
   }
 
@@ -383,5 +444,33 @@ const styles = StyleSheet.create({
     backgroundColor: '#F2F2F7',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  successOverlay: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 16,
+    padding: 4,
+  },
+  completedTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#000000',
+    marginBottom: 4,
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
+  completedSubtitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#8E8E93',
+    marginBottom: 8,
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
+  accuracyText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#34C759',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
 }); 
