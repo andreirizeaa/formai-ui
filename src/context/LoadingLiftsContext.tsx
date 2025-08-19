@@ -1,18 +1,43 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { ILiftData } from '../screens/application/feedback/liftDetails';
+import { ILiftData } from './LiftDataContext';
+import { getUserId } from '../services/storageService';
+import { analyzeLift } from '../services/liftService';
+import { uploadLiftVideo, uploadLiftThumbnail } from '../services/VideoUploadService';
+import { useLiftData } from './LiftDataContext';
 
-interface LoadingLiftData {
+export interface LoadingLiftData {
   id: string;
+  videoLink: string;
   thumbnailUri: string;
   movementType: string;
   weightValue: number;
-  weightUnit: 'kg' | 'lbs';
+  weightUnit?: 'kg' | 'lbs';
   reps: number;
   dateToday: string;
   progress: number;
   isComplete: boolean;
   status: 'uploading' | 'processing' | 'completed' | 'error';
   errorMessage?: string;
+  // Pipeline metadata
+  pipelineStage?: 'upload_video' | 'upload_thumbnail' | 'analyze';
+  failureStage?: 'upload_video' | 'upload_thumbnail' | 'analyze';
+  // Source local URIs for retrying uploads
+  sourceVideoUri?: string;
+  sourceThumbnailUri?: string;
+  // Uploaded URLs retained for retrying analysis
+  uploadedVideoUrl?: string;
+  uploadedThumbnailUrl?: string;
+  // In-place completion data to avoid flicker (subset for card rendering)
+  finalData?: {
+    id: string;
+    isFavourite: boolean;
+    liftType: string;
+    liftDate: string;
+    weightValue: number;
+    reps: number;
+    thumbnailURL?: string;
+    analysis: { accuracy: number; lineGraphValues?: number[]; feedback?: any[] };
+  };
 }
 
 interface LoadingLiftsContextType {
@@ -35,44 +60,14 @@ interface LoadingLiftsProviderProps {
 export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
   const [loadingLifts, setLoadingLifts] = useState<LoadingLiftData[]>([]);
   const [completedLifts, setCompletedLifts] = useState<ILiftData[]>([]);
+  const { refreshLifts } = useLiftData();
 
-  // Mock API function - replace with real API call
-  const analyzeVideo = async (liftData: LoadingLiftData): Promise<ILiftData> => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 5000 + Math.random() * 2000));
-    // Return successful analysis data in ILiftData format
-    return {
-      id: liftData.id,
-      isFavourite: false,
-      liftType: liftData.movementType,
-      liftDate: formatLiftDate(liftData.dateToday),
-      weightValue: liftData.weightValue,
-      weightUnit: liftData.weightUnit.toUpperCase(),
-      reps: liftData.reps,
-      videoURL: 'https://example.com/video.mp4', // Mock video URL
-      thumbnailURL: liftData.thumbnailUri,
-      analysis: {
-        accuracy: generateAccuracy(liftData.movementType),
-        lineGraphValues: generateRandomLineGraph(),
-        feedback: [
-          { 
-            imageURL: require('../../assets/feedback.png'), 
-            flaws: 'Incorrect form - back not straight', 
-            improvement: 'Keep your back straight and engage your core' 
-          },
-          { 
-            imageURL: require('../../assets/feedback.png'), 
-            flaws: 'Weight dropped too quickly', 
-            improvement: 'Control the descent and maintain tension throughout the movement' 
-          },
-          { 
-            imageURL: require('../../assets/feedback.png'), 
-            flaws: 'Incorrect grip position', 
-            improvement: 'Use a wider grip for better stability and power' 
-          }
-        ]
-      }
-    };
+  // Call backend to analyze the lift
+  const analyzeVideo = async (liftData: LoadingLiftData) => {
+    const userId = await getUserId();
+    if (!userId) return { success: false, data: null };
+    const result = await analyzeLift(userId, liftData);
+    return result;
   };
 
   const addLoadingLift = async (liftData: Omit<LoadingLiftData, 'id' | 'progress' | 'isComplete' | 'status'>): Promise<string> => {
@@ -84,59 +79,23 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
       progress: 0,
       isComplete: false,
       status: 'uploading',
+      pipelineStage: 'upload_video',
+      failureStage: undefined,
+      sourceVideoUri: liftData.videoLink,
+      sourceThumbnailUri: liftData.thumbnailUri,
+      uploadedVideoUrl: undefined,
+      uploadedThumbnailUrl: undefined,
     };
     
     setLoadingLifts(prev => [newLift, ...prev]);
     
-    try {
-      // Simulate upload phase (0-30%)
-      await simulateUpload(newLift.id);
-      
-      // Update status to processing
-      setLoadingLifts(prev => 
-        prev.map(lift => 
-          lift.id === newLift.id ? { ...lift, status: 'processing' } : lift
-        )
-      );
-      
-      // Simulate processing phase (30-90%)
-      await simulateProcessing(newLift.id);
-      
-      // Call mock API for analysis
-      const analysisData = await analyzeVideo(newLift);
-      
-      // Complete the lift with analysis data
-      completeLift(newLift.id, analysisData);
-      
-    } catch (error) {
-      // Handle API errors
-      setLoadingLifts(prev => 
-        prev.map(lift => 
-          lift.id === newLift.id ? { 
-            ...lift, 
-            status: 'error', 
-            errorMessage: error instanceof Error ? error.message : 'Unknown error occurred'
-          } : lift
-        )
-      );
-    }
+    // Fire-and-forget processing pipeline with fresh lift snapshot
+    void processLiftPipeline(newLift);
     
     return liftId;
   };
 
-  const simulateUpload = async (liftId: string) => {
-    for (let progress = 0; progress <= 30; progress += 5) {
-      await new Promise(resolve => setTimeout(resolve, 200));
-      updateLiftProgress(liftId, progress);
-    }
-  };
-
-  const simulateProcessing = async (liftId: string) => {
-    for (let progress = 30; progress <= 90; progress += 10) {
-      await new Promise(resolve => setTimeout(resolve, 300 + Math.random() * 200));
-      updateLiftProgress(liftId, progress);
-    }
-  };
+  // Remove local simulation in favor of backend-driven progress updates if needed
 
   const updateLiftProgress = (id: string, progress: number) => {
     setLoadingLifts(prev => 
@@ -146,71 +105,125 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
     );
   };
 
-  const completeLift = (id: string, analysisData?: ILiftData) => {
-    setLoadingLifts(prevLoadingLifts => {
-      const loadingLift = prevLoadingLifts.find(lift => lift.id === id);
-      
-      if (loadingLift && analysisData) {
-        // Add to completed lifts after the loading lift is removed
-        setTimeout(() => {
-          setCompletedLifts(prev => [analysisData, ...prev]);
-        }, 2000);
-      }
+  async function processLiftPipeline(initialLift: LoadingLiftData, startStage?: 'upload_video' | 'upload_thumbnail' | 'analyze') {
+    // Set processing state
+    setLoadingLifts(prev => 
+      prev.map(lift => lift.id === initialLift.id ? { ...lift, status: 'processing', errorMessage: undefined, failureStage: undefined } : lift)
+    );
 
-      // Update loading lift to complete
-      return prevLoadingLifts.map(lift => 
-        lift.id === id ? { ...lift, progress: 100, isComplete: true, status: 'completed' } : lift
-      );
-    });
+    const userId = await getUserId();
+    if (!userId) {
+      setLoadingLifts(prev => prev.map(lift => lift.id === initialLift.id ? { ...lift, status: 'error', failureStage: startStage ?? 'upload_video', errorMessage: 'No userId available' } : lift));
+      return;
+    }
+
+    // Keep a local, authoritative snapshot
+    let current = { ...initialLift } as LoadingLiftData;
+
+    // Stage 1: Upload Video
+    try {
+      setLoadingLifts(prev => prev.map(lift => lift.id === current.id ? { ...lift, pipelineStage: 'upload_video', progress: Math.max(lift.progress, 10) } : lift));
+      if (!startStage || startStage === 'upload_video') {
+        const videoSource = current.sourceVideoUri ?? current.videoLink;
+        const { publicUrl: videoUrl } = await uploadLiftVideo(userId, videoSource);
+        current.uploadedVideoUrl = videoUrl;
+        setLoadingLifts(prev => prev.map(l => l.id === current.id ? { ...l, uploadedVideoUrl: videoUrl } : l));
+      }
+    } catch (error) {
+      setLoadingLifts(prev => prev.map(l => l.id === current.id ? { ...l, status: 'error', failureStage: 'upload_video', errorMessage: error instanceof Error ? error.message : 'Video upload failed' } : l));
+      return;
+    }
+
+    // Stage 2: Upload Thumbnail
+    try {
+      setLoadingLifts(prev => prev.map(lift => lift.id === current.id ? { ...lift, pipelineStage: 'upload_thumbnail', progress: Math.max(lift.progress, 30) } : lift));
+      if (!startStage || startStage === 'upload_video' || startStage === 'upload_thumbnail') {
+        const thumbSource = current.sourceThumbnailUri ?? current.thumbnailUri;
+        const { publicUrl: thumbUrl } = await uploadLiftThumbnail(userId, thumbSource);
+        current.uploadedThumbnailUrl = thumbUrl;
+        setLoadingLifts(prev => prev.map(l => l.id === current.id ? { ...l, uploadedThumbnailUrl: thumbUrl } : l));
+      }
+    } catch (error) {
+      setLoadingLifts(prev => prev.map(l => l.id === current.id ? { ...l, status: 'error', failureStage: 'upload_thumbnail', errorMessage: error instanceof Error ? error.message : 'Thumbnail upload failed' } : l));
+      return;
+    }
+
+    // Stage 3: Analyze
+    try {
+      setLoadingLifts(prev => prev.map(lift => lift.id === current.id ? { ...lift, pipelineStage: 'analyze', progress: Math.max(lift.progress, 60) } : lift));
+      const videoUrl = current.uploadedVideoUrl ?? current.videoLink;
+      const thumbUrl = current.uploadedThumbnailUrl ?? current.thumbnailUri;
+      const liftForAnalysis: LoadingLiftData = { ...current, videoLink: videoUrl, thumbnailUri: thumbUrl };
+      const result = await analyzeVideo(liftForAnalysis);
+      if (!result.success) throw new Error('Analysis failed');
+      // If API returns the final data for the card, store it to prevent flicker
+      if (result.data) {
+        setLoadingLifts(prev => prev.map(l => l.id === current.id ? { ...l, finalData: mapApiDataToFinalData(result.data) } : l));
+      }
+      // Mark as complete with the analysis data
+      completeLift(current.id, result.data);
+      // Refresh lifts in background
+      void (async () => { try { await refreshLifts(); } catch (_) {} })();
+    } catch (error) {
+      setLoadingLifts(prev => prev.map(l => l.id === current.id ? { ...l, status: 'error', failureStage: 'analyze', errorMessage: error instanceof Error ? error.message : 'Analysis failed' } : l));
+      return;
+    }
+  }
+
+  function mapApiDataToFinalData(data: any) {
+    return {
+      id: data.id,
+      isFavourite: !!data.is_favourite,
+      liftType: data.lift_type,
+      liftDate: data.lift_date,
+      weightValue: Number(data.weight_value),
+      reps: Number(data.reps),
+      thumbnailURL: data.thumbnail_url ?? data.thumbnailURL ?? undefined,
+      analysis: {
+        accuracy: Number(data.analysis?.accuracy ?? 0),
+        lineGraphValues: Array.isArray(data.analysis?.lineGraphValues) ? data.analysis.lineGraphValues : [],
+        feedback: Array.isArray(data.analysis?.feedback) ? data.analysis.feedback : [],
+      },
+    };
+  }
+
+  const completeLift = (id: string, analysisData?: any) => {
+    // Update the loading lift to completed state but keep it visible
+    setLoadingLifts(prev => 
+      prev.map(lift => 
+        lift.id === id 
+          ? { 
+              ...lift, 
+              progress: 100, 
+              isComplete: true, 
+              status: 'completed',
+              finalData: analysisData ? mapApiDataToFinalData(analysisData) : lift.finalData
+            } 
+          : lift
+      )
+    );
     
-    // Remove the loading lift after 2 seconds
+    // Remove the completed loading lift after a short delay to allow smooth transition
     setTimeout(() => {
       removeLift(id);
-    }, 2000);
+      // Refresh lifts in background to show the new data card
+      void (async () => { 
+        try { 
+          await refreshLifts(); 
+        } catch (_) {} 
+      })();
+    }, 500); // Reduced from 2000ms to 500ms for smoother transition
   };
 
   const retryLift = async (id: string) => {
     const lift = loadingLifts.find(l => l.id === id);
     if (!lift) return;
 
-    // Reset lift to initial state
-    setLoadingLifts(prev => 
-      prev.map(l => 
-        l.id === id ? { 
-          ...l, 
-          progress: 0, 
-          isComplete: false, 
-          status: 'uploading',
-          errorMessage: undefined
-        } : l
-      )
-    );
-
-    try {
-      await simulateUpload(id);
-      
-      setLoadingLifts(prev => 
-        prev.map(l => 
-          l.id === id ? { ...l, status: 'processing' } : l
-        )
-      );
-      
-      await simulateProcessing(id);
-      
-      const analysisData = await analyzeVideo(lift);
-      completeLift(id, analysisData);
-      
-    } catch (error) {
-      setLoadingLifts(prev => 
-        prev.map(l => 
-          l.id === id ? { 
-            ...l, 
-            status: 'error', 
-            errorMessage: error instanceof Error ? error.message : 'Unknown error occurred'
-          } : l
-        )
-      );
-    }
+    // Determine stage to restart from
+    const stage: 'upload_video' | 'upload_thumbnail' | 'analyze' = lift.failureStage ?? lift.pipelineStage ?? 'upload_video';
+    // Reset error and set processing
+    setLoadingLifts(prev => prev.map(l => l.id === id ? { ...l, status: 'processing', errorMessage: undefined } : l));
+    await processLiftPipeline(lift, stage);
   };
 
   const removeLift = (id: string) => {
@@ -221,51 +234,7 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
     setCompletedLifts(prev => prev.filter(lift => lift.id !== id));
   };
 
-  // Helper function to format date for completed lifts
-  const formatLiftDate = (dateString: string) => {
-    const today = new Date().toISOString().split('T')[0];
-    if (dateString === today) {
-      // Use the same format as LiftDataContext for consistency
-      const day = String(new Date().getDate()).padStart(2, '0');
-      const month = String(new Date().getMonth() + 1).padStart(2, '0');
-      const year = new Date().getFullYear();
-      return `${day}-${month}-${year}`;
-    }
-    // For other dates, also use the same format
-    const date = new Date(dateString);
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    return `${day}-${month}-${year}`;
-  };
-
-  // Helper function to generate random line graph values
-  const generateRandomLineGraph = () => {
-    const values = [];
-    let baseValue = Math.floor(Math.random() * 20) + 80; // Base between 80-100
-    
-    for (let i = 0; i < 8; i++) {
-      const variation = Math.floor(Math.random() * 10) - 5; // -5 to +5 variation
-      values.push(Math.max(70, Math.min(100, baseValue + variation)));
-    }
-    
-    return values;
-  };
-
-  // Helper function to generate realistic accuracy based on movement type
-  const generateAccuracy = (movementType: string) => {
-    // Different movements might have different typical accuracy ranges
-    const movementAccuracyRanges: { [key: string]: [number, number] } = {
-      'Bench Press': [85, 95],
-      'Squat': [80, 90],
-      'Deadlift': [75, 85],
-      'Shoulder Press': [80, 90],
-      'Barbell Row': [85, 95],
-    };
-
-    const range = movementAccuracyRanges[movementType] || [80, 95];
-    return Math.floor(Math.random() * (range[1] - range[0] + 1)) + range[0];
-  };
+  // All mock helpers removed; rely on backend data
 
   return (
     <LoadingLiftsContext.Provider
