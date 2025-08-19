@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, Dimensions, Text, Platform, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { CloseIcon, BackIcon, PlayIcon, ForwardIcon, ChevronUpIcon, ChevronDownIcon } from '../../../components/icons/icons';
+import { CloseIcon, BackIcon, PlayIcon, ForwardIcon, ChevronUpIcon, ChevronDownIcon, CheckmarkCircleIcon, CircledXIcon } from '../../../components/icons/icons';
 import { hapticFeedback } from '../../../utils/haptic';
 
 interface FeedbackSlideshowProps {
@@ -134,19 +134,41 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, liftData }
       return null; // No content in bottom container for image view or when collapsed
     }
 
+    const isIssues = currentPageType === 'flaws';
+    const listRaw = isIssues ? feedbackItem.flaws : feedbackItem.improvement;
+    const items: string[] = Array.isArray(listRaw)
+      ? listRaw as unknown as string[]
+      : typeof listRaw === 'string'
+        ? (listRaw as string).split(/\n+/).map(s => s.trim()).filter(Boolean)
+        : [];
+
     return (
       <View style={styles.bottomContentContainer}>
         <Text style={styles.bottomContentTitle}>
-          {currentPageType === 'flaws' ? 'Issues' : 'Tips'}
+          {isIssues ? 'Issues' : 'Tips'}
         </Text>
-        <Text style={styles.bottomContentText}>
-          {currentPageType === 'flaws' ? feedbackItem.flaws : feedbackItem.improvement}
-        </Text>
+        <View style={styles.listContainer}>
+          {items.map((text, idx) => (
+            <View key={`${isIssues ? 'issue' : 'tip'}-${idx}`} style={styles.listItem}>
+              {isIssues ? (
+                <CircledXIcon width={20} height={20} color="#FF3B30" />
+              ) : (
+                <CheckmarkCircleIcon width={20} height={20} color="#00c950" />
+              )}
+              <Text style={styles.listItemText}>{text}</Text>
+            </View>
+          ))}
+          {items.length === 0 && (
+            <Text style={styles.bottomContentText}>No {isIssues ? 'issues' : 'tips'} provided.</Text>
+          )}
+        </View>
       </View>
     );
   };
 
   const feedbackItem = getCurrentFeedbackItem();
+
+  console.log('feedbackItem', feedbackItem);
 
   return (
     <View style={styles.container}>
@@ -167,7 +189,7 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, liftData }
           {feedbackItem && (
             <View style={styles.imageContainer}>
               <Image 
-                source={feedbackItem.imageURL} 
+                source={typeof feedbackItem.imageURL === 'string' ? { uri: feedbackItem.imageURL } : feedbackItem.imageURL}
                 style={styles.feedbackImage}
                 resizeMode="cover"
               />
@@ -335,6 +357,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 20,
     flex: 1,
+  },
+  listContainer: {
+    gap: 10,
+  },
+  listItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 6,
+  },
+  listItemText: {
+    fontSize: 16,
+    fontWeight: '400',
+    color: '#000000',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+    flexShrink: 1,
   },
   bottomContentTitle: {
     fontSize: 24,

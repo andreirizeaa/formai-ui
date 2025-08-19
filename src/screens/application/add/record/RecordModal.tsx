@@ -10,7 +10,7 @@ import { VideoPreviewScreen } from '../common/VideoPreviewScreen';
 import { MovementSelectionScreen } from '../common/MovementSelectionScreen';
 import { PracticesScreen } from '../common/PracticesScreen';
 import { WeightRepsScreen } from '../common/WeightRepsScreen';
-import { useLoadingLifts } from '../../../../context/LoadingLiftsContext';
+import { LoadingLiftData, useLoadingLifts } from '../../../../context/LoadingLiftsContext';
 import { gymMovements } from '../../../../constants/gymMovements';
 import { CloseIcon } from '../../../../components/icons/icons';
 import { useCameraPermissions } from 'expo-camera';
@@ -58,7 +58,6 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
     dateToday: string;
     movementType: string;
     weightValue: number;
-    weightUnit: 'kg' | 'lbs';
     reps: number;
   } | null>(null);
 
@@ -148,21 +147,6 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
       setHasPermission(result.granted);
     } catch (e) {
       console.error('Permission request failed:', e);
-      setHasPermission(false);
-    }
-  };
-
-  const requestCameraPermission = async () => {
-    try {
-      const result = await requestPermission();
-      if (!result.granted && result.canAskAgain === false) {
-        Linking.openSettings();
-        setHasPermission(false);
-        return;
-      }
-      setHasPermission(result.granted);
-    } catch (e) {
-      console.error('Permission check failed:', e);
       setHasPermission(false);
     }
   };
@@ -276,40 +260,24 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
 
   const handleFinalCompleteClicked = async (data: { weight: number; unit: 'kg' | 'lbs'; reps: number }) => {
     setWeightData(data);
+    const videoUri = recordedVideoUri || '';
+    const today = new Date().toISOString().split('T')[0];
+
+    // Close the modal immediately
+    onClose();
 
     try {
-      // Generate thumbnail from the video URI
-      const thumbnailUri = await generateVideoThumbnail(recordedVideoUri || '');
-
-      // Create the upload data object with thumbnail
-      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
-      const uploadDataObj = {
-        videoLink: recordedVideoUri || '',
-        thumbnailUri: thumbnailUri,
+      const thumbnailUri = await generateVideoThumbnail(videoUri);
+      // Enqueue the loading lift without awaiting
+      void addLoadingLift({
+        videoLink: videoUri,
+        thumbnailUri,
         dateToday: today,
         movementType: selectedMovement,
         weightValue: data.weight,
-        weightUnit: data.unit,
         reps: data.reps,
-      };
-      setUploadData(uploadDataObj);
-      
-      // Add to loading lifts
-      addLoadingLift({
-        thumbnailUri: thumbnailUri,
-        movementType: selectedMovement,
-        weightValue: data.weight,
-        weightUnit: data.unit,
-        reps: data.reps,
-        dateToday: today,
       });
-      
-      // Triple important haptic feedback for distinct feedback
       hapticFeedback.success();
-      
-      // Here you would typically upload the video to your server
-      // For now, we'll just close the modal
-      onClose();
     } catch (error) {
       console.error('Error generating thumbnail:', error);
       Alert.alert('Error', 'Failed to generate video thumbnail. Please try again.');
