@@ -19,7 +19,7 @@ import Animated, {
   runOnJS 
 } from 'react-native-reanimated';
 import i18n from '../../../utils/i18n';
-import { CloseIcon, CircularProgressChart } from '../../../components/icons/icons';
+import { CloseIcon, CircularProgressChart, ChevronRightIcon } from '../../../components/icons/icons';
 
 interface HomeScreenProps {
   onShowFeedback: (liftData: ILiftData) => void;
@@ -133,10 +133,7 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
     onShowLibrary();
   };
 
-  const handleReferCardPress = () => {
-    hapticFeedback.selection();
-    onShowShare();
-  };
+
 
   const handleNoLiftsPress = () => {
     hapticFeedback.selection();
@@ -223,6 +220,18 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
             style={styles.logo}
             resizeMode="contain"
           />
+          <TouchableOpacity 
+            style={styles.streakBadge}
+            activeOpacity={0.7}
+            onPress={handleFireCardPress}
+          >
+            <Image 
+              source={require('../../../../assets/icons/fire.png')}
+              style={styles.streakBadgeIcon}
+              resizeMode="contain"
+            />
+            <Text style={styles.streakBadgeText}>{userDetails?.currentStreak ?? 0}</Text>
+          </TouchableOpacity>
         </View>
         
         {/* Swipeable Calendar */}
@@ -278,53 +287,13 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
         <View style={styles.spacer} />
         
         <View style={styles.bottomContent}>
-          <View style={styles.topCardsContainer}>
-            <TouchableOpacity 
-              style={styles.fireCard}
-              activeOpacity={0.7}
-              onPress={handleFireCardPress}
-            >
-              <View style={styles.fireCardContent}>
-                <Image 
-                  source={require('../../../../assets/icons/fire.png')}
-                  style={styles.fireIcon}
-                  resizeMode="contain"
-                />
-                <Text style={styles.fireNumber}>{userDetails?.currentStreak ?? 0}</Text>
-              </View>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>{i18n.t('home.lifts')}</Text>
+            <TouchableOpacity style={styles.seeAllPill} onPress={handleLibraryPress} activeOpacity={0.7}>
+              <Text style={styles.seeAllText}>{i18n.t('home.seeAll')}</Text>
+              <ChevronRightIcon width={16} height={16} color="#8E8E93" />
             </TouchableOpacity>
-            
-            <View style={styles.rightCardsContainer}>
-              <TouchableOpacity 
-                style={styles.blankCard}
-                onPress={handleReferCardPress}
-                activeOpacity={0.7}
-              >
-                <ImageBackground 
-                  source={require('../../../../assets/homescreen-refer-image.png')}
-                  style={styles.blankCardBackground}
-                  imageStyle={styles.blankCardImage}
-                  resizeMode="cover"
-                >
-                  <View style={styles.blankCardOverlay}>
-                    <Text style={styles.blankCardTitle}>{i18n.t('home.earnByReferring')}</Text>
-                  </View>
-                </ImageBackground>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={[styles.topCard, styles.libraryCard]}
-                onPress={handleLibraryPress}
-                activeOpacity={0.7}
-              >
-                <View style={styles.topCardContent}>
-                  <Text style={styles.topCardTitle}>{i18n.t('home.yourVideoLibrary')}</Text>
-                </View>
-              </TouchableOpacity>
-            </View>
           </View>
-          
-          <Text style={styles.sectionTitle}>{i18n.t('home.lifts')}</Text>
           <View 
             style={styles.liftsScrollView} 
           >
@@ -408,10 +377,18 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
             </View>
 
             {/* Streak text */}
-            <Text style={styles.streakText}>{i18n.t('home.dayStreak', { count: userDetails?.currentStreak ?? 0 })}</Text>
+            <Text style={styles.streakText}>
+              {(userDetails?.currentStreak ?? 0) === 0
+                ? i18n.t('home.zeroDayStreak')
+                : i18n.t('home.dayStreak', { count: userDetails?.currentStreak ?? 0 })}
+            </Text>
 
             {/* Message */}
-            <Text style={styles.message}>{i18n.t('home.onFireMessage')}</Text>
+            <Text style={styles.message}>
+              {(userDetails?.currentStreak ?? 0) === 0
+                ? i18n.t('home.noStreakMessage')
+                : i18n.t('home.onFireMessage')}
+            </Text>
 
             {/* Action button */}
             <TouchableOpacity 
@@ -448,6 +425,25 @@ const styles = StyleSheet.create({
     width: 160,
     height: 40,
   },
+  streakBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  streakBadgeIcon: {
+    width: 18,
+    height: 18,
+  },
+  streakBadgeText: {
+    marginLeft: 2,
+    fontSize: 17,
+    fontWeight: '500',
+    color: '#000000',
+    fontFamily: 'SF Pro Display',
+  },
   scrollView: {
     flex: 1,
     marginBottom: -62,
@@ -458,12 +454,34 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: 20,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
   sectionTitle: {
     fontSize: 22,
     fontWeight: '600',
     color: '#000000',
-    marginBottom: 16,
     fontFamily: 'SF Pro Display',
+  },
+  seeAllText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#8E8E93',
+    fontFamily: 'SF Pro Text',
+  },
+  seeAllPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+    backgroundColor: 'transparent',
+    gap: 4,
   },
   spacer: {
     flex: 1,
@@ -512,79 +530,7 @@ const styles = StyleSheet.create({
     fontFamily: 'SF Pro Text',
     textAlign: 'center',
   },
-  topCardsContainer: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 16,
-  },
-  topCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    padding: 16,
-    alignItems: 'flex-start',
-    justifyContent: 'center',
-    shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  libraryCard: {
-    width: '100%',
-    backgroundColor: '#ffffff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  blankCard: {
-    flex: 1,
-    backgroundColor: 'transparent',
-  },
-  blankCardBackground: {
-    borderRadius: 18,
-    height: 60,
-    alignItems: 'flex-start',
-    justifyContent: 'center',
-    shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  blankCardImage: {
-    borderRadius: 18,
-  },
-  blankCardContent: {
-    padding: 20,
-  },
-  blankCardTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#ffffff',
-    fontFamily: 'SF Pro Text',
-  },
-  blankCardSubtitle: {
-    fontSize: 14,
-    fontWeight: '400',
-    color: '#8E8E93',
-    fontFamily: 'SF Pro Text',
-    textAlign: 'center',
-  },
-  topCardContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  topCardTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#000000',
-    fontFamily: 'SF Pro Text',
-  },
+
   blankCardOverlay: {
     position: 'absolute',
     top: 0,
@@ -677,11 +623,7 @@ const styles = StyleSheet.create({
     color: '#000000',
     fontFamily: 'SF Pro Display',
   },
-  rightCardsContainer: {
-    flexDirection: 'column',
-    gap: 12,
-    width: '70%',
-  },
+
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
