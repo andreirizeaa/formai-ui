@@ -1,15 +1,15 @@
-import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, Dimensions } from 'react-native';
+import React, { useMemo, useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Platform, TouchableOpacity } from 'react-native';
 import { PanGestureHandler } from 'react-native-gesture-handler';
-import Animated, { 
-  useSharedValue, 
-  useAnimatedGestureHandler, 
-  useAnimatedStyle, 
-  withSpring, 
-  runOnJS 
-} from 'react-native-reanimated';
-import { CircularProgressChartWithCustomInner } from '../icons/icons';
+import Animated, { useSharedValue, useAnimatedGestureHandler, useAnimatedStyle, withSpring, runOnJS } from 'react-native-reanimated';
 import { hapticFeedback } from '../../utils/haptic';
+import { CircularProgressChart } from '../icons/icons';
+
+interface SwipeableSummaryCardProps {
+  cardData: any[];
+  onTriggerAddOptions?: () => void;
+  hasNoLifts?: boolean;
+}
 
 interface SummaryCardData {
   title: string;
@@ -17,92 +17,95 @@ interface SummaryCardData {
   color: string;
 }
 
-interface SwipeableSummaryCardProps {
-  cardData: any[]; // Raw lift data
-  onTriggerAddOptions?: () => void;
-  hasNoLifts?: boolean;
+function parseDateDDMMYYYY(dateStr: string): Date | null {
+  if (!dateStr || typeof dateStr !== 'string') return null;
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return null;
+  const [day, month, year] = parts.map(Number);
+  if (!day || !month || !year) return null;
+  return new Date(year, month - 1, day);
+}
+
+function calculateAverageFormImprovement(lifts: Array<{ liftDate?: string; analysis?: { accuracy?: number } }>): number {
+  if (!Array.isArray(lifts) || lifts.length < 2) return 0;
+
+  const sorted = [...lifts]
+    .map(l => ({
+      date: parseDateDDMMYYYY((l as any).liftDate),
+      accuracy: typeof (l as any)?.analysis?.accuracy === 'number' ? (l as any).analysis.accuracy : null,
+    }))
+    .filter(it => it.date && typeof it.accuracy === 'number')
+    .sort((a, b) => (a.date as Date).getTime() - (b.date as Date).getTime());
+
+  if (sorted.length < 2) return 0;
+
+  // Compare early period vs recent period (first third vs last third)
+  const segment = Math.max(1, Math.floor(sorted.length / 3));
+  const early = sorted.slice(0, segment);
+  const recent = sorted.slice(-segment);
+
+  const avg = (arr: Array<{ accuracy: number | null }>) => {
+    const vals = arr.map(x => x.accuracy as number).filter(v => typeof v === 'number');
+    if (vals.length === 0) return 0;
+    return vals.reduce((s, v) => s + v, 0) / vals.length;
+  };
+
+  const earlyAvg = avg(early);
+  const recentAvg = avg(recent);
+  return recentAvg - earlyAvg; // positive => improvement
 }
 
 export function SwipeableSummaryCard({ cardData, onTriggerAddOptions, hasNoLifts = false }: SwipeableSummaryCardProps) {
-  const { width } = Dimensions.get('window');
-  
-  // Current card index state
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const translateX = useSharedValue(0);
 
-  // Calculate summary card data
-  const processedCardData = useMemo(() => {
-    if (!cardData || cardData.length === 0) return [];
+  const summaryCards: SummaryCardData[] = useMemo(() => {
+    if (!Array.isArray(cardData) || cardData.length === 0) return [];
 
-    const summaryCards: SummaryCardData[] = [];
+    const cards: SummaryCardData[] = [];
 
-    // 1. Average Accuracy Card
-    const averageAccuracy = Math.round(cardData.reduce((sum, lift) => sum + lift.analysis.accuracy, 0) / cardData.length);
-    const accuracyColor = averageAccuracy > 80 ? "#00a63e" : averageAccuracy < 50 ? "#fb2c36" : "#fe9a00";
-    
-    summaryCards.push({
-      title: "Average accuracy",
-      value: averageAccuracy,
-      color: accuracyColor
-    });
+    // 1) Average Accuracy
+    const validAccuracies = cardData
+      .map(l => (typeof l?.analysis?.accuracy === 'number' ? l.analysis.accuracy : null))
+      .filter((v): v is number => typeof v === 'number');
+    const averageAccuracy = validAccuracies.length > 0
+      ? Math.round(validAccuracies.reduce((s, v) => s + v, 0) / validAccuracies.length)
+      : 0;
+    const accuracyColor = averageAccuracy > 80 ? '#00a63e' : averageAccuracy < 50 ? '#fb2c36' : '#fe9a00';
+    cards.push({ title: 'Average accuracy', value: averageAccuracy, color: accuracyColor });
 
-    // 2. Average Form Improvement Card
-    const improvementData = calculateAverageFormImprovement(cardData);
-    const improvementColor = improvementData > 10 ? "#00a63e" : improvementData < 0 ? "#fb2c36" : "#fe9a00";
-    
-    summaryCards.push({
-      title: "Average form improvement",
-      value: Math.round(improvementData),
-      color: improvementColor
-    });
+    // 2) Average Form Improvement
+    const improvementData = Math.round(calculateAverageFormImprovement(cardData));
+    const improvementColor = improvementData > 10 ? '#00a63e' : improvementData < 0 ? '#fb2c36' : '#fe9a00';
+    cards.push({ title: 'Average form improvement', value: improvementData, color: improvementColor });
 
-    return summaryCards;
+    return cards;
   }, [cardData]);
 
-  // Calculate average form improvement across all movements
-  function calculateAverageFormImprovement(lifts: any[]): number {
-    if (lifts.length === 0) return 0;
+  useEffect(() => {
+    translateX.value = 0;
+  }, [summaryCards]);
 
-    // Get all unique lift types
-    const uniqueLiftTypes = [...new Set(lifts.map(lift => lift.liftType))];
-    
-    const movementImprovements: number[] = [];
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      translateX.value = withSpring(0);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
 
-    uniqueLiftTypes.forEach(liftType => {
-      const liftsOfType = lifts.filter(lift => lift.liftType === liftType);
-      
-      if (liftsOfType.length < 2) return; // Need at least 2 lifts to calculate improvement
-      
-      // Sort by date (earliest to latest)
-      const sortedLifts = liftsOfType.sort((a, b) => {
-        const [dayA, monthA, yearA] = a.liftDate.split('-').map(Number);
-        const [dayB, monthB, yearB] = b.liftDate.split('-').map(Number);
-        const dateA = new Date(yearA, monthA - 1, dayA);
-        const dateB = new Date(yearB, monthB - 1, dayB);
-        return dateA.getTime() - dateB.getTime();
-      });
-
-      const earliestAccuracy = sortedLifts[0].analysis.accuracy;
-      const latestAccuracy = sortedLifts[sortedLifts.length - 1].analysis.accuracy;
-      
-      const improvement = ((latestAccuracy - earliestAccuracy) / earliestAccuracy) * 100;
-      movementImprovements.push(improvement);
-    });
-
-    // Return average improvement across all movements
-    return movementImprovements.length > 0 
-      ? movementImprovements.reduce((sum, improvement) => sum + improvement, 0) / movementImprovements.length 
-      : 0;
-  }
+  useEffect(() => {
+    if (currentCardIndex >= summaryCards.length) setCurrentCardIndex(0);
+    translateX.value = withSpring(0);
+  }, [summaryCards.length, currentCardIndex]);
 
   const handleCardSwipe = (direction: 'left' | 'right') => {
     hapticFeedback.selection();
-    
-    if (direction === 'left' && currentCardIndex < processedCardData.length - 1) {
-      setCurrentCardIndex(currentCardIndex + 1);
-    } else if (direction === 'right' && currentCardIndex > 0) {
-      setCurrentCardIndex(currentCardIndex - 1);
+    const newIndex = direction === 'left' ? currentCardIndex + 1 : currentCardIndex - 1;
+    if (newIndex < 0 || newIndex >= summaryCards.length) {
+      hapticFeedback.error();
+      return;
     }
+    setCurrentCardIndex(newIndex);
   };
 
   const handlePaginationDotPress = (index: number) => {
@@ -115,91 +118,86 @@ export function SwipeableSummaryCard({ cardData, onTriggerAddOptions, hasNoLifts
       context.startX = translateX.value;
     },
     onActive: (event, context) => {
-      // Only respond to horizontal gestures (ignore vertical scrolling)
-      const horizontalThreshold = 10; // Minimum horizontal movement to start gesture
-      const verticalThreshold = 20; // Maximum vertical movement allowed
-      
-      // If vertical movement is greater than horizontal, ignore the gesture
-      if (Math.abs(event.translationY) > Math.abs(event.translationX) + verticalThreshold) {
-        return;
-      }
-      
-      // Only start gesture if horizontal movement exceeds threshold
-      if (Math.abs(event.translationX) < horizontalThreshold) {
-        return;
-      }
-      
+      const horizontalThreshold = 10;
+      const verticalThreshold = 20;
+      if (Math.abs(event.translationY) > Math.abs(event.translationX) + verticalThreshold) return;
+      if (Math.abs(event.translationX) < horizontalThreshold) return;
       translateX.value = context.startX + event.translationX;
     },
     onEnd: (event) => {
       const threshold = 50;
-      if (event.translationX > threshold) {
-        // Swipe right (positive translation) = go to previous card
-        runOnJS(handleCardSwipe)('right');
-      } else if (event.translationX < -threshold) {
-        // Swipe left (negative translation) = go to next card
-        runOnJS(handleCardSwipe)('left');
-      }
+      if (event.translationX > threshold) runOnJS(handleCardSwipe)('right');
+      else if (event.translationX < -threshold) runOnJS(handleCardSwipe)('left');
       translateX.value = withSpring(0);
     },
   });
 
-  const cardAnimatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ translateX: translateX.value }],
-    };
-  });
+  const cardAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: translateX.value }],
+  }));
 
   return (
     <View style={styles.cardsContainer}>
       {hasNoLifts ? (
-        // Simple clickable card when no lifts
-        <TouchableOpacity 
-          style={styles.performanceCard}
+        <TouchableOpacity
+          style={styles.accuracyCard}
           onPress={() => {
             hapticFeedback.selection();
             onTriggerAddOptions?.();
           }}
           activeOpacity={0.7}
         >
-          <View style={styles.performanceCardContent}>
-            <View style={styles.performanceCardHeader}>
-              <Text style={styles.performanceCardLabel}>
-                No lifts found
-              </Text>
+          <View style={styles.accuracyCardContent}>
+            <View style={styles.accuracyCardLeftSection}>
+              <Text style={styles.accuracyCardNumber}>--</Text>
+              <Text style={styles.accuracyCardLabel}>No lifts found</Text>
+            </View>
+            <View style={styles.accuracyCardRightSection}>
+              <CircularProgressChart
+                width={120}
+                height={120}
+                percentage={0}
+                progressColor="#000000"
+                backgroundColor="#E5E5E5"
+                strokeWidth={8}
+                radius={48}
+              />
             </View>
           </View>
         </TouchableOpacity>
       ) : (
-        // Swipeable cards when there are lifts
         <>
-          <PanGestureHandler 
+          <PanGestureHandler
             onGestureEvent={cardGestureHandler}
             shouldCancelWhenOutside={true}
             activeOffsetX={[-10, 10]}
             failOffsetY={[-5, 5]}
           >
             <Animated.View style={cardAnimatedStyle}>
-              <View style={styles.performanceSummaryCard}>
-                <View style={styles.performanceSummaryCardContent}>
-                  <View style={styles.performanceSummaryCardLeftSection}>
-                    <Text style={styles.performanceSummaryCardNumber}>
-                      {processedCardData[currentCardIndex]?.value || 0}%
+              <View style={styles.accuracyCard}>
+                <View style={styles.accuracyCardContent}>
+                  <View style={styles.accuracyCardLeftSection}>
+                    <Text
+                      style={styles.accuracyCardNumber}
+                      accessibilityLabel={`${summaryCards[currentCardIndex]?.title} value`}
+                    >
+                      {typeof summaryCards[currentCardIndex]?.value === 'number'
+                        ? `${summaryCards[currentCardIndex]?.value}%`
+                        : '--'}
                     </Text>
-                    <Text style={styles.performanceSummaryCardLabel}>
-                      {processedCardData[currentCardIndex]?.title || 'No data'}
+                    <Text style={styles.accuracyCardLabel}>
+                      {summaryCards[currentCardIndex]?.title || 'No data'}
                     </Text>
                   </View>
-                  <View style={styles.performanceSummaryCardRightSection}>
-                    <CircularProgressChartWithCustomInner
+                  <View style={styles.accuracyCardRightSection}>
+                    <CircularProgressChart
                       width={120}
                       height={120}
-                      percentage={processedCardData[currentCardIndex]?.value || 0}
-                      progressColor={processedCardData[currentCardIndex]?.color || "#E5E5E5"}
+                      percentage={Math.max(0, Math.min(100, summaryCards[currentCardIndex]?.value ?? 0))}
+                      progressColor={summaryCards[currentCardIndex]?.color || '#000000'}
                       backgroundColor="#E5E5E5"
                       strokeWidth={8}
-                      radius={36}
-                      innerRadius={28}
+                      radius={48}
                     />
                   </View>
                 </View>
@@ -207,23 +205,19 @@ export function SwipeableSummaryCard({ cardData, onTriggerAddOptions, hasNoLifts
             </Animated.View>
           </PanGestureHandler>
 
-          {/* Pagination Dots */}
-          {processedCardData.length > 1 && (
-            <View style={styles.paginationContainer}>
-              {processedCardData.map((_, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={[
-                    styles.paginationDot,
-                    index === currentCardIndex && styles.paginationDotActive
-                  ]}
-                  onPress={() => handlePaginationDotPress(index)}
-                >
-                  <View style={styles.paginationDotInner} />
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
+          <View style={styles.paginationContainer}>
+            {summaryCards.map((_, index) => (
+              <TouchableOpacity
+                key={index}
+                style={[
+                  styles.paginationDot,
+                  index === currentCardIndex ? styles.paginationDotActive : styles.paginationDotInactive,
+                ]}
+                onPress={() => handlePaginationDotPress(index)}
+                activeOpacity={0.7}
+              />
+            ))}
+          </View>
         </>
       )}
     </View>
@@ -232,100 +226,69 @@ export function SwipeableSummaryCard({ cardData, onTriggerAddOptions, hasNoLifts
 
 const styles = StyleSheet.create({
   cardsContainer: {
-    marginBottom: 24,
-  },
-  performanceCard: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E5E5EA',
-    borderRadius: 20,
-    padding: 20,
-    shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  performanceCardContent: {
     alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
   },
-  performanceCardHeader: {
-  },
-  performanceCardLabel: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#000000',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
-    textAlign: 'center',
-  },
-  performanceSummaryCard: {
+  accuracyCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 18,
     padding: 16,
-    paddingBottom: 0,
-    paddingTop: 0,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 3,
+    marginBottom: 24,
     width: '100%',
   },
-  performanceSummaryCardContent: {
+  accuracyCardContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     width: '100%',
   },
-  performanceSummaryCardLeftSection: {
+  accuracyCardLeftSection: {
     alignItems: 'flex-start',
     paddingLeft: 8,
   },
-  performanceSummaryCardNumber: {
+  accuracyCardNumber: {
     fontSize: 32,
     fontWeight: '700',
     color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
   },
-  performanceSummaryCardLabel: {
+  accuracyCardLabel: {
     fontSize: 14,
     fontWeight: '400',
     color: '#8E8E93',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
-  performanceSummaryCardRightSection: {
+  accuracyCardRightSection: {
     alignItems: 'center',
   },
   paginationContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 16,
-    gap: 8,
+    marginBottom: 24,
   },
   paginationDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#E5E5EA',
-    justifyContent: 'center',
-    alignItems: 'center',
+    marginTop: -10,
+    marginHorizontal: 4,
   },
   paginationDotActive: {
     backgroundColor: '#000000',
   },
-  paginationDotInner: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: 'transparent',
+  paginationDotInactive: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#000000',
   },
-}); 
+});
+
+

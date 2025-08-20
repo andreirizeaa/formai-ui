@@ -427,6 +427,20 @@ export function ChevronDownIcon({ width = DEFAULT_ICON_SIZE, height = DEFAULT_IC
   );
 }
 
+export function ChevronRightIcon({ width = DEFAULT_ICON_SIZE, height = DEFAULT_ICON_SIZE, color = DEFAULT_COLOR }: IconProps) {
+  return (
+    <Svg width={width} height={height} viewBox="0 0 24 24" fill="none">
+      <Path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="m8.25 4.5 7.5 7.5-7.5 7.5"
+        stroke={color}
+        strokeWidth={1.5}
+      />
+    </Svg>
+  );
+}
+
 // Premium Icons
 export function TrendingUpwardsIcon({ width = DEFAULT_ICON_SIZE, height = DEFAULT_ICON_SIZE, color = DEFAULT_COLOR }: IconProps) {
   return (
