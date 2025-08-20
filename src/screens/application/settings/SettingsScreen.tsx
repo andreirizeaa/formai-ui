@@ -307,14 +307,14 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onSharePr
         </View>
 
         {/* Second Card */}
-        <View style={styles.card}>
+        {/* <View style={styles.card}>
           <MemoizedReferFriendOption
             icon={<ReferFriendIcon width={iconSize} height={iconSize} color={iconColor} />}
             title={i18n.t('settings.referFriends')}
             onPress={handleReferFriendPress}
             onSharePress={handleSharePress}
           />
-        </View>
+        </View> */}
 
         {/* Third Card */}
         <View style={styles.card}>
