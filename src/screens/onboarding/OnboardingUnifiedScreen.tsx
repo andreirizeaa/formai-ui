@@ -265,12 +265,12 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       title: i18n.t('onboarding.rating.title'),
       subtitle: i18n.t('onboarding.rating.subtitle'),
     },
-    {
-      type: 'referral',
-      id: 'referralCode',
-      title: i18n.t('onboarding.referralCode.title'),
-      subtitle: i18n.t('onboarding.referralCode.subtitle'),
-    },
+    // {
+    //   type: 'referral',
+    //   id: 'referralCode',
+    //   title: i18n.t('onboarding.referralCode.title'),
+    //   subtitle: i18n.t('onboarding.referralCode.subtitle'),
+    // },
     {
       type: 'allDone',
       id: 'allDone',
