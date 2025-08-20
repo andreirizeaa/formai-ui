@@ -124,7 +124,6 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
     hapticFeedback.success();
     const ok = await deleteLiftApi(liftId);
     if (ok) {
-      // Refresh data from backend after successful deletion
       await refreshLifts();
     }
   };
