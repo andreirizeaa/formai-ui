@@ -15,6 +15,7 @@ interface UserDetails {
   gender: string | null;
   language: string | null;
   currentStreak: number | null;
+  walkthroughCompleted: boolean | null;
 }
 
 interface UserDetailsContextType {
@@ -29,6 +30,7 @@ interface UserDetailsContextType {
   getDateOfBirthDisplay: () => string;
   formatDateForDisplay: (dateString: string) => string;
   refetchUserDetails: () => Promise<void>;
+  isUserDetailsLoaded: boolean;
 }
 
 const UserDetailsContext = createContext<UserDetailsContextType | undefined>(undefined);
@@ -43,29 +45,36 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
   const [userDetails, setUserDetails] = useState<UserDetails | null>(initialUserDetails);
   const queryClient = useQueryClient();
   const [userId, setUserIdState] = useState<string | null>(null);
+  const [isLoaded, setIsLoaded] = useState<boolean>(false);
 
   useEffect(() => {
     getUserId().then(setUserIdState).catch(() => setUserIdState(null));
+    setIsLoaded(false);
   }, []);
 
   useQuery({
     queryKey: ['user-details', userId],
     enabled: !!userId,
     queryFn: async () => {
-      if (!userId) return null;
-      const row = await fetchUserDetailsById(userId);
-      if (!row) return null;
-      // Map server values to context state; do not hardcode defaults
-      setUserDetails({
-        unitSystem: row.unit_system ?? null,
-        currentWeightKG: row.metric_weight ?? null,
-        heightCM: row.metric_height ?? null,
-        dateOfBirth: row.birth_date ? formatDateFromIso(row.birth_date) : null,
-        gender: row.gender ?? null,
-        language: row.language ?? null,
-        currentStreak: row.current_streak ?? null,
-      });
-      return row;
+      try {
+        if (!userId) return null;
+        const row = await fetchUserDetailsById(userId);
+        if (!row) return null;
+        // Map server values to context state; do not hardcode defaults
+        setUserDetails({
+          unitSystem: row.unit_system ?? null,
+          currentWeightKG: row.metric_weight ?? null,
+          heightCM: row.metric_height ?? null,
+          dateOfBirth: row.birth_date ? formatDateFromIso(row.birth_date) : null,
+          gender: row.gender ?? null,
+          language: row.language ?? null,
+          currentStreak: row.current_streak ?? null,
+          walkthroughCompleted: row.walkthrough_completed ?? null,
+        });
+        return row;
+      } finally {
+        setIsLoaded(true);
+      }
     },
   });
 
@@ -82,6 +91,7 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
         gender: null,
         language: null,
         currentStreak: null,
+        walkthroughCompleted: null,
       };
       return { ...base, [key]: value };
     });
@@ -97,6 +107,7 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
         gender: null,
         language: null,
         currentStreak: null,
+        walkthroughCompleted: null,
       };
       return { ...base, unitSystem };
     });
@@ -112,6 +123,7 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
         gender: null,
         language: null,
         currentStreak: null,
+        walkthroughCompleted: null,
       };
       return { ...base, currentWeightKG: weightKg };
     });
@@ -127,6 +139,7 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
         gender: null,
         language: null,
         currentStreak: null,
+        walkthroughCompleted: null,
       };
       return { ...base, heightCM: heightCm };
     });
@@ -192,6 +205,7 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
       getDateOfBirthDisplay,
       formatDateForDisplay,
       refetchUserDetails,
+      isUserDetailsLoaded: isLoaded,
     }), [
       userDetails,
       updateUserDetails,
@@ -203,6 +217,7 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
       getDateOfBirthDisplay,
       formatDateForDisplay,
       refetchUserDetails,
+      isLoaded,
     ]
   );
 

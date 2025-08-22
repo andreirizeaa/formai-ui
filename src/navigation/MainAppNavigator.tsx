@@ -19,7 +19,8 @@ import { EditGenderScreen } from '../screens/application/settings/editPersonalDe
 import { AddOptions } from '../screens/application/add/AddOptions';
 import { RecordModal } from '../screens/application/add/record/RecordModal';
 import { UploadModal } from '../screens/application/add/upload/UploadModal';
-import { ILiftData, LiftDetails } from '../screens/application/feedback/liftDetails';
+import { LiftDetails } from '../screens/application/feedback/liftDetails';
+import { ILiftData } from '../context/LiftDataContext';
 import { FeedbackSlideshow } from '../screens/application/feedback/feedbackSlideshow';
 import { HowItWorksModal } from '../screens/application/feedback/howItWorksModal';
 import { LibraryScreen } from '../screens/application/library/LibraryScreen';
