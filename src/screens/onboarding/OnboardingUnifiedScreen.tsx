@@ -259,12 +259,12 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
         { value: 'other', label: i18n.t('onboarding.discovery.other') },
       ],
     },
-    {
-      type: 'rating',
-      id: 'rating',
-      title: i18n.t('onboarding.rating.title'),
-      subtitle: i18n.t('onboarding.rating.subtitle'),
-    },
+    // {
+    //   type: 'rating',
+    //   id: 'rating',
+    //   title: i18n.t('onboarding.rating.title'),
+    //   subtitle: i18n.t('onboarding.rating.subtitle'),
+    // },
     // {
     //   type: 'referral',
     //   id: 'referralCode',

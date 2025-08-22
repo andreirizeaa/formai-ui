@@ -11,6 +11,7 @@ import Animated, {
 import { LineChart } from 'react-native-chart-kit';
 import { hapticFeedback } from '../../utils/haptic';
 import { formatWeightForDisplay } from '../../utils/unitConversions';
+import { QuestionMarkCircleIcon } from '../icons/icons';
 
 interface ChartData {
   labels: string[];
@@ -33,6 +34,7 @@ interface SwipeableLineGraphCardProps {
   hasNoLifts?: boolean;
   chartType?: 'accuracyPerWeight' | 'accuracyOverTime';
   unitPreference?: 'metric' | 'imperial';
+  onInfoPress?: () => void;
 }
 
 export function SwipeableLineGraphCard({ 
@@ -40,7 +42,8 @@ export function SwipeableLineGraphCard({
   onTriggerAddOptions, 
   hasNoLifts = false, 
   chartType = 'accuracyPerWeight',
-  unitPreference = 'metric'
+  unitPreference = 'metric',
+  onInfoPress
 }: SwipeableLineGraphCardProps) {
   const { width } = Dimensions.get('window');
   
@@ -294,13 +297,29 @@ export function SwipeableLineGraphCard({
               <View style={styles.performanceCard}>
                 <View style={styles.performanceCardContent}>
                   <View style={styles.performanceCardHeader}>
-                    <Text style={styles.performanceCardLabel}>
-                      {processedCardData[currentCardIndex]?.title || 'No data'}
-                    </Text>
+                  <View style={styles.headerLeft}>
+                    <View style={styles.titleRow}>
+                      <Text style={styles.performanceCardLabel}>
+                        {processedCardData[currentCardIndex]?.title || 'No data'}
+                      </Text>
+                      <TouchableOpacity
+                        onPress={() => {
+                          hapticFeedback.selection();
+                          onInfoPress?.();
+                        }}
+                        activeOpacity={0.7}
+                        accessibilityRole="button"
+                        accessibilityLabel="Show card information"
+                        style={styles.titleIcon}
+                      >
+                        <QuestionMarkCircleIcon width={20} height={20} color="#000000" />
+                      </TouchableOpacity>
+                    </View>
                     <Text style={styles.performanceCardSubtitle}>
                       {processedCardData[currentCardIndex]?.subtitle || ''}
                     </Text>
                   </View>
+                </View>
                   
                   {/* Chart */}
                   {processedCardData[currentCardIndex]?.chartData && processedCardData[currentCardIndex].chartData.datasets[0].data.length > 0 && (
@@ -401,10 +420,25 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   performanceCardHeader: {
-    alignItems: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingLeft: 8,
     width: '100%',
     marginBottom: 16,
+  },
+  headerLeft: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    flex: 1,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  titleIcon: {
+    marginLeft: 4,
+    marginBottom: 6,
   },
   performanceCardLabel: {
     fontSize: 22,
@@ -422,7 +456,7 @@ const styles = StyleSheet.create({
   paginationContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginBottom: 24,
+    marginBottom: 12,
   },
   paginationDot: {
     width: 8,

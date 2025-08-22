@@ -363,6 +363,24 @@ const i18n = new I18n({
       reset: 'Reset',
       apply: 'Apply',
       filterLifts: 'Filter lifts',
+      info: {
+        accuracyPerWeight: {
+          title: 'Accuracy per weight',
+          message: 'Shows average form accuracy for each weight you lifted for a given movement. Higher weights may challenge form. Calculated by averaging accuracy scores for all lifts at each weight.'
+        },
+        accuracyOverTime: {
+          title: 'Accuracy over time',
+          message: 'Shows how your form accuracy changes over time for a movement. Calculated by averaging accuracy for each day and plotting across dates.'
+        },
+        accuracy: {
+          title: 'Accuracy',
+          message: 'Your average form accuracy across the selected date range and filters. Calculated as the mean of accuracy scores for all lifts.'
+        },
+        improvement: {
+          title: 'Improvement',
+          message: 'How your form changed over the selected range. We compare the first third of your lifts to the last third and show the difference in average accuracy.'
+        }
+      }
     },
     library: {
       title: 'Library',
