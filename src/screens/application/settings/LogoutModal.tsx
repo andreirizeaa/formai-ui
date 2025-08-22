@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Modal, ActivityIndicator } from 'react-native';
 import { CloseIcon } from '../../../components/icons/icons';
 import i18n from '../../../utils/i18n';
 import { hapticFeedback } from '../../../utils/haptic';
@@ -11,6 +11,24 @@ interface LogoutModalProps {
 }
 
 export function LogoutModal({ isVisible, onClose, onConfirm }: LogoutModalProps) {
+  const [isLoggingOut, setIsLoggingOut] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!isVisible) {
+      setIsLoggingOut(false);
+    }
+  }, [isVisible]);
+
+  const handleLogout = async () => {
+    hapticFeedback.success();
+    setIsLoggingOut(true);
+    try {
+      await onConfirm();
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
+
   return (
     <Modal
       visible={isVisible}
@@ -52,17 +70,20 @@ export function LogoutModal({ isVisible, onClose, onConfirm }: LogoutModalProps)
                 hapticFeedback.selection();
                 onClose();
               }}
+              disabled={isLoggingOut}
             >
               <Text style={styles.buttonText}>{i18n.t('settings.no')}</Text>
             </TouchableOpacity>
             <TouchableOpacity 
               style={styles.button} 
-              onPress={() => {
-                hapticFeedback.success();
-                onConfirm();
-              }}
+              onPress={handleLogout}
+              disabled={isLoggingOut}
             >
-              <Text style={styles.buttonText}>{i18n.t('settings.yes')}</Text>
+              {isLoggingOut ? (
+                <ActivityIndicator size="small" color="#000000" />
+              ) : (
+                <Text style={styles.buttonText}>{i18n.t('settings.yes')}</Text>
+              )}
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
