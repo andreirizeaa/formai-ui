@@ -40,6 +40,7 @@ interface LiftDataContextType {
   formatDateForLift: (date: Date) => string;
   refreshLifts: () => Promise<void>;
   favouriteLiftAndRefresh: (id: string) => Promise<void>;
+  isLiftDataLoaded: boolean;
 }
 
 const LiftDataContext = createContext<LiftDataContextType | undefined>(undefined);
@@ -54,9 +55,11 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
   const [liftData, setLiftData] = useState<ILiftData[]>(initialLiftData);
   const [userId, setUserIdState] = useState<string | null>(null);
   const queryClient = useQueryClient();
+  const [isLoaded, setIsLoaded] = useState<boolean>(false);
 
   useEffect(() => {
     getUserId().then(setUserIdState).catch(() => setUserIdState(null));
+    setIsLoaded(false);
   }, []);
 
   // Helper function to format date consistently
@@ -121,13 +124,14 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
     queryKey: ['lifts-by-user', userId],
     enabled: !!userId,
     queryFn: async () => {
-      if (!userId) return [] as ILiftData[];
-      const { data, error } = await supabase
+      try {
+        if (!userId) return [] as ILiftData[];
+        const { data, error } = await supabase
         .from('lifts')
         .select('id, is_favourite, lift_type, lift_date, weight_value, reps, raw_video_url, pose_video_url, thumbnail_url, analysis')
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
-      if (error) return [] as ILiftData[];
+        if (error) return [] as ILiftData[];
 
       async function extractObjectKeyFromUrl(urlOrKey?: string | null): Promise<string | undefined> {
         if (!urlOrKey) return undefined;
@@ -194,16 +198,19 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
         } as ILiftData;
       }
 
-      const mapped: ILiftData[] = await Promise.all(
-        (data ?? []).map((row: any) => mapRowToLift(row))
-      );
+        const mapped: ILiftData[] = await Promise.all(
+          (data ?? []).map((row: any) => mapRowToLift(row))
+        );
 
-      // Seed per-lift caches keyed by primary key id
-      mapped.forEach(lift => {
-        queryClient.setQueryData(['lift', lift.id], lift);
-      });
-      setLiftData(mapped);
-      return mapped;
+        // Seed per-lift caches keyed by primary key id
+        mapped.forEach(lift => {
+          queryClient.setQueryData(['lift', lift.id], lift);
+        });
+        setLiftData(mapped);
+        return mapped;
+      } finally {
+        setIsLoaded(true);
+      }
     },
   });
 
@@ -305,6 +312,7 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
     formatDateForLift,
     refreshLifts,
     favouriteLiftAndRefresh,
+    isLiftDataLoaded: isLoaded,
   }), [
     liftData,
     addLift,
@@ -320,6 +328,7 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
     formatDateForLift,
     refreshLifts,
     favouriteLiftAndRefresh,
+    isLoaded,
   ]);
 
   return (

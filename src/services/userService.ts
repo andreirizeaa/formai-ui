@@ -18,6 +18,7 @@ export interface UserDetailsRow {
   gender: string | null;
   language: string | null;
   current_streak: number | null;
+  walkthrough_completed: boolean | null;
 }
 
 export interface UserFetchResult {
@@ -108,9 +109,20 @@ export async function editUserDetails(
 export async function fetchUserDetailsById(userId: string): Promise<UserDetailsRow | null> {
   const { data, error } = await supabase
     .from('users')
-    .select('id, unit_system, metric_height, metric_weight, birth_date, gender, language, current_streak')
+    .select('id, unit_system, metric_height, metric_weight, birth_date, gender, language, current_streak, walkthrough_completed')
     .eq('id', userId)
     .maybeSingle();
   if (error) throw new Error(error.message);
   return (data as UserDetailsRow) ?? null;
+}
+
+// --- Walkthrough helpers ---
+export async function markWalkthroughCompleted(): Promise<void> {
+  const userId = await getUserId();
+  if (!userId) throw new Error('Missing user_id');
+  const { error } = await supabase
+    .from('users')
+    .update({ walkthrough_completed: true })
+    .eq('id', userId);
+  if (error) throw new Error(error.message);
 }
