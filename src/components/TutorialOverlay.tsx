@@ -6,7 +6,7 @@ import Svg, { Path, Rect } from 'react-native-svg';
 import { hapticFeedback } from '../utils/haptic';
 
 export function TutorialOverlay() {
-  const { isActive, isTransitioning, steps, currentStepIndex, currentRect, next, stop } = useTutorial();
+  const { isActive, isTransitioning, steps, currentStepIndex, currentRect, next, prev, stop } = useTutorial();
   const { markWalkthroughCompleted } = useUserDetails();
   
   // Don't render anything if tutorial is not active, is transitioning, or has no current rect
@@ -32,7 +32,11 @@ export function TutorialOverlay() {
     'feedback_slideshow',
   ];
   
+  const hasPrev = currentStepIndex > 0 && !noPreviousTutorialIds.includes(step.id);
   const hasNext = currentStepIndex < steps.length - 1; // Changed to prevent going beyond last step
+  
+  // Check if this is the add_button tutorial step
+  const isAddButtonStep = step.id === 'add_button';
 
   const { width: screenW, height: screenH } = Dimensions.get('window');
   const highlight = currentRect
@@ -125,31 +129,66 @@ export function TutorialOverlay() {
         ]}>
           <Text style={styles.title}>{step.title}</Text>
           <Text style={styles.description}>{step.description}</Text>
-          <View style={styles.buttonsRow}>
-            <TouchableOpacity
-              style={styles.navButtonPrimary}
-              onPress={() => {
-                hapticFeedback.selection();
-                next();
-              }}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.navButtonPrimaryText}>Next</Text>
-            </TouchableOpacity>
-          </View>
           
-          {/* Skip guide hyperlink */}
-          <TouchableOpacity
-            style={styles.skipGuideButton}
-            onPress={() => {
-              hapticFeedback.selection();
-              markWalkthroughCompleted();
-              stop();
-            }}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.skipGuideText}>Skip guide</Text>
-          </TouchableOpacity>
+          {isAddButtonStep ? (
+            // Single button layout for add_button tutorial
+            <View>
+              <TouchableOpacity
+                style={styles.navButtonPrimaryFullWidth}
+                onPress={() => {
+                  hapticFeedback.selection();
+                  next();
+                }}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.navButtonPrimaryText}>Next</Text>
+              </TouchableOpacity>
+              
+              {/* Skip guide hyperlink */}
+              <TouchableOpacity
+                style={styles.skipGuideButton}
+                onPress={async () => {
+                  hapticFeedback.selection();
+                  try {
+                    await markWalkthroughCompleted();
+                    stop();
+                  } catch (error) {
+                    console.error('Error in skip guide:', error);
+                  }
+                }}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.skipGuideText}>Skip guide</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            // Previous/Next button layout for all other tutorials
+            <View style={styles.buttonsRow}>
+              <TouchableOpacity
+                style={[styles.navButton, !hasPrev && styles.navButtonDisabled]}
+                onPress={() => {
+                  hapticFeedback.selection();
+                  prev();
+                }}
+                disabled={!hasPrev}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.navButtonText, !hasPrev && styles.navButtonTextDisabled]}>
+                  Previous
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.navButtonPrimary}
+                onPress={() => {
+                  hapticFeedback.selection();
+                  next();
+                }}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.navButtonPrimaryText}>Next</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
       </View>
     </Modal>
@@ -218,11 +257,31 @@ const styles = StyleSheet.create({
   },
   buttonsRow: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    marginBottom: 0,
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  navButton: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#000000',
+    borderRadius: 28,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  navButtonDisabled: {
+    borderColor: '#C7C7CC',
+  },
+  navButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#000000',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
+  navButtonTextDisabled: {
+    color: '#C7C7CC',
   },
   navButtonPrimary: {
-    width: '100%',
+    flex: 1,
     backgroundColor: '#000000',
     borderRadius: 28,
     paddingVertical: 12,
@@ -233,6 +292,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
+  navButtonPrimaryFullWidth: {
+    width: '100%',
+    backgroundColor: '#000000',
+    borderRadius: 28,
+    paddingVertical: 12,
+    alignItems: 'center',
   },
   skipGuideButton: {
     marginTop: 8,
