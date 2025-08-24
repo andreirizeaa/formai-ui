@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity, Platform, Alert, Image, TextInput, ScrollView, Keyboard, useColorScheme, Linking } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Alert, Image, TextInput, ScrollView, Keyboard, useColorScheme, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Camera, useCameraDevice, type VideoFile } from 'react-native-vision-camera';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -325,110 +325,101 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
   }
 
   if (hasPermission === false) {
+    if (!isVisible) {
+      return null;
+    }
+    
     return (
-      <Modal
-        visible={isVisible}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => {
-          setShowCamera(false);
-          onClose();
-        }}
+      <SafeAreaView 
+        style={[
+          styles.container,
+          { backgroundColor: isDark ? '#000000' : '#FFFFFF' }
+        ]}
       >
-        <SafeAreaView 
-          style={[
-            styles.container,
-            { backgroundColor: isDark ? '#000000' : '#FFFFFF' }
-          ]}
-        >
-          {/* Close Button */}
-          <View style={styles.permissionTopControls}>
-            <TouchableOpacity onPress={() => {
-              hapticFeedback.selection();
-              onClose();
-            }} style={[styles.closeButton]}>
-              <CloseIcon width={24} height={24} color={isDark ? '#8E8E93' : '#8E8E93'} />
-            </TouchableOpacity>
-          </View>
+        {/* Close Button */}
+        <View style={styles.permissionTopControls}>
+          <TouchableOpacity onPress={() => {
+            hapticFeedback.selection();
+            onClose();
+          }} style={[styles.closeButton]}>
+            <CloseIcon width={24} height={24} color={isDark ? '#8E8E93' : '#8E8E93'} />
+          </TouchableOpacity>
+        </View>
 
-          {/* Main content */}
-          <View style={styles.permissionContentWrapper}>
-            {/* Title */}
-            <Text style={[styles.permissionMainTitle, { color: isDark ? '#FFFFFF' : '#000000' }]}>
-              {i18n.t('onboarding.cameraPermission.title')}
-            </Text>
+        {/* Main content */}
+        <View style={styles.permissionContentWrapper}>
+          {/* Title */}
+          <Text style={[styles.permissionMainTitle, { color: isDark ? '#FFFFFF' : '#000000' }]}>
+            {i18n.t('onboarding.cameraPermission.title')}
+          </Text>
 
-            {/* Subtitle */}
-            <Text style={[styles.permissionSubtitle, { color: '#8E8E93' }]}>
-              {i18n.t('onboarding.cameraPermission.subtitle')}
-            </Text>
+          {/* Subtitle */}
+          <Text style={[styles.permissionSubtitle, { color: '#8E8E93' }]}>
+            {i18n.t('onboarding.cameraPermission.subtitle')}
+          </Text>
 
-            {/* Dialog */}
-            <View style={styles.permissionDialogWrapper}>
+          {/* Dialog */}
+          <View style={styles.permissionDialogWrapper}>
+            <View style={[
+              styles.permissionDialog,
+              {
+                backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF',
+                shadowColor: '#000000',
+              }
+            ]}>
               <View style={[
-                styles.permissionDialog,
-                {
-                  backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF',
-                  shadowColor: '#000000',
-                }
+                styles.permissionTextArea,
+                { backgroundColor: isDark ? '#2C2C2E' : '#F2F2F7' }
               ]}>
-                <View style={[
-                  styles.permissionTextArea,
-                  { backgroundColor: isDark ? '#2C2C2E' : '#F2F2F7' }
+                <Text style={[
+                  styles.permissionDialogText,
+                  { color: isDark ? '#FFFFFF' : '#000000', fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto' }
                 ]}>
-                  <Text style={[
-                    styles.permissionDialogText,
-                    { color: isDark ? '#FFFFFF' : '#000000', fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto' }
-                  ]}>
-                    {i18n.t('onboarding.cameraPermission.dialogText')}
-                  </Text>
-                </View>
-
-                <View style={[
-                  styles.permissionButtonContainer,
-                  { borderTopColor: isDark ? '#2C2C2E' : '#E5E5EA', borderTopWidth: 1 }
-                ]}>
-                  <TouchableOpacity
-                    style={[styles.permissionButtonCommon, styles.permissionDontAllowButton, { backgroundColor: isDark ? '#2C2C2E' : '#F2F2F7' }]}
-                    onPress={() => hapticFeedback.selection()}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={[styles.permissionButtonText, { color: isDark ? '#FFFFFF' : '#000000', fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto' }]}>
-                      {i18n.t('onboarding.cameraPermission.dontAllow')}
-                    </Text>
-                  </TouchableOpacity>
-
-                  <View style={[styles.permissionButtonDivider, { backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF' }]} />
-
-                  <TouchableOpacity
-                    style={[styles.permissionButtonCommon, styles.permissionAllowButton, { backgroundColor: isDark ? '#FFFFFF' : '#000000' }]}
-                    onPress={requestCameraPermissionFromUser}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={[styles.permissionButtonText, { color: isDark ? '#000000' : '#FFFFFF', fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto' }]}>
-                      {i18n.t('onboarding.cameraPermission.allow')}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
+                  {i18n.t('onboarding.cameraPermission.dialogText')}
+                </Text>
               </View>
 
-              <Text style={styles.permissionPointingEmoji}>👆</Text>
+              <View style={[
+                styles.permissionButtonContainer,
+                { borderTopColor: isDark ? '#2C2C2E' : '#E5E5EA', borderTopWidth: 1 }
+              ]}>
+                <TouchableOpacity
+                  style={[styles.permissionButtonCommon, styles.permissionDontAllowButton, { backgroundColor: isDark ? '#2C2C2E' : '#F2F2F7' }]}
+                  onPress={() => hapticFeedback.selection()}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.permissionButtonText, { color: isDark ? '#FFFFFF' : '#000000', fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto' }]}>
+                    {i18n.t('onboarding.cameraPermission.dontAllow')}
+                  </Text>
+                </TouchableOpacity>
+
+                <View style={[styles.permissionButtonDivider, { backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF' }]} />
+
+                <TouchableOpacity
+                  style={[styles.permissionButtonCommon, styles.permissionAllowButton, { backgroundColor: isDark ? '#FFFFFF' : '#000000' }]}
+                  onPress={requestCameraPermissionFromUser}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.permissionButtonText, { color: isDark ? '#000000' : '#FFFFFF', fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto' }]}>
+                    {i18n.t('onboarding.cameraPermission.allow')}
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
+
+            <Text style={styles.permissionPointingEmoji}>👆</Text>
           </View>
-        </SafeAreaView>
-      </Modal>
+        </View>
+      </SafeAreaView>
     );
   }
 
+  if (!isVisible) {
+    return null;
+  }
+
   return (
-    <Modal
-      visible={isVisible}
-      animationType="slide"
-      presentationStyle="pageSheet"
-      onRequestClose={showPractices || showVideoPreview || showMovementSelection ? () => {
-        onClose();
-      } : handleClose}
-    >
+    <>
       {showPractices ? (
         // Practices Content
         <SafeAreaView style={styles.container}>
@@ -485,14 +476,12 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
         // Movement Selection Content
         <SafeAreaView style={styles.container}>
           {/* Close Button and Title */}
-          <View style={styles.topControls}>
-            <View style={styles.titleContainer}>
-              <Text style={styles.title}>Record Video</Text>
-            </View>
-            <TouchableOpacity onPress={handleClose} style={[styles.closeButton]}>
-              <CloseIcon width={24} height={24} color="#8E8E93" />
-            </TouchableOpacity>
+          <View style={styles.titleContainer}>
+            <Text style={styles.title}>Record Video</Text>
           </View>
+          <TouchableOpacity onPress={handleClose} style={[styles.closeButton]}>
+            <CloseIcon width={24} height={24} color="#8E8E93" />
+          </TouchableOpacity>
 
           {/* Content */}
           <View style={styles.contentWithBottomPadding}>
@@ -512,14 +501,12 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
         // Weight and Reps Content
         <SafeAreaView style={styles.container}>
           {/* Close Button and Title */}
-          <View style={styles.topControls}>
-            <View style={styles.titleContainer}>
-              <Text style={styles.title}>Record Video</Text>
-            </View>
-            <TouchableOpacity onPress={handleClose} style={[styles.closeButton]}>
-              <CloseIcon width={24} height={24} color="#8E8E93" />
-            </TouchableOpacity>
+          <View style={styles.titleContainer}>
+            <Text style={styles.title}>Record Video</Text>
           </View>
+          <TouchableOpacity onPress={handleClose} style={[styles.closeButton]}>
+            <CloseIcon width={24} height={24} color="#8E8E93" />
+          </TouchableOpacity>
 
           {/* Content */}
           <View style={styles.contentWithBottomPadding}>
@@ -561,33 +548,6 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
                   ]}>{formatTime(recordingTime)}</Text>
                 </View>
               </View>
-
-              {/* Corner Guides
-              <View style={styles.cornerGuides}>
-                {/* Top Left Corner */}
-                {/* <View style={[styles.cornerGuide, styles.cornerTopLeft]}>
-                  <View style={[styles.cornerLine, styles.cornerLineHorizontal, styles.cornerLineTop, { borderTopLeftRadius: 4, borderTopRightRadius: 4 }]} />
-                  <View style={[styles.cornerLine, styles.cornerLineVertical, styles.cornerLineLeft, { borderTopLeftRadius: 4, borderBottomLeftRadius: 4 }]} />
-                </View> */}
-                
-                {/* Top Right Corner */}
-                {/* <View style={[styles.cornerGuide, styles.cornerTopRight]}>
-                  <View style={[styles.cornerLine, styles.cornerLineHorizontal, styles.cornerLineTop, { borderTopLeftRadius: 4, borderTopRightRadius: 4 }]} />
-                  <View style={[styles.cornerLine, styles.cornerLineVertical, styles.cornerLineRight, { borderTopRightRadius: 4, borderBottomRightRadius: 4 }]} />
-                </View> */}
-                
-                {/* Bottom Left Corner */}
-                {/* <View style={[styles.cornerGuide, styles.cornerBottomLeft]}>
-                  <View style={[styles.cornerLine, styles.cornerLineHorizontal, styles.cornerLineBottom, { borderBottomLeftRadius: 4, borderBottomRightRadius: 4 }]} />
-                  <View style={[styles.cornerLine, styles.cornerLineVertical, styles.cornerLineLeft, { borderTopLeftRadius: 4, borderBottomLeftRadius: 4 }]} />
-                </View>
-                 */}
-                {/* Bottom Right Corner */}
-                {/* <View style={[styles.cornerGuide, styles.cornerBottomRight]}>
-                  <View style={[styles.cornerLine, styles.cornerLineHorizontal, styles.cornerLineBottom, { borderBottomLeftRadius: 4, borderBottomRightRadius: 4 }]} />
-                  <View style={[styles.cornerLine, styles.cornerLineVertical, styles.cornerLineRight, { borderTopRightRadius: 4, borderBottomRightRadius: 4 }]} />
-                </View> */}
-              {/* </View> */}
 
               {/* Top Controls */}
               <View style={styles.topControls}>
@@ -658,7 +618,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
           </View>
         </SafeAreaView>
       )}
-    </Modal>
+    </>
   );
 }
 
@@ -666,6 +626,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 1000,
   },
   cameraContainer: {
     flex: 1,
@@ -959,6 +925,12 @@ const styles = StyleSheet.create({
   cameraSafeArea: {
     flex: 1,
     backgroundColor: '#000000',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 1000,
   },
   titleContainer: {
     flex: 1,

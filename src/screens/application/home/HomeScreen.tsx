@@ -206,6 +206,29 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
     void refreshLifts();
   }, []);
 
+  // Expose showFirstLiftDetails function globally for tutorial
+  useEffect(() => {
+    global.showFirstLiftDetails = () => {
+      // Find the first lift in the current date's lifts, or fall back to any lift
+      const firstLift = liftsForSelectedDate.length > 0 
+        ? liftsForSelectedDate[0] 
+        : liftData.length > 0 
+          ? liftData[0] 
+          : null;
+      
+      if (firstLift) {
+        hapticFeedback.selection();
+        onShowFeedback(firstLift);
+      }
+    };
+
+    return () => {
+      global.showFirstLiftDetails = undefined;
+    };
+  }, [liftsForSelectedDate, liftData, onShowFeedback]);
+
+
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView 

@@ -15,6 +15,7 @@ import i18n from '../utils/i18n';
 import { TrashIcon } from './icons/icons';
 import { hapticFeedback } from '../utils/haptic';
 import { deleteLift as deleteLiftApi } from '../services/liftService';
+import { useTutorialTarget } from '../context/TutorialContext';
 
 interface LiftDataCardProps {
   lift: ILiftData;
@@ -33,6 +34,9 @@ export function LiftDataCard({ lift, onPress, onDelete, style, scrollViewRef }: 
   const countdownTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
   const { removeLift } = useLiftData();
+  
+  // Tutorial target for the first lift card
+  const { ref: firstLiftCardRef } = useTutorialTarget('home_first_lift_card');
 
   // Circle sizing to guarantee perfect overlap between base ring and progress ring
   const CIRCLE_SIZE = 44;
@@ -158,6 +162,7 @@ export function LiftDataCard({ lift, onPress, onDelete, style, scrollViewRef }: 
             {/* Page 1: Lift Data */}
             <View style={[styles.page, styles.pageLift, { width: '50%' }]}> 
               <TouchableOpacity 
+                ref={firstLiftCardRef}
                 onPress={handlePress}
                 activeOpacity={0.7}
                 style={styles.liftCardContent}
@@ -165,22 +170,42 @@ export function LiftDataCard({ lift, onPress, onDelete, style, scrollViewRef }: 
               >
                 {/* Video Thumbnail - Left 25% */}
                 <View style={styles.videoThumbnailContainer}>
-                  {lift.thumbnailURL ? (
-                    <Image
-                      source={{ uri: lift.thumbnailURL }}
-                      style={styles.videoThumbnail}
-                      resizeMode="cover"
-                      onError={() => {
-                        console.warn('Failed to load thumbnail:', lift.thumbnailURL);
-                      }}
-                    />
-                  ) : (
-                    <Image
-                      source={require('../../assets/placeholder-thumbnail.png')}
-                      style={styles.videoThumbnail}
-                      resizeMode="cover"
-                    />
-                  )}
+                  {(() => {
+                    // Handle both local assets (from require) and remote URLs
+                    if (lift.thumbnailURL) {
+                      if (typeof lift.thumbnailURL === 'number') {
+                        // Local asset from require() - use directly
+                        return (
+                          <Image
+                            source={lift.thumbnailURL}
+                            style={styles.videoThumbnail}
+                            resizeMode="cover"
+                          />
+                        );
+                      } else if (typeof lift.thumbnailURL === 'string' && lift.thumbnailURL.startsWith('http')) {
+                        // Remote URL - use as URI
+                        return (
+                          <Image
+                            source={{ uri: lift.thumbnailURL }}
+                            style={styles.videoThumbnail}
+                            resizeMode="cover"
+                            onError={() => {
+                              console.warn('Failed to load thumbnail:', lift.thumbnailURL);
+                            }}
+                          />
+                        );
+                      }
+                    }
+                    
+                    // Fallback to placeholder
+                    return (
+                      <Image
+                        source={require('../../assets/placeholder-thumbnail.png')}
+                        style={styles.videoThumbnail}
+                        resizeMode="cover"
+                      />
+                    );
+                  })()}
                 </View>
                 
                 {/* Content - Right 75% */}

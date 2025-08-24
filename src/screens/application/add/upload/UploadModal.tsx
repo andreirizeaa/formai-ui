@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity, Platform, Alert, Image, TextInput, ScrollView, Keyboard } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Alert, Image, TextInput, ScrollView, Keyboard } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { Camera } from 'expo-camera';
@@ -24,6 +24,53 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
   const [selectedVideo, setSelectedVideo] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const [showMovementSelection, setShowMovementSelection] = useState(false);
   const [showWeightReps, setShowWeightReps] = useState(false);
+  
+  // Tutorial global functions
+  React.useEffect(() => {
+    global.tutorialUpload = {
+      skipToPreviewWithDemo: () => {
+        // Skip to demo video for tutorial
+        setSelectedVideo({
+          uri: require('../../../../../assets/tutorial/formai-example-video.mp4'),
+          width: 1920,
+          height: 1080,
+          duration: 30,
+          type: 'video',
+          fileName: 'demo-video.mp4',
+          fileSize: 1000000,
+        } as any);
+        setShowMovementSelection(false);
+        setShowWeightReps(false);
+      },
+      goToMovementSelection: () => {
+        setShowMovementSelection(true);
+        setShowWeightReps(false);
+      },
+      goToPractices: () => {
+        setShowMovementSelection(false);
+        setShowWeightReps(false);
+      },
+      selectMovement: (movement: string) => {
+      },
+      goToWeightReps: () => {
+        setShowMovementSelection(false);
+        setShowWeightReps(true);
+      },
+      goToVideoPreview: () => {
+        setShowMovementSelection(false);
+        setShowWeightReps(false);
+      },
+      close: () => {
+        onClose();
+      },
+    };
+    
+    return () => {
+      if (global.tutorialUpload) {
+        delete global.tutorialUpload;
+      }
+    };
+  }, [onClose]);
 
   // Movement selection state
   const [selectedMovement, setSelectedMovement] = useState<string>('');
@@ -222,76 +269,73 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
     onClose();
   };
 
+  if (!isVisible) {
+    return null;
+  }
+
   return (
-    <Modal
-      visible={isVisible}
-      animationType="slide"
-      presentationStyle="pageSheet"
-      onRequestClose={onClose}
-    >
-      <SafeAreaView style={styles.container}>
-        {/* Close Button and Title */}
-        <View style={styles.topControls}>
-          <View style={styles.titleContainer}>
-            <Text style={styles.title}>Upload Video</Text>
-          </View>
-          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <CloseIcon width={24} height={24} color="#8E8E93" />
-          </TouchableOpacity>
+    <SafeAreaView style={styles.container}>
+      {/* Close Button and Title */}
+      <View style={styles.topControls}>
+        <View style={styles.titleContainer}>
+          <Text style={styles.title}>Upload Video</Text>
         </View>
+        <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+          <CloseIcon width={24} height={24} color="#8E8E93" />
+        </TouchableOpacity>
+      </View>
 
-        {/* Content */}
-        <View style={styles.content}>
-          {!selectedVideo ? (
-            // Tips Card - shown when no video is selected
-            <PracticesScreen
-              onUpload={handleUploadPress}
-              buttonText={i18n.t('upload.uploadVideo')}
-              tips={[
-                i18n.t('upload.tips.goodLighting'),
-                i18n.t('upload.tips.sideView')
-              ]}
-            />
-          ) : showMovementSelection ? (
-            // Movement Selection - shown when video is selected and user clicked continue
-            <MovementSelectionScreen
-              searchQuery={searchQuery}
-              filteredMovements={filteredMovements}
-              selectedMovement={selectedMovement}
-              onMovementSelect={handleMovementSelect}
-              onSearchChange={handleSearchChange}
-              onBack={handleBack}
-              onUpload={handleContinueFromMovementSelection}
-              onClose={handleClose}
-            />
-          ) : showWeightReps ? (
-            // Weight and Reps - shown after movement selection
-            <WeightRepsScreen
-              onBack={handleWeightRepsBack}
-              onUpload={handleFinalCompleteClicked}
-            />
-          ) : (
-            // Video Preview - shown when video is selected but movement not yet selected
-            <VideoPreviewScreen
-              videoUri={selectedVideo?.uri || ''}
-              onSelectNewVideo={handleSelectNewVideo}
-              onContinue={handleContinue}
-              onClose={handleClose}
-              selectNewVideoText={i18n.t('upload.selectNewVideo')}
-            />
-          )}
-        </View>
-
-        {/* Bottom Buttons */}
-        {selectedVideo && (
-          <View style={styles.bottomControls}>
-            <View style={styles.buttonStack}>
-              {/* No button needed here since PracticesScreen handles the upload button */}
-            </View>
-          </View>
+      {/* Content */}
+      <View style={styles.content}>
+        {!selectedVideo ? (
+          // Tips Card - shown when no video is selected
+          <PracticesScreen
+            onUpload={handleUploadPress}
+            buttonText={i18n.t('upload.uploadVideo')}
+            tips={[
+              i18n.t('upload.tips.goodLighting'),
+              i18n.t('upload.tips.sideView')
+            ]}
+          />
+        ) : showMovementSelection ? (
+          // Movement Selection - shown when video is selected and user clicked continue
+          <MovementSelectionScreen
+            searchQuery={searchQuery}
+            filteredMovements={filteredMovements}
+            selectedMovement={selectedMovement}
+            onMovementSelect={handleMovementSelect}
+            onSearchChange={handleSearchChange}
+            onBack={handleBack}
+            onUpload={handleContinueFromMovementSelection}
+            onClose={handleClose}
+          />
+        ) : showWeightReps ? (
+          // Weight and Reps - shown after movement selection
+          <WeightRepsScreen
+            onBack={handleWeightRepsBack}
+            onUpload={handleFinalCompleteClicked}
+          />
+        ) : (
+          // Video Preview - shown when video is selected but movement not yet selected
+          <VideoPreviewScreen
+            videoUri={selectedVideo?.uri || ''}
+            onSelectNewVideo={handleSelectNewVideo}
+            onContinue={handleContinue}
+            onClose={handleClose}
+            selectNewVideoText={i18n.t('upload.selectNewVideo')}
+          />
         )}
-      </SafeAreaView>
-    </Modal>
+      </View>
+
+      {/* Bottom Buttons */}
+      {selectedVideo && (
+        <View style={styles.bottomControls}>
+          <View style={styles.buttonStack}>
+            {/* No button needed here since PracticesScreen handles the upload button */}
+          </View>
+        </View>
+      )}
+    </SafeAreaView>
   );
 }
 
@@ -299,6 +343,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 1000,
   },
   topControls: {
     flexDirection: 'row',
