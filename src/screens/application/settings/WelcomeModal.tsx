@@ -18,9 +18,19 @@ export function WelcomeModal({ isVisible, onGetStarted }: WelcomeModalProps) {
     hapticFeedback.success();
     onGetStarted();
   };
+  
+  if (!isVisible) {
+    return null;
+  }
 
   return (
-    <Modal visible={isVisible} transparent>
+    <Modal 
+      visible={isVisible} 
+      transparent
+      animationType="fade"
+      statusBarTranslucent
+      onRequestClose={() => {}}
+    >
       <View style={styles.overlay}>
         <View style={[
           styles.modalContainer,

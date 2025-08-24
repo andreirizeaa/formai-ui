@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Dimensions, Text, Platform, Image } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Dimensions, Text, Platform, Image, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
 import { CloseIcon, BackIcon, PlayIcon, ForwardIcon, ChevronUpIcon, ChevronDownIcon, CheckmarkCircleIcon, CircledXIcon } from '../../../components/icons/icons';
 import { hapticFeedback } from '../../../utils/haptic';
+import { useTutorialTarget } from '../../../context/TutorialContext';
 
 interface FeedbackSlideshowProps {
   onClose: () => void;
@@ -11,8 +13,8 @@ interface FeedbackSlideshowProps {
     analysis: {
       feedback: Array<{
         imageURL: any;
-        flaws: string;
-        improvement: string;
+        flaws: string[];
+        improvement: string[];
       }>;
     };
   };
@@ -22,9 +24,17 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, liftData }
   const [currentFeedbackIndex, setCurrentFeedbackIndex] = useState(0);
   const [currentPageType, setCurrentPageType] = useState<'image' | 'flaws' | 'improvement'>('image');
   const [isBottomExpanded, setIsBottomExpanded] = useState(false);
+  const navigation = useNavigation();
+  
+  // Tutorial targets for the feedback slideshow
+  const { ref: feedbackSlideshowRef } = useTutorialTarget('feedback_slideshow');
+  const { ref: issuesRef } = useTutorialTarget('feedback_issues');
+  const { ref: tipsRef } = useTutorialTarget('feedback_tips');
 
   const handleClose = () => {
     hapticFeedback.selection();
+    // If onNavigateToLiftDetails is provided, use it to go back to lift details
+    // Otherwise, fall back to the default onClose behavior
     if (onNavigateToLiftDetails) {
       onNavigateToLiftDetails();
     } else {
@@ -41,6 +51,39 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, liftData }
     hapticFeedback.selection();
     navigateForward();
   };
+
+  // Expose navigation functions globally for tutorial
+  React.useEffect(() => {
+    global.navigateToIssues = () => {
+      if (currentPageType === 'image') {
+        setCurrentPageType('flaws');
+        setIsBottomExpanded(true);
+      }
+    };
+    
+    global.navigateToTips = () => {
+      if (currentPageType === 'flaws') {
+        setCurrentPageType('improvement');
+        setIsBottomExpanded(true);
+      }
+    };
+    
+    global.navigateToHome = () => {
+      // Navigate back to the main tabs by going back multiple times
+      // First go back from feedback slideshow to how it works
+      navigation.goBack();
+      // Then go back from how it works to lift details
+      setTimeout(() => navigation.goBack(), 100);
+      // Finally go back from lift details to main tabs
+      setTimeout(() => navigation.goBack(), 200);
+    };
+    
+    return () => {
+      delete global.navigateToIssues;
+      delete global.navigateToTips;
+      delete global.navigateToHome;
+    };
+  }, [currentPageType]);
 
   const handleExpandCollapse = () => {
     hapticFeedback.selection();
@@ -66,6 +109,7 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, liftData }
         setIsBottomExpanded(false);
       } else {
         // We're on the last feedback item's improvement page, navigate back to LiftDetails
+        // Use onNavigateToLiftDetails if available, otherwise fall back to onClose
         if (onNavigateToLiftDetails) {
           onNavigateToLiftDetails();
         } else {
@@ -86,7 +130,12 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, liftData }
         setIsBottomExpanded(true);
       } else {
         // We're on the first page, go back to previous screen
-        handleClose();
+        // Use onNavigateToLiftDetails if available, otherwise fall back to onClose
+        if (onNavigateToLiftDetails) {
+          onNavigateToLiftDetails();
+        } else {
+          onClose();
+        }
       }
     } else if (currentPageType === 'flaws') {
       setCurrentPageType('image');
@@ -143,32 +192,36 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, liftData }
         : [];
 
     return (
-      <View style={styles.bottomContentContainer}>
+      <View style={styles.bottomContentContainer} ref={isIssues ? issuesRef : tipsRef}>
         <Text style={styles.bottomContentTitle}>
           {isIssues ? 'Issues' : 'Tips'}
         </Text>
-        <View style={styles.listContainer}>
-          {items.map((text, idx) => (
-            <View key={`${isIssues ? 'issue' : 'tip'}-${idx}`} style={styles.listItem}>
-              {isIssues ? (
-                <CircledXIcon width={20} height={20} color="#FF3B30" />
-              ) : (
-                <CheckmarkCircleIcon width={20} height={20} color="#00c950" />
-              )}
-              <Text style={styles.listItemText}>{text}</Text>
-            </View>
-          ))}
-          {items.length === 0 && (
-            <Text style={styles.bottomContentText}>No {isIssues ? 'issues' : 'tips'} provided.</Text>
-          )}
-        </View>
+        <ScrollView 
+          style={styles.scrollContainer}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContentContainer}
+        >
+          <View style={styles.listContainer}>
+            {items.map((text, idx) => (
+              <View key={`${isIssues ? 'issue' : 'tip'}-${idx}`} style={styles.listItem}>
+                {isIssues ? (
+                  <CircledXIcon width={20} height={20} color="#FF3B30" />
+                ) : (
+                  <CheckmarkCircleIcon width={20} height={20} color="#00c950" />
+                )}
+                <Text style={styles.listItemText}>{text}</Text>
+              </View>
+            ))}
+            {items.length === 0 && (
+              <Text style={styles.bottomContentText}>No {isIssues ? 'issues' : 'tips'} provided.</Text>
+            )}
+          </View>
+        </ScrollView>
       </View>
     );
   };
 
   const feedbackItem = getCurrentFeedbackItem();
-
-  console.log('feedbackItem', feedbackItem);
 
   return (
     <View style={styles.container}>
@@ -187,7 +240,7 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, liftData }
         {/* Content Area - Always full height */}
         <View style={styles.content}>
           {feedbackItem && (
-            <View style={styles.imageContainer}>
+            <View style={styles.imageContainer} ref={feedbackSlideshowRef}>
               <Image 
                 source={typeof feedbackItem.imageURL === 'string' ? { uri: feedbackItem.imageURL } : feedbackItem.imageURL}
                 style={styles.feedbackImage}
@@ -258,13 +311,8 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, liftData }
 
 const styles = StyleSheet.create({
   container: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    flex: 1,
     backgroundColor: '#FFFFFF',
-    zIndex: 1000,
   },
   safeArea: {
     flex: 1,
@@ -285,7 +333,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#F2F2F7',
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 10000,
   },
   header: {
     flexDirection: 'row',
@@ -293,7 +340,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 16,
-    zIndex: 1000,
   },
   title: {
     fontSize: 36,
@@ -302,10 +348,6 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
   },
   bottomNavigationSection: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
     flexDirection: 'column',
     justifyContent: 'flex-end',
     alignItems: 'stretch',
@@ -322,10 +364,12 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
     minHeight: 110,
-    zIndex: 1000,
+    marginBottom: -30,
+    paddingBottom: 30,
   },
   expandedBottomSection: {
     minHeight: 500,
+    maxHeight: 500,
   },
   bottomChevron: {
     width: 44,
@@ -355,8 +399,14 @@ const styles = StyleSheet.create({
   },
   bottomContentContainer: {
     paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingBottom: 30,
     flex: 1,
+  },
+  scrollContainer: {
+    flex: 1,
+  },
+  scrollContentContainer: {
+    flexGrow: 1,
   },
   listContainer: {
     gap: 10,
@@ -393,7 +443,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 20,
     paddingTop: 0,
-    paddingBottom: 100,
+    paddingBottom: 40,
   },
   imageContainer: {
     flex: 1,
@@ -415,13 +465,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingTop: 20,
-    paddingBottom: 40,
+    paddingBottom: 20,
   },
   centerColumn: {
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
     flex: 1,
+    position: 'relative',
   },
   expandCollapseButton: {
     width: 44,
@@ -431,32 +482,37 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,
-    position: 'absolute',
-    top: -22,
-    zIndex: 1001,
   },
   upChevronButton: {
     width: 60,
-    height: 32,
+    height: 26,
     borderRadius: 16,
     backgroundColor: '#000000',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 14,
     position: 'absolute',
-    top: -40,
-    zIndex: 1001,
+    top: -32,
+    alignSelf: 'center',
   },
   downChevronButton: {
     width: 60,
-    height: 32,
+    height: 26,
     borderRadius: 16,
     backgroundColor: '#000000',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 14,
     position: 'absolute',
-    top: -434,
-    zIndex: 1001,
+    top: -420,
+    alignSelf: 'center',
+  },
+  tutorialRefContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    opacity: 0,
   },
 }); 

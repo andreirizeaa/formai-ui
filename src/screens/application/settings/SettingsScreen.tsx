@@ -9,6 +9,7 @@ import { LogoutModal } from './LogoutModal';
 import { LanguageModal } from './LanguageModal';
 import { removeUserId, getUserId } from '../../../services/storageService';
 import { deleteUserAccount } from '../../../services/authService';
+import { useTutorialTarget } from '../../../context/TutorialContext';
 import {
   PersonIcon,
   LanguageIcon,
@@ -34,11 +35,13 @@ interface SettingsOptionProps {
   title: string;
   subtitle?: string;
   onPress?: () => void;
+  ref?: any;
 }
 
-function SettingsOption({ icon, title, subtitle, onPress }: SettingsOptionProps) {
+function SettingsOption({ icon, title, subtitle, onPress, ref }: SettingsOptionProps) {
   return (
     <TouchableOpacity 
+      ref={ref}
       style={styles.optionRow} 
       onPress={() => {
         hapticFeedback.selection();
@@ -152,6 +155,10 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onSharePr
   const iconSize = 26;
   const iconColor = '#000000';
   const [userId, setUserId] = useState<string | null>(null);
+  
+  // Tutorial target registration
+  const { ref: settingsFirstCardRef } = useTutorialTarget('settings_first_card');
+  const { ref: settingsSupportEmailRef } = useTutorialTarget('settings_support_email');
 
   useEffect(() => {
     const fetchUserId = async () => {
@@ -280,7 +287,7 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onSharePr
         <Text style={styles.title}>{i18n.t('tabs.settings')}</Text>
         
         {/* First Card */}
-        <View style={styles.card}>
+        <View style={styles.card} ref={settingsFirstCardRef}>
           <SettingsOption
             icon={<PersonIcon width={iconSize} height={iconSize} color={iconColor} />}
             title={i18n.t('settings.personalDetails')}
@@ -331,6 +338,7 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onSharePr
           />
           <View style={styles.separator} />
           <SettingsOption
+            ref={settingsSupportEmailRef}
             icon={<EmailIcon width={iconSize} height={iconSize} color={iconColor} />}
             title={i18n.t('settings.supportEmail')}
             onPress={handleSupportEmailPress}

@@ -1,17 +1,20 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CloseIcon } from '../../../components/icons/icons';
 import { hapticFeedback } from '../../../utils/haptic';
 import i18n from '../../../utils/i18n';
+import { useTutorialTarget } from '../../../context/TutorialContext';
 
-interface HowItWorksModalProps {
-  isVisible: boolean;
+interface HowItWorksProps {
   onClose: () => void;
   onViewFeedback: () => void;
 }
 
-export function HowItWorksModal({ isVisible, onClose, onViewFeedback }: HowItWorksModalProps) {
+export function HowItWorks({ onClose, onViewFeedback }: HowItWorksProps) {
+  // Tutorial target for the how it works modal
+  const { ref: howItWorksModalRef } = useTutorialTarget('how_it_works_modal');
+  
   const handleClose = () => {
     hapticFeedback.selection();
     onClose();
@@ -23,92 +26,85 @@ export function HowItWorksModal({ isVisible, onClose, onViewFeedback }: HowItWor
   };
 
   return (
-    <Modal
-      visible={isVisible}
-      animationType="slide"
-      presentationStyle="pageSheet"
-      onRequestClose={handleClose}
-    >
-      <View style={styles.container}>
-        <SafeAreaView style={styles.safeArea}>
-          {/* Header */}
-          <View style={styles.header}>
-            <Text style={styles.title}>{i18n.t('feedback.howItWorks')}</Text>
-            <TouchableOpacity 
-              style={styles.closeButton} 
-              onPress={() => {
-                hapticFeedback.selection();
-                onClose();
-              }}
-            >
-              <CloseIcon width={24} height={24} color="#000000" />
-            </TouchableOpacity>
-          </View>
+    <View style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.title}>{i18n.t('feedback.howItWorks')}</Text>
+          <TouchableOpacity 
+            style={styles.closeButton} 
+            onPress={() => {
+              hapticFeedback.selection();
+              onClose();
+            }}
+          >
+            <CloseIcon width={24} height={24} color="#000000" />
+          </TouchableOpacity>
+        </View>
 
-          {/* Content Area */}
-          <View style={styles.content}>
-            <View style={styles.howItWorksContainer}>
-              <View style={styles.howItWorksItems}>
-                <View style={styles.howItWorksItem}>
-                  <View style={styles.howItWorksIcon}>
-                    <Text style={styles.howItWorksNumber}>1</Text>
-                  </View>
-                  <View style={styles.howItWorksContent}>
-                    <Text style={styles.howItWorksText}>
-                      {i18n.t('feedback.step1')}
-                    </Text>
-                  </View>
+        {/* Content Area */}
+        <View style={styles.content}>
+          <View style={styles.howItWorksContainer}>
+            <View style={styles.howItWorksItems} ref={howItWorksModalRef}>
+              <View style={styles.howItWorksItem}>
+                <View style={styles.howItWorksIcon}>
+                  <Text style={styles.howItWorksNumber}>1</Text>
                 </View>
-
-                <View style={styles.howItWorksItem}>
-                  <View style={styles.howItWorksIcon}>
-                    <Text style={styles.howItWorksNumber}>2</Text>
-                  </View>
-                  <View style={styles.howItWorksContent}>
-                    <Text style={styles.howItWorksText}>
-                      {i18n.t('feedback.step2')}
-                    </Text>
-                  </View>
+                <View style={styles.howItWorksContent}>
+                  <Text style={styles.howItWorksText}>
+                    {i18n.t('feedback.step1')}
+                  </Text>
                 </View>
+              </View>
 
-                <View style={styles.howItWorksItem}>
-                  <View style={styles.howItWorksIcon}>
-                    <Text style={styles.howItWorksNumber}>3</Text>
-                  </View>
-                  <View style={styles.howItWorksContent}>
-                    <Text style={styles.howItWorksText}>
-                      {i18n.t('feedback.step3')}
-                    </Text>
-                  </View>
+              <View style={styles.howItWorksItem}>
+                <View style={styles.howItWorksIcon}>
+                  <Text style={styles.howItWorksNumber}>2</Text>
                 </View>
+                <View style={styles.howItWorksContent}>
+                  <Text style={styles.howItWorksText}>
+                    {i18n.t('feedback.step2')}
+                  </Text>
+                </View>
+              </View>
 
-                <View style={styles.howItWorksItem}>
-                  <View style={styles.howItWorksIcon}>
-                    <Text style={styles.howItWorksNumber}>4</Text>
-                  </View>
-                  <View style={styles.howItWorksContent}>
-                    <Text style={styles.howItWorksText}>
-                      {i18n.t('feedback.step4')}
-                    </Text>
-                  </View>
+              <View style={styles.howItWorksItem}>
+                <View style={styles.howItWorksIcon}>
+                  <Text style={styles.howItWorksNumber}>3</Text>
+                </View>
+                <View style={styles.howItWorksContent}>
+                  <Text style={styles.howItWorksText}>
+                    {i18n.t('feedback.step3')}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.howItWorksItem}>
+                <View style={styles.howItWorksIcon}>
+                  <Text style={styles.howItWorksNumber}>4</Text>
+                </View>
+                <View style={styles.howItWorksContent}>
+                  <Text style={styles.howItWorksText}>
+                    {i18n.t('feedback.step4')}
+                  </Text>
                 </View>
               </View>
             </View>
           </View>
+        </View>
 
-          {/* Bottom Button */}
-          <View style={styles.bottomContainer}>
-            <TouchableOpacity 
-              style={styles.viewFeedbackButton}
-              onPress={handleViewFeedback}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.viewFeedbackButtonText}>{i18n.t('feedback.viewFeedback')}</Text>
-            </TouchableOpacity>
-          </View>
-        </SafeAreaView>
-      </View>
-    </Modal>
+        {/* Bottom Button */}
+        <View style={styles.bottomContainer}>
+          <TouchableOpacity 
+            style={styles.viewFeedbackButton}
+            onPress={handleViewFeedback}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.viewFeedbackButtonText}>{i18n.t('feedback.viewFeedback')}</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    </View>
   );
 }
 

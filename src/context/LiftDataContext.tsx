@@ -19,8 +19,8 @@ export interface ILiftData {
     lineGraphValues: number[];
     feedback: Array<{
       imageURL: any;
-      flaws: string;
-      improvement: string;
+      flaws: string[];
+      improvement: string[];
     }>;
   };
 }
@@ -155,11 +155,14 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
       }
 
       async function signPath(key?: string): Promise<string | undefined> {
+        
         if (!key) return undefined;
         const { data: signed, error: signError } = await supabase.storage
           .from('lifts')
           .createSignedUrl(key, 60 * 30); // 30 minutes
-        if (signError) return undefined;
+        if (signError) {
+          return undefined;
+        }
         return signed?.signedUrl;
       }
 
@@ -331,6 +334,14 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
     isLoaded,
   ]);
 
+  // Expose clearAllLifts globally for tutorial completion
+  React.useEffect(() => {
+    global.clearTemporaryLifts = clearAllLifts;
+    return () => {
+      global.clearTemporaryLifts = undefined;
+    };
+  }, [clearAllLifts]);
+
   return (
     <LiftDataContext.Provider value={value}>
       {children}
@@ -344,4 +355,56 @@ export function useLiftData() {
     throw new Error('useLiftData must be used within a LiftDataProvider');
   }
   return context;
+} 
+
+// Expose a helper for tutorial to inject a dummy lift quickly
+declare global {
+  var addDummyLift: (() => void) | undefined;
+}
+
+export function TutorialLiftSeeder() {
+  const { addLift, formatDateForLift } = useLiftData();
+  React.useEffect(() => {
+    global.addDummyLift = () => {
+      const today = new Date();
+      const id = `demo-${today.getTime()}`;
+      addLift({
+        id,
+        isFavourite: false,
+        liftType: 'Barbell Front Squat',
+        liftDate: formatDateForLift(today),
+        weightValue: 60,
+        reps: 1,
+        rawVideoURL: require('../../assets/tutorial/formai-example-video.mp4'),
+        poseVideoURL: require('../../assets/tutorial/formai-example-pose.mp4'),
+        thumbnailURL: require('../../assets/tutorial/formai-example-video-thumbnail.jpg'),
+        analysis: {
+          accuracy: 67,
+          lineGraphValues: [67],
+          feedback: [
+            {
+              imageURL: require('../../assets/tutorial/formai-example-feedback.png'),
+              flaws: [
+                "Right knee is caving inward compared to the left, showing knee valgus.",
+                "Right ankle angle suggests the heel may be lifting more than the left.",
+                "Torso is leaning forward excessively, which stresses the lower back.",
+                "Barbell path is slightly forward of mid-foot, reducing lifting efficiency.",
+                "Hip angle indicates possible butt wink or pelvic tuck at the bottom."
+              ],
+              improvement: [
+                "Actively push knees out and think 'spread the floor' with your feet to prevent valgus.",
+                "Improve ankle dorsiflexion with stretches and banded mobilizations to keep heels grounded.",
+                "Brace your core harder using the Valsalva maneuver to maintain an upright torso.",
+                "Keep the bar over mid-foot and adjust grip width to tighten the upper back.",
+                "Strengthen glutes and hamstrings with RDLs, hip thrusts, and pause squats to control hip position.",
+                "Consider weightlifting shoes with a heel lift if ankle mobility limits squat depth."
+            ],
+            },
+          ],
+        },
+      });
+    };
+    return () => { if (global.addDummyLift) delete global.addDummyLift; };
+  }, [addLift, formatDateForLift]);
+  return null;
 } 

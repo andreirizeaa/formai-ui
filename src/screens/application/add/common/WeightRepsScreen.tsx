@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, TextInpu
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { hapticFeedback } from '../../../../utils/haptic';
 import { useUserDetails } from '../../../../context/UserDetailsContext';
+import { useTutorialTarget, useTutorial } from '../../../../context/TutorialContext';
 
 interface WeightRepsScreenProps {
   onBack: () => void;
@@ -14,6 +15,8 @@ export function WeightRepsScreen({
   onBack, 
   onUpload,
 }: WeightRepsScreenProps) {
+  const { ref: completeButtonRef } = useTutorialTarget('weight_reps_complete');
+  const { isActive: isTutorialActive } = useTutorial();
   const [weight, setWeight] = useState('');
   const [reps, setReps] = useState('');
   const [focusedInput, setFocusedInput] = useState<'weight' | 'reps' | null>(null);
@@ -23,13 +26,17 @@ export function WeightRepsScreen({
   const weightInputRef = useRef<TextInput>(null);
   const repsInputRef = useRef<TextInput>(null);
 
-  // Auto-focus weight input when component mounts
+  // Auto-focus weight input when component mounts (but not during tutorial)
   useEffect(() => {
+    if (isTutorialActive) {
+      return; // Don't auto-focus during tutorial
+    }
+    
     const timer = setTimeout(() => {
       weightInputRef.current?.focus();
     }, 100);
     return () => clearTimeout(timer);
-  }, []);
+  }, [isTutorialActive]);
 
   const handleBack = () => {
     hapticFeedback.selection();
@@ -95,7 +102,7 @@ export function WeightRepsScreen({
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View style={styles.content}>
             {/* Weight Section */}
-            <View style={styles.section}>
+            <View style={styles.section}  ref={completeButtonRef}>
               <Text style={styles.sectionTitle}>Weight</Text>
 
               {/* Weight Input */}
