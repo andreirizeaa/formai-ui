@@ -122,7 +122,7 @@ export async function markWalkthroughCompleted(): Promise<void> {
   if (!userId) throw new Error('Missing user_id');
   const { error } = await supabase
     .from('users')
-    .update({ walkthrough_completed: true })
+    .update({ 'walkthrough_completed': true })
     .eq('id', userId);
   if (error) throw new Error(error.message);
 }

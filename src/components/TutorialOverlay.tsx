@@ -1,11 +1,13 @@
 import React from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet, Platform, Dimensions } from 'react-native';
 import { useTutorial } from '../context/TutorialContext';
+import { useUserDetails } from '../context/UserDetailsContext';
 import Svg, { Path, Rect } from 'react-native-svg';
 import { hapticFeedback } from '../utils/haptic';
 
 export function TutorialOverlay() {
-  const { isActive, isTransitioning, steps, currentStepIndex, currentRect, next, prev } = useTutorial();
+  const { isActive, isTransitioning, steps, currentStepIndex, currentRect, next, stop } = useTutorial();
+  const { markWalkthroughCompleted } = useUserDetails();
   
   // Don't render anything if tutorial is not active, is transitioning, or has no current rect
   if (!isActive || isTransitioning || !currentRect) return null;
@@ -19,7 +21,17 @@ export function TutorialOverlay() {
   const step = steps[currentStepIndex];
   if (!step) return null; // Safety check
   
-  const hasPrev = currentStepIndex > 0;
+  // Tutorial IDs that should not allow going back
+  const noPreviousTutorialIds = [
+    'add_button',
+    'upload_practices_cta', 
+    'home_first_lift_card',
+    'how_it_works_modal',
+    'home_performance_icon',
+    'lift_details_review_feedback',
+    'feedback_slideshow',
+  ];
+  
   const hasNext = currentStepIndex < steps.length - 1; // Changed to prevent going beyond last step
 
   const { width: screenW, height: screenH } = Dimensions.get('window');
@@ -115,17 +127,6 @@ export function TutorialOverlay() {
           <Text style={styles.description}>{step.description}</Text>
           <View style={styles.buttonsRow}>
             <TouchableOpacity
-              style={[styles.navButton, !hasPrev && styles.navButtonDisabled]}
-              onPress={() => {
-                hapticFeedback.selection();
-                prev();
-              }}
-              disabled={!hasPrev}
-              activeOpacity={0.8}
-            >
-              <Text style={[styles.navButtonText, !hasPrev && styles.navButtonTextDisabled]}>Previous</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
               style={styles.navButtonPrimary}
               onPress={() => {
                 hapticFeedback.selection();
@@ -136,6 +137,19 @@ export function TutorialOverlay() {
               <Text style={styles.navButtonPrimaryText}>Next</Text>
             </TouchableOpacity>
           </View>
+          
+          {/* Skip guide hyperlink */}
+          <TouchableOpacity
+            style={styles.skipGuideButton}
+            onPress={() => {
+              hapticFeedback.selection();
+              markWalkthroughCompleted();
+              stop();
+            }}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.skipGuideText}>Skip guide</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </Modal>
@@ -204,31 +218,11 @@ const styles = StyleSheet.create({
   },
   buttonsRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  navButton: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: '#000000',
-    borderRadius: 28,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  navButtonDisabled: {
-    borderColor: '#C7C7CC',
-  },
-  navButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#000000',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
-  },
-  navButtonTextDisabled: {
-    color: '#C7C7CC',
+    justifyContent: 'center',
+    marginBottom: 0,
   },
   navButtonPrimary: {
-    flex: 1,
+    width: '100%',
     backgroundColor: '#000000',
     borderRadius: 28,
     paddingVertical: 12,
@@ -239,6 +233,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
+  skipGuideButton: {
+    marginTop: 8,
+    alignSelf: 'center',
+  },
+  skipGuideText: {
+    color: '#666666',
+    fontSize: 14,
+    fontWeight: '400',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+    textDecorationLine: 'underline',
   },
 });
 
