@@ -184,7 +184,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       title: 'Weight & reps',
       description: 'We will complete this step for the demo.',
       targetId: 'weight_reps_complete',
-      tooltipPlacement: 'bottom',
+      tooltipPlacement: 'top',
       onNext: () => {
         try {
           if (global.tutorialUpload?.close) global.tutorialUpload.close();
@@ -644,7 +644,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       
       // Delay for performance icon step
       if (step.id === 'home_performance_icon') {
-        await new Promise(resolve => setTimeout(resolve, 300));
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
       
       const rect = await reg.measure();

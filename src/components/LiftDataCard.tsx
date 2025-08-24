@@ -160,9 +160,8 @@ export function LiftDataCard({ lift, onPress, onDelete, style, scrollViewRef }: 
         >
           <Animated.View style={[styles.pager, pagerStyle]}>
             {/* Page 1: Lift Data */}
-            <View style={[styles.page, styles.pageLift, { width: '50%' }]}> 
+            <View style={[styles.page, styles.pageLift, { width: '50%' }]} ref={firstLiftCardRef}> 
               <TouchableOpacity 
-                ref={firstLiftCardRef}
                 onPress={handlePress}
                 activeOpacity={0.7}
                 style={styles.liftCardContent}
