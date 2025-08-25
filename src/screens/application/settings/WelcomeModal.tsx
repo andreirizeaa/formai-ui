@@ -49,11 +49,11 @@ export function WelcomeModal({ isVisible, onGetStarted }: WelcomeModalProps) {
           <Text style={[
             styles.title,
             { color: isDark ? '#FFFFFF' : '#000000' }
-          ]}>Welcome</Text>
+          ]}>{i18n.t('welcome.modal.title')}</Text>
           <Text style={[
             styles.message,
             { color: isDark ? '#AEAEB2' : '#000000' }
-          ]}>Thank you for trusting Form AI. We're excited to help you achieve your goals.</Text>
+          ]}>{i18n.t('welcome.modal.message')}</Text>
 
           <View style={styles.footer}>
             <TouchableOpacity 
@@ -72,7 +72,7 @@ export function WelcomeModal({ isVisible, onGetStarted }: WelcomeModalProps) {
                   color: isDark ? '#000000' : '#FFFFFF',
                   fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto'
                 }
-              ]}>Let's show you around</Text>
+              ]}>{i18n.t('welcome.modal.ctaButton')}</Text>
             </TouchableOpacity>
           </View>
         </View>
