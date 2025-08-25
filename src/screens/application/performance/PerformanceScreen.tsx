@@ -9,6 +9,7 @@ import { useUserDetails } from '../../../context/UserDetailsContext';
 import { hapticFeedback } from '../../../utils/haptic';
 import i18n from '../../../utils/i18n';
 import { EditIcon, CloseIcon, CircularProgressChart, QuestionMarkCircleIcon } from '../../../components/icons/icons';
+import { useTutorialTarget } from '../../../context/TutorialContext';
 
 interface PerformanceScreenProps {
   onTriggerAddOptions?: () => void;
@@ -28,6 +29,11 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
   const [selectedMovements, setSelectedMovements] = useState<string[]>([]);
   const [infoModalVisible, setInfoModalVisible] = useState(false);
   const [infoModalContent, setInfoModalContent] = useState<{ title: string; message: string }>({ title: '', message: '' });
+  
+  // Tutorial target registration
+  const { ref: performanceFiltersRef } = useTutorialTarget('performance_filters');
+  const { ref: performanceMetricsRef } = useTutorialTarget('performance_metrics');
+  const { ref: performanceChartsRef } = useTutorialTarget('performance_charts');
   
   // Initialize date range with current data range
   React.useEffect(() => {
@@ -325,7 +331,7 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
           <Text style={styles.title}>{i18n.t('performance.title')}</Text>
           
           {/* Date Range and Filter Pills */}
-          <View style={styles.pillsContainer}>
+          <View style={styles.pillsContainer} ref={performanceFiltersRef}>
             <TouchableOpacity 
               style={[styles.pill, styles.dateRangePill]}
               onPress={handleDateRangePress}
@@ -365,6 +371,7 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
             </TouchableOpacity>
           ) : (
             <SwipeableLineGraphCard 
+              ref={performanceMetricsRef}
               cardData={filteredLiftData}
               onTriggerAddOptions={onTriggerAddOptions}
               hasNoLifts={hasNoLifts}
@@ -376,7 +383,7 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
 
           {/* Metric Cards Row: Accuracy | Improvement */}
           {!hasNoLifts && (
-            <View style={styles.metricsRow}>
+            <View style={styles.metricsRow} ref={performanceChartsRef}>
               {/* Accuracy Card */}
               <View style={styles.metricCard}>
                 <View style={styles.metricHeaderRow}>

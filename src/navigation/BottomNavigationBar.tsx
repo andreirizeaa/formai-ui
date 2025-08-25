@@ -5,6 +5,7 @@ import { HomeIcon, PerformanceIcon, SettingsIcon, PlusIcon } from '../components
 import i18n from '../utils/i18n';
 import { useLanguage } from '../context/LanguageContext';
 import { hapticFeedback } from '../utils/haptic';
+import { useTutorialTarget, useTutorial } from '../context/TutorialContext';
 
 interface BottomNavigationBarProps {
   activeTab: 'home' | 'performance' | 'settings';
@@ -36,7 +37,9 @@ export function BottomNavigationBar({
   onAddPress 
 }: BottomNavigationBarProps) {
   const insets = useSafeAreaInsets();
-  const { currentLanguage } = useLanguage(); // Add this to listen to language changes
+  const { currentStepIndex } = useTutorial();
+  const { ref: addButtonRef } = useTutorialTarget('add_button');
+  const { ref: homePerformanceIcon } = useTutorialTarget('home_performance_icon');
 
   return (
     <View style={styles.container}>
@@ -67,6 +70,7 @@ export function BottomNavigationBar({
 
           {/* Performance Tab */}
           <TouchableOpacity
+            ref={homePerformanceIcon}
             style={styles.tab}
             onPress={() => {
               onTabPress('performance');
@@ -104,6 +108,7 @@ export function BottomNavigationBar({
 
         {/* Right side - Add button */}
         <TouchableOpacity
+          ref={currentStepIndex === 0 ? addButtonRef : null}
           style={styles.addButton}
           onPress={() => {
             onAddPress();

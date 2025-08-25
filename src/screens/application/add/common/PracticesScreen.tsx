@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, Image }
 import { CheckmarkCircleIcon } from '../../../../components/icons/icons';
 import { hapticFeedback } from '../../../../utils/haptic';
 import i18n from '../../../../utils/i18n';
+import { useTutorialTarget } from '../../../../context/TutorialContext';
 
 interface PracticesScreenProps {
   onNext?: () => void;
@@ -19,6 +20,8 @@ export function PracticesScreen({
   buttonText,
   tips = i18n.t('add.recordingTips') as string[]
 }: PracticesScreenProps) {
+  const { ref: practicesCtaRef } = useTutorialTarget('upload_practices_cta');
+  
   const handleButtonPress = () => {
     hapticFeedback.selection();
     if (onNext) {
@@ -51,7 +54,7 @@ export function PracticesScreen({
         </View>
 
         {/* Tips Card */}
-        <View style={styles.tipsCard}>
+        <View style={styles.tipsCard} ref={practicesCtaRef}>
           <Text style={styles.tipsTitle}>{i18n.t('add.generalTips')}</Text>
           <View style={styles.tipsList}>
             {(tips || []).map((tip, index) => (

@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native
 import { UploadIcon, VideoIcon } from '../../../components/icons/icons';
 import i18n from '../../../utils/i18n';
 import { hapticFeedback } from '../../../utils/haptic';
+import { useTutorialTarget } from '../../../context/TutorialContext';
 
 interface AddOptionsProps {
   isVisible: boolean;
@@ -12,6 +13,8 @@ interface AddOptionsProps {
 }
 
 export function AddOptions({ isVisible, onUploadPress, onRecordPress, onClose }: AddOptionsProps) {
+  const { ref: uploadButtonRef } = useTutorialTarget('add_options_upload');
+  
   if (!isVisible) return null;
 
   return (
@@ -27,6 +30,7 @@ export function AddOptions({ isVisible, onUploadPress, onRecordPress, onClose }:
         <View style={styles.cardsContainer}>
           {/* Upload Video Card */}
           <TouchableOpacity 
+            ref={uploadButtonRef}
             style={styles.card} 
             onPress={() => {
               hapticFeedback.selection();

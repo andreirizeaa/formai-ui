@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, TextInpu
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { hapticFeedback } from '../../../../utils/haptic';
 import { useUserDetails } from '../../../../context/UserDetailsContext';
+import { useTutorialTarget, useTutorial } from '../../../../context/TutorialContext';
 
 interface WeightRepsScreenProps {
   onBack: () => void;
@@ -14,6 +15,8 @@ export function WeightRepsScreen({
   onBack, 
   onUpload,
 }: WeightRepsScreenProps) {
+  const { ref: completeButtonRef } = useTutorialTarget('weight_reps_complete');
+  const { isActive: isTutorialActive } = useTutorial();
   const [weight, setWeight] = useState('');
   const [reps, setReps] = useState('');
   const [focusedInput, setFocusedInput] = useState<'weight' | 'reps' | null>(null);
@@ -23,13 +26,17 @@ export function WeightRepsScreen({
   const weightInputRef = useRef<TextInput>(null);
   const repsInputRef = useRef<TextInput>(null);
 
-  // Auto-focus weight input when component mounts
+  // Auto-focus weight input when component mounts (but not during tutorial)
   useEffect(() => {
+    if (isTutorialActive) {
+      return; // Don't auto-focus during tutorial
+    }
+    
     const timer = setTimeout(() => {
       weightInputRef.current?.focus();
     }, 100);
     return () => clearTimeout(timer);
-  }, []);
+  }, [isTutorialActive]);
 
   const handleBack = () => {
     hapticFeedback.selection();
@@ -169,6 +176,7 @@ export function WeightRepsScreen({
               <Text style={styles.backButtonText}>Back</Text>
             </TouchableOpacity>
             <TouchableOpacity 
+              ref={completeButtonRef}
               style={[styles.uploadButton, isUploadDisabled && styles.uploadButtonDisabled]}
               onPress={handleUpload}
               disabled={isUploadDisabled}
@@ -247,7 +255,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     width: '100%',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 0,
   },
   keyboardButtonDisabled: {
     backgroundColor: '#8E8E93',
@@ -266,7 +274,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     width: '100%',
     paddingHorizontal: 20,
-    paddingBottom: 4,
+    marginBottom: -30,
   },
   buttonStack: {
     width: '100%',
@@ -280,7 +288,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderRadius: 28,
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 12,
   },
   backButtonText: {
     color: '#000000',

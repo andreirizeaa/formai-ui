@@ -86,6 +86,11 @@ const i18n = new I18n({
     welcome: {
       title: 'FormAI',
       subtitle: 'Perfect form, always',
+      modal: {
+        title: 'Welcome',
+        message: 'Thank you for trusting Form AI. We\'re excited to help you achieve your goals.',
+        ctaButton: 'Let\'s show you around',
+      },
     },
     onboarding: {
       language: {
@@ -450,6 +455,98 @@ const i18n = new I18n({
       oneLift: '1 Lift',
       lifts: 'Lifts',
       noLiftsFound: 'No lifts found',
+    },
+    tutorial: {
+      buttons: {
+        previous: 'Previous',
+        next: 'Next',
+        complete: 'Complete',
+        skipGuide: 'Skip guide',
+      },
+      addButton: {
+        title: 'Add a lift',
+        description: 'Use the add button to start a new lift analysis.',
+      },
+      addOptionsUpload: {
+        title: 'Upload & Record a video',
+        description: 'Here you can upload a video or record a new one via the app which will also save to your photo library. \n\nFor this walkthrough we will upload a demo video.',
+      },
+      uploadPracticesCta: {
+        title: 'Tips & upload',
+        description: 'Here, you can find some general guidance on video quality and how to get the best results. \n\nThe next step would open up your photo library but for the demo, we will skip this step.',
+      },
+      videoPreviewContinue: {
+        title: 'Video preview',
+        description: 'If the video looks good, continue to select the lift type.',
+      },
+      movementSelectionContinue: {
+        title: 'Choose a lift type',
+        description: 'Please select an accurate lift type which will help us analyze your form. \n\nIf you cannot find a lift, please email our support team and we will look to integrate it.',
+      },
+      weightRepsComplete: {
+        title: 'Weight & reps',
+        description: 'This will be used to track your progress and see how you are improving over time.',
+      },
+      homeFirstLiftCard: {
+        title: 'Click into this to find your analysis',
+        description: 'Your lift appears here with the your analysis. Tap on it to see detailed feedback and insights or swipe to delete.',
+      },
+      liftDetailsFormGraph: {
+        title: 'Form accuracy across your reps',
+        description: 'This chart shows how your form accuracy varies across each rep of the lift.',
+      },
+      liftDetailsReviewFeedback: {
+        title: 'Review your feedback',
+        description: 'Tap the Review Feedback button to see detailed analysis and tips for improving your form.',
+      },
+      howItWorksModal: {
+        title: 'How it works',
+        description: 'This shows how our AI analysis works and how it can help you improve your form.',
+      },
+      feedbackSlideshow: {
+        title: 'Your feedback',
+        description: 'Our AI systems provide specific points during your lift that need improvement which will be surfaced here. Then, the relevant issues and tips will be provided for that exact moment. \n\nTap on the right chevron to see the next point.',
+      },
+      feedbackIssues: {
+        title: 'Issues to address',
+        description: 'Review the specific issues identified in your form that need attention.',
+      },
+      feedbackTips: {
+        title: 'Improvement tips',
+        description: 'Here are specific tips to help improve your form and technique. \n\nRemember you can open and close this feedback panel to review the exact point in your lift that this applies to.',
+      },
+      homeSeeAllLifts: {
+        title: 'View all your lifts',
+        description: 'Tap here to see all your recorded lifts in the library, where you can filter, sort, and review your workout history.',
+      },
+      libraryScreen: {
+        title: 'Library screen',
+        description: 'This is your library where you can view all your recorded lifts. Use the tabs to switch between all lifts and favorites. Sort and filter too! \n\nTap on a lift to see more details and swipe to delete.',
+      },
+      homePerformanceIcon: {
+        title: 'Your performance',
+        description: 'Tap the Performance tab to view your progress and statistics over time.',
+      },
+      performanceFilters: {
+        title: 'Filter your data',
+        description: 'Use the filter button to focus on specific movements and date ranges to get more targeted insights. By default it shows the least year and all movements.',
+      },
+      performanceMetrics: {
+        title: 'Performance Charts',
+        description: 'This chart shows your accuracy per weight to help you understand your progress over time and at what weight limit you are performing at your best.',
+      },
+      performanceCharts: {
+        title: 'Accuracy & Improvement',
+        description: 'View your accuracy and improvement metrics to track your progress over time.',
+      },
+      settingsFirstCard: {
+        title: 'Personal Details',
+        description: 'If anything changes, edit your personal details, language and prefered units',
+      },
+      settingsSupportEmail: {
+        title: 'Support Email',
+        description: 'Need help? Tap here at any timeto contact our support team via email.',
+      },
     },
     upload: {
       permissionRequired: 'Permission Required',
