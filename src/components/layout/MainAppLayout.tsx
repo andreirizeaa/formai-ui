@@ -2,7 +2,6 @@ import React from 'react';
 import { MainAppNavigator } from '../../navigation/MainAppNavigator';
 import { useUserDetails } from '../../context/UserDetailsContext';
 import { WelcomeModal } from '../../screens/application/settings/WelcomeModal';
-import { markWalkthroughCompleted } from '../../services/userService';
 import { TutorialProvider, useTutorial } from '../../context/TutorialContext';
 import { TutorialLiftSeeder } from '../../context/LiftDataContext';
 import { useLiftData } from '../../context/LiftDataContext';
@@ -34,12 +33,6 @@ export function MainAppLayout({ children, onLogout }: MainAppLayoutProps) {
     setShouldStartTutorial(true);
   };
 
-  // Temporary debug function to manually test modal
-  const debugShowModal = () => {
-    console.log('Debug: Manually setting showWelcome to true');
-    setShowWelcome(true);
-  };
-
   if (!isUserDetailsLoaded || !isLiftDataLoaded) {
     return <LoadingScreen onLoadComplete={() => {}} />;
   }
@@ -47,6 +40,9 @@ export function MainAppLayout({ children, onLogout }: MainAppLayoutProps) {
   // TutorialStarter component defined inside to access TutorialProvider context
   function TutorialStarter({ trigger }: { trigger: boolean }) {
     const tutorial = useTutorial();
+    if (tutorial.isActive || userDetails?.walkthroughCompleted === true) {
+      return;
+    }
     React.useEffect(() => {
       if (!trigger) return;
       try {

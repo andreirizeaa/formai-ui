@@ -52,6 +52,9 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
   // Tutorial target for the review feedback button
   const { ref: reviewFeedbackRef } = useTutorialTarget('lift_details_review_feedback');
   
+  // Tutorial target for the form graph
+  const { ref: formGraphRef } = useTutorialTarget('lift_details_form_graph');
+  
   // Simple boolean for favourite state - starts with the initial value
   const [isFavourite, setIsFavourite] = useState(initialLiftData.isFavourite);
 
@@ -214,7 +217,7 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
           </View>
 
           {/* Form Score Chart Card */}
-          <View style={styles.card}  ref={reviewFeedbackRef}>
+          <View style={styles.card} ref={formGraphRef}>
             <Text style={styles.cardTitle}>Form accuracy across your reps</Text>
             <View style={styles.chartContainer}>
               {chartData && chartData.datasets && chartData.datasets[0] && chartData.datasets[0].data && (
@@ -278,6 +281,7 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
       <View style={styles.bottomContainer}>
         <View style={styles.bottomBackground}>
           <TouchableOpacity 
+            ref={reviewFeedbackRef}
             style={styles.reviewFeedbackButton}
             onPress={handleReviewFeedback}
             activeOpacity={0.7}
