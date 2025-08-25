@@ -4,6 +4,7 @@ import { useTutorial } from '../context/TutorialContext';
 import { useUserDetails } from '../context/UserDetailsContext';
 import Svg, { Path, Rect } from 'react-native-svg';
 import { hapticFeedback } from '../utils/haptic';
+import i18n from '../utils/i18n';
 
 export function TutorialOverlay() {
   const { isActive, isTransitioning, steps, currentStepIndex, currentRect, next, prev, stop } = useTutorial();
@@ -182,7 +183,7 @@ export function TutorialOverlay() {
                 }}
                 activeOpacity={0.8}
               >
-                <Text style={styles.navButtonPrimaryText}>Next</Text>
+                <Text style={styles.navButtonPrimaryText}>{i18n.t('tutorial.buttons.next')}</Text>
               </TouchableOpacity>
               
               {/* Skip guide hyperlink */}
@@ -198,7 +199,7 @@ export function TutorialOverlay() {
                 }}
                 activeOpacity={0.8}
               >
-                <Text style={styles.skipGuideText}>Skip guide</Text>
+                <Text style={styles.skipGuideText}>{i18n.t('tutorial.buttons.skipGuide')}</Text>
               </TouchableOpacity>
             </View>
           ) : (
@@ -214,7 +215,7 @@ export function TutorialOverlay() {
                 activeOpacity={0.8}
               >
                 <Text style={[styles.navButtonText, !hasPrev && styles.navButtonTextDisabled]}>
-                  Previous
+                  {i18n.t('tutorial.buttons.previous')}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -226,7 +227,7 @@ export function TutorialOverlay() {
                 activeOpacity={0.8}
               >
                 <Text style={styles.navButtonPrimaryText}>
-                  {hasNext ? 'Next' : 'Complete'}
+                  {hasNext ? i18n.t('tutorial.buttons.next') : i18n.t('tutorial.buttons.complete')}
                 </Text>
               </TouchableOpacity>
             </View>

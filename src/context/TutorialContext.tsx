@@ -3,6 +3,7 @@ import { Dimensions, UIManager, findNodeHandle, Platform } from 'react-native';
 import { useUserDetails } from './UserDetailsContext';
 import { hapticFeedback } from '../utils/haptic';
 import { editUserDetails } from '../services/userService';
+import i18n from '../utils/i18n';
 
 // Global type declarations for tutorial functions
 declare global {
@@ -89,8 +90,8 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
   const steps: TutorialStep[] = useMemo(() => [
     {
       id: 'add_button',
-      title: 'Add a lift',
-      description: 'Use the add button to start a new lift analysis.',
+      title: i18n.t('tutorial.addButton.title'),
+      description: i18n.t('tutorial.addButton.description'),
       targetId: 'add_button',
       tooltipPlacement: 'top',
       onNext: () => {
@@ -103,8 +104,8 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     },
     {
       id: 'add_options_upload',
-      title: 'Upload & Record a video',
-      description: 'Here you can upload a video or record a new one via the app which will also save to your photo library. \n\nFor this walkthrough we will upload a demo video.',
+      title: i18n.t('tutorial.addOptionsUpload.title'),
+      description: i18n.t('tutorial.addOptionsUpload.description'),
       targetId: 'add_options_upload',
       tooltipPlacement: 'top',
       onNext: () => {
@@ -125,8 +126,8 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     },
     {
       id: 'upload_practices_cta',
-      title: 'Tips & upload',
-      description: "Here, you can find some general guidance on video quality and how to get the best results. \n\nThe next step would open up your photo library but for the demo, we will skip this step.",
+      title: i18n.t('tutorial.uploadPracticesCta.title'),
+      description: i18n.t('tutorial.uploadPracticesCta.description'),
       targetId: 'upload_practices_cta',
       tooltipPlacement: 'top',
       onNext: () => {
@@ -142,8 +143,8 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     },
     {
       id: 'video_preview_continue',
-      title: 'Video preview',
-      description: 'If the video looks good, continue to select the lift type.',
+      title: i18n.t('tutorial.videoPreviewContinue.title'),
+      description: i18n.t('tutorial.videoPreviewContinue.description'),
       targetId: 'video_preview_continue',
       tooltipPlacement: 'bottom',
       onNext: () => {
@@ -164,8 +165,8 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     },
     {
       id: 'movement_selection_continue',
-      title: 'Choose a lift type',
-      description: 'Please select an accurate lift type which will help us analyze your form. \n\nIf you cannot find a lift, please email our support team and we will look to integrate it.',
+      title: i18n.t('tutorial.movementSelectionContinue.title'),
+      description: i18n.t('tutorial.movementSelectionContinue.description'),
       targetId: 'movement_selection_continue',
       tooltipPlacement: 'bottom',
       onNext: () => {
@@ -186,8 +187,8 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     },
     {
       id: 'weight_reps_complete',
-      title: 'Weight & reps',
-      description: 'This will be used to track your progress and see how you are improving over time.',
+      title: i18n.t('tutorial.weightRepsComplete.title'),
+      description: i18n.t('tutorial.weightRepsComplete.description'),
       targetId: 'weight_reps_complete',
       tooltipPlacement: 'top',
       onNext: () => {
@@ -208,8 +209,8 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     },
     {
       id: 'home_first_lift_card',
-      title: 'Click into this to find your analysis',
-      description: 'Your lift appears here with the your analysis. Tap on it to see detailed feedback and insights or swipe to delete.',
+      title: i18n.t('tutorial.homeFirstLiftCard.title'),
+      description: i18n.t('tutorial.homeFirstLiftCard.description'),
       targetId: 'home_first_lift_card',
       tooltipPlacement: 'top',
       onNext: () => {
@@ -223,8 +224,8 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     },
     {
       id: 'lift_details_form_graph',
-      title: 'Form accuracy across your reps',
-      description: 'This chart shows how your form accuracy varies across each rep of the lift.',
+      title: i18n.t('tutorial.liftDetailsFormGraph.title'),
+      description: i18n.t('tutorial.liftDetailsFormGraph.description'),
       targetId: 'lift_details_form_graph',
       tooltipPlacement: 'top',
       onNext: () => {
@@ -245,8 +246,8 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     },
     {
       id: 'lift_details_review_feedback',
-      title: 'Review your feedback',
-      description: 'Tap the Review Feedback button to see detailed analysis and tips for improving your form.',
+      title: i18n.t('tutorial.liftDetailsReviewFeedback.title'),
+      description: i18n.t('tutorial.liftDetailsReviewFeedback.description'),
       targetId: 'lift_details_review_feedback',
       tooltipPlacement: 'top',
       onNext: () => {
@@ -269,8 +270,8 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     },
     {
       id: 'how_it_works_modal',
-      title: 'How it works',
-      description: 'This shows how our AI analysis works and how it can help you improve your form.',
+      title: i18n.t('tutorial.howItWorksModal.title'),
+      description: i18n.t('tutorial.howItWorksModal.description'),
       targetId: 'how_it_works_modal',
       tooltipPlacement: 'bottom',
       onNext: () => {
@@ -295,8 +296,8 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     },
     {
       id: 'feedback_slideshow',
-      title: 'Your feedback',
-      description: 'Our AI systems provide specific points during your lift that need improvement which will be surfaced here. Then, the relevant issues and tips will be provided for that exact moment. \n\nTap on the right chevron to see the next point.',
+      title: i18n.t('tutorial.feedbackSlideshow.title'),
+      description: i18n.t('tutorial.feedbackSlideshow.description'),
       targetId: 'feedback_slideshow',
       tooltipPlacement: 'inside-bottom',
       onNext: () => {
@@ -319,8 +320,8 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     },
     {
       id: 'feedback_issues',
-      title: 'Issues to address',
-      description: 'Review the specific issues identified in your form that need attention.',
+      title: i18n.t('tutorial.feedbackIssues.title'),
+      description: i18n.t('tutorial.feedbackIssues.description'),
       targetId: 'feedback_issues',
       tooltipPlacement: 'top',
       onNext: () => {
@@ -344,8 +345,8 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     },
     {
       id: 'feedback_tips',
-      title: 'Improvement tips',
-      description: 'Here are specific tips to help improve your form and technique. \n\nRemember you can open and close this feedback panel to review the exact point in your lift that this applies to.',
+      title: i18n.t('tutorial.feedbackTips.title'),
+      description: i18n.t('tutorial.feedbackTips.description'),
       targetId: 'feedback_tips',
       tooltipPlacement: 'top',
       onNext: () => {
@@ -368,8 +369,8 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     },
     {
       id: 'home_see_all_lifts',
-      title: 'View all your lifts',
-      description: 'Tap here to see all your recorded lifts in the library, where you can filter, sort, and review your workout history.',
+      title: i18n.t('tutorial.homeSeeAllLifts.title'),
+      description: i18n.t('tutorial.homeSeeAllLifts.description'),
       targetId: 'home_see_all_lifts',
       tooltipPlacement: 'top',
       onNext: () => {
@@ -391,8 +392,8 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     },
     {
       id: 'library_screen',
-      title: 'Library screen',
-      description: 'This is your library where you can view all your recorded lifts. Use the tabs to switch between all lifts and favorites. Sort and filter too! \n\nTap on a lift to see more details and swipe to delete.',
+      title: i18n.t('tutorial.libraryScreen.title'),
+      description: i18n.t('tutorial.libraryScreen.description'),
       targetId: 'library_screen',
       tooltipPlacement: 'bottom',
       onNext: () => {
@@ -414,8 +415,8 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     },
     {
       id: 'home_performance_icon',
-      title: 'Your performance',
-      description: 'Tap the Performance tab to view your progress and statistics over time.',
+      title: i18n.t('tutorial.homePerformanceIcon.title'),
+      description: i18n.t('tutorial.homePerformanceIcon.description'),
       targetId: 'home_performance_icon',
       tooltipPlacement: 'top',
       onNext: () => {
@@ -437,8 +438,8 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     },
     {
       id: 'performance_filters',
-      title: 'Filter your data',
-      description: 'Use the filter button to focus on specific movements and date ranges to get more targeted insights. By default it shows the least year and all movements.',
+      title: i18n.t('tutorial.performanceFilters.title'),
+      description: i18n.t('tutorial.performanceFilters.description'),
       targetId: 'performance_filters',
       tooltipPlacement: 'bottom',
       onNext: () => {
@@ -460,8 +461,8 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     },
     {
       id: 'performance_metrics',
-      title: 'Performance Charts',
-      description: 'This chart shows your accuracy per weight to help you understand your progress over time and at what weight limit you are performing at your best.',
+      title: i18n.t('tutorial.performanceMetrics.title'),
+      description: i18n.t('tutorial.performanceMetrics.description'),
       targetId: 'performance_metrics',
       tooltipPlacement: 'bottom',
       onNext: () => {
@@ -483,8 +484,8 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     },
     {
       id: 'performance_charts',
-      title: 'Accuracy & Improvement',
-      description: 'View your accuracy and improvement metrics to track your progress over time.',
+      title: i18n.t('tutorial.performanceCharts.title'),
+      description: i18n.t('tutorial.performanceCharts.description'),
       targetId: 'performance_charts',
       tooltipPlacement: 'top',
       onNext: () => {
@@ -506,8 +507,8 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     },
     {
       id: 'settings_first_card',
-      title: 'Personal Details',
-      description: 'If anything changes, edit your personal details, language and prefered units',
+      title: i18n.t('tutorial.settingsFirstCard.title'),
+      description: i18n.t('tutorial.settingsFirstCard.description'),
       targetId: 'settings_first_card',
       tooltipPlacement: 'bottom',
       onNext: () => {
@@ -529,8 +530,8 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     },
     {
       id: 'settings_support_email',
-      title: 'Support Email',
-      description: 'Need help? Tap here at any timeto contact our support team via email.',
+      title: i18n.t('tutorial.settingsSupportEmail.title'),
+      description: i18n.t('tutorial.settingsSupportEmail.description'),
       targetId: 'settings_support_email',
       tooltipPlacement: 'bottom',
       onNext: () => {
