@@ -1,5 +1,8 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Dimensions, UIManager, findNodeHandle, Platform } from 'react-native';
+import { useUserDetails } from './UserDetailsContext';
+import { hapticFeedback } from '../utils/haptic';
+import { editUserDetails } from '../services/userService';
 
 // Global type declarations for tutorial functions
 declare global {
@@ -79,6 +82,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [currentRect, setCurrentRect] = useState<TutorialRect | null>(null);
+  const { updateUserDetails, refetchUserDetails } = useUserDetails();
 
   // Steps flow definition
   const steps: TutorialStep[] = useMemo(() => [
@@ -189,28 +193,6 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
         try {
           if (global.tutorialUpload?.close) global.tutorialUpload.close();
           if (global.addDummyLift) global.addDummyLift();
-          
-          // Immediately clear current rect and set transitioning to prevent flickering
-          setCurrentRect(null);
-          setIsTransitioning(true);
-          
-          // Clear all registrations immediately to prevent old targets from being measured
-          registrationsRef.current.clear();
-          
-          // Force cleanup of any lingering registrations
-          setTimeout(() => {
-            registrationsRef.current.clear();
-          }, 100);
-          
-          // Manually advance to the home screen card step after a delay
-          setTimeout(() => {
-            const homeCardStepIndex = 6; // Index of home_first_lift_card step
-            
-            setCurrentStepIndex(homeCardStepIndex);
-            
-            // Keep transitioning state until target is properly positioned
-            // The transitioning state will be cleared when the target is measured
-          }, 1000);
         } catch (error) {
           console.warn('Tutorial step error:', error);
         }
@@ -239,11 +221,33 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       },
     },
     {
+      id: 'lift_details_form_graph',
+      title: 'Form accuracy across your reps',
+      description: 'This chart shows how your form accuracy varies across each repetition of your lift.',
+      targetId: 'lift_details_form_graph',
+      tooltipPlacement: 'top',
+      onNext: () => {
+        try {
+          // Continue to the next step (review feedback)
+        } catch (error) {
+          console.warn('Tutorial step error:', error);
+        }
+      },
+      onPrev: () => {
+        try {
+          // Go back to the home screen
+          if (global.showFirstLiftDetails) global.showFirstLiftDetails();
+        } catch (error) {
+          console.warn('Tutorial step error:', error);
+        }
+      },
+    },
+    {
       id: 'lift_details_review_feedback',
       title: 'Review your feedback',
       description: 'Tap the Review Feedback button to see detailed analysis and tips for improving your form.',
       targetId: 'lift_details_review_feedback',
-      tooltipPlacement: 'bottom',
+      tooltipPlacement: 'top',
       onNext: () => {
         try {
           // Open the feedback slideshow as if user clicked on it
@@ -254,8 +258,9 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       },
       onPrev: () => {
         try {
-          // Go back to the home screen
-          if (global.showFirstLiftDetails) global.showFirstLiftDetails();
+          // Go back to the form graph step
+          const formGraphStepIndex = 6; // Index of lift_details_form_graph step
+          setCurrentStepIndex(formGraphStepIndex);
         } catch (error) {
           console.warn('Tutorial step error:', error);
         }
@@ -499,8 +504,6 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     },
   ], []);
 
-
-
   // Helpers
   const registerTarget = useCallback((id: string, measure: () => Promise<TutorialRect | null>) => {
     try {
@@ -537,13 +540,6 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
 
   const unregisterTarget = useCallback((id: string) => {
     try {
-      // Special safeguard for review feedback step: don't unregister during the tutorial step
-      const currentStep = steps[currentStepIndex];
-      if (currentStep?.id === 'lift_details_review_feedback' && id === 'lift_details_review_feedback') {
-        // Only unregister if we're moving away from this step
-        return;
-      }
-      
       registrationsRef.current.delete(id);
     } catch (error) {
       console.warn('Failed to unregister tutorial target:', error);
@@ -564,16 +560,6 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       for (const [id] of registrationsRef.current) {
         if (id !== currentTargetId) {
           registrationsRef.current.delete(id);
-        }
-      }
-      
-      // Special safeguard for review feedback step: ensure it stays registered
-      if (currentStep?.id === 'lift_details_review_feedback' && currentTargetId) {
-        const existingReg = registrationsRef.current.get(currentTargetId);
-        if (!existingReg) {
-          // If the registration was accidentally removed, don't clean it up
-          // This prevents the button from disappearing during the tutorial
-          return;
         }
       }
     } catch (error) {
@@ -618,8 +604,8 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       }
       
       // Longer delay for review feedback step to ensure it's fully rendered
-      if (step.id === 'lift_details_review_feedback') {
-        await new Promise(resolve => setTimeout(resolve, 500));
+      if (step.id === 'lift_details_form_graph') {
+        await new Promise(resolve => setTimeout(resolve, 300));
       }
       
       // Delay for how it works modal step
@@ -661,94 +647,6 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     }
   }, [steps, currentStepIndex]);
 
-  // Re-measure on step change or when activating
-  useEffect(() => {
-    
-    if (!isActive || isTransitioning) {
-      return;
-    }
-    
-    const currentStep = steps[currentStepIndex];
-    if (!currentStep) {
-      return;
-    }
-    
-    // Clean up stale registrations before measuring
-    cleanupStaleRegistrations();
-    
-    // Add a delay before measuring to ensure the target is fully rendered
-    const delay = currentStep.id === 'home_first_lift_card' ? 800 : 
-                  currentStep.id === 'lift_details_review_feedback' ? 800 :
-                  currentStep.id === 'how_it_works_modal' ? 600 :
-                  currentStep.id === 'feedback_slideshow' ? 600 :
-                  currentStep.id === 'feedback_issues' ? 600 :
-                  currentStep.id === 'feedback_tips' ? 600 :
-                  currentStep.id === 'home_performance_icon' ? 600 : 100;
-    
-    setTimeout(() => {
-      // Only measure if we have a valid step and it's the current active step
-      if (currentStepIndex >= 0 && currentStepIndex < steps.length) {
-        void measureCurrentTarget(currentStepIndex);
-      } else {
-        setCurrentStepIndex(0); // Reset to valid step
-      }
-    }, delay);
-    
-    // Special case for review feedback step: add additional measurement after longer delay
-    if (currentStep.id === 'lift_details_review_feedback') {
-      setTimeout(() => {
-        if (currentStepIndex === 7 && isActive && !isTransitioning) {
-          void measureCurrentTarget(currentStepIndex);
-        }
-      }, 1200);
-    }
-    
-    // Special case for how it works modal step: add additional measurement after longer delay
-    if (currentStep.id === 'how_it_works_modal') {
-      setTimeout(() => {
-        if (currentStepIndex === 8 && isActive && !isTransitioning) {
-          void measureCurrentTarget(currentStepIndex);
-        }
-      }, 1000);
-    }
-    
-    // Special case for feedback slideshow step: add additional measurement after longer delay
-    if (currentStep.id === 'feedback_slideshow') {
-      setTimeout(() => {
-        if (currentStepIndex === 9 && isActive && !isTransitioning) {
-          void measureCurrentTarget(currentStepIndex);
-        }
-      }, 1000);
-    }
-    
-    // Special case for feedback issues step: add additional measurement after longer delay
-    if (currentStep.id === 'feedback_issues') {
-      setTimeout(() => {
-        if (currentStepIndex === 10 && isActive && !isTransitioning) {
-          void measureCurrentTarget(currentStepIndex);
-        }
-      }, 1000);
-    }
-    
-    // Special case for feedback tips step: add additional measurement after longer delay
-    if (currentStep.id === 'feedback_tips') {
-      setTimeout(() => {
-        if (currentStepIndex === 11 && isActive && !isTransitioning) {
-          void measureCurrentTarget(currentStepIndex);
-        }
-      }, 1000);
-    }
-    
-    // Special case for performance icon step: add additional measurement after longer delay
-    if (currentStep.id === 'home_performance_icon') {
-      setTimeout(() => {
-        if (currentStepIndex === 12 && isActive && !isTransitioning) {
-          void measureCurrentTarget(currentStepIndex);
-        }
-      }, 1000);
-    }
-  }, [isActive, currentStepIndex, steps, measureCurrentTarget, cleanupStaleRegistrations, isTransitioning]);
-
   // Public actions
   const start = useCallback(() => {
     try {
@@ -783,96 +681,6 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       // Add a delay to ensure any UI changes from onNext are complete
       const isModalOpeningStep = step?.id === 'add_button' || step?.id === 'add_options_upload';
       const delay = isModalOpeningStep ? 500 : 100;
-      
-      // For weight_reps_complete step, don't auto-advance since we handle it manually in onNext
-      if (step?.id === 'weight_reps_complete') {
-        setIsTransitioning(false);
-        return;
-      }
-      
-      // For home_first_lift_card step, auto-advance to review feedback step after a delay
-      if (step?.id === 'home_first_lift_card') {
-        setTimeout(() => {
-          const reviewFeedbackStepIndex = 7; // Index of lift_details_review_feedback step
-          setCurrentStepIndex(reviewFeedbackStepIndex);
-          
-          // Clear transitioning state after step change with longer delay to ensure proper rendering
-          setTimeout(() => {
-            setIsTransitioning(false);
-          }, 500);
-        }, 200); // Increased delay to ensure lift details screen is fully rendered
-        return;
-      }
-      
-      // For review feedback step, auto-advance to how it works modal
-      if (step?.id === 'lift_details_review_feedback') {
-        setTimeout(() => {
-          const howItWorksStepIndex = 8; // Index of how_it_works_modal step
-          setCurrentStepIndex(howItWorksStepIndex);
-          
-          // Clear transitioning state after step change
-          setTimeout(() => {
-            setIsTransitioning(false);
-          }, 500);
-        }, 200);
-        return;
-      }
-      
-      // For how it works modal step, auto-advance to feedback slideshow
-      if (step?.id === 'how_it_works_modal') {
-        setTimeout(() => {
-          const feedbackSlideshowStepIndex = 9; // Index of feedback_slideshow step
-          setCurrentStepIndex(feedbackSlideshowStepIndex);
-          
-          // Clear transitioning state after step change
-          setTimeout(() => {
-            setIsTransitioning(false);
-          }, 500);
-        }, 200);
-        return;
-      }
-      
-      // For feedback slideshow step, auto-advance to issues step after a delay
-      if (step?.id === 'feedback_slideshow') {
-        setTimeout(() => {
-          const issuesStepIndex = 10; // Index of feedback_issues step
-          setCurrentStepIndex(issuesStepIndex);
-          
-          // Clear transitioning state after step change
-          setTimeout(() => {
-            setIsTransitioning(false);
-          }, 500);
-        }, 200);
-        return;
-      }
-      
-      // For feedback issues step, auto-advance to tips step after a delay
-      if (step?.id === 'feedback_issues') {
-        setTimeout(() => {
-          const tipsStepIndex = 11; // Index of feedback_tips step
-          setCurrentStepIndex(tipsStepIndex);
-          
-          // Clear transitioning state after step change
-          setTimeout(() => {
-            setIsTransitioning(false);
-          }, 500);
-        }, 200);
-        return;
-      }
-      
-      // For feedback tips step, auto-advance to performance icon step after navigation
-      if (step?.id === 'feedback_tips') {
-        setTimeout(() => {
-          const performanceIconStepIndex = 12; // Index of home_performance_icon step
-          setCurrentStepIndex(performanceIconStepIndex);
-          
-          // Clear transitioning state after step change with longer delay to ensure navigation completes
-          setTimeout(() => {
-            setIsTransitioning(false);
-          }, 800);
-        }, 500); // Wait for navigation to complete
-        return;
-      }
       
       setTimeout(() => {
         const nextIndex = Math.min(currentStepIndex + 1, steps.length - 1);
@@ -913,13 +721,18 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       setIsTransitioning(false);
     }
   }, [currentStepIndex, steps]);
-
-  const stop = useCallback(() => {
+  const stop = useCallback(async() => {
     try {
       setIsActive(false);
       setIsTransitioning(false);
       setCurrentStepIndex(0);
       setCurrentRect(null);
+      // Update local state immediately to prevent delayed UI updates
+      updateUserDetails('walkthroughCompleted', true);
+      // Then make the API call
+      await editUserDetails({ walkthrough_completed: true });
+      await refetchUserDetails();
+      hapticFeedback.success();
     } catch (error) {
       console.warn('Failed to stop tutorial:', error);
     }
@@ -1017,10 +830,10 @@ export function useTutorialTarget(targetId?: string) {
       };
       
       // For lift_details_review_feedback, use a longer delay to ensure proper rendering
-      const delay = targetId === 'lift_details_review_feedback' ? 300 : 
-                   targetId === 'how_it_works_modal' ? 300 :
-                   targetId === 'feedback_slideshow' ? 300 :
-                   targetId === 'home_performance_icon' ? 300 : 100;
+      const delay = targetId === 'lift_details_form_graph' ? 500 : 
+                   targetId === 'how_it_works_modal' ? 500 :
+                   targetId === 'feedback_slideshow' ? 500 :
+                   targetId === 'home_performance_icon' ? 700 : 100;
       const timer = setTimeout(() => {
         try {
           // AGGRESSIVE SAFEGUARD: Never register add_button when not on step 0
@@ -1031,74 +844,6 @@ export function useTutorialTarget(targetId?: string) {
           // Only register for current step target
           if (isCurrentStepTarget) {
             registerTarget(targetId, measure);
-            
-            // For review feedback step, add additional retry logic
-            if (targetId === 'lift_details_review_feedback') {
-              // Retry registration after a longer delay to ensure the component is fully mounted
-              setTimeout(() => {
-                if (isCurrentStepTarget && ref.current) {
-                  registerTarget(targetId, measure);
-                }
-              }, 600);
-              
-              // Additional retry for extra stability
-              setTimeout(() => {
-                if (isCurrentStepTarget && ref.current) {
-                  registerTarget(targetId, measure);
-                }
-              }, 1000);
-            }
-            
-            // For how it works modal step, add additional retry logic
-            if (targetId === 'how_it_works_modal') {
-              // Retry registration after a longer delay to ensure the component is fully mounted
-              setTimeout(() => {
-                if (isCurrentStepTarget && ref.current) {
-                  registerTarget(targetId, measure);
-                }
-              }, 600);
-              
-              // Additional retry for extra stability
-              setTimeout(() => {
-                if (isCurrentStepTarget && ref.current) {
-                  registerTarget(targetId, measure);
-                }
-              }, 1000);
-            }
-            
-            // For feedback slideshow step, add additional retry logic
-            if (targetId === 'feedback_slideshow') {
-              // Retry registration after a longer delay to ensure the component is fully mounted
-              setTimeout(() => {
-                if (isCurrentStepTarget && ref.current) {
-                  registerTarget(targetId, measure);
-                }
-              }, 600);
-              
-              // Additional retry for extra stability
-              setTimeout(() => {
-                if (isCurrentStepTarget && ref.current) {
-                  registerTarget(targetId, measure);
-                }
-              }, 1000);
-            }
-            
-            // For performance icon step, add additional retry logic
-            if (targetId === 'home_performance_icon') {
-              // Retry registration after a longer delay to ensure the component is fully mounted
-              setTimeout(() => {
-                if (isCurrentStepTarget && ref.current) {
-                  registerTarget(targetId, measure);
-                }
-              }, 600);
-              
-              // Additional retry for extra stability
-              setTimeout(() => {
-                if (isCurrentStepTarget && ref.current) {
-                  registerTarget(targetId, measure);
-                }
-              }, 1000);
-            }
           }
         } catch (error) {
           console.warn('Failed to register tutorial target:', error);

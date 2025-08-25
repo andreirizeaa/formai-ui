@@ -7,7 +7,7 @@ import { hapticFeedback } from '../utils/haptic';
 
 export function TutorialOverlay() {
   const { isActive, isTransitioning, steps, currentStepIndex, currentRect, next, prev, stop } = useTutorial();
-  const { markWalkthroughCompleted } = useUserDetails();
+  const { updateUserDetails, refetchUserDetails } = useUserDetails();
   
   // Don't render anything if tutorial is not active, is transitioning, or has no current rect
   if (!isActive || isTransitioning || !currentRect) return null;
@@ -28,8 +28,8 @@ export function TutorialOverlay() {
     'home_first_lift_card',
     'how_it_works_modal',
     'home_performance_icon',
-    'lift_details_review_feedback',
     'feedback_slideshow',
+    'lift_details_form_graph',
   ];
   
   const hasPrev = currentStepIndex > 0 && !noPreviousTutorialIds.includes(step.id);
@@ -150,7 +150,6 @@ export function TutorialOverlay() {
                 onPress={async () => {
                   hapticFeedback.selection();
                   try {
-                    await markWalkthroughCompleted();
                     stop();
                   } catch (error) {
                     console.error('Error in skip guide:', error);
@@ -185,7 +184,9 @@ export function TutorialOverlay() {
                 }}
                 activeOpacity={0.8}
               >
-                <Text style={styles.navButtonPrimaryText}>Next</Text>
+                <Text style={styles.navButtonPrimaryText}>
+                  {hasNext ? 'Next' : 'Complete'}
+                </Text>
               </TouchableOpacity>
             </View>
           )}

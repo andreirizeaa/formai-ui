@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getUserId } from '../services/storageService';
-import { fetchUserDetailsById, markWalkthroughCompleted as markWalkthroughCompletedService } from '../services/userService';
+import { fetchUserDetailsById, editUserDetails } from '../services/userService';
 import { 
   formatWeightForDisplay, 
   formatHeightForDisplay 
@@ -25,13 +25,13 @@ interface UserDetailsContextType {
   // Helper methods for weight and height
   updateWeight: (weightKg: number) => void;
   updateHeight: (heightCm: number) => void;
+  updateWalkthroughCompleted: (completed: boolean) => void;
   getWeightDisplay: () => string;
   getHeightDisplay: () => string;
   getDateOfBirthDisplay: () => string;
   formatDateForDisplay: (dateString: string) => string;
   refetchUserDetails: () => Promise<void>;
   isUserDetailsLoaded: boolean;
-  markWalkthroughCompleted: () => Promise<void>;
 }
 
 const UserDetailsContext = createContext<UserDetailsContextType | undefined>(undefined);
@@ -146,6 +146,23 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
     });
   };
 
+  const updateWalkthroughCompleted = (completed: boolean) => {
+    console.log('updateWalkthroughCompleted', completed);
+    setUserDetails(prev => {
+      const base: UserDetails = prev ?? {
+        unitSystem: null,
+        currentWeightKG: null,
+        heightCM: null,
+        dateOfBirth: null,
+        gender: null,
+        language: null,
+        currentStreak: null,
+        walkthroughCompleted: null,
+      };
+      return { ...base, walkthroughCompleted: completed };
+    });
+  };
+
   const getWeightDisplay = (): string => {
     if (!userDetails || userDetails.currentWeightKG == null || !userDetails.unitSystem) return '';
     return formatWeightForDisplay(userDetails.currentWeightKG, userDetails.unitSystem);
@@ -194,17 +211,6 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
     await queryClient.invalidateQueries({ queryKey: ['user-details', userId] });
   };
 
-  const markWalkthroughCompleted = async () => {
-    if (!userId) return;
-    try {
-      await markWalkthroughCompletedService();
-      // Update local state immediately
-      setUserDetails(prev => prev ? { ...prev, walkthroughCompleted: true } : null);
-    } catch (error) {
-      console.error('Failed to mark walkthrough completed:', error);
-    }
-  };
-
   const value = useMemo(
     () => ({
       userDetails,
@@ -212,26 +218,26 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
       updateUnitSystem,
       updateWeight,
       updateHeight,
+      updateWalkthroughCompleted,
       getWeightDisplay,
       getHeightDisplay,
       getDateOfBirthDisplay,
       formatDateForDisplay,
       refetchUserDetails,
       isUserDetailsLoaded: isLoaded,
-      markWalkthroughCompleted,
     }), [
       userDetails,
       updateUserDetails,
       updateUnitSystem,
       updateWeight,
       updateHeight,
+      updateWalkthroughCompleted,
       getWeightDisplay,
       getHeightDisplay,
       getDateOfBirthDisplay,
       formatDateForDisplay,
       refetchUserDetails,
       isLoaded,
-      markWalkthroughCompleted,
     ]
   );
 

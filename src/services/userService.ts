@@ -60,6 +60,7 @@ export interface EditUserDetailsPayload {
   gender?: string;
   language?: string; // e.g., 'en'
   unit_system?: 'metric' | 'imperial';
+  walkthrough_completed?: boolean;
 }
 
 export interface EditUserDetailsResponse {
@@ -116,13 +117,3 @@ export async function fetchUserDetailsById(userId: string): Promise<UserDetailsR
   return (data as UserDetailsRow) ?? null;
 }
 
-// --- Walkthrough helpers ---
-export async function markWalkthroughCompleted(): Promise<void> {
-  const userId = await getUserId();
-  if (!userId) throw new Error('Missing user_id');
-  const { error } = await supabase
-    .from('users')
-    .update({ 'walkthrough_completed': true })
-    .eq('id', userId);
-  if (error) throw new Error(error.message);
-}

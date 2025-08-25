@@ -10,6 +10,7 @@ import { LiftDataCard } from '../../../components/LiftDataCard';
 import { SwipeableCalendar } from '../../../components/ui/SwipeableCalendar';
 import { useUserDetails } from '../../../context/UserDetailsContext';
 import { useStreak } from '../../../context/StreakContext';
+import { useTutorial } from '../../../context/TutorialContext';
 import { PanGestureHandler } from 'react-native-gesture-handler';
 import Animated, { 
   useSharedValue, 
@@ -35,6 +36,7 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
   const { liftData, removeLift, getLiftsByDate, formatDateForLift, refreshLifts } = useLiftData();
   const { userDetails } = useUserDetails();
   const { daysLogged } = useStreak();
+  const { isActive: isTutorialActive } = useTutorial();
   
   // Selected date state for calendar
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -90,6 +92,8 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
     liftAnimations.current = newLiftAnimations;
     fadeAnimations.current = newFadeAnimations;
   }, [liftsForSelectedDate]);
+
+
 
   // Animate lift cards when lifts change
   useEffect(() => {
@@ -435,6 +439,8 @@ const styles = StyleSheet.create({
     flex: 1,
     marginTop: -52,
   },
+
+
   header: {
     paddingHorizontal: 20,
     paddingBottom: 24,
