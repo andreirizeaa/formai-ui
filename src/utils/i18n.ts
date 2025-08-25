@@ -86,6 +86,11 @@ const i18n = new I18n({
     welcome: {
       title: 'FormAI',
       subtitle: 'Perfect form, always',
+      modal: {
+        title: 'Welcome',
+        message: 'Thank you for trusting Form AI. We\'re excited to help you achieve your goals.',
+        ctaButton: 'Let\'s show you around',
+      },
     },
     onboarding: {
       language: {
