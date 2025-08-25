@@ -58,6 +58,9 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, liftData }
       if (currentPageType === 'image') {
         setCurrentPageType('flaws');
         setIsBottomExpanded(true);
+      } else if (currentPageType === 'improvement') {
+        setCurrentPageType('flaws');
+        setIsBottomExpanded(true);
       }
     };
     
@@ -65,6 +68,13 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, liftData }
       if (currentPageType === 'flaws') {
         setCurrentPageType('improvement');
         setIsBottomExpanded(true);
+      }
+    };
+    
+    global.navigateToImage = () => {
+      if (currentPageType === 'flaws') {
+        setCurrentPageType('image');
+        setIsBottomExpanded(false);
       }
     };
     
@@ -81,6 +91,7 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, liftData }
     return () => {
       delete global.navigateToIssues;
       delete global.navigateToTips;
+      delete global.navigateToImage;
       delete global.navigateToHome;
     };
   }, [currentPageType]);

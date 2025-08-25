@@ -26,6 +26,7 @@ declare global {
   var openFeedbackSlideshow: (() => void) | undefined;
   var navigateToIssues: (() => void) | undefined;
   var navigateToTips: (() => void) | undefined;
+  var navigateToImage: (() => void) | undefined;
   var navigateToHome: (() => void) | undefined;
   var navigateToPerformance: (() => void) | undefined;
   var openPerformanceFilters: (() => void) | undefined;
@@ -89,12 +90,12 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     {
       id: 'add_button',
       title: 'Add a lift',
-      description: 'Use the Add button to upload or record a video.',
+      description: 'Use the add button to start a new lift analysis.',
       targetId: 'add_button',
       tooltipPlacement: 'top',
       onNext: () => {
         try {
-          if (global.triggerAddOptions) global.triggerAddOptions();
+          if ((global as any).triggerAddOptions) (global as any).triggerAddOptions();
         } catch (error) {
           console.warn('Tutorial step error:', error);
         }
@@ -102,21 +103,21 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     },
     {
       id: 'add_options_upload',
-      title: 'Upload a video',
-      description: 'Choose Upload to pick an existing video.',
+      title: 'Upload & Record a video',
+      description: 'Here you can upload a video or record a new one via the app which will also save to your photo library. \n\nFor this walkthrough we will upload a demo video.',
       targetId: 'add_options_upload',
       tooltipPlacement: 'top',
       onNext: () => {
         try {
-          if (global.openUploadModal) global.openUploadModal();
-          if (global.closeAddOptions) global.closeAddOptions();
+          if ((global as any).openUploadModal) (global as any).openUploadModal();
+          if ((global as any).closeAddOptions) (global as any).closeAddOptions();
         } catch (error) {
           console.warn('Tutorial step error:', error);
         }
       },
       onPrev: () => {
         try {
-          if (global.closeAddOptions) global.closeAddOptions();
+          if ((global as any).closeAddOptions) (global as any).closeAddOptions();
         } catch (error) {
           console.warn('Tutorial step error:', error);
         }
@@ -125,7 +126,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     {
       id: 'upload_practices_cta',
       title: 'Tips & upload',
-      description: "This normally opens your library. We'll skip to a demo video.",
+      description: "Here, you can find some general guidance on video quality and how to get the best results. \n\nThe next step would open up your photo library but for the demo, we will skip this step.",
       targetId: 'upload_practices_cta',
       tooltipPlacement: 'top',
       onNext: () => {
@@ -141,8 +142,8 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     },
     {
       id: 'video_preview_continue',
-      title: 'Preview',
-      description: 'Looks good. Continue to select the movement.',
+      title: 'Video preview',
+      description: 'If the video looks good, continue to select the lift type.',
       targetId: 'video_preview_continue',
       tooltipPlacement: 'bottom',
       onNext: () => {
@@ -163,8 +164,8 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     },
     {
       id: 'movement_selection_continue',
-      title: 'Choose movement',
-      description: 'We picked a demo movement for you. Continue.',
+      title: 'Choose a lift type',
+      description: 'Please select an accurate lift type which will help us analyze your form. \n\nIf you cannot find a lift, please email our support team and we will look to integrate it.',
       targetId: 'movement_selection_continue',
       tooltipPlacement: 'bottom',
       onNext: () => {
@@ -186,7 +187,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     {
       id: 'weight_reps_complete',
       title: 'Weight & reps',
-      description: 'We will complete this step for the demo.',
+      description: 'This will be used to track your progress and see how you are improving over time.',
       targetId: 'weight_reps_complete',
       tooltipPlacement: 'top',
       onNext: () => {
@@ -208,7 +209,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     {
       id: 'home_first_lift_card',
       title: 'Click into this to find your analysis',
-      description: 'Your lift appears here with analysis. Tap on it to see detailed feedback and insights.',
+      description: 'Your lift appears here with the your analysis. Tap on it to see detailed feedback and insights or swipe to delete.',
       targetId: 'home_first_lift_card',
       tooltipPlacement: 'top',
       onNext: () => {
@@ -223,7 +224,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     {
       id: 'lift_details_form_graph',
       title: 'Form accuracy across your reps',
-      description: 'This chart shows how your form accuracy varies across each repetition of your lift.',
+      description: 'This chart shows how your form accuracy varies across each rep of the lift.',
       targetId: 'lift_details_form_graph',
       tooltipPlacement: 'top',
       onNext: () => {
@@ -269,7 +270,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     {
       id: 'how_it_works_modal',
       title: 'How it works',
-      description: 'Learn how our AI analyzes your form and provides personalized feedback.',
+      description: 'This shows how our AI analysis works and how it can help you improve your form.',
       targetId: 'how_it_works_modal',
       tooltipPlacement: 'bottom',
       onNext: () => {
@@ -295,7 +296,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     {
       id: 'feedback_slideshow',
       title: 'Your feedback',
-      description: 'Here you can see detailed analysis of your form with specific areas for improvement.',
+      description: 'Our AI systems provide specific points during your lift that need improvement which will be surfaced here. Then, the relevant issues and tips will be provided for that exact moment. \n\nTap on the right chevron to see the next point.',
       targetId: 'feedback_slideshow',
       tooltipPlacement: 'inside-bottom',
       onNext: () => {
@@ -333,8 +334,9 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       },
       onPrev: () => {
         try {
-          // Go back to image view
-          // This will be handled by the feedback slideshow navigation
+          // Go back to image view by triggering the left chevron
+          // This will move from flaws/issues view back to image view
+          if (global.navigateToImage) global.navigateToImage();
         } catch (error) {
           console.warn('Tutorial step error:', error);
         }
@@ -343,7 +345,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     {
       id: 'feedback_tips',
       title: 'Improvement tips',
-      description: 'Here are specific tips to help improve your form and technique.',
+      description: 'Here are specific tips to help improve your form and technique. \n\nRemember you can open and close this feedback panel to review the exact point in your lift that this applies to.',
       targetId: 'feedback_tips',
       tooltipPlacement: 'top',
       onNext: () => {
@@ -356,8 +358,55 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       },
       onPrev: () => {
         try {
-          // Go back to issues page
-          // This will be handled by the feedback slideshow navigation
+          // Go back to issues page by triggering the left chevron
+          // This will move from improvement/tips view back to flaws/issues view
+          if (global.navigateToIssues) global.navigateToIssues();
+        } catch (error) {
+          console.warn('Tutorial step error:', error);
+        }
+      },
+    },
+    {
+      id: 'home_see_all_lifts',
+      title: 'View all your lifts',
+      description: 'Tap here to see all your recorded lifts in the library, where you can filter, sort, and review your workout history.',
+      targetId: 'home_see_all_lifts',
+      tooltipPlacement: 'top',
+      onNext: () => {
+        try {
+          // Navigate to library screen
+          if ((global as any).navigateToLibrary) (global as any).navigateToLibrary();
+        } catch (error) {
+          console.warn('Tutorial step error:', error);
+        }
+      },
+      onPrev: () => {
+        try {
+          // Go back to feedback tips
+          // This will be handled by the tutorial navigation
+        } catch (error) {
+          console.warn('Tutorial step error:', error);
+        }
+      },
+    },
+    {
+      id: 'library_screen',
+      title: 'Library screen',
+      description: 'This is your library where you can view all your recorded lifts. Use the tabs to switch between all lifts and favorites. Sort and filter too! \n\nTap on a lift to see more details and swipe to delete.',
+      targetId: 'library_screen',
+      tooltipPlacement: 'bottom',
+      onNext: () => {
+        try {
+          // Navigate back to home screen
+          if ((global as any).navigateToHome) (global as any).navigateToHome();
+        } catch (error) {
+          console.warn('Tutorial step error:', error);
+        }
+      },
+      onPrev: () => {
+        try {
+          // Go back to home see all lifts step
+          // This will be handled by the tutorial navigation
         } catch (error) {
           console.warn('Tutorial step error:', error);
         }
@@ -365,7 +414,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     },
     {
       id: 'home_performance_icon',
-      title: 'Performance tracking',
+      title: 'Your performance',
       description: 'Tap the Performance tab to view your progress and statistics over time.',
       targetId: 'home_performance_icon',
       tooltipPlacement: 'top',
@@ -389,7 +438,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     {
       id: 'performance_filters',
       title: 'Filter your data',
-      description: 'Use the filter button to focus on specific movements and get more targeted insights.',
+      description: 'Use the filter button to focus on specific movements and date ranges to get more targeted insights. By default it shows the least year and all movements.',
       targetId: 'performance_filters',
       tooltipPlacement: 'bottom',
       onNext: () => {
@@ -412,7 +461,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     {
       id: 'performance_metrics',
       title: 'Performance Charts',
-      description: 'View your accuracy and improvement metrics to track your progress over time.',
+      description: 'This chart shows your accuracy per weight to help you understand your progress over time and at what weight limit you are performing at your best.',
       targetId: 'performance_metrics',
       tooltipPlacement: 'bottom',
       onNext: () => {
@@ -435,7 +484,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     {
       id: 'performance_charts',
       title: 'Accuracy & Improvement',
-      description: 'Explore detailed charts and graphs to analyze your lifting patterns and trends.',
+      description: 'View your accuracy and improvement metrics to track your progress over time.',
       targetId: 'performance_charts',
       tooltipPlacement: 'top',
       onNext: () => {
@@ -458,7 +507,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     {
       id: 'settings_first_card',
       title: 'Personal Details',
-      description: 'Edit your personal information, language and prefered units',
+      description: 'If anything changes, edit your personal details, language and prefered units',
       targetId: 'settings_first_card',
       tooltipPlacement: 'bottom',
       onNext: () => {
@@ -481,7 +530,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     {
       id: 'settings_support_email',
       title: 'Support Email',
-      description: 'Need help? Tap here to contact our support team via email.',
+      description: 'Need help? Tap here at any timeto contact our support team via email.',
       targetId: 'settings_support_email',
       tooltipPlacement: 'bottom',
       onNext: () => {
@@ -833,7 +882,8 @@ export function useTutorialTarget(targetId?: string) {
       const delay = targetId === 'lift_details_form_graph' ? 500 : 
                    targetId === 'how_it_works_modal' ? 500 :
                    targetId === 'feedback_slideshow' ? 500 :
-                   targetId === 'home_performance_icon' ? 700 : 100;
+                   targetId === 'home_see_all_lifts' ? 700 :
+                   targetId === 'home_performance_icon' ? 500 : 100;
       const timer = setTimeout(() => {
         try {
           // AGGRESSIVE SAFEGUARD: Never register add_button when not on step 0
