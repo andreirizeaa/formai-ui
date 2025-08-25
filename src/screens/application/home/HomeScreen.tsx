@@ -10,7 +10,7 @@ import { LiftDataCard } from '../../../components/LiftDataCard';
 import { SwipeableCalendar } from '../../../components/ui/SwipeableCalendar';
 import { useUserDetails } from '../../../context/UserDetailsContext';
 import { useStreak } from '../../../context/StreakContext';
-import { useTutorial } from '../../../context/TutorialContext';
+import { useTutorial, useTutorialTarget } from '../../../context/TutorialContext';
 import { PanGestureHandler } from 'react-native-gesture-handler';
 import Animated, { 
   useSharedValue, 
@@ -53,6 +53,9 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
   
   // ScrollView ref for gesture handling
   const scrollViewRef = useRef<ScrollView>(null);
+  
+  // Tutorial target ref for the "see all lifts" button
+  const { ref: seeAllLiftsRef } = useTutorialTarget('home_see_all_lifts');
   
   // Lifts for the selected date from LiftDataContext only
   const liftsForSelectedDate: ILiftData[] = getLiftsByDate(selectedDate);
@@ -212,7 +215,7 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
 
   // Expose showFirstLiftDetails function globally for tutorial
   useEffect(() => {
-    global.showFirstLiftDetails = () => {
+    (global as any).showFirstLiftDetails = () => {
       // Find the first lift in the current date's lifts, or fall back to any lift
       const firstLift = liftsForSelectedDate.length > 0 
         ? liftsForSelectedDate[0] 
@@ -227,9 +230,21 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
     };
 
     return () => {
-      global.showFirstLiftDetails = undefined;
+      (global as any).showFirstLiftDetails = undefined;
     };
   }, [liftsForSelectedDate, liftData, onShowFeedback]);
+
+  // Expose navigateToLibrary function globally for tutorial
+  useEffect(() => {
+    (global as any).navigateToLibrary = () => {
+      hapticFeedback.selection();
+      onShowLibrary();
+    };
+
+    return () => {
+      (global as any).navigateToLibrary = undefined;
+    };
+  }, [onShowLibrary]);
 
 
 
@@ -316,7 +331,12 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
         <View style={styles.bottomContent}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>{i18n.t('home.lifts')}</Text>
-            <TouchableOpacity style={styles.seeAllPill} onPress={handleLibraryPress} activeOpacity={0.7}>
+            <TouchableOpacity 
+              ref={seeAllLiftsRef}
+              style={styles.seeAllPill} 
+              onPress={handleLibraryPress} 
+              activeOpacity={0.7}
+            >
               <Text style={styles.seeAllText}>{i18n.t('home.seeAll')}</Text>
               <ChevronRightIcon width={16} height={16} color="#8E8E93" />
             </TouchableOpacity>

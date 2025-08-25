@@ -47,6 +47,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
         setShowWeightReps(false);
       },
       goToPractices: () => {
+        setSelectedVideo(null);
         setShowMovementSelection(false);
         setShowWeightReps(false);
       },

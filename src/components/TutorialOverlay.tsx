@@ -44,6 +44,9 @@ export function TutorialOverlay() {
     'home_performance_icon',
     'feedback_slideshow',
     'lift_details_form_graph',
+    'performance_filters',
+    'settings_first_card',
+    'home_see_all_lifts'
   ];
   
   const hasPrev = currentStepIndex > 0 && !noPreviousTutorialIds.includes(step.id);
@@ -64,6 +67,8 @@ export function TutorialOverlay() {
 
   // Special case for review feedback step: ensure overlay stays stable
   const isReviewFeedbackStep = step?.id === 'lift_details_review_feedback';
+  // Special case for library screen step: show tooltip in center without highlight
+  const isLibraryScreenStep = step?.id === 'library_screen';
   const shouldForceRender = isReviewFeedbackStep && currentRect;
   
   if (!shouldRender && !shouldForceRender) return null;
@@ -72,12 +77,12 @@ export function TutorialOverlay() {
     <Modal visible transparent animationType="fade">
       <View style={styles.overlay} pointerEvents="box-none">
         {/* Dim with cut-out around the target */}
-        {highlight && (
+        {highlight && !isLibraryScreenStep && (
           <Svg style={styles.mask} pointerEvents="none">
             <Path
               fill="rgba(0,0,0,0.45)"
               fillRule="evenodd"
-              d={`M0 0 H${screenW} V${screenH} H0 Z M${highlight.x} ${highlight.y} H${highlight.x + highlight.w} V${highlight.y + highlight.h} H${highlight.x} Z`}
+              d={`M0 0 H${screenW} V${screenH} H0 Z M${highlight.x + 12} ${highlight.y} Q${highlight.x} ${highlight.y} ${highlight.x} ${highlight.y + 12} L${highlight.x} ${highlight.y + highlight.h - 12} Q${highlight.x} ${highlight.y + highlight.h} ${highlight.x + 12} ${highlight.y + highlight.h} L${highlight.x + highlight.w - 12} ${highlight.y + highlight.h} Q${highlight.x + highlight.w} ${highlight.y + highlight.h} ${highlight.x + highlight.w} ${highlight.y + highlight.h - 12} L${highlight.x + highlight.w} ${highlight.y + 12} Q${highlight.x + highlight.w} ${highlight.y} ${highlight.x + highlight.w - 12} ${highlight.y} Z`}
             />
             <Rect
               x={highlight.x}
@@ -94,39 +99,75 @@ export function TutorialOverlay() {
         )}
 
         {/* Step number badge */}
-        {highlight && (
+        {highlight && !isLibraryScreenStep && (
           <View style={[styles.stepBadge, { top: highlight.y - 12, left: highlight.x - 12 }]}>
             <Text style={styles.stepBadgeText}>{currentStepIndex + 1}</Text>
           </View>
         )}
 
         {/* Tooltip container */}
-        <View pointerEvents="box-none" style={[
-          styles.tooltipContainer,
-          {
-            // Position based on tooltipPlacement parameter
-            ...(step.tooltipPlacement === 'inside-bottom' ? {
-              // For inside-bottom placement: position tooltip inside the bottom portion of the highlight
-              top: currentRect ? currentRect.y + currentRect.height - 200 : undefined,
-              bottom: undefined,
-            } : step.tooltipPlacement === 'bottom' ? {
-              // For bottom placement: top edge of tooltip on bottom edge of highlight + gap
-              top: currentRect ? currentRect.y + currentRect.height + 20 : 40,
-              bottom: undefined,
-            } : {
-              // For top placement (default): bottom edge of tooltip above the highlight
-              bottom: undefined,
-              top: currentRect ? currentRect.y - 160 : 40, // 160px above the component to avoid overlap
-              // If there's not enough space above, position below instead
-              ...(currentRect && currentRect.y < 200 && {
-                top: undefined,
-                bottom: currentRect.y + currentRect.height + 20,
+        <View 
+          pointerEvents="box-none" 
+          style={[
+            styles.tooltipContainer,
+            {
+              // Position based on tooltipPlacement parameter
+              ...(isLibraryScreenStep ? {
+                // For library screen step: center the tooltip on screen
+                top: '50%',
+                bottom: undefined,
+                left: 16,
+                right: 16,
+                transform: [{ translateY: -100 }], // Center vertically only, let flexbox handle horizontal centering
+              } : step.tooltipPlacement === 'inside-bottom' ? {
+                // For inside-bottom placement: position tooltip inside the bottom portion of the highlight
+                top: currentRect ? currentRect.y + currentRect.height - 200 : undefined,
+                bottom: undefined,
+              } : step.tooltipPlacement === 'bottom' ? {
+                // For bottom placement: top edge of tooltip on bottom edge of highlight + gap
+                top: currentRect ? currentRect.y + currentRect.height + 20 : 40,
+                bottom: undefined,
+              } : {
+                // For top placement (default): position tooltip above the highlight with proper spacing
+                bottom: undefined,
+                top: currentRect ? currentRect.y - 25 : 40, // Start with 25px gap
               }),
-            }),
-            // Add subtle transform for smooth appearance
-            transform: [{ scale: 1 }],
-          }
-        ]}>
+              // Add subtle transform for smooth appearance (only if not library screen step)
+              ...(isLibraryScreenStep ? {} : { transform: [{ scale: 1 }] }),
+            }
+          ]}
+          onLayout={(event) => {
+            // Skip positioning logic for library screen step
+            if (isLibraryScreenStep) return;
+            
+            // Get the actual height of the tooltip
+            const tooltipHeight = event.nativeEvent.layout.height;
+            
+                         // For top placement, adjust position to ensure bottom edge of tooltip is above the highlight
+             if (step.tooltipPlacement !== 'bottom' && step.tooltipPlacement !== 'inside-bottom' && currentRect) {
+               const newTop = currentRect.y - tooltipHeight - 25; // 25px gap
+               
+               // If there's not enough space above, position below instead
+               if (newTop < 40) {
+                 // Position below the highlight
+                 event.target.setNativeProps({
+                   style: {
+                     top: undefined,
+                     bottom: currentRect.y + currentRect.height + 25,
+                   }
+                 });
+               } else {
+                 // Position above the highlight with proper spacing
+                 event.target.setNativeProps({
+                   style: {
+                     top: newTop,
+                     bottom: undefined,
+                   }
+                 });
+               }
+             }
+          }}
+        >
           <Text style={styles.title}>{step.title}</Text>
           <Text style={styles.description}>{step.description}</Text>
           

@@ -9,6 +9,7 @@ import { RouteProp } from '@react-navigation/native';
 import { FilterModal } from './FilterModal';
 import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import { ILiftData, useLiftData } from '../../../context/LiftDataContext';
+import { useTutorialTarget } from '../../../context/TutorialContext';
 import { deleteLift as deleteLiftApi } from '../../../services/liftService';
 import { Picker } from '@react-native-picker/picker';
 import i18n from '../../../utils/i18n';
@@ -69,6 +70,9 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
   const [isDateRangeModalVisible, setIsDateRangeModalVisible] = useState(false);
   const [dateRange, setDateRange] = useState<DateRange>({ from: null, to: null });
 
+  // Tutorial target ref for the tabs
+  const { ref: libraryScreenRef } = useTutorialTarget('library_screen');
+
   // Initialize date range with current data range
   React.useEffect(() => {
     // Default to today's date a year ago to today
@@ -95,6 +99,18 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
       setFilterOption(route.params.selectedFilters);
     }
   }, [route.params?.selectedFilters]);
+
+  // Expose navigateToHome function globally for tutorial
+  useEffect(() => {
+    (global as any).navigateToHome = () => {
+      hapticFeedback.selection();
+      onBack();
+    };
+
+    return () => {
+      (global as any).navigateToHome = undefined;
+    };
+  }, [onBack]);
 
   // Memoize handlers to prevent unnecessary re-renders
   const handleDeleteLift = useCallback(async (liftId: string) => {
@@ -377,7 +393,7 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
       </View>
 
       {/* Sort and Filter Buttons */}
-      <View style={styles.controlsContainer}>
+      <View style={styles.controlsContainer} ref={libraryScreenRef}>
         <View style={styles.liftCountContainer}>
           <Text style={styles.liftCountText}>
             {liftCount} {liftCount === 1 ? i18n.t('library.lift') : i18n.t('library.lifts')}
