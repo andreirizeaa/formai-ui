@@ -10,6 +10,7 @@ import { LiftDataCard } from '../../../components/LiftDataCard';
 import { SwipeableCalendar } from '../../../components/ui/SwipeableCalendar';
 import { useUserDetails } from '../../../context/UserDetailsContext';
 import { useStreak } from '../../../context/StreakContext';
+import { useTutorial, useTutorialTarget } from '../../../context/TutorialContext';
 import { PanGestureHandler } from 'react-native-gesture-handler';
 import Animated, { 
   useSharedValue, 
@@ -35,6 +36,7 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
   const { liftData, removeLift, getLiftsByDate, formatDateForLift, refreshLifts } = useLiftData();
   const { userDetails } = useUserDetails();
   const { daysLogged } = useStreak();
+  const { isActive: isTutorialActive } = useTutorial();
   
   // Selected date state for calendar
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -51,6 +53,9 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
   
   // ScrollView ref for gesture handling
   const scrollViewRef = useRef<ScrollView>(null);
+  
+  // Tutorial target ref for the "see all lifts" button
+  const { ref: seeAllLiftsRef } = useTutorialTarget('home_see_all_lifts');
   
   // Lifts for the selected date from LiftDataContext only
   const liftsForSelectedDate: ILiftData[] = getLiftsByDate(selectedDate);
@@ -90,6 +95,8 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
     liftAnimations.current = newLiftAnimations;
     fadeAnimations.current = newFadeAnimations;
   }, [liftsForSelectedDate]);
+
+
 
   // Animate lift cards when lifts change
   useEffect(() => {
@@ -206,6 +213,41 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
     void refreshLifts();
   }, []);
 
+  // Expose showFirstLiftDetails function globally for tutorial
+  useEffect(() => {
+    (global as any).showFirstLiftDetails = () => {
+      // Find the first lift in the current date's lifts, or fall back to any lift
+      const firstLift = liftsForSelectedDate.length > 0 
+        ? liftsForSelectedDate[0] 
+        : liftData.length > 0 
+          ? liftData[0] 
+          : null;
+      
+      if (firstLift) {
+        hapticFeedback.selection();
+        onShowFeedback(firstLift);
+      }
+    };
+
+    return () => {
+      (global as any).showFirstLiftDetails = undefined;
+    };
+  }, [liftsForSelectedDate, liftData, onShowFeedback]);
+
+  // Expose navigateToLibrary function globally for tutorial
+  useEffect(() => {
+    (global as any).navigateToLibrary = () => {
+      hapticFeedback.selection();
+      onShowLibrary();
+    };
+
+    return () => {
+      (global as any).navigateToLibrary = undefined;
+    };
+  }, [onShowLibrary]);
+
+
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView 
@@ -289,7 +331,12 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
         <View style={styles.bottomContent}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>{i18n.t('home.lifts')}</Text>
-            <TouchableOpacity style={styles.seeAllPill} onPress={handleLibraryPress} activeOpacity={0.7}>
+            <TouchableOpacity 
+              ref={seeAllLiftsRef}
+              style={styles.seeAllPill} 
+              onPress={handleLibraryPress} 
+              activeOpacity={0.7}
+            >
               <Text style={styles.seeAllText}>{i18n.t('home.seeAll')}</Text>
               <ChevronRightIcon width={16} height={16} color="#8E8E93" />
             </TouchableOpacity>
@@ -412,6 +459,8 @@ const styles = StyleSheet.create({
     flex: 1,
     marginTop: -52,
   },
+
+
   header: {
     paddingHorizontal: 20,
     paddingBottom: 24,

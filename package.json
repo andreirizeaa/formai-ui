@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",
+    "@gorhom/portal": "^1.0.14",
     "@react-native-async-storage/async-storage": "2.1.2",
     "@react-native-google-signin/google-signin": "^10.1.1",
     "@react-native-picker/picker": "^2.11.1",
@@ -47,6 +48,7 @@
     "react-native-circular-progress-indicator": "^4.4.2",
     "react-native-create-thumbnail": "^2.1.1",
     "react-native-gesture-handler": "~2.24.0",
+    "react-native-modal": "^14.0.0-rc.1",
     "react-native-purchases": "^9.2.0",
     "react-native-purchases-ui": "^9.2.0",
     "react-native-reanimated": "~3.17.4",

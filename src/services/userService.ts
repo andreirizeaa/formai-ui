@@ -18,6 +18,7 @@ export interface UserDetailsRow {
   gender: string | null;
   language: string | null;
   current_streak: number | null;
+  walkthrough_completed: boolean | null;
 }
 
 export interface UserFetchResult {
@@ -59,6 +60,7 @@ export interface EditUserDetailsPayload {
   gender?: string;
   language?: string; // e.g., 'en'
   unit_system?: 'metric' | 'imperial';
+  walkthrough_completed?: boolean;
 }
 
 export interface EditUserDetailsResponse {
@@ -108,9 +110,10 @@ export async function editUserDetails(
 export async function fetchUserDetailsById(userId: string): Promise<UserDetailsRow | null> {
   const { data, error } = await supabase
     .from('users')
-    .select('id, unit_system, metric_height, metric_weight, birth_date, gender, language, current_streak')
+    .select('id, unit_system, metric_height, metric_weight, birth_date, gender, language, current_streak, walkthrough_completed')
     .eq('id', userId)
     .maybeSingle();
   if (error) throw new Error(error.message);
   return (data as UserDetailsRow) ?? null;
 }
+

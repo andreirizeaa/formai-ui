@@ -4,6 +4,7 @@ import { CheckmarkIcon } from '../../../../components/icons/icons';
 import { gymMovements } from '../../../../constants/gymMovements';
 import { hapticFeedback } from '../../../../utils/haptic';
 import i18n from '../../../../utils/i18n';
+import { useTutorialTarget } from '../../../../context/TutorialContext';
 
 interface MovementSelectionScreenProps {
   selectedMovement: string;
@@ -28,6 +29,8 @@ export function MovementSelectionScreen({
   onClose,
   title = "Upload Video"
 }: MovementSelectionScreenProps) {
+  const { ref: continueButtonRef } = useTutorialTarget('movement_selection_continue');
+  
   return (
     <>
       {/* Content */}
@@ -35,6 +38,7 @@ export function MovementSelectionScreen({
         <View style={styles.movementSelectionContainer}>
           <Text style={styles.movementSelectionTitle}>{i18n.t('add.whatExercise')}</Text>
           <TextInput
+            ref={continueButtonRef}
             style={styles.searchInput}
             placeholder={i18n.t('add.searchMovements')}
             value={searchQuery}

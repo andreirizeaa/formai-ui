@@ -1,7 +1,8 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { VideoView, useVideoPlayer } from 'expo-video';
+import { useTutorialTarget } from '../../../../context/TutorialContext';
 
 interface VideoPreviewScreenProps {
   videoUri: string;
@@ -39,13 +40,15 @@ export function VideoPreviewScreen({
   title = "Video Preview",
   selectNewVideoText = "Select New Video"
 }: VideoPreviewScreenProps) {
+  const { ref: continueButtonRef } = useTutorialTarget('video_preview_continue');
+  
   return (
     <>
       {/* Content */}
       <View style={styles.content}>
         {/* Video Preview */}
         <View style={styles.videoPreviewWrapper}>
-          <View style={styles.videoPreviewContainer}>
+          <View style={styles.videoPreviewContainer} ref={continueButtonRef}>
             {videoUri ? (
               <VideoPlayerComponent videoUri={videoUri} />
             ) : (

@@ -35,6 +35,7 @@ interface SwipeableLineGraphCardProps {
   chartType?: 'accuracyPerWeight' | 'accuracyOverTime';
   unitPreference?: 'metric' | 'imperial';
   onInfoPress?: () => void;
+  ref?: any;
 }
 
 export function SwipeableLineGraphCard({ 
@@ -43,7 +44,8 @@ export function SwipeableLineGraphCard({
   hasNoLifts = false, 
   chartType = 'accuracyPerWeight',
   unitPreference = 'metric',
-  onInfoPress
+  onInfoPress,
+  ref
 }: SwipeableLineGraphCardProps) {
   const { width } = Dimensions.get('window');
   
@@ -293,7 +295,7 @@ export function SwipeableLineGraphCard({
             activeOffsetX={[-10, 10]}
             failOffsetY={[-5, 5]}
           >
-            <Animated.View style={cardAnimatedStyle}>
+            <Animated.View style={cardAnimatedStyle} ref={ref}>
               <View style={styles.performanceCard}>
                 <View style={styles.performanceCardContent}>
                   <View style={styles.performanceCardHeader}>

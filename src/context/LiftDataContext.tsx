@@ -19,8 +19,8 @@ export interface ILiftData {
     lineGraphValues: number[];
     feedback: Array<{
       imageURL: any;
-      flaws: string;
-      improvement: string;
+      flaws: string[];
+      improvement: string[];
     }>;
   };
 }
@@ -40,6 +40,7 @@ interface LiftDataContextType {
   formatDateForLift: (date: Date) => string;
   refreshLifts: () => Promise<void>;
   favouriteLiftAndRefresh: (id: string) => Promise<void>;
+  isLiftDataLoaded: boolean;
 }
 
 const LiftDataContext = createContext<LiftDataContextType | undefined>(undefined);
@@ -54,9 +55,11 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
   const [liftData, setLiftData] = useState<ILiftData[]>(initialLiftData);
   const [userId, setUserIdState] = useState<string | null>(null);
   const queryClient = useQueryClient();
+  const [isLoaded, setIsLoaded] = useState<boolean>(false);
 
   useEffect(() => {
     getUserId().then(setUserIdState).catch(() => setUserIdState(null));
+    setIsLoaded(false);
   }, []);
 
   // Helper function to format date consistently
@@ -121,13 +124,14 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
     queryKey: ['lifts-by-user', userId],
     enabled: !!userId,
     queryFn: async () => {
-      if (!userId) return [] as ILiftData[];
-      const { data, error } = await supabase
+      try {
+        if (!userId) return [] as ILiftData[];
+        const { data, error } = await supabase
         .from('lifts')
         .select('id, is_favourite, lift_type, lift_date, weight_value, reps, raw_video_url, pose_video_url, thumbnail_url, analysis')
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
-      if (error) return [] as ILiftData[];
+        if (error) return [] as ILiftData[];
 
       async function extractObjectKeyFromUrl(urlOrKey?: string | null): Promise<string | undefined> {
         if (!urlOrKey) return undefined;
@@ -151,11 +155,14 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
       }
 
       async function signPath(key?: string): Promise<string | undefined> {
+        
         if (!key) return undefined;
         const { data: signed, error: signError } = await supabase.storage
           .from('lifts')
           .createSignedUrl(key, 60 * 30); // 30 minutes
-        if (signError) return undefined;
+        if (signError) {
+          return undefined;
+        }
         return signed?.signedUrl;
       }
 
@@ -194,16 +201,19 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
         } as ILiftData;
       }
 
-      const mapped: ILiftData[] = await Promise.all(
-        (data ?? []).map((row: any) => mapRowToLift(row))
-      );
+        const mapped: ILiftData[] = await Promise.all(
+          (data ?? []).map((row: any) => mapRowToLift(row))
+        );
 
-      // Seed per-lift caches keyed by primary key id
-      mapped.forEach(lift => {
-        queryClient.setQueryData(['lift', lift.id], lift);
-      });
-      setLiftData(mapped);
-      return mapped;
+        // Seed per-lift caches keyed by primary key id
+        mapped.forEach(lift => {
+          queryClient.setQueryData(['lift', lift.id], lift);
+        });
+        setLiftData(mapped);
+        return mapped;
+      } finally {
+        setIsLoaded(true);
+      }
     },
   });
 
@@ -305,6 +315,7 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
     formatDateForLift,
     refreshLifts,
     favouriteLiftAndRefresh,
+    isLiftDataLoaded: isLoaded,
   }), [
     liftData,
     addLift,
@@ -320,7 +331,16 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
     formatDateForLift,
     refreshLifts,
     favouriteLiftAndRefresh,
+    isLoaded,
   ]);
+
+  // Expose clearAllLifts globally for tutorial completion
+  React.useEffect(() => {
+    global.clearTemporaryLifts = clearAllLifts;
+    return () => {
+      global.clearTemporaryLifts = undefined;
+    };
+  }, [clearAllLifts]);
 
   return (
     <LiftDataContext.Provider value={value}>
@@ -335,4 +355,56 @@ export function useLiftData() {
     throw new Error('useLiftData must be used within a LiftDataProvider');
   }
   return context;
+} 
+
+// Expose a helper for tutorial to inject a dummy lift quickly
+declare global {
+  var addDummyLift: (() => void) | undefined;
+}
+
+export function TutorialLiftSeeder() {
+  const { addLift, formatDateForLift } = useLiftData();
+  React.useEffect(() => {
+    global.addDummyLift = () => {
+      const today = new Date();
+      const id = `demo-${today.getTime()}`;
+      addLift({
+        id,
+        isFavourite: false,
+        liftType: 'Barbell Front Squat',
+        liftDate: formatDateForLift(today),
+        weightValue: 60,
+        reps: 1,
+        rawVideoURL: require('../../assets/tutorial/formai-example-video.mp4'),
+        poseVideoURL: require('../../assets/tutorial/formai-example-pose.mp4'),
+        thumbnailURL: require('../../assets/tutorial/formai-example-video-thumbnail.jpg'),
+        analysis: {
+          accuracy: 67,
+          lineGraphValues: [67],
+          feedback: [
+            {
+              imageURL: require('../../assets/tutorial/formai-example-feedback.png'),
+              flaws: [
+                "Right knee is caving inward compared to the left, showing knee valgus.",
+                "Right ankle angle suggests the heel may be lifting more than the left.",
+                "Torso is leaning forward excessively, which stresses the lower back.",
+                "Barbell path is slightly forward of mid-foot, reducing lifting efficiency.",
+                "Hip angle indicates possible butt wink or pelvic tuck at the bottom."
+              ],
+              improvement: [
+                "Actively push knees out and think 'spread the floor' with your feet to prevent valgus.",
+                "Improve ankle dorsiflexion with stretches and banded mobilizations to keep heels grounded.",
+                "Brace your core harder using the Valsalva maneuver to maintain an upright torso.",
+                "Keep the bar over mid-foot and adjust grip width to tighten the upper back.",
+                "Strengthen glutes and hamstrings with RDLs, hip thrusts, and pause squats to control hip position.",
+                "Consider weightlifting shoes with a heel lift if ankle mobility limits squat depth."
+            ],
+            },
+          ],
+        },
+      });
+    };
+    return () => { if (global.addDummyLift) delete global.addDummyLift; };
+  }, [addLift, formatDateForLift]);
+  return null;
 } 

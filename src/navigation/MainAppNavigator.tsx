@@ -19,9 +19,10 @@ import { EditGenderScreen } from '../screens/application/settings/editPersonalDe
 import { AddOptions } from '../screens/application/add/AddOptions';
 import { RecordModal } from '../screens/application/add/record/RecordModal';
 import { UploadModal } from '../screens/application/add/upload/UploadModal';
-import { ILiftData, LiftDetails } from '../screens/application/feedback/liftDetails';
+import { LiftDetails } from '../screens/application/feedback/liftDetails';
+import { ILiftData } from '../context/LiftDataContext';
 import { FeedbackSlideshow } from '../screens/application/feedback/feedbackSlideshow';
-import { HowItWorksModal } from '../screens/application/feedback/howItWorksModal';
+import { HowItWorks } from '../screens/application/feedback/howItWorksModal';
 import { LibraryScreen } from '../screens/application/library/LibraryScreen';
 import { BottomNavigationBar } from './BottomNavigationBar';
 import { useUserDetails } from '../context/UserDetailsContext';
@@ -64,6 +65,11 @@ const Stack = createStackNavigator<MainStackParamList>();
 declare global {
   var triggerAddOptions: (() => void) | undefined;
   var navigateToPerformance: (() => void) | undefined;
+  var openUploadModal: (() => void) | undefined;
+  var closeAddOptions: (() => void) | undefined;
+  var openLiftDetails: (() => void) | undefined;
+  var showFirstLiftDetails: (() => void) | undefined;
+  var openHowItWorksModal: (() => void) | undefined;
 }
 
 // Wrapper components for screens that need navigation
@@ -388,6 +394,22 @@ function LiftDetailsWrapper() {
     navigation.navigate('HowItWorks', { liftData: route.params.liftData });
   };
 
+  const handleOpenFeedbackSlideshowDirectly = () => {
+    // For tutorial: bypass HowItWorks and go directly to FeedbackSlideshow
+    navigation.navigate('FeedbackSlideshow', { liftData: route.params.liftData });
+  };
+
+  // Expose functions globally for tutorial
+  React.useEffect(() => {
+    global.openHowItWorksModal = handleShowFeedbackSlideshow;
+    global.openFeedbackSlideshow = handleOpenFeedbackSlideshowDirectly;
+    
+    return () => {
+      delete global.openHowItWorksModal;
+      delete global.openFeedbackSlideshow;
+    };
+  }, [handleShowFeedbackSlideshow, handleOpenFeedbackSlideshowDirectly]);
+
   return (
     <LiftDetails
       onClose={handleClose}
@@ -406,37 +428,52 @@ function FeedbackSlideshowWrapper() {
   };
 
   const handleNavigateToLiftDetails = () => {
-    // Pop back to the original LiftDetails screen by going back twice
-    navigation.pop(2);
+    // Navigate back to the LiftDetails screen
+    // First, go back to the previous screen (which should be HowItWorks)
+    navigation.goBack();
+    // Then navigate to LiftDetails with the same lift data
+    // This ensures users go back to the lift details instead of staying on how it works
+    setTimeout(() => {
+      navigation.navigate('LiftDetails', { 
+        liftData: route.params.liftData,
+      });
+    }, 100);
   };
+
+  // Transform the liftData to match the expected format
+  const transformedLiftData = route.params?.liftData ? {
+    analysis: {
+      feedback: route.params.liftData.analysis.feedback.map(item => ({
+        imageURL: item.imageURL,
+        flaws: item.flaws,
+        improvement: item.improvement
+      }))
+    }
+  } : undefined;
 
   return (
     <FeedbackSlideshow
       onClose={handleClose}
       onNavigateToLiftDetails={handleNavigateToLiftDetails}
-      liftData={route.params?.liftData}
+      liftData={transformedLiftData}
     />
   );
 }
 
-function HowItWorksModalWrapper() {
+function HowItWorksWrapper() {
   const navigation = useNavigation<MainStackNavigationProp>();
   const route = useRoute<RouteProp<MainStackParamList, 'HowItWorks'>>();
-  const [isVisible, setIsVisible] = React.useState(true);
   
   const handleClose = () => {
-    setIsVisible(false);
     navigation.goBack();
   };
 
   const handleViewFeedback = () => {
-    setIsVisible(false);
     navigation.navigate('FeedbackSlideshow', { liftData: route.params.liftData });
   };
 
   return (
-    <HowItWorksModal 
-      isVisible={isVisible}
+    <HowItWorks 
       onClose={handleClose} 
       onViewFeedback={handleViewFeedback}
     />
@@ -509,6 +546,32 @@ function MainTabsNavigator({ onLogout }: { onLogout?: () => void }) {
   React.useEffect(() => {
     global.triggerAddOptions = handleAddPress;
     global.navigateToPerformance = () => handleTabPress('performance');
+    global.navigateToSettings = () => handleTabPress('settings');
+    global.navigateToPersonalDetails = () => {
+      // Navigate to personal details screen
+      navigation.navigate('PersonalDetails');
+    };
+    global.completeTutorialAndGoHome = () => {
+      // Complete tutorial, remove temporary lift data, and navigate to home
+      if (global.completeTutorial) {
+        global.completeTutorial();
+      }
+      // Clear temporary lift data if available
+      if (global.clearTemporaryLifts) {
+        global.clearTemporaryLifts();
+      }
+      // Navigate to home tab
+      handleTabPress('home');
+    };
+    global.openUploadModal = () => handleUploadPress();
+    global.closeAddOptions = () => handleCloseAddOptions();
+    global.openLiftDetails = () => {
+      // Navigate to the first lift in the home screen
+      // This will be handled by the HomeScreen to show the first lift's details
+      if (global.showFirstLiftDetails) {
+        global.showFirstLiftDetails();
+      }
+    };
   }, []);
 
   const renderScreenContent = () => {
@@ -525,52 +588,39 @@ function MainTabsNavigator({ onLogout }: { onLogout?: () => void }) {
   };
 
   return (
-    <LinearGradient
-      colors={['#e2e8f0', '#ffffff']}
-      locations={[0, 0.9]}
-      style={styles.container}
-      start={{ x: 0.5, y: 0 }}
-      end={{ x: 0, y: 1 }}
-    >
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.content}>
-          {renderScreenContent()}
-        </View>
-        
-        <BottomNavigationBar
-          activeTab={activeTab}
-          onTabPress={handleTabPress}
-          onAddPress={handleAddPress}
-        />
+    <>
+      <LinearGradient
+        colors={['#e2e8f0', '#ffffff']}
+        locations={[0, 0.9]}
+        style={styles.container}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0, y: 1 }}
+      >
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.content}>
+            {renderScreenContent()}
+          </View>
+          
+          <BottomNavigationBar
+            activeTab={activeTab}
+            onTabPress={handleTabPress}
+            onAddPress={handleAddPress}
+          />
+        </SafeAreaView>
+      </LinearGradient>
 
-        <AddOptions
-          isVisible={showAddOptions}
-          onUploadPress={handleUploadPress}
-          onRecordPress={handleRecordPress}
-          onClose={handleCloseAddOptions}
-        />
-      </SafeAreaView>
-    </LinearGradient>
+      <AddOptions
+        isVisible={showAddOptions}
+        onUploadPress={handleUploadPress}
+        onRecordPress={handleRecordPress}
+        onClose={handleCloseAddOptions}
+      />
+    </>
   );
 }
 
 // Main stack navigator
 export function MainAppNavigator({ onLogout }: { onLogout?: () => void }) {
-  const [showAddOptions, setShowAddOptions] = React.useState(false);
-
-  const handleAddPress = () => {
-    setShowAddOptions(true);
-  };
-
-  const handleCloseAddOptions = () => {
-    setShowAddOptions(false);
-  };
-
-  const handleNavigateToLibrary = () => {
-    // Navigate to library screen
-    // This will be handled by the navigation prop in the wrapper
-  };
-
   return (
     <NavigationContainer>
         <Stack.Navigator
@@ -659,15 +709,13 @@ export function MainAppNavigator({ onLogout }: { onLogout?: () => void }) {
             component={FeedbackSlideshowWrapper}
             options={{
               presentation: 'card',
-              animation: 'reveal_from_bottom',
             }}
           />
           <Stack.Screen 
             name="HowItWorks" 
-            component={HowItWorksModalWrapper}
+            component={HowItWorksWrapper}
             options={{
-              presentation: 'modal',
-              animation: 'none',
+              presentation: 'card',
             }}
           />
           <Stack.Screen 
@@ -678,36 +726,7 @@ export function MainAppNavigator({ onLogout }: { onLogout?: () => void }) {
             }}
           />
         </Stack.Navigator>
-        
-        {/* Add Options Modal */}
-        <AddOptionsWrapper 
-          showAddOptions={showAddOptions} 
-          onClose={handleCloseAddOptions} 
-        />
       </NavigationContainer>
-  );
-}
-
-function AddOptionsWrapper({ showAddOptions, onClose }: { showAddOptions: boolean; onClose: () => void }) {
-  const navigation = useNavigation<MainStackNavigationProp>();
-
-  const handleUploadPress = () => {
-    onClose();
-    navigation.navigate('UploadModal');
-  };
-
-  const handleRecordPress = () => {
-    onClose();
-    navigation.navigate('RecordModal');
-  };
-
-  return (
-    <AddOptions
-      isVisible={showAddOptions}
-      onUploadPress={handleUploadPress}
-      onRecordPress={handleRecordPress}
-      onClose={onClose}
-    />
   );
 }
 

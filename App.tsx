@@ -104,10 +104,7 @@ export default function App() {
       setShowOnboarding(true);
         setOnboardingInitialRoute('Welcome');
       } finally {
-        // Add extra 1 second delay before hiding loading screen
-        setTimeout(() => {
-          setIsLoading(false);
-        }, 2000);
+        setIsLoading(false);
       }
     }
 
