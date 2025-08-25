@@ -9,6 +9,20 @@ export function TutorialOverlay() {
   const { isActive, isTransitioning, steps, currentStepIndex, currentRect, next, prev, stop } = useTutorial();
   const { updateUserDetails, refetchUserDetails } = useUserDetails();
   
+  // Add a small delay before rendering to prevent flickering during transitions
+  const [shouldRender, setShouldRender] = React.useState(false);
+  
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setShouldRender(true);
+    }, 100);
+    
+    return () => {
+      clearTimeout(timer);
+      setShouldRender(false);
+    };
+  }, [currentStepIndex, currentRect]);
+  
   // Don't render anything if tutorial is not active, is transitioning, or has no current rect
   if (!isActive || isTransitioning || !currentRect) return null;
 
@@ -48,20 +62,6 @@ export function TutorialOverlay() {
       }
     : null;
 
-  // Add a small delay before rendering to prevent flickering during transitions
-  const [shouldRender, setShouldRender] = React.useState(false);
-  
-  React.useEffect(() => {
-    const timer = setTimeout(() => {
-      setShouldRender(true);
-    }, 100);
-    
-    return () => {
-      clearTimeout(timer);
-      setShouldRender(false);
-    };
-  }, [currentStepIndex, currentRect]);
-  
   // Special case for review feedback step: ensure overlay stays stable
   const isReviewFeedbackStep = step?.id === 'lift_details_review_feedback';
   const shouldForceRender = isReviewFeedbackStep && currentRect;
