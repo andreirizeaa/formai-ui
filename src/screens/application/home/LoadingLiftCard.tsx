@@ -182,10 +182,16 @@ export function LoadingLiftCard({ lift }: LoadingLiftCardProps) {
           <View style={styles.liftContent}>
             <View style={styles.liftDetails}>
               <Text style={styles.errorTitle}>
-                {i18n.t('loadingLift.errorOccurred')}
+                {lift.errorMessage === 'No lift found' 
+                  ? i18n.t('loadingLift.noLiftFound.title')
+                  : i18n.t('loadingLift.errorOccurred')
+                }
               </Text>
               <Text style={styles.errorSubtitle}>
-                {i18n.t('loadingLift.pleaseTryAgain')}
+                {lift.errorMessage === 'No lift found'
+                  ? i18n.t('loadingLift.noLiftFound.subtitle')
+                  : i18n.t('loadingLift.pleaseTryAgain')
+                }
               </Text>
               <TouchableOpacity 
                 style={styles.retryButton}

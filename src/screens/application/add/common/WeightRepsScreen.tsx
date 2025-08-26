@@ -247,6 +247,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 12,
     alignItems: 'center',
+    paddingBottom: 50,
   },
   keyboardButton: {
     backgroundColor: '#000000',

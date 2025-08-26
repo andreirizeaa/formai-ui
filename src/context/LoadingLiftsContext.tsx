@@ -155,7 +155,43 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
       const thumbUrl = current.uploadedThumbnailUrl ?? current.thumbnailUri;
       const liftForAnalysis: LoadingLiftData = { ...current, videoLink: videoUrl, thumbnailUri: thumbUrl };
       const result = await analyzeVideo(liftForAnalysis);
-      if (!result.success) throw new Error('Analysis failed');
+      console.log('result', result);
+      
+      if (!result.success) {
+        console.log('Error details:', { error: (result as any).error, message: (result as any).message });
+        // Handle specific error cases from the API
+        if ((result as any).error === 'NO_GYM_VIDEO_FOUND') {
+          console.log('Setting NO_GYM_VIDEO_FOUND error message');
+          setLoadingLifts(prev => prev.map(l => l.id === current.id ? { 
+            ...l, 
+            status: 'error', 
+            failureStage: 'analyze', 
+            errorMessage: 'No lift found' 
+          } : l));
+          return;
+        } else if ((result as any).error === 'ERROR_OCCURED') {
+          console.log('Setting ERROR_OCCURED error message');
+          setLoadingLifts(prev => prev.map(l => l.id === current.id ? { 
+            ...l, 
+            status: 'error', 
+            failureStage: 'analyze', 
+            errorMessage: 'Analysis failed. Please try again.' 
+          } : l));
+          return;
+        } else {
+          // Handle other API errors
+          const errorMessage = (result as any).message || 'Analysis failed';
+          console.log('Setting generic error message:', errorMessage);
+          setLoadingLifts(prev => prev.map(l => l.id === current.id ? { 
+            ...l, 
+            status: 'error', 
+            failureStage: 'analyze', 
+            errorMessage 
+          } : l));
+          return;
+        }
+      }
+      
       // If API returns the final data for the card, store it to prevent flicker
       if (result.data) {
         setLoadingLifts(prev => prev.map(l => l.id === current.id ? { ...l, finalData: mapApiDataToFinalData(result.data) } : l));
@@ -165,7 +201,12 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
       // Refresh lifts in background
       void (async () => { try { await refreshLifts(); } catch (_) {} })();
     } catch (error) {
-      setLoadingLifts(prev => prev.map(l => l.id === current.id ? { ...l, status: 'error', failureStage: 'analyze', errorMessage: error instanceof Error ? error.message : 'Analysis failed' } : l));
+      setLoadingLifts(prev => prev.map(l => l.id === current.id ? { 
+        ...l, 
+        status: 'error', 
+        failureStage: 'analyze', 
+        errorMessage: error instanceof Error ? error.message : 'Analysis failed' 
+      } : l));
       return;
     }
   }
