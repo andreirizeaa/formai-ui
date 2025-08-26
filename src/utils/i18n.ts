@@ -424,6 +424,10 @@ const i18n = new I18n({
       pleaseTryAgain: 'Please try again',
       tapToRetry: 'Tap to retry',
       notifyWhenDone: 'We\'ll notify you when done!',
+      noLiftFound: {
+        title: 'No lift found',
+        subtitle: 'Our AI cannot find your lift',
+      },
     },
     feedback: {
       liftDetails: 'Lift Details',
