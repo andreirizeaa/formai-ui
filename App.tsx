@@ -1,64 +1,30 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, Text, View, Platform } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { QueryClient, QueryClientProvider, focusManager } from '@tanstack/react-query';
-import { AppState } from 'react-native';
-import { useColorScheme } from 'react-native';
+import React, { useEffect } from 'react';
 import { Asset } from 'expo-asset';
-import { OnboardingProvider } from './src/context/OnboardingContext';
-import { LanguageProvider } from './src/context/LanguageContext';
-import { LoadingLiftsProvider } from './src/context/LoadingLiftsContext';
-import { LiftDataProvider } from './src/context/LiftDataContext';
-import { UserDetailsProvider } from './src/context/UserDetailsContext';
-import { OnboardingNavigator } from './src/navigation/OnboardingNavigator';
-import { MainAppLayout } from './src/components/layout/MainAppLayout';
+import { removeUserId } from './src/services/storageService';
+import { Layout } from './layout';
 import { PurchasesProvider } from './src/context/PurchasesContext';
-import { StreakProvider } from './src/context/StreakContext';
-import { WalletCreditProvider } from './src/context/WalletCreditContext';
-import { getUserId, removeUserId } from './src/services/storageService';
-import { fetchUserById, requiresOnboarding, requiresPayment } from './src/services/userService';
-import { supabase } from './src/lib/supabase';
-import { LoadingScreen } from './src/screens/onboarding/LoadingScreen';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { LanguageProvider } from './src/context/LanguageContext';
+import { OnboardingProvider } from './src/context/OnboardingContext';
+import Purchases from 'react-native-purchases';
 
 export default function App() {
-  const queryClientRef = React.useRef<QueryClient | null>(null);
-  if (!queryClientRef.current) {
-    queryClientRef.current = new QueryClient();
-  }
-
-  React.useEffect(() => {
-    const subscription = AppState.addEventListener('change', (status) => {
-      focusManager.setFocused(status === 'active');
-    });
-    return () => subscription.remove();
-  }, []);
-  const [showOnboarding, setShowOnboarding] = useState(true);
-  const [isLoading, setIsLoading] = useState(true);
-  const [userNeedsOnboarding, setUserNeedsOnboarding] = useState(false);
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  const [onboardingInitialRoute, setOnboardingInitialRoute] = useState<'Welcome' | 'Payment'>('Welcome');
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
-  
-  const isMountedRef = useRef(true);
-
   useEffect(() => {
-    return () => {
-      isMountedRef.current = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    async function preloadAndBootstrap() {
+    async function preloadAssets() {
       try {
-        await Asset.loadAsync([
+        // Preload all assets using static require statements
+        const assetsToLoad = [
           require('./assets/recording-tip.jpg'),
           require('./assets/refer-friends.jpg'),
           require('./assets/refer-friends-group.png'),
           require('./assets/formai-light-icon.png'),
           require('./assets/formai-dark-icon.png'),
           require('./assets/formai-ios-icon.png'),
-          // Discovery page icons
+          require('./assets/app-overview-photo.png'),
+          require('./assets/feedback.png'),
+          require('./assets/placeholder-thumbnail.png'),
+          require('./assets/homescreen-refer-image.png'),
+          require('./assets/favicon.png'),
           require('./assets/icons/instagram.png'),
           require('./assets/icons/tiktok.png'),
           require('./assets/icons/fasebook.png'),
@@ -67,162 +33,32 @@ export default function App() {
           require('./assets/icons/fire.png'),
           require('./assets/animations/confetti.json'),
           require('./assets/animations/star-rating.json'),
-        ]);
+          require('./assets/animations/bell.json'),
+          require('./assets/tutorial/formai-example-feedback.png'),
+          require('./assets/tutorial/formai-example-pose.mp4'),
+          require('./assets/tutorial/formai-example-video-thumbnail.jpg'),
+          require('./assets/tutorial/formai-example-video.mp4'),
+        ];
+        
+        await Asset.loadAsync(assetsToLoad);
       } catch (error) {
         console.warn('Error preloading assets:', error);
       } finally {
-        // continue to bootstrap auth state
-      }
-
-      try {
-        const storedUserId = await getUserId();
-        if (!storedUserId) {
-          setShowOnboarding(true);
-          setOnboardingInitialRoute('Welcome');
-          return;
-        }
-        const { user } = await fetchUserById(storedUserId);
-        if (!user) {
-          // user not found, send to welcome to re-onboard/sign-in
-          setShowOnboarding(true);
-          setOnboardingInitialRoute('Welcome');
-          return;
-        }
-        if (requiresOnboarding(user)) {
-          setShowOnboarding(true);
-          return;
-        }
-        if (requiresPayment(user)) {
-          setShowOnboarding(true);
-          setOnboardingInitialRoute('Payment');
-          return;
-        }
-        // user has active subscription
-        setShowOnboarding(false);
-      } catch (e) {
-        console.warn('Bootstrap error:', e);
-      setShowOnboarding(true);
-        setOnboardingInitialRoute('Welcome');
-      } finally {
-        setIsLoading(false);
+        removeUserId();
       }
     }
-
-    preloadAndBootstrap();
+    preloadAssets();
   }, []);
 
-  const handleOnboardingComplete = () => {
-    setShowOnboarding(false);
-    setUserNeedsOnboarding(false);
-  };
-
-  const handleSignIn = () => {
-    setShowOnboarding(false);
-    setUserNeedsOnboarding(false);
-  };
-
-  const handlePaymentComplete = () => {
-    handleOnboardingComplete();
-  };
-
-  const handleUserNeedsOnboarding = () => {
-    setUserNeedsOnboarding(true);
-  };
-
-  const handleLogout = async () => {
-    try {
-      // Sign out from Supabase
-      await supabase.auth.signOut();
-      
-      // Sign out from Google if available
-      try {
-        const { GoogleSignin } = await import('@react-native-google-signin/google-signin');
-        const isSignedIn = await GoogleSignin.isSignedIn();
-        if (isSignedIn) {
-          await GoogleSignin.signOut();
-        }
-      } catch (googleError) {
-        console.warn('Google Sign-In not available or error signing out:', googleError);
-      }
-      
-      // Remove user ID from local storage
-      await removeUserId();
-      // Navigate back to welcome screen
-      setShowOnboarding(true);
-      setOnboardingInitialRoute('Welcome');
-    } catch (error) {
-      console.error('Error during logout:', error);
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <SafeAreaProvider>
-        <LoadingScreen onLoadComplete={() => {}} />
-      </SafeAreaProvider>
-    );
-  }
-
-  const mainAppContent = (
+  return (
     <SafeAreaProvider>
-      <QueryClientProvider client={queryClientRef.current}>
-        <LanguageProvider>
-          <WalletCreditProvider>
-            <UserDetailsProvider>
-              <LiftDataProvider>
-                <LoadingLiftsProvider>
-                  <StreakProvider>
-                    <MainAppLayout onLogout={handleLogout} />
-                  </StreakProvider>
-                </LoadingLiftsProvider>
-              </LiftDataProvider>
-            </UserDetailsProvider>
-          </WalletCreditProvider>
-        </LanguageProvider>
-      </QueryClientProvider>
+      <OnboardingProvider>
+        <PurchasesProvider>
+          <LanguageProvider>
+            <Layout />
+          </LanguageProvider>
+        </PurchasesProvider>
+      </OnboardingProvider>
     </SafeAreaProvider>
   );
-
-  const onboardingContent = (
-    <SafeAreaProvider>
-      <LanguageProvider>
-        <OnboardingProvider>
-          <PurchasesProvider>
-            <OnboardingNavigator 
-              onComplete={handlePaymentComplete}
-              onSignIn={handleSignIn}
-              onUserNeedsOnboarding={handleUserNeedsOnboarding}
-              initialRouteName={onboardingInitialRoute}
-            />
-          </PurchasesProvider>
-        </OnboardingProvider>
-      </LanguageProvider>
-    </SafeAreaProvider>
-  );
-
-  if (showOnboarding || userNeedsOnboarding) {
-    return onboardingContent;
-  }
-
-  return mainAppContent;
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-  },
-  text: {
-    fontSize: 28,
-    fontWeight: '700',
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 17,
-    fontWeight: '400',
-    textAlign: 'center',
-  },
-});

@@ -118,11 +118,11 @@ const styles = StyleSheet.create({
     paddingBottom: 34,
   },
   getStartedButton: {
-    height: 56,
+    height: 65,
     borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   getStartedButtonTheme: {
     backgroundColor: '#000000',
