@@ -122,14 +122,14 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   ctaButton: {
-    height: 56,
+    height: 65,
     borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
   },
   ctaText: {
-    fontSize: 17,
-    fontWeight: '600',
+    fontSize: 20,
+    fontWeight: '500',
   },
   confettiContainer: {
     position: 'absolute',

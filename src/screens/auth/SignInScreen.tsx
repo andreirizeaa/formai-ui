@@ -11,6 +11,7 @@ import { BackButton } from '../../components/ui/BackButton';
 import { LoadingOverlay } from '../../components/ui/LoadingOverlay';
 import { removeUserId, setUserId } from '../../services/storageService';
 import { fetchUserById, requiresOnboarding, requiresPayment } from '../../services/userService';
+import Purchases from 'react-native-purchases';
 
 interface SignInScreenProps {
   onSignIn: () => void;
@@ -47,10 +48,13 @@ export function SignInScreen({ onSignIn, onBack, onNavigateToOnboarding, onRequi
       const { user } = await fetchUserById(userId);
 
       if (!user) {
+        hapticFeedback.error();
         if (onNavigateToOnboarding) onNavigateToOnboarding();
         else onSignIn();
         return;
       }
+
+      await Purchases.logIn(userId);
 
       if (requiresOnboarding(user)) {
         hapticFeedback.error();
@@ -284,14 +288,14 @@ const styles = StyleSheet.create({
   },
   appleButton: {
     width: '80%',
-    height: 56,
+    height: 65,
     borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
   },
   googleButton: {
     width: '80%',
-    height: 56,
+    height: 65,
     borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',

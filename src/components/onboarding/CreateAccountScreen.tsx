@@ -9,6 +9,8 @@ import { useOnboarding } from '../../context/OnboardingContext';
 import { LoadingOverlay } from '../ui/LoadingOverlay';
 import { setUserId } from '../../services/storageService';
 import i18n from '../../utils/i18n';
+import { usePlacement } from 'expo-superwall';
+import Purchases from 'react-native-purchases';
 
 interface CreateAccountScreenProps {
   onNext: () => void;
@@ -19,7 +21,7 @@ interface CreateAccountScreenProps {
 export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountScreenProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
-  const { onboardingData, updateOnboardingData, persistOnboardingData } = useOnboarding();
+  const { onboardingData, updateOnboardingData } = useOnboarding();
   const [isSigningIn, setIsSigningIn] = React.useState(false);
   
   const isExpoGo = Constants.appOwnership === 'expo';
@@ -41,19 +43,14 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
     try {
       hapticFeedback.selection();
       if (isExpoGo) {
-        console.log('Google Sign-In not available in Expo Go');
         return;
       }
-      
-      console.log('Starting Google Sign-In process...');
       const { GoogleSignin } = await import('@react-native-google-signin/google-signin');
-      console.log('Checking Play Services...');
       await GoogleSignin.hasPlayServices();
       setIsSigningIn(true);
       const userInfo = await GoogleSignin.signIn();
       
       if (userInfo.idToken) {
-        console.log('ID token found, signing in with Supabase...');
         const { data, error } = await supabase.auth.signInWithIdToken({
           provider: 'google',
           token: userInfo.idToken,
@@ -62,7 +59,6 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
           console.error('Supabase auth error:', error);
           setIsSigningIn(false);
         } else {
-          console.log('Supabase auth successful, updating onboarding data...');
           updateOnboardingData('signInMethod', 'google');
           updateOnboardingData('onboardingCompleted', true);
     
@@ -81,15 +77,7 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
         throw new Error('no ID token present!');
       }
     } catch (error: any) {
-      if (error.code === 'SIGN_IN_CANCELLED') {
-        console.log('Sign-in cancelled by user');
-      } else if (error.code === 'IN_PROGRESS') {
-        console.log('Sign-in already in progress');
-      } else if (error.code === 'PLAY_SERVICES_NOT_AVAILABLE') {
-        console.log('Play services not available');
-      } else {
-        console.error('Google sign-in error:', error);
-      }
+      console.log('Google sign-in error:', error);
       setIsSigningIn(false);
     }
   };
@@ -135,7 +123,7 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
       if (e.code === 'ERR_REQUEST_CANCELED') {
         console.log('Apple sign-in cancelled');
       } else {
-        console.error('Apple sign-in error:', e);
+        console.log('Apple sign-in error:', e);
       }
       setIsSigningIn(false);
     }
@@ -158,7 +146,8 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
     if (data.user?.id) {
       try {
         const { saveOnboardingProgress } = await import('../../services/onboardingService');
-        const response = await saveOnboardingProgress(updatedData);
+        await saveOnboardingProgress(updatedData);
+        await Purchases.logIn(data.user.id);
         setIsSigningIn(false);
         onNext();
       } catch (persistError) {
@@ -169,11 +158,6 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
       setIsSigningIn(false);
     }
   }
-
-  const handleSignInPress = () => {
-    hapticFeedback.selection();
-    onSignIn();
-  };
 
   return (
     <View style={styles.container}>
@@ -218,7 +202,6 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
             ]}
             onPress={isExpoGo ? () => {
               hapticFeedback.selection();
-              console.log('Google Sign-In not available in Expo Go');
             } : handleGoogleSignIn}
             activeOpacity={0.8}
           >
@@ -285,15 +268,15 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   appleButton: {
-    width: '100%',
-    height: 56,
+    width: '90%',
+    height: 65,
     borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
   },
   googleButton: {
-    width: '100%',
-    height: 56,
+    width: '90%',
+    height: 65,
     borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',

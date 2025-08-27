@@ -25,7 +25,7 @@ const initialOnboardingData: OnboardingData = {
   hasRated: null,
   signInMethod: null,
   onboardingCompleted: false,
-  storeTransactionId: null,
+  revenueCatAppUserId: null,
   activeSubscription: null,
 };
 
