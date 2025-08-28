@@ -6,54 +6,13 @@ import { LiftDataProvider } from './src/context/LiftDataContext';
 import { UserDetailsProvider } from './src/context/UserDetailsContext';
 import { OnboardingNavigator } from './src/navigation/OnboardingNavigator';
 import { MainAppLayout } from './src/components/layout/MainAppLayout';
-import { StreakProvider } from './src/context/StreakContext';
+import { UserCheckInsProvider } from './src/context/UserCheckInsContext';
 import { WalletCreditProvider } from './src/context/WalletCreditContext';
 import { supabase } from './src/lib/supabase';
 import { getUserId, removeUserId } from './src/services/storageService';
 import { LoadingScreen } from './src/screens/onboarding/LoadingScreen';
-import { fetchUserById, requiresOnboarding, requiresPayment } from './src/services/userService';
-import { useSuperwall, useSuperwallEvents } from 'expo-superwall';
-import Purchases from 'react-native-purchases';
-import { hapticFeedback } from './src/utils/haptic';
-
-function SubscriptionSync() {
-  const { setSubscriptionStatus } = useSuperwall();
-  
-  useEffect(() => {
-    Purchases.addCustomerInfoUpdateListener((customerInfo: any) => {
-      const entitlementIds = Object.keys(customerInfo.entitlements.active);      
-      setSubscriptionStatus({
-        status: entitlementIds.length === 0 ? "INACTIVE" : "ACTIVE",
-        entitlements: entitlementIds.map(id => ({ 
-          id, 
-          type: "SERVICE_LEVEL" 
-        }))
-      });
-    });
-    
-    // Get initial customer info
-    const syncInitialStatus = async () => {
-      try {
-        const customerInfo = await Purchases.getCustomerInfo();
-        const entitlementIds = Object.keys(customerInfo.entitlements.active);
-        
-        setSubscriptionStatus({
-          status: entitlementIds.length === 0 ? "INACTIVE" : "ACTIVE",
-          entitlements: entitlementIds.map(id => ({ 
-            id, 
-            type: "SERVICE_LEVEL" 
-          }))
-        });
-      } catch (error) {
-        console.error("Failed to sync initial subscription status:", error);
-      }
-    };
-    
-    syncInitialStatus();
-  }, [setSubscriptionStatus]);
-  
-  return null; // This component just handles the sync
-}
+import { fetchUserById, requiresOnboarding } from './src/services/userService';
+import { usePurchases } from './src/context/PurchasesContext';
 
 export function Layout() {
   const [showOnboarding, setShowOnboarding] = useState(true);
@@ -63,6 +22,7 @@ export function Layout() {
     'Welcome' | 'Payment'
   >('Welcome');
   const queryClientRef = React.useRef<QueryClient | null>(null);
+  const { customerInfo } = usePurchases();
 
   if (!queryClientRef.current) {
     queryClientRef.current = new QueryClient();
@@ -90,7 +50,7 @@ export function Layout() {
           return;
         }
 
-        if (requiresPayment(user)) {
+        if (customerInfo?.activeSubscriptions.length === 0) {
           setShowOnboarding(true);
           setOnboardingInitialRoute('Payment');
           return;
@@ -147,15 +107,14 @@ export function Layout() {
 
   const mainAppContent = (
     <>
-      <SubscriptionSync />
       <QueryClientProvider client={queryClientRef.current}>
         <WalletCreditProvider>
           <UserDetailsProvider>
             <LiftDataProvider>
               <LoadingLiftsProvider>
-                <StreakProvider>
+                <UserCheckInsProvider>
                   <MainAppLayout onLogout={handleLogout} />
-                </StreakProvider>
+                </UserCheckInsProvider>
               </LoadingLiftsProvider>
             </LiftDataProvider>
           </UserDetailsProvider>
@@ -165,15 +124,12 @@ export function Layout() {
   );
 
   const onboardingContent = (
-    <>
-      <SubscriptionSync />
-        <OnboardingNavigator
-          onComplete={handlePaymentComplete}
-          onSignIn={handleSignIn}
-          onUserNeedsOnboarding={handleUserNeedsOnboarding}
-          initialRouteName={onboardingInitialRoute}
-        />
-    </>
+    <OnboardingNavigator
+      onComplete={handlePaymentComplete}
+      onSignIn={handleSignIn}
+      onUserNeedsOnboarding={handleUserNeedsOnboarding}
+      initialRouteName={onboardingInitialRoute}
+    />
   );
 
   if (showOnboarding || userNeedsOnboarding) {

@@ -7,6 +7,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { LanguageProvider } from './src/context/LanguageContext';
 import { OnboardingProvider } from './src/context/OnboardingContext';
 import Purchases from 'react-native-purchases';
+import { SuperwallProvider } from './src/context/SuperwallContext';
 
 export default function App() {
   useEffect(() => {
@@ -44,7 +45,7 @@ export default function App() {
       } catch (error) {
         console.warn('Error preloading assets:', error);
       } finally {
-        removeUserId();
+        // removeUserId();
       }
     }
     preloadAssets();
@@ -54,9 +55,11 @@ export default function App() {
     <SafeAreaProvider>
       <OnboardingProvider>
         <PurchasesProvider>
-          <LanguageProvider>
-            <Layout />
-          </LanguageProvider>
+          <SuperwallProvider>
+            <LanguageProvider>
+              <Layout />
+            </LanguageProvider>
+          </SuperwallProvider>
         </PurchasesProvider>
       </OnboardingProvider>
     </SafeAreaProvider>

@@ -9,7 +9,7 @@ import { LoadingLiftCard } from './LoadingLiftCard';
 import { LiftDataCard } from '../../../components/LiftDataCard';
 import { SwipeableCalendar } from '../../../components/ui/SwipeableCalendar';
 import { useUserDetails } from '../../../context/UserDetailsContext';
-import { useStreak } from '../../../context/StreakContext';
+import { useUserCheckIns } from '../../../context/UserCheckInsContext';
 import { useTutorial, useTutorialTarget } from '../../../context/TutorialContext';
 import { PanGestureHandler } from 'react-native-gesture-handler';
 import Animated, { 
@@ -33,16 +33,11 @@ interface HomeScreenProps {
 
 export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibrary, onShowShare, onTriggerAddOptions, onNavigateToPerformance }: HomeScreenProps) {
   const { loadingLifts } = useLoadingLifts();
-  const { liftData, removeLift, getLiftsByDate, formatDateForLift, refreshLifts } = useLiftData();
-  const { userDetails } = useUserDetails();
-  const { daysLogged } = useStreak();
-  const { isActive: isTutorialActive } = useTutorial();
+  const { liftData , getLiftsByDate , refreshLifts } = useLiftData();
+  const { currentStreak } = useUserCheckIns();
   
   // Selected date state for calendar
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  
-  // Random percentage value between 1-100
-  const [percentageValue, setPercentageValue] = useState(() => Math.floor(Math.random() * 100) + 1);
   
   // Fire card popup state
   const [isFirePopupVisible, setIsFirePopupVisible] = useState(false);
@@ -272,7 +267,7 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
               style={styles.streakBadgeIcon}
               resizeMode="contain"
             />
-            <Text style={styles.streakBadgeText}>{userDetails?.currentStreak ?? 0}</Text>
+            <Text style={styles.streakBadgeText}>{currentStreak}</Text>
           </TouchableOpacity>
         </View>
         
@@ -280,7 +275,6 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
         <SwipeableCalendar 
           onDateSelect={handleDateSelect} 
           initialSelectedDate={selectedDate}
-          daysLogged={daysLogged}
         />
         
         {/* Swipeable Accuracy Card */}
@@ -425,14 +419,14 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
 
             {/* Streak text */}
             <Text style={styles.streakText}>
-              {(userDetails?.currentStreak ?? 0) === 0
+              {currentStreak === 0
                 ? i18n.t('home.zeroDayStreak')
-                : i18n.t('home.dayStreak', { count: userDetails?.currentStreak ?? 0 })}
+                : i18n.t('home.dayStreak', { count: currentStreak })}
             </Text>
 
             {/* Message */}
             <Text style={styles.message}>
-              {(userDetails?.currentStreak ?? 0) === 0
+              {currentStreak === 0
                 ? i18n.t('home.noStreakMessage')
                 : i18n.t('home.onFireMessage')}
             </Text>
@@ -488,6 +482,7 @@ const styles = StyleSheet.create({
   },
   streakBadgeText: {
     marginLeft: 2,
+    marginTop: 4,
     fontSize: 17,
     fontWeight: '500',
     color: '#000000',
@@ -743,14 +738,14 @@ const styles = StyleSheet.create({
   },
   message: {
     fontSize: 16,
-    fontWeight: '400',
+    fontWeight: '500',
     color: '#000000',
     marginBottom: 24,
     textAlign: 'center',
     lineHeight: 22,
   },
   button: {
-    height: 44,
+    height: 65,
     borderRadius: 18,
     backgroundColor: '#ed694a',
     justifyContent: 'center',

@@ -7,10 +7,7 @@ import Purchases, {
   PurchasesPackage,
 } from 'react-native-purchases';
 import { saveOnboardingProgress } from '../services/onboardingService';
-import { CustomPurchaseControllerProvider, SuperwallProvider, SuperwallLoaded, SuperwallLoading } from 'expo-superwall';
 import { useOnboarding } from './OnboardingContext';
-import { LoadingScreen } from '../screens/onboarding/LoadingScreen';
-import { getUserId, removeUserId } from '../services/storageService';
 
 interface PurchasesContextValue {
   isInitializing: boolean;
@@ -33,6 +30,8 @@ interface PurchasesContextValue {
 
 const PurchasesContext = createContext<PurchasesContextValue | undefined>(undefined);
 
+
+
 interface PurchasesProviderProps {
   children: ReactNode;
   onSubscriptionUpdate?: (customerInfo: CustomerInfo) => void;
@@ -46,7 +45,6 @@ export function PurchasesProvider({ children, onSubscriptionUpdate }: PurchasesP
 
   const [offerings, setOfferings] = useState<PurchasesOfferings | null>(null);
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo | null>(null);
-
   const { onboardingData, updateOnboardingData } = useOnboarding();
 
   const packages = useMemo(() => {
@@ -149,12 +147,9 @@ export function PurchasesProvider({ children, onSubscriptionUpdate }: PurchasesP
   async function restorePurchases() {
     try {
       const restoredInfo = await Purchases.restorePurchases();
-      
-      // If there are active subscriptions, store the payment info
       if (restoredInfo.activeSubscriptions.length > 0) {
         await storePaymentInfo(restoredInfo);
       }
-      
       setCustomerInfo(restoredInfo);
       return restoredInfo;
     } catch (error) {
@@ -182,52 +177,9 @@ export function PurchasesProvider({ children, onSubscriptionUpdate }: PurchasesP
   };
 
   return (
-    <CustomPurchaseControllerProvider
-      controller={{
-        onPurchase: async (params) => {
-          try {
-            // Get products from RevenueCat
-            const products = await Purchases.getProducts([params.productId])
-            const product = products[0]
-            
-            // Convert PurchasesStoreProduct to PurchasesPackage
-            // We need to find the package that contains this product
-            const packageWithProduct = packages.find(pkg => pkg.product.identifier === product.identifier)
-            
-            if (!packageWithProduct) {
-              throw new Error(`No package found for product: ${product.identifier}`)
-            }
-            
-            await purchasePackage(packageWithProduct)
-          } catch (error) {
-            console.log("Purchase failed:", error)
-            throw error
-          }
-        },
-        onPurchaseRestore: async () => {
-          try {
-            await restorePurchases()
-          } catch (error) {
-            throw error
-          }
-        },
-      }}
-    >
-        <SuperwallProvider 
-          apiKeys={{ 
-            ios: "pk_zkKfyLcFhibPvjADIBNgv", 
-          }}
-        >
-          <SuperwallLoading>
-            <LoadingScreen onLoadComplete={() => {}} />
-          </SuperwallLoading>
-          <SuperwallLoaded>
-            <PurchasesContext.Provider value={value}>
-              {children}
-            </PurchasesContext.Provider>
-          </SuperwallLoaded>
-        </SuperwallProvider>
-    </CustomPurchaseControllerProvider>
+    <PurchasesContext.Provider value={value}>
+      {children}
+    </PurchasesContext.Provider>
   );
 }
 
