@@ -1,10 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { CloseIcon } from '../../../components/icons/icons';
 import { hapticFeedback } from '../../../utils/haptic';
 import i18n from '../../../utils/i18n';
 import { useTutorialTarget } from '../../../context/TutorialContext';
+import { X } from 'lucide-react-native';
 
 interface HowItWorksProps {
   onClose: () => void;
@@ -38,7 +38,7 @@ export function HowItWorks({ onClose, onViewFeedback }: HowItWorksProps) {
               onClose();
             }}
           >
-            <CloseIcon width={24} height={24} color="#000000" />
+            <X width={24} height={24} color="#000000" />
           </TouchableOpacity>
         </View>
 

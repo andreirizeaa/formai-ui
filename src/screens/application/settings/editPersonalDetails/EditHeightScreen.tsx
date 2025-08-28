@@ -9,8 +9,8 @@ import {
   convertMetricHeightToImperial, 
   convertImperialHeightToMetric 
 } from '../../../../utils/unitConversions';
-import { BackIcon } from '../../../../components/icons/icons';
 import { editUserDetails } from '../../../../services/userService';
+import { ChevronLeft } from 'lucide-react-native';
 
 interface EditHeightScreenProps {
   onBack: () => void;
@@ -104,7 +104,7 @@ export function EditHeightScreen({ onBack, currentValue, onSave }: EditHeightScr
             onBack();
           }}
         >
-          <BackIcon width={24} height={24} color="#000000" />
+          <ChevronLeft width={24} height={24} color="#000000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{i18n.t('personalDetails.editHeight')}</Text>
         <View style={styles.placeholder} />

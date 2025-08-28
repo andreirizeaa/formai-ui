@@ -1,8 +1,8 @@
 import React from 'react';
 import { TouchableOpacity, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from 'react-native';
 import { hapticFeedback } from '../../utils/haptic';
+import { ChevronLeft } from 'lucide-react-native';
 
 interface BackButtonProps {
   onPress: () => void;
@@ -16,20 +16,15 @@ export function BackButton({ onPress }: BackButtonProps) {
     // Call onPress immediately for responsive navigation
     onPress();
     // Run haptic feedback asynchronously to avoid blocking
-    hapticFeedback.selection();
   };
 
   return (
     <TouchableOpacity 
-      style={[styles.container, { backgroundColor: isDark ? '#2C2C2E' : '#F2F2F7' }]} 
+      style={[styles.container, { backgroundColor: isDark ? '#2C2C2E' : '#F4F4F8' }]} 
       onPress={handlePress}
       activeOpacity={0.8}
     >
-      <Ionicons 
-        name="chevron-back" 
-        size={20} 
-        color={isDark ? '#FFFFFF' : '#000000'} 
-      />
+      <ChevronLeft size={24} color={isDark ? '#FFFFFF' : '#000000'} />
     </TouchableOpacity>
   );
 }

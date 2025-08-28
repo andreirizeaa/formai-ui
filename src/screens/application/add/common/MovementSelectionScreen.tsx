@@ -1,10 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Platform } from 'react-native';
-import { CheckmarkIcon } from '../../../../components/icons/icons';
-import { gymMovements } from '../../../../constants/gymMovements';
-import { hapticFeedback } from '../../../../utils/haptic';
 import i18n from '../../../../utils/i18n';
 import { useTutorialTarget } from '../../../../context/TutorialContext';
+import { Check } from 'lucide-react-native';
 
 interface MovementSelectionScreenProps {
   selectedMovement: string;
@@ -66,7 +64,7 @@ export function MovementSelectionScreen({
                 </Text>
                 {selectedMovement === movement && (
                   <View style={styles.checkmark}>
-                    <CheckmarkIcon width={20} height={20} color="#000000" />
+                    <Check width={20} height={20} color="#000000" />
                   </View>
                 )}
               </TouchableOpacity>

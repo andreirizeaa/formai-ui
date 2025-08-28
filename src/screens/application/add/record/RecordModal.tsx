@@ -12,8 +12,8 @@ import { PracticesScreen } from '../common/PracticesScreen';
 import { WeightRepsScreen } from '../common/WeightRepsScreen';
 import { LoadingLiftData, useLoadingLifts } from '../../../../context/LoadingLiftsContext';
 import { gymMovements } from '../../../../constants/gymMovements';
-import { CloseIcon } from '../../../../components/icons/icons';
 import { useCameraPermissions } from 'expo-camera';
+import { X } from 'lucide-react-native';
 
 interface RecordModalProps {
   isVisible: boolean;
@@ -342,7 +342,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
             hapticFeedback.selection();
             onClose();
           }} style={[styles.closeButton]}>
-            <CloseIcon width={24} height={24} color={isDark ? '#8E8E93' : '#8E8E93'} />
+            <X width={24} height={24} color={isDark ? '#8E8E93' : '#8E8E93'} />
           </TouchableOpacity>
         </View>
 
@@ -432,7 +432,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
               hapticFeedback.selection();
               onClose();
             }} style={[styles.closeButton]}>
-              <CloseIcon width={24} height={24} color="#8E8E93" />
+              <X width={24} height={24} color="#8E8E93" />
             </TouchableOpacity>
           </View>
 
@@ -457,7 +457,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
               <Text style={styles.title}>Record Video</Text>
             </View>
             <TouchableOpacity onPress={handleClose} style={[styles.closeButton]}>
-              <CloseIcon width={24} height={24} color="white" />
+              <X width={24} height={24} color="white" />
             </TouchableOpacity>
           </View>
 
@@ -481,7 +481,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
               <Text style={styles.title}>Record Video</Text>
             </View>
             <TouchableOpacity onPress={handleClose} style={[styles.closeButton]}>
-              <CloseIcon width={24} height={24} color="#8E8E93" />
+              <X width={24} height={24} color="#8E8E93" />
             </TouchableOpacity>
           </View>
 
@@ -508,7 +508,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
               <Text style={styles.title}>Record Video</Text>
             </View>
             <TouchableOpacity onPress={handleClose} style={[styles.closeButton]}>
-              <CloseIcon width={24} height={24} color="#8E8E93" />
+              <X width={24} height={24} color="#8E8E93" />
             </TouchableOpacity>
           </View>
 
@@ -560,7 +560,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
                   hapticFeedback.selection();
                   onClose();
                 }} style={styles.closeButton}>
-                  <CloseIcon width={24} height={24} color="white" />
+                  <X width={24} height={24} color="white" />
                 </TouchableOpacity>
               </View>
 

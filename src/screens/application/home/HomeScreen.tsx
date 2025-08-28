@@ -20,7 +20,8 @@ import Animated, {
   runOnJS 
 } from 'react-native-reanimated';
 import i18n from '../../../utils/i18n';
-import { CloseIcon, CircularProgressChart, ChevronRightIcon } from '../../../components/icons/icons';
+import { CircularProgressChart } from '../../../components/icons/icons';
+import { X, ChevronRight } from 'lucide-react-native';
 
 interface HomeScreenProps {
   onShowFeedback: (liftData: ILiftData) => void;
@@ -332,7 +333,7 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
               activeOpacity={0.7}
             >
               <Text style={styles.seeAllText}>{i18n.t('home.seeAll')}</Text>
-              <ChevronRightIcon width={16} height={16} color="#8E8E93" />
+                                <ChevronRight size={16} color="#8E8E93" />
             </TouchableOpacity>
           </View>
           <View 
@@ -396,7 +397,7 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
                 handleFirePopupClose();
               }}
             >
-              <CloseIcon width={20} height={20} color="#000000" />
+              <X size={20} color="#000000" />
             </TouchableOpacity>
 
             {/* Title with FormAI logo */}

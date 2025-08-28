@@ -1,12 +1,12 @@
 import React from 'react';
 import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { BackIcon } from '../../../components/icons/icons';
 import { useColorScheme } from 'react-native';
 import i18n from '../../../utils/i18n';
 import { hapticFeedback } from '../../../utils/haptic';
 import { useUserDetails } from '../../../context/UserDetailsContext';
 import { editUserDetails } from '../../../services/userService';
+import { ChevronLeft } from 'lucide-react-native';
 
 interface UnitsDetailsScreenProps {
   onBack: () => void;
@@ -52,7 +52,7 @@ export function UnitsDetailsScreen({ onBack }: UnitsDetailsScreenProps) {
             onBack();
           }}
         >
-          <BackIcon width={24} height={24} color="#000000" />
+          <ChevronLeft size={24} color="#000000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{i18n.t('settings.units')}</Text>
         <View style={styles.placeholder} />
