@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
   progressContainer: {
     flex: 1,
     marginLeft: 12,
-    paddingTop: 6,
+    paddingTop: 8,
     justifyContent: 'center',
   },
   progressContainerFullWidth: {

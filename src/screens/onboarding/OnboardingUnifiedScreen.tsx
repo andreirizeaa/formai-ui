@@ -4,7 +4,6 @@ import { useColorScheme } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Picker } from '@react-native-picker/picker';
 import * as StoreReview from 'expo-store-review';
-import { CloseIcon } from '../../components/icons/icons';
 import { ReferralService } from '../../services/referralService';
 import { OnboardingLayout } from '../../components/onboarding/OnboardingLayout';
 import { AnimatedOptionButton } from '../../components/onboarding/AnimatedOptionButton';
@@ -15,7 +14,8 @@ import { hapticFeedback } from '../../utils/haptic';
 import { LANGUAGES } from '../../constants/languages';
 import { CreateAccountScreen } from '../../components/onboarding/CreateAccountScreen';
 import LottieView from 'lottie-react-native';
-import { CheckmarkWithCircleIcon } from '../../components/icons/icons';
+import { BicepsFlexed, User, ShieldPlus, Bike, HeartPulse, CircleX, AudioWaveform, ChartNoAxesColumnDecreasing, BookCopy, ShieldOff, BatteryLow, Ellipsis, Sprout, Shrub, TreePine, ChartNoAxesCombined, Hospital, Dumbbell, ShieldCheck, ChartNoAxesColumnIncreasing, ClockArrowUp, BatteryWarning, BatteryMedium, BatteryFull, PartyPopper, Weight, Scale, TrendingUp, ThumbsUp, ThumbsDown, Users, CircleCheck } from 'lucide-react-native';
+import { SingleDotIcon, SixDotsIcon, ThreeDotsIcon } from '../../components/icons/icons';
 
 interface OnboardingUnifiedScreenProps {}
 
@@ -26,6 +26,7 @@ interface StepOption<V> {
   iconImage?: any; // ImageSourcePropType
   iconWidth?: number; // Custom icon width
   iconHeight?: number; // Custom icon height
+  icon?: React.ReactNode; // Lucide icon component
 }
 
 type OptionsStepConfig<K extends keyof OnboardingData> = {
@@ -94,6 +95,10 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
   const isDark = colorScheme === 'dark';
   const { onboardingData, updateOnboardingData } = useOnboarding();
 
+  // Global icon configuration
+  const iconSize = 24;
+  const iconColor = isDark ? '#FFFFFF' : '#000000';
+
   const steps: ReadonlyArray<StepConfig> = useMemo(() => [
     {
       type: 'options',
@@ -132,11 +137,11 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       subtitle: i18n.t('onboarding.trainingReason.subtitle'),
       preferenceKey: 'trainingReason',
       options: [
-        { value: 'build_strength', label: i18n.t('onboarding.trainingReason.buildStrength') },
-        { value: 'improve_physique', label: i18n.t('onboarding.trainingReason.improvePhysique') },
-        { value: 'prevent_injury', label: i18n.t('onboarding.trainingReason.preventInjury') },
-        { value: 'train_for_sport', label: i18n.t('onboarding.trainingReason.trainForSport') },
-        { value: 'stay_active_healthy', label: i18n.t('onboarding.trainingReason.stayActiveHealthy') },
+        { value: 'build_strength', label: i18n.t('onboarding.trainingReason.buildStrength'), icon: <BicepsFlexed size={iconSize} color={iconColor} /> },
+        { value: 'improve_physique', label: i18n.t('onboarding.trainingReason.improvePhysique'), icon: <User size={iconSize} color={iconColor} /> },
+        { value: 'prevent_injury', label: i18n.t('onboarding.trainingReason.preventInjury'), icon: <ShieldPlus size={iconSize} color={iconColor} /> },
+        { value: 'train_for_sport', label: i18n.t('onboarding.trainingReason.trainForSport'), icon: <Bike size={iconSize} color={iconColor} /> },
+        { value: 'stay_active_healthy', label: i18n.t('onboarding.trainingReason.stayActiveHealthy'), icon: <HeartPulse size={iconSize} color={iconColor} /> },
       ],
     },
     {
@@ -146,11 +151,11 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       subtitle: i18n.t('onboarding.gymChallenge.subtitle'),
       preferenceKey: 'gymChallenge',
       options: [
-        { value: 'unsure_form', label: i18n.t('onboarding.gymChallenge.unsureForm') },
-        { value: 'no_results', label: i18n.t('onboarding.gymChallenge.noResults') },
-        { value: 'worried_injury', label: i18n.t('onboarding.gymChallenge.worriedInjury') },
-        { value: 'struggling_motivation', label: i18n.t('onboarding.gymChallenge.strugglingMotivation') },
-        { value: 'other', label: i18n.t('onboarding.gymChallenge.other') },
+        { value: 'unsure_form', label: i18n.t('onboarding.gymChallenge.unsureForm'), icon: <AudioWaveform size={iconSize} color={iconColor} /> },
+        { value: 'no_results', label: i18n.t('onboarding.gymChallenge.noResults'), icon: <ChartNoAxesColumnDecreasing size={iconSize} color={iconColor} /> },
+        { value: 'worried_injury', label: i18n.t('onboarding.gymChallenge.worriedInjury'), icon: <ShieldOff size={iconSize} color={iconColor} /> },
+        { value: 'struggling_motivation', label: i18n.t('onboarding.gymChallenge.strugglingMotivation'), icon: <BatteryLow size={iconSize} color={iconColor} /> },
+        { value: 'other', label: i18n.t('onboarding.gymChallenge.other'), icon: <Ellipsis size={iconSize} color={iconColor} /> },
       ],
     },
     {
@@ -160,11 +165,9 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       subtitle: i18n.t('onboarding.workouts.subtitle'),
       preferenceKey: 'workoutsPerWeek',
       options: [
-        { value: '1-2', label: i18n.t('onboarding.workouts.oneToTwo') },
-        { value: '3-4', label: i18n.t('onboarding.workouts.threeToFour') },
-        { value: '5-6', label: i18n.t('onboarding.workouts.fiveToSix') },
-        { value: 'every_day', label: i18n.t('onboarding.workouts.everyDay') },
-        { value: 'it_varies', label: i18n.t('onboarding.workouts.itVaries') },
+        { value: '0-2', label: i18n.t('onboarding.workouts.zeroToTwo'), description: i18n.t('onboarding.workouts.zeroToTwoDescription'), icon: <SingleDotIcon height={iconSize} width={iconSize} color={iconColor} /> },
+        { value: '3-5', label: i18n.t('onboarding.workouts.threeToFive'), description: i18n.t('onboarding.workouts.threeToFiveDescription'), icon: <ThreeDotsIcon height={iconSize} width={iconSize} color={iconColor} /> },
+        { value: '6+', label: i18n.t('onboarding.workouts.SixPlus'), description: i18n.t('onboarding.workouts.SixPlusDescription'), icon: <SixDotsIcon height={iconSize} width={iconSize} color={iconColor} /> },
       ],
     },
     {
@@ -174,11 +177,11 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       subtitle: i18n.t('onboarding.lifterType.subtitle'),
       preferenceKey: 'lifterType',
       options: [
-        { value: 'beginner', label: i18n.t('onboarding.lifterType.beginner') },
-        { value: 'intermediate', label: i18n.t('onboarding.lifterType.intermediate') },
-        { value: 'advanced', label: i18n.t('onboarding.lifterType.advanced') },
-        { value: 'returning_after_break', label: i18n.t('onboarding.lifterType.returningAfterBreak') },
-        { value: 'injury_rehab', label: i18n.t('onboarding.lifterType.injuryRehab') },
+        { value: 'beginner', label: i18n.t('onboarding.lifterType.beginner'), icon: <Sprout size={iconSize} color={iconColor} /> },
+        { value: 'intermediate', label: i18n.t('onboarding.lifterType.intermediate'), icon: <Shrub size={iconSize} color={iconColor} /> },
+        { value: 'advanced', label: i18n.t('onboarding.lifterType.advanced'), icon: <TreePine size={iconSize} color={iconColor} /> },
+        { value: 'returning_after_break', label: i18n.t('onboarding.lifterType.returningAfterBreak'), icon: <ChartNoAxesCombined size={iconSize} color={iconColor} /> },
+        { value: 'injury_rehab', label: i18n.t('onboarding.lifterType.injuryRehab'), icon: <Hospital size={iconSize} color={iconColor} /> },
       ],
     },
     {
@@ -188,11 +191,11 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       subtitle: i18n.t('onboarding.perfectFormGoal.subtitle'),
       preferenceKey: 'perfectFormGoal',
       options: [
-        { value: 'lift_heavier_safely', label: i18n.t('onboarding.perfectFormGoal.liftHeavierSafely') },
-        { value: 'build_muscle_efficiently', label: i18n.t('onboarding.perfectFormGoal.buildMuscleEfficiently') },
-        { value: 'avoid_injuries', label: i18n.t('onboarding.perfectFormGoal.avoidInjuries') },
-        { value: 'boost_confidence', label: i18n.t('onboarding.perfectFormGoal.boostConfidence') },
-        { value: 'train_longer_without_setbacks', label: i18n.t('onboarding.perfectFormGoal.trainLongerWithoutSetbacks') },
+        { value: 'lift_heavier_safely', label: i18n.t('onboarding.perfectFormGoal.liftHeavierSafely'), icon: <Dumbbell size={iconSize} color={iconColor} /> },
+        { value: 'build_muscle_efficiently', label: i18n.t('onboarding.perfectFormGoal.buildMuscleEfficiently'), icon: <BicepsFlexed size={iconSize} color={iconColor} /> },
+        { value: 'avoid_injuries', label: i18n.t('onboarding.perfectFormGoal.avoidInjuries'), icon: <ShieldCheck size={iconSize} color={iconColor} /> },
+        { value: 'boost_confidence', label: i18n.t('onboarding.perfectFormGoal.boostConfidence'), icon: <ChartNoAxesColumnIncreasing size={iconSize} color={iconColor} /> },
+        { value: 'train_longer_without_setbacks', label: i18n.t('onboarding.perfectFormGoal.trainLongerWithoutSetbacks'), icon: <ClockArrowUp size={iconSize} color={iconColor} /> },
       ],
     },
     {
@@ -202,10 +205,10 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       subtitle: i18n.t('onboarding.formConfidence.subtitle'),
       preferenceKey: 'formConfidence',
       options: [
-        { value: '0-25', label: i18n.t('onboarding.formConfidence.zeroToTwentyFive') },
-        { value: '25-50', label: i18n.t('onboarding.formConfidence.twentyFiveToFifty') },
-        { value: '50-75', label: i18n.t('onboarding.formConfidence.fiftyToSeventyFive') },
-        { value: '75-100', label: i18n.t('onboarding.formConfidence.seventyFiveToHundred') },
+        { value: '0-25', label: i18n.t('onboarding.formConfidence.zeroToTwentyFive'), icon: <BatteryWarning size={iconSize} color={iconColor} /> },
+        { value: '25-50', label: i18n.t('onboarding.formConfidence.twentyFiveToFifty'), icon: <BatteryLow size={iconSize} color={iconColor} /> },
+        { value: '50-75', label: i18n.t('onboarding.formConfidence.fiftyToSeventyFive'), icon: <BatteryMedium size={iconSize} color={iconColor} /> },
+        { value: '75-100', label: i18n.t('onboarding.formConfidence.seventyFiveToHundred'), icon: <BatteryFull size={iconSize} color={iconColor} /> },
       ],
     },
     {
@@ -215,11 +218,11 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       subtitle: i18n.t('onboarding.threeMonthGoal.subtitle'),
       preferenceKey: 'threeMonthGoal',
       options: [
-        { value: 'lifting_heavier', label: i18n.t('onboarding.threeMonthGoal.liftingHeavier') },
-        { value: 'looking_leaner', label: i18n.t('onboarding.threeMonthGoal.lookingLeaner') },
-        { value: 'feeling_stronger_injury_free', label: i18n.t('onboarding.threeMonthGoal.feelingStrongerInjuryFree') },
-        { value: 'more_consistent', label: i18n.t('onboarding.threeMonthGoal.moreConsistent') },
-        { value: 'more_confident', label: i18n.t('onboarding.threeMonthGoal.moreConfident') },
+        { value: 'lifting_heavier', label: i18n.t('onboarding.threeMonthGoal.liftingHeavier'), icon: <Weight size={iconSize} color={iconColor} /> },
+        { value: 'looking_leaner', label: i18n.t('onboarding.threeMonthGoal.lookingLeaner'), icon: <Scale size={iconSize} color={iconColor} /> },
+        { value: 'feeling_stronger_injury_free', label: i18n.t('onboarding.threeMonthGoal.feelingStrongerInjuryFree'), icon: <BicepsFlexed size={iconSize} color={iconColor} /> },
+        { value: 'more_consistent', label: i18n.t('onboarding.threeMonthGoal.moreConsistent'), icon: <TrendingUp size={iconSize} color={iconColor} /> },
+        { value: 'more_confident', label: i18n.t('onboarding.threeMonthGoal.moreConfident'), icon: <PartyPopper size={iconSize} color={iconColor} /> },
       ],
     },
     {
@@ -229,8 +232,8 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       subtitle: i18n.t('onboarding.personalTrainer.subtitle'),
       preferenceKey: 'hasPersonalTrainer',
       options: [
-        { value: true, label: i18n.t('onboarding.personalTrainer.yes') },
-        { value: false, label: i18n.t('onboarding.personalTrainer.no') },
+        { value: true, label: i18n.t('onboarding.personalTrainer.yes'), icon: <ThumbsUp size={iconSize} color={iconColor} /> },
+        { value: false, label: i18n.t('onboarding.personalTrainer.no'), icon: <ThumbsDown size={iconSize} color={iconColor} /> },
       ],
     },
     {
@@ -252,11 +255,15 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       subtitle: i18n.t('onboarding.discovery.subtitle'),
       preferenceKey: 'discoverySource',
       options: [
-        { value: 'instagram', label: i18n.t('onboarding.discovery.instagram'), iconHeight: 24, iconWidth: 24 , iconImage: require('../../../assets/icons/instagram.png') },
-        { value: 'tiktok', label: i18n.t('onboarding.discovery.tiktok'), iconHeight: 24, iconWidth: 24 , iconImage: require('../../../assets/icons/tiktok.png') },
-        { value: 'facebook', label: i18n.t('onboarding.discovery.facebook'), iconHeight: 24, iconWidth: 24 , iconImage: require('../../../assets/icons/fasebook.png') },
-        { value: 'google', label: i18n.t('onboarding.discovery.google'), iconHeight: 24, iconWidth: 24 , iconImage: require('../../../assets/icons/google.png') },
-        { value: 'other', label: i18n.t('onboarding.discovery.other') },
+        { value: 'instagram', label: i18n.t('onboarding.discovery.instagram'), iconHeight: 30, iconWidth: 30 , iconImage: require('../../../assets/icons/instagram.png') },
+        { value: 'tiktok', label: i18n.t('onboarding.discovery.tiktok'), iconHeight: 30, iconWidth: 30 , iconImage: require('../../../assets/icons/tiktok.png') },
+        { value: 'facebook', label: i18n.t('onboarding.discovery.facebook'), iconHeight: 30, iconWidth: 30 , iconImage: require('../../../assets/icons/fasebook.png') },
+        { value: 'twitter', label: i18n.t('onboarding.discovery.twitter'), iconHeight: 30, iconWidth: 30 , iconImage: require('../../../assets/icons/x.png') },
+        { value: 'google', label: i18n.t('onboarding.discovery.google'), iconHeight: 30, iconWidth: 30 , iconImage: require('../../../assets/icons/google.png') },
+        { value: 'appStore', label: i18n.t('onboarding.discovery.appStore'), iconHeight: 30, iconWidth: 30 , iconImage: require('../../../assets/icons/appstore.png') },
+        { value: 'playStore', label: i18n.t('onboarding.discovery.playStore'), iconHeight: 30, iconWidth: 30 , iconImage: require('../../../assets/icons/playstore.png') },
+        { value: 'friends', label: i18n.t('onboarding.discovery.friends'), icon: <Users size={iconSize} color={iconColor} /> },
+        { value: 'other', label: i18n.t('onboarding.discovery.other'), icon: <BookCopy size={iconSize} color={iconColor} /> },
       ],
     },
     // {
@@ -537,20 +544,27 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                   isSelected={selectedValue === item.value}
                   isDark={isDark}
                   delay={0}
+                  hasIcon={!!(item.icon || item.iconImage)}
                 >
-                  <View style={styles.optionContentRow}>
-                    {item.iconImage ? (
-                      <Image 
-                        source={item.iconImage} 
-                        style={[
-                          styles.optionIconImage,
-                          item.iconWidth ? { width: item.iconWidth } : undefined,
-                          item.iconHeight ? { height: item.iconHeight } : undefined
-                        ]} 
-                        resizeMode="contain" 
-                      />
+                  <View style={currentStep.id === 'language' || currentStep.id === 'units' || currentStep.id === 'gender' ? styles.optionContentRowCentered : styles.optionContentRow}>
+                    {item.icon ? (
+                      <View style={styles.optionIconContainer}>
+                        {item.icon}
+                      </View>
+                    ) : item.iconImage ? (
+                      <View style={styles.optionIconContainer}>
+                        <Image 
+                          source={item.iconImage} 
+                          style={[
+                            styles.optionIconImage,
+                            item.iconWidth ? { width: item.iconWidth } : undefined,
+                            item.iconHeight ? { height: item.iconHeight } : undefined
+                          ]} 
+                          resizeMode="contain" 
+                        />
+                      </View>
                     ) : null}
-                    <View style={styles.optionTextContainer}>
+                    <View style={currentStep.id === 'language' || currentStep.id === 'units' || currentStep.id === 'gender' ? styles.optionTextContainerCentered : styles.optionTextContainer}>
                       <Text
                         style={[
                           styles.optionLabel,
@@ -599,20 +613,27 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                   isDark={isDark}
                   delay={index * 100}
                   style={option.description ? styles.optionWithDescription : undefined}
+                  hasIcon={!!(option.icon || option.iconImage)}
                 >
-                  <View style={styles.optionContentRow}>
-                    {option.iconImage ? (
-                      <Image 
-                        source={option.iconImage} 
-                        style={[
-                          styles.optionIconImage,
-                          option.iconWidth ? { width: option.iconWidth } : undefined,
-                          option.iconHeight ? { height: option.iconHeight } : undefined
-                        ]} 
-                        resizeMode="contain" 
-                      />
+                  <View style={currentStep.id === 'language' || currentStep.id === 'units' || currentStep.id === 'gender' ? styles.optionContentRowCentered : styles.optionContentRow}>
+                    {option.icon ? (
+                      <View style={styles.optionIconContainer}>
+                        {option.icon}
+                      </View>
+                    ) : option.iconImage ? (
+                      <View style={styles.optionIconContainer}>
+                        <Image 
+                          source={option.iconImage} 
+                          style={[
+                            styles.optionIconImage,
+                            option.iconWidth ? { width: option.iconWidth } : undefined,
+                            option.iconHeight ? { height: option.iconHeight } : undefined
+                          ]} 
+                          resizeMode="contain" 
+                        />
+                      </View>
                     ) : null}
-                    <View style={styles.optionTextContainer}>
+                    <View style={currentStep.id === 'language' || currentStep.id === 'units' || currentStep.id === 'gender' ? styles.optionTextContainerCentered : styles.optionTextContainer}>
                       <Text
                         style={[
                           styles.optionLabel,
@@ -628,7 +649,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                         <Text
                           style={[
                             styles.optionDescription,
-                            { color: selectedValue === option.value ? '#FFFFFF' : '#9CA3AF' },
+                            { color: selectedValue === option.value ? '#FFFFFF' : '#000000' },
                           ]}
                         >
                           {option.description}
@@ -734,9 +755,6 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
         >
           <View style={styles.birthdateRow}>
             <View style={[styles.birthdatePickerSection, { flex: 1.4 }]}> 
-              <Text style={[styles.pickerLabel, { color: isDark ? '#FFFFFF' : '#000000' }]}>
-                {i18n.t('onboarding.birthDate.month')}
-              </Text>
               <View style={styles.pickerWrapper}>
                 <Picker
                   selectedValue={effectiveBirthDate.month}
@@ -752,9 +770,6 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
               </View>
             </View>
             <View style={styles.birthdatePickerSection}>
-              <Text style={[styles.pickerLabel, { color: isDark ? '#FFFFFF' : '#000000' }]}>
-                {i18n.t('onboarding.birthDate.day')}
-              </Text>
               <View style={styles.pickerWrapper}>
                 <Picker
                   selectedValue={effectiveBirthDate.day}
@@ -770,9 +785,6 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
               </View>
             </View>
             <View style={styles.birthdatePickerSection}>
-              <Text style={[styles.pickerLabel, { color: isDark ? '#FFFFFF' : '#000000' }]}>
-                {i18n.t('onboarding.birthDate.year')}
-              </Text>
               <View style={styles.pickerWrapper}>
                 <Picker
                   selectedValue={effectiveBirthDate.year}
@@ -931,7 +943,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                   activeOpacity={0.7}
                 >
                   <View style={styles.clearIconContainer}>
-                    <CloseIcon width={24} height={24} color={isDark ? '#FFFFFF' : '#8E8E93'} />
+                    <CircleX size={24} color={isDark ? '#FFFFFF' : '#8E8E93'} />
                   </View>
                 </TouchableOpacity>
               )}
@@ -962,7 +974,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
           <View style={styles.allDoneContent}>
             {/* Header with checkmark and "All done!" text */}
             <View style={styles.header}>
-              <CheckmarkWithCircleIcon width={36} height={36} />
+              <CircleCheck size={36} color={'#34C759'} />
               <Text 
                 style={[
                   styles.allDoneText,
@@ -1044,9 +1056,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
+  optionContentRowCentered: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center', // Center content horizontally
+    gap: 12,
+  },
   optionTextContainer: {
     flex: 1,
     alignItems: 'flex-start',
+  },
+  optionTextContainerCentered: {
+    flex: 1,
+    alignItems: 'center', // Center text content
   },
   optionIconImage: {
     resizeMode: 'contain',
@@ -1274,5 +1296,13 @@ const styles = StyleSheet.create({
   confettiAnimation: {
     width: 700,
     height: 700,
+  },
+  optionIconContainer: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
   },
 }); 

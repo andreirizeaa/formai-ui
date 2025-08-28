@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Platform, Alert, ActionSheetIOS, Modal, Image, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { BackIcon, MoreHorizontalIcon, ShareIcon, StarIcon, HeartIcon, TrashIcon, CloseIcon, InfoIcon } from '../../../components/icons/icons';
+import { ChevronLeft, Ellipsis, Heart, Trash2, X } from 'lucide-react-native';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { LineChart } from 'react-native-chart-kit';
 import { hapticFeedback } from '../../../utils/haptic';
@@ -167,7 +167,7 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
             onPress={handleClose}
             activeOpacity={0.7}
           >
-            <BackIcon width={20} height={20} color="#000000" />
+            <ChevronLeft size={20} color="#000000" />
           </TouchableOpacity>
           <Text style={styles.title}>Lift Details</Text>
           <TouchableOpacity 
@@ -175,7 +175,7 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
             onPress={handleActionSheet}
             activeOpacity={0.7}
           >
-            <MoreHorizontalIcon width={20} height={20} color="#000000" />
+            <Ellipsis size={20} color="#000000" />
           </TouchableOpacity>
         </View>
         
@@ -305,7 +305,7 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
               activeOpacity={0.7}
             >
               <Text style={styles.dropdownOptionText}>Favourite</Text>
-              <HeartIcon width={20} height={20} color="#FF3B30" filled={isFavourite} />
+              <Heart size={20} color="#FF3B30" fill={isFavourite ? "#FF3B30" : "none"} />
             </TouchableOpacity>
             <View style={styles.dropdownDivider} />
             <TouchableOpacity 
@@ -314,7 +314,7 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
               activeOpacity={0.7}
             >
               <Text style={styles.dropdownOptionTextDestructive}>Delete Lift</Text>
-              <TrashIcon width={20} height={20} color="#FF3B30" />
+              <Trash2 size={20} color="#FF3B30" />
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
@@ -337,7 +337,7 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
               style={styles.modalCloseButton} 
               onPress={handleDeleteCancel}
             >
-              <CloseIcon width={20} height={20} color="#000000" />
+              <X size={20} color="#000000" />
             </TouchableOpacity>
 
             {/* Title */}

@@ -3,9 +3,9 @@ import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, Activity
 import { Picker } from '@react-native-picker/picker';
 import i18n from '../../../../utils/i18n';
 import { hapticFeedback } from '../../../../utils/haptic';
-import { BackIcon } from '../../../../components/icons/icons';
 import { useUserDetails } from '../../../../context/UserDetailsContext';
 import { editUserDetails } from '../../../../services/userService';
+import { ChevronLeft } from 'lucide-react-native';
 
 interface EditDateOfBirthScreenProps {
   onBack: () => void;
@@ -168,7 +168,7 @@ export function EditDateOfBirthScreen({ onBack, currentValue, onSave }: EditDate
             onBack();
           }}
         >
-          <BackIcon width={24} height={24} color="#000000" />
+          <ChevronLeft width={24} height={24} color="#000000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{i18n.t('personalDetails.editDateOfBirth')}</Text>
         <View style={styles.placeholder} />

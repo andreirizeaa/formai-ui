@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Dimensions, Text, Platform, Image, ScrollView } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Text, Platform, Image, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { CloseIcon, BackIcon, PlayIcon, ForwardIcon, ChevronUpIcon, ChevronDownIcon, CheckmarkCircleIcon, CircledXIcon } from '../../../components/icons/icons';
+import { X, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, CircleCheck, CircleX } from 'lucide-react-native';
 import { hapticFeedback } from '../../../utils/haptic';
 import { useTutorialTarget } from '../../../context/TutorialContext';
 
@@ -216,9 +216,9 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, liftData }
             {items.map((text, idx) => (
               <View key={`${isIssues ? 'issue' : 'tip'}-${idx}`} style={styles.listItem}>
                 {isIssues ? (
-                  <CircledXIcon width={20} height={20} color="#FF3B30" />
+                  <CircleX size={20} color="#FF3B30" />
                 ) : (
-                  <CheckmarkCircleIcon width={20} height={20} color="#00c950" />
+                                      <CircleCheck size={20} color="#00c950" />
                 )}
                 <Text style={styles.listItemText}>{text}</Text>
               </View>
@@ -244,7 +244,7 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, liftData }
             style={styles.closeButton} 
             onPress={handleClose}
           >
-            <CloseIcon width={24} height={24} color="#000000" />
+            <X size={24} color="#000000" />
           </TouchableOpacity>
         </View>
 
@@ -277,7 +277,7 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, liftData }
               onPress={handleLeftChevron}
               activeOpacity={0.7}
             >
-              <BackIcon width={24} height={24} color="#000000" />
+              <ChevronLeft size={24} color="#000000" />
             </TouchableOpacity>
 
             {/* Center Column - Page Indicator and Expand/Collapse */}
@@ -290,9 +290,9 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, liftData }
                   activeOpacity={0.7}
                 >
                   {isBottomExpanded ? (
-                    <ChevronDownIcon width={24} height={24} color="#FFFFFF" />
+                    <ChevronDown size={24} color="#FFFFFF" />
                   ) : (
-                    <ChevronUpIcon width={24} height={24} color="#FFFFFF" />
+                    <ChevronUp size={24} color="#FFFFFF" />
                   )}
                 </TouchableOpacity>
               )}
@@ -311,7 +311,7 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, liftData }
               onPress={handleRightChevron}
               activeOpacity={0.7}
             >
-              <ForwardIcon width={24} height={24} color="#000000" />
+              <ChevronRight size={24} color="#000000" />
             </TouchableOpacity>
           </View>
         </View>

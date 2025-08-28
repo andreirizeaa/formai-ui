@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, ActivityIndicator } from 'react-native';
-import { CloseIcon } from '../../../components/icons/icons';
 import i18n from '../../../utils/i18n';
 import { hapticFeedback } from '../../../utils/haptic';
+import { X } from 'lucide-react-native';
 
 interface LogoutModalProps {
   isVisible: boolean;
@@ -53,7 +53,7 @@ export function LogoutModal({ isVisible, onClose, onConfirm }: LogoutModalProps)
               onClose();
             }}
           >
-            <CloseIcon width={20} height={20} color="#000000" />
+            <X size={20} color="#000000" />
           </TouchableOpacity>
 
           {/* Title */}
