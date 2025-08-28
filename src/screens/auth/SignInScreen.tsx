@@ -11,6 +11,8 @@ import { BackButton } from '../../components/ui/BackButton';
 import { LoadingOverlay } from '../../components/ui/LoadingOverlay';
 import { removeUserId, setUserId } from '../../services/storageService';
 import { fetchUserById, requiresOnboarding, requiresPayment } from '../../services/userService';
+import Purchases from 'react-native-purchases';
+import { usePurchases } from '../../context/PurchasesContext';
 
 interface SignInScreenProps {
   onSignIn: () => void;
@@ -23,6 +25,7 @@ export function SignInScreen({ onSignIn, onBack, onNavigateToOnboarding, onRequi
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const [isSigningIn, setIsSigningIn] = React.useState(false);
+  const { customerInfo } = usePurchases();
   
   // Check if we're running in Expo Go
   const isExpoGo = Constants.appOwnership === 'expo';
@@ -47,11 +50,11 @@ export function SignInScreen({ onSignIn, onBack, onNavigateToOnboarding, onRequi
       const { user } = await fetchUserById(userId);
 
       if (!user) {
+        hapticFeedback.error();
         if (onNavigateToOnboarding) onNavigateToOnboarding();
         else onSignIn();
         return;
       }
-
       if (requiresOnboarding(user)) {
         hapticFeedback.error();
         await removeUserId();
@@ -59,8 +62,7 @@ export function SignInScreen({ onSignIn, onBack, onNavigateToOnboarding, onRequi
         else onSignIn();
         return;
       }
-
-      if (requiresPayment(user)) {
+      if (customerInfo?.activeSubscriptions.length === 0) {
         hapticFeedback.success();
         if (onRequirePayment) onRequirePayment();
         else onSignIn();
@@ -284,14 +286,14 @@ const styles = StyleSheet.create({
   },
   appleButton: {
     width: '80%',
-    height: 56,
+    height: 65,
     borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
   },
   googleButton: {
     width: '80%',
-    height: 56,
+    height: 65,
     borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',

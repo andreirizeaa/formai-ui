@@ -139,20 +139,6 @@ export function LoadingLiftCard({ lift }: LoadingLiftCardProps) {
     }
   };
 
-  const getStatusColor = () => {
-    switch (lift.status) {
-      case 'uploading':
-      case 'processing':
-        return '#000000';
-      case 'completed':
-        return '#000000';
-      case 'error':
-        return '#FF3B30';
-      default:
-        return '#000000';
-    }
-  };
-
   if (lift.status === 'error') {
     return (
       <View style={styles.liftCard}>
@@ -193,13 +179,15 @@ export function LoadingLiftCard({ lift }: LoadingLiftCardProps) {
                   : i18n.t('loadingLift.pleaseTryAgain')
                 }
               </Text>
-              <TouchableOpacity 
-                style={styles.retryButton}
-                onPress={handleRetry}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.retryButtonText}>{i18n.t('loadingLift.tapToRetry')}</Text>
-              </TouchableOpacity>
+              {lift.errorMessage !== 'No lift found' && (
+                <TouchableOpacity 
+                  style={styles.retryButton}
+                  onPress={handleRetry}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.retryButtonText}>{i18n.t('loadingLift.tapToRetry')}</Text>
+                </TouchableOpacity>
+              )}
             </View>
           </View>
         </View>
@@ -360,7 +348,7 @@ const styles = StyleSheet.create({
   },
   liftDetails: {
     flex: 1,
-    justifyContent: 'center', // Center the content vertically
+    justifyContent: 'flex-start', // Keep content at the top
   },
   analyzingText: {
     fontSize: 16,
