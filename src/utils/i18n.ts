@@ -6,7 +6,7 @@ const i18n = new I18n({
     loading: 'Loading...',
     getStarted: 'Get Started',
     signIn: 'Sign In',
-    next: 'Next',
+    next: 'Continue',
     back: 'Back',
     tabs: {
       home: 'Home',
@@ -199,7 +199,7 @@ const i18n = new I18n({
         moreConfident: 'More confident',
       },
       measurements: {
-        title: 'Height and Weight',
+        title: 'Height & Weight',
         subtitle: 'This helps us provide personalized recommendations',
         height: 'Height',
         weight: 'Weight',
@@ -463,7 +463,7 @@ const i18n = new I18n({
     tutorial: {
       buttons: {
         previous: 'Previous',
-        next: 'Next',
+        next: 'Continue',
         complete: 'Complete',
         skipGuide: 'Skip guide',
       },

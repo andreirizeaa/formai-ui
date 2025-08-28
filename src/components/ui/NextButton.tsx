@@ -64,7 +64,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   text: {
-    fontSize: 17,
-    fontWeight: '600',
+    fontSize: 19,
+    fontWeight: '500',
   },
 }); 

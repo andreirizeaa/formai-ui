@@ -110,7 +110,7 @@ export function AnimatedOptionButton({
 
 const styles = StyleSheet.create({
   button: {
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderRadius: 18,
     paddingVertical: 26,
     paddingHorizontal: 24,
