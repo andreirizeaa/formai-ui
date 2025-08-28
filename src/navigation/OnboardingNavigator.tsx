@@ -14,7 +14,6 @@ import { SignInScreen } from '../screens/auth/SignInScreen';
 import { CameraPermissionScreen } from '../screens/onboarding/CameraPermissionScreen';
 import Purchases from 'react-native-purchases';
 import { usePurchases } from '../context/PurchasesContext';
-import { useOnboarding } from '../context/OnboardingContext';
 
 interface OnboardingNavigatorProps {
   onComplete: () => void;

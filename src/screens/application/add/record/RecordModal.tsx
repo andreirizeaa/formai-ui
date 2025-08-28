@@ -472,16 +472,18 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
             />
           </View>
         </SafeAreaView>
-      ) : showMovementSelection ? (
+              ) : showMovementSelection ? (
         // Movement Selection Content
         <SafeAreaView style={styles.container}>
           {/* Close Button and Title */}
-          <View style={styles.titleContainer}>
-            <Text style={styles.title}>Record Video</Text>
+          <View style={styles.topControls}>
+            <View style={styles.titleContainer}>
+              <Text style={styles.title}>Record Video</Text>
+            </View>
+            <TouchableOpacity onPress={handleClose} style={[styles.closeButton]}>
+              <CloseIcon width={24} height={24} color="#8E8E93" />
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity onPress={handleClose} style={[styles.closeButton]}>
-            <CloseIcon width={24} height={24} color="#8E8E93" />
-          </TouchableOpacity>
 
           {/* Content */}
           <View style={styles.contentWithBottomPadding}>
@@ -497,16 +499,18 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
             />
           </View>
         </SafeAreaView>
-      ) : showWeightReps ? (
+              ) : showWeightReps ? (
         // Weight and Reps Content
         <SafeAreaView style={styles.container}>
           {/* Close Button and Title */}
-          <View style={styles.titleContainer}>
-            <Text style={styles.title}>Record Video</Text>
+          <View style={styles.topControls}>
+            <View style={styles.titleContainer}>
+              <Text style={styles.title}>Record Video</Text>
+            </View>
+            <TouchableOpacity onPress={handleClose} style={[styles.closeButton]}>
+              <CloseIcon width={24} height={24} color="#8E8E93" />
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity onPress={handleClose} style={[styles.closeButton]}>
-            <CloseIcon width={24} height={24} color="#8E8E93" />
-          </TouchableOpacity>
 
           {/* Content */}
           <View style={styles.contentWithBottomPadding}>

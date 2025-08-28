@@ -281,7 +281,10 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
         <View style={styles.titleContainer}>
           <Text style={styles.title}>Upload Video</Text>
         </View>
-        <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+        <TouchableOpacity onPress={() => {
+          hapticFeedback.selection();
+          onClose();
+        }} style={styles.closeButton}>
           <CloseIcon width={24} height={24} color="#8E8E93" />
         </TouchableOpacity>
       </View>

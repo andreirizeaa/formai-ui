@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#000000',
   },
   getStartedText: {
-    fontSize: 17,
+    fontSize: 20,
     fontWeight: '600',
     color: '#FFFFFF',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
