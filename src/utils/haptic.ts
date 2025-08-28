@@ -3,7 +3,7 @@ import * as Haptics from 'expo-haptics';
 export const hapticFeedback = {
   // Light impact for button selections
   selection: () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {
       // Silently handle haptic errors to prevent blocking UI
     });
   },

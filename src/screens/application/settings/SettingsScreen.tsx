@@ -22,6 +22,7 @@ import {
   DeleteAccountIcon,
   LogoutIcon,
 } from '../../../components/icons/icons';
+import { supabase } from '../../../lib/supabase';
 
 interface SettingsScreenProps {
   onPersonalDetailsPress: () => void;
@@ -190,7 +191,7 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onSharePr
 
       const res = await deleteUserAccount(userId);
       if (!res?.success) throw new Error(res?.message || 'Delete failed');
-
+      await supabase.auth.signOut();
       await removeUserId();
       setShowDeleteModal(false);
       if (onLogout) onLogout();

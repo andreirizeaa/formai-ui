@@ -9,11 +9,11 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 import { hapticFeedback } from '../../utils/haptic';
+import { useUserCheckIns } from '../../context/UserCheckInsContext';
 
 interface SwipeableCalendarProps {
   onDateSelect?: (date: Date) => void;
   initialSelectedDate?: Date;
-  daysLogged?: string[]; // Format: DD-MM-YYYY
 }
 
 interface DayData {
@@ -25,10 +25,11 @@ interface DayData {
   isLogged: boolean;
 }
 
-export function SwipeableCalendar({ onDateSelect, initialSelectedDate, daysLogged = [] }: SwipeableCalendarProps) {
+export function SwipeableCalendar({ onDateSelect, initialSelectedDate }: SwipeableCalendarProps) {
   const [currentWeekOffset, setCurrentWeekOffset] = useState(0);
   const [selectedDate, setSelectedDate] = useState<Date | null>(initialSelectedDate || new Date());
   const translateX = useSharedValue(0);
+  const { daysLogged } = useUserCheckIns();
   
   // Helper function to format date as DD-MM-YYYY
   const formatDateAsDDMMYYYY = (date: Date): string => {
@@ -147,14 +148,15 @@ export function SwipeableCalendar({ onDateSelect, initialSelectedDate, daysLogge
               >
                 <View style={[
                   styles.dayCircle,
-                  day.isToday && day.isLogged ? styles.todayLoggedCircle :
-                  day.isLogged ? styles.loggedDayCircle :
                   day.isToday && day.isActive ? styles.todaySelectedCircle : 
                   day.isToday ? styles.todayCircle : 
-                  day.isActive ? styles.selectedCircle : styles.inactiveDayCircle
+                  day.isActive && day.isLogged ? styles.loggedDayCircle :
+                  day.isActive ? styles.selectedCircle : 
+                  day.isLogged ? styles.loggedDayCircle : styles.inactiveDayCircle
                 ]}>
                   <Text style={[
                     styles.dayName,
+                    day.isLogged && !day.isToday ? styles.loggedDayText :
                     day.isActive ? styles.activeDayText : styles.inactiveDayText
                   ]}>
                     {day.dayName}
@@ -231,6 +233,10 @@ const styles = StyleSheet.create({
     color: '#000000',
     fontWeight: '700',
   },
+  loggedDayText: {
+    color: '#ff6900',
+    fontWeight: '600',
+  },
   todayCircle: {
     borderWidth: 2,
     borderColor: '#9CA3AF',
@@ -252,7 +258,7 @@ const styles = StyleSheet.create({
   loggedDayCircle: {
     borderWidth: 1.5,
     borderColor: '#ff6900',
-    borderStyle: 'dashed',
+    borderStyle: 'solid',
     backgroundColor: 'transparent',
   },
   todayLoggedCircle: {

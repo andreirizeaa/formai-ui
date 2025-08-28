@@ -1008,8 +1008,8 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       {currentStep.type === 'saveProgress' && (
         <CreateAccountScreen
           onNext={() => {
-            // Navigate to payment screens
-            navigation.navigate('Payment' as never);
+            // Navigate to account loading screen first, then to payment
+            navigation.navigate('AccountLoading' as never);
           }}
           onBack={() => {
             // Navigate to AllDone screen

@@ -8,11 +8,12 @@ import { LoadingScreen } from '../screens/onboarding/LoadingScreen';
 import { WelcomeScreen } from '../screens/onboarding/WelcomeScreen';
 import { OnboardingUnifiedScreen } from '../screens/onboarding/OnboardingUnifiedScreen';
 import { NotificationPermissionScreen } from '../screens/onboarding/NotificationPermissionScreen';
-import { SetupLoadingScreen } from '../screens/onboarding/SetupLoadingScreen';
-import { PaymentUnifiedScreen } from '../screens/payment/PaymentUnifiedScreen';
+import { AccountLoadingScreen } from '../screens/onboarding/AccountLoadingScreen';
+import { PaymentScreen } from '../screens/payment/PaymentScreen';
 import { SignInScreen } from '../screens/auth/SignInScreen';
 import { CameraPermissionScreen } from '../screens/onboarding/CameraPermissionScreen';
-import { useOnboarding } from '../context/OnboardingContext';
+import Purchases from 'react-native-purchases';
+import { usePurchases } from '../context/PurchasesContext';
 
 interface OnboardingNavigatorProps {
   onComplete: () => void;
@@ -27,12 +28,14 @@ export type OnboardingStackParamList = {
   Onboarding: undefined;
   NotificationPermission: undefined;
   SetupLoading: undefined;
+  AccountLoading: undefined;
   Payment: undefined;
   SignIn: undefined;
   CameraPermission: undefined;
+  AllDone: undefined;
 };
 
-type OnboardingNavigationProp = StackNavigationProp<OnboardingStackParamList>;
+export type OnboardingNavigationProp = StackNavigationProp<OnboardingStackParamList>;
 
 const Stack = createStackNavigator<OnboardingStackParamList>();
 
@@ -65,11 +68,11 @@ function UnifiedOnboardingScreenWrapper() {
   return <OnboardingUnifiedScreen />;
 }
 
-function PaymentUnifiedScreenWrapper() {
+function PaymentScreenWrapper() {
   const navigation = useNavigation<OnboardingNavigationProp>();
   
   return (
-    <PaymentUnifiedScreen
+    <PaymentScreen
       onComplete={() => {
         // After payment completion, go directly to camera permission
         navigation.navigate('CameraPermission');
@@ -111,18 +114,21 @@ function NotificationPermissionScreenWrapper() {
   return <NotificationPermissionScreen onNext={handleNext} onBack={handleBack} />;
 }
 
-function SetupLoadingScreenWrapper() {
+function AccountLoadingScreenWrapper({ onComplete }: { onComplete: () => void }) {
   const navigation = useNavigation<OnboardingNavigationProp>();
+  const { customerInfo, storePaymentInfo } = usePurchases();
   
-  const handleNext = () => {
-    navigation.navigate('Payment');
+  const handleNext = async () => {
+    const entitlementIds = Object.keys(customerInfo?.entitlements.active ?? []);
+    if (entitlementIds.length === 0) {
+      navigation.navigate('Payment');
+    } else {
+      await storePaymentInfo(customerInfo!);
+      onComplete();
+    }
   };
 
-  const handleBack = () => {
-    navigation.navigate('NotificationPermission');
-  };
-
-  return <SetupLoadingScreen onNext={handleNext} onBack={handleBack} />;
+  return <AccountLoadingScreen onComplete={handleNext} />;
 }
 
 export function OnboardingNavigator({ onComplete, onSignIn, onUserNeedsOnboarding, initialRouteName = 'Welcome' }: OnboardingNavigatorProps) {
@@ -150,8 +156,13 @@ export function OnboardingNavigator({ onComplete, onSignIn, onUserNeedsOnboardin
           {() => <NotificationPermissionScreenWrapper />}
         </Stack.Screen>
 
-        <Stack.Screen name="SetupLoading">
-          {() => <SetupLoadingScreenWrapper />}
+        <Stack.Screen 
+          name="AccountLoading"
+          options={{
+            cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+          }}
+        >
+          {() => <AccountLoadingScreenWrapper onComplete={onComplete} />}
         </Stack.Screen>
 
         <Stack.Screen 
@@ -160,7 +171,7 @@ export function OnboardingNavigator({ onComplete, onSignIn, onUserNeedsOnboardin
             cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
           }}
         >
-          {() => <PaymentUnifiedScreenWrapper />}
+          {() => <PaymentScreenWrapper />}
         </Stack.Screen>
 
         <Stack.Screen 
@@ -183,4 +194,4 @@ export function OnboardingNavigator({ onComplete, onSignIn, onUserNeedsOnboardin
       </Stack.Navigator>
     </NavigationContainer>
   );
-} 
+}

@@ -1,13 +1,13 @@
 import React, { createContext, useContext, useEffect, useMemo, useState, ReactNode } from 'react';
-import { Platform } from 'react-native';
+import { Platform, View } from 'react-native';
 import Purchases, {
   CustomerInfo,
   LOG_LEVEL,
   PurchasesOfferings,
   PurchasesPackage,
 } from 'react-native-purchases';
-import { useOnboarding } from './OnboardingContext';
 import { saveOnboardingProgress } from '../services/onboardingService';
+import { useOnboarding } from './OnboardingContext';
 
 interface PurchasesContextValue {
   isInitializing: boolean;
@@ -21,7 +21,7 @@ interface PurchasesContextValue {
 
   hasActiveSubscription: boolean;
   activeEntitlementIds: string[];
-
+  storePaymentInfo: (customerInfo: CustomerInfo) => Promise<void>;
   refreshOfferings: () => Promise<void>;
   refreshCustomerInfo: () => Promise<void>;
   purchasePackage: (pkg: PurchasesPackage) => Promise<CustomerInfo | null>;
@@ -29,6 +29,8 @@ interface PurchasesContextValue {
 }
 
 const PurchasesContext = createContext<PurchasesContextValue | undefined>(undefined);
+
+
 
 interface PurchasesProviderProps {
   children: ReactNode;
@@ -43,7 +45,7 @@ export function PurchasesProvider({ children, onSubscriptionUpdate }: PurchasesP
 
   const [offerings, setOfferings] = useState<PurchasesOfferings | null>(null);
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo | null>(null);
-  const { onboardingData, persistOnboardingData, updateOnboardingData } = useOnboarding();
+  const { onboardingData, updateOnboardingData } = useOnboarding();
 
   const packages = useMemo(() => {
     if (!offerings?.current) return [];
@@ -64,7 +66,6 @@ export function PurchasesProvider({ children, onSubscriptionUpdate }: PurchasesP
       try {
         Purchases.setLogLevel(LOG_LEVEL.WARN);
         if (Platform.OS === 'ios') {
-          // NOTE: uses same API key as previously configured in App.tsx
           Purchases.configure({ apiKey: 'appl_GUYEEZQfOpAHzaNTEHKrIuRLGuY' });
         }
         // else if (Platform.OS === 'android') {3
@@ -121,23 +122,24 @@ export function PurchasesProvider({ children, onSubscriptionUpdate }: PurchasesP
 
   async function storePaymentInfo(customerInfo: CustomerInfo) {
     const activeSubscription = customerInfo.activeSubscriptions[0];
-    
+    const rcAppId = customerInfo.originalAppUserId;
+
     // Keep the context updates for state consistency
     updateOnboardingData('activeSubscription', activeSubscription);
-    updateOnboardingData('storeTransactionId', customerInfo.subscriptionsByProductIdentifier[activeSubscription].storeTransactionId);
+    updateOnboardingData('revenueCatAppUserId', rcAppId);
     
     if (onboardingData.signInMethod !== null) {
       // Build the updated onboarding data with the new payment values
       const updatedData = {
         ...onboardingData,
         activeSubscription: activeSubscription,
-        storeTransactionId: customerInfo.subscriptionsByProductIdentifier[activeSubscription].storeTransactionId
+        revenueCatAppUserId: rcAppId
       };
 
       try {
-        const response = await saveOnboardingProgress(updatedData);
+        await saveOnboardingProgress(updatedData);
       } catch (persistError) {
-        console.error('Error persisting payment data:', persistError);
+        console.log('Error persisting payment data:', persistError);
       }
     }
   }
@@ -145,13 +147,9 @@ export function PurchasesProvider({ children, onSubscriptionUpdate }: PurchasesP
   async function restorePurchases() {
     try {
       const restoredInfo = await Purchases.restorePurchases();
-      console.log('Restored info:', restoredInfo);
-      
-      // If there are active subscriptions, store the payment info
       if (restoredInfo.activeSubscriptions.length > 0) {
         await storePaymentInfo(restoredInfo);
       }
-      
       setCustomerInfo(restoredInfo);
       return restoredInfo;
     } catch (error) {
@@ -171,13 +169,18 @@ export function PurchasesProvider({ children, onSubscriptionUpdate }: PurchasesP
     customerInfo,
     hasActiveSubscription,
     activeEntitlementIds,
+    storePaymentInfo,
     refreshOfferings,
     refreshCustomerInfo,
     purchasePackage,
     restorePurchases,
   };
 
-  return <PurchasesContext.Provider value={value}>{children}</PurchasesContext.Provider>;
+  return (
+    <PurchasesContext.Provider value={value}>
+      {children}
+    </PurchasesContext.Provider>
+  );
 }
 
 export function usePurchases() {
