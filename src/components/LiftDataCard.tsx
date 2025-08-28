@@ -12,10 +12,10 @@ import Animated, {
   Easing
 } from 'react-native-reanimated';
 import i18n from '../utils/i18n';
-import { TrashIcon } from './icons/icons';
 import { hapticFeedback } from '../utils/haptic';
 import { deleteLift as deleteLiftApi } from '../services/liftService';
 import { useTutorialTarget } from '../context/TutorialContext';
+import { Trash2 } from 'lucide-react-native';
 
 interface LiftDataCardProps {
   lift: ILiftData;
@@ -237,8 +237,8 @@ export function LiftDataCard({ lift, onPress, onDelete, style, scrollViewRef }: 
                   <View style={[styles.loadingCircle, circleBaseStyle]}>
                     {/* Animated ring (below icon so icon appears on top) */}
                     <Animated.View style={[styles.loadingProgress, progressBaseStyle, loadingProgressStyle]} />
-                    {/* Centered trash icon inside the circle */}
-                    <TrashIcon width={20} height={20} color="#FFFFFF" />
+                    {/* Centered Trash2 icon inside the circle */}
+                    <Trash2 size={20} color="#FFFFFF" />
                   </View>
                 </TouchableOpacity>
                 <Text style={styles.loadingText}>{(remainingSeconds ?? 2)}s</Text>

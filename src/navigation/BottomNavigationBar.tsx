@@ -1,11 +1,10 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { HomeIcon, PerformanceIcon, SettingsIcon, PlusIcon } from '../components/icons/icons';
 import i18n from '../utils/i18n';
-import { useLanguage } from '../context/LanguageContext';
 import { hapticFeedback } from '../utils/haptic';
 import { useTutorialTarget, useTutorial } from '../context/TutorialContext';
+import { ChartNoAxesColumn, House, Settings, Plus} from 'lucide-react-native';
 
 interface BottomNavigationBarProps {
   activeTab: 'home' | 'performance' | 'settings';
@@ -23,9 +22,9 @@ function TabIcon({ name, isActive, size = 26 }: TabIconProps) {
   const color = isActive ? '#000000' : '#8E8E93';
   
   const icons = {
-    home: <HomeIcon width={size} height={size} color={color} />,
-    performance: <PerformanceIcon width={size} height={size} color={color} />,
-    settings: <SettingsIcon width={size} height={size} color={color} />,
+    home: <House size={size} color={color} />,
+    performance: <ChartNoAxesColumn size={size} color={color}/>,
+    settings: <Settings size={size} color={color} />,
   };
 
   return icons[name];
@@ -116,7 +115,7 @@ export function BottomNavigationBar({
           }}
           activeOpacity={0.7}
         >
-          <PlusIcon width={26} height={26} color="#FFFFFF" />
+          <Plus size={26} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
     </View>

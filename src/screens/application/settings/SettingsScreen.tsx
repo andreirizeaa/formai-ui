@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { View, Text, StyleSheet, Platform, TouchableOpacity, Alert, ImageBackground, ScrollView, Animated, Image } from 'react-native';
 import * as MailComposer from 'expo-mail-composer';
 import Constants from 'expo-constants';
+import { User, Languages, Ruler, FileText, ShieldCheck, MailPlus, UserMinus, LogOut } from 'lucide-react-native';
 import i18n from '../../../utils/i18n';
 import { hapticFeedback } from '../../../utils/haptic';
 import { DeleteAccountModal } from './DeleteAccountModal';
@@ -10,18 +11,6 @@ import { LanguageModal } from './LanguageModal';
 import { removeUserId, getUserId } from '../../../services/storageService';
 import { deleteUserAccount } from '../../../services/authService';
 import { useTutorialTarget } from '../../../context/TutorialContext';
-import {
-  PersonIcon,
-  LanguageIcon,
-  UnitsIcon,
-  ReferFriendIcon,
-  AppearanceIcon,
-  TermsIcon,
-  PrivacyIcon,
-  EmailIcon,
-  DeleteAccountIcon,
-  LogoutIcon,
-} from '../../../components/icons/icons';
 import { supabase } from '../../../lib/supabase';
 
 interface SettingsScreenProps {
@@ -290,19 +279,19 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onSharePr
         {/* First Card */}
         <View style={styles.card} ref={settingsFirstCardRef}>
           <SettingsOption
-            icon={<PersonIcon width={iconSize} height={iconSize} color={iconColor} />}
+            icon={<User size={iconSize} color={iconColor} />}
             title={i18n.t('settings.personalDetails')}
             onPress={handlePersonalDetailsPress}
           />
           <View style={styles.separator} />
           <SettingsOption
-            icon={<LanguageIcon width={iconSize} height={iconSize} color={iconColor} />}
+            icon={<Languages size={iconSize} color={iconColor} />}
             title={i18n.t('settings.language')}
             onPress={handleLanguagePress}
           />
           <View style={styles.separator} />
           <SettingsOption
-            icon={<UnitsIcon width={iconSize} height={iconSize} color={iconColor} />}
+            icon={<Ruler size={iconSize} color={iconColor} />}
             title={i18n.t('settings.units')}
             onPress={handleUnitsPress}
           />
@@ -327,26 +316,26 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onSharePr
         {/* Third Card */}
         <View style={styles.card}>
           <SettingsOption
-            icon={<TermsIcon width={iconSize} height={iconSize} color={iconColor} />}
+            icon={<FileText size={iconSize} color={iconColor} />}
             title={i18n.t('settings.termsAndConditions')}
             onPress={() => {}}
           />
           <View style={styles.separator} />
           <SettingsOption
-            icon={<PrivacyIcon width={iconSize} height={iconSize} color={iconColor} />}
+            icon={<ShieldCheck size={iconSize} color={iconColor} />}
             title={i18n.t('settings.privacyPolicy')}
             onPress={() => {}}
           />
           <View style={styles.separator} />
           <SettingsOption
             ref={settingsSupportEmailRef}
-            icon={<EmailIcon width={iconSize} height={iconSize} color={iconColor} />}
+            icon={<MailPlus size={iconSize} color={iconColor} />}
             title={i18n.t('settings.supportEmail')}
             onPress={handleSupportEmailPress}
           />
           <View style={styles.separator} />
           <SettingsOption
-            icon={<DeleteAccountIcon width={iconSize} height={iconSize} color={iconColor} />}
+            icon={<UserMinus size={iconSize} color={iconColor} />}
             title={i18n.t('settings.deleteAccount')}
             onPress={handleDeleteAccountPress}
           />
@@ -355,7 +344,7 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onSharePr
         {/* Forth Card */}
         <View style={styles.card}>
           <SettingsOption
-            icon={<LogoutIcon width={iconSize} height={iconSize} color={iconColor} />}
+            icon={<LogOut size={iconSize} color={iconColor} />}
             title={i18n.t('settings.logout')}
             onPress={handleLogoutPress}
           />

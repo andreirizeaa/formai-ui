@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, ActivityIndicator } from 'react-native';
-import { BackIcon } from '../../../../components/icons/icons';
 import { useUserDetails } from '../../../../context/UserDetailsContext';
 import { editUserDetails } from '../../../../services/userService';
 import { hapticFeedback } from '../../../../utils/haptic';
 import i18n from '../../../../utils/i18n';
+import { ChevronLeft } from 'lucide-react-native';
 
 interface EditGenderScreenProps {
   onBack: () => void;
@@ -46,7 +46,7 @@ export function EditGenderScreen({ onBack, currentValue, onSave }: EditGenderScr
             onBack();
           }}
         >
-          <BackIcon width={24} height={24} color="#000000" />
+          <ChevronLeft width={24} height={24} color="#000000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{i18n.t('personalDetails.editGender')}</Text>
         <View style={styles.placeholder} />

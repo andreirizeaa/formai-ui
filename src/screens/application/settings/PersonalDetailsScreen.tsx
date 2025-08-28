@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import i18n from '../../../utils/i18n';
 import { hapticFeedback } from '../../../utils/haptic';
 import { useUserDetails } from '../../../context/UserDetailsContext';
-import { BackIcon, EditIcon } from '../../../components/icons/icons';
+import { Pencil, X } from 'lucide-react-native';
 
 interface PersonalDetailsScreenProps {
   onBack: () => void;
@@ -35,7 +35,7 @@ function PersonalDetailOption({ title, value, onPress }: PersonalDetailOptionPro
         <Text style={styles.optionValue}>{value}</Text>
       </View>
       <View style={styles.iconContainer}>
-        <EditIcon width={20} height={20} color="#8E8E93" />
+        <Pencil width={20} height={20} color="#8E8E93" />
       </View>
     </TouchableOpacity>
   );
@@ -143,7 +143,7 @@ export function PersonalDetailsScreen({
             onBack();
           }}
         >
-          <BackIcon width={20} height={20} color="#000000" />
+          <X width={20} height={20} color="#000000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{i18n.t('settings.personalDetails')}</Text>
         <View style={styles.placeholder} />

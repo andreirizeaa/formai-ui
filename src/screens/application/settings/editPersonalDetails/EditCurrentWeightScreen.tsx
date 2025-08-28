@@ -10,7 +10,7 @@ import {
   convertMetricWeightToImperial, 
   convertImperialWeightToMetric 
 } from '../../../../utils/unitConversions';
-import { BackIcon } from '../../../../components/icons/icons';
+import { ChevronLeft } from 'lucide-react-native';
 
 interface EditCurrentWeightScreenProps {
   onBack: () => void;
@@ -90,7 +90,7 @@ export function EditCurrentWeightScreen({ onBack, currentValue, onSave }: EditCu
             onBack();
           }}
         >
-          <BackIcon width={24} height={24} color="#000000" />
+          <ChevronLeft width={24} height={24} color="#000000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{i18n.t('personalDetails.editCurrentWeight')}</Text>
         <View style={styles.placeholder} />

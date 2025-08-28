@@ -1,9 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
-import { UploadIcon, VideoIcon } from '../../../components/icons/icons';
 import i18n from '../../../utils/i18n';
 import { hapticFeedback } from '../../../utils/haptic';
 import { useTutorialTarget } from '../../../context/TutorialContext';
+import { Upload, Video } from 'lucide-react-native';
 
 interface AddOptionsProps {
   isVisible: boolean;
@@ -38,7 +38,7 @@ export function AddOptions({ isVisible, onUploadPress, onRecordPress, onClose }:
             }}
           >
             <View style={styles.iconContainer}>
-              <UploadIcon width={32} height={32} color="currentColor" />
+              <Upload width={32} height={32} color="currentColor" />
             </View>
             <Text style={styles.cardTitle}>{i18n.t('add.uploadVideo')}</Text>
           </TouchableOpacity>
@@ -52,7 +52,7 @@ export function AddOptions({ isVisible, onUploadPress, onRecordPress, onClose }:
             }}
           >
             <View style={styles.iconContainer}>
-              <VideoIcon width={32} height={32} color="currentColor" />
+              <Video width={32} height={32} color="currentColor" />
             </View>
             <Text style={styles.cardTitle}>{i18n.t('add.recordVideo')}</Text>
           </TouchableOpacity>

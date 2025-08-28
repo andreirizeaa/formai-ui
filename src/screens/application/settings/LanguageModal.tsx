@@ -1,12 +1,12 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, ScrollView, Platform, ActivityIndicator } from 'react-native';
-import { CloseIcon } from '../../../components/icons/icons';
 import i18n from '../../../utils/i18n';
 import { LANGUAGES } from '../../../constants/languages';
 import { hapticFeedback } from '../../../utils/haptic';
 import { useLanguage } from '../../../context/LanguageContext';
 import { useUserDetails } from '../../../context/UserDetailsContext';
 import { editUserDetails } from '../../../services/userService';
+import { X } from 'lucide-react-native';
 
 interface LanguageModalProps {
   isVisible: boolean;
@@ -63,7 +63,7 @@ export function LanguageModal({ isVisible, onClose }: LanguageModalProps) {
               onClose();
             }}
           >
-            <CloseIcon width={20} height={20} color="#000000" />
+            <X width={20} height={20} color="#000000" />
           </TouchableOpacity>
 
           {/* Title */}

@@ -7,31 +7,19 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 import { FilterModal } from './FilterModal';
-import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import { ILiftData, useLiftData } from '../../../context/LiftDataContext';
 import { useTutorialTarget } from '../../../context/TutorialContext';
 import { deleteLift as deleteLiftApi } from '../../../services/liftService';
 import { Picker } from '@react-native-picker/picker';
 import i18n from '../../../utils/i18n';
-import Animated, { 
-  useSharedValue, 
-  useAnimatedStyle, 
-  useAnimatedGestureHandler,
-  runOnJS,
-  withSpring,
-  withTiming,
-  interpolate,
-  Extrapolate
-} from 'react-native-reanimated';
 import { 
-  ClockIcon, 
-  SortUpIcon, 
-  SortDownIcon, 
-  FilterIcon, 
-  EditIcon, 
-  CloseIcon,
-  BackIcon 
-} from '../../../components/icons/icons';
+  ClockArrowDown, 
+  ClockArrowUp, 
+  SlidersHorizontal, 
+  Pencil, 
+  X,
+  ChevronLeft 
+} from 'lucide-react-native';
 
 interface LibraryScreenProps {
   onBack: () => void;
@@ -366,7 +354,7 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
           style={styles.backButton} 
           onPress={handleBackPress}
         >
-          <BackIcon width={24} height={24} color="#000000" />
+          <ChevronLeft size={24} color="#000000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{i18n.t('library.title')}</Text>
         <View style={styles.placeholder} />
@@ -403,17 +391,16 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
         <View style={styles.controlsRightContainer}>
           <TouchableOpacity style={styles.controlButton} onPress={handleSortPress}>
             <View style={styles.sortIconsContainer}>
-              <ClockIcon width={20} height={20} color="#000000" />
               {sortOption === 'newest' ? (
-                <SortUpIcon width={20} height={20} color="#000000" />
+                <ClockArrowUp size={20} color="#000000" />
               ) : (
-                <SortDownIcon width={20} height={20} color="#000000" />
+                <ClockArrowDown size={20} color="#000000" />
               )}
             </View>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.controlButton} onPress={handleFilterPress}>
-            <FilterIcon width={20} height={20} color="#000000" />
+            <SlidersHorizontal size={20} color="#000000" />
           </TouchableOpacity>
         </View>
       </View>
@@ -472,7 +459,7 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
               activeOpacity={0.7}
             >
               <Text style={styles.popupOptionText}>{dateRangeText}</Text>
-              <EditIcon width={20} height={20} color="#000000" />
+              <Pencil size={20} color="#000000" />
             </TouchableOpacity>
             <View style={styles.popupDivider} />
             <TouchableOpacity 
@@ -481,7 +468,7 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
               activeOpacity={0.7}
             >
               <Text style={styles.popupOptionText}>{filterPillText}</Text>
-              <EditIcon width={20} height={20} color="#000000" />
+              <Pencil size={20} color="#000000" />
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
@@ -519,7 +506,7 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
             <View style={styles.modalHeader}>
               <Text style={styles.modalHeaderTitle}>{i18n.t('library.editDateRange')}</Text>
               <TouchableOpacity style={styles.closeButton} onPress={handleDateRangeModalClose}>
-                <CloseIcon width={20} height={20} color="#000000" />
+                <X size={20} color="#000000" />
               </TouchableOpacity>
             </View>
 
@@ -788,10 +775,9 @@ const styles = StyleSheet.create({
   },
   sortIconsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
-    paddingHorizontal: 8,
   },
   liftCountContainer: {
     height: 36,
