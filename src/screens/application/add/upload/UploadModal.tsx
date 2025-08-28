@@ -12,7 +12,7 @@ import { PracticesScreen } from '../common/PracticesScreen';
 import { WeightRepsScreen } from '../common/WeightRepsScreen';
 import { useLoadingLifts } from '../../../../context/LoadingLiftsContext';
 import { gymMovements } from '../../../../constants/gymMovements';
-import { CloseIcon } from '../../../../components/icons/icons';
+import { X } from 'lucide-react-native';
 
 interface UploadModalProps {
   isVisible: boolean;
@@ -285,7 +285,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
           hapticFeedback.selection();
           onClose();
         }} style={styles.closeButton}>
-          <CloseIcon width={24} height={24} color="#8E8E93" />
+          <X width={24} height={24} color="#8E8E93" />
         </TouchableOpacity>
       </View>
 

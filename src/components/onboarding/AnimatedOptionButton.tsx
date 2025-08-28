@@ -17,6 +17,7 @@ interface AnimatedOptionButtonProps {
   delay: number;
   style?: any;
   activeOpacity?: number;
+  hasIcon?: boolean; // New prop to indicate if the button has an icon
 }
 
 export function AnimatedOptionButton({
@@ -26,7 +27,8 @@ export function AnimatedOptionButton({
   isDark,
   delay,
   style,
-  activeOpacity = 0.7
+  activeOpacity = 0.7,
+  hasIcon = false // Default to false
 }: AnimatedOptionButtonProps) {
   const translateY = useSharedValue(delay === 0 ? 0 : 30);
   const opacity = useSharedValue(delay === 0 ? 1 : 0);
@@ -92,10 +94,11 @@ export function AnimatedOptionButton({
           {
             backgroundColor: isSelected
               ? '#000000'  // Black background when selected
-              : 'transparent',
-            borderColor: isSelected
-              ? '#000000'  // Black border when selected
-              : (isDark ? '#2C2C2E' : '#E5E5EA'),
+              : '#F4F4F8',
+            // borderColor: isSelected
+            //   ? '#000000'  // Black border when selected
+            //   : (isDark ? '#2C2C2E' : '#E5E5EA'),
+            paddingVertical: hasIcon ? 14 : 22, // Conditional padding
           },
           style
         ]}
@@ -110,9 +113,8 @@ export function AnimatedOptionButton({
 
 const styles = StyleSheet.create({
   button: {
-    borderWidth: 1,
+    // borderWidth: 1,
     borderRadius: 18,
-    paddingVertical: 26,
     paddingHorizontal: 24,
   },
 }); 

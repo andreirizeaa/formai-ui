@@ -1,9 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, Image } from 'react-native';
-import { CheckmarkCircleIcon } from '../../../../components/icons/icons';
 import { hapticFeedback } from '../../../../utils/haptic';
 import i18n from '../../../../utils/i18n';
 import { useTutorialTarget } from '../../../../context/TutorialContext';
+import { CircleCheck } from 'lucide-react-native';
 
 interface PracticesScreenProps {
   onNext?: () => void;
@@ -42,7 +42,7 @@ export function PracticesScreen({
         <View style={styles.tipImageWrapper}>
           {/* Checkmark Icon */}
           <View style={styles.simpleIconContainer}>
-            <CheckmarkCircleIcon width={48} height={48} color="#000000" />
+            <CircleCheck width={48} height={48} color="#000000" />
           </View>
           <View style={styles.tipImageContainer}>
             <Image

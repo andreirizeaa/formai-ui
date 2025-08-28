@@ -11,7 +11,7 @@ import Animated, {
 import { LineChart } from 'react-native-chart-kit';
 import { hapticFeedback } from '../../utils/haptic';
 import { formatWeightForDisplay } from '../../utils/unitConversions';
-import { QuestionMarkCircleIcon } from '../icons/icons';
+import { CircleQuestionMark } from 'lucide-react-native';
 
 interface ChartData {
   labels: string[];
@@ -314,7 +314,7 @@ export function SwipeableLineGraphCard({
                         accessibilityLabel="Show card information"
                         style={styles.titleIcon}
                       >
-                        <QuestionMarkCircleIcon width={20} height={20} color="#000000" />
+                        <CircleQuestionMark width={20} height={20} color="#000000" />
                       </TouchableOpacity>
                     </View>
                     <Text style={styles.performanceCardSubtitle}>

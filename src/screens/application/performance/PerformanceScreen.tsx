@@ -8,8 +8,9 @@ import { useLiftData } from '../../../context/LiftDataContext';
 import { useUserDetails } from '../../../context/UserDetailsContext';
 import { hapticFeedback } from '../../../utils/haptic';
 import i18n from '../../../utils/i18n';
-import { EditIcon, CloseIcon, CircularProgressChart, QuestionMarkCircleIcon } from '../../../components/icons/icons';
 import { useTutorialTarget } from '../../../context/TutorialContext';
+import { CircleQuestionMark, Pencil, X } from 'lucide-react-native';
+import { CircularProgressChart } from '../../../components/icons/icons';
 
 interface PerformanceScreenProps {
   onTriggerAddOptions?: () => void;
@@ -339,7 +340,7 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
             >
               <View style={styles.pillContent}>
                 <Text style={styles.pillText}>{dateRangeText}</Text>
-                <EditIcon width={16} height={16} color="#000000" />
+                <Pencil width={16} height={16} color="#000000" />
               </View>
             </TouchableOpacity>
             
@@ -350,7 +351,7 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
             >
               <View style={styles.pillContent}>
                 <Text style={styles.pillText}>{filterPillText}</Text>
-                <EditIcon width={16} height={16} color="#000000" />
+                <Pencil width={16} height={16} color="#000000" />
               </View>
             </TouchableOpacity>
           </View>
@@ -389,7 +390,7 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
                 <View style={styles.metricHeaderRow}>
                   <Text style={styles.metricTitle}>Accuracy</Text>
                   <TouchableOpacity onPress={() => openInfoModal('accuracy')} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Show accuracy information" style={styles.metricTitleIcon}>
-                    <QuestionMarkCircleIcon width={20} height={20} color="#000000" />
+                    <CircleQuestionMark width={20} height={20} color="#000000" />
                   </TouchableOpacity>
                 </View>
                 <View style={styles.progressWrapper}>
@@ -413,7 +414,7 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
                 <View style={styles.metricHeaderRow}>
                   <Text style={styles.metricTitle}>Improvement</Text>
                   <TouchableOpacity onPress={() => openInfoModal('improvement')} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Show improvement information" style={styles.metricTitleIcon}>
-                    <QuestionMarkCircleIcon width={20} height={20} color="#000000" />
+                    <CircleQuestionMark width={20} height={20} color="#000000" />
                   </TouchableOpacity>
                 </View>
                 <View style={styles.progressWrapper}>
@@ -468,7 +469,7 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
             <View style={styles.header}>
               <Text style={styles.headerTitle}>{i18n.t('performance.editDateRange')}</Text>
               <TouchableOpacity style={styles.closeButton} onPress={handleCloseModal}>
-                <CloseIcon width={20} height={20} color="#000000" />
+                <X width={20} height={20} color="#000000" />
               </TouchableOpacity>
             </View>
 
@@ -667,7 +668,7 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
         <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={closeInfoModal}>
           <TouchableOpacity style={styles.infoModalContainer} activeOpacity={1} onPress={(e) => e.stopPropagation()}>
             <TouchableOpacity style={styles.closeButton} onPress={closeInfoModal}>
-              <CloseIcon width={20} height={20} color="#000000" />
+              <X width={20} height={20} color="#000000" />
             </TouchableOpacity>
             <Text style={styles.infoTitle}>{infoModalContent.title}</Text>
             <Text style={styles.infoMessage}>{infoModalContent.message}</Text>

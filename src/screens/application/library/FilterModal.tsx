@@ -1,9 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform, TextInput, ScrollView, Modal } from 'react-native';
-import { CloseIcon, CheckmarkIcon } from '../../../components/icons/icons';
 import { gymMovements } from '../../../constants/gymMovements';
 import { hapticFeedback } from '../../../utils/haptic';
 import i18n from '../../../utils/i18n';
+import { Check, X } from 'lucide-react-native';
 
 interface FilterModalProps {
   isVisible: boolean;
@@ -95,7 +95,7 @@ export function FilterModal({
           <View style={styles.header}>
             <Text style={styles.headerTitle}>{title}</Text>
             <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
-              <CloseIcon width={20} height={20} color="#000000" />
+              <X width={20} height={20} color="#000000" />
             </TouchableOpacity>
           </View>
 
@@ -115,7 +115,7 @@ export function FilterModal({
                     style={styles.clearButton} 
                     onPress={handleClearSearch}
                   >
-                    <CloseIcon width={16} height={16} color="#8E8E93" />
+                    <X width={16} height={16} color="#8E8E93" />
                   </TouchableOpacity>
                 )}
               </View>
@@ -137,7 +137,7 @@ export function FilterModal({
                     {i18n.t('library.allMovements')}
                   </Text>
                   {selectedMovements.length === 0 && (
-                    <CheckmarkIcon width={20} height={20} color="#000000" />
+                    <Check width={20} height={20} color="#000000" />
                   )}
                 </TouchableOpacity>
                 
@@ -159,7 +159,7 @@ export function FilterModal({
                       {movement}
                     </Text>
                     {isMovementSelected(movement) && (
-                      <CheckmarkIcon width={20} height={20} color="#000000" />
+                      <Check width={20} height={20} color="#000000" />
                     )}
                   </TouchableOpacity>
                 ))}
