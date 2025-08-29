@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Share, Platform, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { BackIcon, CheckmarkCircleIcon, CopyIcon } from '../../../components/icons/icons';
 import * as Clipboard from 'expo-clipboard';
 import { hapticFeedback } from '../../../utils/haptic';
 import i18n from '../../../utils/i18n';
+import { ChevronLeftIcon, CircleCheck, Copy } from 'lucide-react-native';
 
 interface ShareScreenProps {
   onBack: () => void;
@@ -53,7 +53,7 @@ export function ShareScreen({ onBack }: ShareScreenProps) {
             onBack();
           }}
         >
-          <BackIcon width={24} height={24} color="#000000" />
+          <ChevronLeftIcon width={24} height={24} color="#000000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{i18n.t('share.referYourFriends')}</Text>
         <View style={styles.placeholder} />
@@ -82,9 +82,9 @@ export function ShareScreen({ onBack }: ShareScreenProps) {
               onPress={handleCopyPromoCode}
             >
               {isCopied ? (
-                <CheckmarkCircleIcon width={28} height={28} color="#000000" />
+                <CircleCheck width={28} height={28} color="#000000" />
               ) : (
-                <CopyIcon width={28} height={28} color="#000000" />
+                <Copy width={28} height={28} color="#000000" />
               )}
             </TouchableOpacity>
           </View>
