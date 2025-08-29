@@ -244,6 +244,12 @@ const i18n = new I18n({
         thankYou: 'Thank you for trusting us',
         privacy: 'We promise to always keep your personal information private and secure.',
       },
+      trainSafer: {
+        title: 'Train with three times less of a chance of injury with Form AI vs on your own',
+        withoutFormAI: 'Without Form AI',
+        withFormAI: 'With Form AI',
+        description: 'FormAI makes it easy to perfect your form and keep you accountable.',
+      },
       notificationPermission: {
         title: 'Reach your goals with notifications',
         dialogText: 'FormAI would like to send you Notifications',
@@ -307,6 +313,40 @@ const i18n = new I18n({
         allow: 'Allow',
         dontAllow: "Don't Allow",
       },
+      // New translations for hardcoded text
+      perfectFormGoalMessage: {
+        highlighted: {
+          liftHeavierSafely: 'Lifting heavier safely',
+          buildMuscleEfficiently: 'Building muscle',
+          avoidInjuries: 'Avoiding injuries',
+          boostConfidence: 'Your confidence will sky rocket',
+          trainLongerWithoutSetbacks: 'Training without setbacks',
+          default: 'Your goals',
+        },
+        rest: ' is a guaranteed target. It\'s not hard at all!',
+        restRealistic: ' is a realistic target. It\'s not hard at all!',
+        restFantastic: ' is a fantastic target. It\'s not hard at all!',
+        restAfter: ' after. It\'s not hard at all!',
+        restNormal: ' will be normal. It\'s not hard at all!',
+        restAchievable: ' are achievable with Form AI. It\'s not hard at all!',
+        subtitle: '95% of users say that change is clear after using Form AI.',
+      },
+      potentialGraph: {
+        title: 'You have amazing potential to crush your goal',
+        chartTitle: 'Your accuracy transition',
+        subtitle: 'Based on Form AI\'s historical data, accuracy improvement is delayed at first, but after 14 days, you will become crazy consistent!',
+      },
+      costComparison: {
+        title: 'Perfect form at a fraction of the cost using Form AI vs trainers',
+        personalTrainer: 'Personal trainer',
+        withFormAI: 'With Form AI',
+        costLess: '99% Less',
+        description: 'Having safe and perfect form in the gym shouldn\'t cost an arm and a leg.',
+      },
+      saveProgress: {
+        title: 'Create an account',
+      },
+
     },
     months: {
       january: 'January',
@@ -321,6 +361,8 @@ const i18n = new I18n({
       october: 'October',
       november: 'November',
       december: 'December',
+      // Array format for easy access
+      array: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'] as const,
     },
     progress: {
       title: 'Your journey starts here',

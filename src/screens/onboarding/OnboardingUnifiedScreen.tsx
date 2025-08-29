@@ -1,9 +1,10 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Platform, Image, TouchableOpacity, TextInput, ActivityIndicator, FlatList, ListRenderItem } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Platform, Image, TouchableOpacity, TextInput, ActivityIndicator, FlatList, ListRenderItem, Animated } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Picker } from '@react-native-picker/picker';
 import * as StoreReview from 'expo-store-review';
+import { LinearGradient } from 'expo-linear-gradient';
 import { ReferralService } from '../../services/referralService';
 import { OnboardingLayout } from '../../components/onboarding/OnboardingLayout';
 import { AnimatedOptionButton } from '../../components/onboarding/AnimatedOptionButton';
@@ -14,8 +15,10 @@ import { hapticFeedback } from '../../utils/haptic';
 import { LANGUAGES } from '../../constants/languages';
 import { CreateAccountScreen } from '../../components/onboarding/CreateAccountScreen';
 import LottieView from 'lottie-react-native';
-import { BicepsFlexed, User, ShieldPlus, Bike, HeartPulse, CircleX, AudioWaveform, ChartNoAxesColumnDecreasing, BookCopy, ShieldOff, BatteryLow, Ellipsis, Sprout, Shrub, TreePine, ChartNoAxesCombined, Hospital, Dumbbell, ShieldCheck, ChartNoAxesColumnIncreasing, ClockArrowUp, BatteryWarning, BatteryMedium, BatteryFull, PartyPopper, Weight, Scale, TrendingUp, ThumbsUp, ThumbsDown, Users, CircleCheck } from 'lucide-react-native';
+import { BicepsFlexed, User, ShieldPlus, Bike, HeartPulse, CircleX, AudioWaveform, ChartNoAxesColumnDecreasing, BookCopy, ShieldOff, BatteryLow, Ellipsis, Sprout, Shrub, TreePine, ChartNoAxesCombined, Hospital, Dumbbell, ShieldCheck, ChartNoAxesColumnIncreasing, ClockArrowUp, BatteryWarning, BatteryMedium, BatteryFull, PartyPopper, Weight, Scale, TrendingUp, ThumbsUp, ThumbsDown, Users, CircleCheck, Trophy } from 'lucide-react-native';
+import { LineChart } from 'react-native-chart-kit';
 import { SingleDotIcon, SixDotsIcon, ThreeDotsIcon } from '../../components/icons/icons';
+import { Line } from 'react-native-svg';
 
 interface OnboardingUnifiedScreenProps {}
 
@@ -80,6 +83,34 @@ interface AllDoneStepConfig {
   subtitle?: string;
 }
 
+interface InfoStepConfig {
+  type: 'info';
+  id: string;
+  title: string;
+  subtitle?: string;
+}
+
+interface InjuryChanceInfoStepConfig {
+  type: 'injuryChanceInfo';
+  id: string;
+  title: string;
+  subtitle?: string;
+}
+
+interface PerfectFormGoalMessageStepConfig {
+  type: 'perfectFormGoalMessage';
+  id: string;
+  title: string;
+  subtitle?: string;
+}
+
+interface GraphStepConfig {
+  type: 'graph';
+  id: string;
+  title: string;
+  subtitle?: string;
+}
+
 type StepConfig =
   | OptionsStepConfig<keyof OnboardingData>
   | MeasurementsStepConfig
@@ -87,7 +118,11 @@ type StepConfig =
   | RatingStepConfig
   | ReferralStepConfig
   | CreateAccountStepConfig
-  | AllDoneStepConfig;
+  | AllDoneStepConfig
+  | InfoStepConfig
+  | InjuryChanceInfoStepConfig
+  | PerfectFormGoalMessageStepConfig
+  | GraphStepConfig;
 
 export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
   const navigation = useNavigation();
@@ -145,6 +180,11 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       ],
     },
     {
+      type: 'injuryChanceInfo',
+      id: 'trainSafer',
+      title: i18n.t('onboarding.trainSafer.title'),
+    },
+    {
       type: 'options',
       id: 'gymChallenge',
       title: i18n.t('onboarding.gymChallenge.title'),
@@ -199,6 +239,12 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       ],
     },
     {
+      type: 'perfectFormGoalMessage',
+      id: 'perfectFormGoalMessage',
+      title: '',
+      subtitle: '',
+    },
+    {
       type: 'options',
       id: 'formConfidence',
       title: i18n.t('onboarding.formConfidence.title'),
@@ -222,8 +268,14 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
         { value: 'looking_leaner', label: i18n.t('onboarding.threeMonthGoal.lookingLeaner'), icon: <Scale size={iconSize} color={iconColor} /> },
         { value: 'feeling_stronger_injury_free', label: i18n.t('onboarding.threeMonthGoal.feelingStrongerInjuryFree'), icon: <BicepsFlexed size={iconSize} color={iconColor} /> },
         { value: 'more_consistent', label: i18n.t('onboarding.threeMonthGoal.moreConsistent'), icon: <TrendingUp size={iconSize} color={iconColor} /> },
-        { value: 'more_confident', label: i18n.t('onboarding.threeMonthGoal.moreConfident'), icon: <PartyPopper size={iconSize} color={iconColor} /> },
+        { value: 'more_confident', label: i18n.t('onboarding.threeMonthGoal.moreConfident'), icon: <PartyPopper size={iconColor} /> },
       ],
+    },
+    {
+      type: 'graph',
+      id: 'potentialGraph',
+      title: i18n.t('onboarding.potentialGraph.title'),
+      subtitle: '',
     },
     {
       type: 'options',
@@ -235,6 +287,11 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
         { value: true, label: i18n.t('onboarding.personalTrainer.yes'), icon: <ThumbsUp size={iconSize} color={iconColor} /> },
         { value: false, label: i18n.t('onboarding.personalTrainer.no'), icon: <ThumbsDown size={iconSize} color={iconColor} /> },
       ],
+    },
+    {
+      type: 'injuryChanceInfo',
+      id: 'costComparison',
+      title: i18n.t('onboarding.costComparison.title'),
     },
     {
       type: 'measurements',
@@ -287,7 +344,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
     {
       type: 'saveProgress',
       id: 'saveProgress',
-      title: 'Create an account',
+      title: i18n.t('onboarding.saveProgress.title'),
       subtitle: '',
     },
   ], [i18n.locale]);
@@ -300,6 +357,10 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
   const [referralCode, setReferralCode] = useState(onboardingData.referralCode || '');
   const [referralValidating, setReferralValidating] = useState(false);
   const [referralError, setReferralError] = useState(false);
+
+  // Animation values for info step
+  const percentageBoxHeight = useMemo(() => new Animated.Value(0), []);
+  const formaiBoxHeight = useMemo(() => new Animated.Value(0), []);
 
   // Helpers for measurements
   const isMetric = onboardingData.unitSystem === 'metric';
@@ -371,6 +432,28 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
   }, [currentStep.type, onboardingData.birthDate, currentYear, updateOnboardingData]);
 
   useEffect(() => {
+    if (currentStep.id === 'trainSafer' || currentStep.id === 'costComparison') {
+      // Animate boxes growing from 0 height
+      Animated.parallel([
+        Animated.timing(percentageBoxHeight, {
+          toValue: 150,
+          duration: 400,
+          useNativeDriver: false,
+        }),
+        Animated.timing(formaiBoxHeight, {
+          toValue: 50,
+          duration: 400,
+          useNativeDriver: false,
+        }),
+      ]).start();
+    } else {
+      // Reset animation values when leaving info step
+      percentageBoxHeight.setValue(0);
+      formaiBoxHeight.setValue(0);
+    }
+  }, [currentStep.id, percentageBoxHeight, formaiBoxHeight]);
+
+  useEffect(() => {
     if (currentStep.type === 'allDone') {
       hapticFeedback.success();
     }
@@ -400,6 +483,42 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
     }
     const dateString = formatBirthDateString(updatedObj.month, updatedObj.day, updatedObj.year);
     updateOnboardingData('birthDate', dateString);
+  }
+
+  function getPerfectFormGoalMessage() {
+    const goal = onboardingData.perfectFormGoal;
+    switch (goal) {
+      case 'lift_heavier_safely':
+        return {
+          highlighted: i18n.t('onboarding.perfectFormGoalMessage.highlighted.liftHeavierSafely'),
+          rest: i18n.t('onboarding.perfectFormGoalMessage.rest'),
+        };
+      case 'build_muscle_efficiently':
+        return {
+          highlighted: i18n.t('onboarding.perfectFormGoalMessage.highlighted.buildMuscleEfficiently'),
+          rest: i18n.t('onboarding.perfectFormGoalMessage.restRealistic'),
+        };
+      case 'avoid_injuries':
+        return {
+          highlighted: i18n.t('onboarding.perfectFormGoalMessage.highlighted.avoidInjuries'),
+          rest: i18n.t('onboarding.perfectFormGoalMessage.restFantastic'),
+        };
+      case 'boost_confidence':
+        return {
+          highlighted: i18n.t('onboarding.perfectFormGoalMessage.highlighted.boostConfidence'),
+          rest: i18n.t('onboarding.perfectFormGoalMessage.restAfter'),
+        };
+      case 'train_longer_without_setbacks':
+        return {
+          highlighted: i18n.t('onboarding.perfectFormGoalMessage.highlighted.trainLongerWithoutSetbacks'),
+          rest: i18n.t('onboarding.perfectFormGoalMessage.restNormal'),
+        };
+      default:
+        return {
+          highlighted: i18n.t('onboarding.perfectFormGoalMessage.highlighted.default'),
+          rest: i18n.t('onboarding.perfectFormGoalMessage.restAchievable'),
+        };
+    }
   }
 
   function handleSelectOptionStep(value: any) {
@@ -508,6 +627,8 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
     nextDisabled = !onboardingData.birthDate;
   } else if (currentStep.type === 'rating') {
     nextDisabled = false; // enable default next for rating step
+  } else if (currentStep.type === 'info') {
+    nextDisabled = false; // always enabled for info step
   } else if (currentStep.type === 'referral') {
     nextLoading = referralValidating; // show loading while validating
   } else if (currentStep.type === 'allDone') {
@@ -531,6 +652,218 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       hideNextButton={currentStep.type === 'saveProgress'}
       
     >
+      {currentStep.id === 'trainSafer' && (
+        <View style={styles.infoStepContainer}>
+          <LinearGradient
+            colors={['#e2e8f0', '#f5f3ff']}
+            locations={[0, 0.9]}
+            style={styles.comparisonCard}
+            start={{ x: 0.5, y: 0 }}
+            end={{ x: 0, y: 1 }}
+          >
+              <View style={styles.comparisonRow}>
+                {/* Without FormAI */}
+                <View style={styles.comparisonSection}>
+                  <View style={styles.whiteBoxContainer}>
+                    <Text style={[styles.sectionTitle, { color: '#000000' }]}>
+                      {i18n.t('onboarding.trainSafer.withoutFormAI')}
+                    </Text>
+                        <Animated.View style={[styles.percentageBox, { backgroundColor: '#E0E0E0', height: percentageBoxHeight }]}>
+                        <Text style={[styles.percentageText, { color: '#000000' }]}>
+                          60%
+                        </Text>
+                      </Animated.View>
+                  </View>
+                </View>
+
+                {/* With FormAI */}
+                <View style={styles.comparisonSection}>
+                  <View style={styles.whiteBoxContainer}>
+                    <Text style={[styles.sectionTitle, { color: '#000000' }]}>
+                      {i18n.t('onboarding.trainSafer.withFormAI')}
+                    </Text>
+                        <Animated.View style={[styles.formaiBox, { backgroundColor: '#000000', height: formaiBoxHeight }]}>
+                        <Text style={[styles.formaiText, { color: '#FFFFFF' }]}>
+                          3X less
+                        </Text>
+                      </Animated.View>
+                  </View>
+                </View>
+              </View>
+
+            <Text style={[styles.description, { color: '#000000' }]}>
+              {i18n.t('onboarding.trainSafer.description')}
+            </Text>
+          </LinearGradient>
+        </View>
+      )}
+
+      {currentStep.id === 'costComparison' && (
+        <View style={styles.infoStepContainer}>
+          <LinearGradient
+            colors={['#e2e8f0', '#f5f3ff']}
+            locations={[0, 0.9]}
+            style={styles.comparisonCard}
+            start={{ x: 0.5, y: 0 }}
+            end={{ x: 0, y: 1 }}
+          >
+              <View style={styles.comparisonRow}>
+                {/* Personal Trainer */}
+                <View style={styles.comparisonSection}>
+                  <View style={styles.whiteBoxContainer}>
+                    <Text style={[styles.sectionTitle, { color: '#000000' }]}>
+                      {i18n.t('onboarding.costComparison.personalTrainer')}
+                    </Text>
+                        <Animated.View style={[styles.percentageBox, { backgroundColor: '#E0E0E0', height: percentageBoxHeight }]}>
+                        <Text style={[styles.percentageText, { color: '#000000' }]}>
+                          $5000+/yr
+                        </Text>
+                      </Animated.View>
+                  </View>
+                </View>
+
+                {/* With FormAI */}
+                <View style={styles.comparisonSection}>
+                  <View style={styles.whiteBoxContainer}>
+                    <Text style={[styles.sectionTitle, { color: '#000000' }]}>
+                      {i18n.t('onboarding.costComparison.withFormAI')}
+                    </Text>
+                        <Animated.View style={[styles.formaiBox, { backgroundColor: '#000000', height: formaiBoxHeight }]}>
+                        <Text style={[styles.formaiText, { color: '#FFFFFF' }]}>
+                          {i18n.t('onboarding.costComparison.costLess')}
+                        </Text>
+                      </Animated.View>
+                  </View>
+                </View>
+              </View>
+
+            <Text style={[styles.description, { color: '#000000' }]}>
+              {i18n.t('onboarding.costComparison.description')}
+            </Text>
+          </LinearGradient>
+        </View>
+      )}
+
+      {currentStep.type === 'perfectFormGoalMessage' && (
+        <View style={styles.perfectFormGoalMessageContainer}>
+          <Text style={[styles.perfectFormGoalMessageTitle, { color: isDark ? '#FFFFFF' : '#000000' }]}>
+            <Text style={[styles.highlightedText, { color: '#ffb86a' }]}>
+              {getPerfectFormGoalMessage().highlighted}
+            </Text>
+            {getPerfectFormGoalMessage().rest}
+          </Text>
+          <Text style={[styles.perfectFormGoalMessageSubtitle, { color: isDark ? '#FFFFFF' : '#000000' }]}>
+            {i18n.t('onboarding.perfectFormGoalMessage.subtitle')}
+          </Text>
+        </View>
+      )}
+
+      {currentStep.type === 'graph' && (
+        <View style={styles.graphContainer}>
+          <LinearGradient
+            colors={['#e2e8f0', '#f5f3ff']}
+            locations={[0, 0.9]}
+            style={styles.graphGradient}
+            start={{ x: 0.5, y: 0 }}
+            end={{ x: 0, y: 1 }}
+          >
+            <View style={styles.titleContainer}>
+              <Text style={styles.graphTitle}>{i18n.t('onboarding.potentialGraph.chartTitle')}</Text>
+            </View>
+            <LineChart
+                data={{
+                    labels: ['3 Days', '', '14 Days', '', '30 Days'],
+                    datasets: [
+                      {
+                        data: [20, 25, 30, 58, 85],
+                        color: () => '#000000',
+                        strokeWidth: 3,
+                      },
+                      {
+                        data: [10],
+                        withDots: false,
+                        color: () => 'transparent',
+                        strokeWidth: 0,
+                      },
+                      {
+                        data: [81],
+                        withDots: false,
+                        color: () => 'transparent',
+                        strokeWidth: 0,
+                      },
+                    ],
+                  }}
+                  fromZero={false}
+                              width={400}
+                height={200}
+              withHorizontalLabels={false}
+              withInnerLines={false}
+              withOuterLines={false}
+              chartConfig={{
+                backgroundGradientFrom: '#ffffff',
+                backgroundGradientTo: '#ffffff',
+                backgroundGradientFromOpacity: 0,
+                backgroundGradientToOpacity: 0,  
+                decimalPlaces: 0,
+                color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+                labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+                propsForLabels: {
+                  fontSize: 12,
+                  fontWeight: '600',
+                },
+                style: {
+                  borderRadius: 16,
+                  paddingVertical: 40,
+                  marginLeft: 20,
+                },
+                propsForDots: {
+                  r: '6',
+                  strokeWidth: '2',
+                  stroke: '#000000',
+                  fill: '#FFFFFF',
+                },
+                fillShadowGradient: '#ffb86a',
+                fillShadowGradientOpacity: 0.6,
+                fillShadowGradientFrom: '#ffb86a',
+                fillShadowGradientTo: '#e2e8f0',
+              }}
+              decorator={({ width, height }: { width: number, height: number }) => {
+                const lineWidth = width * 0.7; // 70% of chart width
+                const startX = (width - lineWidth) / 2; // center horizontally
+                return (
+                  <Line
+                    x1={startX}
+                    y1={height - 34}   // increased bottom margin
+                    x2={startX + lineWidth}
+                    y2={height - 34}
+                    stroke="black"
+                    strokeWidth="1"
+                  />
+                );
+              }}
+              renderDotContent={({ x, y, index }) => {
+                // Check if this is the last data point (index 4 for the 5th data point)
+                if (index === 4) {
+                  return (
+                    <View style={[styles.customTrophyDot, { left: x - 18, top: y - 18 }]}>
+                      <View style={styles.trophyDotBackground}>
+                        <Trophy size={20} color="#FFFFFF" />
+                      </View>
+                    </View>
+                  );
+                }
+                return null;
+              }}
+              bezier
+              style={styles.chart}
+            />
+            <Text style={styles.graphSubtitle}>
+              {i18n.t('onboarding.potentialGraph.subtitle')}
+            </Text>
+          </LinearGradient>
+        </View>
+      )}
+
       {currentStep.type === 'options' && (
         currentStep.id === 'language' ? (
           <FlatList
@@ -840,9 +1173,9 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                 />
                 <View style={styles.userInfo}>
                   <View style={styles.nameStarsRow}>
-                    <Text style={[styles.userName, { color: isDark ? '#FFFFFF' : '#000000' }]}>
-                      Sarah Johnson
-                    </Text>
+                                    <Text style={[styles.userName, { color: isDark ? '#FFFFFF' : '#000000' }]}>
+                  Sarah Johnson
+                </Text>
                     <Text style={styles.userStars}>⭐⭐⭐⭐⭐</Text>
                   </View>
                 </View>
@@ -866,9 +1199,9 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                 />
                 <View style={styles.userInfo}>
                   <View style={styles.nameStarsRow}>
-                    <Text style={[styles.userName, { color: isDark ? '#FFFFFF' : '#000000' }]}>
-                      Mike Chen
-                    </Text>
+                                    <Text style={[styles.userName, { color: isDark ? '#FFFFFF' : '#000000' }]}>
+                  Mike Chen
+                </Text>
                     <Text style={styles.userStars}>⭐⭐⭐⭐⭐</Text>
                   </View>
                 </View>
@@ -892,9 +1225,9 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                 />
                 <View style={styles.userInfo}>
                   <View style={styles.nameStarsRow}>
-                    <Text style={[styles.userName, { color: isDark ? '#FFFFFF' : '#000000' }]}>
-                      Emma Rodriguez
-                    </Text>
+                                    <Text style={[styles.userName, { color: isDark ? '#FFFFFF' : '#000000' }]}>
+                  Emma Rodriguez
+                </Text>
                     <Text style={styles.userStars}>⭐⭐⭐⭐⭐</Text>
                   </View>
                 </View>
@@ -1253,7 +1586,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 20,
   },
   allDoneContent: {
     alignItems: 'center',
@@ -1271,8 +1603,8 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   thankYouText: {
-    fontSize: 28,
-    fontWeight: '700',
+    fontSize: 40,
+    fontWeight: '600',
     textAlign: 'center',
     marginBottom: 16,
     lineHeight: 34,
@@ -1304,5 +1636,194 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
     borderRadius: 20,
+  },
+  // Info step styles
+  infoStepContainer: {
+    marginTop: -30,
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 10,
+  },
+  whiteBackgroundCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  comparisonCard: {
+    borderRadius: 20,
+    padding: 24,
+  },
+  whiteBoxContainer: {
+    height: 240,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 0,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+    marginBottom: 0,
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+  },
+  comparisonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 24,
+    marginBottom: 24,
+  },
+  comparisonSection: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  sectionTitle: {
+    paddingTop: 10,
+    width: 80,
+    fontSize: 20,
+    fontWeight: '600',
+    textAlign: 'center',
+    flexWrap: 'wrap',
+  },
+  percentageBox: {
+    width: 120,
+    height: 150,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    margin: 0,
+    marginTop: 'auto',
+  },
+  percentageText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  formaiBox: {
+    width: 120,
+    height: 50,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    margin: 0,
+    marginTop: 'auto',
+  },
+  formaiText: {
+    fontSize: 20,
+    fontWeight: '600',
+  },
+  description: {
+    fontSize: 17,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 24,
+  },
+  // Perfect form goal message styles
+  perfectFormGoalMessageContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  perfectFormGoalMessageTitle: {
+    fontSize: 40,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 16,
+    lineHeight: 44,
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
+  },
+  perfectFormGoalMessageSubtitle: {
+    width: '80%',
+    fontSize: 18,
+    textAlign: 'center',
+    lineHeight: 24,
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
+  highlightedText: {
+    fontWeight: '700',
+  },
+  // Graph styles
+  graphContainer: {
+    marginTop: -40,
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  graphGradient: {
+    borderRadius: 20,
+    padding: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    maxWidth: 350,
+    position: 'relative',
+  },
+  chart: {
+    borderRadius: 16,
+  },
+  titleContainer: {
+    width: '100%',
+    alignItems: 'flex-start',
+  },
+  graphTitle: {
+    fontSize: 22,
+    fontWeight: '500',
+    textAlign: 'left',
+    marginBottom: 16,
+    color: '#000000',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
+  },
+  graphSubtitle: {
+    fontSize: 17,
+    fontWeight: '500',
+    textAlign: 'center',
+    marginTop: 16,
+    color: '#000000',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+    lineHeight: 22,
+  },
+  trophyContainer: {
+    position: 'absolute',
+    top: '5%',
+    right: '10%',
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#FF9500',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  trophyIcon: {
+    fontSize: 16,
+  },
+  customTrophyDot: {
+    position: 'absolute',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  trophyDotBackground: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#ffb86a',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 }); 
