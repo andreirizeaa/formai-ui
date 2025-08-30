@@ -3,9 +3,11 @@ import { View, StyleSheet, TouchableOpacity, Text, Platform, Image, ScrollView, 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { X, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, CircleCheck, CircleX } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { hapticFeedback } from '../../../utils/haptic';
 import { useTutorialTarget } from '../../../context/TutorialContext';
 import i18n from '../../../utils/i18n';
+import LottieView from 'lottie-react-native';
 
 interface FeedbackSlideshowProps {
   onClose: () => void;
@@ -17,11 +19,12 @@ interface FeedbackSlideshowProps {
         flaws: string[];
         improvement: string[];
       }>;
+      accuracyScore?: number;
     };
   };
 }
 
-type ScreenMode = 'howItWorks' | 'feedback';
+type ScreenMode = 'howItWorks' | 'feedback' | 'accuracyScore';
 
 export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, liftData }: FeedbackSlideshowProps) {
   const [currentFeedbackIndex, setCurrentFeedbackIndex] = useState(0);
@@ -167,6 +170,16 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, liftData }
     setScreenMode('howItWorks');
   };
 
+  const handleExitToLiftDetails = () => {
+    hapticFeedback.selection();
+    // Navigate back to lift details
+    if (onNavigateToLiftDetails) {
+      onNavigateToLiftDetails();
+    } else {
+      onClose();
+    }
+  };
+
   const handleLeftChevron = () => {
     hapticFeedback.selection();
     navigateBackward();
@@ -304,15 +317,10 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, liftData }
         }).start(() => {
           currentSlidePosition.current = 390;
         });
-      } else {
-        // We're on the last feedback item's improvement page, navigate back to LiftDetails
-        // Use onNavigateToLiftDetails if available, otherwise fall back to onClose
-        if (onNavigateToLiftDetails) {
-          onNavigateToLiftDetails();
-        } else {
-          onClose();
+              } else {
+          // We're on the last feedback item's improvement page, show accuracy score page
+          setScreenMode('accuracyScore');
         }
-      }
     }
   };
 
@@ -510,6 +518,76 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, liftData }
               activeOpacity={0.7}
             >
               <Text style={styles.viewFeedbackButtonText}>{i18n.t('feedback.viewFeedback')}</Text>
+            </TouchableOpacity>
+          </View>
+        </SafeAreaView>
+      </View>
+    );
+  }
+
+  // Render Accuracy Score screen
+  if (screenMode === 'accuracyScore') {
+    const accuracyScore = liftData?.analysis?.accuracyScore || 85; // Default to 85 if not provided
+    
+    return (
+      <View style={styles.container}>
+        <SafeAreaView style={styles.safeArea}>
+          {/* Header */}
+          <View style={styles.header}>
+            <Text style={styles.title}>Analysis Complete</Text>
+            <TouchableOpacity 
+              style={styles.closeButton} 
+              onPress={handleClose}
+            >
+              <X size={24} color="#000000" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Content Area */}
+          <View style={styles.content}>
+            <View style={styles.accuracyScoreContainer}>
+              {/* Confetti animation positioned behind content */}
+              <View style={styles.animationContainer}>
+                <LottieView
+                  source={require('../../../../assets/animations/confetti.json')}
+                  autoPlay
+                  loop={false}
+                  speed={0.6}
+                  style={styles.confettiAnimation}
+                />
+              </View>
+
+              <LinearGradient
+                colors={['#e2e8f0', '#f5f3ff']}
+                locations={[0, 0.9]}
+                style={styles.accuracyScoreCard}
+                start={{ x: 0.5, y: 0 }}
+                end={{ x: 0, y: 1 }}
+              >
+                <View style={styles.accuracyScoreContent}>
+                  {/* Accuracy Score Display */}
+                  <View style={styles.scoreDisplay}>
+                    <Text style={styles.scoreLabel}>Form Accuracy</Text>
+                    <Text style={styles.scoreValue}>{accuracyScore}%</Text>
+                  </View>
+
+                  {/* Subtitle */}
+                  <Text style={styles.accuracySubtitle}>
+                    Great job! Your form analysis is complete.
+                  </Text>
+                </View>
+              </LinearGradient>
+            </View>
+          </View>
+
+          {/* Bottom Button */}
+          <View style={styles.bottomContainer}>
+            <TouchableOpacity 
+              style={styles.exitButton}
+              onPress={handleExitToLiftDetails}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.exitButtonText}>Exit</Text>
             </TouchableOpacity>
           </View>
         </SafeAreaView>
@@ -841,5 +919,100 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     opacity: 0,
+  },
+  // Accuracy Score styles
+  accuracyScoreContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    position: 'relative',
+  },
+  animationContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: -1, // Ensure it's behind other content
+  },
+  confettiAnimation: {
+    width: 700,
+    height: 700,
+  },
+  accuracyScoreCard: {
+    borderRadius: 20,
+    padding: 24,
+    width: '100%',
+    maxWidth: 350,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  accuracyScoreContent: {
+    alignItems: 'center',
+    zIndex: 1, // Ensure it's above the animation
+  },
+  scoreDisplay: {
+    backgroundColor: 'transparent',
+    borderRadius: 18,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  scoreLabel: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#000000',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  scoreValue: {
+    fontSize: 48,
+    fontWeight: '700',
+    color: '#ffb86a',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
+    textAlign: 'center',
+  },
+  accuracySubtitle: {
+    fontSize: 18,
+    fontWeight: '400',
+    color: '#000000',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
+    lineHeight: 26,
+    textAlign: 'center',
+  },
+  exitButton: {
+    backgroundColor: '#000000',
+    borderRadius: 28,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+  },
+  exitButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#FFFFFF',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
   },
 }); 

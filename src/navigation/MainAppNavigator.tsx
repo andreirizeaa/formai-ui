@@ -22,7 +22,6 @@ import { UploadModal } from '../screens/application/add/upload/UploadModal';
 import { LiftDetails } from '../screens/application/feedback/liftDetails';
 import { ILiftData } from '../context/LiftDataContext';
 import { FeedbackSlideshow } from '../screens/application/feedback/feedbackSlideshow';
-import { HowItWorks } from '../screens/application/feedback/howItWorksModal';
 import { LibraryScreen } from '../screens/application/library/LibraryScreen';
 import { BottomNavigationBar } from './BottomNavigationBar';
 import { useUserDetails } from '../context/UserDetailsContext';
