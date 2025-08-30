@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, Platform, Image, ScrollView } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Text, Platform, Image, ScrollView, Animated, PanResponder } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { X, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, CircleCheck, CircleX } from 'lucide-react-native';
@@ -30,11 +30,121 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, liftData }
   const [screenMode, setScreenMode] = useState<ScreenMode>('howItWorks');
   const navigation = useNavigation();
   
+  // Setup slide animation and pan responder for bottom drawer
+  const slideAnim = React.useRef(new Animated.Value(390)).current; // start collapsed (panel mostly hidden, only header showing)
+  const currentSlidePosition = React.useRef(390); // track current position for pan responder
+  
+  const panResponder = React.useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_: any, gestureState: any) => {
+        // start gesture if vertical swipe > horizontal
+        return Math.abs(gestureState.dy) > 10;
+      },
+      onPanResponderMove: (_: any, gestureState: any) => {
+        if (isBottomExpanded) {
+          // When expanded, allow dragging both up and down
+          if (gestureState.dy < 0) {
+            // Dragging up - collapse the panel
+            const newY = Math.max(gestureState.dy, -390); // limit to 0 (fully expanded)
+            slideAnim.setValue(newY);
+          } else if (gestureState.dy > 0) {
+            // Dragging down - show just the top of expanded content
+            const newY = Math.min(gestureState.dy, 200); // limit to 200 (showing just top portion)
+            slideAnim.setValue(newY);
+          }
+        } else {
+          // When collapsed, only allow dragging up to expand
+          if (gestureState.dy < 0) {
+            const newY = Math.max(gestureState.dy + 390, 0); // start from 390, limit to 0
+            slideAnim.setValue(newY);
+          }
+        }
+      },
+      onPanResponderRelease: (_: any, gestureState: any) => {
+        if (isBottomExpanded) {
+          if (gestureState.dy < -100) {
+            // swipe up → collapse
+            Animated.timing(slideAnim, {
+              toValue: 390,
+              duration: 200,
+              useNativeDriver: true,
+            }).start(() => {
+              setIsBottomExpanded(false);
+              currentSlidePosition.current = 390;
+            });
+          } else if (gestureState.dy > 100) {
+            // swipe down → show just top portion
+            Animated.timing(slideAnim, {
+              toValue: 200,
+              duration: 200,
+              useNativeDriver: true,
+            }).start(() => {
+              currentSlidePosition.current = 200;
+            });
+          } else {
+            // snap back to expanded
+            Animated.timing(slideAnim, {
+              toValue: 0,
+              duration: 200,
+              useNativeDriver: true,
+            }).start(() => {
+              currentSlidePosition.current = 0;
+            });
+          }
+        } else {
+          // When collapsed, only allow expanding by dragging up
+          if (gestureState.dy < -100) {
+            // swipe up → expand
+            Animated.timing(slideAnim, {
+              toValue: 0,
+              duration: 200,
+              useNativeDriver: true,
+            }).start(() => {
+              setIsBottomExpanded(true);
+              currentSlidePosition.current = 0;
+            });
+          } else {
+            // snap back to collapsed
+            Animated.timing(slideAnim, {
+              toValue: 390,
+              duration: 200,
+              useNativeDriver: true,
+            }).start(() => {
+              currentSlidePosition.current = 390;
+            });
+          }
+        }
+      },
+    })
+  ).current;
+  
   // Tutorial targets for the feedback slideshow
   const { ref: feedbackSlideshowRef } = useTutorialTarget('feedback_slideshow');
   const { ref: issuesRef } = useTutorialTarget('feedback_issues');
   const { ref: tipsRef } = useTutorialTarget('feedback_tips');
   const { ref: howItWorksModalRef } = useTutorialTarget('how_it_works_modal');
+
+  // Initialize slideAnim position based on current state
+  React.useEffect(() => {
+    if (currentPageType === 'image') {
+      Animated.timing(slideAnim, {
+        toValue: 390, // collapsed
+        duration: 300,
+        useNativeDriver: true,
+      }).start(() => {
+        currentSlidePosition.current = 390;
+      });
+    } else {
+      const targetValue = isBottomExpanded ? 0 : 390;
+      Animated.timing(slideAnim, {
+        toValue: targetValue,
+        duration: 300,
+        useNativeDriver: true,
+      }).start(() => {
+        currentSlidePosition.current = targetValue;
+      });
+    }
+  }, [currentPageType, isBottomExpanded, slideAnim]);
 
   const handleClose = () => {
     hapticFeedback.selection();
@@ -73,9 +183,17 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, liftData }
       if (currentPageType === 'image') {
         setCurrentPageType('flaws');
         setIsBottomExpanded(true);
+        Animated.timing(slideAnim, {
+          toValue: 0, // expand
+          duration: 300,
+          useNativeDriver: true,
+        }).start(() => {
+          currentSlidePosition.current = 0;
+        });
       } else if (currentPageType === 'improvement') {
         setCurrentPageType('flaws');
         setIsBottomExpanded(true);
+        // Already expanded, no animation needed
       }
     };
     
@@ -83,6 +201,7 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, liftData }
       if (currentPageType === 'flaws') {
         setCurrentPageType('improvement');
         setIsBottomExpanded(true);
+        // Already expanded, no animation needed
       }
     };
     
@@ -90,6 +209,13 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, liftData }
       if (currentPageType === 'flaws') {
         setCurrentPageType('image');
         setIsBottomExpanded(false);
+        Animated.timing(slideAnim, {
+          toValue: 390, // collapse
+          duration: 300,
+          useNativeDriver: true,
+        }).start(() => {
+          currentSlidePosition.current = 390;
+        });
       }
     };
     
@@ -134,6 +260,15 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, liftData }
 
   const handleExpandCollapse = () => {
     hapticFeedback.selection();
+    const targetValue = isBottomExpanded ? 390 : 0;
+    Animated.timing(slideAnim, {
+      toValue: targetValue, // 0 = fully expanded, 390 = collapsed
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => {
+      currentSlidePosition.current = targetValue;
+    });
+
     setIsBottomExpanded(!isBottomExpanded);
   };
 
@@ -145,15 +280,30 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, liftData }
     if (currentPageType === 'image') {
       setCurrentPageType('flaws');
       setIsBottomExpanded(true);
+      Animated.timing(slideAnim, {
+        toValue: 0, // expand
+        duration: 300,
+        useNativeDriver: true,
+      }).start(() => {
+        currentSlidePosition.current = 0;
+      });
     } else if (currentPageType === 'flaws') {
       setCurrentPageType('improvement');
       setIsBottomExpanded(true);
+      // Already expanded, no animation needed
     } else if (currentPageType === 'improvement') {
       // Move to next feedback item
       if (currentFeedbackIndex < totalFeedbackItems - 1) {
         setCurrentFeedbackIndex(currentFeedbackIndex + 1);
         setCurrentPageType('image');
         setIsBottomExpanded(false);
+        Animated.timing(slideAnim, {
+          toValue: 390, // collapse
+          duration: 300,
+          useNativeDriver: true,
+        }).start(() => {
+          currentSlidePosition.current = 390;
+        });
       } else {
         // We're on the last feedback item's improvement page, navigate back to LiftDetails
         // Use onNavigateToLiftDetails if available, otherwise fall back to onClose
@@ -175,6 +325,13 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, liftData }
         setCurrentFeedbackIndex(currentFeedbackIndex - 1);
         setCurrentPageType('improvement');
         setIsBottomExpanded(true);
+        Animated.timing(slideAnim, {
+          toValue: 0, // expand
+          duration: 300,
+          useNativeDriver: true,
+        }).start(() => {
+          currentSlidePosition.current = 0;
+        });
       } else {
         // We're on the first page, go back to previous screen
         // Use onNavigateToLiftDetails if available, otherwise fall back to onClose
@@ -187,9 +344,17 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, liftData }
     } else if (currentPageType === 'flaws') {
       setCurrentPageType('image');
       setIsBottomExpanded(false);
+      Animated.timing(slideAnim, {
+        toValue: 390, // collapse
+        duration: 300,
+        useNativeDriver: true,
+      }).start(() => {
+        currentSlidePosition.current = 390;
+      });
     } else if (currentPageType === 'improvement') {
       setCurrentPageType('flaws');
       setIsBottomExpanded(true);
+      // Already expanded, no animation needed
     }
   };
 
@@ -381,15 +546,30 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, liftData }
         </View>
 
         {/* Bottom Navigation Section - Overlays on top */}
-        <View style={[
-          styles.bottomNavigationSection,
-          (currentPageType !== 'image' && isBottomExpanded) && styles.expandedBottomSection
-        ]}>
+        <Animated.View 
+          {...panResponder.panHandlers}
+          style={[
+            styles.bottomNavigationSection,
+            {
+              transform: [{ translateY: slideAnim }],
+            },
+          ]}
+        >
           {/* Bottom Content - Above navigation when expanded */}
           {getBottomContent()}
 
-          {/* Navigation Row - Always at bottom */}
-          <View style={styles.navigationRow}>
+          {/* Navigation Row - Only show when fully expanded or collapsed, not in intermediate state */}
+          <Animated.View 
+            style={[
+              styles.navigationRow,
+              {
+                opacity: slideAnim.interpolate({
+                  inputRange: [0, 150, 200, 390],
+                  outputRange: [1, 0, 0, 1], // visible at 0 (expanded) and 390 (collapsed), hidden in between
+                }),
+              },
+            ]}
+          >
             {/* Left Chevron */}
             <TouchableOpacity 
               style={styles.bottomChevron}
@@ -401,21 +581,6 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, liftData }
 
             {/* Center Column - Page Indicator and Expand/Collapse */}
             <View style={styles.centerColumn}>
-              {/* Expand/Collapse Button - Only show on issues/tips */}
-              {currentPageType !== 'image' && (
-                <TouchableOpacity 
-                  style={isBottomExpanded ? styles.downChevronButton : styles.upChevronButton}
-                  onPress={handleExpandCollapse}
-                  activeOpacity={0.7}
-                >
-                  {isBottomExpanded ? (
-                    <ChevronDown size={24} color="#FFFFFF" />
-                  ) : (
-                    <ChevronUp size={24} color="#FFFFFF" />
-                  )}
-                </TouchableOpacity>
-              )}
-
               {/* Page Indicator */}
               <View style={styles.bottomPageIndicator}>
                 <Text style={styles.bottomPageIndicatorText}>
@@ -432,8 +597,8 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, liftData }
             >
               <ChevronRight size={24} color="#000000" />
             </TouchableOpacity>
-          </View>
-        </View>
+          </Animated.View>
+        </Animated.View>
       </SafeAreaView>
     </View>
   );
@@ -478,10 +643,11 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
   },
   bottomNavigationSection: {
-    flexDirection: 'column',
-    justifyContent: 'flex-end',
-    alignItems: 'stretch',
-    paddingHorizontal: 20,
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 500, // fixed max height
     backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
@@ -493,14 +659,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 8,
-    minHeight: 110,
-    marginBottom: -30,
+    paddingHorizontal: 20,
     paddingBottom: 30,
   },
-  expandedBottomSection: {
-    minHeight: 500,
-    maxHeight: 500,
-  },
+
   bottomChevron: {
     width: 44,
     height: 44,
@@ -671,30 +833,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,
-  },
-  upChevronButton: {
-    width: 60,
-    height: 26,
-    borderRadius: 16,
-    backgroundColor: '#000000',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 14,
-    position: 'absolute',
-    top: -32,
-    alignSelf: 'center',
-  },
-  downChevronButton: {
-    width: 60,
-    height: 26,
-    borderRadius: 16,
-    backgroundColor: '#000000',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 14,
-    position: 'absolute',
-    top: -420,
-    alignSelf: 'center',
   },
   tutorialRefContainer: {
     position: 'absolute',

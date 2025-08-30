@@ -560,11 +560,11 @@ const i18n = new I18n({
       },
       feedbackIssues: {
         title: 'Issues to address',
-        description: 'Review the specific issues identified in your form that need attention.',
+        description: 'Review the specific issues identified in your form that need attention. \n\nSwipe the overlay to see your video screenshot.',
       },
       feedbackTips: {
         title: 'Improvement tips',
-        description: 'Here are specific tips to help improve your form and technique. \n\nRemember you can open and close this feedback panel to review the exact point in your lift that this applies to.',
+        description: 'Here are specific tips to help improve your form and technique. \n\nRemember you can open and close this feedback panel to review the exact point in your lift that this applies to. \n\nSwipe the overlay to see your video screenshot.',
       },
       homeSeeAllLifts: {
         title: 'View all your lifts',
