@@ -391,7 +391,8 @@ function LiftDetailsWrapper() {
   };
 
   const handleShowFeedbackSlideshow = () => {
-    navigation.navigate('HowItWorks', { liftData: route.params.liftData });
+    // Navigate directly to FeedbackSlideshow (which now includes How It Works)
+    navigation.navigate('FeedbackSlideshow', { liftData: route.params.liftData });
   };
 
   const handleOpenFeedbackSlideshowDirectly = () => {
@@ -401,14 +402,12 @@ function LiftDetailsWrapper() {
 
   // Expose functions globally for tutorial
   React.useEffect(() => {
-    global.openHowItWorksModal = handleShowFeedbackSlideshow;
-    global.openFeedbackSlideshow = handleOpenFeedbackSlideshowDirectly;
+    global.openFeedbackSlideshow = handleShowFeedbackSlideshow;
     
     return () => {
-      delete global.openHowItWorksModal;
       delete global.openFeedbackSlideshow;
     };
-  }, [handleShowFeedbackSlideshow, handleOpenFeedbackSlideshowDirectly]);
+  }, [handleShowFeedbackSlideshow]);
 
   return (
     <LiftDetails
@@ -424,20 +423,13 @@ function FeedbackSlideshowWrapper() {
   const route = useRoute<RouteProp<MainStackParamList, 'FeedbackSlideshow'>>();
   
   const handleClose = () => {
+    // Go back to LiftDetails
     navigation.goBack();
   };
 
   const handleNavigateToLiftDetails = () => {
-    // Navigate back to the LiftDetails screen
-    // First, go back to the previous screen (which should be HowItWorks)
+    // Go back to LiftDetails
     navigation.goBack();
-    // Then navigate to LiftDetails with the same lift data
-    // This ensures users go back to the lift details instead of staying on how it works
-    setTimeout(() => {
-      navigation.navigate('LiftDetails', { 
-        liftData: route.params.liftData,
-      });
-    }, 100);
   };
 
   // Transform the liftData to match the expected format
@@ -460,25 +452,7 @@ function FeedbackSlideshowWrapper() {
   );
 }
 
-function HowItWorksWrapper() {
-  const navigation = useNavigation<MainStackNavigationProp>();
-  const route = useRoute<RouteProp<MainStackParamList, 'HowItWorks'>>();
-  
-  const handleClose = () => {
-    navigation.goBack();
-  };
 
-  const handleViewFeedback = () => {
-    navigation.navigate('FeedbackSlideshow', { liftData: route.params.liftData });
-  };
-
-  return (
-    <HowItWorks 
-      onClose={handleClose} 
-      onViewFeedback={handleViewFeedback}
-    />
-  );
-}
 
 function LibraryScreenWrapperWithProps() {
   const navigation = useNavigation<MainStackNavigationProp>();
@@ -547,6 +521,7 @@ function MainTabsNavigator({ onLogout }: { onLogout?: () => void }) {
     global.triggerAddOptions = handleAddPress;
     global.navigateToPerformance = () => handleTabPress('performance');
     global.navigateToSettings = () => handleTabPress('settings');
+    global.navigateToHome = () => handleTabPress('home');
     global.navigateToPersonalDetails = () => {
       // Navigate to personal details screen
       navigation.navigate('PersonalDetails');
@@ -711,13 +686,7 @@ export function MainAppNavigator({ onLogout }: { onLogout?: () => void }) {
               presentation: 'card',
             }}
           />
-          <Stack.Screen 
-            name="HowItWorks" 
-            component={HowItWorksWrapper}
-            options={{
-              presentation: 'card',
-            }}
-          />
+
           <Stack.Screen 
             name="Library" 
             component={LibraryScreenWrapperWithProps}

@@ -596,7 +596,7 @@ const i18n = new I18n({
       },
       settingsSupportEmail: {
         title: 'Support Email',
-        description: 'Need help? Tap here at any timeto contact our support team via email.',
+        description: 'Need help? Tap here at any time to contact our support team via email.',
       },
     },
     upload: {
