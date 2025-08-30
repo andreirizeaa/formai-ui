@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, ActivityIndicator } from 'react-native';
+import showAlert from '../../../../services/alertService';
 import { useUserDetails } from '../../../../context/UserDetailsContext';
 import { editUserDetails } from '../../../../services/userService';
 import { hapticFeedback } from '../../../../utils/haptic';
@@ -13,7 +14,7 @@ interface EditGenderScreenProps {
 }
 
 export function EditGenderScreen({ onBack, currentValue, onSave }: EditGenderScreenProps) {
-  const { updateUserDetails, refetchUserDetails } = useUserDetails();
+  const { refetchUserDetails } = useUserDetails();
   const [selectedGender, setSelectedGender] = useState(currentValue);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -23,15 +24,18 @@ export function EditGenderScreen({ onBack, currentValue, onSave }: EditGenderScr
     setIsSaving(true);
     try {
       await editUserDetails({ gender: selectedGender });
-      updateUserDetails('gender', selectedGender);
       await refetchUserDetails();
       hapticFeedback.success();
+      onSave(selectedGender);
     } catch (e) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to update gender', e);
+      hapticFeedback.error();
+      setSelectedGender(currentValue);
+      showAlert('Gender edit failed', 'Please try again later', () => {
+        hapticFeedback.selection();
+        onBack();
+      });
     }
     setIsSaving(false);
-    onSave(selectedGender);
   };
 
   return (

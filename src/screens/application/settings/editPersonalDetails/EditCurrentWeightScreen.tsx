@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, TextInput, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, TextInput, ActivityIndicator, Alert } from 'react-native';
 import { RulerPicker } from 'react-native-ruler-picker';
 import i18n from '../../../../utils/i18n';
 import { hapticFeedback } from '../../../../utils/haptic';
@@ -19,28 +19,39 @@ interface EditCurrentWeightScreenProps {
 }
 
 export function EditCurrentWeightScreen({ onBack, currentValue, onSave }: EditCurrentWeightScreenProps) {
-  const { userDetails, updateWeight, refetchUserDetails } = useUserDetails();
+  const { userDetails, refetchUserDetails } = useUserDetails();
   const unitSystem = userDetails?.unitSystem ?? 'metric';
   const isMetric = unitSystem === 'metric';
   const [selectedWeight, setSelectedWeight] = useState(60); // Default 60kg
   const [isSaving, setIsSaving] = useState(false);
+  const didMount = useRef(false);
 
   // Parse current value to determine initial state
   React.useEffect(() => {
+    updateValues();
+  }, [currentValue, isMetric]);
+
+  const updateValues = () => {
     if (currentValue) {
       // Parse the current weight string to get the metric value
       const weightKg = parseWeightToMetric(currentValue);
+      const imperialWeight = convertMetricWeightToImperial(weightKg);
       
       // Convert to display units based on user's preference
       if (isMetric) {
         setSelectedWeight(weightKg);
       } else {
-        setSelectedWeight(convertMetricWeightToImperial(weightKg));
+        setSelectedWeight(imperialWeight);
       }
     }
-  }, [currentValue, isMetric]);
+  }
 
   const handleWeightChange = (weight: string | number) => {
+    if (!didMount.current) {
+      didMount.current = true;
+      return;
+    }
+  
     const numWeight = typeof weight === 'string' ? parseFloat(weight) : weight;
     setSelectedWeight(numWeight);
   };
@@ -55,28 +66,25 @@ export function EditCurrentWeightScreen({ onBack, currentValue, onSave }: EditCu
     
     try {
       await editUserDetails({ weight: weightKg });
-      updateWeight(weightKg);
       await refetchUserDetails();
       hapticFeedback.success();
+      // Format for display based on user's unit system
+      const unit = isMetric ? 'kg' : 'lbs';
+      const formattedWeight = isMetric ? Math.round(weightKg) : Math.round(selectedWeight);
+      const displayValue = `${formattedWeight} ${unit}`;
+      onSave(displayValue);
     } catch (e) {
-      // Soft-fail: keep local UX flowing
-      // eslint-disable-next-line no-console
-      console.error('Failed to update weight', e);
-    }
-    
-    // Format for display based on user's unit system
-    const unit = isMetric ? 'kg' : 'lbs';
-    const formattedWeight = isMetric ? Math.round(weightKg) : Math.round(selectedWeight);
-    const displayValue = `${formattedWeight} ${unit}`;
-    
-    setIsSaving(false);
-    onSave(displayValue);
-  };
+      hapticFeedback.error();
+      updateValues();
+      Alert.alert('Weight edit failed', 'Please try again later', [{ text: 'Ok', onPress: () => {
+        hapticFeedback.selection();
+        onBack();
+      } }]);
 
-  // Generate weight options based on unit system
-  const weightOptions = isMetric
-    ? Array.from({ length: 151 }, (_, i) => 40 + i) // 40-190 kg
-    : Array.from({ length: 251 }, (_, i) => 90 + i); // 90-340 lbs
+    }
+    didMount.current = false;
+    setIsSaving(false);
+  };
 
   return (
     <View style={styles.container}>
@@ -87,6 +95,7 @@ export function EditCurrentWeightScreen({ onBack, currentValue, onSave }: EditCu
           style={styles.backButton} 
           onPress={() => {
             hapticFeedback.selection();
+            didMount.current = false;
             onBack();
           }}
         >
@@ -101,9 +110,9 @@ export function EditCurrentWeightScreen({ onBack, currentValue, onSave }: EditCu
         {/* Ruler Picker */}
         <View style={styles.rulerContainer}>
           <RulerPicker
-            min={isMetric ? 40 : 90}
-            max={isMetric ? 190 : 340}
-            step={isMetric ? 1 : 1}
+            min={isMetric ? 30 : 90}
+            max={isMetric ? 300 : 340}
+            step={isMetric ? 0.1 : 1}
             unit={isMetric ? 'kg' : 'lbs'}
             initialValue={selectedWeight}
             onValueChange={handleWeightChange}

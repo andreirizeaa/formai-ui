@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, ActivityIndicator, Alert } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import i18n from '../../../../utils/i18n';
 import { hapticFeedback } from '../../../../utils/haptic';
@@ -24,6 +24,10 @@ export function EditDateOfBirthScreen({ onBack, currentValue, onSave }: EditDate
 
   // Parse current value to determine initial state
   React.useEffect(() => {
+    updateValues();
+  }, [currentValue]);
+
+  const updateValues = () => {
     if (currentValue) {
       // First try to parse DD-MM-YYYY format
       const ddMmYyyyMatch = currentValue.match(/^(\d{2})-(\d{2})-(\d{4})$/);
@@ -82,7 +86,7 @@ export function EditDateOfBirthScreen({ onBack, currentValue, onSave }: EditDate
         if (yearMatch) setSelectedYear(parseInt(yearMatch[1]));
       }
     }
-  }, [currentValue]);
+  }
 
   const months = [
     i18n.t('months.january'),
@@ -138,12 +142,17 @@ export function EditDateOfBirthScreen({ onBack, currentValue, onSave }: EditDate
       updateUserDetails('dateOfBirth', formattedDate);
       await refetchUserDetails();
       hapticFeedback.success();
+      onSave(formattedDate);
     } catch (e) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to update birth date', e);
+      hapticFeedback.error();
+      updateValues();
+      Alert.alert('Birth date edit failed', 'Please try again later', [{ text: 'Ok', onPress: () => {
+        hapticFeedback.selection();
+        onBack();
+      } }]);
+
     }
     setIsSaving(false);
-    onSave(formattedDate);
   };
 
   // Generate years from 1940 to current year - 4 (descending order for better UX)
@@ -179,9 +188,6 @@ export function EditDateOfBirthScreen({ onBack, currentValue, onSave }: EditDate
         <View style={styles.pickersContainer}>
           {/* Month Picker */}
           <View style={[styles.pickerSection, styles.monthPickerSection]}>
-            <Text style={styles.pickerLabel}>
-              {i18n.t('onboarding.birthDate.month')}
-            </Text>
             <View style={styles.pickerWrapper}>
               <Picker
                 selectedValue={selectedMonth}
@@ -202,9 +208,6 @@ export function EditDateOfBirthScreen({ onBack, currentValue, onSave }: EditDate
 
           {/* Day Picker */}
           <View style={styles.pickerSection}>
-            <Text style={styles.pickerLabel}>
-              {i18n.t('onboarding.birthDate.day')}
-            </Text>
             <View style={styles.pickerWrapper}>
               <Picker
                 selectedValue={selectedDay}
@@ -225,9 +228,6 @@ export function EditDateOfBirthScreen({ onBack, currentValue, onSave }: EditDate
 
           {/* Year Picker */}
           <View style={styles.pickerSection}>
-            <Text style={styles.pickerLabel}>
-              {i18n.t('onboarding.birthDate.year')}
-            </Text>
             <View style={styles.pickerWrapper}>
               <Picker
                 selectedValue={selectedYear}

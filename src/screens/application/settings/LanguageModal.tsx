@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal, ScrollView, Platform, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Modal, ScrollView, Platform, ActivityIndicator, Alert } from 'react-native';
 import i18n from '../../../utils/i18n';
 import { LANGUAGES } from '../../../constants/languages';
 import { hapticFeedback } from '../../../utils/haptic';
@@ -31,8 +31,11 @@ export function LanguageModal({ isVisible, onClose }: LanguageModalProps) {
       hapticFeedback.success();
       onClose();
     } catch (e) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to update language', e);
+      hapticFeedback.error();
+      Alert.alert('Language update failed', 'Please try again later', [{ text: 'Ok', onPress: () => {
+        hapticFeedback.selection();
+        onClose();
+      } }]);
     } finally {
       setSavingCode(null);
       setPendingCode(null);
