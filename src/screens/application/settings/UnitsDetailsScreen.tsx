@@ -18,6 +18,7 @@ export function UnitsDetailsScreen({ onBack }: UnitsDetailsScreenProps) {
   const { userDetails } = useUserDetails();
   const [selectedUnit, setSelectedUnit] = React.useState(userDetails?.unitSystem ?? 'metric');
   const [isSaving, setIsSaving] = React.useState(false);
+  const { updateUnitSystem } = useUserDetails();
 
   const handleUnitSelect = (unitSystem: 'metric' | 'imperial') => {
     hapticFeedback.selection();
@@ -32,6 +33,7 @@ export function UnitsDetailsScreen({ onBack }: UnitsDetailsScreenProps) {
       const unit = (selectedUnit as 'metric' | 'imperial') ?? 'metric';
       await editUserDetails({ unit_system: unit });
       hapticFeedback.success();
+      updateUnitSystem(unit);
       onBack();
     } catch (e) {
       hapticFeedback.error();
@@ -235,3 +237,4 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
 }); 
+

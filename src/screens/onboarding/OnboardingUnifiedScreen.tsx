@@ -383,7 +383,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
   function getCurrentWeight() {
     if (!onboardingData.metricWeight) return isMetric ? 60 : 130;
     if (isMetric) return onboardingData.metricWeight;
-    return Math.round(onboardingData.metricWeight / 0.453592);
+    return onboardingData.metricWeight / 0.453592;
   }
 
   function handleHeightSelect(height: number) {

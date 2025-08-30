@@ -11,13 +11,13 @@ export interface HeightData {
   unit: 'cm' | 'ft-in';
 }
 
-// Weight conversions
+// Weight conversions - preserve decimal precision for metric
 export function kgToLbs(kg: number): number {
-  return Math.round(kg * 2.20462);
+  return kg * 2.20462;
 }
 
 export function lbsToKg(lbs: number): number {
-  return Math.round(lbs * 0.453592);
+  return lbs * 0.453592;
 }
 
 // Height conversions
@@ -41,7 +41,7 @@ export function feetInchesToCm(feet: number, inches: number): number {
   return inchesToCm(totalInches);
 }
 
-// Parse weight string to metric value
+// Parse weight string to metric value - preserve decimal precision
 export function parseWeightToMetric(weightString: string): number {
   const weightMatch = weightString.match(/(\d+(?:\.\d+)?)\s*(kg|lbs)/);
   if (!weightMatch) return 70; // Default 70kg
@@ -49,7 +49,7 @@ export function parseWeightToMetric(weightString: string): number {
   const [, number, unit] = weightMatch;
   const weight = parseFloat(number);
   
-  return unit === 'kg' ? Math.round(weight) : lbsToKg(weight);
+  return unit === 'kg' ? weight : lbsToKg(weight);
 }
 
 // Parse height string to metric value
@@ -73,12 +73,15 @@ export function parseHeightToMetric(heightString: string): number {
 }
 
 // Format metric weight for display
-export function formatWeightForDisplay(kg: number, unitSystem: 'metric' | 'imperial'): string {
+export function formatWeightForDisplay(
+  kg: number,
+  unitSystem: 'metric' | 'imperial'
+): string {
   if (unitSystem === 'metric') {
-    return `${Math.round(kg)} kg`;
+    return `${Number(kg.toFixed(1))} kg`;
   } else {
     const lbs = kgToLbs(kg);
-    return `${lbs} lbs`;
+    return `${Math.round(lbs)} lbs`;
   }
 }
 

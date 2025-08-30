@@ -43,8 +43,6 @@ function PersonalDetailOption({ title, value, onPress }: PersonalDetailOptionPro
 
 // Function to translate personal data values based on current language
 function translatePersonalDataValue(key: string, value: string): string {
-  const currentLocale = i18n.locale;
-  
   switch (key) {
     case 'currentWeight':
       // Extract number and unit from weight value

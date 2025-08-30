@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, TextInput, ActivityIndicator, Alert } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, ActivityIndicator, Alert } from 'react-native';
 import { RulerPicker } from 'react-native-ruler-picker';
 import i18n from '../../../../utils/i18n';
 import { hapticFeedback } from '../../../../utils/haptic';
@@ -22,36 +22,40 @@ export function EditCurrentWeightScreen({ onBack, currentValue, onSave }: EditCu
   const { userDetails, refetchUserDetails } = useUserDetails();
   const unitSystem = userDetails?.unitSystem ?? 'metric';
   const isMetric = unitSystem === 'metric';
-  const [selectedWeight, setSelectedWeight] = useState(60); // Default 60kg
+  const [selectedWeight, setSelectedWeight] = useState(60);
   const [isSaving, setIsSaving] = useState(false);
   const didMount = useRef(false);
 
-  // Parse current value to determine initial state
-  React.useEffect(() => {
-    updateValues();
+  // Set didMount after first render
+  useEffect(() => {
+    didMount.current = true;
+  }, []);
+
+  // Update initial state when currentValue or unit system changes
+  useEffect(() => {
+    if (!currentValue) return;
+
+    const weightKg = parseWeightToMetric(currentValue);
+    const imperialWeight = convertMetricWeightToImperial(weightKg);
+    
+    // For metric, preserve decimal precision; for imperial, round to whole numbers
+    const initialValue = isMetric ? weightKg : Math.round(imperialWeight);
+    setSelectedWeight(initialValue);
+
+    // IMPORTANT: reset didMount so that onValueChange doesn't fire right away
+    didMount.current = false;
+
+    // Re-enable updates after a tick
+    const timer = setTimeout(() => {
+      didMount.current = true;
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, [currentValue, isMetric]);
 
-  const updateValues = () => {
-    if (currentValue) {
-      // Parse the current weight string to get the metric value
-      const weightKg = parseWeightToMetric(currentValue);
-      const imperialWeight = convertMetricWeightToImperial(weightKg);
-      
-      // Convert to display units based on user's preference
-      if (isMetric) {
-        setSelectedWeight(weightKg);
-      } else {
-        setSelectedWeight(imperialWeight);
-      }
-    }
-  }
-
   const handleWeightChange = (weight: string | number) => {
-    if (!didMount.current) {
-      didMount.current = true;
-      return;
-    }
-  
+    if (!didMount.current) return;
+
     const numWeight = typeof weight === 'string' ? parseFloat(weight) : weight;
     setSelectedWeight(numWeight);
   };
@@ -60,30 +64,29 @@ export function EditCurrentWeightScreen({ onBack, currentValue, onSave }: EditCu
     if (isSaving) return;
     hapticFeedback.selection();
     setIsSaving(true);
-    
-    // Convert to metric for storage
+
     const weightKg = isMetric ? selectedWeight : convertImperialWeightToMetric(selectedWeight);
-    
+
     try {
       await editUserDetails({ weight: weightKg });
       await refetchUserDetails();
       hapticFeedback.success();
-      // Format for display based on user's unit system
+
       const unit = isMetric ? 'kg' : 'lbs';
-      const formattedWeight = isMetric ? Math.round(weightKg) : Math.round(selectedWeight);
-      const displayValue = `${formattedWeight} ${unit}`;
+      // For metric, show 1 decimal place; for imperial, show whole numbers
+      const displayValue = isMetric 
+        ? `${Number(weightKg.toFixed(1))} ${unit}`
+        : `${Math.round(selectedWeight)} ${unit}`;
+
       onSave(displayValue);
     } catch (e) {
       hapticFeedback.error();
-      updateValues();
-      Alert.alert('Weight edit failed', 'Please try again later', [{ text: 'Ok', onPress: () => {
-        hapticFeedback.selection();
-        onBack();
-      } }]);
-
+      Alert.alert('Weight edit failed', 'Please try again later', [
+        { text: 'Ok', onPress: () => hapticFeedback.selection() },
+      ]);
+    } finally {
+      setIsSaving(false);
     }
-    didMount.current = false;
-    setIsSaving(false);
   };
 
   return (
@@ -95,7 +98,6 @@ export function EditCurrentWeightScreen({ onBack, currentValue, onSave }: EditCu
           style={styles.backButton} 
           onPress={() => {
             hapticFeedback.selection();
-            didMount.current = false;
             onBack();
           }}
         >
@@ -107,7 +109,6 @@ export function EditCurrentWeightScreen({ onBack, currentValue, onSave }: EditCu
 
       {/* Content */}
       <View style={styles.content}>
-        {/* Ruler Picker */}
         <View style={styles.rulerContainer}>
           <RulerPicker
             min={isMetric ? 30 : 90}
@@ -125,7 +126,12 @@ export function EditCurrentWeightScreen({ onBack, currentValue, onSave }: EditCu
 
       {/* Save Button */}
       <View style={styles.bottomContainer}>
-        <TouchableOpacity style={[styles.saveButton, isSaving && { opacity: 0.7 }]} onPress={handleSave} activeOpacity={0.8} disabled={isSaving}>
+        <TouchableOpacity
+          style={[styles.saveButton, isSaving && { opacity: 0.7 }]}
+          onPress={handleSave}
+          activeOpacity={0.8}
+          disabled={isSaving}
+        >
           {isSaving ? (
             <ActivityIndicator color="#FFFFFF" />
           ) : (
@@ -145,7 +151,7 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    bottom: 12,
+    bottom: 0,
   },
   header: {
     flexDirection: 'row',

@@ -5,6 +5,7 @@ import { LineChart } from 'react-native-chart-kit';
 import { hapticFeedback } from '../../utils/haptic';
 import { formatWeightForDisplay } from '../../utils/unitConversions';
 import { CircleQuestionMark } from 'lucide-react-native';
+import { useTutorialTarget } from '../../context/TutorialContext';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH * 0.9;
@@ -33,6 +34,7 @@ interface ProcessedCardData {
 }
 
 interface SwipeableLineGraphCardProps {
+  ref?: React.RefObject<any>;
   cardData: Lift[];
   onTriggerAddOptions?: () => void;
   hasNoLifts?: boolean;
@@ -42,6 +44,7 @@ interface SwipeableLineGraphCardProps {
 }
 
 export function SwipeableLineGraphCard({ 
+  ref,
   cardData, 
   onTriggerAddOptions, 
   hasNoLifts = false, 
@@ -177,96 +180,95 @@ export function SwipeableLineGraphCard({
           </View>
         </TouchableOpacity>
       ) : (
-        <>
-          <Carousel
-            loop={false}
-            width={SCREEN_WIDTH}
-            height={CARD_HEIGHT} // 🔑 taller
-            data={processedCardData}
-            renderItem={({ item }) => (
-              <View style={styles.page}>
-                <View style={[styles.performanceCard, { width: CARD_WIDTH }]}>
-                  <View style={styles.performanceCardContent}>
-                    <View style={styles.performanceCardHeader}>
-                      <View style={styles.headerLeft}>
-                        <View style={styles.titleRow}>
-                          <Text style={styles.performanceCardLabel}>
-                            {item.title}
-                          </Text>
-                          <TouchableOpacity
-                            onPress={() => {
-                              onInfoPress?.();
-                            }}
-                            activeOpacity={0.7}
-                            style={styles.titleIcon}
-                          >
-                            <CircleQuestionMark width={20} height={20} color="#000" />
-                          </TouchableOpacity>
-                        </View>
-                        <Text style={styles.performanceCardSubtitle}>
-                          {item.subtitle}
-                        </Text>
-                      </View>
-                    </View>
-
-                    {item.chartData &&
-                      item.chartData.datasets[0].data.length > 0 && (
-                        <View style={styles.chartContainer}>
-                          <ScrollView
-                            ref={scrollViewRef}
-                            horizontal
-                            showsHorizontalScrollIndicator={false}
-                          >
-                            <LineChart
-                              data={item.chartData}
-                              width={getChartWidth(item.chartData.labels.length)}
-                              height={180}
-                              chartConfig={{
-                                fillShadowGradientFrom: '#4f39f6',
-                                fillShadowGradientTo: '#ffffff',
-                                backgroundColor: '#FFFFFF',
-                                backgroundGradientFrom: '#FFFFFF',
-                                backgroundGradientTo: '#FFFFFF',
-                                decimalPlaces: 0,
-                                color: (opacity = 1) => `rgba(0,0,0,${opacity})`,
-                                labelColor: (opacity = 1) => `rgba(0,0,0,${opacity})`,
-                                propsForDots: {
-                                  r: '2',
-                                  strokeWidth: '2',
-                                  stroke: '#000',
-                                  fill: '#000',
-                                },
-                                formatXLabel: (val) => val,
-                                formatYLabel: (val) => `${val}%`,
+          <View>
+            <Carousel
+              loop={false}
+              width={SCREEN_WIDTH}
+              height={CARD_HEIGHT} // 🔑 taller
+              data={processedCardData}
+              renderItem={({ item }) => (
+                <View style={styles.page}>
+                  <View style={[styles.performanceCard, { width: CARD_WIDTH }]}>
+                    <View style={styles.performanceCardContent}>
+                      <View style={styles.performanceCardHeader}>
+                        <View style={styles.headerLeft}>
+                          <View style={styles.titleRow}>
+                            <Text style={styles.performanceCardLabel}>
+                              {item.title}
+                            </Text>
+                            <TouchableOpacity
+                              onPress={() => {
+                                onInfoPress?.();
                               }}
-                              bezier
-                              style={styles.chart}
-                              withDots
-                              withShadow
-                              withInnerLines
-                              withOuterLines={false}
-                              withVerticalLines={false}
-                              withHorizontalLines
-                              yAxisSuffix="%"
-                            />
-                          </ScrollView>
+                              activeOpacity={0.7}
+                              style={styles.titleIcon}
+                            >
+                              <CircleQuestionMark width={20} height={20} color="#000" />
+                            </TouchableOpacity>
+                          </View>
+                          <Text style={styles.performanceCardSubtitle}>
+                            {item.subtitle}
+                          </Text>
                         </View>
-                      )}
+                      </View>
+
+                      {item.chartData &&
+                        item.chartData.datasets[0].data.length > 0 && (
+                          <View style={styles.chartContainer} ref={ref}>
+                            <ScrollView
+                              ref={scrollViewRef}
+                              horizontal
+                              showsHorizontalScrollIndicator={false}
+                            >
+                              <LineChart
+                                data={item.chartData}
+                                width={getChartWidth(item.chartData.labels.length)}
+                                height={180}
+                                chartConfig={{
+                                  fillShadowGradientFrom: '#4f39f6',
+                                  fillShadowGradientTo: '#ffffff',
+                                  backgroundColor: '#FFFFFF',
+                                  backgroundGradientFrom: '#FFFFFF',
+                                  backgroundGradientTo: '#FFFFFF',
+                                  decimalPlaces: 0,
+                                  color: (opacity = 1) => `rgba(0,0,0,${opacity})`,
+                                  labelColor: (opacity = 1) => `rgba(0,0,0,${opacity})`,
+                                  propsForDots: {
+                                    r: '2',
+                                    strokeWidth: '2',
+                                    stroke: '#000',
+                                    fill: '#000',
+                                  },
+                                  formatXLabel: (val) => val,
+                                  formatYLabel: (val) => `${val}%`,
+                                }}
+                                bezier
+                                style={styles.chart}
+                                withDots
+                                withShadow
+                                withInnerLines
+                                withOuterLines={false}
+                                withVerticalLines={false}
+                                withHorizontalLines
+                                yAxisSuffix="%"
+                              />
+                            </ScrollView>
+                          </View>
+                        )}
+                    </View>
                   </View>
                 </View>
-              </View>
-            )}
-            onSnapToItem={(index) => {
-              if (index !== currentCardIndex) {
-                setCurrentCardIndex(index);
-              }
-            }}
-            defaultIndex={0}
-            pagingEnabled
-            snapEnabled
-            style={{ backgroundColor: 'transparent' }}
-          />
-
+              )}
+              onSnapToItem={(index) => {
+                if (index !== currentCardIndex) {
+                  setCurrentCardIndex(index);
+                }
+              }}
+              defaultIndex={0}
+              pagingEnabled
+              snapEnabled
+              style={{ backgroundColor: 'transparent' }}
+            />
           {/* Pagination Dots */}
           <View style={styles.paginationContainer}>
             {processedCardData.map((_, index) => (
@@ -282,7 +284,7 @@ export function SwipeableLineGraphCard({
               />
             ))}
           </View>
-        </>
+        </View>
       )}
     </View>
   );
@@ -304,7 +306,6 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     padding: 16,
     marginBottom: 24,
-    // ❌ removed shadow/elevation
   },
   performanceCardContent: {
     flexDirection: 'column',

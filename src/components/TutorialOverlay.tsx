@@ -308,7 +308,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#000000',
     borderRadius: 28,
-    paddingVertical: 12,
+    paddingVertical: 14,
     alignItems: 'center',
   },
   navButtonDisabled: {
@@ -340,7 +340,7 @@ const styles = StyleSheet.create({
     width: '100%',
     backgroundColor: '#000000',
     borderRadius: 28,
-    paddingVertical: 12,
+    paddingVertical: 14,
     alignItems: 'center',
   },
   skipGuideButton: {
