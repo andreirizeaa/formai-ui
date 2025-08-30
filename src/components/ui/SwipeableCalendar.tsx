@@ -1,15 +1,13 @@
-import React, { useState, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, Dimensions, TouchableOpacity, Platform } from 'react-native';
-import { PanGestureHandler, State } from 'react-native-gesture-handler';
-import Animated, {
-  useSharedValue,
-  useAnimatedGestureHandler,
-  useAnimatedStyle,
-  withSpring,
-  runOnJS,
-} from 'react-native-reanimated';
+import React, { useState, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Platform } from 'react-native';
+import Carousel from 'react-native-reanimated-carousel';
 import { hapticFeedback } from '../../utils/haptic';
 import { useUserCheckIns } from '../../context/UserCheckInsContext';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+const WEEK_WIDTH = SCREEN_WIDTH * 0.9; // ✅ narrower than screen
+const WEEK_HEIGHT = 80;
 
 interface SwipeableCalendarProps {
   onDateSelect?: (date: Date) => void;
@@ -26,62 +24,64 @@ interface DayData {
 }
 
 export function SwipeableCalendar({ onDateSelect, initialSelectedDate }: SwipeableCalendarProps) {
-  const [currentWeekOffset, setCurrentWeekOffset] = useState(0);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(initialSelectedDate || new Date());
-  const translateX = useSharedValue(0);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(
+    initialSelectedDate || new Date()
+  );
   const { daysLogged } = useUserCheckIns();
-  
-  // Helper function to format date as DD-MM-YYYY
+
   const formatDateAsDDMMYYYY = (date: Date): string => {
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const year = date.getFullYear();
     return `${day}-${month}-${year}`;
   };
-  
-  // Generate weeks of data based on week offset
-  const generateWeekData = useCallback((weekOffset: number): DayData[] => {
-    const today = new Date();
-    
-    // Calculate the start of the current week (Sunday)
-    const startOfCurrentWeek = new Date(today);
-    const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
-    startOfCurrentWeek.setDate(today.getDate() - dayOfWeek);
-    
-    // Calculate the start of the target week based on offset
-    const startOfTargetWeek = new Date(startOfCurrentWeek);
-    startOfTargetWeek.setDate(startOfCurrentWeek.getDate() + (weekOffset * 7));
-    
-    const days: DayData[] = [];
-    const dayNames = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-    
-    for (let i = 0; i < 7; i++) {
-      const date = new Date(startOfTargetWeek);
-      date.setDate(startOfTargetWeek.getDate() + i);
-      
-      const isToday = date.toDateString() === today.toDateString();
-      const isSelected = selectedDate ? date.toDateString() === selectedDate.toDateString() : false;
-      const isActive = isSelected;
-      
-      // Format the date as DD-MM-YYYY for comparison with daysLogged array
-      const formattedDate = formatDateAsDDMMYYYY(date);
-      const isLogged = daysLogged.includes(formattedDate);
-            
-      days.push({
-        date,
-        dayName: dayNames[i],
-        dayNumber: date.getDate().toString(),
-        isToday,
-        isActive,
-        isLogged,
-      });
-    }
-    
-    return days;
-  }, [selectedDate, daysLogged]);
 
-  const currentWeek = generateWeekData(currentWeekOffset);
-  
+  const generateWeekData = useCallback(
+    (weekOffset: number): DayData[] => {
+      const today = new Date();
+      const startOfCurrentWeek = new Date(today);
+      const dayOfWeek = today.getDay();
+      startOfCurrentWeek.setDate(today.getDate() - dayOfWeek);
+
+      const startOfTargetWeek = new Date(startOfCurrentWeek);
+      startOfTargetWeek.setDate(startOfCurrentWeek.getDate() + weekOffset * 7);
+
+      const days: DayData[] = [];
+      const dayNames = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
+      for (let i = 0; i < 7; i++) {
+        const date = new Date(startOfTargetWeek);
+        date.setDate(startOfTargetWeek.getDate() + i);
+
+        const isToday = date.toDateString() === today.toDateString();
+        const isSelected = selectedDate
+          ? date.toDateString() === selectedDate.toDateString()
+          : false;
+
+        const formattedDate = formatDateAsDDMMYYYY(date);
+        const isLogged = daysLogged.includes(formattedDate);
+
+        days.push({
+          date,
+          dayName: dayNames[i],
+          dayNumber: date.getDate().toString(),
+          isToday,
+          isActive: isSelected,
+          isLogged,
+        });
+      }
+
+      return days;
+    },
+    [selectedDate, daysLogged]
+  );
+
+  const WEEKS_BACK = 12;
+  const weeks: DayData[][] = [];
+  for (let i = -WEEKS_BACK; i <= 0; i++) {
+    weeks.push(generateWeekData(i));
+  }
+
   const handleDatePress = (dayData: DayData) => {
     setSelectedDate(dayData.date);
     if (onDateSelect) {
@@ -89,90 +89,73 @@ export function SwipeableCalendar({ onDateSelect, initialSelectedDate }: Swipeab
     }
   };
 
-  const handleWeekChange = (direction: 'left' | 'right') => {
-    // Fix the direction mapping: left swipe should go to previous week, right swipe to next week
-    const newOffset = direction === 'left' 
-      ? currentWeekOffset - 1  // Previous week
-      : currentWeekOffset + 1; // Next week
-    
-    // Prevent going to future weeks (when currentWeekOffset is 0, which is the current week)
-    if (direction === 'right' && currentWeekOffset === 0) {
-      // Don't allow swiping to next week when we're on the current week
-      hapticFeedback.error();
-      return;
-    }
-    hapticFeedback.selection();
-
-    
-    setCurrentWeekOffset(newOffset);
-  };
-
-  const gestureHandler = useAnimatedGestureHandler({
-    onStart: (_, context: any) => {
-      context.startX = translateX.value;
-    },
-    onActive: (event, context) => {
-      translateX.value = context.startX + event.translationX;
-    },
-    onEnd: (event) => {
-      const threshold = 50;
-      // Fix the gesture direction mapping
-      if (event.translationX > threshold) {
-        // Swipe right (positive translation) = go to previous week
-        runOnJS(handleWeekChange)('left');
-      } else if (event.translationX < -threshold) {
-        // Swipe left (negative translation) = go to next week
-        runOnJS(handleWeekChange)('right');
-      }
-      translateX.value = withSpring(0);
-    },
-  });
-
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ translateX: translateX.value }],
-    };
-  });
-
   return (
     <View style={styles.container}>
-      <PanGestureHandler onGestureEvent={gestureHandler}>
-        <Animated.View style={[styles.calendarContainer, animatedStyle]}>
-          <View style={styles.daysContainer}>
-            {currentWeek.map((day, index) => (
-              <TouchableOpacity
-                key={index}
-                style={styles.dayContainer}
-                onPress={() => handleDatePress(day)}
-                activeOpacity={0.7}
-              >
-                <View style={[
-                  styles.dayCircle,
-                  day.isToday && day.isActive ? styles.todaySelectedCircle : 
-                  day.isToday ? styles.todayCircle : 
-                  day.isActive && day.isLogged ? styles.loggedDayCircle :
-                  day.isActive ? styles.selectedCircle : 
-                  day.isLogged ? styles.loggedDayCircle : styles.inactiveDayCircle
-                ]}>
-                  <Text style={[
-                    styles.dayName,
-                    day.isLogged && !day.isToday ? styles.loggedDayText :
-                    day.isActive ? styles.activeDayText : styles.inactiveDayText
-                  ]}>
-                    {day.dayName}
+      <Carousel
+        loop={false}
+        width={SCREEN_WIDTH}        // ✅ page = full screen
+        height={WEEK_HEIGHT}
+        data={weeks}
+        renderItem={({ item }) => (
+          <View style={styles.weekPage}>
+            <View style={styles.weekContent}>
+              {item.map((day, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={styles.dayContainer}
+                  onPress={() => handleDatePress(day)}
+                  activeOpacity={0.7}
+                >
+                  <View
+                    style={[
+                      styles.dayCircle,
+                      day.isToday && day.isActive
+                        ? styles.todaySelectedCircle
+                        : day.isToday
+                        ? styles.todayCircle
+                        : day.isActive && day.isLogged
+                        ? styles.loggedDayCircle
+                        : day.isActive
+                        ? styles.selectedCircle
+                        : day.isLogged
+                        ? styles.loggedDayCircle
+                        : styles.inactiveDayCircle,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.dayName,
+                        day.isLogged && !day.isToday
+                          ? styles.loggedDayText
+                          : day.isActive
+                          ? styles.activeDayText
+                          : styles.inactiveDayText,
+                      ]}
+                    >
+                      {day.dayName}
+                    </Text>
+                  </View>
+                  <Text
+                    style={[
+                      styles.dayNumber,
+                      day.isActive ? styles.activeDayText : styles.inactiveDayText,
+                    ]}
+                  >
+                    {day.dayNumber}
                   </Text>
-                </View>
-                <Text style={[
-                  styles.dayNumber,
-                  day.isActive ? styles.activeDayText : styles.inactiveDayText
-                ]}>
-                  {day.dayNumber}
-                </Text>
-              </TouchableOpacity>
-            ))}
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
-        </Animated.View>
-      </PanGestureHandler>
+        )}
+        defaultIndex={weeks.length - 1}
+        onSnapToItem={() => {
+          hapticFeedback.selection();
+        }}
+        pagingEnabled
+        snapEnabled
+        style={{ backgroundColor: 'transparent' }}
+      />
     </View>
   );
 }
@@ -180,14 +163,15 @@ export function SwipeableCalendar({ onDateSelect, initialSelectedDate }: Swipeab
 const styles = StyleSheet.create({
   container: {
     backgroundColor: 'transparent',
+    paddingVertical: 8,
   },
-  calendarContainer: {
-    backgroundColor: 'transparent',
-    borderRadius: 20,
-    marginHorizontal: 20,
-    paddingBottom: 24,
+  weekPage: {
+    width: SCREEN_WIDTH,          // ✅ full page
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  daysContainer: {
+  weekContent: {
+    width: WEEK_WIDTH,            // ✅ narrower, centered
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -210,10 +194,28 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
     backgroundColor: 'transparent',
   },
-  activeDayCircle: {
+  selectedCircle: {
     borderWidth: 2,
     borderColor: '#000000',
     borderStyle: 'dashed',
+    backgroundColor: 'transparent',
+  },
+  todayCircle: {
+    borderWidth: 2,
+    borderColor: '#9CA3AF',
+    borderStyle: 'solid',
+    backgroundColor: 'transparent',
+  },
+  todaySelectedCircle: {
+    borderWidth: 2,
+    borderColor: '#000000',
+    borderStyle: 'solid',
+    backgroundColor: 'transparent',
+  },
+  loggedDayCircle: {
+    borderWidth: 1.5,
+    borderColor: '#ff6900',
+    borderStyle: 'solid',
     backgroundColor: 'transparent',
   },
   dayName: {
@@ -237,34 +239,4 @@ const styles = StyleSheet.create({
     color: '#ff6900',
     fontWeight: '600',
   },
-  todayCircle: {
-    borderWidth: 2,
-    borderColor: '#9CA3AF',
-    borderStyle: 'solid',
-    backgroundColor: 'transparent',
-  },
-  todaySelectedCircle: {
-    borderWidth: 2,
-    borderColor: '#000000',
-    borderStyle: 'solid',
-    backgroundColor: 'transparent',
-  },
-  selectedCircle: {
-    borderWidth: 2,
-    borderColor: '#000000',
-    borderStyle: 'dashed',
-    backgroundColor: 'transparent',
-  },
-  loggedDayCircle: {
-    borderWidth: 1.5,
-    borderColor: '#ff6900',
-    borderStyle: 'solid',
-    backgroundColor: 'transparent',
-  },
-  todayLoggedCircle: {
-    borderWidth: 2,
-    borderColor: '#ed694a',
-    borderStyle: 'solid',
-    backgroundColor: 'transparent',
-  },
-}); 
+});

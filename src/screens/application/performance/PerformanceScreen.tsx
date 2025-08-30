@@ -372,7 +372,6 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
             </TouchableOpacity>
           ) : (
             <SwipeableLineGraphCard 
-              ref={performanceMetricsRef}
               cardData={filteredLiftData}
               onTriggerAddOptions={onTriggerAddOptions}
               hasNoLifts={hasNoLifts}
@@ -400,7 +399,7 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
                     percentage={Math.max(0, Math.min(100, averageAccuracy))}
                     progressColor={accuracyColor}
                     backgroundColor="#E5E5E5"
-                    strokeWidth={8}
+                    strokeWidth={10}
                     radius={40}
                   />
                   <Text style={styles.progressText} accessibilityLabel="Accuracy value">
@@ -424,7 +423,7 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
                     percentage={Math.max(0, Math.min(100, improvementValue))}
                     progressColor={improvementColor}
                     backgroundColor="#E5E5E5"
-                    strokeWidth={8}
+                    strokeWidth={10}
                     radius={40}
                   />
                   <Text style={styles.progressText} accessibilityLabel="Improvement value">
