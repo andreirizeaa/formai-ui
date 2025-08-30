@@ -30,7 +30,6 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
   const [selectedMovements, setSelectedMovements] = useState<string[]>([]);
   const [infoModalVisible, setInfoModalVisible] = useState(false);
   const [infoModalContent, setInfoModalContent] = useState<{ title: string; message: string }>({ title: '', message: '' });
-  
   // Tutorial target registration
   const { ref: performanceFiltersRef } = useTutorialTarget('performance_filters');
   const { ref: performanceMetricsRef } = useTutorialTarget('performance_metrics');
@@ -372,6 +371,7 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
             </TouchableOpacity>
           ) : (
             <SwipeableLineGraphCard 
+              ref={performanceMetricsRef}
               cardData={filteredLiftData}
               onTriggerAddOptions={onTriggerAddOptions}
               hasNoLifts={hasNoLifts}

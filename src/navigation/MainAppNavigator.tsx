@@ -237,7 +237,7 @@ function EditCurrentWeightScreenWrapper() {
     if (weightMatch) {
       const [, number, unit] = weightMatch;
       const weight = parseFloat(number);
-      const weightKg = unit === 'kg' ? Math.round(weight) : Math.round(weight * 0.453592);
+      const weightKg = unit === 'kg' ? weight : weight * 0.453592;
       updateWeight(weightKg);
     }
     navigation.goBack();

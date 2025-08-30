@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Asset } from 'expo-asset';
-import { removeUserId } from './src/services/storageService';
+import { removeUserId, setUserId } from './src/services/storageService';
 import { Layout } from './layout';
 import { PurchasesProvider } from './src/context/PurchasesContext';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -47,8 +47,6 @@ export default function App() {
         await Asset.loadAsync(assetsToLoad);
       } catch (error) {
         console.warn('Error preloading assets:', error);
-      } finally {
-        // removeUserId();
       }
     }
     preloadAssets();

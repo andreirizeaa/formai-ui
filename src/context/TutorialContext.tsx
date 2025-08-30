@@ -887,7 +887,8 @@ export function useTutorialTarget(targetId?: string) {
                    targetId === 'how_it_works_modal' ? 500 :
                    targetId === 'feedback_slideshow' ? 500 :
                    targetId === 'home_see_all_lifts' ? 500 :
-                   targetId === 'home_performance_icon' ? 500 : 100;
+                   targetId === 'home_performance_icon' ? 500 : 
+                   100;
       const timer = setTimeout(() => {
         try {
           // AGGRESSIVE SAFEGUARD: Never register add_button when not on step 0

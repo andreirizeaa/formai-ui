@@ -135,9 +135,6 @@ function ReferFriendOption({ icon, title, subtitle, onPress, onSharePress }: Ref
   );
 }
 
-// Memoize the ReferFriendOption component to prevent unnecessary re-renders
-const MemoizedReferFriendOption = React.memo(ReferFriendOption);
-
 export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onSharePress, onLogout }: SettingsScreenProps) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -222,9 +219,6 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onSharePr
     onUnitsPress();
   };
 
-  const handleReferFriendPress = () => {
-  };
-
   const handlePersonalDetailsPress = () => {
     onPersonalDetailsPress();
   };
@@ -244,7 +238,6 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onSharePr
         body: `Hello FormAI Support Team,
 
 
-
         
 
 
@@ -261,11 +254,6 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onSharePr
       showAlert('Error', 'Failed to open email composer. Please try again.');
     }
   };
-
-  // Memoize the share press handler to prevent unnecessary re-renders
-  const handleSharePress = useCallback(() => {
-    onSharePress();
-  }, [onSharePress]);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>

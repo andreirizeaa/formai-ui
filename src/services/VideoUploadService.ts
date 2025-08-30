@@ -93,6 +93,8 @@ export async function uploadLiftVideo(userId: string, fileUri: string): Promise<
     upsert: false,
   });
 
+  console.log('error', error);
+
   if (error) throw error;
 
   const { data } = supabase.storage.from('lifts').getPublicUrl(path);
