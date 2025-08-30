@@ -55,7 +55,6 @@ export function CircularProgressChart({
         fill="none"
         strokeDasharray={circumference}
         strokeDashoffset={strokeDashoffset}
-        strokeLinecap="round"
         transform={`rotate(-90 ${centerX} ${centerY})`}
       />
       {/* Inner circle */}
@@ -105,7 +104,6 @@ export function CircularProgressChartWithCustomInner({
         fill="none"
         strokeDasharray={circumference}
         strokeDashoffset={strokeDashoffset}
-        strokeLinecap="round"
         transform={`rotate(-90 ${centerX} ${centerY})`}
       />
       {/* Inner circle */}

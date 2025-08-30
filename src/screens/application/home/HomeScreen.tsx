@@ -8,17 +8,11 @@ import { deleteLift as deleteLiftApi } from '../../../services/liftService';
 import { LoadingLiftCard } from './LoadingLiftCard';
 import { LiftDataCard } from '../../../components/LiftDataCard';
 import { SwipeableCalendar } from '../../../components/ui/SwipeableCalendar';
+import { SwipeableAccuracyCard } from '../../../components/ui/SwipeableAccuracyCard';
 import { useUserDetails } from '../../../context/UserDetailsContext';
 import { useUserCheckIns } from '../../../context/UserCheckInsContext';
 import { useTutorial, useTutorialTarget } from '../../../context/TutorialContext';
-import { PanGestureHandler } from 'react-native-gesture-handler';
-import Animated, { 
-  useSharedValue, 
-  useAnimatedGestureHandler, 
-  useAnimatedStyle, 
-  withSpring, 
-  runOnJS 
-} from 'react-native-reanimated';
+
 import i18n from '../../../utils/i18n';
 import { CircularProgressChart } from '../../../components/icons/icons';
 import { X, ChevronRight } from 'lucide-react-native';
@@ -45,7 +39,6 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
   
   // Accuracy card swipe state
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
-  const translateX = useSharedValue(0);
   
   // ScrollView ref for gesture handling
   const scrollViewRef = useRef<ScrollView>(null);
@@ -158,51 +151,7 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
     setIsFirePopupVisible(false);
   };
 
-  const handleAccuracyCardSwipe = (direction: 'left' | 'right') => {
-    hapticFeedback.selection();
-    const newIndex = direction === 'left' 
-      ? currentCardIndex + 1  // Next card
-      : currentCardIndex - 1; // Previous card
-    
-    // Prevent swiping beyond bounds
-    if (newIndex < 0 || newIndex >= cardData.length) {
-      hapticFeedback.error();
-      return;
-    }
-    
-    setCurrentCardIndex(newIndex);
-  };
 
-  const handlePaginationDotPress = (index: number) => {
-    hapticFeedback.selection();
-    setCurrentCardIndex(index);
-  };
-
-  const accuracyCardGestureHandler = useAnimatedGestureHandler({
-    onStart: (_, context: any) => {
-      context.startX = translateX.value;
-    },
-    onActive: (event, context) => {
-      translateX.value = context.startX + event.translationX;
-    },
-    onEnd: (event) => {
-      const threshold = 50;
-      if (event.translationX > threshold) {
-        // Swipe right (positive translation) = go to previous card
-        runOnJS(handleAccuracyCardSwipe)('right');
-      } else if (event.translationX < -threshold) {
-        // Swipe left (negative translation) = go to next card
-        runOnJS(handleAccuracyCardSwipe)('left');
-      }
-      translateX.value = withSpring(0);
-    },
-  });
-
-  const accuracyCardAnimatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ translateX: translateX.value }],
-    };
-  });
 
   // Ensure we load lifts from backend on first mount
   useEffect(() => {
@@ -279,46 +228,11 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
         />
         
         {/* Swipeable Accuracy Card */}
-        <View style={styles.cardsContainer}>
-          <PanGestureHandler onGestureEvent={accuracyCardGestureHandler}>
-            <Animated.View style={accuracyCardAnimatedStyle}>
-              <View style={styles.accuracyCard}>
-                <View style={styles.accuracyCardContent}>
-                  <View style={styles.accuracyCardLeftSection}>
-                    <Text style={styles.accuracyCardNumber}>{cardData[currentCardIndex].percentage}%</Text>
-                    <Text style={styles.accuracyCardLabel}>{cardData[currentCardIndex].label}</Text>
-                  </View>
-                  <View style={styles.accuracyCardRightSection}>
-                    <CircularProgressChart
-                      width={120}
-                      height={120}
-                      percentage={cardData[currentCardIndex].percentage}
-                      progressColor="#000000"
-                      backgroundColor="#E5E5E5"
-                      strokeWidth={8}
-                      radius={48}
-                    />
-                  </View>
-                </View>
-              </View>
-            </Animated.View>
-          </PanGestureHandler>
-          
-          {/* Pagination Dots */}
-          <View style={styles.paginationContainer}>
-            {cardData.map((_, index) => (
-              <TouchableOpacity
-                key={index}
-                style={[
-                  styles.paginationDot,
-                  index === currentCardIndex ? styles.paginationDotActive : styles.paginationDotInactive
-                ]}
-                onPress={() => handlePaginationDotPress(index)}
-                activeOpacity={0.7}
-              />
-            ))}
-          </View>
-        </View>
+        <SwipeableAccuracyCard
+          cardData={cardData}
+          currentCardIndex={currentCardIndex}
+          onCardIndexChange={setCurrentCardIndex}
+        />
         
         {/* Spacer to push content to bottom */}
         <View style={styles.spacer} />
@@ -587,54 +501,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  accuracyCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    padding: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-    marginBottom: 24,
-    width: '100%',
-  },
-  accuracyCardContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    width: '100%',
-  },
-  accuracyCardLeftSection: {
-    alignItems: 'flex-start',
-    paddingLeft: 8,
-  },
-  accuracyCardNumber: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: '#000000',
-    fontFamily: 'SF Pro Display',
-  },
-  accuracyCardLabel: {
-    fontSize: 14,
-    fontWeight: '400',
-    color: '#8E8E93',
-    fontFamily: 'SF Pro Text',
-  },
-  accuracyCardRightSection: {
-    alignItems: 'center',
-  },
-  cardsContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-    width: '100%',
-  },
+
   fireCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 18,
@@ -757,24 +624,5 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#ffffff',
   },
-  paginationContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginBottom: 24,
-  },
-  paginationDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginTop: -10,
-    marginHorizontal: 4,
-  },
-  paginationDotActive: {
-    backgroundColor: '#000000',
-  },
-  paginationDotInactive: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#000000',
-  },
+
 }); 
