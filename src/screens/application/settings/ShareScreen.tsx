@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Share, Platform, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Share, Platform } from 'react-native';
+import showAlert from '../../../services/alertService';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
 import { hapticFeedback } from '../../../utils/haptic';
@@ -18,12 +19,12 @@ export function ShareScreen({ onBack }: ShareScreenProps) {
     try {
       hapticFeedback.success();
       await Clipboard.setString(promoCode);
-      Alert.alert(i18n.t('share.copied'), i18n.t('share.promoCodeCopied'));
+      showAlert(i18n.t('share.copied'), i18n.t('share.promoCodeCopied'));
       setIsCopied(true);
       setTimeout(() => setIsCopied(false), 2000); // Reset copied state after 2 seconds
     } catch (error) {
       console.error('Failed to copy to clipboard:', error);
-      Alert.alert(i18n.t('share.error'), i18n.t('share.failedToCopy'));
+      showAlert(i18n.t('share.error'), i18n.t('share.failedToCopy'));
     }
   };
 
@@ -38,7 +39,7 @@ export function ShareScreen({ onBack }: ShareScreenProps) {
       });
     } catch (error) {
       console.error('Failed to share:', error);
-      Alert.alert(i18n.t('share.error'), i18n.t('share.failedToShare'));
+      showAlert(i18n.t('share.error'), i18n.t('share.failedToShare'));
     }
   };
 

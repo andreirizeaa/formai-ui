@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, Alert, ImageBackground, ScrollView, Animated, Image } from 'react-native';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, ImageBackground, ScrollView, Animated, Image } from 'react-native';
+import showAlert from '../../../services/alertService';
 import * as MailComposer from 'expo-mail-composer';
 import Constants from 'expo-constants';
 import { User, Languages, Ruler, FileText, ShieldCheck, MailPlus, UserMinus, LogOut } from 'lucide-react-native';
@@ -185,7 +186,10 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onSharePr
       setShowDeleteModal(false);
       if (onLogout) onLogout();
     } catch (e: any) {
-      Alert.alert('Delete failed', e?.message || 'Please try again later');
+      showAlert('Delete failed', 'Please try again later', () => {
+        hapticFeedback.selection();
+        handleCloseDeleteModal();
+      });
     } finally {
       setIsDeleting(false);
     }
@@ -230,11 +234,7 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onSharePr
       const isAvailable = await MailComposer.isAvailableAsync();
       
       if (!isAvailable) {
-        Alert.alert(
-          'Email Not Available',
-          'No email app is available on this device.',
-          [{ text: 'OK' }]
-        );
+        showAlert('Email Not Available', 'No email app is available on this device.');
         return;
       }
 
@@ -258,11 +258,7 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onSharePr
       });
     } catch (error) {
       console.error('Error opening email composer:', error);
-      Alert.alert(
-        'Error',
-        'Failed to open email composer. Please try again.',
-        [{ text: 'OK' }]
-      );
+      showAlert('Error', 'Failed to open email composer. Please try again.');
     }
   };
 

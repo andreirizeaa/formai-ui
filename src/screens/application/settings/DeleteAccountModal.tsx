@@ -29,11 +29,14 @@ export function DeleteAccountModal({ isVisible, onClose, onConfirm }: DeleteAcco
   };
 
   const handleDelete = async () => {
-    hapticFeedback.success();
     setIsDeleting(true);
     try {
       await onConfirm();
-    } finally {
+      hapticFeedback.success();
+    } catch {
+      hapticFeedback.error();
+    } 
+    finally {
       setIsDeleting(false);
     }
   };

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import i18n from '../../../utils/i18n';
@@ -15,13 +15,13 @@ interface UnitsDetailsScreenProps {
 export function UnitsDetailsScreen({ onBack }: UnitsDetailsScreenProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
-  const { userDetails, updateUnitSystem } = useUserDetails();
-  const selectedUnit = userDetails?.unitSystem ?? 'metric';
+  const { userDetails } = useUserDetails();
+  const [selectedUnit, setSelectedUnit] = React.useState(userDetails?.unitSystem ?? 'metric');
   const [isSaving, setIsSaving] = React.useState(false);
 
   const handleUnitSelect = (unitSystem: 'metric' | 'imperial') => {
     hapticFeedback.selection();
-    updateUnitSystem(unitSystem);
+    setSelectedUnit(unitSystem);
   };
 
   const handleSave = async () => {
@@ -32,12 +32,16 @@ export function UnitsDetailsScreen({ onBack }: UnitsDetailsScreenProps) {
       const unit = (selectedUnit as 'metric' | 'imperial') ?? 'metric';
       await editUserDetails({ unit_system: unit });
       hapticFeedback.success();
+      onBack();
     } catch (e) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to update unit system', e);
+      hapticFeedback.error();
+      setSelectedUnit(userDetails?.unitSystem ?? 'metric');
+      Alert.alert('Unit system update failed', 'Please try again later', [{ text: 'Ok', onPress: () => {
+        hapticFeedback.selection();
+        onBack();
+      } }]);
     }
     setIsSaving(false);
-    onBack();
   };
 
   return (

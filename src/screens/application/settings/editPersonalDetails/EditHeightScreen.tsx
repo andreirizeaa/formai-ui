@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, ActivityIndicator, Alert } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import i18n from '../../../../utils/i18n';
 import { hapticFeedback } from '../../../../utils/haptic';
@@ -29,6 +29,10 @@ export function EditHeightScreen({ onBack, currentValue, onSave }: EditHeightScr
 
   // Parse current value to determine initial state
   React.useEffect(() => {
+    updateValues();
+  }, [currentValue, isMetric]);
+
+  const updateValues = () => {
     if (currentValue) {
       // Parse the current height string to get the metric value
       const heightCm = parseHeightToMetric(currentValue);
@@ -42,7 +46,7 @@ export function EditHeightScreen({ onBack, currentValue, onSave }: EditHeightScr
         setSelectedInches(inches);
       }
     }
-  }, [currentValue, isMetric]);
+  }
 
   const handleHeightChange = (height: number) => {
     setSelectedHeight(height);
@@ -75,16 +79,20 @@ export function EditHeightScreen({ onBack, currentValue, onSave }: EditHeightScr
     
     try {
       await editUserDetails({ height: heightCm });
-      updateHeight(heightCm);
       await refetchUserDetails();
       hapticFeedback.success();
+      onSave(displayValue);
     } catch (e) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to update height', e);
+      hapticFeedback.error();
+      updateValues();
+      Alert.alert('Height edit failed', 'Please try again later', [{ text: 'Ok', onPress: () => {
+        hapticFeedback.selection();
+        onBack();
+      } }]);
+
     }
     
     setIsSaving(false);
-    onSave(displayValue);
   };
 
   // Generate height options
