@@ -42,6 +42,7 @@ export const gymMovements = [
   'Romanian Deadlift (Barbell or Dumbbell)',
   'Stiff-Leg Deadlift',
   'Good Morning',
+  'Push Ups'
 ] as const;
 
 export type GymMovement = typeof gymMovements[number]; 

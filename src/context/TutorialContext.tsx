@@ -23,7 +23,7 @@ declare global {
   var addDummyLift: (() => void) | undefined;
   var openLiftDetails: (() => void) | undefined;
   var showFirstLiftDetails: (() => void) | undefined;
-  var openHowItWorksModal: (() => void) | undefined;
+
   var openFeedbackSlideshow: (() => void) | undefined;
   var navigateToIssues: (() => void) | undefined;
   var navigateToTips: (() => void) | undefined;
@@ -36,6 +36,9 @@ declare global {
   var completeTutorial: (() => void) | undefined;
   var completeTutorialAndGoHome: (() => void) | undefined;
   var clearTemporaryLifts: (() => void) | undefined;
+  var navigateToHowItWorksStep: (() => void) | undefined;
+  var navigateToFeedbackPage: (() => void) | undefined;
+  var onFeedbackPageReady: (() => void) | undefined;
 }
 
 interface TutorialRect {
@@ -253,7 +256,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       onNext: () => {
         try {
           // Open the feedback slideshow as if user clicked on it
-          if (global.openHowItWorksModal) global.openHowItWorksModal();
+          if (global.openFeedbackSlideshow) global.openFeedbackSlideshow();
         } catch (error) {
           console.warn('Tutorial step error:', error);
         }
@@ -276,19 +279,15 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       tooltipPlacement: 'bottom',
       onNext: () => {
         try {
-          // Navigate directly to the feedback slideshow and set the image as reference
-          // Add a small delay to ensure the navigation completes before auto-advancing
-          setTimeout(() => {
-            if (global.openFeedbackSlideshow) global.openFeedbackSlideshow();
-          }, 100);
+          if (global.navigateToFeedbackPage) global.navigateToFeedbackPage();
         } catch (error) {
           console.warn('Tutorial step error:', error);
         }
       },
       onPrev: () => {
         try {
-          // Go back to lift details
-          if (global.openLiftDetails) global.openLiftDetails();
+          // Go back to lift details - this will be handled by the component's navigation
+          // The tutorial will go back to the previous step
         } catch (error) {
           console.warn('Tutorial step error:', error);
         }
@@ -311,8 +310,9 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       },
       onPrev: () => {
         try {
-          // Go back to how it works modal
-          if (global.openHowItWorksModal) global.openHowItWorksModal();
+          // Go back to how it works step within the feedback slideshow
+          // This will be handled by the component's internal state
+          if (global.navigateToHowItWorksStep) global.navigateToHowItWorksStep();
         } catch (error) {
           console.warn('Tutorial step error:', error);
         }
@@ -665,7 +665,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       
       // Delay for feedback slideshow step
       if (step.id === 'feedback_slideshow') {
-        await new Promise(resolve => setTimeout(resolve, 300));
+        await new Promise(resolve => setTimeout(resolve, 800));
       }
       
       // Delay for feedback issues step
@@ -730,7 +730,8 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       
       // Add a delay to ensure any UI changes from onNext are complete
       const isModalOpeningStep = step?.id === 'add_button' || step?.id === 'add_options_upload';
-      const delay = isModalOpeningStep ? 500 : 100;
+      const isFeedbackStep = step?.id === 'feedback_slideshow' || step?.id === 'feedback_issues' || step?.id === 'feedback_tips';
+      const delay = isModalOpeningStep ? 300 : isFeedbackStep ? 300 : 100;
       
       setTimeout(() => {
         const nextIndex = Math.min(currentStepIndex + 1, steps.length - 1);
@@ -746,6 +747,8 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       setIsTransitioning(false);
     }
   }, [currentStepIndex, steps]);
+
+
 
   const prev = useCallback(() => {
     try {
@@ -883,7 +886,7 @@ export function useTutorialTarget(targetId?: string) {
       const delay = targetId === 'lift_details_form_graph' ? 500 : 
                    targetId === 'how_it_works_modal' ? 500 :
                    targetId === 'feedback_slideshow' ? 500 :
-                   targetId === 'home_see_all_lifts' ? 700 :
+                   targetId === 'home_see_all_lifts' ? 500 :
                    targetId === 'home_performance_icon' ? 500 : 100;
       const timer = setTimeout(() => {
         try {

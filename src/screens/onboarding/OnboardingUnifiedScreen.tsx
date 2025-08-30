@@ -775,17 +775,20 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                     labels: ['3 Days', '', '14 Days', '', '30 Days'],
                     datasets: [
                       {
+                        key: 'main-dataset',
                         data: [20, 25, 30, 58, 85],
                         color: () => '#000000',
                         strokeWidth: 3,
                       },
                       {
+                        key: 'transparent-start',
                         data: [10],
                         withDots: false,
                         color: () => 'transparent',
                         strokeWidth: 0,
                       },
                       {
+                        key: 'transparent-end',
                         data: [81],
                         withDots: false,
                         color: () => 'transparent',
@@ -832,6 +835,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                 const startX = (width - lineWidth) / 2; // center horizontally
                 return (
                   <Line
+                    key="decorator-line"
                     x1={startX}
                     y1={height - 34}   // increased bottom margin
                     x2={startX + lineWidth}
@@ -845,7 +849,10 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                 // Check if this is the last data point (index 4 for the 5th data point)
                 if (index === 4) {
                   return (
-                    <View style={[styles.customTrophyDot, { left: x - 18, top: y - 18 }]}>
+                    <View 
+                      key={`trophy-dot-${index}`}
+                      style={[styles.customTrophyDot, { left: x - 18, top: y - 18 }]}
+                    >
                       <View style={styles.trophyDotBackground}>
                         <Trophy size={20} color="#FFFFFF" />
                       </View>
@@ -1607,7 +1614,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textAlign: 'center',
     marginBottom: 16,
-    lineHeight: 34,
+    lineHeight: 44,
   },
   privacyText: {
     fontSize: 16,

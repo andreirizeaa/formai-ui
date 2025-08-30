@@ -5,6 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import { X, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, CircleCheck, CircleX } from 'lucide-react-native';
 import { hapticFeedback } from '../../../utils/haptic';
 import { useTutorialTarget } from '../../../context/TutorialContext';
+import i18n from '../../../utils/i18n';
 
 interface FeedbackSlideshowProps {
   onClose: () => void;
@@ -20,16 +21,20 @@ interface FeedbackSlideshowProps {
   };
 }
 
+type ScreenMode = 'howItWorks' | 'feedback';
+
 export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, liftData }: FeedbackSlideshowProps) {
   const [currentFeedbackIndex, setCurrentFeedbackIndex] = useState(0);
   const [currentPageType, setCurrentPageType] = useState<'image' | 'flaws' | 'improvement'>('image');
   const [isBottomExpanded, setIsBottomExpanded] = useState(false);
+  const [screenMode, setScreenMode] = useState<ScreenMode>('howItWorks');
   const navigation = useNavigation();
   
   // Tutorial targets for the feedback slideshow
   const { ref: feedbackSlideshowRef } = useTutorialTarget('feedback_slideshow');
   const { ref: issuesRef } = useTutorialTarget('feedback_issues');
   const { ref: tipsRef } = useTutorialTarget('feedback_tips');
+  const { ref: howItWorksModalRef } = useTutorialTarget('how_it_works_modal');
 
   const handleClose = () => {
     hapticFeedback.selection();
@@ -40,6 +45,16 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, liftData }
     } else {
       onClose();
     }
+  };
+
+  const handleViewFeedback = () => {
+    hapticFeedback.selection();
+    setScreenMode('feedback');
+  };
+
+  const handleBackToHowItWorks = () => {
+    hapticFeedback.selection();
+    setScreenMode('howItWorks');
   };
 
   const handleLeftChevron = () => {
@@ -78,23 +93,44 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, liftData }
       }
     };
     
+    global.navigateToHowItWorksStep = () => {
+      setScreenMode('howItWorks');
+    };
+    
+    global.navigateToFeedbackPage = () => {
+      setScreenMode('feedback');
+      // Notify tutorial that the component is ready to continue
+      // Use a longer delay to ensure the component is fully rendered
+      setTimeout(() => {
+        if (global.onFeedbackPageReady) global.onFeedbackPageReady();
+      }, 800);
+    };
+    
     global.navigateToHome = () => {
-      // Navigate back to the main tabs by going back multiple times
-      // First go back from feedback slideshow to how it works
-      navigation.goBack();
-      // Then go back from how it works to lift details
-      setTimeout(() => navigation.goBack(), 100);
-      // Finally go back from lift details to main tabs
-      setTimeout(() => navigation.goBack(), 200);
+      // Navigate to home screen for the tutorial
+      // First close the current modal, then navigate to home
+      if (onClose) {
+        onClose();
+        // Add a small delay to ensure the modal closes before navigating
+        setTimeout(() => {
+          // Use the global function to navigate to home tab
+          if ((global as any).navigateToHome) {
+            (global as any).navigateToHome();
+          }
+        }, 100);
+      }
     };
     
     return () => {
       delete global.navigateToIssues;
       delete global.navigateToTips;
       delete global.navigateToImage;
+      delete global.navigateToHowItWorksStep;
+      delete global.navigateToFeedbackPage;
       delete global.navigateToHome;
+      delete global.onFeedbackPageReady;
     };
-  }, [currentPageType]);
+  }, [currentPageType, onClose]);
 
   const handleExpandCollapse = () => {
     hapticFeedback.selection();
@@ -234,6 +270,89 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, liftData }
 
   const feedbackItem = getCurrentFeedbackItem();
 
+  // Render How It Works screen
+  if (screenMode === 'howItWorks') {
+    return (
+      <View style={styles.container}>
+        <SafeAreaView style={styles.safeArea}>
+          {/* Header */}
+          <View style={styles.header}>
+            <Text style={styles.title}>{i18n.t('feedback.howItWorks')}</Text>
+            <TouchableOpacity 
+              style={styles.closeButton} 
+              onPress={handleClose}
+            >
+              <X size={24} color="#000000" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Content Area */}
+          <View style={styles.content}>
+            <View style={styles.howItWorksContainer}>
+              <View style={styles.howItWorksItems} ref={howItWorksModalRef}>
+                <View style={styles.howItWorksItem}>
+                  <View style={styles.howItWorksIcon}>
+                    <Text style={styles.howItWorksNumber}>1</Text>
+                  </View>
+                  <View style={styles.howItWorksContent}>
+                    <Text style={styles.howItWorksText}>
+                      {i18n.t('feedback.step1')}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.howItWorksItem}>
+                  <View style={styles.howItWorksIcon}>
+                    <Text style={styles.howItWorksNumber}>2</Text>
+                  </View>
+                  <View style={styles.howItWorksContent}>
+                    <Text style={styles.howItWorksText}>
+                      {i18n.t('feedback.step2')}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.howItWorksItem}>
+                  <View style={styles.howItWorksIcon}>
+                    <Text style={styles.howItWorksNumber}>3</Text>
+                  </View>
+                  <View style={styles.howItWorksContent}>
+                    <Text style={styles.howItWorksText}>
+                      {i18n.t('feedback.step3')}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.howItWorksItem}>
+                  <View style={styles.howItWorksIcon}>
+                    <Text style={styles.howItWorksNumber}>4</Text>
+                  </View>
+                  <View style={styles.howItWorksContent}>
+                    <Text style={styles.howItWorksText}>
+                      {i18n.t('feedback.step4')}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            </View>
+          </View>
+
+          {/* Bottom Button */}
+          <View style={styles.bottomContainer}>
+            <TouchableOpacity 
+              style={styles.viewFeedbackButton}
+              onPress={handleViewFeedback}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.viewFeedbackButtonText}>{i18n.t('feedback.viewFeedback')}</Text>
+            </TouchableOpacity>
+          </View>
+        </SafeAreaView>
+      </View>
+    );
+  }
+
+  // Render Feedback Slideshow screen
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
@@ -449,6 +568,65 @@ const styles = StyleSheet.create({
     color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
     lineHeight: 26,
+  },
+  // How It Works styles
+  howItWorksContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  howItWorksItems: {
+    width: '100%',
+  },
+  howItWorksItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 44,
+  },
+  howItWorksIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#000000',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 15,
+  },
+  howItWorksNumber: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
+  },
+  howItWorksContent: {
+    flex: 1,
+  },
+  howItWorksText: {
+    fontSize: 18,
+    fontWeight: '400',
+    color: '#000000',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
+    lineHeight: 24,
+  },
+  bottomContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 30,
+  },
+  viewFeedbackButton: {
+    backgroundColor: '#000000',
+    borderRadius: 28,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+  },
+  viewFeedbackButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#FFFFFF',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
   },
   content: {
     flex: 1,
