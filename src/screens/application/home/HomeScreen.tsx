@@ -266,8 +266,6 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
                     key={lift.id} 
                     lift={lift} 
                     onPress={() => handleLiftPress(lift)}
-                    onDelete={handleDeleteLift}
-                    scrollViewRef={scrollViewRef}
                   />
                 );
               })
