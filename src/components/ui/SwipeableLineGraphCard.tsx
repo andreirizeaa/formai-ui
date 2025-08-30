@@ -1,17 +1,21 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, Dimensions, ScrollView, ViewStyle } from 'react-native';
-import { PanGestureHandler } from 'react-native-gesture-handler';
-import Animated, { 
-  useSharedValue, 
-  useAnimatedGestureHandler, 
-  useAnimatedStyle, 
-  withSpring, 
-  runOnJS 
-} from 'react-native-reanimated';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, Dimensions, ScrollView } from 'react-native';
+import Carousel from 'react-native-reanimated-carousel';
 import { LineChart } from 'react-native-chart-kit';
 import { hapticFeedback } from '../../utils/haptic';
 import { formatWeightForDisplay } from '../../utils/unitConversions';
 import { CircleQuestionMark } from 'lucide-react-native';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const CARD_WIDTH = SCREEN_WIDTH * 0.9;
+const CARD_HEIGHT = 310; // 🔑 taller by 10px
+
+type Lift = {
+  liftType: string;
+  weightValue: number;
+  liftDate: string; // "DD-MM-YYYY"
+  analysis: { accuracy: number };
+};
 
 interface ChartData {
   labels: string[];
@@ -22,20 +26,19 @@ interface ChartData {
   }>;
 }
 
-interface CardData {
+interface ProcessedCardData {
   title: string;
   subtitle: string;
   chartData: ChartData;
 }
 
 interface SwipeableLineGraphCardProps {
-  cardData: any[]; // Raw lift data
+  cardData: Lift[];
   onTriggerAddOptions?: () => void;
   hasNoLifts?: boolean;
   chartType?: 'accuracyPerWeight' | 'accuracyOverTime';
   unitPreference?: 'metric' | 'imperial';
   onInfoPress?: () => void;
-  ref?: any;
 }
 
 export function SwipeableLineGraphCard({ 
@@ -44,39 +47,30 @@ export function SwipeableLineGraphCard({
   hasNoLifts = false, 
   chartType = 'accuracyPerWeight',
   unitPreference = 'metric',
-  onInfoPress,
-  ref
+  onInfoPress
 }: SwipeableLineGraphCardProps) {
-  const { width } = Dimensions.get('window');
-  
-  // Current card index state
-  const [currentCardIndex, setCurrentCardIndex] = useState(0);
-  const translateX = useSharedValue(0);
   const scrollViewRef = useRef<ScrollView>(null);
+  const [currentCardIndex, setCurrentCardIndex] = useState(0);
 
-  // Calculate chart data based on raw lift data
-  const processedCardData = useMemo(() => {
+  // Build processed cards
+  const processedCardData: ProcessedCardData[] = useMemo(() => {
     if (!cardData || cardData.length === 0) return [];
 
-    // Get all unique lift types that have data
     const uniqueLiftTypes = [...new Set(cardData.map(lift => lift.liftType))];
 
     if (chartType === 'accuracyPerWeight') {
-      // Generate card data for accuracy per weight
       return uniqueLiftTypes.map((liftType) => {
-        // Get all lifts of this type
         const liftsOfType = cardData.filter(lift => lift.liftType === liftType);
-        
-        // Sort by weight (lowest to highest)
         const sortedLifts = liftsOfType.sort((a, b) => a.weightValue - b.weightValue);
-        
-        // Create chart data - show all data points with labels
-        const chartData = {
-          labels: sortedLifts.map(lift => formatWeightForDisplay(lift.weightValue, unitPreference)),
+
+        const chartData: ChartData = {
+          labels: sortedLifts.map(lift =>
+            formatWeightForDisplay(lift.weightValue, unitPreference)
+          ),
           datasets: [
             {
               data: sortedLifts.map(lift => lift.analysis.accuracy),
-              color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+              color: (opacity = 1) => `rgba(0,0,0,${opacity})`,
               strokeWidth: 2,
             },
           ],
@@ -85,74 +79,60 @@ export function SwipeableLineGraphCard({
         return {
           title: 'Accuracy per weight',
           subtitle: liftType,
-          chartData
+          chartData,
         };
       });
     } else {
-      // Generate card data for accuracy over time
       return uniqueLiftTypes.map((liftType) => {
-        // Get all lifts of this type
         const liftsOfType = cardData.filter(lift => lift.liftType === liftType);
-        
-        // Group lifts by date and average accuracy for each date
-        const liftsByDate = liftsOfType.reduce((acc, lift) => {
+
+        const liftsByDate = liftsOfType.reduce((acc: Record<string, Lift[]>, lift: Lift) => {
           const date = lift.liftDate;
-          if (!acc[date]) {
-            acc[date] = [];
-          }
+          if (!acc[date]) acc[date] = [];
           acc[date].push(lift);
           return acc;
-        }, {} as Record<string, typeof liftsOfType>);
+        }, {});
 
-        // Calculate average accuracy for each date and sort by date
         const averagedLifts = Object.entries(liftsByDate)
           .map(([date, lifts]) => {
-            if (!Array.isArray(lifts) || lifts.length === 0) {
-              return { date, averageAccuracy: 0 }
-            }
-            return {
-              date,
-              averageAccuracy: (lifts as Array<{ analysis: { accuracy: number } }>).reduce(
-                (sum, lift) => sum + (typeof lift.analysis?.accuracy === 'number' ? lift.analysis.accuracy : 0),
+            const avg =
+              lifts.reduce(
+                (sum, lift) =>
+                  sum + (typeof lift.analysis?.accuracy === 'number'
+                    ? lift.analysis.accuracy
+                    : 0),
                 0
-              ) / lifts.length
-            }
+              ) / lifts.length;
+            return { date, averageAccuracy: avg };
           })
           .sort((a, b) => {
-            // Parse DD-MM-YYYY format correctly
             const parseDate = (dateStr: string) => {
               const [day, month, year] = dateStr.split('-').map(Number);
-              return new Date(year, month - 1, day); // month is 0-indexed in Date constructor
+              return new Date(year, month - 1, day);
             };
             return parseDate(a.date).getTime() - parseDate(b.date).getTime();
           });
-        
-        // Format date for display
+
         const formatDate = (dateString: string) => {
-          // Parse DD-MM-YYYY format correctly
           const [day, month, year] = dateString.split('-').map(Number);
-          const date = new Date(year, month - 1, day); // month is 0-indexed in Date constructor
-          return date.toLocaleDateString('en-US', { 
+          const d = new Date(year, month - 1, day);
+          return d.toLocaleDateString('en-US', {
             day: 'numeric',
             month: 'short',
-            year: 'numeric'
+            year: 'numeric',
           });
         };
-        
-        // Create chart data - show only first and last labels
-        const formattedLabels = averagedLifts.map((lift, index) => {
-          if (index === 0 || index === averagedLifts.length - 1) {
-            return formatDate(lift.date);
-          }
-          return ''; // Empty string for intermediate labels
-        });
-        
-        const chartData = {
+
+        const formattedLabels = averagedLifts.map((lift, idx) =>
+          idx === 0 || idx === averagedLifts.length - 1 ? formatDate(lift.date) : ''
+        );
+
+        const chartData: ChartData = {
           labels: formattedLabels,
           datasets: [
             {
               data: averagedLifts.map(lift => lift.averageAccuracy),
-              color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+              color: (opacity = 1) => `rgba(0,0,0,${opacity})`,
               strokeWidth: 2,
             },
           ],
@@ -161,117 +141,29 @@ export function SwipeableLineGraphCard({
         return {
           title: 'Accuracy over time',
           subtitle: liftType,
-          chartData
+          chartData,
         };
       });
     }
   }, [cardData, chartType, unitPreference]);
 
-  // Calculate dynamic chart width based on data points
   const getChartWidth = (dataPoints: number) => {
-    const minWidth = width - 40; // Reduced minimum width
-    const pointSpacing = 80; // Increased space between each data point
-    const calculatedWidth = Math.max(minWidth, dataPoints * pointSpacing);
-    return calculatedWidth;
+    const minWidth = CARD_WIDTH - 40;
+    const pointSpacing = 80;
+    return Math.max(minWidth, dataPoints * pointSpacing);
   };
 
-  // Reset scroll progress when card changes
   useEffect(() => {
     if (scrollViewRef.current) {
       scrollViewRef.current.scrollTo({ x: 0, animated: true });
     }
   }, [currentCardIndex]);
 
-  // Reset shared values when component mounts or data changes
-  useEffect(() => {
-    translateX.value = 0;
-  }, [processedCardData]);
-
-  // Ensure cards are properly positioned on component mount
-  useEffect(() => {
-    // Small delay to ensure component is fully mounted
-    const timer = setTimeout(() => {
-      translateX.value = withSpring(0);
-    }, 100);
-    
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Reset current card index when card data changes
-  useEffect(() => {
-    if (currentCardIndex >= processedCardData.length) {
-      setCurrentCardIndex(0);
-    }
-    // Reset shared value when card index changes
-    translateX.value = withSpring(0);
-  }, [processedCardData.length, currentCardIndex]);
-
-  const handleCardSwipe = (direction: 'left' | 'right') => {
-    hapticFeedback.selection();
-    const newIndex = direction === 'left' 
-      ? currentCardIndex + 1  // Next card
-      : currentCardIndex - 1; // Previous card
-    
-    // Prevent swiping beyond bounds
-    if (newIndex < 0 || newIndex >= processedCardData.length) {
-      hapticFeedback.error();
-      return;
-    }
-    
-    setCurrentCardIndex(newIndex);
-  };
-
-  const handlePaginationDotPress = (index: number) => {
-    hapticFeedback.selection();
-    setCurrentCardIndex(index);
-  };
-
-  const cardGestureHandler = useAnimatedGestureHandler({
-    onStart: (_, context: any) => {
-      context.startX = translateX.value;
-    },
-    onActive: (event, context) => {
-      // Only respond to horizontal gestures (ignore vertical scrolling)
-      const horizontalThreshold = 10; // Minimum horizontal movement to start gesture
-      const verticalThreshold = 20; // Maximum vertical movement allowed
-      
-      // If vertical movement is greater than horizontal, ignore the gesture
-      if (Math.abs(event.translationY) > Math.abs(event.translationX) + verticalThreshold) {
-        return;
-      }
-      
-      // Only start gesture if horizontal movement exceeds threshold
-      if (Math.abs(event.translationX) < horizontalThreshold) {
-        return;
-      }
-      
-      translateX.value = context.startX + event.translationX;
-    },
-    onEnd: (event) => {
-      const threshold = 50;
-      if (event.translationX > threshold) {
-        // Swipe right (positive translation) = go to previous card
-        runOnJS(handleCardSwipe)('right');
-      } else if (event.translationX < -threshold) {
-        // Swipe left (negative translation) = go to next card
-        runOnJS(handleCardSwipe)('left');
-      }
-      translateX.value = withSpring(0);
-    },
-  });
-
-  const cardAnimatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ translateX: translateX.value }],
-    };
-  });
-
   return (
     <View style={styles.cardsContainer}>
       {hasNoLifts ? (
-        // Simple clickable card when no lifts
-        <TouchableOpacity 
-          style={styles.performanceCard}
+        <TouchableOpacity
+          style={[styles.performanceCard, { width: CARD_WIDTH }]}
           onPress={() => {
             hapticFeedback.selection();
             onTriggerAddOptions?.();
@@ -280,100 +172,101 @@ export function SwipeableLineGraphCard({
         >
           <View style={styles.performanceCardContent}>
             <View style={styles.performanceCardHeader}>
-              <Text style={styles.performanceCardLabel}>
-                No lifts found
-              </Text>
+              <Text style={styles.performanceCardLabel}>No lifts found</Text>
             </View>
           </View>
         </TouchableOpacity>
       ) : (
-        // Swipeable cards when there are lifts
         <>
-          <PanGestureHandler 
-            onGestureEvent={cardGestureHandler}
-            shouldCancelWhenOutside={true}
-            activeOffsetX={[-10, 10]}
-            failOffsetY={[-5, 5]}
-          >
-            <Animated.View style={cardAnimatedStyle} ref={ref}>
-              <View style={styles.performanceCard}>
-                <View style={styles.performanceCardContent}>
-                  <View style={styles.performanceCardHeader}>
-                  <View style={styles.headerLeft}>
-                    <View style={styles.titleRow}>
-                      <Text style={styles.performanceCardLabel}>
-                        {processedCardData[currentCardIndex]?.title || 'No data'}
-                      </Text>
-                      <TouchableOpacity
-                        onPress={() => {
-                          hapticFeedback.selection();
-                          onInfoPress?.();
-                        }}
-                        activeOpacity={0.7}
-                        accessibilityRole="button"
-                        accessibilityLabel="Show card information"
-                        style={styles.titleIcon}
-                      >
-                        <CircleQuestionMark width={20} height={20} color="#000000" />
-                      </TouchableOpacity>
+          <Carousel
+            loop={false}
+            width={SCREEN_WIDTH}
+            height={CARD_HEIGHT} // 🔑 taller
+            data={processedCardData}
+            renderItem={({ item }) => (
+              <View style={styles.page}>
+                <View style={[styles.performanceCard, { width: CARD_WIDTH }]}>
+                  <View style={styles.performanceCardContent}>
+                    <View style={styles.performanceCardHeader}>
+                      <View style={styles.headerLeft}>
+                        <View style={styles.titleRow}>
+                          <Text style={styles.performanceCardLabel}>
+                            {item.title}
+                          </Text>
+                          <TouchableOpacity
+                            onPress={() => {
+                              onInfoPress?.();
+                            }}
+                            activeOpacity={0.7}
+                            style={styles.titleIcon}
+                          >
+                            <CircleQuestionMark width={20} height={20} color="#000" />
+                          </TouchableOpacity>
+                        </View>
+                        <Text style={styles.performanceCardSubtitle}>
+                          {item.subtitle}
+                        </Text>
+                      </View>
                     </View>
-                    <Text style={styles.performanceCardSubtitle}>
-                      {processedCardData[currentCardIndex]?.subtitle || ''}
-                    </Text>
+
+                    {item.chartData &&
+                      item.chartData.datasets[0].data.length > 0 && (
+                        <View style={styles.chartContainer}>
+                          <ScrollView
+                            ref={scrollViewRef}
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                          >
+                            <LineChart
+                              data={item.chartData}
+                              width={getChartWidth(item.chartData.labels.length)}
+                              height={180}
+                              chartConfig={{
+                                fillShadowGradientFrom: '#4f39f6',
+                                fillShadowGradientTo: '#ffffff',
+                                backgroundColor: '#FFFFFF',
+                                backgroundGradientFrom: '#FFFFFF',
+                                backgroundGradientTo: '#FFFFFF',
+                                decimalPlaces: 0,
+                                color: (opacity = 1) => `rgba(0,0,0,${opacity})`,
+                                labelColor: (opacity = 1) => `rgba(0,0,0,${opacity})`,
+                                propsForDots: {
+                                  r: '2',
+                                  strokeWidth: '2',
+                                  stroke: '#000',
+                                  fill: '#000',
+                                },
+                                formatXLabel: (val) => val,
+                                formatYLabel: (val) => `${val}%`,
+                              }}
+                              bezier
+                              style={styles.chart}
+                              withDots
+                              withShadow
+                              withInnerLines
+                              withOuterLines={false}
+                              withVerticalLines={false}
+                              withHorizontalLines
+                              yAxisSuffix="%"
+                            />
+                          </ScrollView>
+                        </View>
+                      )}
                   </View>
                 </View>
-                  
-                  {/* Chart */}
-                  {processedCardData[currentCardIndex]?.chartData && processedCardData[currentCardIndex].chartData.datasets[0].data.length > 0 && (
-                    <View style={styles.chartContainer}>
-                      <ScrollView
-                        ref={scrollViewRef}
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                      >
-                        <LineChart
-                          data={processedCardData[currentCardIndex].chartData}
-                          width={getChartWidth(processedCardData[currentCardIndex].chartData.labels.length)}
-                          height={180}
-                          chartConfig={{
-                            fillShadowGradientFrom: '#4f39f6',
-                            fillShadowGradientTo: '#ffffff',
-                            backgroundColor: '#FFFFFF',
-                            backgroundGradientFrom: '#FFFFFF',
-                            backgroundGradientTo: '#FFFFFF',
-                            decimalPlaces: 0,
-                            color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-                            labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-                            style: {
-                              borderRadius: 16,
-                            },
-                            propsForDots: {
-                              r: '2',
-                              strokeWidth: '2',
-                              stroke: '#000000',
-                              fill: '#000000',
-                            },
-                            formatXLabel: (value) => value,
-                            formatYLabel: (value) => `${value}%`,
-                          }}
-                          bezier
-                          style={styles.chart}
-                          withDots={true}
-                          withShadow={true}
-                          withInnerLines={true}
-                          withOuterLines={false}
-                          withVerticalLines={false}
-                          withHorizontalLines={true}
-                          yAxisSuffix="%"
-                        />
-                      </ScrollView>
-                    </View>
-                  )}
-                </View>
               </View>
-            </Animated.View>
-          </PanGestureHandler>
-          
+            )}
+            onSnapToItem={(index) => {
+              if (index !== currentCardIndex) {
+                setCurrentCardIndex(index);
+              }
+            }}
+            defaultIndex={0}
+            pagingEnabled
+            snapEnabled
+            style={{ backgroundColor: 'transparent' }}
+          />
+
           {/* Pagination Dots */}
           <View style={styles.paginationContainer}>
             {processedCardData.map((_, index) => (
@@ -381,9 +274,10 @@ export function SwipeableLineGraphCard({
                 key={index}
                 style={[
                   styles.paginationDot,
-                  index === currentCardIndex ? styles.paginationDotActive : styles.paginationDotInactive
+                  index === currentCardIndex
+                    ? styles.paginationDotActive
+                    : styles.paginationDotInactive,
                 ]}
-                onPress={() => handlePaginationDotPress(index)}
                 activeOpacity={0.7}
               />
             ))}
@@ -400,20 +294,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: '100%',
   },
+  page: {
+    width: SCREEN_WIDTH,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   performanceCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 18,
     padding: 16,
-    shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
     marginBottom: 24,
-    width: '100%',
+    // ❌ removed shadow/elevation
   },
   performanceCardContent: {
     flexDirection: 'column',
@@ -445,7 +336,7 @@ const styles = StyleSheet.create({
   performanceCardLabel: {
     fontSize: 22,
     fontWeight: '600',
-    color: '#000000',
+    color: '#000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
     marginBottom: 8,
   },
@@ -468,12 +359,12 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
   },
   paginationDotActive: {
-    backgroundColor: '#000000',
+    backgroundColor: '#000',
   },
   paginationDotInactive: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FFF',
     borderWidth: 1,
-    borderColor: '#000000',
+    borderColor: '#000',
   },
   chartContainer: {
     width: '100%',
@@ -484,4 +375,4 @@ const styles = StyleSheet.create({
   chart: {
     borderRadius: 16,
   },
-}); 
+});
