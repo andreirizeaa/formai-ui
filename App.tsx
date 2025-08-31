@@ -8,6 +8,7 @@ import { LanguageProvider } from './src/context/LanguageContext';
 import { OnboardingProvider } from './src/context/OnboardingContext';
 import Purchases from 'react-native-purchases';
 import { SuperwallProvider } from './src/context/SuperwallContext';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 export default function App() {
   useEffect(() => {
@@ -53,16 +54,18 @@ export default function App() {
   }, []);
 
   return (
-    <SafeAreaProvider>
-      <OnboardingProvider>
-        <PurchasesProvider>
-          <SuperwallProvider>
-            <LanguageProvider>
-              <Layout />
-            </LanguageProvider>
-          </SuperwallProvider>
-        </PurchasesProvider>
-      </OnboardingProvider>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <OnboardingProvider>
+          <PurchasesProvider>
+            <SuperwallProvider>
+              <LanguageProvider>
+                <Layout />
+              </LanguageProvider>
+            </SuperwallProvider>
+          </PurchasesProvider>
+        </OnboardingProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }

@@ -83,7 +83,7 @@ export function SwipeableAccuracyCard({
     const randomAccuracy = Math.floor(Math.random() * 36) + 60;
     
     // Random weight between 40-200
-    const randomWeight = Math.floor(Math.random() * 161) + 40;
+    const randomWeight = Math.floor(Math.random()) + 40;
     
     // Random reps between 1-12
     const randomReps = Math.floor(Math.random() * 12) + 1;
@@ -98,15 +98,19 @@ export function SwipeableAccuracyCard({
     const randomMinute = Math.floor(Math.random() * 60);
     const randomTime = `${randomHour > 12 ? randomHour - 12 : randomHour}:${randomMinute.toString().padStart(2, '0')} ${randomHour >= 12 ? 'PM' : 'AM'}`;
     
-    // Create the test lift
+    // Generate random date within the last 30 days
     const today = new Date();
-    const id = `demo-${today.getTime()}-${Math.random().toString(36).substr(2, 9)}`;
+    const randomDaysAgo = Math.floor(Math.random() * 30);
+    const randomDate = new Date(today);
+    randomDate.setDate(today.getDate() - randomDaysAgo);
     
+    const id = `demo-${today.getTime()}-${Math.random().toString(36).substr(2, 9)}`;
+
     addLift({
       id,
       isFavourite: Math.random() > 0.7, // 30% chance of being favourite
       liftType: "Deadlift",
-      liftDate: formatDateForLift(today),
+      liftDate: formatDateForLift(randomDate),
       liftTime: randomTime,
       weightValue: randomWeight,
       reps: randomReps,

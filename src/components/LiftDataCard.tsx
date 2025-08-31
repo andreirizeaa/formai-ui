@@ -15,15 +15,17 @@ import { hapticFeedback } from '../utils/haptic';
 import { deleteLift as deleteLiftApi } from '../services/liftService';
 import { useTutorialTarget } from '../context/TutorialContext';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useOnboarding } from '../context/OnboardingContext';
+import { useUserDetails } from '../context/UserDetailsContext';
+import i18n from '../utils/i18n';
 
 interface LiftDataCardProps {
   lift: ILiftData;
   onPress?: (lift: ILiftData) => void;
   style?: any;
+  showDate?: boolean; // When true, show formatted date instead of time
 }
 
-export function LiftDataCard({ lift, onPress, style }: LiftDataCardProps) {
+export function LiftDataCard({ lift, onPress, style, showDate = false }: LiftDataCardProps) {
   const translateX = useSharedValue(0);
   const panStartX = useSharedValue(0);
   const loadingProgress = useSharedValue(0);
@@ -31,9 +33,21 @@ export function LiftDataCard({ lift, onPress, style }: LiftDataCardProps) {
   const { removeLift } = useLiftData();
   const { ref: firstLiftCardRef } = useTutorialTarget('home_first_lift_card');
   const [deleting, setDeleting] = useState(false);
-  const { onboardingData } = useOnboarding();
+  const { userDetails } = useUserDetails();
+
 
   const autoResetTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Helper function to format lift date
+  const formatLiftDate = (dateString: string) => {
+    const [day, month, year] = dateString.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: '2-digit',
+      year: 'numeric'
+    });
+  };
 
   function handleDelete() {
     if (deleting) return;
@@ -116,6 +130,8 @@ export function LiftDataCard({ lift, onPress, style }: LiftDataCardProps) {
     };
   }, []);
 
+  console.log('lift', lift.weightValue);
+
   return (
     <View
       style={[styles.wrapper, style]}
@@ -169,13 +185,15 @@ export function LiftDataCard({ lift, onPress, style }: LiftDataCardProps) {
 
                 {/* Content */}
                 <View style={styles.liftContent}>
-                  {/* Top row: Lift name and time pill */}
+                  {/* Top row: Lift name and time/date pill */}
                   <View style={styles.topRow}>
                     <Text style={styles.liftName} numberOfLines={1}>
                       {lift.liftType}
                     </Text>
                     <View style={styles.timePill}>
-                      <Text style={styles.timeValue}>{lift.liftTime}</Text>
+                      <Text style={styles.timeValue}>
+                        {showDate ? formatLiftDate(lift.liftDate) : lift.liftTime}
+                      </Text>
                     </View>
                   </View>
 
@@ -184,7 +202,7 @@ export function LiftDataCard({ lift, onPress, style }: LiftDataCardProps) {
                     <Target size={20} color="#000" />
                     <View style={styles.accuracyContainer}>
                       <Text style={styles.accuracyValue}>{lift.analysis.accuracy}%</Text>
-                      <Text style={styles.accuracyText}> accuracy</Text>
+                      <Text style={styles.accuracyText}> {i18n.t('feedback.accuracy')}</Text>
                     </View>
                   </View>
 
@@ -193,7 +211,7 @@ export function LiftDataCard({ lift, onPress, style }: LiftDataCardProps) {
                     <View style={styles.bottomRowItem}>
                       <Weight size={16} color="#000000" />
                       <Text style={styles.bottomRowText}>
-                        {onboardingData.unitSystem === 'imperial' 
+                        {userDetails?.unitSystem === 'imperial' 
                           ? `${Math.round(lift.weightValue * 2.20462)} lbs`
                           : `${lift.weightValue} kg`
                         }
@@ -201,7 +219,7 @@ export function LiftDataCard({ lift, onPress, style }: LiftDataCardProps) {
                     </View>
                     <View style={styles.bottomRowItem}>
                       <ChartNoAxesCombined size={16} color="#000000" />
-                      <Text style={styles.bottomRowText}>{lift.analysis.feedback?.length || 0} improvements</Text>
+                      <Text style={styles.bottomRowText}>{lift.analysis.feedback?.length || 0} {i18n.t('feedback.improvements')}</Text>
                     </View>
                   </View>
                 </View>

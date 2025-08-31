@@ -354,6 +354,7 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
               key={lift.id} 
               lift={lift} 
               onPress={() => handleLiftPress(lift)}
+              showDate={true}
             />
           ))
         ) : (

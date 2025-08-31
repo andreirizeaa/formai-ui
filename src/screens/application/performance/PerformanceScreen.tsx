@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Platform, ScrollView, TouchableOpacity, Modal, Dimensions } from 'react-native';
+import React, { useMemo, useState, useRef } from 'react';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, Modal, Dimensions } from 'react-native';
+import { ScrollView } from 'react-native-gesture-handler';
 import { SwipeableLineGraphCard } from '../../../components/ui/SwipeableLineGraphCard';
 import { useLiftData } from '../../../context/LiftDataContext';
 import { useUserDetails } from '../../../context/UserDetailsContext';
@@ -25,10 +26,8 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
   const { ref: performanceMetricsRef } = useTutorialTarget('performance_metrics');
   const { ref: performanceChartsRef } = useTutorialTarget('performance_charts');
   
-
-
-  // Check if there are no lifts
-  const hasNoLifts = liftData.length === 0;
+  // Scroll ref for gesture coordination
+  const scrollRef = useRef(null);
 
   // Helpers: compute summary stats (moved from SwipeableSummaryCard)
   function parseDateDDMMYYYY(dateStr: string): Date | null {
@@ -123,109 +122,92 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
 
   return (
     <>
-      <ScrollView style={styles.container}>
+      <ScrollView
+        ref={scrollRef}
+        style={styles.container}
+        nestedScrollEnabled
+        directionalLockEnabled
+        contentInsetAdjustmentBehavior="automatic"
+      >
         <View style={styles.content}>
           <Text style={styles.title}>{i18n.t('performance.title')}</Text>
           
-
-
           {/* Metric Cards Row: Accuracy | Improvement */}
-          {!hasNoLifts && (
-            <View style={styles.metricsRow} ref={performanceChartsRef}>
-              {/* Accuracy Card */}
-              <View style={styles.metricCard}>
-                <View style={styles.metricHeaderRow}>
-                  <Text style={styles.metricTitle}>Accuracy</Text>
-                  <TouchableOpacity onPress={() => openInfoModal('accuracy')} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Show accuracy information" style={styles.metricTitleIcon}>
-                    <CircleQuestionMark width={20} height={20} color="#000000" />
-                  </TouchableOpacity>
-                </View>
-                <View style={styles.progressWrapper}>
-                  <CircularProgressChart
-                    width={100}
-                    height={100}
-                    percentage={Math.max(0, Math.min(100, averageAccuracy))}
-                    progressColor={accuracyColor}
-                    backgroundColor="#E5E5E5"
-                    strokeWidth={10}
-                    radius={40}
-                    clockwise={true}
-                  />
-                  <Text style={styles.progressText} accessibilityLabel="Accuracy value">
-                    {`${averageAccuracy}%`}
-                  </Text>
-                </View>
+          <View style={styles.metricsRow} ref={performanceChartsRef}>
+            {/* Accuracy Card */}
+            <View style={styles.metricCard}>
+              <View style={styles.metricHeaderRow}>
+                <Text style={styles.metricTitle}>Accuracy</Text>
+                <TouchableOpacity onPress={() => openInfoModal('accuracy')} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Show accuracy information" style={styles.metricTitleIcon}>
+                  <CircleQuestionMark width={20} height={20} color="#000000" />
+                </TouchableOpacity>
               </View>
-
-              {/* Improvement Card */}
-              <View style={styles.metricCard}>
-                <View style={styles.metricHeaderRow}>
-                  <Text style={styles.metricTitle}>Improvement</Text>
-                  <TouchableOpacity onPress={() => openInfoModal('improvement')} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Show improvement information" style={styles.metricTitleIcon}>
-                    <CircleQuestionMark width={20} height={20} color="#000000" />
-                  </TouchableOpacity>
-                </View>
-                <View style={styles.progressWrapper}>
-                  <CircularProgressChart
-                    width={100}
-                    height={100}
-                    percentage={Math.abs(improvementValue)}
-                    progressColor={improvementColor}
-                    backgroundColor="#E5E5E5"
-                    strokeWidth={10}
-                    radius={40}
-                    clockwise={!isImprovementNegative}
-                  />
-                  <Text style={styles.progressText} accessibilityLabel="Improvement value">
-                    {`${improvementValue}%`}
-                  </Text>
-                </View>
+              <View style={styles.progressWrapper}>
+                <CircularProgressChart
+                  width={100}
+                  height={100}
+                  percentage={Math.max(0, Math.min(100, averageAccuracy))}
+                  progressColor={accuracyColor}
+                  backgroundColor="#E5E5E5"
+                  strokeWidth={10}
+                  radius={40}
+                  clockwise={true}
+                />
+                <Text style={styles.progressText} accessibilityLabel="Accuracy value">
+                  {`${averageAccuracy}%`}
+                </Text>
               </View>
             </View>
-          )}
+
+            {/* Improvement Card */}
+            <View style={styles.metricCard}>
+              <View style={styles.metricHeaderRow}>
+                <Text style={styles.metricTitle}>Improvement</Text>
+                <TouchableOpacity onPress={() => openInfoModal('improvement')} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Show improvement information" style={styles.metricTitleIcon}>
+                  <CircleQuestionMark width={20} height={20} color="#000000" />
+                </TouchableOpacity>
+              </View>
+              <View style={styles.progressWrapper}>
+                <CircularProgressChart
+                  width={100}
+                  height={100}
+                  percentage={Math.abs(improvementValue)}
+                  progressColor={improvementColor}
+                  backgroundColor="#E5E5E5"
+                  strokeWidth={10}
+                  radius={40}
+                  clockwise={!isImprovementNegative}
+                />
+                <Text style={styles.progressText} accessibilityLabel="Improvement value">
+                  {`${improvementValue}%`}
+                </Text>
+              </View>
+            </View>
+          </View>
           
           {/* Performance Cards */}
-          {hasNoLifts ? (
-            <TouchableOpacity 
-              style={styles.performanceCard}
-              activeOpacity={0.7}
-            >
-              <View style={styles.performanceCardContent}>
-                <View style={styles.performanceCardHeader}>
-                  <Text style={styles.performanceCardLabel}>
-                    {i18n.t('common.noLiftsFound')}
-                  </Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-          ) : (
-            <SwipeableLineGraphCard 
-              ref={performanceMetricsRef}
-              cardData={liftData}
-              onTriggerAddOptions={onTriggerAddOptions}
-              hasNoLifts={hasNoLifts}
-              chartType="accuracyPerWeight"
-              unitPreference={userDetails?.unitSystem ?? 'metric'}
-              onInfoPress={() => openInfoModal('accuracyPerWeight')}
-            />
-          )}
+          <SwipeableLineGraphCard 
+            ref={performanceMetricsRef}
+            cardData={liftData}
+            onTriggerAddOptions={onTriggerAddOptions}
+            hasNoLifts={liftData.length === 0}
+            chartType="accuracyPerWeight"
+            unitPreference={userDetails?.unitSystem ?? 'metric'}
+            onInfoPress={() => openInfoModal('accuracyPerWeight')}
+            externalScrollGestureRef={scrollRef}
+          />
 
           {/* Accuracy Over Time Cards */}
-          {!hasNoLifts && (
-            <SwipeableLineGraphCard 
-              cardData={liftData}
-              hasNoLifts={false}
-              chartType="accuracyOverTime"
-              unitPreference={userDetails?.unitSystem ?? 'metric'}
-              onInfoPress={() => openInfoModal('accuracyOverTime')}
-            />
-          )}
+          <SwipeableLineGraphCard 
+            cardData={liftData}
+            hasNoLifts={liftData.length === 0}
+            chartType="accuracyOverTime"
+            unitPreference={userDetails?.unitSystem ?? 'metric'}
+            onInfoPress={() => openInfoModal('accuracyOverTime')}
+            externalScrollGestureRef={scrollRef}
+          />
         </View>
       </ScrollView>
-
-
-
-
 
       {/* Info Modal */}
       <Modal
