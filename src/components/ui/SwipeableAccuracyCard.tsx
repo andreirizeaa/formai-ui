@@ -7,7 +7,7 @@ import { CircularProgressChart } from '../icons/icons';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // Config
-const CARD_HEIGHT = 130;
+const CARD_HEIGHT = 140;
 const CARD_WIDTH = SCREEN_WIDTH * 0.9; // ✅ slightly smaller than screen
 
 interface AccuracyCardData {
@@ -43,6 +43,9 @@ export function SwipeableAccuracyCard({
               backgroundColor="#E5E5E5"
               strokeWidth={10}
               radius={42}
+              showTargetIcon={true}
+              iconColor="#000000"
+              iconSize={20}
             />
           </View>
         </View>
@@ -104,7 +107,7 @@ const styles = StyleSheet.create({
   accuracyCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 18,
-    padding: 12,
+    padding: 20,
     alignItems: 'center',
     justifyContent: 'center',
     width: CARD_WIDTH,                 // ✅ narrower card = gap at edges
@@ -118,7 +121,7 @@ const styles = StyleSheet.create({
   },
   accuracyCardLeftSection: { alignItems: 'flex-start', paddingLeft: 8 },
   accuracyCardNumber: {
-    fontSize: 28,
+    fontSize: 46,
     fontWeight: '700',
     color: '#000000',
     fontFamily: 'SF Pro Display',
