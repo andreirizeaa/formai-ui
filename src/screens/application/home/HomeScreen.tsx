@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, Dimensions, ImageSourcePropType, ImageBackground, Modal, Animated as RNAnimated } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, ImageSourcePropType, ImageBackground, Modal, Animated as RNAnimated } from 'react-native';
+import { Image } from 'expo-image';
 import { hapticFeedback } from '../../../utils/haptic';
 import { useLoadingLifts } from '../../../context/LoadingLiftsContext';
 import { useLiftData, ILiftData } from '../../../context/LiftDataContext';
@@ -9,12 +9,10 @@ import { LoadingLiftCard } from './LoadingLiftCard';
 import { LiftDataCard } from '../../../components/LiftDataCard';
 import { SwipeableCalendar } from '../../../components/ui/SwipeableCalendar';
 import { SwipeableAccuracyCard } from '../../../components/ui/SwipeableAccuracyCard';
-import { useUserDetails } from '../../../context/UserDetailsContext';
 import { useUserCheckIns } from '../../../context/UserCheckInsContext';
-import { useTutorial, useTutorialTarget } from '../../../context/TutorialContext';
+import { useTutorialTarget } from '../../../context/TutorialContext';
 
 import i18n from '../../../utils/i18n';
-import { CircularProgressChart } from '../../../components/icons/icons';
 import { X, ChevronRight } from 'lucide-react-native';
 
 interface HomeScreenProps {
@@ -194,96 +192,94 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
 
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView 
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        ref={scrollViewRef}
-      >
-        <View style={styles.header}>
-          <Image 
-            source={require('../../../../assets/formai-light-icon.png')}
-            style={styles.logo}
-            resizeMode="contain"
+    <ScrollView 
+      style={styles.scrollView}
+      contentContainerStyle={styles.scrollContent}
+      showsVerticalScrollIndicator={false}
+      ref={scrollViewRef}
+    >
+      <View style={styles.header}>
+        <Image
+          source={require('../../../../assets/formai-light-icon.png')}
+          style={styles.logo}
+          contentFit="contain"
+        />
+        <TouchableOpacity 
+          style={styles.streakBadge}
+          activeOpacity={0.7}
+          onPress={handleFireCardPress}
+        >
+          <Image
+            source={require('../../../../assets/icons/fire.png')}
+            style={styles.streakBadgeIcon}
+            contentFit="contain"
           />
+          <Text style={styles.streakBadgeText}>{currentStreak}</Text>
+        </TouchableOpacity>
+      </View>
+      
+      {/* Swipeable Calendar */}
+      <SwipeableCalendar 
+        onDateSelect={handleDateSelect} 
+        initialSelectedDate={selectedDate}
+      />
+      
+      {/* Swipeable Accuracy Card */}
+      <SwipeableAccuracyCard
+        cardData={cardData}
+        currentCardIndex={currentCardIndex}
+        onCardIndexChange={setCurrentCardIndex}
+      />
+      
+      {/* Spacer to push content to bottom */}
+      <View style={styles.spacer} />
+      
+      <View style={styles.bottomContent}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>{i18n.t('home.lifts')}</Text>
           <TouchableOpacity 
-            style={styles.streakBadge}
+            ref={seeAllLiftsRef}
+            style={styles.seeAllPill} 
+            onPress={handleLibraryPress} 
             activeOpacity={0.7}
-            onPress={handleFireCardPress}
           >
-            <Image 
-              source={require('../../../../assets/icons/fire.png')}
-              style={styles.streakBadgeIcon}
-              resizeMode="contain"
-            />
-            <Text style={styles.streakBadgeText}>{currentStreak}</Text>
+            <Text style={styles.seeAllText}>{i18n.t('home.seeAll')}</Text>
+                              <ChevronRight size={16} color="#8E8E93" />
           </TouchableOpacity>
         </View>
-        
-        {/* Swipeable Calendar */}
-        <SwipeableCalendar 
-          onDateSelect={handleDateSelect} 
-          initialSelectedDate={selectedDate}
-        />
-        
-        {/* Swipeable Accuracy Card */}
-        <SwipeableAccuracyCard
-          cardData={cardData}
-          currentCardIndex={currentCardIndex}
-          onCardIndexChange={setCurrentCardIndex}
-        />
-        
-        {/* Spacer to push content to bottom */}
-        <View style={styles.spacer} />
-        
-        <View style={styles.bottomContent}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>{i18n.t('home.lifts')}</Text>
+        <View 
+          style={styles.liftsScrollView} 
+        >
+          {/* Show loading lifts first */}
+          {loadingLifts.map((loadingLift) => (
+            <LoadingLiftCard key={loadingLift.id} lift={loadingLift} />
+          ))}
+          
+          {/* Show completed lifts for selected date */}
+          {liftsForSelectedDate.length > 0 ? (
+            liftsForSelectedDate.map((lift, index) => {
+              return (
+                <LiftDataCard 
+                  key={lift.id} 
+                  lift={lift} 
+                  onPress={() => handleLiftPress(lift)}
+                />
+              );
+            })
+          ) : loadingLifts.length === 0 ? (
             <TouchableOpacity 
-              ref={seeAllLiftsRef}
-              style={styles.seeAllPill} 
-              onPress={handleLibraryPress} 
+              style={styles.noLiftsCard}
+              onPress={handleNoLiftsPress}
               activeOpacity={0.7}
             >
-              <Text style={styles.seeAllText}>{i18n.t('home.seeAll')}</Text>
-                                <ChevronRight size={16} color="#8E8E93" />
+              <View style={styles.noLiftsContent}>
+                <Text style={styles.noLiftsTitle}>{i18n.t('home.noRecordedLifts')}</Text>
+                <Text style={styles.noLiftsSubtitle}>{i18n.t('home.startAnalyzingWorkout')}</Text>
+              </View>
             </TouchableOpacity>
-          </View>
-          <View 
-            style={styles.liftsScrollView} 
-          >
-            {/* Show loading lifts first */}
-            {loadingLifts.map((loadingLift) => (
-              <LoadingLiftCard key={loadingLift.id} lift={loadingLift} />
-            ))}
-            
-            {/* Show completed lifts for selected date */}
-            {liftsForSelectedDate.length > 0 ? (
-              liftsForSelectedDate.map((lift, index) => {
-                return (
-                  <LiftDataCard 
-                    key={lift.id} 
-                    lift={lift} 
-                    onPress={() => handleLiftPress(lift)}
-                  />
-                );
-              })
-            ) : loadingLifts.length === 0 ? (
-              <TouchableOpacity 
-                style={styles.noLiftsCard}
-                onPress={handleNoLiftsPress}
-                activeOpacity={0.7}
-              >
-                <View style={styles.noLiftsContent}>
-                  <Text style={styles.noLiftsTitle}>{i18n.t('home.noRecordedLifts')}</Text>
-                  <Text style={styles.noLiftsSubtitle}>{i18n.t('home.startAnalyzingWorkout')}</Text>
-                </View>
-              </TouchableOpacity>
-            ) : null}
-          </View>
+          ) : null}
         </View>
-      </ScrollView>
+      </View>
       
       {/* Fire Card Popup */}
       <Modal
@@ -314,19 +310,19 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
 
             {/* Title with FormAI logo */}
             <View style={styles.modalHeader}>
-              <Image 
+              <Image
                 source={require('../../../../assets/formai-light-icon.png')}
                 style={styles.modalLogo}
-                resizeMode="contain"
+                contentFit="contain"
               />
             </View>
 
             {/* Large centered fire icon */}
             <View style={styles.fireModalContent}>
-              <Image 
+              <Image
                 source={require('../../../../assets/icons/fire.png')}
                 style={styles.fireModalIcon}
-                resizeMode="contain"
+                contentFit="contain"
               />
             </View>
 
@@ -357,17 +353,26 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
           </TouchableOpacity>
         </TouchableOpacity>
       </Modal>
-    </SafeAreaView>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    marginTop: -52,
+    paddingTop: 20,
   },
-
-
+  scrollView: {
+    flex: 1,
+    marginBottom: -62,
+    paddingTop: 20,
+  },
+  scrollContent: {
+    paddingBottom: 0,
+  },
+  content: {
+    paddingHorizontal: 20,
+  },
   header: {
     paddingHorizontal: 20,
     paddingBottom: 24,
@@ -400,16 +405,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#000000',
     fontFamily: 'SF Pro Display',
-  },
-  scrollView: {
-    flex: 1,
-    marginBottom: -62,
-  },
-  scrollContent: {
-    paddingBottom: 0,
-  },
-  content: {
-    paddingHorizontal: 20,
   },
   sectionHeader: {
     flexDirection: 'row',

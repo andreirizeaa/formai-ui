@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, Platform, TouchableOpacity } from 'react-native';
+import { Image } from 'expo-image';
 import { ILiftData, useLiftData } from '../context/LiftDataContext';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
@@ -11,7 +12,6 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Trash2, Target, Weight, ChartNoAxesCombined } from 'lucide-react-native';
 import { hapticFeedback } from '../utils/haptic';
-import i18n from '../utils/i18n';
 import { deleteLift as deleteLiftApi } from '../services/liftService';
 import { useTutorialTarget } from '../context/TutorialContext';
 import { LinearGradient } from 'expo-linear-gradient';

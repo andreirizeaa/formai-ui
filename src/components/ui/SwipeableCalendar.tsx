@@ -1,12 +1,10 @@
-import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Platform } from 'react-native';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Platform, InteractionManager } from 'react-native';
 import Carousel from 'react-native-reanimated-carousel';
-import { hapticFeedback } from '../../utils/haptic';
 import { useUserCheckIns } from '../../context/UserCheckInsContext';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
-const WEEK_WIDTH = SCREEN_WIDTH * 0.9; // ✅ narrower than screen
+const WEEK_WIDTH = SCREEN_WIDTH * 0.9;
 const WEEK_HEIGHT = 80;
 
 interface SwipeableCalendarProps {
@@ -24,10 +22,17 @@ interface DayData {
 }
 
 export function SwipeableCalendar({ onDateSelect, initialSelectedDate }: SwipeableCalendarProps) {
-  const [selectedDate, setSelectedDate] = useState<Date | null>(
-    initialSelectedDate || new Date()
-  );
+  const [selectedDate, setSelectedDate] = useState<Date>(initialSelectedDate || new Date());
   const { daysLogged } = useUserCheckIns();
+
+  // ⏳ control when calendar is ready to mount
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    const task = InteractionManager.runAfterInteractions(() => {
+      setReady(true);
+    });
+    return () => task.cancel();
+  }, []);
 
   const formatDateAsDDMMYYYY = (date: Date): string => {
     const day = String(date.getDate()).padStart(2, '0');
@@ -46,56 +51,60 @@ export function SwipeableCalendar({ onDateSelect, initialSelectedDate }: Swipeab
       const startOfTargetWeek = new Date(startOfCurrentWeek);
       startOfTargetWeek.setDate(startOfCurrentWeek.getDate() + weekOffset * 7);
 
-      const days: DayData[] = [];
       const dayNames = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
-      for (let i = 0; i < 7; i++) {
+      return Array.from({ length: 7 }, (_, i) => {
         const date = new Date(startOfTargetWeek);
         date.setDate(startOfTargetWeek.getDate() + i);
 
         const isToday = date.toDateString() === today.toDateString();
-        const isSelected = selectedDate
-          ? date.toDateString() === selectedDate.toDateString()
-          : false;
-
+        const isSelected = date.toDateString() === selectedDate.toDateString();
         const formattedDate = formatDateAsDDMMYYYY(date);
         const isLogged = daysLogged.includes(formattedDate);
 
-        days.push({
+        return {
           date,
           dayName: dayNames[i],
           dayNumber: date.getDate().toString(),
           isToday,
           isActive: isSelected,
           isLogged,
-        });
-      }
-
-      return days;
+        };
+      });
     },
     [selectedDate, daysLogged]
   );
 
-  const WEEKS_BACK = 12;
-  const weeks: DayData[][] = [];
-  for (let i = -WEEKS_BACK; i <= 0; i++) {
-    weeks.push(generateWeekData(i));
-  }
-
-  const handleDatePress = (dayData: DayData) => {
-    setSelectedDate(dayData.date);
-    if (onDateSelect) {
-      onDateSelect(dayData.date);
+  const WEEKS_BACK = 3;
+  const weeks = useMemo(() => {
+    const arr: DayData[][] = [];
+    for (let i = -WEEKS_BACK; i <= 0; i++) {
+      arr.push(generateWeekData(i));
     }
+    return arr;
+  }, [generateWeekData]);
+
+  const handleDatePress = (day: DayData) => {
+    setSelectedDate(day.date);
+    onDateSelect?.(day.date);
   };
+
+  // ⏳ Render placeholder until calendar is mounted
+  if (!ready) {
+    return <View style={{ height: WEEK_HEIGHT }} />; // simple spacer, could replace with skeleton
+  }
 
   return (
     <View style={styles.container}>
       <Carousel
         loop={false}
-        width={SCREEN_WIDTH}        // ✅ page = full screen
+        width={SCREEN_WIDTH}
         height={WEEK_HEIGHT}
         data={weeks}
+        defaultIndex={weeks.length - 1}
+        pagingEnabled
+        snapEnabled
+        style={{ backgroundColor: 'transparent' }}
         renderItem={({ item }) => (
           <View style={styles.weekPage}>
             <View style={styles.weekContent}>
@@ -148,10 +157,6 @@ export function SwipeableCalendar({ onDateSelect, initialSelectedDate }: Swipeab
             </View>
           </View>
         )}
-        defaultIndex={weeks.length - 1}
-        pagingEnabled
-        snapEnabled
-        style={{ backgroundColor: 'transparent' }}
       />
     </View>
   );
@@ -163,12 +168,12 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   weekPage: {
-    width: SCREEN_WIDTH,          // ✅ full page
+    width: SCREEN_WIDTH,
     justifyContent: 'center',
     alignItems: 'center',
   },
   weekContent: {
-    width: WEEK_WIDTH,            // ✅ narrower, centered
+    width: WEEK_WIDTH,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -237,3 +242,5 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
+
+
