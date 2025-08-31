@@ -19,6 +19,7 @@ export interface UserDetailsRow {
   language: string | null;
   current_streak: number | null;
   walkthrough_completed: boolean | null;
+  has_rated: boolean | null;
 }
 
 export interface UserFetchResult {
@@ -61,6 +62,7 @@ export interface EditUserDetailsPayload {
   language?: string; // e.g., 'en'
   unit_system?: 'metric' | 'imperial';
   walkthrough_completed?: boolean;
+  has_rated?: boolean;
 }
 
 export interface EditUserDetailsResponse {
@@ -110,7 +112,7 @@ export async function editUserDetails(
 export async function fetchUserDetailsById(userId: string): Promise<UserDetailsRow | null> {
   const { data, error } = await supabase
     .from('users')
-    .select('id, unit_system, metric_height, metric_weight, birth_date, gender, language, current_streak, walkthrough_completed')
+    .select('id, unit_system, metric_height, metric_weight, birth_date, gender, language, current_streak, walkthrough_completed, has_rated')
     .eq('id', userId)
     .maybeSingle();
   if (error) throw new Error(error.message);

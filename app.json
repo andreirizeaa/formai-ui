@@ -21,7 +21,7 @@
     },
     "web": {
       "favicon": "./assets/favicon.png",
-      "proxy": "http://192.168.1.121:8000"
+      "proxy": "http://192.168.1.224:8000"
     },
     
     "plugins": [
@@ -29,6 +29,14 @@
       "expo-video",
       "expo-apple-authentication",
       "react-native-vision-camera",
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Allow Form AI to access your photo library to save videos recorded in the app.",
+          "savePhotosPermission": "Allow Form AI to save videos recorded in the app to your photo library.",
+          "isAccessMediaLocationEnabled": true
+        }
+      ],
       [
         "@react-native-google-signin/google-signin",
         {
@@ -38,7 +46,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "The app accesses your photos to let you share them with your friends."
+          "photosPermission": "The app accesses your photo library to allow you to select videos to upload for analysis."
         }
       ]
     ],
@@ -56,6 +64,8 @@
         ],
         "NSCameraUsageDescription": "This app uses the camera to record workout videos for lift analysis and form feedback.",
         "NSMicrophoneUsageDescription": "This app uses the microphone while recording workout videos.",
+        "NSPhotoLibraryUsageDescription": "This app saves workout videos to your photo library for easy access.",
+        "NSPhotoLibraryAddUsageDescription": "This app saves workout videos to your photo library for easy access.",
         "ITSAppUsesNonExemptEncryption": false
       }
     },

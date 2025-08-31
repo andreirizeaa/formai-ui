@@ -10,10 +10,11 @@ import { VideoPreviewScreen } from '../common/VideoPreviewScreen';
 import { MovementSelectionScreen } from '../common/MovementSelectionScreen';
 import { PracticesScreen } from '../common/PracticesScreen';
 import { WeightRepsScreen } from '../common/WeightRepsScreen';
-import { LoadingLiftData, useLoadingLifts } from '../../../../context/LoadingLiftsContext';
+import { useLoadingLifts } from '../../../../context/LoadingLiftsContext';
 import { gymMovements } from '../../../../constants/gymMovements';
 import { useCameraPermissions } from 'expo-camera';
 import { X } from 'lucide-react-native';
+import * as MediaLibrary from 'expo-media-library';
 
 interface RecordModalProps {
   isVisible: boolean;
@@ -60,6 +61,12 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
     weightValue: number;
     reps: number;
   } | null>(null);
+
+  useEffect(() => {
+    if (isRecording && recordingTime >= 90) {
+      handleStopRecording();
+    }
+  }, [isRecording, recordingTime]);
 
   useEffect(() => {
     if (isVisible) {
@@ -163,11 +170,23 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
 
       cameraRef.current.startRecording({
         fileType: Platform.OS === 'ios' ? 'mov' : 'mp4',
-        onRecordingFinished: (video: VideoFile) => {
+        onRecordingFinished: async(video: VideoFile) => {
           const path = video.path as string;
           const uri = path.startsWith('file://') ? path : `file://${path}`;
           setRecordedVideoUri(uri);
           setShowVideoPreview(true);
+          try {
+            // Check and request media library permissions
+            const { status } = await MediaLibrary.requestPermissionsAsync();
+            if (status === 'granted') {
+              await MediaLibrary.saveToLibraryAsync(uri);
+              console.log("✅ Video saved to media library");
+            } else {
+              console.log("❌ Media library permission denied");
+            }
+          } catch (err) {
+            console.error("❌ Failed to save video:", err);
+          }
         },
         onRecordingError: error => {
           console.error('Recording error:', error);
@@ -258,10 +277,29 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
     setShowMovementSelection(true);
   };
 
+  const getDateAndTime = () => {
+    const now = new Date();
+  
+    // 📅 Date (YYYY-MM-DD)
+    const date = now.toISOString().split("T")[0];
+  
+    // ⏰ Time (hh:mm AM/PM)
+    let hours = now.getHours();
+    const minutes = now.getMinutes().toString().padStart(2, "0");
+  
+    const ampm = hours >= 12 ? "PM" : "AM";
+    hours = hours % 12;
+    hours = hours ? hours : 12; // 0 -> 12
+  
+    const time = `${hours}:${minutes} ${ampm}`;
+  
+    return { date, time };
+  };
+
   const handleFinalCompleteClicked = async (data: { weight: number; unit: 'kg' | 'lbs'; reps: number }) => {
     setWeightData(data);
     const videoUri = recordedVideoUri || '';
-    const today = new Date().toISOString().split('T')[0];
+    const { date, time } = getDateAndTime();
 
     // Close the modal immediately
     onClose();
@@ -272,7 +310,8 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
       void addLoadingLift({
         videoLink: videoUri,
         thumbnailUri,
-        dateToday: today,
+        dateToday: date,
+        timeToday: time,
         movementType: selectedMovement,
         weightValue: data.weight,
         reps: data.reps,

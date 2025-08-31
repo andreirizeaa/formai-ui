@@ -14,6 +14,7 @@ export interface LoadingLiftData {
   weightUnit?: 'kg' | 'lbs';
   reps: number;
   dateToday: string;
+  timeToday: string;
   progress: number;
   isComplete: boolean;
   status: 'uploading' | 'processing' | 'completed' | 'error';
@@ -155,7 +156,6 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
       const thumbUrl = current.uploadedThumbnailUrl ?? current.thumbnailUri;
       const liftForAnalysis: LoadingLiftData = { ...current, videoLink: videoUrl, thumbnailUri: thumbUrl };
       const result = await analyzeVideo(liftForAnalysis);
-      console.log('result', result);
       
       if (!result.success) {
         console.log('Error details:', { error: (result as any).error, message: (result as any).message });

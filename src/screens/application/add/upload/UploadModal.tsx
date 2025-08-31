@@ -209,30 +209,42 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
     setShowMovementSelection(true);
   };
 
+  const getDateAndTime = () => {
+    const now = new Date();
+  
+    // 📅 Date (YYYY-MM-DD)
+    const date = now.toISOString().split("T")[0];
+  
+    // ⏰ Time (hh:mm AM/PM)
+    let hours = now.getHours();
+    const minutes = now.getMinutes().toString().padStart(2, "0");
+  
+    const ampm = hours >= 12 ? "PM" : "AM";
+    hours = hours % 12;
+    hours = hours ? hours : 12; // 0 -> 12
+  
+    const time = `${hours}:${minutes} ${ampm}`;
+  
+    return { date, time };
+  };
+
   const handleFinalCompleteClicked = async (data: { weight: number; unit: 'kg' | 'lbs'; reps: number }) => {
     setWeightData(data);
     const videoUri = selectedVideo?.uri || '';
-    const today = new Date().toISOString().split('T')[0];
+    const { date, time } = getDateAndTime();
 
     // Close the modal immediately
     onClose();
 
     try {
       const thumbnailUri = await generateVideoThumbnail(videoUri);
-      const uploadDataObj = {
-        videoLink: videoUri,
-        thumbnailUri,
-        dateToday: today,
-        movementType: selectedMovement,
-        weightValue: data.weight,
-        reps: data.reps,
-      };
       
       // Enqueue the loading lift without awaiting
       void addLoadingLift({
         videoLink: videoUri,
         thumbnailUri,
-        dateToday: today,
+        dateToday: date,
+        timeToday: time,
         movementType: selectedMovement,
         weightValue: data.weight,
         reps: data.reps,

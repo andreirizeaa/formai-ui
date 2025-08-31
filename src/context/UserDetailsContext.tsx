@@ -16,6 +16,7 @@ interface UserDetails {
   language: string | null;
   currentStreak: number | null;
   walkthroughCompleted: boolean | null;
+  hasRated: boolean | null;
 }
 
 interface UserDetailsContextType {
@@ -25,6 +26,7 @@ interface UserDetailsContextType {
   // Helper methods for weight and height
   updateWeight: (weightKg: number) => void;
   updateHeight: (heightCm: number) => void;
+  updateHasRated: (rated: boolean) => void;
   updateWalkthroughCompleted: (completed: boolean) => void;
   getWeightDisplay: () => string;
   getHeightDisplay: () => string;
@@ -71,6 +73,7 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
           language: row.language ?? null,
           currentStreak: row.current_streak ?? null,
           walkthroughCompleted: row.walkthrough_completed ?? null,
+          hasRated: row.has_rated ?? null,
         });
         return row;
       } finally {
@@ -93,6 +96,7 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
         language: null,
         currentStreak: null,
         walkthroughCompleted: null,
+        hasRated: null,
       };
       return { ...base, [key]: value };
     });
@@ -109,6 +113,7 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
         language: null,
         currentStreak: null,
         walkthroughCompleted: null,
+        hasRated: null,
       };
       return { ...base, unitSystem };
     });
@@ -125,6 +130,7 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
         language: null,
         currentStreak: null,
         walkthroughCompleted: null,
+        hasRated: null,
       };
       return { ...base, currentWeightKG: weightKg };
     });
@@ -141,13 +147,13 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
         language: null,
         currentStreak: null,
         walkthroughCompleted: null,
+        hasRated: null,
       };
       return { ...base, heightCM: heightCm };
     });
   };
 
   const updateWalkthroughCompleted = (completed: boolean) => {
-    console.log('updateWalkthroughCompleted', completed);
     setUserDetails(prev => {
       const base: UserDetails = prev ?? {
         unitSystem: null,
@@ -158,8 +164,26 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
         language: null,
         currentStreak: null,
         walkthroughCompleted: null,
+        hasRated: null,
       };
       return { ...base, walkthroughCompleted: completed };
+    });
+  };
+
+  const updateHasRated = (rated: boolean) => {
+    setUserDetails(prev => {
+      const base: UserDetails = prev ?? {
+        unitSystem: null,
+        currentWeightKG: null,
+        heightCM: null,
+        dateOfBirth: null,
+        gender: null,
+        language: null,
+        currentStreak: null,
+        walkthroughCompleted: null,
+        hasRated: null,
+      };
+      return { ...base, hasRated: rated };
     });
   };
 
@@ -219,6 +243,7 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
       updateWeight,
       updateHeight,
       updateWalkthroughCompleted,
+      updateHasRated,
       getWeightDisplay,
       getHeightDisplay,
       getDateOfBirthDisplay,
@@ -232,6 +257,7 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
       updateWeight,
       updateHeight,
       updateWalkthroughCompleted,
+      updateHasRated,
       getWeightDisplay,
       getHeightDisplay,
       getDateOfBirthDisplay,

@@ -329,6 +329,7 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     paddingVertical: 12,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   navButtonPrimaryText: {
     color: '#FFFFFF',

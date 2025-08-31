@@ -8,6 +8,9 @@ import { hapticFeedback } from '../../../utils/haptic';
 import { useTutorialTarget } from '../../../context/TutorialContext';
 import i18n from '../../../utils/i18n';
 import LottieView from 'lottie-react-native';
+import { useUserDetails } from '../../../context/UserDetailsContext';
+import * as StoreReview from 'expo-store-review';
+import { editUserDetails } from '../../../services/userService';
 
 interface FeedbackSlideshowProps {
   onClose: () => void;
@@ -31,7 +34,8 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, liftData }
   const [currentPageType, setCurrentPageType] = useState<'image' | 'flaws' | 'improvement'>('image');
   const [isBottomExpanded, setIsBottomExpanded] = useState(false);
   const [screenMode, setScreenMode] = useState<ScreenMode>('howItWorks');
-  const navigation = useNavigation();
+  const { userDetails, updateHasRated } = useUserDetails();
+
   
   // Setup slide animation and pan responder for bottom drawer
   const slideAnim = React.useRef(new Animated.Value(390)).current; // start collapsed (panel mostly hidden, only header showing)
@@ -165,13 +169,15 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, liftData }
     setScreenMode('feedback');
   };
 
-  const handleBackToHowItWorks = () => {
+  const handleExitToLiftDetails = async() => {
     hapticFeedback.selection();
-    setScreenMode('howItWorks');
-  };
-
-  const handleExitToLiftDetails = () => {
-    hapticFeedback.selection();
+    if (!userDetails?.hasRated) {
+      if ( await StoreReview.isAvailableAsync){
+        await StoreReview.requestReview();
+        updateHasRated(true);
+        editUserDetails({ has_rated: true });
+      }
+    }
     // Navigate back to lift details
     if (onNavigateToLiftDetails) {
       onNavigateToLiftDetails();
@@ -270,20 +276,6 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, liftData }
       delete global.onFeedbackPageReady;
     };
   }, [currentPageType, onClose]);
-
-  const handleExpandCollapse = () => {
-    hapticFeedback.selection();
-    const targetValue = isBottomExpanded ? 390 : 0;
-    Animated.timing(slideAnim, {
-      toValue: targetValue, // 0 = fully expanded, 390 = collapsed
-      duration: 300,
-      useNativeDriver: true,
-    }).start(() => {
-      currentSlidePosition.current = targetValue;
-    });
-
-    setIsBottomExpanded(!isBottomExpanded);
-  };
 
   const navigateForward = () => {
     if (!liftData?.analysis?.feedback) return;
@@ -946,7 +938,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 24,
     width: '100%',
-    maxWidth: 350,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000000',
@@ -954,7 +945,7 @@ const styles = StyleSheet.create({
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 4,
   },
@@ -968,18 +959,10 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 24,
     marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
   },
   scoreLabel: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 18,
+    fontWeight: '600',
     color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
     textAlign: 'center',
