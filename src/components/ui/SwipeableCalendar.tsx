@@ -2,6 +2,7 @@ import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Platform, InteractionManager } from 'react-native';
 import Carousel from 'react-native-reanimated-carousel';
 import { useUserCheckIns } from '../../context/UserCheckInsContext';
+import { useSelectedDate } from '../../context/SelectedDateContext';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const WEEK_WIDTH = SCREEN_WIDTH * 0.9;
@@ -22,17 +23,26 @@ interface DayData {
 }
 
 export function SwipeableCalendar({ onDateSelect, initialSelectedDate }: SwipeableCalendarProps) {
-  const [selectedDate, setSelectedDate] = useState<Date>(initialSelectedDate || new Date());
+  const { selectedDate, setSelectedDate } = useSelectedDate();
   const { daysLogged } = useUserCheckIns();
 
   // ⏳ control when calendar is ready to mount
   const [ready, setReady] = useState(false);
+  const [currentWeekIndex, setCurrentWeekIndex] = useState(0);
+  
   useEffect(() => {
     const task = InteractionManager.runAfterInteractions(() => {
       setReady(true);
     });
     return () => task.cancel();
   }, []);
+
+  // Set initial date if provided and different from current selected date
+  useEffect(() => {
+    if (initialSelectedDate && initialSelectedDate.toDateString() !== selectedDate.toDateString()) {
+      setSelectedDate(initialSelectedDate);
+    }
+  }, [initialSelectedDate, selectedDate, setSelectedDate]);
 
   const formatDateAsDDMMYYYY = (date: Date): string => {
     const day = String(date.getDate()).padStart(2, '0');
@@ -84,6 +94,31 @@ export function SwipeableCalendar({ onDateSelect, initialSelectedDate }: Swipeab
     return arr;
   }, [generateWeekData]);
 
+  // Calculate which week index contains the selected date
+  const getWeekIndexForDate = useCallback((targetDate: Date) => {
+    const today = new Date();
+    const startOfCurrentWeek = new Date(today);
+    const dayOfWeek = today.getDay();
+    startOfCurrentWeek.setDate(today.getDate() - dayOfWeek);
+    
+    const startOfTargetWeek = new Date(targetDate);
+    const dayOfTargetWeek = targetDate.getDay();
+    startOfTargetWeek.setDate(targetDate.getDate() - dayOfTargetWeek);
+    
+    const diffTime = startOfTargetWeek.getTime() - startOfCurrentWeek.getTime();
+    const diffWeeks = Math.round(diffTime / (1000 * 60 * 60 * 24 * 7));
+    
+    // Convert to our week array index (0 = current week, negative = past weeks)
+    return Math.max(-WEEKS_BACK, Math.min(0, diffWeeks));
+  }, []);
+
+  // Update current week index when selected date changes
+  useEffect(() => {
+    const weekIndex = getWeekIndexForDate(selectedDate);
+    const arrayIndex = weekIndex + WEEKS_BACK; // Convert to array index
+    setCurrentWeekIndex(Math.max(0, Math.min(weeks.length - 1, arrayIndex)));
+  }, [selectedDate, getWeekIndexForDate, weeks.length]);
+
   const handleDatePress = (day: DayData) => {
     setSelectedDate(day.date);
     onDateSelect?.(day.date);
@@ -101,7 +136,7 @@ export function SwipeableCalendar({ onDateSelect, initialSelectedDate }: Swipeab
         width={SCREEN_WIDTH}
         height={WEEK_HEIGHT}
         data={weeks}
-        defaultIndex={weeks.length - 1}
+        defaultIndex={currentWeekIndex}
         pagingEnabled
         snapEnabled
         style={{ backgroundColor: 'transparent' }}
@@ -241,6 +276,4 @@ const styles = StyleSheet.create({
     color: '#ff6900',
     fontWeight: '600',
   },
-});
-
-
+}); 

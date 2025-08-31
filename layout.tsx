@@ -8,6 +8,7 @@ import { OnboardingNavigator } from './src/navigation/OnboardingNavigator';
 import { MainAppLayout } from './src/components/layout/MainAppLayout';
 import { UserCheckInsProvider } from './src/context/UserCheckInsContext';
 import { WalletCreditProvider } from './src/context/WalletCreditContext';
+import { SelectedDateProvider } from './src/context/SelectedDateContext';
 import { supabase } from './src/lib/supabase';
 import { getUserId, removeUserId } from './src/services/storageService';
 import { LoadingScreen } from './src/screens/onboarding/LoadingScreen';
@@ -113,7 +114,9 @@ export function Layout() {
             <LiftDataProvider>
               <LoadingLiftsProvider>
                 <UserCheckInsProvider>
-                  <MainAppLayout onLogout={handleLogout} />
+                  <SelectedDateProvider>
+                    <MainAppLayout onLogout={handleLogout} />
+                  </SelectedDateProvider>
                 </UserCheckInsProvider>
               </LoadingLiftsProvider>
             </LiftDataProvider>
