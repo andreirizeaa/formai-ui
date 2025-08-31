@@ -7,10 +7,11 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 import { FilterModal } from './FilterModal';
+import { DateRangeModal } from './DateRangeModal';
 import { ILiftData, useLiftData } from '../../../context/LiftDataContext';
 import { useTutorialTarget } from '../../../context/TutorialContext';
 import { deleteLift as deleteLiftApi } from '../../../services/liftService';
-import { Picker } from '@react-native-picker/picker';
+
 import i18n from '../../../utils/i18n';
 import { 
   ClockArrowDown, 
@@ -246,67 +247,7 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
     onBack();
   }, [onBack]);
 
-  // Date picker helper functions
-  const months = [
-    i18n.t('months.january'),
-    i18n.t('months.february'),
-    i18n.t('months.march'),
-    i18n.t('months.april'),
-    i18n.t('months.may'),
-    i18n.t('months.june'),
-    i18n.t('months.july'),
-    i18n.t('months.august'),
-    i18n.t('months.september'),
-    i18n.t('months.october'),
-    i18n.t('months.november'),
-    i18n.t('months.december')
-  ];
 
-  const getDaysInMonth = (month: number, year: number) => {
-    return new Date(year, month, 0).getDate();
-  };
-
-  const isDateValid = (fromDate: { month: number; day: number; year: number } | null, toDate: { month: number; day: number; year: number } | null) => {
-    if (!fromDate || !toDate) return true;
-    
-    const from = new Date(fromDate.year, fromDate.month - 1, fromDate.day);
-    const to = new Date(toDate.year, toDate.month - 1, toDate.day);
-    
-    return to >= from;
-  };
-
-  const updateDateRange = (type: 'from' | 'to', field: 'month' | 'day' | 'year', value: number | null) => {
-    hapticFeedback.selection();
-    const currentDate = dateRange[type] || { month: 1, day: 1, year: new Date().getFullYear() };
-    
-    const updatedDate = {
-      ...currentDate,
-      [field]: value,
-    };
-    
-    // If changing month or year, validate the day
-    if (field === 'month' || field === 'year') {
-      if (updatedDate.month && updatedDate.year && updatedDate.day) {
-        const maxDays = getDaysInMonth(updatedDate.month, updatedDate.year);
-        if (updatedDate.day > maxDays) {
-          updatedDate.day = maxDays;
-        }
-      }
-    }
-    
-    const newDateRange = {
-      ...dateRange,
-      [type]: updatedDate
-    };
-
-    // Validate date range - if invalid, don't update
-    if (!isDateValid(newDateRange.from, newDateRange.to)) {
-      hapticFeedback.error();
-      return;
-    }
-    
-    setDateRange(newDateRange);
-  };
 
   const handleResetDateRange = useCallback(() => {
     hapticFeedback.success();
@@ -334,12 +275,7 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
     setIsDateRangeModalVisible(false);
   }, []);
 
-  // Generate years from 2020 to current year
-  const currentYear = new Date().getFullYear();
-  const years = Array.from(
-    { length: currentYear - 2020 + 1 },
-    (_, i) => 2020 + i
-  );
+
 
   // Memoize the lift count to prevent unnecessary re-renders
   const liftCount = useMemo(() => filteredAndSortedLifts.length, [filteredAndSortedLifts.length]);
@@ -485,206 +421,14 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
       />
 
       {/* Date Range Modal */}
-      <Modal
-        visible={isDateRangeModalVisible}
-        transparent={true}
-        animationType="none"
-        onRequestClose={handleDateRangeModalClose}
-      >
-        <TouchableOpacity 
-          style={styles.overlay} 
-          activeOpacity={1} 
-          onPress={handleDateRangeModalClose}
-        >
-          <TouchableOpacity 
-            style={styles.dateRangeModalContainer} 
-            activeOpacity={1} 
-            onPress={() => {}} // Prevent closing when clicking inside the modal
-          >
-            {/* Header */}
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalHeaderTitle}>{i18n.t('library.editDateRange')}</Text>
-              <TouchableOpacity style={styles.closeButton} onPress={handleDateRangeModalClose}>
-                <X size={20} color="#000000" />
-              </TouchableOpacity>
-            </View>
-
-            {/* Content */}
-            <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={false}>
-              {/* From Date Section */}
-              <View style={styles.dateSection}>
-                <Text style={styles.dateSectionTitle}>{i18n.t('library.from')}</Text>
-                <View style={styles.pickersContainer}>
-                  {/* Month Picker */}
-                  <View style={[styles.pickerSection, styles.monthPickerSection]}>
-                    <View style={styles.pickerWrapper}>
-                      <Picker
-                        selectedValue={dateRange.from?.month}
-                        onValueChange={(value) => updateDateRange('from', 'month', value)}
-                        style={styles.picker}
-                        itemStyle={Platform.OS === 'ios' ? { color: '#000000', fontSize: 14 } : undefined}
-                        dropdownIconColor="#000000"
-                      >
-                        {months.map((month, index) => (
-                          <Picker.Item 
-                            key={index + 1} 
-                            label={month} 
-                            value={index + 1}
-                            color="#000000"
-                          />
-                        ))}
-                      </Picker>
-                    </View>
-                  </View>
-
-                  {/* Day Picker */}
-                  <View style={styles.pickerSection}>
-                    <View style={styles.pickerWrapper}>
-                      <Picker
-                        selectedValue={dateRange.from?.day}
-                        onValueChange={(value) => updateDateRange('from', 'day', value)}
-                        style={styles.picker}
-                        itemStyle={Platform.OS === 'ios' ? { color: '#000000', fontSize: 14 } : undefined}
-                        dropdownIconColor="#000000"
-                      >
-                        {Array.from(
-                          { length: dateRange.from?.month && dateRange.from?.year 
-                            ? getDaysInMonth(dateRange.from.month, dateRange.from.year) 
-                            : 31 
-                          }, 
-                          (_, i) => i + 1
-                        ).map(day => (
-                          <Picker.Item 
-                            key={day} 
-                            label={day.toString()} 
-                            value={day}
-                            color="#000000"
-                          />
-                        ))}
-                      </Picker>
-                    </View>
-                  </View>
-
-                  {/* Year Picker */}
-                  <View style={styles.pickerSection}>
-                    <View style={styles.pickerWrapper}>
-                      <Picker
-                        selectedValue={dateRange.from?.year}
-                        onValueChange={(value) => updateDateRange('from', 'year', value)}
-                        style={styles.picker}
-                        itemStyle={Platform.OS === 'ios' ? { color: '#000000', fontSize: 14 } : undefined}
-                        dropdownIconColor="#000000"
-                      >
-                        {years.map(year => (
-                          <Picker.Item 
-                            key={year} 
-                            label={year.toString()} 
-                            value={year}
-                            color="#000000"
-                          />
-                        ))}
-                      </Picker>
-                    </View>
-                  </View>
-                </View>
-              </View>
-
-              {/* To Date Section */}
-              <View style={styles.dateSection}>
-                <Text style={styles.dateSectionTitle}>{i18n.t('library.to')}</Text>
-                <View style={styles.pickersContainer}>
-                  {/* Month Picker */}
-                  <View style={[styles.pickerSection, styles.monthPickerSection]}>
-                    <View style={styles.pickerWrapper}>
-                      <Picker
-                        selectedValue={dateRange.to?.month}
-                        onValueChange={(value) => updateDateRange('to', 'month', value)}
-                        style={styles.picker}
-                        itemStyle={Platform.OS === 'ios' ? { color: '#000000', fontSize: 14 } : undefined}
-                        dropdownIconColor="#000000"
-                      >
-                        {months.map((month, index) => (
-                          <Picker.Item 
-                            key={index + 1} 
-                            label={month} 
-                            value={index + 1}
-                            color="#000000"
-                          />
-                        ))}
-                      </Picker>
-                    </View>
-                  </View>
-
-                  {/* Day Picker */}
-                  <View style={styles.pickerSection}>
-                    <View style={styles.pickerWrapper}>
-                      <Picker
-                        selectedValue={dateRange.to?.day}
-                        onValueChange={(value) => updateDateRange('to', 'day', value)}
-                        style={styles.picker}
-                        itemStyle={Platform.OS === 'ios' ? { color: '#000000', fontSize: 14 } : undefined}
-                        dropdownIconColor="#000000"
-                      >
-                        {Array.from(
-                          { length: dateRange.to?.month && dateRange.to?.year 
-                            ? getDaysInMonth(dateRange.to.month, dateRange.to.year) 
-                            : 31 
-                          }, 
-                          (_, i) => i + 1
-                        ).map(day => (
-                          <Picker.Item 
-                            key={day} 
-                            label={day.toString()} 
-                            value={day}
-                            color="#000000"
-                          />
-                        ))}
-                      </Picker>
-                    </View>
-                  </View>
-
-                  {/* Year Picker */}
-                  <View style={styles.pickerSection}>
-                    <View style={styles.pickerWrapper}>
-                      <Picker
-                        selectedValue={dateRange.to?.year}
-                        onValueChange={(value) => updateDateRange('to', 'year', value)}
-                        style={styles.picker}
-                        itemStyle={Platform.OS === 'ios' ? { color: '#000000', fontSize: 14 } : undefined}
-                        dropdownIconColor="#000000"
-                      >
-                        {years.map(year => (
-                          <Picker.Item 
-                            key={year} 
-                            label={year.toString()} 
-                            value={year}
-                            color="#000000"
-                          />
-                        ))}
-                      </Picker>
-                    </View>
-                  </View>
-                </View>
-              </View>
-            </ScrollView>
-
-            {/* Bottom Buttons */}
-            <View style={styles.bottomControls}>
-              <View style={styles.buttonStack}>
-                <TouchableOpacity 
-                  style={styles.resetButton} 
-                  onPress={handleResetDateRange}
-                >
-                  <Text style={styles.resetButtonText}>{i18n.t('library.reset')}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.applyButton} onPress={handleApplyDateRange}>
-                  <Text style={styles.applyButtonText}>{i18n.t('library.apply')}</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </TouchableOpacity>
-        </TouchableOpacity>
-      </Modal>
+      <DateRangeModal
+        isVisible={isDateRangeModalVisible}
+        onClose={handleDateRangeModalClose}
+        dateRange={dateRange}
+        onDateRangeChange={setDateRange}
+        onReset={handleResetDateRange}
+        title={i18n.t('library.editDateRange')}
+      />
     </SafeAreaView>
   );
 }
@@ -874,123 +618,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#E5E5EA',
     marginVertical: 8,
   },
-  // Date Range Modal Styles
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 40,
-  },
-  dateRangeModalContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    width: '100%',
-    height: '90%',
-    shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 10,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 20,
-    elevation: 10,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 16,
-  },
-  modalHeaderTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#000000',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
-    textAlign: 'left',
-    flex: 1,
-  },
-  modalContent: {
-    flex: 1,
-    paddingHorizontal: 20,
-    minHeight: 0,
-  },
-  dateSection: {
-    marginBottom: 30,
-  },
-  dateSectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#000000',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
-    marginBottom: 20,
-    textAlign: 'left',
-  },
-  pickersContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-  },
-  pickerSection: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  monthPickerSection: {
-    flex: 1.4, // Make month picker wider
-  },
-  pickerWrapper: {
-    width: '100%',
-    alignItems: 'center',
-  },
-  picker: {
-    height: Platform.OS === 'ios' ? 200 : 80,
-    width: '100%',
-  },
-  bottomControls: {
-    justifyContent: 'flex-end',
-    width: '100%',
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-    paddingTop: 16,
-  },
-  buttonStack: {
-    width: '100%',
-    flexDirection: 'row',
-    gap: 12,
-  },
-  resetButton: {
-    flex: 1,
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: '#000000',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  resetButtonText: {
-    color: '#000000',
-    fontSize: 16,
-    fontWeight: '600',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
-  },
-  applyButton: {
-    flex: 1,
-    backgroundColor: '#000000',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  applyButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
-  },
+
   closeButton: {
     position: 'absolute',
     top: 16,
