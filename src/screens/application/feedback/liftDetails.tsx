@@ -199,7 +199,7 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
             <ChevronLeft size={20} color="#000000" />
           </TouchableOpacity>
           <View style={styles.titleContainer}>
-            <Text style={styles.title}>Lift Details</Text>
+            <Text style={styles.title}>{i18n.t('feedback.liftDetails')}</Text>
           </View>
           <TouchableOpacity 
             style={styles.ellipsisButton} 
@@ -227,7 +227,7 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
               </>
             ) : (
               <View style={styles.noVideoContainer}>
-                <Text style={styles.noVideoText}>No video available</Text>
+                <Text style={styles.noVideoText}>{i18n.t('feedback.noVideoAvailable')}</Text>
               </View>
             )}
           </View>
@@ -250,7 +250,7 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
           </View>
           {/* Form Score Chart Card */}
           <View style={[styles.card, styles.bottomCard]} ref={formGraphRef}>
-            <Text style={styles.cardTitle}>Form accuracy across your reps</Text>
+                          <Text style={styles.cardTitle}>{i18n.t('feedback.formAccuracyAcrossReps')}</Text>
             <View style={styles.chartContainer}>
               {chartData && chartData.datasets && chartData.datasets[0] && chartData.datasets[0].data && (
                 <LineChart
@@ -263,6 +263,8 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
                     backgroundGradientTo: '#FFFFFF',
                     backgroundGradientFromOpacity: 0,
                     backgroundGradientToOpacity: 0,
+                    fillShadowGradientFrom: '#000',
+                    fillShadowGradientTo: '#ffffff',
                     decimalPlaces: 0,
                     color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
                     labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
@@ -270,18 +272,21 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
                       borderRadius: 16,
                     },
                     propsForDots: {
-                      r: '6',
+                      r: '4',
                       strokeWidth: '2',
                       stroke: '#000000',
                       fill: '#FFFFFF',
                     },
+                    propsForBackgroundLines: {
+                      strokeDasharray: '2,2',
+                    },
                   }}
                   bezier
+                  withShadow
                   style={styles.chart}
-                  withShadow={false}
                   // withInnerLines={true}
                   // withOuterLines={true}
-                  // withVerticalLines={false}
+                  withVerticalLines={false}
                   // withHorizontalLines={false}
                   yAxisLabel=""
                   yAxisSuffix="%"
@@ -295,15 +300,18 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
           <View style={[styles.cardsRow, styles.bottomCardsRow]}>
             {/* Weight Card */}
             <View style={styles.infoCard}>
-              <Text style={styles.infoCardTitle}>Weight</Text>
+              <Text style={styles.infoCardTitle}>{i18n.t('feedback.weight')}</Text>
               <Text style={styles.infoCardValue}>
-                {currentLiftData.weightValue || '--'} {userDetails?.unitSystem === 'imperial' ? 'lbs' : 'kg'}
+                {userDetails?.unitSystem === 'imperial' 
+                  ? `${Math.round((currentLiftData.weightValue || 0) * 2.20462)} ${i18n.t('feedback.lbs')}`
+                  : `${currentLiftData.weightValue || '--'} ${i18n.t('feedback.kg')}`
+                }
               </Text>
             </View>
             
             {/* Reps Card */}
             <View style={styles.infoCard}>
-              <Text style={styles.infoCardTitle}>Reps</Text>
+              <Text style={styles.infoCardTitle}>{i18n.t('feedback.reps')}</Text>
               <Text style={styles.infoCardValue}>
                 {currentLiftData.reps || '--'}
               </Text>
@@ -311,7 +319,7 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
 
             {/* Accuracy Card */}
             <View style={[styles.infoCard, styles.infoCardOrange]}>
-              <Text style={styles.infoCardTitleOrange}>Accuracy</Text>
+              <Text style={styles.infoCardTitleOrange}>{i18n.t('feedback.accuracy')}</Text>
               <Text style={styles.infoCardValueOrange}>
                 {currentLiftData.analysis.accuracy || 91}%
               </Text>
@@ -326,7 +334,7 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
               onPress={handleReviewFeedback}
               activeOpacity={0.7}
             >
-              <Text style={styles.reviewFeedbackButtonText}>Review Feedback</Text>
+              <Text style={styles.reviewFeedbackButtonText}>{i18n.t('feedback.reviewFeedback')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -345,7 +353,7 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
               onPress={handleFavourite}
               activeOpacity={0.7}
             >
-              <Text style={styles.dropdownOptionText}>Favourite</Text>
+              <Text style={styles.dropdownOptionText}>{i18n.t('feedback.favourite')}</Text>
               <Heart size={20} color="#FF3B30" fill={isFavourite ? "#FF3B30" : "none"} />
             </TouchableOpacity>
             <View style={styles.dropdownDivider} />
@@ -354,7 +362,7 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
               onPress={handleDelete}
               activeOpacity={0.7}
             >
-              <Text style={styles.dropdownOptionTextDestructive}>Delete Lift</Text>
+              <Text style={styles.dropdownOptionTextDestructive}>{i18n.t('feedback.deleteLift')}</Text>
               <Trash2 size={20} color="#FF3B30" />
             </TouchableOpacity>
           </View>
@@ -382,10 +390,10 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
             </TouchableOpacity>
 
             {/* Title */}
-            <Text style={styles.modalTitle}>Delete Lift</Text>
+            <Text style={styles.modalTitle}>{i18n.t('feedback.deleteLift')}</Text>
 
             {/* Message */}
-            <Text style={styles.modalMessage}>Are you sure you want to delete this lift? This action cannot be undone.</Text>
+            <Text style={styles.modalMessage}>{i18n.t('feedback.deleteLiftConfirmation')}</Text>
 
             {/* Action buttons */}
             <View style={styles.modalButtonContainer}>
@@ -393,13 +401,13 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
                 style={styles.modalButton} 
                 onPress={handleDeleteCancel}
               >
-                <Text style={styles.modalButtonText}>Cancel</Text>
+                <Text style={styles.modalButtonText}>{i18n.t('feedback.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity 
                 style={[styles.modalButton, styles.modalButtonDelete]} 
                 onPress={handleDeleteConfirm}
               >
-                <Text style={[styles.modalButtonText, styles.modalButtonTextDelete]}>Delete</Text>
+                <Text style={[styles.modalButtonText, styles.modalButtonTextDelete]}>{i18n.t('feedback.delete')}</Text>
               </TouchableOpacity>
             </View>
           </TouchableOpacity>
@@ -597,10 +605,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     alignItems: 'center',
     width: '100%',
-    marginLeft: 'auto',
   },
   chart: {
-    borderRadius: 16,
   },
   ellipsisButton: {
     width: 44,
@@ -793,7 +799,7 @@ const styles = StyleSheet.create({
     borderColor: '#e2e8f0',
   },
   bottomCardsRow: {
-    marginBottom: 20,
+    marginBottom: 10,
   },
   bottomButton: {
     marginTop: 10,
@@ -811,7 +817,7 @@ const styles = StyleSheet.create({
       width: 0,
       height: -2,
     },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 8,
   },
@@ -819,6 +825,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: 12,
+    marginTop: -10,
   },
   infoCard: {
     flex: 1,
@@ -859,7 +866,7 @@ const styles = StyleSheet.create({
   infoCardTitleOrange: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#000',
+    color: '#fff',
     fontFamily: 'SF Pro Display',
     marginBottom: 4,
   },

@@ -42,6 +42,7 @@ interface SwipeableLineGraphCardProps {
   chartType?: 'accuracyPerWeight' | 'accuracyOverTime';
   unitPreference?: 'metric' | 'imperial';
   onInfoPress?: () => void;
+  externalScrollGestureRef?: React.RefObject<any>;
 }
 
 const parseLiftDate = (dateStr: string) => {
@@ -65,6 +66,7 @@ export function SwipeableLineGraphCard({
   chartType = 'accuracyPerWeight',
   unitPreference = 'metric',
   onInfoPress,
+  externalScrollGestureRef,
 }: SwipeableLineGraphCardProps) {
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [timeRange, setTimeRange] = useState<TimeRange>('90d');
@@ -78,7 +80,21 @@ export function SwipeableLineGraphCard({
 
   // Build processed cards from filtered data
   const processedCardData: ProcessedCardData[] = useMemo(() => {
-    if (!rangedCardData || rangedCardData.length === 0) return [];
+    if (!rangedCardData || rangedCardData.length === 0) {
+      // Return a placeholder card when there's no data
+      return [{
+        title: chartType === 'accuracyPerWeight' ? 'Accuracy per weight' : 'Accuracy over time',
+        subtitle: 'No data available',
+        chartData: {
+          labels: [''],
+          datasets: [{
+            data: [0],
+            color: () => '#000000',
+            strokeWidth: 1.5,
+          }],
+        },
+      }];
+    }
 
     const uniqueLiftTypes = [...new Set(rangedCardData.map((lift) => lift.liftType))];
 
@@ -274,142 +290,133 @@ export function SwipeableLineGraphCard({
   return (
     <View style={styles.cardsContainer}>
       {/* Segmented control ABOVE the carousel and card */}
-      {!hasNoLifts && processedCardData.length > 0 && (
-        <View style={styles.segmentedWrapper}>
-          <View style={styles.segmented}>
-            {Segments.map((seg, i) => {
-              const active = timeRange === seg.value;
-              return (
-                <React.Fragment key={seg.value}>
-                  <TouchableOpacity
-                    style={[styles.segment, active ? styles.segmentActive : styles.segmentInactive]}
-                    activeOpacity={0.9}
-                    onPress={() => {
-                      if (!active) {
-                        hapticFeedback.selection();
-                        setTimeRange(seg.value);
-                      }
-                    }}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: active }}
-                  >
-                    <Text style={[styles.segmentText, active && styles.segmentTextActive]}>
-                      {seg.label}
-                    </Text>
-                  </TouchableOpacity>
-                </React.Fragment>
-              );
-            })}
-          </View>
+      <View style={styles.segmentedWrapper}>
+        <View style={styles.segmented}>
+          {Segments.map((seg, i) => {
+            const active = timeRange === seg.value;
+            return (
+              <React.Fragment key={seg.value}>
+                <TouchableOpacity
+                  style={[styles.segment, active ? styles.segmentActive : styles.segmentInactive]}
+                  activeOpacity={0.9}
+                  onPress={() => {
+                    if (!active) {
+                      hapticFeedback.selection();
+                      setTimeRange(seg.value);
+                    }
+                  }}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: active }}
+                >
+                  <Text style={[styles.segmentText, active && styles.segmentTextActive]}>
+                    {seg.label}
+                  </Text>
+                </TouchableOpacity>
+              </React.Fragment>
+            );
+          })}
         </View>
-      )}
+      </View>
 
-      {hasNoLifts ? (
-        <TouchableOpacity
-          style={[styles.performanceCard, { width: CARD_WIDTH }]}
-          onPress={() => {
-            hapticFeedback.selection();
-            onTriggerAddOptions?.();
+      <View style={styles.carouselContainer}>
+        <Carousel
+          loop={false}
+          width={SCREEN_WIDTH}
+          height={CARD_HEIGHT}
+          data={processedCardData}
+          onConfigurePanGesture={(g) => {
+            'worklet';
+            // Require horizontal intent (> ~12px) before activating
+            g.activeOffsetX([-12, 12]);
+            // If the user moves vertically by ~8px, fail this pan so the parent ScrollView takes over
+            g.failOffsetY([-8, 8]);
+            // Allow both to recognize if needed (RNGH ScrollView ref)
+            if (externalScrollGestureRef) {
+              // works with RNGH 2.x "Gesture" API under the hood
+              g.simultaneousWithExternalGesture(externalScrollGestureRef);
+            }
           }}
-          activeOpacity={0.7}
-        >
-          <View style={styles.performanceCardContent}>
-            <View style={styles.performanceCardHeader}>
-              <Text style={styles.performanceCardLabel}>No lifts found</Text>
-            </View>
-          </View>
-        </TouchableOpacity>
-      ) : (
-        <View style={styles.carouselContainer}>
-          <Carousel
-            loop={false}
-            width={SCREEN_WIDTH}
-            height={CARD_HEIGHT}
-            data={processedCardData}
-            renderItem={({ item }) => (
-              <View style={styles.page}>
-                <View style={[styles.performanceCard, { width: CARD_WIDTH }]}>
-                  <View style={styles.performanceCardContent}>
-                    <View style={styles.performanceCardHeader}>
-                      <View style={styles.headerLeft}>
-                        <View style={styles.titleRow}>
-                          <Text style={styles.performanceCardLabel}>{item.title}</Text>
-                          <TouchableOpacity
-                            onPress={() => onInfoPress?.()}
-                            activeOpacity={0.7}
-                            style={styles.titleIcon}
-                          >
-                            <CircleQuestionMark width={20} height={20} color="#000" />
-                          </TouchableOpacity>
-                        </View>
-                        <Text style={styles.performanceCardSubtitle}>{item.subtitle}</Text>
+          renderItem={({ item }) => (
+            <View style={styles.page}>
+              <View style={[styles.performanceCard, { width: CARD_WIDTH }]}>
+                <View style={styles.performanceCardContent}>
+                  <View style={styles.performanceCardHeader}>
+                    <View style={styles.headerLeft}>
+                      <View style={styles.titleRow}>
+                        <Text style={styles.performanceCardLabel}>{item.title}</Text>
+                        <TouchableOpacity
+                          onPress={() => onInfoPress?.()}
+                          activeOpacity={0.7}
+                          style={styles.titleIcon}
+                        >
+                          <CircleQuestionMark width={20} height={20} color="#000" />
+                        </TouchableOpacity>
                       </View>
+                      <Text style={styles.performanceCardSubtitle}>{item.subtitle}</Text>
                     </View>
+                  </View>
 
-                    {item.chartData && item.chartData.datasets[0].data.length > 0 && (
-                      <View style={styles.chartContainer} ref={ref}>
-                        <LineChart
-                          data={item.chartData}
-                          width={CARD_WIDTH - 20}
-                          height={180}
-                          chartConfig={{
-                            fillShadowGradientFrom: '#000',
-                            fillShadowGradientTo: '#ffffff',
-                            backgroundColor: '#FFFFFF',
-                            backgroundGradientFrom: '#FFFFFF',
-                            backgroundGradientTo: '#FFFFFF',
-                            decimalPlaces: 0,
-                            color: (opacity = 1) => `rgba(0,0,0,${opacity})`,
-                            labelColor: (opacity = 1) => `rgba(0,0,0,${opacity})`,
-                            propsForDots: {
-                              r: '2',
-                              strokeWidth: '2',
-                              stroke: '#000',
-                              fill: '#000',
-                            },
-                            propsForBackgroundLines: {
-                              strokeDasharray: '2,2',
-                            },
-                            formatXLabel: (val) => val,
-                            formatYLabel: (val) => `${val}%`,
-                          }}
-                          bezier
-                          style={styles.chart}
-                          withDots={false}
-                          withShadow
-                          withInnerLines
-                          withOuterLines={false}
-                          withVerticalLines={false}
-                          withHorizontalLines
-                          yAxisSuffix="%"
-                        />
-                      </View>
-                    )}
+                  <View style={styles.chartContainer} ref={ref}>
+                    <LineChart
+                      data={item.chartData}
+                      width={CARD_WIDTH - 20}
+                      height={180}
+                      chartConfig={{
+                        fillShadowGradientFrom: '#000',
+                        fillShadowGradientTo: '#ffffff',
+                        backgroundColor: '#FFFFFF',
+                        backgroundGradientFrom: '#FFFFFF',
+                        backgroundGradientTo: '#FFFFFF',
+                        decimalPlaces: 0,
+                        color: (opacity = 1) => `rgba(0,0,0,${opacity})`,
+                        labelColor: (opacity = 1) => `rgba(0,0,0,${opacity})`,
+                        propsForDots: {
+                          r: '2',
+                          strokeWidth: '2',
+                          stroke: '#000',
+                          fill: '#000',
+                        },
+                        propsForBackgroundLines: {
+                          strokeDasharray: '2,2',
+                        },
+                        formatXLabel: (val) => val,
+                        formatYLabel: (val) => `${val}%`,
+                      }}
+                      bezier
+                      style={styles.chart}
+                      withDots={false}
+                      withShadow
+                      withInnerLines
+                      withOuterLines={false}
+                      withVerticalLines={false}
+                      withHorizontalLines
+                      yAxisSuffix="%"
+                    />
                   </View>
                 </View>
               </View>
-            )}
-            onSnapToItem={(index) => setCurrentCardIndex(index)}
-            defaultIndex={0}
-            pagingEnabled
-            snapEnabled
-            style={{ backgroundColor: 'transparent' }}
-          />
-          {/* Pagination Dots */}
-          <View style={styles.paginationContainer}>
-            {processedCardData.map((_, index) => (
-              <TouchableOpacity
-                key={index}
-                style={[
-                  styles.paginationDot,
-                  index === currentCardIndex ? styles.paginationDotActive : styles.paginationDotInactive,
-                ]}
-                activeOpacity={0.7}
-              />
-            ))}
-          </View>
+            </View>
+          )}
+          onSnapToItem={(index) => setCurrentCardIndex(index)}
+          defaultIndex={0}
+          pagingEnabled
+          snapEnabled
+          style={{ backgroundColor: 'transparent' }}
+        />
+        {/* Pagination Dots */}
+        <View style={styles.paginationContainer}>
+          {processedCardData.map((_, index) => (
+            <TouchableOpacity
+              key={index}
+              style={[
+                styles.paginationDot,
+                index === currentCardIndex ? styles.paginationDotActive : styles.paginationDotInactive,
+              ]}
+              activeOpacity={0.7}
+            />
+          ))}
         </View>
-      )}
+      </View>
     </View>
   );
 }
@@ -467,11 +474,13 @@ const styles = StyleSheet.create({
   },
   // --- Card / chart ---
   carouselContainer: {
+    marginTop: -4,
   },
   page: {
     width: SCREEN_WIDTH,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingTop: 4,
   },
   performanceCard: {
     backgroundColor: '#FFFFFF',
