@@ -1,5 +1,5 @@
 import React from 'react';
-import Svg, { Path, Circle } from 'react-native-svg';
+import Svg, { Circle, G } from 'react-native-svg';
 
 // Default icon size
 const DEFAULT_ICON_SIZE = 26;
@@ -18,6 +18,9 @@ interface CircularProgressProps extends IconProps {
   backgroundColor?: string;
   strokeWidth?: number;
   radius?: number;
+  showTargetIcon?: boolean;
+  iconColor?: string;
+  iconSize?: number;
 }
 
 export function CircularProgressChart({ 
@@ -25,9 +28,11 @@ export function CircularProgressChart({
   height = 120, 
   percentage, 
   progressColor = DEFAULT_COLOR, 
-  backgroundColor = "#E5E5E5",
   strokeWidth = 8,
-  radius = 48
+  radius = 48,
+  showTargetIcon = false,
+  iconColor = "#000000",
+  iconSize = 24
 }: CircularProgressProps) {
   const centerX = width / 2;
   const centerY = height / 2;
@@ -41,7 +46,7 @@ export function CircularProgressChart({
         cx={centerX}
         cy={centerY}
         r={radius}
-        stroke={backgroundColor}
+        stroke={'#f1f5f9'}
         strokeWidth={strokeWidth}
         fill="none"
       />
@@ -64,58 +69,44 @@ export function CircularProgressChart({
         r={radius - strokeWidth - 8}
         fill="#FFFFFF"
       />
+      {/* Target Icon in center with circular background */}
+      {showTargetIcon && (
+        <G transform={`translate(${centerX - iconSize/2}, ${centerY - iconSize/2})`}>
+          {/* Circular background for the icon - matching back button style */}
+          <Circle
+            cx={iconSize/2}
+            cy={iconSize/2}
+            r={iconSize/2 + 6}
+            fill="#f1f5f9"
+          />
+          {/* Target icon as SVG paths */}
+          <Circle
+            cx={iconSize/2}
+            cy={iconSize/2}
+            r={iconSize/2}
+            fill="none"
+            stroke={iconColor}
+            strokeWidth={1.5}
+          />
+          <Circle
+            cx={iconSize/2}
+            cy={iconSize/2}
+            r={iconSize/3}
+            fill="none"
+            stroke={iconColor}
+            strokeWidth={1.5}
+          />
+          <Circle
+            cx={iconSize/2}
+            cy={iconSize/2}
+            r={iconSize/6}
+            fill={iconColor}
+          />
+        </G>
+      )}
     </Svg>
   );
 }
-
-export function CircularProgressChartWithCustomInner({ 
-  width = 120, 
-  height = 120, 
-  percentage, 
-  progressColor = DEFAULT_COLOR, 
-  backgroundColor = "#E5E5E5",
-  strokeWidth = 8,
-  radius = 36,
-  innerRadius = 28
-}: CircularProgressProps & { innerRadius?: number }) {
-  const centerX = width / 2;
-  const centerY = height / 2;
-  const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference * (1 - percentage / 100);
-  
-  return (
-    <Svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
-      {/* Background circle */}
-      <Circle
-        cx={centerX}
-        cy={centerY}
-        r={radius}
-        stroke={backgroundColor}
-        strokeWidth={strokeWidth}
-        fill="none"
-      />
-      {/* Progress circle - percentage filled */}
-      <Circle
-        cx={centerX}
-        cy={centerY}
-        r={radius}
-        stroke={progressColor}
-        strokeWidth={strokeWidth}
-        fill="none"
-        strokeDasharray={circumference}
-        strokeDashoffset={strokeDashoffset}
-        transform={`rotate(-90 ${centerX} ${centerY})`}
-      />
-      {/* Inner circle */}
-      <Circle
-        cx={centerX}
-        cy={centerY}
-        r={innerRadius}
-        fill="#FFFFFF"
-      />
-    </Svg>
-  );
-} 
 
 
 export function SingleDotIcon({ width = DEFAULT_ICON_SIZE, height = DEFAULT_ICON_SIZE, color = DEFAULT_COLOR }: IconProps) {
@@ -207,3 +198,5 @@ export function SixDotsIcon({ width = DEFAULT_ICON_SIZE, height = DEFAULT_ICON_S
     </Svg>
   );
 } 
+
+ 

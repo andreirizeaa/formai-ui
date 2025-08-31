@@ -200,7 +200,6 @@ export function SwipeableCalendar({ onDateSelect, initialSelectedDate }: Swipeab
 const styles = StyleSheet.create({
   container: {
     backgroundColor: 'transparent',
-    paddingVertical: 8,
   },
   weekPage: {
     width: SCREEN_WIDTH,
