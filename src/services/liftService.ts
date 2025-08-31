@@ -22,6 +22,7 @@ export interface AnalyzeLiftResponse<T = any> {
 
 export async function analyzeLift(userId: string, liftData: LoadingLiftData): Promise<AnalyzeLiftResponse> {
   if (!userId) return { success: false, data: null };
+  console.log('analyzeLift', liftData.dateToday);
 
   const payload: AnalyzeLiftPayload = {
     userId,

@@ -4,10 +4,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft, Ellipsis, Heart, Trash2, X } from 'lucide-react-native';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { LineChart } from 'react-native-chart-kit';
+import { LinearGradient } from 'expo-linear-gradient';
 import { hapticFeedback } from '../../../utils/haptic';
 import { useLiftData, ILiftData } from '../../../context/LiftDataContext';
 import { deleteLift as deleteLiftApi, favouriteLift as favouriteLiftApi } from '../../../services/liftService';
 import { useTutorialTarget } from '../../../context/TutorialContext';
+import { useUserDetails } from '../../../context/UserDetailsContext';
 import i18n from '../../../utils/i18n';
 
 interface VideoPlayerComponentProps {
@@ -45,6 +47,7 @@ interface LiftDetailsProps {
 
 export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initialLiftData }: LiftDetailsProps) {
   const { removeLift, updateLift, refreshLifts, liftData: contextLiftData, favouriteLiftAndRefresh } = useLiftData();
+  const { userDetails } = useUserDetails();
   const [showDropdown, setShowDropdown] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isVideoLoading, setIsVideoLoading] = useState(true);
@@ -149,6 +152,32 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
     ],
   };
 
+  // Format date to "Aug 25th, 2025" format
+  function formatDate(dateString: string | null) {
+    if (!dateString) return 'Aug 25th, 2025';
+    
+    // Parse dd-mm-yyyy format
+    const parts = dateString.split('-');
+    if (parts.length !== 3) return 'Aug 25th, 2025';
+    
+    const day = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1; // Month is 0-indexed in Date constructor
+    const year = parseInt(parts[2], 10);
+    
+    if (isNaN(day) || isNaN(month) || isNaN(year)) return 'Aug 25th, 2025';
+    
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthName = months[month];
+    
+    // Add ordinal suffix to day
+    let suffix = 'th';
+    if (day === 1 || day === 21 || day === 31) suffix = 'st';
+    else if (day === 2 || day === 22) suffix = 'nd';
+    else if (day === 3 || day === 23) suffix = 'rd';
+    
+    return `${monthName} ${day}${suffix}, ${year}`;
+  }
+
   // Ensure we have valid data for the chart
   const chartData = {
     labels: formScoreData.labels,
@@ -169,7 +198,9 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
           >
             <ChevronLeft size={20} color="#000000" />
           </TouchableOpacity>
-          <Text style={styles.title}>Lift Details</Text>
+          <View style={styles.titleContainer}>
+            <Text style={styles.title}>Lift Details</Text>
+          </View>
           <TouchableOpacity 
             style={styles.ellipsisButton} 
             onPress={handleActionSheet}
@@ -200,7 +231,12 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
               </View>
             )}
           </View>
+        </View>
+      </SafeAreaView>
 
+      {/* Bottom Container with Chart, Cards, and Review Button */}
+      <View style={styles.bottomContainer}>
+        <View style={styles.bottomBackground}>
           {/* Pills Row */}
           <View style={styles.pillsRow}>
             <View style={styles.leftPills}>
@@ -208,27 +244,25 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
                 <Text style={styles.pillText}>{currentLiftData.liftType || 'Bench Press'}</Text>
               </View>
               <View style={styles.pill}>
-                <Text style={styles.pillText}>{currentLiftData.liftDate || '4 Sep, 2025'}</Text>
+                <Text style={styles.pillText}>{formatDate(currentLiftData.liftDate)}</Text>
               </View>
             </View>
-            <View style={styles.orangePill}>
-              <Text style={styles.pillText}>{currentLiftData.analysis.accuracy || 91}%</Text>
-            </View>
           </View>
-
           {/* Form Score Chart Card */}
-          <View style={styles.card} ref={formGraphRef}>
+          <View style={[styles.card, styles.bottomCard]} ref={formGraphRef}>
             <Text style={styles.cardTitle}>Form accuracy across your reps</Text>
             <View style={styles.chartContainer}>
               {chartData && chartData.datasets && chartData.datasets[0] && chartData.datasets[0].data && (
                 <LineChart
                   data={chartData}
-                  width={width - 80} // Reduced width to make chart smaller
+                  width={width - 75} // Match the width of the weight/reps cards row
                   height={180} // Increased height to show x-axis labels
                   chartConfig={{
                     backgroundColor: '#FFFFFF',
                     backgroundGradientFrom: '#FFFFFF',
                     backgroundGradientTo: '#FFFFFF',
+                    backgroundGradientFromOpacity: 0,
+                    backgroundGradientToOpacity: 0,
                     decimalPlaces: 0,
                     color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
                     labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
@@ -236,18 +270,19 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
                       borderRadius: 16,
                     },
                     propsForDots: {
-                      r: '0',
-                      strokeWidth: '0',
+                      r: '6',
+                      strokeWidth: '2',
+                      stroke: '#000000',
+                      fill: '#FFFFFF',
                     },
                   }}
                   bezier
                   style={styles.chart}
-                  withDots={false}
                   withShadow={false}
-                  withInnerLines={false}
-                  withOuterLines={false}
-                  withVerticalLines={false}
-                  withHorizontalLines={false}
+                  // withInnerLines={true}
+                  // withOuterLines={true}
+                  // withVerticalLines={false}
+                  // withHorizontalLines={false}
                   yAxisLabel=""
                   yAxisSuffix="%"
                   xAxisLabel=""
@@ -256,38 +291,44 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
             </View>
           </View>
 
-          {/* Weight and Sets/Reps Cards Row */}
-          <View style={styles.cardsRow}>
+          {/* Weight, Reps, and Accuracy Cards Row */}
+          <View style={[styles.cardsRow, styles.bottomCardsRow]}>
             {/* Weight Card */}
-            <View style={styles.halfCard}>
-              <Text style={styles.halfCardTitle}>Weight</Text>
-              <Text style={styles.halfCardValue}>
-                {currentLiftData.weightValue || '--'}
+            <View style={styles.infoCard}>
+              <Text style={styles.infoCardTitle}>Weight</Text>
+              <Text style={styles.infoCardValue}>
+                {currentLiftData.weightValue || '--'} {userDetails?.unitSystem === 'imperial' ? 'lbs' : 'kg'}
               </Text>
             </View>
             
-            {/* Sets/Reps Card */}
-            <View style={styles.halfCard}>
-              <Text style={styles.halfCardTitle}>Reps</Text>
-              <Text style={styles.halfCardValue}>
+            {/* Reps Card */}
+            <View style={styles.infoCard}>
+              <Text style={styles.infoCardTitle}>Reps</Text>
+              <Text style={styles.infoCardValue}>
                 {currentLiftData.reps || '--'}
               </Text>
             </View>
-          </View>
-        </View>
-      </SafeAreaView>
 
-      {/* Review Feedback Button - Fixed to Bottom */}
-      <View style={styles.bottomContainer}>
-        <View style={styles.bottomBackground}>
-          <TouchableOpacity 
-            ref={reviewFeedbackRef}
-            style={styles.reviewFeedbackButton}
-            onPress={handleReviewFeedback}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.reviewFeedbackButtonText}>Review Feedback</Text>
-          </TouchableOpacity>
+            {/* Accuracy Card */}
+            <View style={[styles.infoCard, styles.infoCardOrange]}>
+              <Text style={styles.infoCardTitleOrange}>Accuracy</Text>
+              <Text style={styles.infoCardValueOrange}>
+                {currentLiftData.analysis.accuracy || 91}%
+              </Text>
+            </View>
+          </View>
+
+          {/* Review Feedback Button Card */}
+          <View style={styles.feedbackButtonCard}>
+            <TouchableOpacity 
+              ref={reviewFeedbackRef}
+              style={styles.reviewFeedbackButton}
+              onPress={handleReviewFeedback}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.reviewFeedbackButtonText}>Review Feedback</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
 
@@ -377,7 +418,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#000',
     zIndex: 1000,
   },
   safeArea: {
@@ -400,26 +441,33 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     zIndex: 1,
   },
+  titleContainer: {
+    backgroundColor: '#F2F2F7',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
+    width: 'auto',
+  },
   title: {
     fontSize: 20,
-    fontWeight: '600',
+    fontWeight: '500',
     color: '#000000',
     fontFamily: 'SF Pro Display',
-    position: 'absolute',
-    left: 0,
-    right: 0,
     textAlign: 'center',
   },
   content: {
     paddingHorizontal: 20,
-    paddingBottom: 100,
+    paddingBottom: 0,
   },
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'transparent',
     borderRadius: 18,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#E5E5EA',
+    borderColor: '#000000',
     marginBottom: 16,
     shadowColor: '#000000',
     shadowOffset: {
@@ -434,11 +482,12 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     overflow: 'hidden',
     backgroundColor: 'black',
-    marginBottom: 16,
+    marginBottom: 4,
+    marginTop: -10,
   },
   video: {
     width: '100%',
-    height: 200,
+    height: '67%',
   },
   videoLoadingOverlay: {
     position: 'absolute',
@@ -495,14 +544,17 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
   pillsRow: {
+    marginTop: -8,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 16,
-    gap: 12,
+    alignItems: 'center',
+    marginBottom: 8,
+    paddingHorizontal: 6,
   },
   leftPills: {
     flexDirection: 'row',
     gap: 12,
+    flex: 1,
   },
   pill: {
     backgroundColor: '#000000',
@@ -518,8 +570,14 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     fontFamily: 'SF Pro Display',
   },
+  orangePillText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Display',
+  },
   orangePill: {
-    backgroundColor: '#000000',
+    backgroundColor: '#ffb86a',
     borderRadius: 18,
     paddingVertical: 4,
     paddingHorizontal: 12,
@@ -537,11 +595,12 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     borderRadius: 16,
     overflow: 'hidden',
-    alignItems: 'flex-start',
+    alignItems: 'center',
+    width: '100%',
+    marginLeft: 'auto',
   },
   chart: {
     borderRadius: 16,
-    marginLeft: -22,
   },
   ellipsisButton: {
     width: 44,
@@ -685,34 +744,35 @@ const styles = StyleSheet.create({
     borderColor: '#000000',
     borderRadius: 28,
     width: '100%',
-    paddingVertical: 12,
+    paddingVertical: 16,
     paddingHorizontal: 24,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'transparent',
+    backgroundColor: '#fff',
     marginBottom: 4,
   },
   reviewFeedbackButtonText: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '500',
     color: '#000000',
     fontFamily: 'SF Pro Display',
   },
   bottomContainer: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'transparent',
+    backgroundColor: '#f1f5f9',
   },
   bottomBackground: {
-    backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    paddingVertical: 30,
+    paddingVertical: 20,
     paddingHorizontal: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: 'flex-start',
+    justifyContent: 'flex-start',
     shadowColor: '#000000',
     shadowOffset: {
       width: 0,
@@ -721,39 +781,86 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 8,
+    height: height * 0.585,
+  },
+  bottomCard: {
+    marginBottom: 20,
+    shadowColor: 'transparent',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    elevation: 0,
+    borderColor: '#e2e8f0',
+  },
+  bottomCardsRow: {
+    marginBottom: 20,
+  },
+  bottomButton: {
+    marginTop: 10,
+  },
+  feedbackButtonCard: {
+    backgroundColor: '#f1f5f9',
+    padding: 20,
+    marginTop: 20,
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: -2,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 8,
   },
   cardsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: 12,
   },
-  halfCard: {
+  infoCard: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'transparent',
     borderRadius: 18,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#E5E5EA',
-    shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+    borderColor: '#e2e8f0',
+    shadowColor: 'transparent',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    elevation: 0,
   },
-  halfCardTitle: {
+  infoCardTitle: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
     color: '#000000',
     fontFamily: 'SF Pro Display',
     marginBottom: 4,
   },
-  halfCardValue: {
+  infoCardValue: {
     fontSize: 24,
     fontWeight: '600',
     color: '#000000',
     fontFamily: 'SF Pro Display',
+  },
+  infoCardValueOrange: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#fff',
+    fontFamily: 'SF Pro Display',
+  },
+  infoCardOrange: {
+    backgroundColor: '#ffb86a',
+    borderColor: '#ffb86a',
+  },
+  infoCardTitleOrange: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#000',
+    fontFamily: 'SF Pro Display',
+    marginBottom: 4,
   },
 }); 

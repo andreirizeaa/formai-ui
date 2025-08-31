@@ -149,9 +149,6 @@ export function SwipeableCalendar({ onDateSelect, initialSelectedDate }: Swipeab
           </View>
         )}
         defaultIndex={weeks.length - 1}
-        onSnapToItem={() => {
-          hapticFeedback.selection();
-        }}
         pagingEnabled
         snapEnabled
         style={{ backgroundColor: 'transparent' }}

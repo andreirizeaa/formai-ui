@@ -9,6 +9,7 @@ export interface ILiftData {
   isFavourite: boolean;
   liftType: string;
   liftDate: string;
+  liftTime: string;
   weightValue: number;
   reps: number;
   rawVideoURL: any;
@@ -128,7 +129,7 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
         if (!userId) return [] as ILiftData[];
         const { data, error } = await supabase
         .from('lifts')
-        .select('id, is_favourite, lift_type, lift_date, weight_value, reps, raw_video_url, pose_video_url, thumbnail_url, analysis')
+        .select('id, is_favourite, lift_type, lift_date, lift_time, weight_value, reps, raw_video_url, pose_video_url, thumbnail_url, analysis')
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
         if (error) return [] as ILiftData[];
@@ -188,6 +189,7 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
           isFavourite: !!row.is_favourite,
           liftType: row.lift_type,
           liftDate: formatDateForLift(new Date(row.lift_date)),
+          liftTime: row.lift_time,
           weightValue: Number(row.weight_value),
           reps: Number(row.reps),
           rawVideoURL,
@@ -228,7 +230,7 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
       // Fetch only this lift by id and update state
       const { data, error } = await supabase
         .from('lifts')
-        .select('id, is_favourite, lift_type, lift_date, weight_value, reps, raw_video_url, pose_video_url, thumbnail_url, analysis')
+        .select('id, is_favourite, lift_type, lift_date, lift_time, weight_value, reps, raw_video_url, pose_video_url, thumbnail_url, analysis')
         .eq('id', id)
         .maybeSingle();
       if (!error && data) {
@@ -281,6 +283,7 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
             isFavourite: !!data.is_favourite,
             liftType: data.lift_type,
             liftDate: formatDateForLift(new Date(data.lift_date)),
+            liftTime: data.lift_time,
             weightValue: Number(data.weight_value),
             reps: Number(data.reps),
             rawVideoURL,
@@ -292,6 +295,7 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
               feedback: signedFeedback,
             },
           };
+          console.log(mappedLift);
           return mappedLift;
         })();
         setLiftData(prev => prev.map(l => l.id === id ? updated : l));
@@ -373,6 +377,7 @@ export function TutorialLiftSeeder() {
         isFavourite: false,
         liftType: 'Barbell Front Squat',
         liftDate: formatDateForLift(today),
+        liftTime: '10:35 PM',
         weightValue: 60,
         reps: 1,
         rawVideoURL: require('../../assets/tutorial/formai-example-video.mp4'),

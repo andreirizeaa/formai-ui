@@ -9,11 +9,13 @@ import Animated, {
   withTiming,
   Easing,
 } from 'react-native-reanimated';
-import { Trash2 } from 'lucide-react-native';
+import { Trash2, Target, Weight, ChartNoAxesCombined } from 'lucide-react-native';
 import { hapticFeedback } from '../utils/haptic';
 import i18n from '../utils/i18n';
 import { deleteLift as deleteLiftApi } from '../services/liftService';
 import { useTutorialTarget } from '../context/TutorialContext';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useOnboarding } from '../context/OnboardingContext';
 
 interface LiftDataCardProps {
   lift: ILiftData;
@@ -29,6 +31,7 @@ export function LiftDataCard({ lift, onPress, style }: LiftDataCardProps) {
   const { removeLift } = useLiftData();
   const { ref: firstLiftCardRef } = useTutorialTarget('home_first_lift_card');
   const [deleting, setDeleting] = useState(false);
+  const { onboardingData } = useOnboarding();
 
   const autoResetTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -133,46 +136,77 @@ export function LiftDataCard({ lift, onPress, style }: LiftDataCardProps) {
       {/* Foreground: SHADOW wrapper (no overflow), holds the animated translate */}
       <GestureDetector gesture={pan}>
         <Animated.View style={[styles.cardShadow, shadowStyle]} ref={firstLiftCardRef}>
-          {/* Inner card with overflow hidden to clip corners — shadow won’t be clipped */}
+          {/* Inner card with overflow hidden to clip corners — shadow won't be clipped */}
           <View style={styles.cardInner}>
-            <TouchableOpacity
-              onPress={() => onPress?.(lift)}
-              activeOpacity={0.7}
-              disabled={!onPress}
-              style={styles.contentRow}
+            <LinearGradient
+              colors={['#e2e8f0', '#f5f3ff']}
+              locations={[0, 0.3]}
+              style={styles.cardGradient}
+              start={{ x: 0.6, y: 0 }}
+              end={{ x: 0, y: 1 }}
             >
-              {/* Thumbnail */}
-              <View style={styles.thumbContainer}>
-                {lift.thumbnailURL ? (
-                  typeof lift.thumbnailURL === 'string' ? (
-                    <Image source={{ uri: lift.thumbnailURL }} style={styles.thumbnail} />
+              <TouchableOpacity
+                onPress={() => onPress?.(lift)}
+                activeOpacity={0.7}
+                disabled={!onPress}
+                style={styles.contentRow}
+              >
+                {/* Thumbnail */}
+                <View style={styles.thumbContainer}>
+                  {lift.thumbnailURL ? (
+                    typeof lift.thumbnailURL === 'string' ? (
+                      <Image source={{ uri: lift.thumbnailURL }} style={styles.thumbnail} />
+                    ) : (
+                      <Image source={lift.thumbnailURL} style={styles.thumbnail} />
+                    )
                   ) : (
-                    <Image source={lift.thumbnailURL} style={styles.thumbnail} />
-                  )
-                ) : (
-                  <Image
-                    source={require('../../assets/placeholder-thumbnail.png')}
-                    style={styles.thumbnail}
-                  />
-                )}
-              </View>
-
-              {/* Content */}
-              <View style={styles.liftContent}>
-                <View style={styles.liftHeader}>
-                  <Text style={styles.liftName} numberOfLines={1}>
-                    {lift.liftType}
-                  </Text>
-                  <Text style={styles.liftDate}>{lift.liftDate}</Text>
+                    <Image
+                      source={require('../../assets/placeholder-thumbnail.png')}
+                      style={styles.thumbnail}
+                    />
+                  )}
                 </View>
-                <View style={styles.liftAccuracyRow}>
-                  <Text style={styles.accuracyLabel}>{i18n.t('liftCard.accuracy')}</Text>
-                  <View style={styles.accuracyPill}>
-                    <Text style={styles.accuracyValue}>{lift.analysis.accuracy}%</Text>
+
+                {/* Content */}
+                <View style={styles.liftContent}>
+                  {/* Top row: Lift name and time pill */}
+                  <View style={styles.topRow}>
+                    <Text style={styles.liftName} numberOfLines={1}>
+                      {lift.liftType}
+                    </Text>
+                    <View style={styles.timePill}>
+                      <Text style={styles.timeValue}>{lift.liftTime}</Text>
+                    </View>
+                  </View>
+
+                  {/* Middle row: Target icon and accuracy */}
+                  <View style={styles.middleRow}>
+                    <Target size={20} color="#000" />
+                    <View style={styles.accuracyContainer}>
+                      <Text style={styles.accuracyValue}>{lift.analysis.accuracy}%</Text>
+                      <Text style={styles.accuracyText}> accuracy</Text>
+                    </View>
+                  </View>
+
+                  {/* Bottom row: Weight and feedback count */}
+                  <View style={styles.bottomRow}>
+                    <View style={styles.bottomRowItem}>
+                      <Weight size={16} color="#000000" />
+                      <Text style={styles.bottomRowText}>
+                        {onboardingData.unitSystem === 'imperial' 
+                          ? `${Math.round(lift.weightValue * 2.20462)} lbs`
+                          : `${lift.weightValue} kg`
+                        }
+                      </Text>
+                    </View>
+                    <View style={styles.bottomRowItem}>
+                      <ChartNoAxesCombined size={16} color="#000000" />
+                      <Text style={styles.bottomRowText}>{lift.analysis.feedback?.length || 0} improvements</Text>
+                    </View>
                   </View>
                 </View>
-              </View>
-            </TouchableOpacity>
+              </TouchableOpacity>
+            </LinearGradient>
           </View>
         </Animated.View>
       </GestureDetector>
@@ -208,24 +242,27 @@ const styles = StyleSheet.create({
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.2,
     shadowRadius: 4,
-    elevation: 2,
+    elevation: 4,
   },
 
   // ⬇️ Inner card actually draws the white background and clips children
   cardInner: {
     borderRadius: 18,
     overflow: 'hidden',
-    backgroundColor: '#FFF',
+  },
+  cardGradient: {
+    flex: 1,
+    borderRadius: 18,
   },
 
   contentRow: {
     flexDirection: 'row',
-    height: 120,
+    height: 130,
   },
   thumbContainer: {
-    width: '25%',
+    width: '30%',
     height: '100%',
     overflow: 'hidden',
     borderTopLeftRadius: 18,
@@ -238,45 +275,70 @@ const styles = StyleSheet.create({
   liftContent: {
     flex: 1,
     padding: 16,
-    justifyContent: 'center',
-  },
-  liftHeader: {
-    flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 12,
   },
   liftName: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '400',
     color: '#000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
     flex: 1,
     marginRight: 8,
   },
-  liftDate: {
-    fontSize: 14,
-    color: '#8E8E93',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
-  },
-  liftAccuracyRow: {
+  topRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  accuracyLabel: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#000',
-  },
-  accuracyPill: {
-    backgroundColor: '#000',
+  timePill: {
+    backgroundColor: '#ffffff',
     borderRadius: 18,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+  },
+  timeValue: {
+    color: '#000000',
+    fontSize: 14,
+    fontWeight: '400',
+  },
+  middleRow: {
+    marginTop: -4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+  },
+  accuracyContainer: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    marginLeft: 8,
   },
   accuracyValue: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#000000',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
+  accuracyText: {
+    fontSize: 18,
+    color: '#000000',
+    fontWeight: '600',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
+  bottomRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    gap: 20,
+  },
+  bottomRowItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  bottomRowText: {
+    fontSize: 14,
+    color: '#000000',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+    fontWeight: '500',
   },
 });
