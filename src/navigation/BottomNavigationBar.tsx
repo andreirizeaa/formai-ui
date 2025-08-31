@@ -7,13 +7,13 @@ import { useTutorialTarget, useTutorial } from '../context/TutorialContext';
 import { ChartNoAxesColumn, House, Settings, Plus} from 'lucide-react-native';
 
 interface BottomNavigationBarProps {
-  activeTab: 'home' | 'performance' | 'settings';
-  onTabPress: (tab: 'home' | 'performance' | 'settings') => void;
+  activeTab: 'home' | 'progress' | 'settings';
+  onTabPress: (tab: 'home' | 'progress' | 'settings') => void;
   onAddPress: () => void;
 }
 
 interface TabIconProps {
-  name: 'home' | 'performance' | 'settings';
+  name: 'home' | 'progress' | 'settings';
   isActive: boolean;
   size?: number;
 }
@@ -23,7 +23,7 @@ function TabIcon({ name, isActive, size = 26 }: TabIconProps) {
   
   const icons = {
     home: <House size={size} color={color} />,
-    performance: <ChartNoAxesColumn size={size} color={color}/>,
+    progress: <ChartNoAxesColumn size={size} color={color}/>,
     settings: <Settings size={size} color={color} />,
   };
 
@@ -72,17 +72,17 @@ export function BottomNavigationBar({
             ref={homePerformanceIcon}
             style={styles.tab}
             onPress={() => {
-              onTabPress('performance');
+              onTabPress('progress');
               hapticFeedback.selection();
             }}
             activeOpacity={0.7}
           >
-            <TabIcon name="performance" isActive={activeTab === 'performance'} />
+            <TabIcon name="progress" isActive={activeTab === 'progress'} />
             <Text style={[
               styles.tabText,
-              { color: activeTab === 'performance' ? '#000000' : '#8E8E93' }
+              { color: activeTab === 'progress' ? '#000000' : '#8E8E93' }
             ]}>
-              {i18n.t('tabs.performance')}
+              {i18n.t('tabs.progress')}
             </Text>
           </TouchableOpacity>
 
