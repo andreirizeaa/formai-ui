@@ -11,6 +11,7 @@ import { SwipeableCalendar } from '../../../components/ui/SwipeableCalendar';
 import { SwipeableAccuracyCard } from '../../../components/ui/SwipeableAccuracyCard';
 import { useUserCheckIns } from '../../../context/UserCheckInsContext';
 import { useTutorialTarget } from '../../../context/TutorialContext';
+import { useSelectedDate } from '../../../context/SelectedDateContext';
 
 import i18n from '../../../utils/i18n';
 import { X, ChevronRight } from 'lucide-react-native';
@@ -28,9 +29,7 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
   const { loadingLifts } = useLoadingLifts();
   const { liftData , getLiftsByDate , refreshLifts } = useLiftData();
   const { currentStreak } = useUserCheckIns();
-  
-  // Selected date state for calendar
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const { selectedDate, setSelectedDate } = useSelectedDate();
   
   // Fire card popup state
   const [isFirePopupVisible, setIsFirePopupVisible] = useState(false);
@@ -221,7 +220,6 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
       {/* Swipeable Calendar */}
       <SwipeableCalendar 
         onDateSelect={handleDateSelect} 
-        initialSelectedDate={selectedDate}
       />
       
       {/* Swipeable Accuracy Card */}
