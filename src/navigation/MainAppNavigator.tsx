@@ -489,11 +489,11 @@ function LibraryScreenWrapperWithProps() {
 
 // Main tabs navigator with custom bottom navigation
 function MainTabsNavigator({ onLogout }: { onLogout?: () => void }) {
-  const [activeTab, setActiveTab] = React.useState<'home' | 'performance' | 'settings'>('home');
+  const [activeTab, setActiveTab] = React.useState<'home' | 'progress' | 'settings'>('home');
   const [showAddOptions, setShowAddOptions] = React.useState(false);
   const navigation = useNavigation<MainStackNavigationProp>();
 
-  const handleTabPress = (tab: 'home' | 'performance' | 'settings') => {
+  const handleTabPress = (tab: 'home' | 'progress' | 'settings') => {
     setActiveTab(tab);
   };
 
@@ -518,7 +518,7 @@ function MainTabsNavigator({ onLogout }: { onLogout?: () => void }) {
   // Expose the add press function globally
   React.useEffect(() => {
     global.triggerAddOptions = handleAddPress;
-    global.navigateToPerformance = () => handleTabPress('performance');
+    global.navigateToPerformance = () => handleTabPress('progress');
     global.navigateToSettings = () => handleTabPress('settings');
     global.navigateToHome = () => handleTabPress('home');
     global.navigateToPersonalDetails = () => {
@@ -552,7 +552,7 @@ function MainTabsNavigator({ onLogout }: { onLogout?: () => void }) {
     switch (activeTab) {
       case 'home':
         return <HomeScreenWrapper />;
-      case 'performance':
+      case 'progress':
         return <PerformanceScreenWrapper />;
       case 'settings':
         return <SettingsScreenWrapper onLogout={onLogout} />;

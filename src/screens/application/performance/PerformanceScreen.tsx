@@ -1,101 +1,34 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, Platform, ScrollView, TouchableOpacity, Modal, Dimensions } from 'react-native';
 import { SwipeableLineGraphCard } from '../../../components/ui/SwipeableLineGraphCard';
-// Removed SwipeableSummaryCard in favor of inline metric cards
-import { FilterModal } from '../library/FilterModal';
-import { DateRangeModal } from '../library/DateRangeModal';
 import { useLiftData } from '../../../context/LiftDataContext';
 import { useUserDetails } from '../../../context/UserDetailsContext';
 import { hapticFeedback } from '../../../utils/haptic';
 import i18n from '../../../utils/i18n';
 import { useTutorialTarget } from '../../../context/TutorialContext';
-import { CircleQuestionMark, Pencil, X } from 'lucide-react-native';
+import { CircleQuestionMark, X } from 'lucide-react-native';
 import { CircularProgressChart } from '../../../components/icons/icons';
 
 interface PerformanceScreenProps {
   onTriggerAddOptions?: () => void;
 }
 
-interface DateRange {
-  from: { month: number; day: number; year: number } | null;
-  to: { month: number; day: number; year: number } | null;
-}
+
 
 export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProps) {
   const { liftData } = useLiftData();
   const { userDetails } = useUserDetails();
-  const [isDateRangeModalVisible, setIsDateRangeModalVisible] = useState(false);
-  const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
-  const [dateRange, setDateRange] = useState<DateRange>({ from: null, to: null });
-  const [selectedMovements, setSelectedMovements] = useState<string[]>([]);
   const [infoModalVisible, setInfoModalVisible] = useState(false);
   const [infoModalContent, setInfoModalContent] = useState<{ title: string; message: string }>({ title: '', message: '' });
+  
   // Tutorial target registration
-  const { ref: performanceFiltersRef } = useTutorialTarget('performance_filters');
   const { ref: performanceMetricsRef } = useTutorialTarget('performance_metrics');
   const { ref: performanceChartsRef } = useTutorialTarget('performance_charts');
   
-  // Initialize date range with current data range
-  React.useEffect(() => {
-    if (liftData.length > 0) {
-      const dates = liftData.map(lift => {
-        const [day, month, year] = lift.liftDate.split('-').map(Number);
-        return new Date(year, month - 1, day);
-      }).sort((a, b) => a.getTime() - b.getTime());
 
-      const startDate = dates[0];
-      const endDate = dates[dates.length - 1];
 
-      setDateRange({
-        from: {
-          month: startDate.getMonth() + 1,
-          day: startDate.getDate(),
-          year: startDate.getFullYear()
-        },
-        to: {
-          month: endDate.getMonth() + 1,
-          day: endDate.getDate(),
-          year: endDate.getFullYear()
-        }
-      });
-    } else {
-      // Default to today's date a year ago to today
-      const today = new Date();
-      const oneYearAgo = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate());
-      
-      setDateRange({
-        from: {
-          month: oneYearAgo.getMonth() + 1,
-          day: oneYearAgo.getDate(),
-          year: oneYearAgo.getFullYear()
-        },
-        to: {
-          month: today.getMonth() + 1,
-          day: today.getDate(),
-          year: today.getFullYear()
-        }
-      });
-    }
-  }, [liftData]);
-
-  // Filter lift data based on date range
-  const filteredLiftData = useMemo(() => {
-    if (!dateRange.from || !dateRange.to) {
-      return liftData;
-    }
-
-    const fromDate = new Date(dateRange.from.year, dateRange.from.month - 1, dateRange.from.day);
-    const toDate = new Date(dateRange.to.year, dateRange.to.month - 1, dateRange.to.day);
-
-    return liftData.filter(lift => {
-      const [day, month, year] = lift.liftDate.split('-').map(Number);
-      const liftDate = new Date(year, month - 1, day);
-      return liftDate >= fromDate && liftDate <= toDate;
-    });
-  }, [liftData, dateRange]);
-  
   // Check if there are no lifts
-  const hasNoLifts = filteredLiftData.length === 0;
+  const hasNoLifts = liftData.length === 0;
 
   // Helpers: compute summary stats (moved from SwipeableSummaryCard)
   function parseDateDDMMYYYY(dateStr: string): Date | null {
@@ -135,8 +68,8 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
     return recentAvg - earlyAvg;
   }
 
-  const { averageAccuracy, improvementValue, accuracyColor, improvementColor } = useMemo(() => {
-    const validAccuracies = filteredLiftData
+  const { averageAccuracy, improvementValue, accuracyColor, improvementColor, isImprovementNegative } = useMemo(() => {
+    const validAccuracies = liftData
       .map(l => (typeof (l as any)?.analysis?.accuracy === 'number' ? (l as any).analysis.accuracy as number : null))
       .filter((v): v is number => typeof v === 'number');
     const averageAccuracyRaw = validAccuracies.length > 0
@@ -144,16 +77,18 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
       : 0;
     const accColor = averageAccuracyRaw > 80 ? '#00a63e' : averageAccuracyRaw < 50 ? '#fb2c36' : '#fe9a00';
 
-    const improvementRaw = Math.round(calculateAverageFormImprovement(filteredLiftData as any));
-    const impColor = improvementRaw > 10 ? '#00a63e' : improvementRaw < 0 ? '#fb2c36' : '#fe9a00';
+    const improvementRaw = Math.round(calculateAverageFormImprovement(liftData as any));
+    const impColor = improvementRaw >= 0 ? '#00a63e' : '#fb2c36';
+    const isNegative = improvementRaw < 0;
 
     return {
       averageAccuracy: averageAccuracyRaw,
       improvementValue: improvementRaw,
       accuracyColor: accColor,
       improvementColor: impColor,
+      isImprovementNegative: isNegative,
     };
-  }, [filteredLiftData]);
+  }, [liftData]);
 
   // Info handlers
   const openInfoModal = (key: 'accuracyPerWeight' | 'accuracyOverTime' | 'accuracy' | 'improvement') => {
@@ -186,145 +121,13 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
     setInfoModalVisible(false);
   };
 
-  // Get date range for display
-  const dateRangeText = useMemo(() => {
-    if (!dateRange.from || !dateRange.to) {
-      return i18n.t('common.selectDateRange');
-    }
-
-    const formatDate = (date: { month: number; day: number; year: number }) => {
-      const dateObj = new Date(date.year, date.month - 1, date.day);
-      return dateObj.toLocaleDateString('en-US', { 
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric'
-      });
-    };
-
-    return `${formatDate(dateRange.from)} - ${formatDate(dateRange.to)}`;
-  }, [dateRange]);
-
-  // Get filter pill text
-  const filterPillText = useMemo(() => {
-    if (selectedMovements.length === 0) {
-      return i18n.t('common.allLifts');
-    } else if (selectedMovements.length === 1) {
-      return i18n.t('common.oneLift');
-    } else {
-      return `${selectedMovements.length} ${i18n.t('common.lifts')}`;
-    }
-  }, [selectedMovements]);
-
-  const handleDateRangePress = () => {
-    hapticFeedback.selection();
-    setIsDateRangeModalVisible(true);
-  };
-
-  const handleFilterPress = () => {
-    hapticFeedback.selection();
-    setIsFilterModalVisible(true);
-  };
-
-  const handleCloseModal = () => {
-    hapticFeedback.selection();
-    setIsDateRangeModalVisible(false);
-  };
-
-  const handleCloseFilterModal = () => {
-    hapticFeedback.selection();
-    setIsFilterModalVisible(false);
-  };
-
-  const handleFilterSelect = (movements: string[]) => {
-    setSelectedMovements(movements);
-  };
-
-  const handleResetDateRange = () => {
-    hapticFeedback.success();
-    const today = new Date();
-    const oneYearAgo = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate());
-    
-    setDateRange({
-      from: {
-        month: oneYearAgo.getMonth() + 1,
-        day: oneYearAgo.getDate(),
-        year: oneYearAgo.getFullYear()
-      },
-      to: {
-        month: today.getMonth() + 1,
-        day: today.getDate(),
-        year: today.getFullYear()
-      }
-    });
-    
-    setIsDateRangeModalVisible(false);
-  };
-
-  const handleApplyDateRange = () => {
-    hapticFeedback.success();
-    setIsDateRangeModalVisible(false);
-  };
-
-
-
-
-
   return (
     <>
       <ScrollView style={styles.container}>
         <View style={styles.content}>
           <Text style={styles.title}>{i18n.t('performance.title')}</Text>
           
-          {/* Date Range and Filter Pills */}
-          <View style={styles.pillsContainer} ref={performanceFiltersRef}>
-            <TouchableOpacity 
-              style={[styles.pill, styles.dateRangePill]}
-              onPress={handleDateRangePress}
-              activeOpacity={0.7}
-            >
-              <View style={styles.pillContent}>
-                <Text style={styles.pillText}>{dateRangeText}</Text>
-                <Pencil width={16} height={16} color="#000000" />
-              </View>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={[styles.pill, styles.filterPill]}
-              onPress={handleFilterPress}
-              activeOpacity={0.7}
-            >
-              <View style={styles.pillContent}>
-                <Text style={styles.pillText}>{filterPillText}</Text>
-                <Pencil width={16} height={16} color="#000000" />
-              </View>
-            </TouchableOpacity>
-          </View>
-          
-          {/* Performance Cards */}
-          {hasNoLifts ? (
-            <TouchableOpacity 
-              style={styles.performanceCard}
-              activeOpacity={0.7}
-            >
-              <View style={styles.performanceCardContent}>
-                <View style={styles.performanceCardHeader}>
-                  <Text style={styles.performanceCardLabel}>
-                    {i18n.t('common.noLiftsFound')}
-                  </Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-          ) : (
-            <SwipeableLineGraphCard 
-              ref={performanceMetricsRef}
-              cardData={filteredLiftData}
-              onTriggerAddOptions={onTriggerAddOptions}
-              hasNoLifts={hasNoLifts}
-              chartType="accuracyPerWeight"
-              unitPreference={userDetails?.unitSystem ?? 'metric'}
-              onInfoPress={() => openInfoModal('accuracyPerWeight')}
-            />
-          )}
+
 
           {/* Metric Cards Row: Accuracy | Improvement */}
           {!hasNoLifts && (
@@ -346,6 +149,7 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
                     backgroundColor="#E5E5E5"
                     strokeWidth={10}
                     radius={40}
+                    clockwise={true}
                   />
                   <Text style={styles.progressText} accessibilityLabel="Accuracy value">
                     {`${averageAccuracy}%`}
@@ -365,11 +169,12 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
                   <CircularProgressChart
                     width={100}
                     height={100}
-                    percentage={Math.max(0, Math.min(100, improvementValue))}
+                    percentage={Math.abs(improvementValue)}
                     progressColor={improvementColor}
                     backgroundColor="#E5E5E5"
                     strokeWidth={10}
                     radius={40}
+                    clockwise={!isImprovementNegative}
                   />
                   <Text style={styles.progressText} accessibilityLabel="Improvement value">
                     {`${improvementValue}%`}
@@ -378,11 +183,37 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
               </View>
             </View>
           )}
+          
+          {/* Performance Cards */}
+          {hasNoLifts ? (
+            <TouchableOpacity 
+              style={styles.performanceCard}
+              activeOpacity={0.7}
+            >
+              <View style={styles.performanceCardContent}>
+                <View style={styles.performanceCardHeader}>
+                  <Text style={styles.performanceCardLabel}>
+                    {i18n.t('common.noLiftsFound')}
+                  </Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+          ) : (
+            <SwipeableLineGraphCard 
+              ref={performanceMetricsRef}
+              cardData={liftData}
+              onTriggerAddOptions={onTriggerAddOptions}
+              hasNoLifts={hasNoLifts}
+              chartType="accuracyPerWeight"
+              unitPreference={userDetails?.unitSystem ?? 'metric'}
+              onInfoPress={() => openInfoModal('accuracyPerWeight')}
+            />
+          )}
 
           {/* Accuracy Over Time Cards */}
           {!hasNoLifts && (
             <SwipeableLineGraphCard 
-              cardData={filteredLiftData}
+              cardData={liftData}
               hasNoLifts={false}
               chartType="accuracyOverTime"
               unitPreference={userDetails?.unitSystem ?? 'metric'}
@@ -392,24 +223,9 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
         </View>
       </ScrollView>
 
-      {/* Date Range Modal */}
-      <DateRangeModal
-        isVisible={isDateRangeModalVisible}
-        onClose={handleCloseModal}
-        dateRange={dateRange}
-        onDateRangeChange={setDateRange}
-        onReset={handleResetDateRange}
-        title={i18n.t('performance.editDateRange')}
-      />
 
-      {/* Filter Modal */}
-      <FilterModal
-        isVisible={isFilterModalVisible}
-        onClose={handleCloseFilterModal}
-        onFilterSelect={handleFilterSelect}
-        currentFilters={selectedMovements}
-        title={i18n.t('performance.filterLifts')}
-      />
+
+
 
       {/* Info Modal */}
       <Modal
@@ -449,44 +265,6 @@ const styles = StyleSheet.create({
     textAlign: 'left',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
     marginBottom: 24,
-  },
-  pillsContainer: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 24,
-    width: '100%',
-  },
-  pill: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  dateRangePill: {
-    flex: 0.75,
-  },
-  filterPill: {
-    flex: 0.25,
-  },
-  pillContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '100%',
-  },
-  pillText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#000000',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
   overlay: {
     flex: 1,
@@ -549,14 +327,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#E5E5EA',
+    borderColor: '#f1f5f9',
     borderRadius: 20,
     padding: 16,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2,
     alignItems: 'center',
   },
   metricHeaderRow: {

@@ -21,6 +21,7 @@ interface CircularProgressProps extends IconProps {
   showTargetIcon?: boolean;
   iconColor?: string;
   iconSize?: number;
+  clockwise?: boolean;
 }
 
 export function CircularProgressChart({ 
@@ -32,7 +33,8 @@ export function CircularProgressChart({
   radius = 48,
   showTargetIcon = false,
   iconColor = "#000000",
-  iconSize = 24
+  iconSize = 24,
+  clockwise = true
 }: CircularProgressProps) {
   const centerX = width / 2;
   const centerY = height / 2;
@@ -59,8 +61,12 @@ export function CircularProgressChart({
         strokeWidth={strokeWidth}
         fill="none"
         strokeDasharray={circumference}
-        strokeDashoffset={strokeDashoffset}
-        transform={`rotate(-90 ${centerX} ${centerY})`}
+        strokeDashoffset={
+          clockwise
+            ? circumference * (1 - percentage / 100) // clockwise
+            : circumference * (1 - percentage / 100) * -1 // anticlockwise
+        }
+        transform={`rotate(-90 ${centerX} ${centerY})`} // always start from 12 o’clock
       />
       {/* Inner circle */}
       <Circle

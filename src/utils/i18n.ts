@@ -10,7 +10,7 @@ const i18n = new I18n({
     back: 'Back',
     tabs: {
       home: 'Home',
-      performance: 'Performance',
+      progress: 'Progress',
       settings: 'Settings',
     },
     settings: {
@@ -408,7 +408,7 @@ const i18n = new I18n({
       continue: 'Continue',
     },
     performance: {
-      title: 'Performance',
+      title: 'Progress',
       editDateRange: 'Edit date range',
       from: 'From',
       to: 'To',
