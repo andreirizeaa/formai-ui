@@ -85,7 +85,7 @@ export function EditHeightScreen({ onBack, currentValue, onSave }: EditHeightScr
     } catch (e) {
       hapticFeedback.error();
       updateValues();
-      Alert.alert('Height edit failed', 'Please try again later', [{ text: 'Ok', onPress: () => {
+      Alert.alert(i18n.t('settings.editFailed.height'), i18n.t('settings.editFailed.message'), [{ text: 'Ok', onPress: () => {
         hapticFeedback.selection();
         onBack();
       } }]);

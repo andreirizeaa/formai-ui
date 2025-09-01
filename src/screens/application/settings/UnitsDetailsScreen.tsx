@@ -38,7 +38,7 @@ export function UnitsDetailsScreen({ onBack }: UnitsDetailsScreenProps) {
     } catch (e) {
       hapticFeedback.error();
       setSelectedUnit(userDetails?.unitSystem ?? 'metric');
-      Alert.alert('Unit system update failed', 'Please try again later', [{ text: 'Ok', onPress: () => {
+      Alert.alert(i18n.t('settings.editFailed.unitSystem'), i18n.t('settings.editFailed.message'), [{ text: 'Ok', onPress: () => {
         hapticFeedback.selection();
         onBack();
       } }]);
