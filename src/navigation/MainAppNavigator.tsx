@@ -694,6 +694,7 @@ export function MainAppNavigator({ onLogout }: { onLogout?: () => void }) {
             options={{
               presentation: 'card',
               freezeOnBlur: true, 
+              animation: 'slide_from_bottom',
             }}
           />
         </Stack.Navigator>

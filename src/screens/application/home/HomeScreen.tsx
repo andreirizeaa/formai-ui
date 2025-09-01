@@ -261,7 +261,6 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
             onPress={handleLibraryPress}
           >
             <Text style={styles.seeAllText}>{i18n.t('home.seeAll')}</Text>
-                              <ChevronRight size={16} color="#8E8E93" />
           </Pressable>
         </View>
         <View style={styles.liftsScrollView}>
@@ -387,10 +386,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#E5E5EA',
-    backgroundColor: 'transparent',
+    backgroundColor: '#f3f4f6',
     gap: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
   spacer: {
     flex: 1,

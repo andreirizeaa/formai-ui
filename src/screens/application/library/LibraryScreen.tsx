@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, Platform, Pressable, StatusBar, ScrollView, Dimensions, Image, Modal } from 'react-native';
+import { View, Text, StyleSheet, Platform, Pressable, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FlashList } from '@shopify/flash-list';
 import { hapticFeedback } from '../../../utils/haptic';
@@ -19,8 +19,7 @@ import {
   ClockArrowUp, 
   SlidersHorizontal, 
   Pencil, 
-  X,
-  ChevronLeft 
+  X, 
 } from 'lucide-react-native';
 
 interface LibraryScreenProps {
@@ -306,7 +305,7 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
           ]} 
           onPress={handleBackPress}
         >
-          <ChevronLeft size={24} color="#000000" />
+          <X size={24} color="#000000" />
         </Pressable>
         <Text style={styles.headerTitle}>{i18n.t('library.title')}</Text>
         <View style={styles.placeholder} />
