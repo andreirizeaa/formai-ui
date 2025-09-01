@@ -428,6 +428,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 3,
+    paddingHorizontal: 20,
   },
   liftCardContent: {
     flexDirection: 'row',
@@ -568,7 +569,7 @@ const styles = StyleSheet.create({
   closeButton: {
     position: 'absolute',
     top: 8,
-    right: 8,
+    right: 22,
     zIndex: 10,
     padding: 8,
   },
@@ -623,9 +624,11 @@ const styles = StyleSheet.create({
       width: 0,
       height: 2,
     },
+    paddingHorizontal: 20,
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 4,
+    
   },
   errorCardInner: {
     borderRadius: 18,

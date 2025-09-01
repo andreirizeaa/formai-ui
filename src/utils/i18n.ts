@@ -617,6 +617,9 @@ const i18n = new I18n({
       failedToGenerateThumbnail: 'Failed to generate video thumbnail. Please try again.',
       uploadVideo: 'Upload Video',
       selectNewVideo: 'Select New Video',
+      duplicateVideo: 'Duplicate Video',
+      duplicateVideoMessage: 'This video has already been uploaded. Please select a different video.',
+      selectDifferentVideo: 'Select Different Video',
       tips: {
         goodLighting: 'Ensure good lighting',
         stableVideo: 'Ensure a stable video',
