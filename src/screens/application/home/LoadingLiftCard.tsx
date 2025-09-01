@@ -383,9 +383,10 @@ function LoadingLiftCardComponent({ lift }: LoadingLiftCardProps) {
                 progressValueColor={'#000000'}
                 activeStrokeColor={'#000000'}
                 inActiveStrokeColor={'#E5E5EA'}
-                activeStrokeWidth={6}
-                inActiveStrokeWidth={6}
+                activeStrokeWidth={8}
+                inActiveStrokeWidth={8}
                 showProgressValue={false}
+                strokeLinecap={'butt'}
               />
               <View style={styles.percentageOverlay}>
                 <Text style={styles.percentageText}>
@@ -468,7 +469,8 @@ const styles = StyleSheet.create({
   },
   percentageText: {
     fontSize: 15,
-    fontWeight: '700',
+    fontWeight: '800',
+    marginLeft: 3,
     color: '#fff',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
