@@ -14,20 +14,20 @@ import { getUserId, removeUserId } from './src/services/storageService';
 import { LoadingScreen } from './src/screens/onboarding/LoadingScreen';
 import { fetchUserById, requiresOnboarding } from './src/services/userService';
 import { usePurchases } from './src/context/PurchasesContext';
+import { useUserDetails } from './src/context/UserDetailsContext';
+import { useLiftData } from './src/context/LiftDataContext';
 
-export function Layout() {
+// Component that can access context providers to check loading states
+function AppContent() {
   const [showOnboarding, setShowOnboarding] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [userNeedsOnboarding, setUserNeedsOnboarding] = useState(false);
   const [onboardingInitialRoute, setOnboardingInitialRoute] = useState<
     'Welcome' | 'Payment'
   >('Welcome');
-  const queryClientRef = React.useRef<QueryClient | null>(null);
-  const { customerInfo } = usePurchases();
-
-  if (!queryClientRef.current) {
-    queryClientRef.current = new QueryClient();
-  }
+  const { customerInfo, isInitializing } = usePurchases();
+  const { isUserDetailsLoaded } = useUserDetails();
+  const { isLiftDataLoaded } = useLiftData();
 
   useEffect(() => {
     async function setActiveLayout() {
@@ -67,7 +67,10 @@ export function Layout() {
     }
 
     setActiveLayout();
-  }, []);
+  }, [customerInfo]);
+
+  // Check if all required data is loaded before showing the app
+  const isAllDataLoaded = !isInitializing && isUserDetailsLoaded && isLiftDataLoaded;
 
   const handleOnboardingComplete = () => {
     setShowOnboarding(false);
@@ -98,7 +101,8 @@ export function Layout() {
     }
   };
 
-  if (isLoading) {
+  // Show loading screen until all data is loaded
+  if (isLoading || !isAllDataLoaded) {
     return (
       <SafeAreaProvider>
         <LoadingScreen onLoadComplete={() => {}} />
@@ -106,25 +110,7 @@ export function Layout() {
     );
   }
 
-  const mainAppContent = (
-    <>
-      <QueryClientProvider client={queryClientRef.current}>
-        <WalletCreditProvider>
-          <UserDetailsProvider>
-            <LiftDataProvider>
-              <LoadingLiftsProvider>
-                <UserCheckInsProvider>
-                  <SelectedDateProvider>
-                    <MainAppLayout onLogout={handleLogout} />
-                  </SelectedDateProvider>
-                </UserCheckInsProvider>
-              </LoadingLiftsProvider>
-            </LiftDataProvider>
-          </UserDetailsProvider>
-        </WalletCreditProvider>
-      </QueryClientProvider>
-    </>
-  );
+  const mainAppContent = <MainAppLayout onLogout={handleLogout} />;
 
   const onboardingContent = (
     <OnboardingNavigator
@@ -140,4 +126,30 @@ export function Layout() {
   }
 
   return mainAppContent;
+}
+
+export function Layout() {
+  const queryClientRef = React.useRef<QueryClient | null>(null);
+
+  if (!queryClientRef.current) {
+    queryClientRef.current = new QueryClient();
+  }
+
+  return (
+    <QueryClientProvider client={queryClientRef.current}>
+      <WalletCreditProvider>
+        <UserDetailsProvider>
+          <LiftDataProvider>
+            <LoadingLiftsProvider>
+              <UserCheckInsProvider>
+                <SelectedDateProvider>
+                  <AppContent />
+                </SelectedDateProvider>
+              </UserCheckInsProvider>
+            </LoadingLiftsProvider>
+          </LiftDataProvider>
+        </UserDetailsProvider>
+      </WalletCreditProvider>
+    </QueryClientProvider>
+  );
 }

@@ -63,6 +63,13 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
     setIsLoaded(false);
   }, []);
 
+  // Set loaded to true if there's no userId (onboarding case)
+  useEffect(() => {
+    if (userId === null) {
+      setIsLoaded(true);
+    }
+  }, [userId]);
+
   // Helper function to format date consistently
   const formatDateForLift = useCallback((date: Date): string => {
     const day = String(date.getDate()).padStart(2, '0');
