@@ -390,15 +390,16 @@ export function SwipeableLineGraphCard({
           data={processedCardData}
           onConfigurePanGesture={(g) => {
             'worklet';
-            // Require horizontal intent (> ~12px) before activating
-            g.activeOffsetX([-12, 12]);
-            // If the user moves vertically by ~8px, fail this pan so the parent ScrollView takes over
-            g.failOffsetY([-8, 8]);
-            // Allow both to recognize if needed (RNGH ScrollView ref)
-            if (externalScrollGestureRef) {
-              // works with RNGH 2.x "Gesture" API under the hood
-              g.simultaneousWithExternalGesture(externalScrollGestureRef);
-            }
+            // Require strong horizontal intent (> ~20px) before activating - very strict
+            g.activeOffsetX([-20, 20]);
+            // If the user moves vertically by ~15px, fail this pan so the parent ScrollView takes over - strict
+            g.failOffsetY([-15, 15]);
+            // Prevent simultaneous gestures - once this gesture starts, block others
+            g.shouldCancelWhenOutside(true);
+            // Don't allow simultaneous gestures with the parent ScrollView
+            // if (externalScrollGestureRef) {
+            //   g.simultaneousWithExternalGesture(externalScrollGestureRef);
+            // }
           }}
           renderItem={({ item }) => (
             <View style={styles.page}>

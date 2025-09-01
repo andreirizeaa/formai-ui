@@ -659,16 +659,18 @@ export function MainAppNavigator({ onLogout }: { onLogout?: () => void }) {
             name="RecordModal" 
             component={RecordModalWrapper}
             options={{
-              presentation: 'modal',
-              animation: 'none',
+              presentation: 'card',
+              animation: 'slide_from_bottom',
+              animationDuration: 300,
             }}
           />
           <Stack.Screen 
             name="UploadModal" 
             component={UploadModalWrapper}
             options={{
-              presentation: 'modal',
-              animation: 'none',
+              presentation: 'card',
+              animation: 'slide_from_bottom',
+              animationDuration: 300,
             }}
           />
           <Stack.Screen 

@@ -377,7 +377,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingTop: 20,
-    marginBottom: -24,
+    marginBottom: -30,
   },
   content: {
     flex: 1,
@@ -503,6 +503,7 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
   },
   footer: {
+    marginTop: -30,
     alignItems: 'center',
     justifyContent: 'center',
     paddingBottom: 40,
@@ -513,7 +514,7 @@ const styles = StyleSheet.create({
     height: 100,
   },
   versionText: {
-    marginTop: -26,
+    marginTop: -36,
     fontSize: 14,
     color: '#8E8E93',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
