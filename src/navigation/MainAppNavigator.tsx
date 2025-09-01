@@ -1,11 +1,11 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import { createStackNavigator } from '@react-navigation/stack';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
 import { View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { HomeScreen } from '../screens/application/home/HomeScreen';
 import { PerformanceScreen } from '../screens/application/performance/PerformanceScreen';
 import { SettingsScreen } from '../screens/application/settings/SettingsScreen';
@@ -56,9 +56,9 @@ export type MainStackParamList = {
   Library: { selectedFilters?: string[] };
 };
 
-type MainStackNavigationProp = StackNavigationProp<MainStackParamList>;
+type MainStackNavigationProp = NativeStackNavigationProp<MainStackParamList>;
 
-const Stack = createStackNavigator<MainStackParamList>();
+const Stack = createNativeStackNavigator<MainStackParamList>();
 
 // Declare global function type
 declare global {

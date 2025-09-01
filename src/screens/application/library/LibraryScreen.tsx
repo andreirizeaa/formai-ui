@@ -5,7 +5,7 @@ import { FlashList } from '@shopify/flash-list';
 import { hapticFeedback } from '../../../utils/haptic';
 import { LiftDataCard } from '../../../components/LiftDataCard';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { FilterModal } from './FilterModal';
 import { DateRangeModal } from './DateRangeModal';
@@ -44,7 +44,7 @@ type MainStackParamList = {
   };
 };
 
-type LibraryNavigationProp = StackNavigationProp<MainStackParamList>;
+type LibraryNavigationProp = NativeStackNavigationProp<MainStackParamList>;
 type LibraryRouteProp = RouteProp<MainStackParamList, 'Library'>;
 
 export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProps) {
