@@ -7,6 +7,7 @@ import { hapticFeedback } from '../../../utils/haptic';
 import { useUserDetails } from '../../../context/UserDetailsContext';
 import { editUserDetails } from '../../../services/userService';
 import { ChevronLeft } from 'lucide-react-native';
+import { AnimatedOptionButton } from '../../../components/onboarding/AnimatedOptionButton';
 
 interface UnitsDetailsScreenProps {
   onBack: () => void;
@@ -68,20 +69,12 @@ export function UnitsDetailsScreen({ onBack }: UnitsDetailsScreenProps) {
       <View style={styles.content}>
         {/* Units Options */}
         <View style={styles.optionsContainer}>
-          <TouchableOpacity
-            style={[
-              styles.unitButton,
-              {
-                backgroundColor: selectedUnit === 'metric'
-                  ? '#000000'  // Black background when selected
-                  : 'transparent',
-                borderColor: selectedUnit === 'metric'
-                  ? '#000000'  // Black border when selected
-                  : (isDark ? '#2C2C2E' : '#E5E5EA'),
-              }
-            ]}
+          <AnimatedOptionButton
+            isSelected={selectedUnit === 'metric'}
+            isDark={isDark}
+            delay={0}
             onPress={() => handleUnitSelect('metric')}
-            activeOpacity={0.7}
+            style={styles.unitButton}
           >
             <View style={styles.unitContent}>
               <Text 
@@ -101,22 +94,14 @@ export function UnitsDetailsScreen({ onBack }: UnitsDetailsScreenProps) {
                 {i18n.t('onboarding.units.metricDescription')}
               </Text>
             </View>
-          </TouchableOpacity>
+          </AnimatedOptionButton>
 
-          <TouchableOpacity
-            style={[
-              styles.unitButton,
-              {
-                backgroundColor: selectedUnit === 'imperial'
-                  ? '#000000'  // Black background when selected
-                  : 'transparent',
-                borderColor: selectedUnit === 'imperial'
-                  ? '#000000'  // Black border when selected
-                  : (isDark ? '#2C2C2E' : '#E5E5EA'),
-              }
-            ]}
+          <AnimatedOptionButton
+            isSelected={selectedUnit === 'imperial'}
+            isDark={isDark}
+            delay={100}
             onPress={() => handleUnitSelect('imperial')}
-            activeOpacity={0.7}
+            style={styles.unitButton}
           >
             <View style={styles.unitContent}>
               <Text 
@@ -136,7 +121,7 @@ export function UnitsDetailsScreen({ onBack }: UnitsDetailsScreenProps) {
                 {i18n.t('onboarding.units.imperialDescription')}
               </Text>
             </View>
-          </TouchableOpacity>
+          </AnimatedOptionButton>
         </View>
       </View>
 
@@ -198,9 +183,6 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   unitButton: {
-    borderWidth: 1.5,
-    borderRadius: 16,
-    padding: 20,
     minHeight: 80,
     justifyContent: 'center',
   },
