@@ -7,6 +7,7 @@ import { useLanguage } from '../../../context/LanguageContext';
 import { useUserDetails } from '../../../context/UserDetailsContext';
 import { editUserDetails } from '../../../services/userService';
 import { X } from 'lucide-react-native';
+import showEditFailedAlert from '../../../services/alertService';
 
 interface LanguageModalProps {
   isVisible: boolean;
@@ -32,10 +33,10 @@ export function LanguageModal({ isVisible, onClose }: LanguageModalProps) {
       onClose();
     } catch (e) {
       hapticFeedback.error();
-      Alert.alert('Language update failed', 'Please try again later', [{ text: 'Ok', onPress: () => {
+      showEditFailedAlert(i18n.t('settings.editFailed.language'), i18n.t('settings.editFailed.message'), () => {
         hapticFeedback.selection();
         onClose();
-      } }]);
+      });
     } finally {
       setSavingCode(null);
       setPendingCode(null);
@@ -94,8 +95,7 @@ export function LanguageModal({ isVisible, onClose }: LanguageModalProps) {
                   style={[
                     styles.languageButton,
                     {
-                      backgroundColor: isSelected ? '#000000' : 'transparent',
-                      borderColor: isSelected ? '#000000' : '#E5E5EA',
+                      backgroundColor: isSelected ? '#000000' : '#F4F4F8',
                     }
                   ]}
                   onPress={() => handleLanguageSelect(language.code)}
@@ -179,12 +179,11 @@ const styles = StyleSheet.create({
   scrollContentContainer: {
     flexGrow: 1,
     paddingVertical: 10,
-    gap: 12,
+    gap: 10,
   },
   languageButton: {
-    borderWidth: 1.5,
     borderRadius: 16,
-    paddingVertical: 10,
+    paddingVertical: 12,
     paddingHorizontal: 24,
   },
   languageContent: {

@@ -36,6 +36,15 @@ const i18n = new I18n({
       logoutMessage: 'Are you sure you want to logout? You will need to sign in again to access your account.',
       no: 'No',
       yes: 'Yes',
+      editFailed: {
+        gender: 'Gender edit failed',
+        height: 'Height edit failed',
+        dateOfBirth: 'Birth date edit failed',
+        currentWeight: 'Weight edit failed',
+        unitSystem: 'Unit system update failed',
+        language: 'Language update failed',
+        message: 'Please try again later',
+      },
     },
     share: {
       referYourFriends: 'Refer your friends',

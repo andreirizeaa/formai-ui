@@ -81,7 +81,7 @@ export function EditCurrentWeightScreen({ onBack, currentValue, onSave }: EditCu
       onSave(displayValue);
     } catch (e) {
       hapticFeedback.error();
-      Alert.alert('Weight edit failed', 'Please try again later', [
+      Alert.alert(i18n.t('settings.editFailed.currentWeight'), i18n.t('settings.editFailed.message'), [
         { text: 'Ok', onPress: () => hapticFeedback.selection() },
       ]);
     } finally {

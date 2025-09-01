@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, ActivityIndicator } from 'react-native';
-import showAlert from '../../../../services/alertService';
+import showEditFailedAlert from '../../../../services/alertService';
 import { useUserDetails } from '../../../../context/UserDetailsContext';
 import { editUserDetails } from '../../../../services/userService';
 import { hapticFeedback } from '../../../../utils/haptic';
@@ -30,7 +30,7 @@ export function EditGenderScreen({ onBack, currentValue, onSave }: EditGenderScr
     } catch (e) {
       hapticFeedback.error();
       setSelectedGender(currentValue);
-      showAlert('Gender edit failed', 'Please try again later', () => {
+      showEditFailedAlert(i18n.t('settings.editFailed.gender'), i18n.t('settings.editFailed.message'), () => {
         hapticFeedback.selection();
         onBack();
       });

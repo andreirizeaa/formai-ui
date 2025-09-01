@@ -146,7 +146,7 @@ export function EditDateOfBirthScreen({ onBack, currentValue, onSave }: EditDate
     } catch (e) {
       hapticFeedback.error();
       updateValues();
-      Alert.alert('Birth date edit failed', 'Please try again later', [{ text: 'Ok', onPress: () => {
+      Alert.alert(i18n.t('settings.editFailed.dateOfBirth'), i18n.t('settings.editFailed.message'), [{ text: 'Ok', onPress: () => {
         hapticFeedback.selection();
         onBack();
       } }]);
