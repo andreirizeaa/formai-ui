@@ -29,7 +29,7 @@ export function WelcomeScreen({ onGetStarted, onSignIn }: WelcomeScreenProps) {
   useEffect(() => {
     Animated.timing(fadeAnim, {
       toValue: 1,
-      duration: 500,
+      duration: 300,
       useNativeDriver: true,
     }).start();
   }, [fadeAnim]);
