@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, Dimensions, ActivityIndicator } from 'react-native';
 import Carousel from 'react-native-reanimated-carousel';
 import { LineChart } from 'react-native-chart-kit';
 import { hapticFeedback } from '../../utils/haptic';
@@ -127,26 +127,32 @@ const getRegression = (key: string, points: number[]) => {
 // Memoized Chart Page Component
 const ChartPage = React.memo(function ChartPage({ 
   item, 
-  onInfoPress 
+  onInfoPress,
+  ref, 
 }: { 
   item: ProcessedCardData; 
   onInfoPress?: () => void;
+  ref: any;
 }) {
+  const isPlaceholder = item.title === 'Loading...';
+  
   return (
     <View style={styles.page}>
-      <View style={[styles.performanceCard, { width: CARD_WIDTH }]}>
+      <View style={[styles.performanceCard, { width: CARD_WIDTH }]} ref={ref}>
         <View style={styles.performanceCardContent}>
           <View style={styles.performanceCardHeader}>
             <View style={styles.headerLeft}>
               <View style={styles.titleRow}>
                 <Text style={styles.performanceCardLabel}>{item.title}</Text>
-                <TouchableOpacity
-                  onPress={() => onInfoPress?.()}
-                  activeOpacity={0.7}
-                  style={styles.titleIcon}
-                >
-                  <CircleQuestionMark width={20} height={20} color="#000" />
-                </TouchableOpacity>
+                {!isPlaceholder && (
+                  <TouchableOpacity
+                    onPress={() => onInfoPress?.()}
+                    activeOpacity={0.7}
+                    style={styles.titleIcon}
+                  >
+                    <CircleQuestionMark width={20} height={20} color="#000" />
+                  </TouchableOpacity>
+                )}
               </View>
               <Text style={styles.performanceCardSubtitle}>{item.subtitle}</Text>
             </View>
@@ -268,8 +274,8 @@ export function SwipeableLineGraphCard({
     if (!rangedCardData || rangedCardData.length === 0) {
       // Return a placeholder card when there's no data
       return [{
-        title: chartType === 'accuracyPerWeight' ? 'Accuracy per weight' : 'Accuracy over time',
-        subtitle: 'No data available',
+        title: 'Loading...',
+        subtitle: 'Preparing charts',
         chartData: {
           labels: [''],
           datasets: [{
@@ -500,7 +506,7 @@ export function SwipeableLineGraphCard({
 
   // Memoized render item function
   const renderItem = useCallback(({ item }: { item: ProcessedCardData }) => {
-    return <ChartPage item={item} onInfoPress={onInfoPress} />;
+    return <ChartPage item={item} onInfoPress={onInfoPress} ref={ref} />;
   }, [onInfoPress]);
 
   // Memoized onSnapToItem handler

@@ -431,6 +431,20 @@ function FeedbackSlideshowWrapper() {
     navigation.goBack();
   };
 
+  const handleNavigateToHome = () => {
+    // Go back twice: first from feedback slideshow to lift details, then from lift details to home
+    navigation.goBack(); // Go back to lift details
+    setTimeout(() => {
+      navigation.goBack(); // Go back to home
+      // Then navigate to home tab by calling the global function
+      setTimeout(() => {
+        if ((global as any).navigateToHome) {
+          (global as any).navigateToHome();
+        }
+      }, 100);
+    }, 100);
+  };
+
   // Transform the liftData to match the expected format
   const transformedLiftData = route.params?.liftData ? {
     analysis: {
@@ -446,6 +460,7 @@ function FeedbackSlideshowWrapper() {
     <FeedbackSlideshow
       onClose={handleClose}
       onNavigateToLiftDetails={handleNavigateToLiftDetails}
+      onNavigateToHome={handleNavigateToHome}
       liftData={transformedLiftData}
     />
   );

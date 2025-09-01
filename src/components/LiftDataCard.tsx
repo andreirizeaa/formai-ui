@@ -19,13 +19,24 @@ import { useUserDetails } from '../context/UserDetailsContext';
 import i18n from '../utils/i18n';
 
 interface LiftDataCardProps {
-  lift: ILiftData;
+  lift?: ILiftData;
   onPress?: (liftId: string) => void; // Changed to take liftId instead of full lift object
-  style?: any;
   showDate?: boolean; // When true, show formatted date instead of time
+  isNoLiftsCard?: boolean; // When true, render as no lifts card
+  noLiftsTitle?: string;
+  noLiftsSubtitle?: string;
+  onNoLiftsPress?: () => void;
 }
 
-function LiftDataCardComponent({ lift, onPress, style, showDate = false }: LiftDataCardProps) {
+function LiftDataCardComponent({ 
+  lift, 
+  onPress, 
+  showDate = false, 
+  isNoLiftsCard = false, 
+  noLiftsTitle, 
+  noLiftsSubtitle, 
+  onNoLiftsPress 
+}: LiftDataCardProps) {
   const translateX = useSharedValue(0);
   const panStartX = useSharedValue(0);
   const loadingProgress = useSharedValue(0);
@@ -50,12 +61,12 @@ function LiftDataCardComponent({ lift, onPress, style, showDate = false }: LiftD
   };
 
   const handleDelete = useCallback(() => {
-    if (deleting) return;
+    if (deleting || !lift) return;
     setDeleting(true);
     hapticFeedback.success();
     removeLift(lift.id);
     deleteLiftApi(lift.id).catch(() => {});
-  }, [deleting, lift.id, removeLift]);
+  }, [deleting, lift, removeLift]);
 
   function startAutoReset() {
     if (autoResetTimeoutRef.current) clearTimeout(autoResetTimeoutRef.current);
@@ -130,9 +141,32 @@ function LiftDataCardComponent({ lift, onPress, style, showDate = false }: LiftD
     };
   }, []);
 
+  // Render no lifts card if isNoLiftsCard is true
+  if (isNoLiftsCard) {
+    return (
+      <Pressable 
+        style={({ pressed }) => [
+          styles.noLiftsCard,
+          { opacity: pressed ? 0.7 : 1 }
+        ]}
+        onPress={onNoLiftsPress}
+      >
+        <View style={styles.noLiftsContent}>
+          <Text style={styles.noLiftsTitle}>{noLiftsTitle}</Text>
+          <Text style={styles.noLiftsSubtitle}>{noLiftsSubtitle}</Text>
+        </View>
+      </Pressable>
+    );
+  }
+
+  // Early return if no lift data
+  if (!lift) {
+    return null;
+  }
+
   return (
     <View
-      style={[styles.wrapper, style]}
+      style={styles.wrapper}
       onLayout={(e) => {
         swipeWidth.value = e.nativeEvent.layout.width;
       }}
@@ -149,9 +183,9 @@ function LiftDataCardComponent({ lift, onPress, style, showDate = false }: LiftD
 
       {/* Foreground: SHADOW wrapper (no overflow), holds the animated translate */}
       <GestureDetector gesture={pan}>
-        <Animated.View style={[styles.cardShadow, shadowStyle]} ref={firstLiftCardRef}>
+        <Animated.View style={[styles.cardShadow, shadowStyle]}>
           {/* Inner card with overflow hidden to clip corners — shadow won't be clipped */}
-          <View style={styles.cardInner}>
+          <View style={styles.cardInner} ref={firstLiftCardRef}>
             <LinearGradient
               colors={['#e2e8f0', '#f5f3ff']}
               locations={[0, 0.3]}
@@ -240,8 +274,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 2,
     bottom: 2,
-    left: 6,
-    right: 6,
+    left: 26,
+    right: 26,
     backgroundColor: '#fb2c36',
     borderRadius: 16,
     justifyContent: 'center',
@@ -255,13 +289,14 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
     borderRadius: 18,
     backgroundColor: 'transparent',
+    paddingHorizontal: 20,
     shadowColor: '#000000',
     shadowOffset: {
       width: 0,
       height: 2,
     },
     shadowOpacity: 0.2,
-    shadowRadius: 4,
+    shadowRadius: 3,
     elevation: 4,
   },
 
@@ -359,20 +394,64 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
     fontWeight: '500',
   },
+  noLiftsCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    paddingVertical: 20,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginHorizontal: 20,
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  noLiftsContent: {
+    alignItems: 'center',
+  },
+  noLiftsTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#000000',
+    marginBottom: 8,
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
+  },
+  noLiftsSubtitle: {
+    fontSize: 16,
+    fontWeight: '400',
+    color: '#8E8E93',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+    textAlign: 'center',
+  },
 });
 
 // Memoized component with custom comparison for performance
 export const LiftDataCard = memo(LiftDataCardComponent, (prevProps, nextProps) => {
-  // Only re-render if essential props change
+  // Handle no lifts card comparison
+  if (prevProps.isNoLiftsCard || nextProps.isNoLiftsCard) {
+    return (
+      prevProps.isNoLiftsCard === nextProps.isNoLiftsCard &&
+      prevProps.noLiftsTitle === nextProps.noLiftsTitle &&
+      prevProps.noLiftsSubtitle === nextProps.noLiftsSubtitle &&
+      prevProps.onNoLiftsPress === nextProps.onNoLiftsPress
+    );
+  }
+  
+  // Only re-render if essential props change for regular lift cards
   return (
-    prevProps.lift.id === nextProps.lift.id &&
-    prevProps.lift.analysis.accuracy === nextProps.lift.analysis.accuracy &&
-    prevProps.lift.weightValue === nextProps.lift.weightValue &&
-    prevProps.lift.thumbnailURL === nextProps.lift.thumbnailURL &&
-    prevProps.lift.liftType === nextProps.lift.liftType &&
-    prevProps.lift.liftDate === nextProps.lift.liftDate &&
-    prevProps.lift.liftTime === nextProps.lift.liftTime &&
-    prevProps.lift.analysis.feedback?.length === nextProps.lift.analysis.feedback?.length &&
+    prevProps.lift?.id === nextProps.lift?.id &&
+    prevProps.lift?.analysis.accuracy === nextProps.lift?.analysis.accuracy &&
+    prevProps.lift?.weightValue === nextProps.lift?.weightValue &&
+    prevProps.lift?.thumbnailURL === nextProps.lift?.thumbnailURL &&
+    prevProps.lift?.liftType === nextProps.lift?.liftType &&
+    prevProps.lift?.liftDate === nextProps.lift?.liftDate &&
+    prevProps.lift?.liftTime === nextProps.lift?.liftTime &&
+    prevProps.lift?.analysis.feedback?.length === nextProps.lift?.analysis.feedback?.length &&
     prevProps.showDate === nextProps.showDate &&
     prevProps.onPress === nextProps.onPress
   );

@@ -388,28 +388,21 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
             contentContainerStyle={styles.scrollContentContainer}
           />
         ) : (
-          <Pressable 
-            style={({ pressed }) => [
-              styles.noLiftsCard,
-              { opacity: pressed ? 0.7 : 1 }
-            ]}
-            onPress={handleEmptyCardPress}
-          >
-            <View style={styles.noLiftsContent}>
-              <Text style={styles.noLiftsTitle}>
-                {liftData.length === 0 ? i18n.t('library.noLiftsAnalysed') : 
-                 activeTab === 'favourites' ? i18n.t('library.noFavouriteLifts') : i18n.t('library.noLiftsFound')}
-              </Text>
-              <Text style={styles.noLiftsSubtitle}>
-                {liftData.length === 0 
-                  ? i18n.t('library.startAnalysingWorkout')
-                  : activeTab === 'favourites'
-                  ? i18n.t('library.markLiftsAsFavourites')
-                  : i18n.t('library.tryAdjustingFilters')
-                }
-              </Text>
-            </View>
-          </Pressable>
+          <LiftDataCard
+            isNoLiftsCard={true}
+            noLiftsTitle={
+              liftData.length === 0 ? i18n.t('library.noLiftsAnalysed') : 
+              activeTab === 'favourites' ? i18n.t('library.noFavouriteLifts') : i18n.t('library.noLiftsFound')
+            }
+            noLiftsSubtitle={
+              liftData.length === 0 
+                ? i18n.t('library.startAnalysingWorkout')
+                : activeTab === 'favourites'
+                ? i18n.t('library.markLiftsAsFavourites')
+                : i18n.t('library.tryAdjustingFilters')
+            }
+            onNoLiftsPress={handleEmptyCardPress}
+          />
         )}
       </View>
 
@@ -504,7 +497,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   scrollContentContainer: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 0,
   },
   tabsContainer: {
     flexDirection: 'row',
@@ -575,38 +568,7 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
   },
-  noLiftsCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    padding: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  noLiftsContent: {
-    alignItems: 'center',
-  },
-  noLiftsTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#000000',
-    marginBottom: 8,
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
-  },
-  noLiftsSubtitle: {
-    fontSize: 16,
-    fontWeight: '400',
-    color: '#8E8E93',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
-    textAlign: 'center',
-  },
+
   controlsRightContainer: {
     flexDirection: 'row',
     gap: 12,

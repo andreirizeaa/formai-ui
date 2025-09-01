@@ -78,18 +78,6 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredMovements, setFilteredMovements] = useState([...gymMovements]);
 
-  // Weight and reps state
-  const [weightData, setWeightData] = useState<{ weight: number; unit: 'kg' | 'lbs'; reps: number } | null>(null);
-
-  // Combined state object for logging
-  const [uploadData, setUploadData] = useState<{
-    videoLink: string;
-    thumbnailUri: string;
-    dateToday: string;
-    movementType: string;
-    weightValue: number;
-    reps: number;
-  } | null>(null);
 
   // Reset states when modal becomes invisible
   useEffect(() => {
@@ -100,7 +88,6 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
       setSelectedMovement('');
       setSearchQuery('');
       setFilteredMovements([...gymMovements]);
-      setWeightData(null);
     }
   }, [isVisible]);
 
@@ -119,9 +106,10 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
       }
       
       if (durationInSeconds !== undefined && durationInSeconds !== null && durationInSeconds > 90) {
+        hapticFeedback.error();
         Alert.alert(
-          'Video Too Long',
-          'Your video is over 90 seconds. Please select a shorter video.',
+          i18n.t('upload.videoTooLong'),
+          i18n.t('upload.videoTooLongMessage'),
           [
             { 
               text: 'OK', 
@@ -165,20 +153,6 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
           if (asset.duration > 1000) {
             durationInSeconds = asset.duration / 1000;
           }
-        }
-        
-        if (durationInSeconds !== undefined && durationInSeconds !== null && durationInSeconds > 90) {
-          Alert.alert(
-            i18n.t('upload.videoTooLong'),
-            i18n.t('upload.videoTooLongMessage'),
-            [
-              { text: 'OK', onPress: () => {
-                // Reopen the picker to let user select another video
-                handleUploadPress();
-              }},
-            ]
-          );
-          return;
         }
 
         // Video is valid, set it as selected
@@ -262,7 +236,6 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
   };
 
   const handleFinalCompleteClicked = async (data: { weight: number; unit: 'kg' | 'lbs'; reps: number }) => {
-    setWeightData(data);
     const videoUri = selectedVideo?.uri || '';
     const { date, time } = getDateAndTime();
 
@@ -305,8 +278,6 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
     setSelectedMovement('');
     setSearchQuery('');
     setFilteredMovements([...gymMovements]);
-    setWeightData(null);
-    setUploadData(null);
   };
 
   const handleClose = () => {

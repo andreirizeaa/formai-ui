@@ -16,7 +16,7 @@ import { useTutorialTarget } from '../../../context/TutorialContext';
 import { useSelectedDate } from '../../../context/SelectedDateContext';
 
 import i18n from '../../../utils/i18n';
-import { ChevronRight } from 'lucide-react-native';
+import { ChevronRight, FileVideoCamera } from 'lucide-react-native';
 
 interface HomeScreenProps {
   onShowFeedback: (liftData: ILiftData) => void;
@@ -261,6 +261,7 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
             onPress={handleLibraryPress}
           >
             <Text style={styles.seeAllText}>{i18n.t('home.seeAll')}</Text>
+            <FileVideoCamera size={16} color="#8E8E93" />
           </Pressable>
         </View>
         <View style={styles.liftsScrollView}>
@@ -287,18 +288,12 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
               scrollEnabled={false}
             />
           ) : loadingLifts.length === 0 ? (
-            <Pressable 
-              style={({ pressed }) => [
-                styles.noLiftsCard,
-                { opacity: pressed ? 0.7 : 1 }
-              ]}
-              onPress={handleNoLiftsPress}
-            >
-              <View style={styles.noLiftsContent}>
-                <Text style={styles.noLiftsTitle}>{i18n.t('home.noRecordedLifts')}</Text>
-                <Text style={styles.noLiftsSubtitle}>{i18n.t('home.startAnalyzingWorkout')}</Text>
-              </View>
-            </Pressable>
+            <LiftDataCard
+              isNoLiftsCard={true}
+              noLiftsTitle={i18n.t('home.noRecordedLifts')}
+              noLiftsSubtitle={i18n.t('home.startAnalyzingWorkout')}
+              onNoLiftsPress={handleNoLiftsPress}
+            />
           ) : null}
         </View>
       </View>
@@ -367,6 +362,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 16,
+    paddingHorizontal: 20,
+
   },
   sectionTitle: {
     fontSize: 22,
@@ -379,6 +376,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#8E8E93',
     fontFamily: 'SF Pro Text',
+    marginRight: 2,
   },
   seeAllPill: {
     flexDirection: 'row',
@@ -388,16 +386,19 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     backgroundColor: '#f3f4f6',
     gap: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 3,
   },
   spacer: {
     flex: 1,
   },
   bottomContent: {
-    paddingHorizontal: 20,
     backgroundColor: 'transparent',
   },
   liftsScrollView: {
@@ -408,38 +409,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     paddingHorizontal: 4,
   },
-  noLiftsCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    padding: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  noLiftsContent: {
-    alignItems: 'center',
-  },
-  noLiftsTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#000000',
-    marginBottom: 8,
-    fontFamily: 'SF Pro Display',
-  },
-  noLiftsSubtitle: {
-    fontSize: 16,
-    fontWeight: '400',
-    color: '#8E8E93',
-    fontFamily: 'SF Pro Text',
-    textAlign: 'center',
-  },
+
 
 
 
