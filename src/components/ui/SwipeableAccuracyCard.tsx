@@ -82,11 +82,12 @@ export function SwipeableAccuracyCard({
     // Random accuracy between 60-95%
     const randomAccuracy = Math.floor(Math.random() * 36) + 60;
     
-    // Random weight between 40-200
-    const randomWeight = Math.floor(Math.random()) + 40;
     
     // Random reps between 1-12
     const randomReps = Math.floor(Math.random() * 12) + 1;
+    
+    // Random weight between 1-500
+    const randomWeight = Math.floor(Math.random() * 500) + 1;
     
     // Generate random line graph values based on reps
     const randomLineGraphValues = Array.from({ length: randomReps }, () => 

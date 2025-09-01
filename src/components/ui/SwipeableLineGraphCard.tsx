@@ -132,40 +132,58 @@ export function SwipeableLineGraphCard({
     if (chartType === 'accuracyPerWeight') {
       return uniqueLiftTypes.map((liftType) => {
         const liftsOfType = rangedCardData.filter((lift) => lift.liftType === liftType);
-        const sortedLifts = liftsOfType.sort((a, b) => a.weightValue - b.weightValue);
+        
+        // Group lifts by weight and calculate average accuracy for each weight
+        const weightGroups = liftsOfType.reduce((acc: Record<number, { totalAccuracy: number; count: number }>, lift) => {
+          const weight = lift.weightValue;
+          if (!acc[weight]) {
+            acc[weight] = { totalAccuracy: 0, count: 0 };
+          }
+          acc[weight].totalAccuracy += lift.analysis.accuracy;
+          acc[weight].count += 1;
+          return acc;
+        }, {});
+
+        // Convert to array of { weight, averageAccuracy } and sort by weight
+        const weightAccuracyData = Object.entries(weightGroups)
+          .map(([weight, data]) => ({
+            weight: parseFloat(weight),
+            averageAccuracy: data.totalAccuracy / data.count
+          }))
+          .sort((a, b) => a.weight - b.weight);
 
         let chartLabels: string[];
         let chartDataPoints: number[];
 
-        if (sortedLifts.length <= 25) {
-          // If 25 or fewer data points, use all of them but only show strategic labels
-          chartLabels = sortedLifts.map((lift, idx) => {
+        if (weightAccuracyData.length <= 25) {
+          // If 25 or fewer unique weights, use all of them
+          chartLabels = weightAccuracyData.map((data, idx) => {
             const position = idx + 1; // Convert to 1-based indexing
             if (position === 1 || position === 9 || position === 16 || position === 22) {
-              if (position === 22 && idx !== sortedLifts.length - 1) {
+              if (position === 22 && idx !== weightAccuracyData.length - 1) {
                 // Position 22 should show the last data point's weight if it's not already the last
-                return formatWeightForDisplay(sortedLifts[sortedLifts.length - 1].weightValue, unitPreference);
+                return formatWeightForDisplay(weightAccuracyData[weightAccuracyData.length - 1].weight, unitPreference);
               }
-              return formatWeightForDisplay(lift.weightValue, unitPreference);
+              return formatWeightForDisplay(data.weight, unitPreference);
             }
             return '';
           });
-          chartDataPoints = sortedLifts.map((lift) => lift.analysis.accuracy);
+          chartDataPoints = weightAccuracyData.map((data) => data.averageAccuracy);
         } else {
-          // If more than 25 data points, select strategic points
+          // If more than 25 unique weights, select 25 strategic points
           const selectedIndices = new Set<number>();
           
           // Always include the first (lowest weight) and last (highest weight)
           selectedIndices.add(0);
-          selectedIndices.add(sortedLifts.length - 1);
+          selectedIndices.add(weightAccuracyData.length - 1);
           
           // Add evenly distributed points in between
           const remainingSlots = 23; // 25 total - 2 (first and last)
-          const step = (sortedLifts.length - 2) / (remainingSlots - 1);
+          const step = (weightAccuracyData.length - 2) / (remainingSlots - 1);
           
           for (let i = 1; i < remainingSlots; i++) {
             const index = Math.round(step * i);
-            if (index > 0 && index < sortedLifts.length - 1) {
+            if (index > 0 && index < weightAccuracyData.length - 1) {
               selectedIndices.add(index);
             }
           }
@@ -173,19 +191,18 @@ export function SwipeableLineGraphCard({
           // Convert to sorted array and get the data
           const selectedIndicesArray = Array.from(selectedIndices).sort((a, b) => a - b);
           chartDataPoints = selectedIndicesArray.map((index) => 
-            sortedLifts[index].analysis.accuracy
+            weightAccuracyData[index].averageAccuracy
           );
           
           // For labels, only show positions 1, 9, 16, 22 (1-based indexing), empty strings elsewhere
-          // Note: position 22 should show the last data point's weight
           chartLabels = selectedIndicesArray.map((index, labelIndex) => {
             const position = labelIndex + 1; // Convert to 1-based indexing
             if (position === 1 || position === 9 || position === 16 || position === 22) {
               if (position === 22) {
                 // Position 22 should show the last data point's weight
-                return formatWeightForDisplay(sortedLifts[sortedLifts.length - 1].weightValue, unitPreference);
+                return formatWeightForDisplay(weightAccuracyData[weightAccuracyData.length - 1].weight, unitPreference);
               }
-              return formatWeightForDisplay(sortedLifts[index].weightValue, unitPreference);
+              return formatWeightForDisplay(weightAccuracyData[index].weight, unitPreference);
             }
             return '';
           });

@@ -691,6 +691,7 @@ export function MainAppNavigator({ onLogout }: { onLogout?: () => void }) {
             component={LibraryScreenWrapperWithProps}
             options={{
               presentation: 'card',
+              freezeOnBlur: true, 
             }}
           />
         </Stack.Navigator>
