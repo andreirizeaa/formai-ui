@@ -437,29 +437,6 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       },
     },
     {
-      id: 'performance_filters',
-      title: i18n.t('tutorial.performanceFilters.title'),
-      description: i18n.t('tutorial.performanceFilters.description'),
-      targetId: 'performance_filters',
-      tooltipPlacement: 'bottom',
-      onNext: () => {
-        try {
-          // Just proceed to next tutorial step (no navigation needed)
-          // The tutorial will automatically show the next step
-        } catch (error) {
-          console.warn('Tutorial step error:', error);
-        }
-      },
-      onPrev: () => {
-        try {
-          // Go back to performance icon step
-          // This will be handled by the tutorial navigation
-        } catch (error) {
-          console.warn('Tutorial step error:', error);
-        }
-      },
-    },
-    {
       id: 'performance_metrics',
       title: i18n.t('tutorial.performanceMetrics.title'),
       description: i18n.t('tutorial.performanceMetrics.description'),
@@ -888,6 +865,9 @@ export function useTutorialTarget(targetId?: string) {
                    targetId === 'feedback_slideshow' ? 500 :
                    targetId === 'home_see_all_lifts' ? 500 :
                    targetId === 'home_performance_icon' ? 500 : 
+                   targetId === 'upload_practices_cta' ? 500 :
+                   targetId === 'home_first_lift_card' ? 500 :
+                   targetId === 'library_screen' ? 500 :
                    100;
       const timer = setTimeout(() => {
         try {

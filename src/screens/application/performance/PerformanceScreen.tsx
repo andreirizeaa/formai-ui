@@ -136,7 +136,7 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
           <Text style={styles.title}>{i18n.t('performance.title')}</Text>
           
           {/* Metric Cards Row: Accuracy | Improvement */}
-          <View style={styles.metricsRow} ref={performanceChartsRef}>
+          <View style={styles.metricsRow} ref={performanceMetricsRef}>
             {/* Accuracy Card */}
             <View style={styles.metricCard}>
               <View style={styles.metricHeaderRow}>
@@ -190,7 +190,7 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
           
           {/* Performance Cards */}
           <SwipeableLineGraphCard 
-            ref={performanceMetricsRef}
+            ref={performanceChartsRef}
             cardData={stableLiftData}
             onTriggerAddOptions={onTriggerAddOptions}
             hasNoLifts={stableLiftData.length === 0}
@@ -310,8 +310,6 @@ const styles = StyleSheet.create({
   metricCard: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#f1f5f9',
     borderRadius: 20,
     padding: 16,
     alignItems: 'center',

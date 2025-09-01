@@ -16,6 +16,7 @@ import { editUserDetails } from '../../../services/userService';
 interface FeedbackSlideshowProps {
   onClose: () => void;
   onNavigateToLiftDetails?: () => void;
+  onNavigateToHome?: () => void;
   liftData?: {
     analysis: {
       feedback: Array<{
@@ -30,7 +31,7 @@ interface FeedbackSlideshowProps {
 
 type ScreenMode = 'howItWorks' | 'feedback' | 'accuracyScore';
 
-export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, liftData }: FeedbackSlideshowProps) {
+export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigateToHome, liftData }: FeedbackSlideshowProps) {
   const [currentFeedbackIndex, setCurrentFeedbackIndex] = useState(0);
   const [currentPageType, setCurrentPageType] = useState<'image' | 'flaws' | 'improvement'>('image');
   const [isBottomExpanded, setIsBottomExpanded] = useState(false);
@@ -253,17 +254,12 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, liftData }
     };
     
     global.navigateToHome = () => {
-      // Navigate to home screen for the tutorial
-      // First close the current modal, then navigate to home
-      if (onClose) {
+      // Navigate directly to home screen for the tutorial
+      if (onNavigateToHome) {
+        onNavigateToHome();
+      } else if (onClose) {
+        // Fallback to closing if onNavigateToHome is not provided
         onClose();
-        // Add a small delay to ensure the modal closes before navigating
-        setTimeout(() => {
-          // Use the global function to navigate to home tab
-          if ((global as any).navigateToHome) {
-            (global as any).navigateToHome();
-          }
-        }, 100);
       }
     };
     
@@ -276,7 +272,7 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, liftData }
       delete global.navigateToHome;
       delete global.onFeedbackPageReady;
     };
-  }, [currentPageType, onClose]);
+  }, [currentPageType, onClose, onNavigateToHome]);
 
   const navigateForward = () => {
     if (!liftData?.analysis?.feedback) return;

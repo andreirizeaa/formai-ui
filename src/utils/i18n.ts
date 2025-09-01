@@ -590,11 +590,11 @@ const i18n = new I18n({
         title: 'Filter your data',
         description: 'Use the filter button to focus on specific movements and date ranges to get more targeted insights. By default it shows the least year and all movements.',
       },
-      performanceMetrics: {
+      performanceCharts: {
         title: 'Performance Charts',
         description: 'This chart shows your accuracy per weight to help you understand your progress over time and at what weight limit you are performing at your best.',
       },
-      performanceCharts: {
+      performanceMetrics: {
         title: 'Accuracy & Improvement',
         description: 'View your accuracy and improvement metrics to track your progress over time.',
       },

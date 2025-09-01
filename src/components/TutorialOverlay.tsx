@@ -327,7 +327,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000000',
     borderRadius: 28,
-    paddingVertical: 12,
+    paddingVertical: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -341,7 +341,7 @@ const styles = StyleSheet.create({
     width: '100%',
     backgroundColor: '#000000',
     borderRadius: 28,
-    paddingVertical: 14,
+    paddingVertical: 16,
     alignItems: 'center',
   },
   skipGuideButton: {
