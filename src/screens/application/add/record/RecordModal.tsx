@@ -11,7 +11,7 @@ import { MovementSelectionScreen } from '../common/MovementSelectionScreen';
 import { PracticesScreen } from '../common/PracticesScreen';
 import { WeightRepsScreen } from '../common/WeightRepsScreen';
 import { useLoadingLifts } from '../../../../context/LoadingLiftsContext';
-import { gymMovements } from '../../../../constants/gymMovements';
+import { gymMovements, BodyPart } from '../../../../constants/gymMovements';
 import { useCameraPermissions } from 'expo-camera';
 import { X } from 'lucide-react-native';
 import * as MediaLibrary from 'expo-media-library';
@@ -34,7 +34,8 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
   const [recordedVideoUri, setRecordedVideoUri] = useState<string | null>(null);
   const [selectedMovement, setSelectedMovement] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [filteredMovements, setFilteredMovements] = useState<string[]>([...gymMovements]);
+  const [selectedBodyPart, setSelectedBodyPart] = useState<BodyPart>('all');
+  const [filteredMovements, setFilteredMovements] = useState<string[]>(gymMovements.map(m => m.name));
   const [isCameraReady, setIsCameraReady] = useState(false);
   const [showCamera, setShowCamera] = useState(true);
   const [cameraKey, setCameraKey] = useState(0);
@@ -66,7 +67,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
       setRecordedVideoUri(null);
       setSelectedMovement('');
       setSearchQuery('');
-      setFilteredMovements([...gymMovements]);
+      setFilteredMovements(gymMovements.map(m => m.name));
       setIsCameraReady(false);
       setShowCamera(true);
     } else {
@@ -80,7 +81,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
       setRecordedVideoUri(null);
       setSelectedMovement('');
       setSearchQuery('');
-      setFilteredMovements([...gymMovements]);
+      setFilteredMovements(gymMovements.map(m => m.name));
     }
   }, [isVisible]);
 
@@ -306,10 +307,36 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
 
   const handleSearchChange = (text: string) => {
     setSearchQuery(text);
-    const filtered = [...gymMovements].filter(movement =>
-      movement.toLowerCase().includes(text.toLowerCase())
-    );
-    setFilteredMovements(filtered);
+    filterMovements(text, selectedBodyPart);
+  };
+
+  const handleBodyPartChange = (bodyPart: BodyPart) => {
+    setSelectedBodyPart(bodyPart);
+    filterMovements(searchQuery, bodyPart);
+  };
+
+  const filterMovements = (searchText: string, bodyPart: BodyPart) => {
+    let filtered = [...gymMovements];
+    
+    // Filter by body part
+    if (bodyPart !== 'all') {
+      filtered = filtered.filter(movement => movement.bodyPart === bodyPart);
+    }
+    
+    // Filter by search text
+    if (searchText.trim()) {
+      filtered = filtered.filter(movement =>
+        movement.name.toLowerCase().includes(searchText.toLowerCase())
+      );
+    }
+    
+    setFilteredMovements(filtered.map(m => m.name));
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery('');
+    setSelectedMovement(''); // Clear the selected movement
+    filterMovements('', selectedBodyPart); // Reset search but keep body part filter
   };
 
   const handleClose = () => {
@@ -389,7 +416,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
             ]}>
               <View style={[
                 styles.permissionTextArea,
-                { backgroundColor: isDark ? '#2C2C2E' : '#F2F2F7' }
+                { backgroundColor: isDark ? '#2C2C2E' : '#f3f4f6' }
               ]}>
                 <Text style={[
                   styles.permissionDialogText,
@@ -404,7 +431,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
                 { borderTopColor: isDark ? '#2C2C2E' : '#E5E5EA', borderTopWidth: 1 }
               ]}>
                 <TouchableOpacity
-                  style={[styles.permissionButtonCommon, styles.permissionDontAllowButton, { backgroundColor: isDark ? '#2C2C2E' : '#F2F2F7' }]}
+                  style={[styles.permissionButtonCommon, styles.permissionDontAllowButton, { backgroundColor: isDark ? '#2C2C2E' : '#f3f4f6' }]}
                   onPress={() => hapticFeedback.selection()}
                   activeOpacity={0.7}
                 >
@@ -511,8 +538,11 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
               searchQuery={searchQuery}
               filteredMovements={filteredMovements}
               selectedMovement={selectedMovement}
+              selectedBodyPart={selectedBodyPart}
               onMovementSelect={handleMovementSelect}
               onSearchChange={handleSearchChange}
+              onClearSearch={handleClearSearch}
+              onBodyPartChange={handleBodyPartChange}
               onBack={handleBack}
               onUpload={handleContinueFromMovementSelection}
               onClose={handleClose}
@@ -579,7 +609,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
                 <TouchableOpacity onPress={() => {
                   hapticFeedback.selection();
                   onClose();
-                }} style={styles.closeButton}>
+                }} style={styles.closeButtonCamera}>
                   <X width={24} height={24} color="white" />
                 </TouchableOpacity>
               </View>
@@ -681,6 +711,16 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   closeButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#f3f4f6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+    marginTop: 6,
+  },
+  closeButtonCamera: {
     width: 40,
     height: 40,
     borderRadius: 20,

@@ -2,14 +2,19 @@ import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Platform } from 'react-native';
 import i18n from '../../../../utils/i18n';
 import { useTutorialTarget } from '../../../../context/TutorialContext';
-import { Check } from 'lucide-react-native';
+import { Check, X } from 'lucide-react-native';
+import { hapticFeedback } from '../../../../utils/haptic';
+import { BodyPart } from '../../../../constants/gymMovements';
 
 interface MovementSelectionScreenProps {
   selectedMovement: string;
   searchQuery: string;
   filteredMovements: string[];
+  selectedBodyPart: BodyPart;
   onMovementSelect: (movement: string) => void;
   onSearchChange: (text: string) => void;
+  onClearSearch: () => void;
+  onBodyPartChange: (bodyPart: BodyPart) => void;
   onBack: () => void;
   onUpload: () => void;
   onClose: () => void;
@@ -20,8 +25,11 @@ export function MovementSelectionScreen({
   selectedMovement,
   searchQuery,
   filteredMovements,
+  selectedBodyPart,
   onMovementSelect,
   onSearchChange,
+  onClearSearch,
+  onBodyPartChange,
   onBack,
   onUpload,
   onClose,
@@ -35,40 +43,119 @@ export function MovementSelectionScreen({
       <View style={styles.content}>
         <View style={styles.movementSelectionContainer}>
           <Text style={styles.movementSelectionTitle}>{i18n.t('add.whatExercise')}</Text>
-          <TextInput
-            ref={continueButtonRef}
-            style={styles.searchInput}
-            placeholder={i18n.t('add.searchMovements')}
-            value={searchQuery}
-            onChangeText={onSearchChange}
-            placeholderTextColor="#8E8E93"
-          />
+          
+          {/* Body Part Segmented Control */}
+          <View style={styles.segmentedWrapper}>
+            <View style={styles.segmented}>
+              {[
+                { label: i18n.t('add.bodyParts.all'), value: 'all' as BodyPart, flex: 0.8 },
+                { label: i18n.t('add.bodyParts.chest'), value: 'chest' as BodyPart, flex: 1 },
+                { label: i18n.t('add.bodyParts.back'), value: 'back' as BodyPart, flex: 0.8 },
+                { label: i18n.t('add.bodyParts.shoulders'), value: 'shoulders' as BodyPart, flex: 1.4 },
+                { label: i18n.t('add.bodyParts.arms'), value: 'arms' as BodyPart, flex: 0.8 },
+                { label: i18n.t('add.bodyParts.legs'), value: 'legs' as BodyPart, flex: 0.8 },
+              ].map((segment) => {
+                const active = selectedBodyPart === segment.value;
+                return (
+                  <TouchableOpacity
+                    key={segment.value}
+                    style={[
+                      styles.segment, 
+                      { flex: segment.flex },
+                      active ? styles.segmentActive : styles.segmentInactive
+                    ]}
+                    activeOpacity={0.9}
+                    onPress={() => {
+                      if (!active) {
+                        hapticFeedback.selection();
+                        onBodyPartChange(segment.value);
+                      }
+                    }}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: active }}
+                  >
+                    <Text style={[styles.segmentText, active && styles.segmentTextActive]}>
+                      {segment.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+          
+          <View style={styles.searchInputContainer}>
+            <TextInput
+              ref={continueButtonRef}
+              style={styles.searchInput}
+              placeholder={i18n.t('add.searchMovements')}
+              value={searchQuery}
+              onChangeText={onSearchChange}
+              placeholderTextColor="#8E8E93"
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity
+                style={styles.clearButton}
+                onPress={() => {
+                  hapticFeedback.selection();
+                  onClearSearch();
+                }}
+                activeOpacity={0.7}
+              >
+                <X width={20} height={20} color="#8E8E93" />
+              </TouchableOpacity>
+            )}
+          </View>
           
           <ScrollView style={styles.movementsList} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-            {filteredMovements.map((movement, index) => (
+            {filteredMovements.length > 0 ? (
+              filteredMovements.map((movement, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={[
+                    styles.movementItem,
+                    selectedMovement === movement && styles.movementItemSelected
+                  ]}
+                  onPress={() => onMovementSelect(movement)}
+                  activeOpacity={0.7}
+                  delayPressIn={0}
+                >
+                  <Text style={[
+                    styles.movementItemText,
+                    selectedMovement === movement && styles.movementItemTextSelected
+                  ]}>
+                    {movement}
+                  </Text>
+                  {selectedMovement === movement && (
+                    <View style={styles.checkmark}>
+                      <Check width={20} height={20} color="#000000" />
+                    </View>
+                  )}
+                </TouchableOpacity>
+              ))
+            ) : searchQuery.trim().length > 0 ? (
               <TouchableOpacity
-                key={index}
                 style={[
                   styles.movementItem,
-                  selectedMovement === movement && styles.movementItemSelected
+                  selectedMovement === searchQuery.trim() && styles.movementItemSelected
                 ]}
-                onPress={() => onMovementSelect(movement)}
+                onPress={() => onMovementSelect(searchQuery.trim())}
                 activeOpacity={0.7}
                 delayPressIn={0}
               >
                 <Text style={[
                   styles.movementItemText,
-                  selectedMovement === movement && styles.movementItemTextSelected
+                  styles.customMovementText,
+                  selectedMovement === searchQuery.trim() && styles.movementItemTextSelected
                 ]}>
-                  {movement}
+                  {i18n.t('add.useCustomMovement')} {searchQuery.trim()}?
                 </Text>
-                {selectedMovement === movement && (
+                {selectedMovement === searchQuery.trim() && (
                   <View style={styles.checkmark}>
                     <Check width={20} height={20} color="#000000" />
                   </View>
                 )}
               </TouchableOpacity>
-            ))}
+            ) : null}
           </ScrollView>
         </View>
       </View>
@@ -114,18 +201,34 @@ const styles = StyleSheet.create({
     textAlign: 'left',
     width: '100%',
   },
+  searchInputContainer: {
+    position: 'relative',
+    width: '100%',
+    marginBottom: 20,
+  },
   searchInput: {
     width: '100%',
     height: 50,
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#8E8E93',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    backgroundColor: '#f3f4f6',
     paddingHorizontal: 15,
+    paddingRight: 50, // Make room for the clear button
     fontSize: 16,
     fontWeight: '400',
     color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
-    marginBottom: 20,
+    textAlignVertical: 'center',
+  },
+  clearButton: {
+    position: 'absolute',
+    right: 15,
+    top: '50%',
+    transform: [{ translateY: -15 }], // Center vertically (half of input height)
+    padding: 5,
   },
   movementsList: {
     flex: 1,
@@ -138,10 +241,10 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     paddingHorizontal: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: '#f3f4f6',
   },
   movementItemSelected: {
-    backgroundColor: '#E0E0E0',
+    backgroundColor: '#f3f4f6',
   },
   movementItemText: {
     fontSize: 17,
@@ -202,5 +305,55 @@ const styles = StyleSheet.create({
   },
   checkmark: {
     marginLeft: 10,
+  },
+  customMovementText: {
+    fontStyle: 'italic',
+    color: '#666666',
+  },
+  // Segmented control styles
+  segmentedWrapper: {
+    width: '100%',
+    marginBottom: 20,
+  },
+  segmented: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#f3f4f6',
+    borderRadius: 12,
+    padding: 4,
+    // Platform-specific shadow optimization
+    ...(Platform.OS === 'android' ? { elevation: 1 } : {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.1,
+      shadowRadius: 1,
+    }),
+  },
+  segment: {
+    paddingVertical: 8,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  segmentInactive: {},
+  segmentActive: {
+    backgroundColor: '#FFFFFF',
+    // Platform-specific shadow optimization
+    ...(Platform.OS === 'android' ? { elevation: 2 } : {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.1,
+      shadowRadius: 2,
+    }),
+  },
+  segmentText: {
+    fontSize: 13,
+    fontWeight: '400',
+    color: '#000',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
+  segmentTextActive: {
+    color: '#000',
+    fontWeight: '700',
   },
 }); 
