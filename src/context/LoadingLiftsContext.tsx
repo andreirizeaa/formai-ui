@@ -28,6 +28,8 @@ export interface LoadingLiftData {
   // Uploaded URLs retained for retrying analysis
   uploadedVideoUrl?: string;
   uploadedThumbnailUrl?: string;
+  // Asset ID for unique video identification
+  assetId?: string;
   // In-place completion data to avoid flicker (subset for card rendering)
   finalData?: {
     id: string;
@@ -126,7 +128,7 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
       setLoadingLifts(prev => prev.map(lift => lift.id === current.id ? { ...lift, pipelineStage: 'upload_video', progress: Math.max(lift.progress, 10) } : lift));
       if (!startStage || startStage === 'upload_video') {
         const videoSource = current.sourceVideoUri ?? current.videoLink;
-        const { publicUrl: videoUrl } = await uploadLiftVideo(userId, videoSource);
+        const { publicUrl: videoUrl } = await uploadLiftVideo(userId, videoSource, current.assetId);
         current.uploadedVideoUrl = videoUrl;
         setLoadingLifts(prev => prev.map(l => l.id === current.id ? { ...l, uploadedVideoUrl: videoUrl } : l));
       }

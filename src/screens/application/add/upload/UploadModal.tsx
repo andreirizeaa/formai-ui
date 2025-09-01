@@ -13,6 +13,8 @@ import { WeightRepsScreen } from '../common/WeightRepsScreen';
 import { useLoadingLifts } from '../../../../context/LoadingLiftsContext';
 import { gymMovements } from '../../../../constants/gymMovements';
 import { X } from 'lucide-react-native';
+import { listUserVideoPaths } from '../../../../services/VideoUploadService';
+import { getUserId } from '../../../../services/storageService';
 
 interface UploadModalProps {
   isVisible: boolean;
@@ -22,14 +24,14 @@ interface UploadModalProps {
 export function UploadModal({ isVisible, onClose }: UploadModalProps) {
   const { addLoadingLift } = useLoadingLifts();
   const [selectedVideo, setSelectedVideo] = useState<ImagePicker.ImagePickerAsset | null>(null);
-  const [showMovementSelection, setShowMovementSelection] = useState(false);
+    const [showMovementSelection, setShowMovementSelection] = useState(false);
   const [showWeightReps, setShowWeightReps] = useState(false);
   
   // Tutorial global functions
   React.useEffect(() => {
     global.tutorialUpload = {
       skipToPreviewWithDemo: () => {
-        // Skip to demo video for tutorial
+        // Skip to demo video for tutorial (bypass duplicate check for demo)
         setSelectedVideo({
           uri: require('../../../../../assets/tutorial/formai-example-video.mp4'),
           width: 1920,
@@ -91,39 +93,26 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
     }
   }, [isVisible]);
 
-  // Check video duration when video preview screen is shown
-  useEffect(() => {
-    if (selectedVideo && !showMovementSelection && !showWeightReps) {
-      // Video preview screen is shown, check duration
-      let durationInSeconds = selectedVideo.duration;
-      
-      // Handle different duration formats
-      if (typeof selectedVideo.duration === 'number') {
-        // If duration is in milliseconds, convert to seconds
-        if (selectedVideo.duration > 1000) {
-          durationInSeconds = selectedVideo.duration / 1000;
-        }
+
+
+  const checkForDuplicateVideo = async (assetId: string): Promise<boolean> => {
+    try {
+      const userId = await getUserId();
+      if (!userId) {
+        return false;
       }
+
+      const existingVideoPaths = await listUserVideoPaths(userId);
       
-      if (durationInSeconds !== undefined && durationInSeconds !== null && durationInSeconds > 90) {
-        hapticFeedback.error();
-        Alert.alert(
-          i18n.t('upload.videoTooLong'),
-          i18n.t('upload.videoTooLongMessage'),
-          [
-            { 
-              text: 'OK', 
-              onPress: () => {
-                // Go back and open media library again
-                setSelectedVideo(null);
-                handleUploadPress();
-              }
-            },
-          ]
-        );
-      }
+      // Extract the base asset ID (remove /L0/001 suffix if present)
+      const baseAssetId = assetId.split('/')[0];
+      
+      // Check if any existing video has the same base assetId
+      return existingVideoPaths.includes(baseAssetId);
+    } catch (error) {
+      return false;
     }
-  }, [selectedVideo, showMovementSelection, showWeightReps]);
+  };
 
   const handleUploadPress = async () => {
     // Selection haptic feedback
@@ -155,21 +144,59 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
           }
         }
 
-        // Video is valid, set it as selected
+        // Check for duplicate video before setting as selected
+        const isDuplicate = await checkForDuplicateVideo(asset.assetId || '');
+        
+        // Check if video duration is under 90 seconds
+        if (durationInSeconds !== undefined && durationInSeconds !== null && durationInSeconds > 90) {
+          hapticFeedback.error();
+          Alert.alert(
+            i18n.t('upload.videoTooLong'),
+            i18n.t('upload.videoTooLongMessage'),
+            [
+              { 
+                text: 'OK', 
+                onPress: () => {
+                  // Go back and open media library again
+                  handleUploadPress();
+                }
+              },
+            ]
+          );
+          return;
+        }
+        
+        if (isDuplicate) {
+          hapticFeedback.error();
+          Alert.alert(
+            i18n.t('upload.duplicateVideo'),
+            i18n.t('upload.duplicateVideoMessage'),
+            [
+              { 
+                text: i18n.t('upload.selectDifferentVideo'), 
+                onPress: () => {
+                  // Open media library again
+                  handleUploadPress();
+                }
+              },
+            ]
+          );
+          return;
+        }
+
+        // Video is valid, not a duplicate, and within duration limit, set it as selected
         setSelectedVideo(asset);
       }
     } catch (error) {
-      console.error('Error picking video:', error);
-      
       // Handle permission errors specifically
       if (error instanceof Error && error.message.includes('permission')) {
         Alert.alert(
-          'Permission Required',
-          'Please allow access to your photo library to select videos.',
+          i18n.t('upload.permissionRequired'),
+          i18n.t('upload.permissionMessage'),
           [{ text: 'OK' }]
         );
       } else {
-        Alert.alert('Error', 'Failed to select video. Please try again.');
+        Alert.alert(i18n.t('upload.error'), i18n.t('upload.failedToSelectVideo'));
       }
     }
   };
@@ -237,6 +264,9 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
 
   const handleFinalCompleteClicked = async (data: { weight: number; unit: 'kg' | 'lbs'; reps: number }) => {
     const videoUri = selectedVideo?.uri || '';
+    const fullAssetId = selectedVideo?.assetId || '';
+    // Extract the base asset ID (remove /L0/001 suffix if present)
+    const baseAssetId = fullAssetId.split('/')[0];
     const { date, time } = getDateAndTime();
 
     // Close the modal immediately
@@ -254,11 +284,11 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
         movementType: selectedMovement,
         weightValue: data.weight,
         reps: data.reps,
+        assetId: baseAssetId,
       });
       
       hapticFeedback.success();
     } catch (error) {
-      console.error('Error generating thumbnail:', error);
       Alert.alert(i18n.t('upload.error'), i18n.t('upload.failedToGenerateThumbnail'));
     }
   };

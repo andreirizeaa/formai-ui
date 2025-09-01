@@ -76,10 +76,12 @@ function contentTypeForImageExt(ext: string): string {
   }
 }
 
-export async function uploadLiftVideo(userId: string, fileUri: string): Promise<{ publicUrl: string; path: string }> {
+export async function uploadLiftVideo(userId: string, fileUri: string, assetId?: string): Promise<{ publicUrl: string; path: string }> {
   const ext = inferExtensionFromUri(fileUri);
   const contentType = contentTypeForExt(ext);
-  const fileName = `${Date.now()}.${ext}`;
+  
+  // Use assetId as filename if provided, otherwise fallback to timestamp
+  const fileName = assetId ? `${assetId}.${ext}` : `${Date.now()}.${ext}`;
   const path = `${userId}/videos/${fileName}`;
 
   // Read local file reliably in React Native (Expo)
@@ -90,10 +92,8 @@ export async function uploadLiftVideo(userId: string, fileUri: string): Promise<
 
   const { error } = await supabase.storage.from('lifts').upload(path, arrayBuffer, {
     contentType,
-    upsert: false,
+    upsert: true,
   });
-
-  console.log('error', error);
 
   if (error) throw error;
 
@@ -122,6 +122,32 @@ export async function uploadLiftThumbnail(userId: string, fileUri: string): Prom
 
   const { data } = supabase.storage.from('lifts').getPublicUrl(path);
   return { publicUrl: data.publicUrl, path };
+}
+
+export async function listUserVideoPaths(userId: string): Promise<string[]> {
+  try {
+    const { data, error } = await supabase.storage
+      .from('lifts')
+      .list(`${userId}/videos`, {
+        limit: 1000, // Adjust limit as needed
+        sortBy: { column: 'created_at', order: 'desc' }
+      });
+
+    if (error) {
+      console.error('Error listing video paths:', error);
+      return [];
+    }
+
+    // Return assetIds (filename without extension) for comparison
+    return data?.map(file => {
+      // Remove file extension to get the assetId
+      const lastDotIndex = file.name.lastIndexOf('.');
+      return lastDotIndex > 0 ? file.name.substring(0, lastDotIndex) : file.name;
+    }) || [];
+  } catch (error) {
+    console.error('Error listing user video paths:', error);
+    return [];
+  }
 }
 
 

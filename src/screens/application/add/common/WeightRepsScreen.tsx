@@ -253,7 +253,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#000000',
     borderRadius: 28,
     paddingHorizontal: 24,
-    paddingVertical: 12,
+    paddingVertical: 18,
     width: '100%',
     alignItems: 'center',
     marginBottom: 0,
@@ -263,7 +263,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   keyboardButtonText: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '600',
     color: '#FFFFFF',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',

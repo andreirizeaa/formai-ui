@@ -45,22 +45,8 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
   const device = useCameraDevice(cameraFacing);
   const [permission, requestPermission] = useCameraPermissions();
 
-
   // Screen states
   const [showWeightReps, setShowWeightReps] = useState(false);
-
-  // Weight and reps state
-  const [weightData, setWeightData] = useState<{ weight: number; unit: 'kg' | 'lbs'; reps: number } | null>(null);
-
-  // Combined state object for logging
-  const [uploadData, setUploadData] = useState<{
-    videoLink: string;
-    thumbnailUri: string;
-    dateToday: string;
-    movementType: string;
-    weightValue: number;
-    reps: number;
-  } | null>(null);
 
   useEffect(() => {
     if (isRecording && recordingTime >= 90) {
@@ -83,7 +69,6 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
       setFilteredMovements([...gymMovements]);
       setIsCameraReady(false);
       setShowCamera(true);
-      setUploadData(null);
     } else {
       // Reset states when modal becomes invisible
       setIsRecording(false);
@@ -96,7 +81,6 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
       setSelectedMovement('');
       setSearchQuery('');
       setFilteredMovements([...gymMovements]);
-      setUploadData(null);
     }
   }, [isVisible]);
 
@@ -124,7 +108,9 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+    const currentTime = `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+    const maxTime = '1:30'; // 90 seconds maximum
+    return `${currentTime} / ${maxTime}`;
   };
 
   const handleNext = () => {
@@ -138,7 +124,6 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
       if (permission == null) return;
       setHasPermission(permission.granted);
     } catch (e) {
-      console.error('Permission check failed:', e);
       setHasPermission(false);
     }
   };
@@ -153,14 +138,12 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
       }
       setHasPermission(result.granted);
     } catch (e) {
-      console.error('Permission request failed:', e);
       setHasPermission(false);
     }
   };
 
   const handleStartRecording = () => {
     if (!cameraRef.current || !isCameraReady) {
-      console.log('Camera not ready or ref not available');
       return;
     }
 
@@ -180,22 +163,17 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
             const { status } = await MediaLibrary.requestPermissionsAsync();
             if (status === 'granted') {
               await MediaLibrary.saveToLibraryAsync(uri);
-              console.log("✅ Video saved to media library");
-            } else {
-              console.log("❌ Media library permission denied");
             }
           } catch (err) {
-            console.error("❌ Failed to save video:", err);
+            // Failed to save video to media library
           }
         },
         onRecordingError: error => {
-          console.error('Recording error:', error);
           Alert.alert('Error', 'Recording failed. Please try again.');
           setIsRecording(false);
         },
       });
     } catch (error) {
-      console.error('Error starting recording:', error);
       setIsRecording(false);
       Alert.alert('Error', 'Failed to start recording. Please try again.');
     }
@@ -203,15 +181,13 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
 
   const handleStopRecording = async () => {
     if (!cameraRef.current || !isRecording) {
-      console.log('Camera not ready or no recording in progress');
       return;
     }
 
     try {
-      hapticFeedback.selection();
       cameraRef.current.stopRecording();
+      hapticFeedback.success();
     } catch (e) {
-      console.error('Failed to finish recording:', e);
       Alert.alert('Error', 'Recording failed to finish. Please try again.');
     } finally {
       setIsRecording(false);
@@ -297,9 +273,14 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
   };
 
   const handleFinalCompleteClicked = async (data: { weight: number; unit: 'kg' | 'lbs'; reps: number }) => {
-    setWeightData(data);
     const videoUri = recordedVideoUri || '';
     const { date, time } = getDateAndTime();
+
+    // Extract assetId from the recorded video URI
+    // The assetId is the filename without extension (after the last /)
+    const uriParts = videoUri.split('/');
+    const fileName = uriParts[uriParts.length - 1]; // Get the last part (filename)
+    const recordedAssetId = fileName.split('.')[0]; // Remove file extension
 
     // Close the modal immediately
     onClose();
@@ -315,10 +296,10 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
         movementType: selectedMovement,
         weightValue: data.weight,
         reps: data.reps,
+        assetId: recordedAssetId,
       });
       hapticFeedback.success();
     } catch (error) {
-      console.error('Error generating thumbnail:', error);
       Alert.alert('Error', 'Failed to generate video thumbnail. Please try again.');
     }
   };
