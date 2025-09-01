@@ -29,6 +29,9 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
   // Scroll ref for gesture coordination
   const scrollRef = useRef(null);
 
+  // Memoize liftData to ensure stable reference
+  const stableLiftData = useMemo(() => liftData, [liftData]);
+
   // Helpers: compute summary stats (moved from SwipeableSummaryCard)
   function parseDateDDMMYYYY(dateStr: string): Date | null {
     if (!dateStr || typeof dateStr !== 'string') return null;
@@ -68,7 +71,7 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
   }
 
   const { averageAccuracy, improvementValue, accuracyColor, improvementColor, isImprovementNegative } = useMemo(() => {
-    const validAccuracies = liftData
+    const validAccuracies = stableLiftData
       .map(l => (typeof (l as any)?.analysis?.accuracy === 'number' ? (l as any).analysis.accuracy as number : null))
       .filter((v): v is number => typeof v === 'number');
     const averageAccuracyRaw = validAccuracies.length > 0
@@ -76,7 +79,7 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
       : 0;
     const accColor = averageAccuracyRaw > 80 ? '#00a63e' : averageAccuracyRaw < 50 ? '#fb2c36' : '#fe9a00';
 
-    const improvementRaw = Math.round(calculateAverageFormImprovement(liftData as any));
+    const improvementRaw = Math.round(calculateAverageFormImprovement(stableLiftData as any));
     const impColor = improvementRaw >= 0 ? '#00a63e' : '#fb2c36';
     const isNegative = improvementRaw < 0;
 
@@ -87,7 +90,7 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
       improvementColor: impColor,
       isImprovementNegative: isNegative,
     };
-  }, [liftData]);
+  }, [stableLiftData]);
 
   // Info handlers
   const openInfoModal = (key: 'accuracyPerWeight' | 'accuracyOverTime' | 'accuracy' | 'improvement') => {
@@ -188,9 +191,9 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
           {/* Performance Cards */}
           <SwipeableLineGraphCard 
             ref={performanceMetricsRef}
-            cardData={liftData}
+            cardData={stableLiftData}
             onTriggerAddOptions={onTriggerAddOptions}
-            hasNoLifts={liftData.length === 0}
+            hasNoLifts={stableLiftData.length === 0}
             chartType="accuracyPerWeight"
             unitPreference={userDetails?.unitSystem ?? 'metric'}
             onInfoPress={() => openInfoModal('accuracyPerWeight')}
@@ -199,8 +202,8 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
 
           {/* Accuracy Over Time Cards */}
           <SwipeableLineGraphCard 
-            cardData={liftData}
-            hasNoLifts={liftData.length === 0}
+            cardData={stableLiftData}
+            hasNoLifts={stableLiftData.length === 0}
             chartType="accuracyOverTime"
             unitPreference={userDetails?.unitSystem ?? 'metric'}
             onInfoPress={() => openInfoModal('accuracyOverTime')}

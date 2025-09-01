@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback, useRef } from 'react';
 import { View, Text, StyleSheet, Platform, TouchableOpacity, Dimensions } from 'react-native';
 import Carousel from 'react-native-reanimated-carousel';
 import { LineChart } from 'react-native-chart-kit';
@@ -88,6 +88,160 @@ const getThresholdForRange = (range: TimeRange) => {
   if (range === '1y') return new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
   return null; // all
 };
+
+// Memoized chart configuration to prevent recreation on every render
+const chartConfig = {
+  fillShadowGradientFrom: '#000',
+  fillShadowGradientTo: '#ffffff',
+  backgroundColor: '#FFFFFF',
+  backgroundGradientFrom: '#FFFFFF',
+  backgroundGradientTo: '#FFFFFF',
+  decimalPlaces: 0,
+  color: (opacity = 1) => `rgba(0,0,0,${opacity})`,
+  labelColor: (opacity = 1) => `rgba(0,0,0,${opacity})`,
+  propsForDots: {
+    r: '2',
+    strokeWidth: '2',
+    stroke: '#000',
+    fill: '#000',
+  },
+  propsForBackgroundLines: {
+    strokeDasharray: '2,2',
+  },
+  formatXLabel: (val: string) => val,
+  formatYLabel: (val: string) => `${val}%`,
+};
+
+// Memoized regression cache
+const regressionCache = new Map<string, number[]>();
+
+const getRegression = (key: string, points: number[]) => {
+  const k = key + '|' + points.join(',');
+  const cached = regressionCache.get(k);
+  if (cached) return cached;
+  const line = calculateLinearRegression(points);
+  regressionCache.set(k, line);
+  return line;
+};
+
+// Memoized Chart Page Component
+const ChartPage = React.memo(function ChartPage({ 
+  item, 
+  onInfoPress 
+}: { 
+  item: ProcessedCardData; 
+  onInfoPress?: () => void;
+}) {
+  return (
+    <View style={styles.page}>
+      <View style={[styles.performanceCard, { width: CARD_WIDTH }]}>
+        <View style={styles.performanceCardContent}>
+          <View style={styles.performanceCardHeader}>
+            <View style={styles.headerLeft}>
+              <View style={styles.titleRow}>
+                <Text style={styles.performanceCardLabel}>{item.title}</Text>
+                <TouchableOpacity
+                  onPress={() => onInfoPress?.()}
+                  activeOpacity={0.7}
+                  style={styles.titleIcon}
+                >
+                  <CircleQuestionMark width={20} height={20} color="#000" />
+                </TouchableOpacity>
+              </View>
+              <Text style={styles.performanceCardSubtitle}>{item.subtitle}</Text>
+            </View>
+          </View>
+
+          <View style={styles.chartContainer}>
+            <LineChart
+              data={item.chartData}
+              width={CARD_WIDTH - 20}
+              height={180}
+              chartConfig={chartConfig}
+              bezier
+              style={styles.chart}
+              withDots={false}
+              withShadow
+              withInnerLines
+              withOuterLines={false}
+              withVerticalLines={false}
+              withHorizontalLines
+              yAxisSuffix="%"
+            />
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+});
+
+// Memoized Pagination Component
+const Pagination = React.memo(function Pagination({ 
+  count, 
+  active 
+}: { 
+  count: number; 
+  active: number;
+}) {
+  return (
+    <View style={styles.paginationContainer}>
+      {Array.from({ length: count }).map((_, index) => (
+        <View
+          key={index}
+          style={[
+            styles.paginationDot,
+            index === active ? styles.paginationDotActive : styles.paginationDotInactive,
+          ]}
+        />
+      ))}
+    </View>
+  );
+});
+
+// Memoized Segmented Control Component
+const SegmentedControl = React.memo(function SegmentedControl({
+  timeRange,
+  onTimeRangeChange,
+}: {
+  timeRange: TimeRange;
+  onTimeRangeChange: (range: TimeRange) => void;
+}) {
+  const Segments = [
+    { label: '90 Days', value: '90d' as TimeRange },
+    { label: '6 Months', value: '6m' as TimeRange },
+    { label: '1 Year', value: '1y' as TimeRange },
+    { label: 'All time', value: 'all' as TimeRange },
+  ];
+
+  return (
+    <View style={styles.segmentedWrapper}>
+      <View style={styles.segmented}>
+        {Segments.map((seg) => {
+          const active = timeRange === seg.value;
+          return (
+            <TouchableOpacity
+              key={seg.value}
+              style={[styles.segment, active ? styles.segmentActive : styles.segmentInactive]}
+              activeOpacity={0.9}
+              onPress={() => {
+                if (!active) {
+                  hapticFeedback.selection();
+                  onTimeRangeChange(seg.value);
+                }
+              }}
+              accessibilityRole="button"
+              accessibilityState={{ selected: active }}
+            >
+              <Text style={[styles.segmentText, active && styles.segmentTextActive]}>
+                {seg.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    </View>
+  );
+});
 
 export function SwipeableLineGraphCard({
   ref,
@@ -208,8 +362,8 @@ export function SwipeableLineGraphCard({
           });
         }
 
-        // Calculate line of best fit
-        const lineOfBestFit = calculateLinearRegression(chartDataPoints);
+        // Calculate line of best fit using cached regression
+        const lineOfBestFit = getRegression(`weight-${liftType}`, chartDataPoints);
 
         const chartData: ChartData = {
           labels: chartLabels,
@@ -316,8 +470,8 @@ export function SwipeableLineGraphCard({
           });
         }
 
-        // Calculate line of best fit
-        const lineOfBestFit = calculateLinearRegression(chartDataPoints);
+        // Calculate line of best fit using cached regression
+        const lineOfBestFit = getRegression(`time-${liftType}`, chartDataPoints);
 
         const chartData: ChartData = {
           labels: chartLabels,
@@ -344,43 +498,23 @@ export function SwipeableLineGraphCard({
     }
   }, [rangedCardData, chartType, unitPreference]);
 
-  const Segments = [
-    { label: '90 Days', value: '90d' as TimeRange },
-    { label: '6 Months', value: '6m' as TimeRange },
-    { label: '1 Year', value: '1y' as TimeRange },
-    { label: 'All time', value: 'all' as TimeRange },
-  ];
+  // Memoized render item function
+  const renderItem = useCallback(({ item }: { item: ProcessedCardData }) => {
+    return <ChartPage item={item} onInfoPress={onInfoPress} />;
+  }, [onInfoPress]);
+
+  // Memoized onSnapToItem handler
+  const handleSnapToItem = useCallback((index: number) => {
+    setCurrentCardIndex(index);
+  }, []);
 
   return (
     <View style={styles.cardsContainer}>
       {/* Segmented control ABOVE the carousel and card */}
-      <View style={styles.segmentedWrapper}>
-        <View style={styles.segmented}>
-          {Segments.map((seg, i) => {
-            const active = timeRange === seg.value;
-            return (
-              <React.Fragment key={seg.value}>
-                <TouchableOpacity
-                  style={[styles.segment, active ? styles.segmentActive : styles.segmentInactive]}
-                  activeOpacity={0.9}
-                  onPress={() => {
-                    if (!active) {
-                      hapticFeedback.selection();
-                      setTimeRange(seg.value);
-                    }
-                  }}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: active }}
-                >
-                  <Text style={[styles.segmentText, active && styles.segmentTextActive]}>
-                    {seg.label}
-                  </Text>
-                </TouchableOpacity>
-              </React.Fragment>
-            );
-          })}
-        </View>
-      </View>
+      <SegmentedControl 
+        timeRange={timeRange} 
+        onTimeRangeChange={setTimeRange} 
+      />
 
       <View style={styles.carouselContainer}>
         <Carousel
@@ -388,6 +522,13 @@ export function SwipeableLineGraphCard({
           width={SCREEN_WIDTH}
           height={CARD_HEIGHT}
           data={processedCardData}
+          renderItem={renderItem}
+          onSnapToItem={handleSnapToItem}
+          defaultIndex={0}
+          pagingEnabled
+          snapEnabled
+          enableSnap
+          style={{ backgroundColor: 'transparent' }}
           onConfigurePanGesture={(g) => {
             'worklet';
             // Require strong horizontal intent (> ~20px) before activating - very strict
@@ -401,86 +542,10 @@ export function SwipeableLineGraphCard({
             //   g.simultaneousWithExternalGesture(externalScrollGestureRef);
             // }
           }}
-          renderItem={({ item }) => (
-            <View style={styles.page}>
-              <View style={[styles.performanceCard, { width: CARD_WIDTH }]}>
-                <View style={styles.performanceCardContent}>
-                  <View style={styles.performanceCardHeader}>
-                    <View style={styles.headerLeft}>
-                      <View style={styles.titleRow}>
-                        <Text style={styles.performanceCardLabel}>{item.title}</Text>
-                        <TouchableOpacity
-                          onPress={() => onInfoPress?.()}
-                          activeOpacity={0.7}
-                          style={styles.titleIcon}
-                        >
-                          <CircleQuestionMark width={20} height={20} color="#000" />
-                        </TouchableOpacity>
-                      </View>
-                      <Text style={styles.performanceCardSubtitle}>{item.subtitle}</Text>
-                    </View>
-                  </View>
-
-                  <View style={styles.chartContainer} ref={ref}>
-                    <LineChart
-                      data={item.chartData}
-                      width={CARD_WIDTH - 20}
-                      height={180}
-                      chartConfig={{
-                        fillShadowGradientFrom: '#000',
-                        fillShadowGradientTo: '#ffffff',
-                        backgroundColor: '#FFFFFF',
-                        backgroundGradientFrom: '#FFFFFF',
-                        backgroundGradientTo: '#FFFFFF',
-                        decimalPlaces: 0,
-                        color: (opacity = 1) => `rgba(0,0,0,${opacity})`,
-                        labelColor: (opacity = 1) => `rgba(0,0,0,${opacity})`,
-                        propsForDots: {
-                          r: '2',
-                          strokeWidth: '2',
-                          stroke: '#000',
-                          fill: '#000',
-                        },
-                        propsForBackgroundLines: {
-                          strokeDasharray: '2,2',
-                        },
-                        formatXLabel: (val) => val,
-                        formatYLabel: (val) => `${val}%`,
-                      }}
-                      bezier
-                      style={styles.chart}
-                      withDots={false}
-                      withShadow
-                      withInnerLines
-                      withOuterLines={false}
-                      withVerticalLines={false}
-                      withHorizontalLines
-                      yAxisSuffix="%"
-                    />
-                  </View>
-                </View>
-              </View>
-            </View>
-          )}
-          onSnapToItem={(index) => setCurrentCardIndex(index)}
-          defaultIndex={0}
-          pagingEnabled
-          snapEnabled
-          style={{ backgroundColor: 'transparent' }}
         />
+        
         {/* Pagination Dots */}
-        <View style={styles.paginationContainer}>
-          {processedCardData.map((_, index) => (
-            <TouchableOpacity
-              key={index}
-              style={[
-                styles.paginationDot,
-                index === currentCardIndex ? styles.paginationDotActive : styles.paginationDotInactive,
-              ]}
-              activeOpacity={0.7}
-            />
-          ))}
-        </View>
+        <Pagination count={processedCardData.length} active={currentCardIndex} />
       </View>
     </View>
   );
@@ -507,10 +572,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#f3f4f6',
     borderRadius: 12,
     padding: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
+    // Platform-specific shadow optimization
+    ...(Platform.OS === 'android' ? { elevation: 1 } : {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.1,
+      shadowRadius: 1,
+    }),
   },
   segment: {
     flex: 1,
@@ -522,10 +590,13 @@ const styles = StyleSheet.create({
   segmentInactive: {},
   segmentActive: {
     backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
+    // Platform-specific shadow optimization
+    ...(Platform.OS === 'android' ? { elevation: 2 } : {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.1,
+      shadowRadius: 2,
+    }),
   },
   segmentText: {
     fontSize: 14,
@@ -552,11 +623,13 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     padding: 16,
     marginBottom: 24,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2,
+    // Platform-specific shadow optimization
+    ...(Platform.OS === 'android' ? { elevation: 2 } : {
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.1,
+      shadowRadius: 2,
+    }),
   },
   performanceCardContent: {
     flexDirection: 'column',
