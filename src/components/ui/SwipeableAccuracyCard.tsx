@@ -77,72 +77,75 @@ export function SwipeableAccuracyCard({
       'Tricep Dips',
       'Leg Press'
     ];
-    const randomMovement = movements[Math.floor(Math.random() * movements.length)];
-    
-    // Random accuracy between 60-95%
-    const randomAccuracy = Math.floor(Math.random() * 36) + 60;
-    
-    
-    // Random reps between 1-12
-    const randomReps = Math.floor(Math.random() * 12) + 1;
-    
-    // Random weight between 1-500
-    const randomWeight = Math.floor(Math.random() * 500) + 1;
-    
-    // Generate random line graph values based on reps
-    const randomLineGraphValues = Array.from({ length: randomReps }, () => 
-      Math.floor(Math.random() * 36) + 60
-    );
-    
-    // Random time between 8 AM and 10 PM
-    const randomHour = Math.floor(Math.random() * 14) + 8;
-    const randomMinute = Math.floor(Math.random() * 60);
-    const randomTime = `${randomHour > 12 ? randomHour - 12 : randomHour}:${randomMinute.toString().padStart(2, '0')} ${randomHour >= 12 ? 'PM' : 'AM'}`;
-    
-    // Generate random date within the last 30 days
-    const today = new Date();
-    const randomDaysAgo = Math.floor(Math.random() * 30);
-    const randomDate = new Date(today);
-    randomDate.setDate(today.getDate() - randomDaysAgo);
-    
-    const id = `demo-${today.getTime()}-${Math.random().toString(36).substr(2, 9)}`;
 
-    addLift({
-      id,
-      isFavourite: Math.random() > 0.7, // 30% chance of being favourite
-      liftType: "Deadlift",
-      liftDate: formatDateForLift(randomDate),
-      liftTime: randomTime,
-      weightValue: randomWeight,
-      reps: randomReps,
-      rawVideoURL: require('../../../assets/tutorial/formai-example-video.mp4'),
-      poseVideoURL: require('../../../assets/tutorial/formai-example-pose.mp4'),
-      thumbnailURL: require('../../../assets/tutorial/formai-example-video-thumbnail.jpg'),
-      analysis: {
-        accuracy: randomAccuracy,
-        lineGraphValues: randomLineGraphValues,
-        feedback: [
-          {
-            imageURL: require('../../../assets/tutorial/formai-example-feedback.png'),
-            flaws: [
-              "Right knee is caving inward compared to the left, showing knee valgus.",
-              "Right ankle angle suggests the heel may be lifting more than the left.",
-              "Torso is leaning forward excessively, which stresses the lower back.",
-              "Barbell path is slightly forward of mid-foot, reducing lifting efficiency.",
-              "Hip angle indicates possible butt wink or pelvic tuck at the bottom."
-            ],
-            improvement: [
-              "Actively push knees out and think 'spread the floor' with your feet to prevent valgus.",
-              "Improve ankle dorsiflexion with stretches and banded mobilizations to keep heels grounded.",
-              "Brace your core harder using the Valsalva maneuver to maintain an upright torso.",
-              "Keep the bar over mid-foot and adjust grip width to tighten the upper back.",
-              "Strengthen glutes and hamstrings with RDLs, hip thrusts, and pause squats to control hip position.",
-              "Consider weightlifting shoes with a heel lift if ankle mobility limits squat depth."
-            ],
-          },
-        ],
-      },
-    });
+    // Add 1000 test lifts
+    for (let i = 0; i < 1000; i++) {
+      const randomMovement = movements[Math.floor(Math.random() * movements.length)];
+      
+      // Random accuracy between 60-95%
+      const randomAccuracy = Math.floor(Math.random() * 36) + 60;
+      
+      // Random reps between 1-12
+      const randomReps = Math.floor(Math.random() * 12) + 1;
+      
+      // Random weight between 1-500
+      const randomWeight = Math.floor(Math.random() * 500) + 1;
+      
+      // Generate random line graph values based on reps
+      const randomLineGraphValues = Array.from({ length: randomReps }, () => 
+        Math.floor(Math.random() * 36) + 60
+      );
+      
+      // Random time between 8 AM and 10 PM
+      const randomHour = Math.floor(Math.random() * 14) + 8;
+      const randomMinute = Math.floor(Math.random() * 60);
+      const randomTime = `${randomHour > 12 ? randomHour - 12 : randomHour}:${randomMinute.toString().padStart(2, '0')} ${randomHour >= 12 ? 'PM' : 'AM'}`;
+      
+      // Generate random date within the last 30 days
+      const today = new Date();
+      const randomDaysAgo = Math.floor(Math.random() * 30);
+      const randomDate = new Date(today);
+      randomDate.setDate(today.getDate() - randomDaysAgo);
+      
+      const id = `demo-${today.getTime()}-${i}-${Math.random().toString(36).substr(2, 9)}`;
+
+      addLift({
+        id,
+        isFavourite: Math.random() > 0.7, // 30% chance of being favourite
+        liftType: randomMovement,
+        liftDate: formatDateForLift(randomDate),
+        liftTime: randomTime,
+        weightValue: randomWeight,
+        reps: randomReps,
+        rawVideoURL: require('../../../assets/tutorial/formai-example-video.mp4'),
+        poseVideoURL: require('../../../assets/tutorial/formai-example-pose.mp4'),
+        thumbnailURL: require('../../../assets/tutorial/formai-example-video-thumbnail.jpg'),
+        analysis: {
+          accuracy: randomAccuracy,
+          lineGraphValues: randomLineGraphValues,
+          feedback: [
+            {
+              imageURL: require('../../../assets/tutorial/formai-example-feedback.png'),
+              flaws: [
+                "Right knee is caving inward compared to the left, showing knee valgus.",
+                "Right ankle angle suggests the heel may be lifting more than the left.",
+                "Torso is leaning forward excessively, which stresses the lower back.",
+                "Barbell path is slightly forward of mid-foot, reducing lifting efficiency.",
+                "Hip angle indicates possible butt wink or pelvic tuck at the bottom."
+              ],
+              improvement: [
+                "Actively push knees out and think 'spread the floor' with your feet to prevent valgus.",
+                "Improve ankle dorsiflexion with stretches and banded mobilizations to keep heels grounded.",
+                "Brace your core harder using the Valsalva maneuver to maintain an upright torso.",
+                "Keep the bar over mid-foot and adjust grip width to tighten the upper back.",
+                "Strengthen glutes and hamstrings with RDLs, hip thrusts, and pause squats to control hip position.",
+                "Consider weightlifting shoes with a heel lift if ankle mobility limits squat depth."
+              ],
+            },
+          ],
+        },
+      });
+    }
   };
 
   return (
@@ -189,7 +192,7 @@ export function SwipeableAccuracyCard({
           onPress={handleAddTestLift}
           activeOpacity={0.7}
         >
-          <Text style={styles.testLiftButtonText}>Add Random Test Lift</Text>
+          <Text style={styles.testLiftButtonText}>Add 1000 Test Lifts</Text>
         </TouchableOpacity>
       )}
     </View>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import { createStackNavigator, StackNavigationProp, CardStyleInterpolators } from '@react-navigation/stack';
+import { createNativeStackNavigator, NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 
 // Import screens
@@ -35,9 +35,9 @@ export type OnboardingStackParamList = {
   AllDone: undefined;
 };
 
-export type OnboardingNavigationProp = StackNavigationProp<OnboardingStackParamList>;
+export type OnboardingNavigationProp = NativeStackNavigationProp<OnboardingStackParamList>;
 
-const Stack = createStackNavigator<OnboardingStackParamList>();
+const Stack = createNativeStackNavigator<OnboardingStackParamList>();
 
 // Wrapper components that handle navigation
 function LoadingScreenWrapper({ onComplete }: { onComplete: () => void }) {
@@ -158,36 +158,24 @@ export function OnboardingNavigator({ onComplete, onSignIn, onUserNeedsOnboardin
 
         <Stack.Screen 
           name="AccountLoading"
-          options={{
-            cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
-          }}
         >
           {() => <AccountLoadingScreenWrapper onComplete={onComplete} />}
         </Stack.Screen>
 
         <Stack.Screen 
           name="Payment"
-          options={{
-            cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
-          }}
         >
           {() => <PaymentScreenWrapper />}
         </Stack.Screen>
 
         <Stack.Screen 
           name="SignIn"
-          options={{
-            cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
-          }}
         >
           {() => <SignInScreenWrapper onSignIn={onSignIn} onUserNeedsOnboarding={onUserNeedsOnboarding} />}
         </Stack.Screen>
 
         <Stack.Screen 
-          name="CameraPermission" 
-          options={{ 
-            cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
-          }}
+          name="CameraPermission"
         >
           {() => <CameraPermissionScreenWrapper onComplete={onComplete} />}
         </Stack.Screen>
