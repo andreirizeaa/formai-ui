@@ -196,7 +196,7 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
             onPress={handleClose}
             activeOpacity={0.7}
           >
-            <ChevronLeft size={20} color="#000000" />
+            <ChevronLeft size={20} color="#ffffff" />
           </TouchableOpacity>
           <View style={styles.titleContainer}>
             <Text style={styles.title}>{i18n.t('feedback.liftDetails')}</Text>
@@ -206,7 +206,7 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
             onPress={handleActionSheet}
             activeOpacity={0.7}
           >
-            <Ellipsis size={20} color="#000000" />
+            <Ellipsis size={20} color="#ffffff" />
           </TouchableOpacity>
         </View>
         
@@ -250,12 +250,12 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
           </View>
           {/* Form Score Chart Card */}
           <View style={[styles.card, styles.bottomCard]} ref={formGraphRef}>
-                          <Text style={styles.cardTitle}>{i18n.t('feedback.formAccuracyAcrossReps')}</Text>
+             <Text style={styles.cardTitle}>{i18n.t('feedback.formAccuracyAcrossReps')}</Text>
             <View style={styles.chartContainer}>
               {chartData && chartData.datasets && chartData.datasets[0] && chartData.datasets[0].data && (
                 <LineChart
                   data={chartData}
-                  width={width - 75} // Match the width of the weight/reps cards row
+                  width={width - 51} // Match the width of the weight/reps cards row
                   height={180} // Increased height to show x-axis labels
                   chartConfig={{
                     backgroundColor: '#FFFFFF',
@@ -444,13 +444,21 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: '#0F0F0F',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
+  },
+  ellipsisButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#0F0F0F',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 1,
   },
   titleContainer: {
-    backgroundColor: '#F2F2F7',
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 22,
@@ -461,8 +469,8 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 20,
-    fontWeight: '500',
-    color: '#000000',
+    fontWeight: '400',
+    color: '#ffffff',
     fontFamily: 'SF Pro Display',
     textAlign: 'center',
   },
@@ -594,7 +602,7 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '400',
     color: '#000000',
     fontFamily: 'SF Pro Display',
     marginBottom: 12,
@@ -605,17 +613,9 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     alignItems: 'center',
     width: '100%',
+    marginLeft: -24,
   },
   chart: {
-  },
-  ellipsisButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#F2F2F7',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1,
   },
   dropdownOverlay: {
     position: 'absolute',
@@ -758,14 +758,14 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   reviewFeedbackButtonText: {
-    fontSize: 17,
-    fontWeight: '500',
+    fontSize: 18,
+    fontWeight: '400',
     color: '#000000',
     fontFamily: 'SF Pro Display',
   },
   bottomContainer: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
     position: 'absolute',
     bottom: 0,
     left: 0,
@@ -817,9 +817,9 @@ const styles = StyleSheet.create({
       width: 0,
       height: -2,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 4,
   },
   cardsRow: {
     flexDirection: 'row',
@@ -842,7 +842,7 @@ const styles = StyleSheet.create({
   },
   infoCardTitle: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '400',
     color: '#000000',
     fontFamily: 'SF Pro Display',
     marginBottom: 4,
@@ -865,7 +865,7 @@ const styles = StyleSheet.create({
   },
   infoCardTitleOrange: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '400',
     color: '#fff',
     fontFamily: 'SF Pro Display',
     marginBottom: 4,
