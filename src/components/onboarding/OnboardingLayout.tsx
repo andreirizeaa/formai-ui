@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Platform } from 'react-native';
+import { View, Text, StyleSheet, Platform, Animated } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BackButton } from '../ui/BackButton';
@@ -39,6 +39,16 @@ export function OnboardingLayout({
   
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const fadeAnim = React.useRef(new Animated.Value(0)).current;
+
+  // Fade in animation when component mounts
+  React.useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 500,
+      useNativeDriver: true,
+    }).start();
+  }, [fadeAnim]);
 
   return (
     <SafeAreaView 
@@ -47,65 +57,67 @@ export function OnboardingLayout({
         { backgroundColor: isDark ? '#000000' : '#FFFFFF' }
       ]}
     >
-      {/* Header with back button and progress bar */}
-      <View style={styles.header}>
-        {!hideBackButton && (
-          <BackButton onPress={() => {
-            hapticFeedback.selection();
-            onBack();
-          }} />
-        )}
-        <View style={[styles.progressContainer, hideBackButton && styles.progressContainerFullWidth]}>
-          <ProgressBar currentStep={currentStep} totalSteps={totalSteps} />
+      <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
+        {/* Header with back button and progress bar */}
+        <View style={styles.header}>
+          {!hideBackButton && (
+            <BackButton onPress={() => {
+              hapticFeedback.selection();
+              onBack();
+            }} />
+          )}
+          <View style={[styles.progressContainer, hideBackButton && styles.progressContainerFullWidth]}>
+            <ProgressBar currentStep={currentStep} totalSteps={totalSteps} />
+          </View>
         </View>
-      </View>
-      
-      {/* Integrated Header Content */}
-      <View style={styles.headerContent}>
-        <Text 
-          style={[
-            styles.title, 
-            { 
-              color: isDark ? '#FFFFFF' : '#000000',
-              fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto'
-            }
-          ]}
-        >
-          {title}
-        </Text>
-        {subtitle && (
+        
+        {/* Integrated Header Content */}
+        <View style={styles.headerContent}>
           <Text 
             style={[
-              styles.subtitle, 
+              styles.title, 
               { 
-                color: isDark ? '#AEAEB2' : '#8E8E93',
-                fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
+                color: isDark ? '#FFFFFF' : '#000000',
+                fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto'
               }
             ]}
           >
-            {subtitle}
+            {title}
           </Text>
-        )}
-      </View>
-
-      {/* Content area with vertical centering */}
-      <View style={styles.contentWrapper}>
-        <View style={styles.centeredContent}>
-          {children}
+          {subtitle && (
+            <Text 
+              style={[
+                styles.subtitle, 
+                { 
+                  color: isDark ? '#AEAEB2' : '#8E8E93',
+                  fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
+                }
+              ]}
+            >
+              {subtitle}
+            </Text>
+          )}
         </View>
-      </View>
 
-      {/* Bottom Next button */}
-      {!hideNextButton ? (
-        <View style={styles.bottomBar}>
-          <NextButton 
-            title={nextTitle}
-            onPress={onNext}
-            disabled={nextDisabled}
-            loading={nextLoading}
-          />
+        {/* Content area with vertical centering */}
+        <View style={styles.contentWrapper}>
+          <View style={styles.centeredContent}>
+            {children}
+          </View>
         </View>
-      ) : null}
+
+        {/* Bottom Next button */}
+        {!hideNextButton ? (
+          <View style={styles.bottomBar}>
+            <NextButton 
+              title={nextTitle}
+              onPress={onNext}
+              disabled={nextDisabled}
+              loading={nextLoading}
+            />
+          </View>
+        ) : null}
+      </Animated.View>
     </SafeAreaView>
   );
 }

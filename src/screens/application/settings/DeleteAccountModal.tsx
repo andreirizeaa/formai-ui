@@ -107,22 +107,22 @@ export function DeleteAccountModal({ isVisible, onClose, onConfirm }: DeleteAcco
           ) : (
             <View style={styles.buttonContainer}>
               <TouchableOpacity 
-                style={styles.button} 
+                style={[styles.button, styles.buttonOutlined]} 
                 onPress={() => {
                   hapticFeedback.selection();
                   onClose();
                 }}
               >
-                <Text style={styles.buttonText}>{i18n.t('settings.no')}</Text>
+                <Text style={styles.buttonOutlinedText}>{i18n.t('settings.no')}</Text>
               </TouchableOpacity>
               <TouchableOpacity 
-                style={styles.button} 
+                style={[styles.button, styles.buttonPrimary]} 
                 onPress={() => {
                   hapticFeedback.selection();
                   setIsAcknowledgementStep(true);
                 }}
               >
-                <Text style={styles.buttonText}>{i18n.t('settings.yes')}</Text>
+                <Text style={styles.buttonPrimaryText}>{i18n.t('settings.yes')}</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -183,30 +183,40 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    gap: 12,
   },
   button: {
     flex: 1,
-    paddingVertical: 14,
-    alignItems: 'center',
+    height: 56,
+    borderRadius: 28,
     justifyContent: 'center',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E5E5EA',
-    marginHorizontal: 4,
+    alignItems: 'center',
   },
-  buttonText: {
+  buttonOutlined: {
+    borderWidth: 1,
+    borderColor: '#000000',
+    backgroundColor: '#FFFFFF',
+  },
+  buttonPrimary: {
+    backgroundColor: '#000000',
+  },
+  buttonOutlinedText: {
     fontSize: 16,
     fontWeight: '600',
     color: '#000000',
+  },
+  buttonPrimaryText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
   acknowledgeContainer: {
     marginTop: 4,
   },
   acknowledgeButton: {
     width: '100%',
-    paddingVertical: 16,
-    borderRadius: 14,
+    height: 56,
+    borderRadius: 28,
     backgroundColor: '#000000',
     alignItems: 'center',
     justifyContent: 'center',

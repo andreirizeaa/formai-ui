@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Image, Animated } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import i18n from '../../utils/i18n';
@@ -15,6 +15,7 @@ export function WelcomeScreen({ onGetStarted, onSignIn }: WelcomeScreenProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const [userId, setUserId] = useState<string | null>(null);
+  const fadeAnim = React.useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     const fetchUserId = async () => {
@@ -23,6 +24,15 @@ export function WelcomeScreen({ onGetStarted, onSignIn }: WelcomeScreenProps) {
     };
     fetchUserId();
   }, []);
+
+  // Fade in animation when component mounts
+  useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 500,
+      useNativeDriver: true,
+    }).start();
+  }, [fadeAnim]);
 
   const handleGetStarted = () => {
     hapticFeedback.selection();
@@ -35,12 +45,13 @@ export function WelcomeScreen({ onGetStarted, onSignIn }: WelcomeScreenProps) {
   };
 
   return (
-    <SafeAreaView 
-      style={[
-        styles.container, 
-        { backgroundColor: isDark ? '#000000' : '#FFFFFF' }
-      ]}
-    >
+    <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
+      <SafeAreaView 
+        style={[
+          styles.container, 
+          { backgroundColor: isDark ? '#000000' : '#FFFFFF' }
+        ]}
+      >
       {/* App overview photo */}
       <View style={styles.photoContainer}>
         <Image 
@@ -82,7 +93,8 @@ export function WelcomeScreen({ onGetStarted, onSignIn }: WelcomeScreenProps) {
         </TouchableOpacity>
         )}
       </View>
-    </SafeAreaView>
+      </SafeAreaView>
+    </Animated.View>
   );
 }
 
@@ -118,7 +130,7 @@ const styles = StyleSheet.create({
     paddingBottom: 34,
   },
   getStartedButton: {
-    height: 65,
+    height: 56,
     borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
