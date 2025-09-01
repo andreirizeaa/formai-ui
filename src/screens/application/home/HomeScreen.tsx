@@ -1,6 +1,7 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, ImageSourcePropType, ImageBackground, Modal, Animated as RNAnimated } from 'react-native';
+import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, Pressable, Dimensions, ImageSourcePropType, ImageBackground, Modal, Animated as RNAnimated } from 'react-native';
 import { Image } from 'expo-image';
+import { FlashList } from '@shopify/flash-list';
 import { hapticFeedback } from '../../../utils/haptic';
 import { useLoadingLifts } from '../../../context/LoadingLiftsContext';
 import { useLiftData, ILiftData } from '../../../context/LiftDataContext';
@@ -109,45 +110,46 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
     RNAnimated.parallel(animations).start();
   }, [liftsForSelectedDate]); // Re-run when lifts change
 
-  const handleLiftPress = (lift: ILiftData) => {
+  const handleLiftPress = useCallback((liftId: string) => {
     hapticFeedback.selection();
-    onShowFeedback(lift);
-  };
+    const lift = liftsForSelectedDate.find(l => l.id === liftId) || liftData.find(l => l.id === liftId);
+    if (lift) {
+      onShowFeedback(lift);
+    }
+  }, [liftsForSelectedDate, liftData, onShowFeedback]);
 
-  const handleDeleteLift = async (liftId: string) => {
+  const handleDeleteLift = useCallback(async (liftId: string) => {
     hapticFeedback.success();
     const ok = await deleteLiftApi(liftId);
     if (ok) {
       await refreshLifts();
     }
-  };
+  }, [refreshLifts]);
 
-  const handleLibraryPress = () => {
+  const handleLibraryPress = useCallback(() => {
     hapticFeedback.selection();
     onShowLibrary();
-  };
+  }, [onShowLibrary]);
 
-
-
-  const handleNoLiftsPress = () => {
+  const handleNoLiftsPress = useCallback(() => {
     hapticFeedback.selection();
     onTriggerAddOptions();
-  };
+  }, [onTriggerAddOptions]);
 
-  const handleDateSelect = (date: Date) => {
+  const handleDateSelect = useCallback((date: Date) => {
     hapticFeedback.selection();
     setSelectedDate(date);
-  };
+  }, [setSelectedDate]);
 
-  const handleFireCardPress = () => {
+  const handleFireCardPress = useCallback(() => {
     hapticFeedback.selection();
     setIsFirePopupVisible(true);
-  };
+  }, []);
 
-  const handleFirePopupClose = () => {
+  const handleFirePopupClose = useCallback(() => {
     hapticFeedback.selection();
     setIsFirePopupVisible(false);
-  };
+  }, []);
 
 
 
@@ -189,7 +191,19 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
     };
   }, [onShowLibrary]);
 
+  // Render function for FlashList
+  const renderLiftItem = useCallback(({ item }: { item: ILiftData }) => (
+    <LiftDataCard 
+      lift={item} 
+      onPress={handleLiftPress}
+      showDate={false}
+    />
+  ), [handleLiftPress]);
 
+  // Render function for loading lifts
+  const renderLoadingLiftItem = useCallback(({ item }: { item: any }) => (
+    <LoadingLiftCard lift={item} />
+  ), []);
 
   return (
     <ScrollView 
@@ -204,9 +218,11 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
           style={styles.logo}
           contentFit="contain"
         />
-        <TouchableOpacity 
-          style={styles.streakBadge}
-          activeOpacity={0.7}
+        <Pressable 
+          style={({ pressed }) => [
+            styles.streakBadge,
+            { opacity: pressed ? 0.7 : 1 }
+          ]}
           onPress={handleFireCardPress}
         >
           <Image
@@ -215,7 +231,7 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
             contentFit="contain"
           />
           <Text style={styles.streakBadgeText}>{currentStreak}</Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
       
       {/* Swipeable Calendar */}
@@ -236,47 +252,54 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
       <View style={styles.bottomContent}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>{i18n.t('home.lifts')}</Text>
-          <TouchableOpacity 
+          <Pressable 
             ref={seeAllLiftsRef}
-            style={styles.seeAllPill} 
-            onPress={handleLibraryPress} 
-            activeOpacity={0.7}
+            style={({ pressed }) => [
+              styles.seeAllPill,
+              { opacity: pressed ? 0.7 : 1 }
+            ]} 
+            onPress={handleLibraryPress}
           >
             <Text style={styles.seeAllText}>{i18n.t('home.seeAll')}</Text>
                               <ChevronRight size={16} color="#8E8E93" />
-          </TouchableOpacity>
+          </Pressable>
         </View>
-        <View 
-          style={styles.liftsScrollView} 
-        >
+        <View style={styles.liftsScrollView}>
           {/* Show loading lifts first */}
-          {loadingLifts.map((loadingLift) => (
-            <LoadingLiftCard key={loadingLift.id} lift={loadingLift} />
-          ))}
+          {loadingLifts.length > 0 && (
+            <FlashList
+              data={loadingLifts}
+              renderItem={renderLoadingLiftItem}
+              keyExtractor={(item) => item.id}
+              estimatedItemSize={146}
+              showsVerticalScrollIndicator={false}
+              scrollEnabled={false}
+            />
+          )}
           
           {/* Show completed lifts for selected date */}
           {liftsForSelectedDate.length > 0 ? (
-            liftsForSelectedDate.map((lift, index) => {
-              return (
-                <LiftDataCard 
-                  key={lift.id} 
-                  lift={lift} 
-                  onPress={() => handleLiftPress(lift)}
-                  showDate={false}
-                />
-              );
-            })
+            <FlashList
+              data={liftsForSelectedDate}
+              renderItem={renderLiftItem}
+              keyExtractor={(item) => item.id}
+              estimatedItemSize={146}
+              showsVerticalScrollIndicator={false}
+              scrollEnabled={false}
+            />
           ) : loadingLifts.length === 0 ? (
-            <TouchableOpacity 
-              style={styles.noLiftsCard}
+            <Pressable 
+              style={({ pressed }) => [
+                styles.noLiftsCard,
+                { opacity: pressed ? 0.7 : 1 }
+              ]}
               onPress={handleNoLiftsPress}
-              activeOpacity={0.7}
             >
               <View style={styles.noLiftsContent}>
                 <Text style={styles.noLiftsTitle}>{i18n.t('home.noRecordedLifts')}</Text>
                 <Text style={styles.noLiftsSubtitle}>{i18n.t('home.startAnalyzingWorkout')}</Text>
               </View>
-            </TouchableOpacity>
+            </Pressable>
           ) : null}
         </View>
       </View>
