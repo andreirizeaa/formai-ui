@@ -611,7 +611,7 @@ const i18n = new I18n({
       permissionRequired: 'Permission Required',
       permissionMessage: 'Please grant permission to access your photo library.',
       videoTooLong: 'Video Too Long',
-      videoTooLongMessage: 'Please select a video that is under 1 minute.',
+      videoTooLongMessage: 'Please select a video that is under 90 seconds.',
       error: 'Error',
       failedToSelectVideo: 'Failed to select video. Please try again.',
       failedToGenerateThumbnail: 'Failed to generate video thumbnail. Please try again.',

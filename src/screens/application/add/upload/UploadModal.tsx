@@ -104,6 +104,39 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
     }
   }, [isVisible]);
 
+  // Check video duration when video preview screen is shown
+  useEffect(() => {
+    if (selectedVideo && !showMovementSelection && !showWeightReps) {
+      // Video preview screen is shown, check duration
+      let durationInSeconds = selectedVideo.duration;
+      
+      // Handle different duration formats
+      if (typeof selectedVideo.duration === 'number') {
+        // If duration is in milliseconds, convert to seconds
+        if (selectedVideo.duration > 1000) {
+          durationInSeconds = selectedVideo.duration / 1000;
+        }
+      }
+      
+      if (durationInSeconds !== undefined && durationInSeconds !== null && durationInSeconds > 90) {
+        Alert.alert(
+          'Video Too Long',
+          'Your video is over 90 seconds. Please select a shorter video.',
+          [
+            { 
+              text: 'OK', 
+              onPress: () => {
+                // Go back and open media library again
+                setSelectedVideo(null);
+                handleUploadPress();
+              }
+            },
+          ]
+        );
+      }
+    }
+  }, [selectedVideo, showMovementSelection, showWeightReps]);
+
   const handleUploadPress = async () => {
     // Selection haptic feedback
     hapticFeedback.selection();
@@ -123,7 +156,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
       const asset = result.assets[0];
       
       if (asset) {
-        // Check if video duration is available and under 1 minute
+        // Check if video duration is available and under 90 seconds
         let durationInSeconds = asset.duration;
         
         // Handle different duration formats
@@ -134,7 +167,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
           }
         }
         
-        if (durationInSeconds !== undefined && durationInSeconds !== null && durationInSeconds > 60) {
+        if (durationInSeconds !== undefined && durationInSeconds !== null && durationInSeconds > 90) {
           Alert.alert(
             i18n.t('upload.videoTooLong'),
             i18n.t('upload.videoTooLongMessage'),
