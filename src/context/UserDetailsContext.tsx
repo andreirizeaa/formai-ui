@@ -55,6 +55,13 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
     setIsLoaded(false);
   }, []);
 
+  // Set loaded to true if there's no userId (onboarding case)
+  useEffect(() => {
+    if (userId === null) {
+      setIsLoaded(true);
+    }
+  }, [userId]);
+
   useQuery({
     queryKey: ['user-details', userId],
     enabled: !!userId,

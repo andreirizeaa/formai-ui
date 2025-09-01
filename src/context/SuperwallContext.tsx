@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useEffect, ReactNode } from 'react';
-import { CustomPurchaseControllerProvider, SuperwallProvider as ExpoSuperwallProvider, SuperwallLoaded, SuperwallLoading, useUser } from 'expo-superwall';
-import { LoadingScreen } from '../screens/onboarding/LoadingScreen';
+import { CustomPurchaseControllerProvider, SuperwallProvider as ExpoSuperwallProvider, SuperwallLoaded, useUser } from 'expo-superwall';
 import Purchases from 'react-native-purchases';
 import { usePurchases } from './PurchasesContext';
 
@@ -98,9 +97,6 @@ export function SuperwallProvider({ children }: SuperwallProviderProps) {
         }}
       >
         <SubscriptionSync />
-        <SuperwallLoading>
-          <LoadingScreen onLoadComplete={() => {}} />
-        </SuperwallLoading>
         <SuperwallLoaded>
           {children}
         </SuperwallLoaded>
