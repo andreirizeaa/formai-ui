@@ -50,6 +50,37 @@ const parseLiftDate = (dateStr: string) => {
   return new Date(y, m - 1, d);
 };
 
+// Calculate linear regression for line of best fit
+const calculateLinearRegression = (dataPoints: number[]) => {
+  const n = dataPoints.length;
+  if (n < 2) return dataPoints;
+  
+  // Calculate x values (indices) and y values (data points)
+  const xValues = Array.from({ length: n }, (_, i) => i);
+  const yValues = dataPoints;
+  
+  // Calculate means
+  const xMean = xValues.reduce((sum, x) => sum + x, 0) / n;
+  const yMean = yValues.reduce((sum, y) => sum + y, 0) / n;
+  
+  // Calculate slope and intercept
+  let numerator = 0;
+  let denominator = 0;
+  
+  for (let i = 0; i < n; i++) {
+    const xDiff = xValues[i] - xMean;
+    const yDiff = yValues[i] - yMean;
+    numerator += xDiff * yDiff;
+    denominator += xDiff * xDiff;
+  }
+  
+  const slope = denominator === 0 ? 0 : numerator / denominator;
+  const intercept = yMean - slope * xMean;
+  
+  // Generate line of best fit points
+  return xValues.map(x => slope * x + intercept);
+};
+
 const getThresholdForRange = (range: TimeRange) => {
   const now = new Date();
   if (range === '90d') return new Date(now.getFullYear(), now.getMonth(), now.getDate() - 90);
@@ -160,6 +191,9 @@ export function SwipeableLineGraphCard({
           });
         }
 
+        // Calculate line of best fit
+        const lineOfBestFit = calculateLinearRegression(chartDataPoints);
+
         const chartData: ChartData = {
           labels: chartLabels,
           datasets: [
@@ -167,6 +201,11 @@ export function SwipeableLineGraphCard({
               data: chartDataPoints,
               color: () => '#000000',
               strokeWidth: 1.5,
+            },
+            {
+              data: lineOfBestFit,
+              color: () => '#ffb86a',
+              strokeWidth: 2,
             },
           ],
         };
@@ -260,6 +299,9 @@ export function SwipeableLineGraphCard({
           });
         }
 
+        // Calculate line of best fit
+        const lineOfBestFit = calculateLinearRegression(chartDataPoints);
+
         const chartData: ChartData = {
           labels: chartLabels,
           datasets: [
@@ -267,6 +309,11 @@ export function SwipeableLineGraphCard({
               data: chartDataPoints,
               color: () => '#000000',
               strokeWidth: 1.5,
+            },
+            {
+              data: lineOfBestFit,
+              color: () => '#ffb86a',
+              strokeWidth: 2,
             },
           ],
         };
