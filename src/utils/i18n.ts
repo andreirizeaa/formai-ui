@@ -464,6 +464,7 @@ const i18n = new I18n({
     },
     loadingLift: {
       uploadingVideo: 'Uploading video...',
+      checkingVideo: 'Checking video...',
       analyzingForm: 'Analyzing form...',
       analysisFailed: 'Analysis failed',
       processing: 'Processing...',

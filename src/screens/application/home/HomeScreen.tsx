@@ -401,11 +401,11 @@ const styles = StyleSheet.create({
   },
   liftsScrollView: {
     backgroundColor: 'transparent',
+    paddingBottom: 54,
   },
   liftsScrollContent: {
     paddingVertical: 4,
     paddingHorizontal: 4,
-    paddingBottom: 20,
   },
   noLiftsCard: {
     backgroundColor: '#FFFFFF',
