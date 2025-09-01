@@ -1,4 +1,5 @@
 import React from 'react';
+import { Animated } from 'react-native';
 import { MainAppNavigator } from '../../navigation/MainAppNavigator';
 import { useUserDetails } from '../../context/UserDetailsContext';
 import { WelcomeModal } from '../../screens/application/settings/WelcomeModal';
@@ -15,6 +16,7 @@ export function MainAppLayout({ children, onLogout }: MainAppLayoutProps) {
   const { userDetails, updateUserDetails } = useUserDetails();
   const [showWelcome, setShowWelcome] = React.useState(false);
   const [shouldStartTutorial, setShouldStartTutorial] = React.useState(false);
+  const fadeAnim = React.useRef(new Animated.Value(0)).current;
 
   React.useEffect(() => {
     // Show welcome modal if walkthrough is not completed (false or null)
@@ -22,6 +24,15 @@ export function MainAppLayout({ children, onLogout }: MainAppLayoutProps) {
       setShowWelcome(true);
     }
   }, [userDetails]);
+
+  // Fade in animation when component mounts
+  React.useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 500,
+      useNativeDriver: true,
+    }).start();
+  }, [fadeAnim]);
 
   const handleGetStarted = async () => {
     setShowWelcome(false);
@@ -56,7 +67,9 @@ export function MainAppLayout({ children, onLogout }: MainAppLayoutProps) {
     <>
       <WelcomeModal isVisible={showWelcome} onGetStarted={handleGetStarted} />
       <TutorialProvider>
-        <MainAppNavigator onLogout={onLogout} />
+        <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
+          <MainAppNavigator onLogout={onLogout} />
+        </Animated.View>
         <TutorialOverlay />
         <TutorialLiftSeeder />
         <TutorialStarter trigger={shouldStartTutorial} />

@@ -24,7 +24,9 @@ export function LogoutModal({ isVisible, onClose, onConfirm }: LogoutModalProps)
     setIsLoggingOut(true);
     try {
       await onConfirm();
-    } finally {
+      // Modal will be closed by parent component after successful logout
+    } catch (error) {
+      // If logout fails, reset the loading state
       setIsLoggingOut(false);
     }
   };
@@ -65,24 +67,24 @@ export function LogoutModal({ isVisible, onClose, onConfirm }: LogoutModalProps)
           {/* Action buttons */}
           <View style={styles.buttonContainer}>
             <TouchableOpacity 
-              style={styles.button} 
+              style={[styles.button, styles.buttonOutlined]} 
               onPress={() => {
                 hapticFeedback.selection();
                 onClose();
               }}
               disabled={isLoggingOut}
             >
-              <Text style={styles.buttonText}>{i18n.t('settings.no')}</Text>
+              <Text style={styles.buttonOutlinedText}>{i18n.t('settings.no')}</Text>
             </TouchableOpacity>
             <TouchableOpacity 
-              style={styles.button} 
+              style={[styles.button, styles.buttonPrimary]} 
               onPress={handleLogout}
               disabled={isLoggingOut}
             >
               {isLoggingOut ? (
-                <ActivityIndicator size="small" color="#000000" />
+                <ActivityIndicator size="small" color="#FFFFFF" />
               ) : (
-                <Text style={styles.buttonText}>{i18n.t('settings.yes')}</Text>
+                <Text style={styles.buttonPrimaryText}>{i18n.t('settings.yes')}</Text>
               )}
             </TouchableOpacity>
           </View>
@@ -149,17 +151,27 @@ const styles = StyleSheet.create({
   },
   button: {
     flex: 1,
-    height: 44,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#E5E5EA',
-    backgroundColor: '#FFFFFF',
+    height: 56,
+    borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  buttonText: {
+  buttonOutlined: {
+    borderWidth: 1,
+    borderColor: '#000000',
+    backgroundColor: '#FFFFFF',
+  },
+  buttonPrimary: {
+    backgroundColor: '#000000',
+  },
+  buttonOutlinedText: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '600',
     color: '#000000',
+  },
+  buttonPrimaryText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
 }); 
