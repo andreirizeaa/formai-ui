@@ -106,13 +106,13 @@ export function SwipeableLineGraphCard({
         let chartLabels: string[];
         let chartDataPoints: number[];
 
-        if (sortedLifts.length <= 15) {
-          // If 15 or fewer data points, use all of them but only show strategic labels
+        if (sortedLifts.length <= 25) {
+          // If 25 or fewer data points, use all of them but only show strategic labels
           chartLabels = sortedLifts.map((lift, idx) => {
             const position = idx + 1; // Convert to 1-based indexing
-            if (position === 1 || position === 5 || position === 10 || position === 14) {
-              if (position === 14 && idx !== sortedLifts.length - 1) {
-                // Position 14 should show the last data point's weight if it's not already the last
+            if (position === 1 || position === 9 || position === 16 || position === 22) {
+              if (position === 22 && idx !== sortedLifts.length - 1) {
+                // Position 22 should show the last data point's weight if it's not already the last
                 return formatWeightForDisplay(sortedLifts[sortedLifts.length - 1].weightValue, unitPreference);
               }
               return formatWeightForDisplay(lift.weightValue, unitPreference);
@@ -121,7 +121,7 @@ export function SwipeableLineGraphCard({
           });
           chartDataPoints = sortedLifts.map((lift) => lift.analysis.accuracy);
         } else {
-          // If more than 15 data points, select strategic points
+          // If more than 25 data points, select strategic points
           const selectedIndices = new Set<number>();
           
           // Always include the first (lowest weight) and last (highest weight)
@@ -129,7 +129,7 @@ export function SwipeableLineGraphCard({
           selectedIndices.add(sortedLifts.length - 1);
           
           // Add evenly distributed points in between
-          const remainingSlots = 13; // 15 total - 2 (first and last)
+          const remainingSlots = 23; // 25 total - 2 (first and last)
           const step = (sortedLifts.length - 2) / (remainingSlots - 1);
           
           for (let i = 1; i < remainingSlots; i++) {
@@ -145,13 +145,13 @@ export function SwipeableLineGraphCard({
             sortedLifts[index].analysis.accuracy
           );
           
-          // For labels, only show positions 1, 5, 10, 14 (1-based indexing), empty strings elsewhere
-          // Note: position 14 should show the last data point's weight
+          // For labels, only show positions 1, 9, 16, 22 (1-based indexing), empty strings elsewhere
+          // Note: position 22 should show the last data point's weight
           chartLabels = selectedIndicesArray.map((index, labelIndex) => {
             const position = labelIndex + 1; // Convert to 1-based indexing
-            if (position === 1 || position === 5 || position === 10 || position === 14) {
-              if (position === 14) {
-                // Position 14 should show the last data point's weight
+            if (position === 1 || position === 9 || position === 16 || position === 22) {
+              if (position === 22) {
+                // Position 22 should show the last data point's weight
                 return formatWeightForDisplay(sortedLifts[sortedLifts.length - 1].weightValue, unitPreference);
               }
               return formatWeightForDisplay(sortedLifts[index].weightValue, unitPreference);
@@ -211,8 +211,8 @@ export function SwipeableLineGraphCard({
         let chartLabels: string[];
         let chartDataPoints: number[];
 
-        if (averagedLifts.length <= 15) {
-          // If 15 or fewer data points, use all of them but only show first and last labels
+        if (averagedLifts.length <= 25) {
+          // If 25 or fewer data points, use all of them but only show first and last labels
           chartLabels = averagedLifts.map((lift, idx) => {
             if (idx === 0 || idx === averagedLifts.length - 1) {
               return formatDate(lift.date);
@@ -221,7 +221,7 @@ export function SwipeableLineGraphCard({
           });
           chartDataPoints = averagedLifts.map((lift) => lift.averageAccuracy);
         } else {
-          // If more than 15 data points, select strategic points
+          // If more than 25 data points, select strategic points
           const selectedIndices = new Set<number>();
           
           // Always include the first and last
@@ -229,7 +229,7 @@ export function SwipeableLineGraphCard({
           selectedIndices.add(averagedLifts.length - 1);
           
           // Add evenly distributed points in between
-          const remainingSlots = 13; // 15 total - 2 (first and last)
+          const remainingSlots = 23; // 25 total - 2 (first and last)
           const step = (averagedLifts.length - 2) / (remainingSlots - 1);
           
           for (let i = 1; i < remainingSlots; i++) {
@@ -245,13 +245,13 @@ export function SwipeableLineGraphCard({
             averagedLifts[index].averageAccuracy
           );
           
-          // For labels, only show positions 1, 6, 10 (1-based indexing), empty strings elsewhere
-          // Note: position 10 should show the value for the last data point
+          // For labels, only show positions 1, 11, 21 (1-based indexing), empty strings elsewhere
+          // Note: position 21 should show the value for the last data point (position 25)
           chartLabels = selectedIndicesArray.map((index, labelIndex) => {
             const position = labelIndex + 1; // Convert to 1-based indexing
-            if (position === 1 || position === 6 || position === 10) {
-              if (position === 10) {
-                // Position 10 should show the last data point's date
+            if (position === 1 || position === 11 || position === 21) {
+              if (position === 21) {
+                // Position 21 should show the last data point's date
                 return formatDate(averagedLifts[averagedLifts.length - 1].date);
               }
               return formatDate(averagedLifts[index].date);

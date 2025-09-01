@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, ScrollView, Dimensions, Image, Modal } from 'react-native';
+import { View, Text, StyleSheet, Platform, Pressable, StatusBar, ScrollView, Dimensions, Image, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { FlashList } from '@shopify/flash-list';
 import { hapticFeedback } from '../../../utils/haptic';
 import { LiftDataCard } from '../../../components/LiftDataCard';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -235,12 +236,15 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
     setActiveTab(tab);
   }, []);
 
-  const handleLiftPress = useCallback((lift: ILiftData) => {
+  const handleLiftPress = useCallback((liftId: string) => {
     hapticFeedback.selection();
-    navigation.navigate('LiftDetails', { 
-      liftData: lift,
-    });
-  }, [navigation]);
+    const lift = filteredAndSortedLifts.find(l => l.id === liftId);
+    if (lift) {
+      navigation.navigate('LiftDetails', { 
+        liftData: lift,
+      });
+    }
+  }, [navigation, filteredAndSortedLifts]);
 
   const handleBackPress = useCallback(() => {
     hapticFeedback.selection();
@@ -280,40 +284,60 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
   // Memoize the lift count to prevent unnecessary re-renders
   const liftCount = useMemo(() => filteredAndSortedLifts.length, [filteredAndSortedLifts.length]);
 
+  // Render function for FlashList
+  const renderLiftItem = useCallback(({ item }: { item: ILiftData }) => (
+    <LiftDataCard 
+      lift={item} 
+      onPress={handleLiftPress}
+      showDate={true}
+    />
+  ), [handleLiftPress]);
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton} 
+        <Pressable 
+          style={({ pressed }) => [
+            styles.backButton,
+            { opacity: pressed ? 0.7 : 1 }
+          ]} 
           onPress={handleBackPress}
         >
           <ChevronLeft size={24} color="#000000" />
-        </TouchableOpacity>
+        </Pressable>
         <Text style={styles.headerTitle}>{i18n.t('library.title')}</Text>
         <View style={styles.placeholder} />
       </View>
 
       {/* Tabs */}
       <View style={styles.tabsContainer}>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'all' && styles.tabActive]}
+        <Pressable
+          style={({ pressed }) => [
+            styles.tab, 
+            activeTab === 'all' && styles.tabActive,
+            { opacity: pressed ? 0.7 : 1 }
+          ]}
           onPress={() => handleTabPress('all')}
         >
           <Text style={[styles.tabText, activeTab === 'all' && styles.tabTextActive]}>
             {i18n.t('library.all')}
           </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'favourites' && styles.tabActive]}
+        </Pressable>
+        <Pressable
+          style={({ pressed }) => [
+            styles.tab, 
+            activeTab === 'favourites' && styles.tabActive,
+            { opacity: pressed ? 0.7 : 1 }
+          ]}
           onPress={() => handleTabPress('favourites')}
         >
           <Text style={[styles.tabText, activeTab === 'favourites' && styles.tabTextActive]}>
             {i18n.t('library.favourites')}
           </Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
       {/* Sort and Filter Buttons */}
@@ -325,7 +349,13 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
         </View>
         
         <View style={styles.controlsRightContainer}>
-          <TouchableOpacity style={styles.controlButton} onPress={handleSortPress}>
+          <Pressable 
+            style={({ pressed }) => [
+              styles.controlButton,
+              { opacity: pressed ? 0.7 : 1 }
+            ]} 
+            onPress={handleSortPress}
+          >
             <View style={styles.sortIconsContainer}>
               {sortOption === 'newest' ? (
                 <ClockArrowUp size={20} color="#000000" />
@@ -333,35 +363,38 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
                 <ClockArrowDown size={20} color="#000000" />
               )}
             </View>
-          </TouchableOpacity>
+          </Pressable>
 
-          <TouchableOpacity style={styles.controlButton} onPress={handleFilterPress}>
+          <Pressable 
+            style={({ pressed }) => [
+              styles.controlButton,
+              { opacity: pressed ? 0.7 : 1 }
+            ]} 
+            onPress={handleFilterPress}
+          >
             <SlidersHorizontal size={20} color="#000000" />
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </View>
 
-      {/* Content - Optimized ScrollView */}
-      <ScrollView 
-        style={styles.scrollContainer}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContentContainer}
-        removeClippedSubviews={true}
-      >
+      {/* Content - Optimized FlashList */}
+      <View style={styles.scrollContainer}>
         {filteredAndSortedLifts.length > 0 ? (
-          filteredAndSortedLifts.map((lift) => (
-            <LiftDataCard 
-              key={lift.id} 
-              lift={lift} 
-              onPress={() => handleLiftPress(lift)}
-              showDate={true}
-            />
-          ))
+          <FlashList
+            data={filteredAndSortedLifts}
+            renderItem={renderLiftItem}
+            keyExtractor={(item) => item.id}
+            estimatedItemSize={146}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContentContainer}
+          />
         ) : (
-          <TouchableOpacity 
-            style={styles.noLiftsCard}
+          <Pressable 
+            style={({ pressed }) => [
+              styles.noLiftsCard,
+              { opacity: pressed ? 0.7 : 1 }
+            ]}
             onPress={handleEmptyCardPress}
-            activeOpacity={0.7}
           >
             <View style={styles.noLiftsContent}>
               <Text style={styles.noLiftsTitle}>
@@ -377,37 +410,40 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
                 }
               </Text>
             </View>
-          </TouchableOpacity>
+          </Pressable>
         )}
-      </ScrollView>
+      </View>
 
       {/* Popup Modal */}
       {showPopupModal && (
-        <TouchableOpacity 
+        <Pressable 
           style={styles.popupOverlay} 
-          activeOpacity={1} 
           onPress={handlePopupModalClose}
         >
           <View style={styles.popupContainer}>
-            <TouchableOpacity 
-              style={styles.popupOption} 
+            <Pressable 
+              style={({ pressed }) => [
+                styles.popupOption,
+                { opacity: pressed ? 0.7 : 1 }
+              ]} 
               onPress={handleDateRangePress}
-              activeOpacity={0.7}
             >
               <Text style={styles.popupOptionText}>{dateRangeText}</Text>
               <Pencil size={20} color="#000000" />
-            </TouchableOpacity>
+            </Pressable>
             <View style={styles.popupDivider} />
-            <TouchableOpacity 
-              style={styles.popupOption} 
+            <Pressable 
+              style={({ pressed }) => [
+                styles.popupOption,
+                { opacity: pressed ? 0.7 : 1 }
+              ]} 
               onPress={handleMovementFilterPress}
-              activeOpacity={0.7}
             >
               <Text style={styles.popupOptionText}>{filterPillText}</Text>
               <Pencil size={20} color="#000000" />
-            </TouchableOpacity>
+            </Pressable>
           </View>
-        </TouchableOpacity>
+        </Pressable>
       )}
 
       {/* Filter Modal */}

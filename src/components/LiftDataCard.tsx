@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity } from 'react-native';
+import React, { useState, useRef, useEffect, memo, useCallback } from 'react';
+import { View, Text, StyleSheet, Platform, Pressable } from 'react-native';
 import { Image } from 'expo-image';
 import { ILiftData, useLiftData } from '../context/LiftDataContext';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -20,12 +20,12 @@ import i18n from '../utils/i18n';
 
 interface LiftDataCardProps {
   lift: ILiftData;
-  onPress?: (lift: ILiftData) => void;
+  onPress?: (liftId: string) => void; // Changed to take liftId instead of full lift object
   style?: any;
   showDate?: boolean; // When true, show formatted date instead of time
 }
 
-export function LiftDataCard({ lift, onPress, style, showDate = false }: LiftDataCardProps) {
+function LiftDataCardComponent({ lift, onPress, style, showDate = false }: LiftDataCardProps) {
   const translateX = useSharedValue(0);
   const panStartX = useSharedValue(0);
   const loadingProgress = useSharedValue(0);
@@ -49,13 +49,13 @@ export function LiftDataCard({ lift, onPress, style, showDate = false }: LiftDat
     });
   };
 
-  function handleDelete() {
+  const handleDelete = useCallback(() => {
     if (deleting) return;
     setDeleting(true);
     hapticFeedback.success();
     removeLift(lift.id);
     deleteLiftApi(lift.id).catch(() => {});
-  }
+  }, [deleting, lift.id, removeLift]);
 
   function startAutoReset() {
     if (autoResetTimeoutRef.current) clearTimeout(autoResetTimeoutRef.current);
@@ -130,8 +130,6 @@ export function LiftDataCard({ lift, onPress, style, showDate = false }: LiftDat
     };
   }, []);
 
-  console.log('lift', lift.weightValue);
-
   return (
     <View
       style={[styles.wrapper, style]}
@@ -141,12 +139,12 @@ export function LiftDataCard({ lift, onPress, style, showDate = false }: LiftDat
     >
       {/* Background: delete zone (2px inset) */}
       <View style={styles.deleteBackground}>
-        <TouchableOpacity onPress={handleDelete} activeOpacity={0.8}>
+        <Pressable onPress={handleDelete} style={({ pressed }) => ({ opacity: pressed ? 0.8 : 1 })}>
           <View style={circleBaseStyle}>
             <Animated.View style={[progressBaseStyle, loadingProgressStyle]} />
             <Trash2 size={20} color="#FFF" />
           </View>
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
       {/* Foreground: SHADOW wrapper (no overflow), holds the animated translate */}
@@ -161,11 +159,13 @@ export function LiftDataCard({ lift, onPress, style, showDate = false }: LiftDat
               start={{ x: 0.6, y: 0 }}
               end={{ x: 0, y: 1 }}
             >
-              <TouchableOpacity
-                onPress={() => onPress?.(lift)}
-                activeOpacity={0.7}
+              <Pressable
+                onPress={() => onPress?.(lift.id)}
                 disabled={!onPress}
-                style={styles.contentRow}
+                style={({ pressed }) => [
+                  styles.contentRow,
+                  { opacity: pressed ? 0.7 : 1 }
+                ]}
               >
                 {/* Thumbnail */}
                 <View style={styles.thumbContainer}>
@@ -223,7 +223,7 @@ export function LiftDataCard({ lift, onPress, style, showDate = false }: LiftDat
                     </View>
                   </View>
                 </View>
-              </TouchableOpacity>
+              </Pressable>
             </LinearGradient>
           </View>
         </Animated.View>
@@ -359,4 +359,21 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
     fontWeight: '500',
   },
+});
+
+// Memoized component with custom comparison for performance
+export const LiftDataCard = memo(LiftDataCardComponent, (prevProps, nextProps) => {
+  // Only re-render if essential props change
+  return (
+    prevProps.lift.id === nextProps.lift.id &&
+    prevProps.lift.analysis.accuracy === nextProps.lift.analysis.accuracy &&
+    prevProps.lift.weightValue === nextProps.lift.weightValue &&
+    prevProps.lift.thumbnailURL === nextProps.lift.thumbnailURL &&
+    prevProps.lift.liftType === nextProps.lift.liftType &&
+    prevProps.lift.liftDate === nextProps.lift.liftDate &&
+    prevProps.lift.liftTime === nextProps.lift.liftTime &&
+    prevProps.lift.analysis.feedback?.length === nextProps.lift.analysis.feedback?.length &&
+    prevProps.showDate === nextProps.showDate &&
+    prevProps.onPress === nextProps.onPress
+  );
 });

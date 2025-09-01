@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, Image, Dimensions, Platform, TouchableOpacity } from 'react-native';
+import React, { useEffect, memo } from 'react';
+import { View, Text, StyleSheet, Image, Dimensions, Platform, Pressable } from 'react-native';
 import { BlurView } from 'expo-blur';
 import CircularProgress from 'react-native-circular-progress-indicator';
 import { Ionicons } from '@expo/vector-icons';
@@ -41,7 +41,7 @@ interface LoadingLiftCardProps {
   };
 }
 
-export function LoadingLiftCard({ lift }: LoadingLiftCardProps) {
+function LoadingLiftCardComponent({ lift }: LoadingLiftCardProps) {
   const { retryLift, removeLift } = useLoadingLifts();
   const pulseAnim = useSharedValue(0);
   const line1Anim = useSharedValue(0);
@@ -142,15 +142,17 @@ export function LoadingLiftCard({ lift }: LoadingLiftCardProps) {
   if (lift.status === 'error') {
     return (
       <View style={styles.liftCard}>
-        <TouchableOpacity 
-          style={styles.closeButton}
+        <Pressable 
+          style={({ pressed }) => [
+            styles.closeButton,
+            { opacity: pressed ? 0.7 : 1 }
+          ]}
           onPress={handleClose}
-          activeOpacity={0.7}
         >
           <View style={styles.closeButtonCircle}>
             <Ionicons name="trash-outline" size={20} color="#8E8E93" />
           </View>
-        </TouchableOpacity>
+        </Pressable>
         <View style={styles.liftCardContent}>
           {/* Video Thumbnail - Left 25% */}
           <View style={styles.videoThumbnailContainer}>
@@ -180,13 +182,15 @@ export function LoadingLiftCard({ lift }: LoadingLiftCardProps) {
                 }
               </Text>
               {lift.errorMessage !== 'No lift found' && (
-                <TouchableOpacity 
-                  style={styles.retryButton}
+                <Pressable 
+                  style={({ pressed }) => [
+                    styles.retryButton,
+                    { opacity: pressed ? 0.7 : 1 }
+                  ]}
                   onPress={handleRetry}
-                  activeOpacity={0.7}
                 >
                   <Text style={styles.retryButtonText}>{i18n.t('loadingLift.tapToRetry')}</Text>
-                </TouchableOpacity>
+                </Pressable>
               )}
             </View>
           </View>
@@ -467,4 +471,17 @@ const styles = StyleSheet.create({
     color: '#34C759',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
+});
+
+// Memoized component for performance
+export const LoadingLiftCard = memo(LoadingLiftCardComponent, (prevProps, nextProps) => {
+  return (
+    prevProps.lift.id === nextProps.lift.id &&
+    prevProps.lift.status === nextProps.lift.status &&
+    prevProps.lift.progress === nextProps.lift.progress &&
+    prevProps.lift.thumbnailUri === nextProps.lift.thumbnailUri &&
+    prevProps.lift.movementType === nextProps.lift.movementType &&
+    prevProps.lift.weightValue === nextProps.lift.weightValue &&
+    prevProps.lift.errorMessage === nextProps.lift.errorMessage
+  );
 }); 
