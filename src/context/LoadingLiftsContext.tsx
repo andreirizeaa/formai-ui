@@ -76,6 +76,16 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
   const addLoadingLift = async (liftData: Omit<LoadingLiftData, 'id' | 'progress' | 'isComplete' | 'status'>): Promise<string> => {
     const liftId = Date.now().toString();
     
+    // Check if we already have a lift with the same video source to prevent duplicates
+    const existingLift = loadingLifts.find(lift => 
+      lift.sourceVideoUri === liftData.videoLink || 
+      lift.videoLink === liftData.videoLink
+    );
+    
+    if (existingLift && existingLift.status !== 'error') {
+      return existingLift.id;
+    }
+    
     const newLift: LoadingLiftData = {
       ...liftData,
       id: liftId,
@@ -89,7 +99,6 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
       uploadedVideoUrl: undefined,
       uploadedThumbnailUrl: undefined,
     };
-    
     setLoadingLifts(prev => [newLift, ...prev]);
     
     // Fire-and-forget processing pipeline with fresh lift snapshot
@@ -126,7 +135,9 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
     // Stage 1: Upload Video
     try {
       setLoadingLifts(prev => prev.map(lift => lift.id === current.id ? { ...lift, pipelineStage: 'upload_video', progress: Math.max(lift.progress, 10) } : lift));
-      if (!startStage || startStage === 'upload_video') {
+      
+      // Only upload video if we don't already have a successful upload URL
+      if ((!startStage || startStage === 'upload_video') && !current.uploadedVideoUrl) {
         const videoSource = current.sourceVideoUri ?? current.videoLink;
         const { publicUrl: videoUrl } = await uploadLiftVideo(userId, videoSource, current.assetId);
         current.uploadedVideoUrl = videoUrl;
@@ -140,7 +151,9 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
     // Stage 2: Upload Thumbnail
     try {
       setLoadingLifts(prev => prev.map(lift => lift.id === current.id ? { ...lift, pipelineStage: 'upload_thumbnail', progress: Math.max(lift.progress, 30) } : lift));
-      if (!startStage || startStage === 'upload_video' || startStage === 'upload_thumbnail') {
+      
+      // Only upload thumbnail if we don't already have a successful upload URL
+      if ((!startStage || startStage === 'upload_video' || startStage === 'upload_thumbnail') && !current.uploadedThumbnailUrl) {
         const thumbSource = current.sourceThumbnailUri ?? current.thumbnailUri;
         const { publicUrl: thumbUrl } = await uploadLiftThumbnail(userId, thumbSource);
         current.uploadedThumbnailUrl = thumbUrl;
@@ -154,16 +167,26 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
     // Stage 3: Analyze
     try {
       setLoadingLifts(prev => prev.map(lift => lift.id === current.id ? { ...lift, pipelineStage: 'analyze', progress: Math.max(lift.progress, 60) } : lift));
+      
+      // Ensure we have both video and thumbnail URLs before analysis
       const videoUrl = current.uploadedVideoUrl ?? current.videoLink;
       const thumbUrl = current.uploadedThumbnailUrl ?? current.thumbnailUri;
+      
+      if (!videoUrl || !thumbUrl) {
+        setLoadingLifts(prev => prev.map(l => l.id === current.id ? { 
+          ...l, 
+          status: 'error', 
+          failureStage: 'analyze', 
+          errorMessage: 'Missing required upload URLs for analysis' 
+        } : l));
+        return;
+      }
       const liftForAnalysis: LoadingLiftData = { ...current, videoLink: videoUrl, thumbnailUri: thumbUrl };
       const result = await analyzeVideo(liftForAnalysis);
       
       if (!result.success) {
-        console.log('Error details:', { error: (result as any).error, message: (result as any).message });
         // Handle specific error cases from the API
         if ((result as any).error === 'NO_GYM_VIDEO_FOUND') {
-          console.log('Setting NO_GYM_VIDEO_FOUND error message');
           setLoadingLifts(prev => prev.map(l => l.id === current.id ? { 
             ...l, 
             status: 'error', 
@@ -172,7 +195,6 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
           } : l));
           return;
         } else if ((result as any).error === 'ERROR_OCCURED') {
-          console.log('Setting ERROR_OCCURED error message');
           setLoadingLifts(prev => prev.map(l => l.id === current.id ? { 
             ...l, 
             status: 'error', 
@@ -183,7 +205,6 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
         } else {
           // Handle other API errors
           const errorMessage = (result as any).message || 'Analysis failed';
-          console.log('Setting generic error message:', errorMessage);
           setLoadingLifts(prev => prev.map(l => l.id === current.id ? { 
             ...l, 
             status: 'error', 
@@ -193,7 +214,6 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
           return;
         }
       }
-      
       // If API returns the final data for the card, store it to prevent flicker
       if (result.data) {
         setLoadingLifts(prev => prev.map(l => l.id === current.id ? { ...l, finalData: mapApiDataToFinalData(result.data) } : l));
@@ -260,12 +280,34 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
 
   const retryLift = async (id: string) => {
     const lift = loadingLifts.find(l => l.id === id);
-    if (!lift) return;
+    if (!lift) {
+      return;
+    }
 
-    // Determine stage to restart from
-    const stage: 'upload_video' | 'upload_thumbnail' | 'analyze' = lift.failureStage ?? lift.pipelineStage ?? 'upload_video';
+    // Prevent multiple simultaneous retries for the same lift
+    if (lift.status === 'processing') {
+      return;
+    }
+
+    // Determine stage to restart from based on what's already completed
+    let stage: 'upload_video' | 'upload_thumbnail' | 'analyze' = 'upload_video';
+    
+    if (lift.failureStage) {
+      // Use the failure stage if available
+      stage = lift.failureStage;
+    } else if (lift.uploadedVideoUrl && lift.uploadedThumbnailUrl) {
+      // If both uploads are complete, start from analysis
+      stage = 'analyze';
+    } else if (lift.uploadedVideoUrl) {
+      // If only video is uploaded, start from thumbnail
+      stage = 'upload_thumbnail';
+    } else {
+      // Default to video upload
+      stage = 'upload_video';
+    }
+    
     // Reset error and set processing
-    setLoadingLifts(prev => prev.map(l => l.id === id ? { ...l, status: 'processing', errorMessage: undefined } : l));
+    setLoadingLifts(prev => prev.map(l => l.id === id ? { ...l, status: 'processing', errorMessage: undefined, failureStage: undefined } : l));
     await processLiftPipeline(lift, stage);
   };
 

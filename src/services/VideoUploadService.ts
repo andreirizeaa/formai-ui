@@ -104,7 +104,6 @@ export async function uploadLiftVideo(userId: string, fileUri: string, assetId?:
 export async function uploadLiftThumbnail(userId: string, fileUri: string): Promise<{ publicUrl: string; path: string }> {
   const ext = inferImageExtensionFromUri(fileUri);
   const contentType = contentTypeForImageExt(ext);
-  console.log('contentType', contentType);
   const fileName = `${Date.now()}.${ext}`;
   const path = `${userId}/thumbnails/${fileName}`;
 
@@ -116,7 +115,7 @@ export async function uploadLiftThumbnail(userId: string, fileUri: string): Prom
 
   const { error } = await supabase.storage.from('lifts').upload(path, arrayBuffer, {
     contentType,
-    upsert: false,
+    upsert: true,
   });
   if (error) throw error;
 
