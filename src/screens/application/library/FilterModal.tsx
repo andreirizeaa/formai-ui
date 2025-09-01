@@ -26,11 +26,13 @@ export function FilterModal({
   // Filter movements based on search query
   const filteredMovements = useMemo(() => {
     if (!searchQuery.trim()) {
-      return gymMovements;
+      return gymMovements.map(m => m.name);
     }
-    return gymMovements.filter(movement =>
-      movement.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    return gymMovements
+      .filter(movement =>
+        movement.name.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+      .map(m => m.name);
   }, [searchQuery]);
 
   const handleMovementToggle = (movement: string) => {
@@ -114,8 +116,9 @@ export function FilterModal({
                   <TouchableOpacity 
                     style={styles.clearButton} 
                     onPress={handleClearSearch}
+                    activeOpacity={0.7}
                   >
-                    <X width={16} height={16} color="#8E8E93" />
+                    <X width={20} height={20} color="#8E8E93" />
                   </TouchableOpacity>
                 )}
               </View>
@@ -252,30 +255,31 @@ const styles = StyleSheet.create({
     minHeight: 0,
   },
   searchInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    position: 'relative',
     width: '100%',
-    height: 44,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#8E8E93',
-    paddingHorizontal: 15,
-    marginBottom: 16,
+    marginBottom: 20,
   },
   searchInput: {
-    flex: 1,
-    paddingRight: 10,
+    width: '100%',
+    height: 50,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    backgroundColor: '#f3f4f6',
+    paddingHorizontal: 15,
+    paddingRight: 50, // Make room for the clear button
     fontSize: 16,
     fontWeight: '400',
     color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
-    height: '100%',
-    paddingTop: 0,
-    paddingBottom: 0,
-    textAlignVertical: 'center',
-    lineHeight: 16,
   },
   clearButton: {
+    position: 'absolute',
+    right: 15,
+    top: '50%',
+    transform: [{ translateY: -15 }], // Center vertically (half of input height)
     padding: 5,
   },
   movementsList: {
@@ -290,12 +294,11 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: '#f3f4f6',
     minHeight: 44,
   },
   movementItemSelected: {
-    backgroundColor: '#F2F2F7',
-    borderRadius: 8,
+    backgroundColor: '#f3f4f6',
   },
   movementItemText: {
     fontSize: 16,
@@ -325,7 +328,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     borderWidth: 1,
     borderColor: '#000000',
-    borderRadius: 12,
+    borderRadius: 28,
     paddingHorizontal: 16,
     paddingVertical: 12,
     alignItems: 'center',
@@ -339,7 +342,7 @@ const styles = StyleSheet.create({
   applyButton: {
     flex: 1,
     backgroundColor: '#000000',
-    borderRadius: 12,
+    borderRadius: 28,
     paddingHorizontal: 16,
     paddingVertical: 12,
     alignItems: 'center',

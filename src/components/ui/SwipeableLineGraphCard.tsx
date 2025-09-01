@@ -5,6 +5,7 @@ import { LineChart } from 'react-native-chart-kit';
 import { hapticFeedback } from '../../utils/haptic';
 import { formatWeightForDisplay } from '../../utils/unitConversions';
 import { CircleQuestionMark } from 'lucide-react-native';
+import i18n from '../../utils/i18n';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH * 0.9;
@@ -274,8 +275,10 @@ export function SwipeableLineGraphCard({
     if (!rangedCardData || rangedCardData.length === 0) {
       // Return a placeholder card when there's no data
       return [{
-        title: 'Loading...',
-        subtitle: 'Preparing charts',
+        title: chartType === 'accuracyPerWeight' 
+          ? i18n.t('performance.chartTitles.accuracyPerWeight')
+          : i18n.t('performance.chartTitles.accuracyOverTime'),
+        subtitle: i18n.t('performance.chartTitles.noDataAvailable'),
         chartData: {
           labels: [''],
           datasets: [{
@@ -388,7 +391,7 @@ export function SwipeableLineGraphCard({
         };
 
         return {
-          title: 'Accuracy per weight',
+          title: i18n.t('performance.chartTitles.accuracyPerWeight'),
           subtitle: liftType,
           chartData,
         };
@@ -496,7 +499,7 @@ export function SwipeableLineGraphCard({
         };
 
         return {
-          title: 'Accuracy over time',
+          title: i18n.t('performance.chartTitles.accuracyOverTime'),
           subtitle: liftType,
           chartData,
         };

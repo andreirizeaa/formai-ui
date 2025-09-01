@@ -60,7 +60,7 @@ export function NotificationPermissionScreen({ onNext, onBack }: NotificationPer
           <View style={[
             styles.textArea,
             {
-              backgroundColor: isDark ? '#2C2C2E' : '#F2F2F7',
+              backgroundColor: isDark ? '#2C2C2E' : '#f3f4f6',
             }
           ]}>
             <Text style={[
@@ -87,7 +87,7 @@ export function NotificationPermissionScreen({ onNext, onBack }: NotificationPer
                 styles.button,
                 styles.dontAllowButton,
                 {
-                  backgroundColor: isDark ? '#2C2C2E' : '#F2F2F7',
+                  backgroundColor: isDark ? '#2C2C2E' : '#f3f4f6',
                 }
               ]}
               onPress={handleDontAllow}

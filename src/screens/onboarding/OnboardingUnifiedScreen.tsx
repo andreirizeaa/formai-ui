@@ -668,7 +668,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                     <Text style={[styles.sectionTitle, { color: '#000000' }]}>
                       {i18n.t('onboarding.trainSafer.withoutFormAI')}
                     </Text>
-                        <Animated.View style={[styles.percentageBox, { backgroundColor: '#E0E0E0', height: percentageBoxHeight }]}>
+                        <Animated.View style={[styles.percentageBox, { backgroundColor: '#f3f4f6', height: percentageBoxHeight }]}>
                         <Text style={[styles.percentageText, { color: '#000000' }]}>
                           60%
                         </Text>
@@ -714,7 +714,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                     <Text style={[styles.sectionTitle, { color: '#000000' }]}>
                       {i18n.t('onboarding.costComparison.personalTrainer')}
                     </Text>
-                        <Animated.View style={[styles.percentageBox, { backgroundColor: '#E0E0E0', height: percentageBoxHeight }]}>
+                        <Animated.View style={[styles.percentageBox, { backgroundColor: '#f3f4f6', height: percentageBoxHeight }]}>
                         <Text style={[styles.percentageText, { color: '#000000' }]}>
                           $5000+/yr
                         </Text>

@@ -11,7 +11,7 @@ import { MovementSelectionScreen } from '../common/MovementSelectionScreen';
 import { PracticesScreen } from '../common/PracticesScreen';
 import { WeightRepsScreen } from '../common/WeightRepsScreen';
 import { useLoadingLifts } from '../../../../context/LoadingLiftsContext';
-import { gymMovements } from '../../../../constants/gymMovements';
+import { gymMovements, BodyPart } from '../../../../constants/gymMovements';
 import { X } from 'lucide-react-native';
 import { listUserVideoPaths } from '../../../../services/VideoUploadService';
 import { getUserId } from '../../../../services/storageService';
@@ -54,6 +54,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
         setShowWeightReps(false);
       },
       selectMovement: (movement: string) => {
+        setSelectedMovement(movement);
       },
       goToWeightReps: () => {
         setShowMovementSelection(false);
@@ -78,7 +79,8 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
   // Movement selection state
   const [selectedMovement, setSelectedMovement] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [filteredMovements, setFilteredMovements] = useState([...gymMovements]);
+  const [selectedBodyPart, setSelectedBodyPart] = useState<BodyPart>('all');
+  const [filteredMovements, setFilteredMovements] = useState(gymMovements.map(m => m.name));
 
 
   // Reset states when modal becomes invisible
@@ -89,7 +91,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
       setShowWeightReps(false);
       setSelectedMovement('');
       setSearchQuery('');
-      setFilteredMovements([...gymMovements]);
+      setFilteredMovements(gymMovements.map(m => m.name));
     }
   }, [isVisible]);
 
@@ -295,10 +297,36 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
 
   const handleSearchChange = (text: string) => {
     setSearchQuery(text);
-    const filtered = [...gymMovements].filter(movement =>
-      movement.toLowerCase().includes(text.toLowerCase())
-    );
-    setFilteredMovements(filtered);
+    filterMovements(text, selectedBodyPart);
+  };
+
+  const handleBodyPartChange = (bodyPart: BodyPart) => {
+    setSelectedBodyPart(bodyPart);
+    filterMovements(searchQuery, bodyPart);
+  };
+
+  const filterMovements = (searchText: string, bodyPart: BodyPart) => {
+    let filtered = [...gymMovements];
+    
+    // Filter by body part
+    if (bodyPart !== 'all') {
+      filtered = filtered.filter(movement => movement.bodyPart === bodyPart);
+    }
+    
+    // Filter by search text
+    if (searchText.trim()) {
+      filtered = filtered.filter(movement =>
+        movement.name.toLowerCase().includes(searchText.toLowerCase())
+      );
+    }
+    
+    setFilteredMovements(filtered.map(m => m.name));
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery('');
+    setSelectedMovement(''); // Clear the selected movement
+    filterMovements('', selectedBodyPart); // Reset search but keep body part filter
   };
 
   const resetModal = () => {
@@ -307,7 +335,8 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
     setShowWeightReps(false);
     setSelectedMovement('');
     setSearchQuery('');
-    setFilteredMovements([...gymMovements]);
+    setSelectedBodyPart('all');
+    setFilteredMovements(gymMovements.map(m => m.name));
   };
 
   const handleClose = () => {
@@ -353,8 +382,11 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
             searchQuery={searchQuery}
             filteredMovements={filteredMovements}
             selectedMovement={selectedMovement}
+            selectedBodyPart={selectedBodyPart}
             onMovementSelect={handleMovementSelect}
             onSearchChange={handleSearchChange}
+            onClearSearch={handleClearSearch}
+            onBodyPartChange={handleBodyPartChange}
             onBack={handleBack}
             onUpload={handleContinueFromMovementSelection}
             onClose={handleClose}
@@ -430,7 +462,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    backgroundColor: '#f3f4f6',
     alignItems: 'center',
     justifyContent: 'center',
   },
