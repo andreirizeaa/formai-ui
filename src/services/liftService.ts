@@ -12,6 +12,7 @@ interface AnalyzeLiftPayload {
     weightValue: number;
     reps: number;
     dateToday: string;
+    timeToday: string;
   };
 }
 
@@ -22,7 +23,6 @@ export interface AnalyzeLiftResponse<T = any> {
 
 export async function analyzeLift(userId: string, liftData: LoadingLiftData): Promise<AnalyzeLiftResponse> {
   if (!userId) return { success: false, data: null };
-  console.log('analyzeLift', liftData.dateToday);
 
   const payload: AnalyzeLiftPayload = {
     userId,
@@ -34,6 +34,7 @@ export async function analyzeLift(userId: string, liftData: LoadingLiftData): Pr
       weightValue: liftData.weightValue,
       reps: liftData.reps,
       dateToday: liftData.dateToday,
+      timeToday: liftData.timeToday,
     },
   };
 

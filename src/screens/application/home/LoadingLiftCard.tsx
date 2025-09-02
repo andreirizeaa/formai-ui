@@ -248,58 +248,54 @@ function LoadingLiftCardComponent({ lift }: LoadingLiftCardProps) {
 
   if (lift.status === 'error') {
     return (
-      <View style={styles.errorWrapper}>
-        <View style={styles.errorCardShadow}>
-          <View style={styles.errorCardInner}>
-            <LinearGradient
-              colors={['#e2e8f0', '#f5f3ff']}
-              locations={[0, 0.3]}
-              style={styles.errorCardGradient}
-              start={{ x: 0.6, y: 0 }}
-              end={{ x: 0, y: 1 }}
-            >
-              <View style={styles.errorContentRow}>
-                {/* Video Thumbnail - Left 30% */}
-                <View style={styles.errorThumbContainer}>
-                  <Image
-                    source={{ uri: lift.thumbnailUri }}
-                    style={styles.errorThumbnail}
-                    resizeMode="cover"
-                  />
-                </View>
-                
-                {/* Content - Right 70% */}
-                <View style={styles.errorLiftContent}>
-                  <View style={styles.errorLiftDetails}>
-                    <Text style={styles.errorTitle}>
-                      {lift.errorMessage === 'No lift found' 
-                        ? i18n.t('loadingLift.noLiftFound.title')
-                        : i18n.t('loadingLift.errorOccurred')
-                      }
-                    </Text>
-                    <Text style={styles.errorSubtitle}>
-                      {lift.errorMessage === 'No lift found'
-                        ? i18n.t('loadingLift.noLiftFound.subtitle')
-                        : i18n.t('loadingLift.pleaseTryAgain')
-                      }
-                    </Text>
-                    {lift.errorMessage !== 'No lift found' && (
-                      <Pressable 
-                        style={({ pressed }) => [
-                          styles.retryButton,
-                          { opacity: pressed ? 0.7 : 1 }
-                        ]}
-                        onPress={handleRetry}
-                      >
-                        <Text style={styles.retryButtonText}>{i18n.t('loadingLift.tapToRetry')}</Text>
-                      </Pressable>
-                    )}
-                  </View>
-                </View>
+      <View style={styles.liftCard}>
+        <LinearGradient
+          colors={['#e2e8f0', '#f5f3ff']}
+          locations={[0, 0.3]}
+          style={styles.cardGradient}
+          start={{ x: 0.6, y: 0 }}
+          end={{ x: 0, y: 1 }}
+        >
+          <View style={styles.liftCardContent}>
+            {/* Video Thumbnail - Left 30% */}
+            <View style={styles.videoThumbnailContainer}>
+              <Image
+                source={{ uri: lift.thumbnailUri }}
+                style={styles.videoThumbnail}
+                resizeMode="cover"
+              />
+            </View>
+            
+            {/* Content - Right 70% */}
+            <View style={styles.liftContent}>
+              <View style={styles.liftDetails}>
+                <Text style={styles.errorTitle}>
+                  {lift.errorMessage === 'No lift found' 
+                    ? i18n.t('loadingLift.noLiftFound.title')
+                    : i18n.t('loadingLift.errorOccurred')
+                  }
+                </Text>
+                <Text style={styles.errorSubtitle}>
+                  {lift.errorMessage === 'No lift found'
+                    ? i18n.t('loadingLift.noLiftFound.subtitle')
+                    : i18n.t('loadingLift.pleaseTryAgain')
+                  }
+                </Text>
+                {lift.errorMessage !== 'No lift found' && (
+                  <Pressable 
+                    style={({ pressed }) => [
+                      styles.retryButton,
+                      { opacity: pressed ? 0.7 : 1 }
+                    ]}
+                    onPress={handleRetry}
+                  >
+                    <Text style={styles.retryButtonText}>{i18n.t('loadingLift.tapToRetry')}</Text>
+                  </Pressable>
+                )}
               </View>
-            </LinearGradient>
+            </View>
           </View>
-        </View>
+        </LinearGradient>
         
         {/* Close button positioned absolutely */}
         <Pressable 
@@ -326,122 +322,147 @@ function LoadingLiftCardComponent({ lift }: LoadingLiftCardProps) {
     
     return (
       <Animated.View style={[styles.liftCard, fadeStyle]}>
-        <View style={styles.liftCardContent}>
-          {/* Video Thumbnail - Left 25% */}
-          <View style={styles.videoThumbnailContainer}>
-            <Image
-              source={{ uri: finalData.thumbnailURL || lift.thumbnailUri }}
-              style={styles.videoThumbnail}
-              resizeMode="cover"
-              onError={() => {
-                console.warn('Failed to load thumbnail:', finalData.thumbnailURL || lift.thumbnailUri);
-              }}
-            />
-            {/* Success overlay */}
-            <View style={styles.successOverlay}>
-              <CircleCheck size={32} color="#34C759" />
+        <LinearGradient
+          colors={['#e2e8f0', '#f5f3ff']}
+          locations={[0, 0.3]}
+          style={styles.cardGradient}
+          start={{ x: 0.6, y: 0 }}
+          end={{ x: 0, y: 1 }}
+        >
+          <View style={styles.liftCardContent}>
+            {/* Video Thumbnail - Left 30% */}
+            <View style={styles.videoThumbnailContainer}>
+              <Image
+                source={{ uri: finalData.thumbnailURL || lift.thumbnailUri }}
+                style={styles.videoThumbnail}
+                resizeMode="cover"
+                onError={() => {
+                  console.warn('Failed to load thumbnail:', finalData.thumbnailURL || lift.thumbnailUri);
+                }}
+              />
+              {/* Success overlay */}
+              <View style={styles.successOverlay}>
+                <CircleCheck size={32} color="#34C759" />
+              </View>
+            </View>
+            
+            {/* Content - Right 70% */}
+            <View style={styles.liftContent}>
+              <View style={styles.liftDetails}>
+                <Text style={styles.completedTitle}>
+                  {finalData.liftType}
+                </Text>
+                <Text style={styles.completedSubtitle}>
+                  {finalData.weightValue} {lift.weightUnit || 'kg'} × {finalData.reps} reps
+                </Text>
+                <Text style={styles.accuracyText}>
+                  Accuracy: {finalData.analysis.accuracy}%
+                </Text>
+              </View>
             </View>
           </View>
-          
-          {/* Content - Right 75% */}
-          <View style={styles.liftContent}>
-            <View style={styles.liftDetails}>
-              <Text style={styles.completedTitle}>
-                {finalData.liftType}
-              </Text>
-              <Text style={styles.completedSubtitle}>
-                {finalData.weightValue} {lift.weightUnit || 'kg'} × {finalData.reps} reps
-              </Text>
-              <Text style={styles.accuracyText}>
-                Accuracy: {finalData.analysis.accuracy}%
-              </Text>
-            </View>
-          </View>
-        </View>
+        </LinearGradient>
       </Animated.View>
     );
   }
 
   return (
     <View style={styles.liftCard}>
-      <View style={styles.liftCardContent}>
-        {/* Video Thumbnail - Left 25% */}
-        <View style={styles.videoThumbnailContainer}>
-          <Image
-            source={{ uri: lift.thumbnailUri }}
-            style={styles.videoThumbnail}
-            resizeMode="cover"
-            onError={() => {
-              console.warn('Failed to load thumbnail:', lift.thumbnailUri);
-            }}
-          />
-          <BlurView intensity={30} style={styles.blurOverlay}>
-            <View style={styles.progressContainer}>
-              <CircularProgress
-                value={displayProgress}
-                radius={32}
-                progressValueColor={'#000000'}
-                activeStrokeColor={'#000000'}
-                inActiveStrokeColor={'#E5E5EA'}
-                activeStrokeWidth={8}
-                inActiveStrokeWidth={8}
-                showProgressValue={false}
-                strokeLinecap={'butt'}
-              />
-              <View style={styles.percentageOverlay}>
-                <Text style={styles.percentageText}>
-                  {Math.round(displayProgress)}%
-                </Text>
+      <LinearGradient
+        colors={['#e2e8f0', '#f5f3ff']}
+        locations={[0, 0.3]}
+        style={styles.cardGradient}
+        start={{ x: 0.6, y: 0 }}
+        end={{ x: 0, y: 1 }}
+      >
+        <View style={styles.liftCardContent}>
+          {/* Video Thumbnail - Left 30% */}
+          <View style={styles.videoThumbnailContainer}>
+            <Image
+              source={{ uri: lift.thumbnailUri }}
+              style={styles.videoThumbnail}
+              resizeMode="cover"
+              onError={() => {
+                console.warn('Failed to load thumbnail:', lift.thumbnailUri);
+              }}
+            />
+            <BlurView intensity={30} style={styles.blurOverlay}>
+              <View style={styles.progressContainer}>
+                <CircularProgress
+                  value={displayProgress}
+                  radius={32}
+                  progressValueColor={'#000000'}
+                  activeStrokeColor={'#000000'}
+                  inActiveStrokeColor={'#E5E5EA'}
+                  activeStrokeWidth={8}
+                  inActiveStrokeWidth={8}
+                  showProgressValue={false}
+                  strokeLinecap={'butt'}
+                />
+                <View style={styles.percentageOverlay}>
+                  <Text style={styles.percentageText}>
+                    {Math.round(displayProgress)}%
+                  </Text>
+                </View>
               </View>
+            </BlurView>
+          </View>
+          
+          {/* Content - Right 70% */}
+          <View style={styles.liftContent}>
+            {/* Top row: Title */}
+            <View style={styles.topRow}>
+              <Text style={styles.liftName} numberOfLines={1}>
+                {getStatusText()}
+              </Text>
             </View>
-          </BlurView>
-        </View>
-        
-        {/* Content - Right 75% */}
-        <View style={styles.liftContent}>
-          <View style={styles.liftDetails}>
-            <Text style={styles.analyzingText}>{getStatusText()}</Text>
-              <View style={styles.placeholderLines}>
-                <Animated.View style={[styles.placeholderLine, styles.placeholderLine1, animatedLine1Style]} />
-                <Animated.View style={[styles.placeholderLine, styles.placeholderLine2, animatedLine2Style]} />
-                <Animated.View style={[styles.placeholderLine, styles.placeholderLine3, animatedLine3Style]} />
-              </View>
-            <Text style={styles.notificationText}>{i18n.t('loadingLift.notifyWhenDone')}</Text>
+
+            {/* Middle row: Animated lines */}
+            <View style={styles.placeholderLines}>
+              <Animated.View style={[styles.placeholderLine, styles.placeholderLine1, animatedLine1Style]} />
+              <Animated.View style={[styles.placeholderLine, styles.placeholderLine2, animatedLine2Style]} />
+              <Animated.View style={[styles.placeholderLine, styles.placeholderLine3, animatedLine3Style]} />
+            </View>
+
+            {/* Bottom row: Notification message */}
+            <View style={styles.bottomRow}>
+              <Text style={styles.notificationText}>{i18n.t('loadingLift.notifyWhenDone')}</Text>
+            </View>
           </View>
         </View>
-      </View>
+      </LinearGradient>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   liftCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    padding: 20,
     marginBottom: 16,
+    borderRadius: 18,
+    backgroundColor: 'transparent',
     shadowColor: '#000000',
     shadowOffset: {
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-    paddingHorizontal: 20,
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 4,
+  },
+  cardGradient: {
+    flex: 1,
+    borderRadius: 18,
   },
   liftCardContent: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginHorizontal: -20, // Extend beyond card padding
+    height: 130,
   },
   videoThumbnailContainer: {
-    height: 120,
-    width: Dimensions.get('window').width * 0.25, // 25% of screen width
+    width: '30%',
+    height: '100%',
     overflow: 'hidden',
-    borderTopLeftRadius: 18, // Only left side border radius
-    borderBottomLeftRadius: 18, // Only left side border radius
-    marginVertical: -20, // Extend beyond card padding
+    borderTopLeftRadius: 18,
+    borderBottomLeftRadius: 18,
     position: 'relative',
   },
   videoThumbnail: {
@@ -484,29 +505,49 @@ const styles = StyleSheet.create({
   },
   liftContent: {
     flex: 1,
-    paddingLeft: 16, // Add padding to separate from video
-    paddingRight: 16, // Add padding to prevent text from touching right edge
-    justifyContent: 'center', // Center the content vertically
+    padding: 16,
+    justifyContent: 'space-between',
   },
   liftDetails: {
     flex: 1,
     justifyContent: 'flex-start', // Keep content at the top
   },
-  analyzingText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#000000',
-    marginBottom: 8,
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  topRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
+  liftName: {
+    fontSize: 18,
+    fontWeight: '400',
+    color: '#000',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+    flex: 1,
+    marginRight: 8,
+  },
+  middleRow: {
+    marginTop: -4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+  },
+  bottomRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    gap: 20,
+  },
+
   placeholderLines: {
     marginBottom: 8,
+    marginTop: 8,
+    width: '100%',
   },
   placeholderLine: {
-    height: 4,
-    backgroundColor: '#E5E5EA',
-    borderRadius: 2,
-    marginBottom: 4,
+    height: 6,
+    backgroundColor: '#71717b',
+    borderRadius: 3,
+    marginBottom: 6,
   },
   placeholderLine1: {
     width: '80%',
@@ -569,7 +610,7 @@ const styles = StyleSheet.create({
   closeButton: {
     position: 'absolute',
     top: 8,
-    right: 22,
+    right: 8,
     zIndex: 10,
     padding: 8,
   },
@@ -609,59 +650,7 @@ const styles = StyleSheet.create({
     color: '#34C759',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
-  // Error card styles matching LiftDataCard
-  errorWrapper: {
-    marginBottom: 16,
-    position: 'relative',
-  },
-  errorCardShadow: {
-    width: '100%',
-    alignSelf: 'stretch',
-    borderRadius: 18,
-    backgroundColor: 'transparent',
-    shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    paddingHorizontal: 20,
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
-    
-  },
-  errorCardInner: {
-    borderRadius: 18,
-    overflow: 'hidden',
-  },
-  errorCardGradient: {
-    flex: 1,
-    borderRadius: 18,
-  },
-  errorContentRow: {
-    flexDirection: 'row',
-    height: 130,
-  },
-  errorThumbContainer: {
-    width: '30%',
-    height: '100%',
-    overflow: 'hidden',
-    borderTopLeftRadius: 18,
-    borderBottomLeftRadius: 18,
-  },
-  errorThumbnail: {
-    width: '100%',
-    height: '100%',
-  },
-  errorLiftContent: {
-    flex: 1,
-    padding: 16,
-    justifyContent: 'center',
-  },
-  errorLiftDetails: {
-    flex: 1,
-    justifyContent: 'center',
-  },
+
 });
 
 // Memoized component for performance

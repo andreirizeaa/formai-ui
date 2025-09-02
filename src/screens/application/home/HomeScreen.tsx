@@ -274,6 +274,7 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
               estimatedItemSize={146}
               showsVerticalScrollIndicator={false}
               scrollEnabled={false}
+              contentContainerStyle={styles.loadingLiftsContainer}
             />
           )}
           
@@ -408,6 +409,9 @@ const styles = StyleSheet.create({
   liftsScrollContent: {
     paddingVertical: 4,
     paddingHorizontal: 4,
+  },
+  loadingLiftsContainer: {
+    paddingHorizontal: 20,
   },
 
 
