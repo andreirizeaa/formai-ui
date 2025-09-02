@@ -360,7 +360,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
           hapticFeedback.selection();
           onClose();
         }} style={styles.closeButton}>
-          <X width={24} height={24} color="#8E8E93" />
+          <X width={24} height={24} color="#000000" />
         </TouchableOpacity>
       </View>
 

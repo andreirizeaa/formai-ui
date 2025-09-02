@@ -13,7 +13,7 @@ import { WeightRepsScreen } from '../common/WeightRepsScreen';
 import { useLoadingLifts } from '../../../../context/LoadingLiftsContext';
 import { gymMovements, BodyPart } from '../../../../constants/gymMovements';
 import { useCameraPermissions } from 'expo-camera';
-import { X } from 'lucide-react-native';
+import { ChevronLeft, CircleQuestionMark, X } from 'lucide-react-native';
 import * as MediaLibrary from 'expo-media-library';
 
 interface RecordModalProps {
@@ -389,7 +389,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
             hapticFeedback.selection();
             onClose();
           }} style={[styles.closeButton]}>
-            <X width={24} height={24} color={isDark ? '#8E8E93' : '#8E8E93'} />
+            <X width={24} height={24} color={'#ffffff'} />
           </TouchableOpacity>
         </View>
 
@@ -479,7 +479,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
               hapticFeedback.selection();
               onClose();
             }} style={[styles.closeButton]}>
-              <X width={24} height={24} color="#8E8E93" />
+              <X width={24} height={24} color="#000000" />
             </TouchableOpacity>
           </View>
 
@@ -504,7 +504,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
               <Text style={styles.title}>Record Video</Text>
             </View>
             <TouchableOpacity onPress={handleClose} style={[styles.closeButton]}>
-              <X width={24} height={24} color="white" />
+              <X width={24} height={24} color="#000000" />
             </TouchableOpacity>
           </View>
 
@@ -528,7 +528,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
               <Text style={styles.title}>Record Video</Text>
             </View>
             <TouchableOpacity onPress={handleClose} style={[styles.closeButton]}>
-              <X width={24} height={24} color="#8E8E93" />
+              <X width={24} height={24} color="#000000" />
             </TouchableOpacity>
           </View>
 
@@ -558,7 +558,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
               <Text style={styles.title}>Record Video</Text>
             </View>
             <TouchableOpacity onPress={handleClose} style={[styles.closeButton]}>
-              <X width={24} height={24} color="#8E8E93" />
+              <X width={24} height={24} color="#000000" />
             </TouchableOpacity>
           </View>
 
@@ -605,12 +605,18 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
 
               {/* Top Controls */}
               <View style={styles.topControls}>
-                <View style={styles.topControlsSpacer} />
+                <TouchableOpacity onPress={() => {
+                  hapticFeedback.selection();
+                  setShowCamera(false);
+                  setShowPractices(true);
+                }} style={styles.backButtonCamera} disabled={isRecording}>
+                  <ChevronLeft size={24} color="#ffffff"/>
+                </TouchableOpacity>
                 <TouchableOpacity onPress={() => {
                   hapticFeedback.selection();
                   onClose();
                 }} style={styles.closeButtonCamera}>
-                  <X width={24} height={24} color="white" />
+                  <X width={24} height={24} color="#ffffff" />
                 </TouchableOpacity>
               </View>
 
@@ -715,6 +721,16 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 20,
     backgroundColor: '#f3f4f6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+    marginTop: 6,
+  },
+  backButtonCamera: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 10,
@@ -983,9 +999,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 10,
   },
-  topControlsSpacer: {
-    width: 40, // Adjust as needed to balance the close button
-  },
+
   cameraSafeArea: {
     flex: 1,
     backgroundColor: '#000000',
