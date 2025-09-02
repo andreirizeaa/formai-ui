@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, Alert, Image, TextInput, ScrollView, Keyboard, useColorScheme, Linking } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Alert, Keyboard, useColorScheme, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Camera, useCameraDevice, type VideoFile } from 'react-native-vision-camera';
 import Ionicons from '@expo/vector-icons/Ionicons';

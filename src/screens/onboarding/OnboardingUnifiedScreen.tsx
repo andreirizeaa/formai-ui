@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Platform, Image, TouchableOpacity, TextInput, ActivityIndicator, FlatList, ListRenderItem, Animated } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Platform, TouchableOpacity, TextInput, FlatList, Animated } from 'react-native';
+import { Image } from 'expo-image';
 import { useColorScheme } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Picker } from '@react-native-picker/picker';
