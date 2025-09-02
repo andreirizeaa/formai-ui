@@ -8,7 +8,7 @@ import { useLiftData } from '../../context/LiftDataContext';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // Config
-const CARD_HEIGHT = 130;
+const CARD_HEIGHT = 160;
 const CARD_WIDTH = SCREEN_WIDTH * 0.9; // ✅ slightly smaller than screen
 
 interface AccuracyCardData {
@@ -39,13 +39,13 @@ export function SwipeableAccuracyCard({
           </View>
           <View style={styles.accuracyCardRightSection}>
             <CircularProgressChart
-              width={100}
-              height={100}
+              width={120}
+              height={120}
               percentage={item.percentage}
               progressColor="#000000"
               backgroundColor="#E5E5E5"
               strokeWidth={10}
-              radius={42}
+              radius={54}
               showTargetIcon={true}
               iconColor="#000000"
               iconSize={20}
@@ -232,15 +232,15 @@ const styles = StyleSheet.create({
   },
   accuracyCardLeftSection: { alignItems: 'flex-start', paddingLeft: 8 },
   accuracyCardNumber: {
-    fontSize: 46,
+    fontSize: 48,
     fontWeight: '700',
     color: '#000000',
     fontFamily: 'SF Pro Display',
   },
   accuracyCardLabel: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '400',
-    color: '#8E8E93',
+    color: '#000000',
     fontFamily: 'SF Pro Text',
   },
   accuracyCardRightSection: { alignItems: 'center' },

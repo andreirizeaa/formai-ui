@@ -82,7 +82,7 @@ export function CircularProgressChart({
           <Circle
             cx={iconSize/2}
             cy={iconSize/2}
-            r={iconSize/2 + 6}
+            r={iconSize/2 + 10}
             fill="#f1f5f9"
           />
           {/* Target icon as SVG paths */}
