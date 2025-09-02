@@ -140,13 +140,13 @@ export function Layout() {
       <WalletCreditProvider>
         <UserDetailsProvider>
           <LiftDataProvider>
-            <LoadingLiftsProvider>
-              <UserCheckInsProvider>
-                <SelectedDateProvider>
+            <UserCheckInsProvider>
+              <SelectedDateProvider>
+                <LoadingLiftsProvider>
                   <AppContent />
-                </SelectedDateProvider>
-              </UserCheckInsProvider>
-            </LoadingLiftsProvider>
+                </LoadingLiftsProvider>
+              </SelectedDateProvider>
+            </UserCheckInsProvider>
           </LiftDataProvider>
         </UserDetailsProvider>
       </WalletCreditProvider>

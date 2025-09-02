@@ -11,6 +11,7 @@ import { MovementSelectionScreen } from '../common/MovementSelectionScreen';
 import { PracticesScreen } from '../common/PracticesScreen';
 import { WeightRepsScreen } from '../common/WeightRepsScreen';
 import { useLoadingLifts } from '../../../../context/LoadingLiftsContext';
+import { useSelectedDate } from '../../../../context/SelectedDateContext';
 import { gymMovements, BodyPart } from '../../../../constants/gymMovements';
 import { useCameraPermissions } from 'expo-camera';
 import { ChevronLeft, CircleQuestionMark, X } from 'lucide-react-native';
@@ -23,6 +24,7 @@ interface RecordModalProps {
 
 export function RecordModal({ isVisible, onClose }: RecordModalProps) {
   const { addLoadingLift } = useLoadingLifts();
+  const { selectedDate } = useSelectedDate();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const [isRecording, setIsRecording] = useState(false);
@@ -257,10 +259,10 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
   const getDateAndTime = () => {
     const now = new Date();
   
-    // 📅 Date (YYYY-MM-DD)
-    const date = now.toISOString().split("T")[0];
+    // 📅 Date (YYYY-MM-DD) - Use selected date from calendar
+    const date = selectedDate.toISOString().split("T")[0];
   
-    // ⏰ Time (hh:mm AM/PM)
+    // ⏰ Time (hh:mm AM/PM) - Use current time
     let hours = now.getHours();
     const minutes = now.getMinutes().toString().padStart(2, "0");
   

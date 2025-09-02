@@ -11,6 +11,7 @@ import { MovementSelectionScreen } from '../common/MovementSelectionScreen';
 import { PracticesScreen } from '../common/PracticesScreen';
 import { WeightRepsScreen } from '../common/WeightRepsScreen';
 import { useLoadingLifts } from '../../../../context/LoadingLiftsContext';
+import { useSelectedDate } from '../../../../context/SelectedDateContext';
 import { gymMovements, BodyPart } from '../../../../constants/gymMovements';
 import { X } from 'lucide-react-native';
 import { listUserVideoPaths } from '../../../../services/VideoUploadService';
@@ -23,6 +24,7 @@ interface UploadModalProps {
 
 export function UploadModal({ isVisible, onClose }: UploadModalProps) {
   const { addLoadingLift } = useLoadingLifts();
+  const { selectedDate } = useSelectedDate();
   const [selectedVideo, setSelectedVideo] = useState<ImagePicker.ImagePickerAsset | null>(null);
     const [showMovementSelection, setShowMovementSelection] = useState(false);
   const [showWeightReps, setShowWeightReps] = useState(false);
@@ -248,10 +250,10 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
   const getDateAndTime = () => {
     const now = new Date();
   
-    // 📅 Date (YYYY-MM-DD)
-    const date = now.toISOString().split("T")[0];
+    // 📅 Date (YYYY-MM-DD) - Use selected date from calendar
+    const date = selectedDate.toISOString().split("T")[0];
   
-    // ⏰ Time (hh:mm AM/PM)
+    // ⏰ Time (hh:mm AM/PM) - Use current time
     let hours = now.getHours();
     const minutes = now.getMinutes().toString().padStart(2, "0");
   
