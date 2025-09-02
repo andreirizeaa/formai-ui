@@ -1,8 +1,10 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Platform, InteractionManager } from 'react-native';
 import Carousel from 'react-native-reanimated-carousel';
+import Svg, { Circle } from 'react-native-svg';
 import { useUserCheckIns } from '../../context/UserCheckInsContext';
 import { useSelectedDate } from '../../context/SelectedDateContext';
+import { useLiftData } from '../../context/LiftDataContext';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const WEEK_WIDTH = SCREEN_WIDTH * 0.9;
@@ -20,11 +22,14 @@ interface DayData {
   isToday: boolean;
   isActive: boolean;
   isLogged: boolean;
+  isFuture: boolean;
+  dailyAccuracy: number;
 }
 
 export function SwipeableCalendar({ onDateSelect, initialSelectedDate }: SwipeableCalendarProps) {
   const { selectedDate, setSelectedDate } = useSelectedDate();
   const { daysLogged } = useUserCheckIns();
+  const { getLiftsByDate } = useLiftData();
 
   // ⏳ control when calendar is ready to mount
   const [ready, setReady] = useState(false);
@@ -51,6 +56,39 @@ export function SwipeableCalendar({ onDateSelect, initialSelectedDate }: Swipeab
     return `${day}-${month}-${year}`;
   };
 
+  const calculateDailyAccuracy = (date: Date): number => {
+    const liftsForDate = getLiftsByDate(date);
+    if (liftsForDate.length === 0) return 0;
+    
+    const totalAccuracy = liftsForDate.reduce((sum, lift) => sum + lift.analysis.accuracy, 0);
+    return Math.round(totalAccuracy / liftsForDate.length);
+  };
+
+  const CircularProgress = ({ percentage, size = 36, strokeWidth = 2 }: { percentage: number; size?: number; strokeWidth?: number }) => {
+    const radius = (size - strokeWidth) / 2;
+    const circumference = radius * 2 * Math.PI;
+    const strokeDasharray = circumference;
+    const strokeDashoffset = circumference - (percentage / 100) * circumference;
+    
+    return (
+      <Svg width={size} height={size} style={{ position: 'absolute' }}>
+        {/* Progress circle only - no background circle */}
+        <Circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke="#000000"
+          strokeWidth={strokeWidth}
+          fill="transparent"
+          strokeDasharray={strokeDasharray}
+          strokeDashoffset={strokeDashoffset}
+          strokeLinecap="round"
+          transform={`rotate(-90 ${size / 2} ${size / 2})`}
+        />
+      </Svg>
+    );
+  };
+
   const generateWeekData = useCallback(
     (weekOffset: number): DayData[] => {
       const today = new Date();
@@ -69,8 +107,10 @@ export function SwipeableCalendar({ onDateSelect, initialSelectedDate }: Swipeab
 
         const isToday = date.toDateString() === today.toDateString();
         const isSelected = date.toDateString() === selectedDate.toDateString();
+        const isFuture = date > today;
         const formattedDate = formatDateAsDDMMYYYY(date);
         const isLogged = daysLogged.includes(formattedDate);
+        const dailyAccuracy = calculateDailyAccuracy(date);
 
         return {
           date,
@@ -79,10 +119,12 @@ export function SwipeableCalendar({ onDateSelect, initialSelectedDate }: Swipeab
           isToday,
           isActive: isSelected,
           isLogged,
+          isFuture,
+          dailyAccuracy,
         };
       });
     },
-    [selectedDate, daysLogged]
+    [selectedDate, daysLogged, getLiftsByDate]
   );
 
   const WEEKS_BACK = 3;
@@ -120,6 +162,10 @@ export function SwipeableCalendar({ onDateSelect, initialSelectedDate }: Swipeab
   }, [selectedDate, getWeekIndexForDate, weeks.length]);
 
   const handleDatePress = (day: DayData) => {
+    // Don't allow selection of future dates
+    if (day.isFuture) {
+      return;
+    }
     setSelectedDate(day.date);
     onDateSelect?.(day.date);
   };
@@ -148,12 +194,16 @@ export function SwipeableCalendar({ onDateSelect, initialSelectedDate }: Swipeab
                   key={index}
                   style={styles.dayContainer}
                   onPress={() => handleDatePress(day)}
-                  activeOpacity={0.7}
+                  activeOpacity={day.isFuture ? 1 : 0.7}
+                  disabled={day.isFuture}
                 >
                   <View
                     style={[
                       styles.dayCircle,
-                      day.isToday && day.isActive
+                      // Hide entire day circle background when has lifts, or for future dates
+                      day.dailyAccuracy > 0 || day.isFuture
+                        ? styles.transparentCircle
+                        : day.isToday && day.isActive
                         ? styles.todaySelectedCircle
                         : day.isToday
                         ? styles.todayCircle
@@ -166,6 +216,10 @@ export function SwipeableCalendar({ onDateSelect, initialSelectedDate }: Swipeab
                         : styles.inactiveDayCircle,
                     ]}
                   >
+                    {/* Circular progress indicator for days with lifts */}
+                    {day.dailyAccuracy > 0 && (
+                      <CircularProgress percentage={day.dailyAccuracy} size={36} strokeWidth={2} />
+                    )}
                     <Text
                       style={[
                         styles.dayName,
@@ -182,7 +236,9 @@ export function SwipeableCalendar({ onDateSelect, initialSelectedDate }: Swipeab
                   <Text
                     style={[
                       styles.dayNumber,
-                      day.isActive ? styles.activeDayText : styles.inactiveDayText,
+                      day.isActive 
+                        ? styles.activeDayText 
+                        : styles.inactiveDayText,
                     ]}
                   >
                     {day.dayNumber}
@@ -252,6 +308,10 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: '#ff6900',
     borderStyle: 'solid',
+    backgroundColor: 'transparent',
+  },
+  transparentCircle: {
+    borderWidth: 0,
     backgroundColor: 'transparent',
   },
   dayName: {
