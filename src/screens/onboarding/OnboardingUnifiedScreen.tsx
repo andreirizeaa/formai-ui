@@ -1972,7 +1972,7 @@ const styles = StyleSheet.create({
   },
   graphSubtitle: {
     fontSize: 17,
-    fontWeight: '500',
+    fontWeight: '400',
     textAlign: 'center',
     marginTop: 16,
     color: '#000000',
