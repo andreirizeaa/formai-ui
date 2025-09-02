@@ -95,9 +95,6 @@ export function AnimatedOptionButton({
             backgroundColor: isSelected
               ? '#000000'  // Black background when selected
               : '#F4F4F8',
-            // borderColor: isSelected
-            //   ? '#000000'  // Black border when selected
-            //   : (isDark ? '#2C2C2E' : '#E5E5EA'),
             paddingVertical: hasIcon ? 14 : 22, // Conditional padding
           },
           style

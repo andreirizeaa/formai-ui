@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Platform, Animated } from 'react-native';
+import { View, Text, StyleSheet, Platform } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BackButton } from '../ui/BackButton';
@@ -39,16 +39,6 @@ export function OnboardingLayout({
   
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
-  const fadeAnim = React.useRef(new Animated.Value(0)).current;
-
-  // Fade in animation when component mounts
-  React.useEffect(() => {
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 500,
-      useNativeDriver: true,
-    }).start();
-  }, [fadeAnim]);
 
   return (
     <SafeAreaView 
@@ -57,7 +47,7 @@ export function OnboardingLayout({
         { backgroundColor: isDark ? '#000000' : '#FFFFFF' }
       ]}
     >
-      <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
+      <View style={{ flex: 1 }}>
         {/* Header with back button and progress bar */}
         <View style={styles.header}>
           {!hideBackButton && (
@@ -117,7 +107,7 @@ export function OnboardingLayout({
             />
           </View>
         ) : null}
-      </Animated.View>
+      </View>
     </SafeAreaView>
   );
 }

@@ -1,5 +1,11 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Platform, TouchableOpacity, TextInput, FlatList, Animated } from 'react-native';
+import ReanimatedAnimated, { 
+  useSharedValue, 
+  useAnimatedStyle, 
+  withSpring, 
+  withDelay 
+} from 'react-native-reanimated';
 import { Image } from 'expo-image';
 import { useColorScheme } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -22,6 +28,52 @@ import { SingleDotIcon, SixDotsIcon, ThreeDotsIcon } from '../../components/icon
 import { Line } from 'react-native-svg';
 
 interface OnboardingUnifiedScreenProps {}
+
+interface AnimatedInfoCardProps {
+  children: React.ReactNode;
+  delay: number;
+}
+
+function AnimatedInfoCard({ children, delay }: AnimatedInfoCardProps) {
+  const translateY = useSharedValue(delay === 0 ? 0 : 30);
+  const opacity = useSharedValue(delay === 0 ? 1 : 0);
+
+  useEffect(() => {
+    // If delay is 0, don't animate - show immediately
+    if (delay === 0) return;
+    
+    // Animate in with a staggered delay
+    translateY.value = withDelay(
+      delay,
+      withSpring(0, {
+        damping: 25,
+        stiffness: 200,
+        mass: 0.6,
+      })
+    );
+    
+    opacity.value = withDelay(
+      delay,
+      withSpring(1, {
+        damping: 25,
+        stiffness: 200,
+      })
+    );
+  }, [delay]);
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateY: translateY.value }],
+      opacity: opacity.value,
+    };
+  });
+
+  return (
+    <ReanimatedAnimated.View style={animatedStyle}>
+      {children}
+    </ReanimatedAnimated.View>
+  );
+}
 
 interface StepOption<V> {
   value: V;
@@ -112,6 +164,13 @@ interface GraphStepConfig {
   subtitle?: string;
 }
 
+interface GymChallengeInfoStepConfig {
+  type: 'gymChallengeInfo';
+  id: string;
+  title: string;
+  subtitle?: string;
+}
+
 type StepConfig =
   | OptionsStepConfig<keyof OnboardingData>
   | MeasurementsStepConfig
@@ -123,7 +182,8 @@ type StepConfig =
   | InfoStepConfig
   | InjuryChanceInfoStepConfig
   | PerfectFormGoalMessageStepConfig
-  | GraphStepConfig;
+  | GraphStepConfig
+  | GymChallengeInfoStepConfig;
 
 export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
   const navigation = useNavigation();
@@ -200,6 +260,12 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       ],
     },
     {
+      type: 'gymChallengeInfo',
+      id: 'gymChallengeInfo',
+      title: '',
+      subtitle: '',
+    },
+    {
       type: 'options',
       id: 'workouts',
       title: i18n.t('onboarding.workouts.title'),
@@ -269,7 +335,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
         { value: 'looking_leaner', label: i18n.t('onboarding.threeMonthGoal.lookingLeaner'), icon: <Scale size={iconSize} color={iconColor} /> },
         { value: 'feeling_stronger_injury_free', label: i18n.t('onboarding.threeMonthGoal.feelingStrongerInjuryFree'), icon: <BicepsFlexed size={iconSize} color={iconColor} /> },
         { value: 'more_consistent', label: i18n.t('onboarding.threeMonthGoal.moreConsistent'), icon: <TrendingUp size={iconSize} color={iconColor} /> },
-        { value: 'more_confident', label: i18n.t('onboarding.threeMonthGoal.moreConfident'), icon: <PartyPopper size={iconColor} /> },
+        { value: 'more_confident', label: i18n.t('onboarding.threeMonthGoal.moreConfident'), icon: <PartyPopper size={iconSize} color={iconColor} /> },
       ],
     },
     {
@@ -522,6 +588,72 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
     }
   }
 
+  function getGymChallengeInfo() {
+    const challenge = onboardingData.gymChallenge;
+    switch (challenge) {
+      case 'no_results':
+        return {
+          headline: i18n.t('onboarding.gymChallengeInfo.noResults.headline'),
+          message: i18n.t('onboarding.gymChallengeInfo.noResults.message'),
+          howWeGetYouThere: [
+            'Form analysis to ensure every rep counts',
+            'Video feedback to spot what\'s holding you back',
+            'Accuracy tracking to measure real progress over time'
+          ],
+        };
+      case 'unsure_form':
+        return {
+          headline: i18n.t('onboarding.gymChallengeInfo.unsureForm.headline'),
+          message: i18n.t('onboarding.gymChallengeInfo.unsureForm.message'),
+          howWeGetYouThere: [
+            'Instant form breakdown from your workout videos',
+            'Actionable tips to fix mistakes quickly',
+            'Accuracy scoring to track your improvement'
+          ],
+        };
+      case 'worried_injury':
+        return {
+          headline: i18n.t('onboarding.gymChallengeInfo.worriedInjury.headline'),
+          message: i18n.t('onboarding.gymChallengeInfo.worriedInjury.message'),
+          howWeGetYouThere: [
+            'Video feedback to highlight unsafe positions',
+            'Safer technique recommendations tailored to you',
+            'Accuracy tracking to ensure long-term consistency'
+          ],
+        };
+      case 'struggling_motivation':
+        return {
+          headline: i18n.t('onboarding.gymChallengeInfo.strugglingMotivation.headline'),
+          message: i18n.t('onboarding.gymChallengeInfo.strugglingMotivation.message'),
+          howWeGetYouThere: [
+            'Easy-to-read accuracy scores after every workout',
+            'Visible improvements with tracked progress trends',
+            'Encouraging tips that help you stay consistent'
+          ],
+        };
+      case 'other':
+        return {
+          headline: i18n.t('onboarding.gymChallengeInfo.other.headline'),
+          message: i18n.t('onboarding.gymChallengeInfo.other.message'),
+          howWeGetYouThere: [
+            'Personalized feedback on your movement videos',
+            'Accuracy tracking across different exercise types',
+            'Continuous tips and insights to support your goals'
+          ],
+        };
+      default:
+        return {
+          headline: i18n.t('onboarding.gymChallengeInfo.other.headline'),
+          message: i18n.t('onboarding.gymChallengeInfo.other.message'),
+          howWeGetYouThere: [
+            'Personalized feedback on your movement videos',
+            'Accuracy tracking across different exercise types',
+            'Continuous tips and insights to support your goals'
+          ],
+        };
+    }
+  }
+
   function handleSelectOptionStep(value: any) {
     hapticFeedback.selection();
     const step = currentStep as OptionsStepConfig<keyof OnboardingData>;
@@ -630,6 +762,8 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
     nextDisabled = false; // enable default next for rating step
   } else if (currentStep.type === 'info') {
     nextDisabled = false; // always enabled for info step
+  } else if (currentStep.type === 'gymChallengeInfo') {
+    nextDisabled = false; // always enabled for gym challenge info step
   } else if (currentStep.type === 'referral') {
     nextLoading = referralValidating; // show loading while validating
   } else if (currentStep.type === 'allDone') {
@@ -757,6 +891,51 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
             {i18n.t('onboarding.perfectFormGoalMessage.subtitle')}
           </Text>
         </View>
+      )}
+
+      {currentStep.type === 'gymChallengeInfo' && (
+        <ScrollView 
+          style={styles.gymChallengeInfoContainer}
+          contentContainerStyle={styles.gymChallengeInfoContent}
+          showsVerticalScrollIndicator={false}
+          bounces
+          alwaysBounceVertical={false}
+        >
+          {/* Main card with headline and message */}
+          <LinearGradient
+            colors={['#e2e8f0', '#f5f3ff']}
+            locations={[0, 0.9]}
+            style={styles.gymChallengeInfoCard}
+            start={{ x: 0.5, y: 0 }}
+            end={{ x: 0, y: 1 }}
+          >
+            <Text style={[styles.gymChallengeInfoHeadline, { color: '#000000' }]}>
+              {getGymChallengeInfo().headline}
+            </Text>
+            <Text style={[styles.gymChallengeInfoMessage, { color: '#000000' }]}>
+              {getGymChallengeInfo().message}
+            </Text>
+          </LinearGradient>
+
+          {/* How we get you there section */}
+          <Text style={[styles.howWeGetYouThereTitle, { color: isDark ? '#FFFFFF' : '#000000' }]}>
+            {i18n.t('onboarding.gymChallengeInfo.howWeGetYouThereTitle')}:
+          </Text>
+
+          {/* How we get you there items */}
+          {getGymChallengeInfo().howWeGetYouThere.map((item: string, index: number) => (
+            <AnimatedInfoCard key={index} delay={index * 100}>
+              <View style={styles.howWeGetYouThereCard}>
+                <View style={styles.howWeGetYouThereIcon}>
+                  <Text style={styles.howWeGetYouThereNumber}>{index + 1}</Text>
+                </View>
+                <Text style={[styles.howWeGetYouThereItem, { color: isDark ? '#FFFFFF' : '#000000' }]}>
+                  {item}
+                </Text>
+              </View>
+            </AnimatedInfoCard>
+          ))}
+        </ScrollView>
       )}
 
       {currentStep.type === 'graph' && (
@@ -1833,5 +2012,73 @@ const styles = StyleSheet.create({
     borderColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  // Gym challenge info styles
+  gymChallengeInfoContainer: {
+    marginTop: -50,
+    flex: 1,
+  },
+  gymChallengeInfoContent: {
+    paddingTop: 0,
+    gap: 8,
+    paddingBottom: 20,
+  },
+  gymChallengeInfoCard: {
+    borderRadius: 18,
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 32,
+  },
+  gymChallengeInfoHeadline: {
+    fontSize: 32,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 16,
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
+  },
+  gymChallengeInfoMessage: {
+    fontSize: 18,
+    fontWeight: '500',
+    textAlign: 'center',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
+  howWeGetYouThereTitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    textAlign: 'left',
+    marginBottom: 4,
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
+  },
+  howWeGetYouThereCard: {
+    backgroundColor: '#F4F4F8',
+    borderRadius: 18,
+    paddingHorizontal: 24,
+    paddingVertical: 22,
+    marginBottom: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  howWeGetYouThereIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 15,
+  },
+  howWeGetYouThereNumber: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#000000',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
+  },
+  howWeGetYouThereItem: {
+    fontSize: 16,
+    fontWeight: '500',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+    flex: 1,
   },
 }); 

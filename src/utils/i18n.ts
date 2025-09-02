@@ -401,6 +401,54 @@ const i18n = new I18n({
         costLess: '99% Less',
         description: 'Having safe and perfect form in the gym shouldn\'t cost an arm and a leg.',
       },
+      gymChallengeInfo: {
+        noResults: {
+          headline: 'Results take time, but you\'re closer than you think.',
+          message: 'We\'ll guide you with the right feedback so your hard work pays off.',
+          howWeGetYouThere: [
+            'Form analysis to ensure every rep counts',
+            'Video feedback to spot what\'s holding you back',
+            'Accuracy tracking to measure real progress over time'
+          ]
+        },
+        unsureForm: {
+          headline: 'Form comes first.',
+          message: 'We\'ll give you clear feedback so you can train safely and effectively, every time.',
+          howWeGetYouThere: [
+            'Instant form breakdown from your workout videos',
+            'Actionable tips to fix mistakes quickly',
+            'Accuracy scoring to track your improvement'
+          ]
+        },
+        worriedInjury: {
+          headline: 'Train safe. Train strong.',
+          message: 'We\'ll help you lift with confidence by catching risky movements before they become injuries.',
+          howWeGetYouThere: [
+            'Video feedback to highlight unsafe positions',
+            'Safer technique recommendations tailored to you',
+            'Accuracy tracking to ensure long-term consistency'
+          ]
+        },
+        strugglingMotivation: {
+          headline: 'Motivation is easier when you don\'t do it alone.',
+          message: 'We\'ll keep you engaged by showing your progress and celebrating every improvement in your form.',
+          howWeGetYouThere: [
+            'Easy-to-read accuracy scores after every workout',
+            'Visible improvements with tracked progress trends',
+            'Encouraging tips that help you stay consistent'
+          ]
+        },
+        other: {
+          headline: 'We\'re here for your journey.',
+          message: 'Whatever your challenge is, we\'ll give you the guidance and support to overcome it.',
+          howWeGetYouThere: [
+            'Personalized feedback on your movement videos',
+            'Accuracy tracking across different exercise types',
+            'Continuous tips and insights to support your goals'
+          ]
+        },
+        howWeGetYouThereTitle: 'Here\'s how we\'re going to get you there'
+      },
       saveProgress: {
         title: 'Create an account',
       },
