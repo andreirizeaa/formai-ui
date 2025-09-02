@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, Platform, TouchableOpacity } from 'react-native';
+import { Image } from 'expo-image';
 import { useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as AppleAuthentication from 'expo-apple-authentication';

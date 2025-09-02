@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, ImageBackground, ScrollView, Animated, Image } from 'react-native';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, ScrollView, Animated } from 'react-native';
+import { Image, ImageBackground } from 'expo-image';
 import showAlert from '../../../services/alertService';
 import * as MailComposer from 'expo-mail-composer';
 import Constants from 'expo-constants';
