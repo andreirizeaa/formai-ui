@@ -20,7 +20,6 @@ interface VideoPlayerComponentProps {
 function VideoPlayerComponent({ videoUri }: VideoPlayerComponentProps) {
   const player = useVideoPlayer(videoUri, (player) => {
     player.loop = true;
-    player.showNowPlayingNotification = false;
     player.play();
   });
 

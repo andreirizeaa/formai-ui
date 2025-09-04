@@ -1,14 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, ActivityIndicator, TextInput, Keyboard } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ChevronLeft, Ellipsis, Heart, Trash2, X } from 'lucide-react-native';
+import { ChevronLeft, Ellipsis, Heart, Trash2, X, Pencil } from 'lucide-react-native';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { LineChart } from 'react-native-chart-kit';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useQueryClient } from '@tanstack/react-query';
 import { hapticFeedback } from '../../../utils/haptic';
 import { useLiftData, ILiftData } from '../../../context/LiftDataContext';
-import { deleteLift as deleteLiftApi, favouriteLift as favouriteLiftApi } from '../../../services/liftService';
+import { deleteLift as deleteLiftApi, favouriteLift as favouriteLiftApi, updateLiftWeight } from '../../../services/liftService';
+import { showAlert } from '../../../services/alertService';
 import { useTutorialTarget } from '../../../context/TutorialContext';
 import { useUserDetails } from '../../../context/UserDetailsContext';
 import { useUserCheckIns } from '../../../context/UserCheckInsContext';
@@ -44,8 +45,12 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
   const queryClient = useQueryClient();
   const [showDropdown, setShowDropdown] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showEditWeightModal, setShowEditWeightModal] = useState(false);
   const [isVideoLoading, setIsVideoLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isUpdatingWeight, setIsUpdatingWeight] = useState(false);
+  const [editWeight, setEditWeight] = useState('');
+  const editWeightInputRef = useRef<TextInput>(null);
   
   // Tutorial target for the review feedback button
   const { ref: reviewFeedbackRef } = useTutorialTarget('lift_details_review_feedback');
@@ -66,6 +71,16 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
       setIsFavourite(freshData.isFavourite);
     }
   }, [contextLiftData, initialLiftData.id]);
+
+  // Auto-focus input when edit weight modal opens
+  useEffect(() => {
+    if (showEditWeightModal) {
+      const timer = setTimeout(() => {
+        editWeightInputRef.current?.focus();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [showEditWeightModal]);
 
   const handleClose = () => {
     hapticFeedback.selection();
@@ -136,6 +151,79 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
     hapticFeedback.selection();
     setShowDropdown(false);
     handleDeleteLift();
+  };
+
+  const handleEditWeight = () => {
+    hapticFeedback.selection();
+    // Initialize edit weight with current weight value
+    const currentWeight = userDetails?.unitSystem === 'imperial' 
+      ? Math.round((currentLiftData.weightValue || 0) * 2.20462).toString()
+      : (currentLiftData.weightValue || 0).toString();
+    setEditWeight(currentWeight);
+    setShowEditWeightModal(true);
+  };
+
+  const handleEditWeightCancel = () => {
+    hapticFeedback.selection();
+    setShowEditWeightModal(false);
+    setEditWeight('');
+  };
+
+  const handleEditWeightApply = async () => {
+    hapticFeedback.selection();
+    const weightValue = parseFloat(editWeight);
+    if (weightValue > 0 && !isUpdatingWeight) {
+      setIsUpdatingWeight(true);
+      try {
+        const result = await updateLiftWeight(
+          currentLiftData.id, 
+          weightValue, 
+          userDetails?.unitSystem || 'metric'
+        );
+        
+        if (result.success) {
+          // Update the lift data immediately for instant UI feedback
+          updateLift(currentLiftData.id, { weightValue: userDetails?.unitSystem === 'imperial' ? weightValue / 2.20462 : weightValue });
+          
+          // Invalidate the specific lift query to refresh data
+          queryClient.invalidateQueries({ queryKey: ['lift', currentLiftData.id] });
+          
+          hapticFeedback.success();
+          setShowEditWeightModal(false);
+          setEditWeight('');
+        } else {
+          hapticFeedback.error();
+          setShowEditWeightModal(false);
+          setEditWeight('');
+          showAlert(
+            i18n.t('feedback.updateFailed.weight'), 
+            i18n.t('feedback.updateFailed.message')
+          );
+        }
+      } catch (error) {
+        hapticFeedback.error();
+        setShowEditWeightModal(false);
+        setEditWeight('');
+        showAlert(
+          i18n.t('feedback.updateFailed.weight'), 
+          i18n.t('feedback.updateFailed.message')
+        );
+      } finally {
+        setIsUpdatingWeight(false);
+      }
+    }
+  };
+
+  const isEditWeightValid = () => {
+    const weightValue = parseFloat(editWeight);
+    if (weightValue <= 0) return false;
+    
+    // Get current weight in the same unit system as the input
+    const currentWeight = userDetails?.unitSystem === 'imperial' 
+      ? Math.round((currentLiftData.weightValue || 0) * 2.20462)
+      : (currentLiftData.weightValue || 0);
+    
+    return weightValue !== currentWeight;
   };
 
   // Form score data using currentLiftData
@@ -305,9 +393,18 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
 
           {/* Weight, Reps, and Accuracy Cards Row */}
           <View style={[styles.cardsRow, styles.bottomCardsRow]}>
-            {/* Weight Card */}
-            <View style={styles.infoCard}>
-              <Text style={styles.infoCardTitle}>{i18n.t('feedback.weight')}</Text>
+            {/* Weight Card - Wider */}
+            <View style={[styles.infoCard, styles.weightCard]}>
+              <View style={styles.weightCardTitleRow}>
+                <Text style={styles.infoCardTitle}>{i18n.t('feedback.weight')}</Text>
+                <TouchableOpacity 
+                  style={styles.editWeightButton}
+                  onPress={handleEditWeight}
+                  activeOpacity={0.7}
+                >
+                  <Pencil size={14} color="#8E8E93" />
+                </TouchableOpacity>
+              </View>
               <Text style={styles.infoCardValue}>
                 {userDetails?.unitSystem === 'imperial' 
                   ? `${Math.round((currentLiftData.weightValue || 0) * 2.20462)} ${i18n.t('feedback.lbs')}`
@@ -317,7 +414,7 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
             </View>
             
             {/* Reps Card */}
-            <View style={styles.infoCard}>
+            <View style={[styles.infoCard, styles.repsCard]}>
               <Text style={styles.infoCardTitle}>{i18n.t('feedback.reps')}</Text>
               <Text style={styles.infoCardValue}>
                 {currentLiftData.reps || '--'}
@@ -325,7 +422,7 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
             </View>
 
             {/* Accuracy Card */}
-            <View style={[styles.infoCard, styles.infoCardOrange]}>
+            <View style={[styles.infoCard, styles.infoCardOrange, styles.accuracyCard]}>
               <Text style={styles.infoCardTitleOrange}>{i18n.t('feedback.accuracy')}</Text>
               <Text style={styles.infoCardValueOrange}>
                 {currentLiftData.analysis.accuracy || 91}%
@@ -420,6 +517,74 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
                   <ActivityIndicator size="small" color="#FFFFFF" />
                 ) : (
                   <Text style={styles.modalButtonPrimaryText}>{i18n.t('feedback.delete')}</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      )}
+
+      {/* Edit Weight Modal */}
+      {showEditWeightModal && (
+        <TouchableOpacity 
+          style={styles.modalOverlay} 
+          activeOpacity={1} 
+          onPress={handleEditWeightCancel}
+        >
+          <TouchableOpacity 
+            style={styles.modalContainer} 
+            activeOpacity={1} 
+            onPress={(e) => e.stopPropagation()}
+          >
+            {/* Close button */}
+            <TouchableOpacity 
+              style={styles.modalCloseButton} 
+              onPress={handleEditWeightCancel}
+            >
+              <X size={20} color="#000000" />
+            </TouchableOpacity>
+
+            {/* Title */}
+            <Text style={styles.modalTitle}>Edit Weight</Text>
+
+            {/* Weight Input Section */}
+            <View style={styles.editWeightSection}>
+              <View style={styles.editWeightInputContainer}>
+                <TextInput
+                  ref={editWeightInputRef}
+                  style={styles.editWeightInput}
+                  value={editWeight}
+                  onChangeText={setEditWeight}
+                  placeholder="1"
+                  placeholderTextColor="#8E8E93"
+                  keyboardType="numeric"
+                  textContentType="none"
+                  autoComplete="off"
+                  autoCorrect={false}
+                />
+                <Text style={styles.editWeightUnitText}>
+                  {userDetails?.unitSystem === 'imperial' ? 'lbs' : 'kg'}
+                </Text>
+              </View>
+            </View>
+
+            {/* Action buttons */}
+            <View style={styles.modalButtonContainer}>
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.modalButtonOutlined]} 
+                onPress={handleEditWeightCancel}
+              >
+                <Text style={styles.modalButtonOutlinedText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.modalButtonPrimary, (!isEditWeightValid() || isUpdatingWeight) && styles.modalButtonDisabled]} 
+                onPress={handleEditWeightApply}
+                disabled={!isEditWeightValid() || isUpdatingWeight}
+              >
+                {isUpdatingWeight ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Text style={[styles.modalButtonPrimaryText, (!isEditWeightValid() || isUpdatingWeight) && styles.modalButtonTextDisabled]}>Apply</Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -750,7 +915,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   modalButtonPrimary: {
-    backgroundColor: '#fb2c36',
+    backgroundColor: '#000000',
   },
   modalButtonOutlinedText: {
     fontSize: 16,
@@ -761,6 +926,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#FFFFFF',
+  },
+  modalButtonDisabled: {
+    backgroundColor: '#8E8E93',
+    opacity: 0.7,
+  },
+  modalButtonTextDisabled: {
+    color: '#C7C7CC',
   },
   reviewFeedbackButton: {
     borderWidth: 1,
@@ -886,5 +1058,70 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontFamily: 'SF Pro Display',
     marginBottom: 4,
+  },
+  // Weight card styles
+  weightCard: {
+    flex: 1.5, // Make weight card moderately wider
+    marginRight: 8,
+  },
+  weightCardTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  repsCard: {
+    width: 80,
+    flex: 0, // Override flex to use fixed width
+  },
+  editWeightButton: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 0.5,
+    borderColor: '#000000',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  accuracyCard: {
+    width: 110,
+    flex: 0, // Override flex to use fixed width
+  },
+  // Edit weight modal styles
+  editWeightSection: {
+    marginBottom: 24,
+  },
+  editWeightTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#000000',
+    marginBottom: 16,
+    fontFamily: 'SF Pro Display',
+  },
+  editWeightInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#f3f4f6',
+    borderRadius: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    marginTop: 40,
+    marginBottom: 10,
+  },
+  editWeightInput: {
+    flex: 1,
+    color: '#000000',
+    fontSize: 18,
+    fontWeight: '400',
+    fontFamily: 'SF Pro Display',
+    textAlign: 'center',
+  },
+  editWeightUnitText: {
+    fontSize: 18,
+    fontWeight: '500',
+    color: '#000000',
+    marginLeft: 8,
+    fontFamily: 'SF Pro Display',
   },
 }); 
