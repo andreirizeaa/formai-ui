@@ -3,9 +3,6 @@ import { View, Text, StyleSheet, Image, Dimensions, Platform, Pressable, Activit
 import { BlurView } from 'expo-blur';
 import Svg, { Circle } from 'react-native-svg';
 import { Target, Weight, ChartNoAxesCombined } from 'lucide-react-native';
-
-const AnimatedCircle = Animated.createAnimatedComponent(Circle);
-
 import Animated, { 
   useSharedValue, 
   useAnimatedStyle, 
@@ -16,6 +13,7 @@ import Animated, {
   withSequence,
   interpolate
 } from 'react-native-reanimated';
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 import { LinearGradient } from 'expo-linear-gradient';
 import { hapticFeedback } from '../../../utils/haptic';
 import { useLoadingLifts } from '../../../context/LoadingLiftsContext';
@@ -35,7 +33,6 @@ function LoadingLiftCardComponent({ lift }: LoadingLiftCardProps) {
   const line2Anim = useSharedValue(0);
   const line3Anim = useSharedValue(0);
   const fadeAnim = useSharedValue(1);
-  const completedAnim = useSharedValue(0);
   const initialProgress = lift.uiProgress || 0.02;
   const targetProgress = useSharedValue(initialProgress);
   const progressRender = useSharedValue(initialProgress);
@@ -113,12 +110,6 @@ function LoadingLiftCardComponent({ lift }: LoadingLiftCardProps) {
       );
     }
 
-    // Add fade transition when status changes to completed
-    if (lift.status === 'completed') {
-      fadeAnim.value = withTiming(0.8, { duration: 300 });
-      // Animate to completed state
-      completedAnim.value = withTiming(1, { duration: 500 });
-    }
   }, [lift.status]);
 
 
@@ -245,6 +236,7 @@ function LoadingLiftCardComponent({ lift }: LoadingLiftCardProps) {
   const [progressPercentage, setProgressPercentage] = useState(() => 
     Math.round((lift.uiProgress || 0.02) * 100)
   );
+
 
   // Sync progress state when lift.uiProgress changes (e.g., from AsyncStorage)
   useEffect(() => {
@@ -473,90 +465,6 @@ function LoadingLiftCardComponent({ lift }: LoadingLiftCardProps) {
     );
   }
 
-  // Handle completed state - show lift data card layout
-  if (lift.status === 'completed' && lift.finalData) {
-    const completedStyle = useAnimatedStyle(() => ({
-      opacity: completedAnim.value,
-      transform: [
-        { scale: interpolate(completedAnim.value, [0, 1], [0.95, 1]) }
-      ]
-    }));
-
-    return (
-      <Animated.View style={[styles.liftCard, completedStyle]}>
-        <LinearGradient
-          colors={['#e2e8f0', '#f5f3ff']}
-          locations={[0, 0.3]}
-          style={styles.cardGradient}
-          start={{ x: 0.6, y: 0 }}
-          end={{ x: 0, y: 1 }}
-        >
-          <Pressable
-            style={({ pressed }) => [
-              styles.liftCardContent,
-              { opacity: pressed ? 0.7 : 1 }
-            ]}
-            onPress={() => {
-              // Handle press to show lift details
-              console.log('Completed lift pressed:', lift.id);
-            }}
-          >
-            {/* Video Thumbnail - Left 30% */}
-            <View style={styles.videoThumbnailContainer}>
-              <Image
-                source={{ uri: lift.thumbnailUri }}
-                style={styles.videoThumbnail}
-                resizeMode="cover"
-              />
-            </View>
-            
-            {/* Content - Right 70% */}
-            <View style={styles.liftContent}>
-              {/* Top row: Lift name and time */}
-              <View style={styles.topRow}>
-                <Text style={styles.liftName} numberOfLines={1}>
-                  {lift.finalData.liftType}
-                </Text>
-                <View style={styles.timePill}>
-                  <Text style={styles.timeValue}>
-                    {lift.finalData.liftTime}
-                  </Text>
-                </View>
-              </View>
-
-              {/* Middle row: Target icon and accuracy */}
-              <View style={styles.middleRow}>
-                <Target size={20} color="#000" />
-                <View style={styles.accuracyContainer}>
-                  <Text style={styles.accuracyValue}>{lift.finalData.analysis.accuracy}%</Text>
-                  <Text style={styles.accuracyText}> {i18n.t('feedback.accuracy')}</Text>
-                </View>
-              </View>
-
-              {/* Bottom row: Weight and feedback count */}
-              <View style={styles.bottomRow}>
-                <View style={styles.bottomRowItem}>
-                  <Weight size={16} color="#000000" />
-                  <Text style={styles.bottomRowText}>
-                    {lift.weightUnit === 'lbs' 
-                      ? `${Math.round(lift.weightValue * 2.20462)} lbs`
-                      : `${lift.weightValue} kg`
-                    }
-                  </Text>
-                </View>
-                <View style={styles.bottomRowItem}>
-                  <ChartNoAxesCombined size={16} color="#000000" />
-                  <Text style={styles.bottomRowText}>
-                    {lift.finalData.analysis.feedback?.length || 0} {i18n.t('feedback.improvements')}
-                  </Text>
-                </View>
-              </View>
-            </View>
-          </Pressable>
-        </LinearGradient>
-      </Animated.View>
-    );
-  }
 
   return (
     <View style={styles.liftCard}>

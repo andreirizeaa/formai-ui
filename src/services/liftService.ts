@@ -117,13 +117,11 @@ export async function checkDuplicateAssetId(assetId: string): Promise<boolean> {
       console.log(' >>>>>>> <<<<<<<< check duplicate asset ID', assetId);
     
     if (error) {
-      console.error('Error checking duplicate asset ID:', error);
       return false;
     }
     
     return data && data.length > 0;
   } catch (error) {
-    console.error('Error checking duplicate asset ID:', error);
     return false;
   }
 }
@@ -143,7 +141,6 @@ export async function searchLiftByAssetId(assetId: string): Promise<ILiftData | 
     console.log(' >>>>>>> <<<<<<<< search lift by asset ID', assetId);
     
     if (error) {
-      console.error('Error searching lift by asset ID:', error);
       return null;
     }
     
@@ -177,8 +174,34 @@ export async function searchLiftByAssetId(assetId: string): Promise<ILiftData | 
     
     return null;
   } catch (error) {
-    console.error('Error searching lift by asset ID:', error);
     return null;
+  }
+}
+
+export async function updateLiftWeight(liftId: string, weightValue: number, unitSystem: 'metric' | 'imperial'): Promise<{ success: boolean; error?: string }> {
+  const userId = await getUserId();
+  if (!userId) return { success: false, error: 'NO_USER_ID' };
+
+  try {
+    // Convert to metric if imperial
+    const metricWeight = unitSystem === 'imperial' ? weightValue / 2.20462 : weightValue;
+
+    const response = await fetch(`${API_CONFIG.baseURL}/lifts/update`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        userId, 
+        liftId, 
+        metricWeight 
+      }),
+    });
+
+    if (!response.ok) return { success: false, error: 'API_ERROR' };
+    
+    const json = (await response.json().catch(() => null)) as { success?: boolean; error?: string } | null;
+    return { success: !!json?.success, error: json?.error };
+  } catch (error) {
+    return { success: false, error: 'NETWORK_ERROR' };
   }
 }
 

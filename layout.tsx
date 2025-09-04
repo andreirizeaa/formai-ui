@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
+import { Animated } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { LoadingLiftsProvider } from './src/context/LoadingLiftsContext';
@@ -25,6 +26,8 @@ function AppContent() {
   const [onboardingInitialRoute, setOnboardingInitialRoute] = useState<
     'Welcome' | 'Payment'
   >('Welcome');
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const fadeAnim = useRef(new Animated.Value(1)).current;
   const { customerInfo, isInitializing } = usePurchases();
   const { isUserDetailsLoaded } = useUserDetails();
   const { isLiftDataLoaded } = useLiftData();
@@ -73,13 +76,51 @@ function AppContent() {
   const isAllDataLoaded = !isInitializing && isUserDetailsLoaded && isLiftDataLoaded;
 
   const handleOnboardingComplete = () => {
-    setShowOnboarding(false);
-    setUserNeedsOnboarding(false);
+    setIsTransitioning(true);
+    
+    // Start fade out animation
+    Animated.timing(fadeAnim, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => {
+      // After fade out completes, switch to main app
+      setShowOnboarding(false);
+      setUserNeedsOnboarding(false);
+      
+      // Start fade in animation for main app
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }).start(() => {
+        setIsTransitioning(false);
+      });
+    });
   };
 
   const handleSignIn = () => {
-    setShowOnboarding(false);
-    setUserNeedsOnboarding(false);
+    setIsTransitioning(true);
+    
+    // Start fade out animation
+    Animated.timing(fadeAnim, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => {
+      // After fade out completes, switch to main app
+      setShowOnboarding(false);
+      setUserNeedsOnboarding(false);
+      
+      // Start fade in animation for main app
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }).start(() => {
+        setIsTransitioning(false);
+      });
+    });
   };
 
   const handlePaymentComplete = () => {
@@ -87,15 +128,54 @@ function AppContent() {
   };
 
   const handleUserNeedsOnboarding = () => {
-    setUserNeedsOnboarding(true);
+    setIsTransitioning(true);
+    
+    // Start fade out animation
+    Animated.timing(fadeAnim, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => {
+      // After fade out completes, switch to onboarding
+      setUserNeedsOnboarding(true);
+      
+      // Start fade in animation for onboarding
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }).start(() => {
+        setIsTransitioning(false);
+      });
+    });
   };
 
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
       await removeUserId();
-      setShowOnboarding(true);
-      setOnboardingInitialRoute('Welcome');
+      
+      setIsTransitioning(true);
+      
+      // Start fade out animation
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start(() => {
+        // After fade out completes, switch to onboarding
+        setShowOnboarding(true);
+        setOnboardingInitialRoute('Welcome');
+        
+        // Start fade in animation for onboarding
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }).start(() => {
+          setIsTransitioning(false);
+        });
+      });
     } catch (error) {
       console.error('Error during logout:', error);
     }
@@ -122,10 +202,18 @@ function AppContent() {
   );
 
   if (showOnboarding || userNeedsOnboarding) {
-    return onboardingContent;
+    return (
+      <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
+        {onboardingContent}
+      </Animated.View>
+    );
   }
 
-  return mainAppContent;
+  return (
+    <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
+      {mainAppContent}
+    </Animated.View>
+  );
 }
 
 export function Layout() {

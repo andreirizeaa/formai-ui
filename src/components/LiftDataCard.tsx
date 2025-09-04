@@ -57,6 +57,7 @@ function LiftDataCardComponent({
   };
 
   const handleDelete = useCallback(async () => {
+    hapticFeedback.selection();
     if (deleting || deleteLoading || !lift) return;
     
     setDeleting(true);

@@ -634,6 +634,10 @@ const i18n = new I18n({
       deleteLiftConfirmation: 'Are you sure you want to delete this lift? This action cannot be undone.',
       lbs: 'lbs',
       kg: 'kg',
+      updateFailed: {
+        weight: 'Weight update failed',
+        message: 'Please try again later',
+      },
     },
     common: {
       accuracy: 'Accuracy',

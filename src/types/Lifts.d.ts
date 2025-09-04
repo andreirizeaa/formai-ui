@@ -163,7 +163,7 @@ export interface AnalyzeLiftResponse<T = any> {
   data?: T | null;
   stage?: RetryStage;
   error?: string;
-  streak?: boolean;
+  is_streak?: boolean;
 }
 
 export interface VideoPlayerComponentProps {

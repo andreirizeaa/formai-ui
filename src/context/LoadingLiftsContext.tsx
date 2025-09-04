@@ -382,7 +382,7 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
       }
       
       // Check if streak should be shown and trigger modal
-      if (result.streak === true) {
+      if (result.is_streak === true) {
         openStreakModal();
       }
       
@@ -429,25 +429,6 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
   }
 
   const completeLift = (id: string, analysisData?: any) => {
-    // Update the loading lift to completed state but keep it visible
-    setAllLoadingLifts(prev => {
-      const updated = prev.map(lift => 
-        lift.id === id 
-          ? { 
-              ...lift, 
-              isComplete: true, 
-              status: 'completed' as const,
-              finalData: analysisData ? mapApiDataToFinalData(analysisData) : lift.finalData
-            } 
-          : lift
-      );
-      
-      // Immediately persist completion state to ensure it's saved
-      void saveLoadingLifts(updated);
-      
-      return updated;
-    });
-    
     // Check if this is the first lift for today's date and trigger streak modal
     const completedLift = allLoadingLifts.find(lift => lift.id === id);
     if (completedLift) {
@@ -467,16 +448,14 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
       }
     }
     
-    // Remove the completed loading lift after a short delay to allow smooth transition
-    setTimeout(() => {
-      removeLift(id);
-      // Refresh lifts in background to show the new data card
-      void (async () => { 
-        try { 
-          await refreshLifts(); 
-        } catch (_) {} 
-      })();
-    }, 500); // Reduced from 2000ms to 500ms for smoother transition
+    // Immediately remove the loading lift and refresh regular lifts to show LiftDataCard
+    removeLift(id);
+    // Refresh lifts in background to show the new data card
+    void (async () => { 
+      try { 
+        await refreshLifts(); 
+      } catch (_) {} 
+    })();
   };
 
   const retryLift = async (id: string) => {
