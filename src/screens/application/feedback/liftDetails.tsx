@@ -5,17 +5,15 @@ import { ChevronLeft, Ellipsis, Heart, Trash2, X } from 'lucide-react-native';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { LineChart } from 'react-native-chart-kit';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useQueryClient } from '@tanstack/react-query';
 import { hapticFeedback } from '../../../utils/haptic';
 import { useLiftData, ILiftData } from '../../../context/LiftDataContext';
 import { deleteLift as deleteLiftApi, favouriteLift as favouriteLiftApi } from '../../../services/liftService';
 import { useTutorialTarget } from '../../../context/TutorialContext';
 import { useUserDetails } from '../../../context/UserDetailsContext';
+import { useUserCheckIns } from '../../../context/UserCheckInsContext';
 import i18n from '../../../utils/i18n';
-
-interface VideoPlayerComponentProps {
-  videoUri: string;
-  onReady: () => void;
-}
+import { VideoPlayerComponentProps, LiftDetailsProps } from '../../../types/Lifts';
 
 function VideoPlayerComponent({ videoUri, onReady }: VideoPlayerComponentProps) {
   const player = useVideoPlayer(videoUri, (player) => {
@@ -39,18 +37,15 @@ function VideoPlayerComponent({ videoUri, onReady }: VideoPlayerComponentProps) 
   );
 }
 
-interface LiftDetailsProps {
-  onClose: () => void;
-  onShowFeedbackSlideshow: () => void;
-  liftData: ILiftData;
-}
-
 export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initialLiftData }: LiftDetailsProps) {
   const { removeLift, updateLift, refreshLifts, liftData: contextLiftData, favouriteLiftAndRefresh } = useLiftData();
   const { userDetails } = useUserDetails();
+  const { invalidateAndRefetch } = useUserCheckIns();
+  const queryClient = useQueryClient();
   const [showDropdown, setShowDropdown] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isVideoLoading, setIsVideoLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   // Tutorial target for the review feedback button
   const { ref: reviewFeedbackRef } = useTutorialTarget('lift_details_review_feedback');
@@ -90,12 +85,24 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
   };
 
   const handleDeleteConfirm = async () => {
-    hapticFeedback.success();
-    const ok = await deleteLiftApi(currentLiftData.id);
-    if (ok) {
-      removeLift(currentLiftData.id);
-      setShowDeleteModal(false);
-      onClose();
+    hapticFeedback.selection();
+    setIsDeleting(true);
+    try {
+      const ok = await deleteLiftApi(currentLiftData.id);
+      if (ok) {
+        hapticFeedback.success();
+        removeLift(currentLiftData.id);
+        // Invalidate UserCheckIns query to refresh check-in data
+        invalidateAndRefetch();
+        setShowDeleteModal(false);
+        onClose();
+      } else {
+        hapticFeedback.error();
+      }
+    } catch (error) {
+      hapticFeedback.error();
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -398,16 +405,22 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
             {/* Action buttons */}
             <View style={styles.modalButtonContainer}>
               <TouchableOpacity 
-                style={styles.modalButton} 
+                style={[styles.modalButton, styles.modalButtonOutlined]} 
                 onPress={handleDeleteCancel}
+                disabled={isDeleting}
               >
-                <Text style={styles.modalButtonText}>{i18n.t('feedback.cancel')}</Text>
+                <Text style={styles.modalButtonOutlinedText}>{i18n.t('feedback.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity 
-                style={[styles.modalButton, styles.modalButtonDelete]} 
+                style={[styles.modalButton, styles.modalButtonPrimary]} 
                 onPress={handleDeleteConfirm}
+                disabled={isDeleting}
               >
-                <Text style={[styles.modalButtonText, styles.modalButtonTextDelete]}>{i18n.t('feedback.delete')}</Text>
+                {isDeleting ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.modalButtonPrimaryText}>{i18n.t('feedback.delete')}</Text>
+                )}
               </TouchableOpacity>
             </View>
           </TouchableOpacity>
@@ -726,23 +739,27 @@ const styles = StyleSheet.create({
   },
   modalButton: {
     flex: 1,
-    height: 44,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#E5E5EA',
-    backgroundColor: '#FFFFFF',
+    height: 56,
+    borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  modalButtonText: {
+  modalButtonOutlined: {
+    borderWidth: 1,
+    borderColor: '#000000',
+    backgroundColor: '#FFFFFF',
+  },
+  modalButtonPrimary: {
+    backgroundColor: '#fb2c36',
+  },
+  modalButtonOutlinedText: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '600',
     color: '#000000',
   },
-  modalButtonDelete: {
-    backgroundColor: '#FF3B30',
-  },
-  modalButtonTextDelete: {
+  modalButtonPrimaryText: {
+    fontSize: 16,
+    fontWeight: '600',
     color: '#FFFFFF',
   },
   reviewFeedbackButton: {

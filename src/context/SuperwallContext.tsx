@@ -14,12 +14,10 @@ function SubscriptionSync() {
   const { isInitializing, customerInfo } = usePurchases();
   
   useEffect(() => {
-    console.log("SubscriptionSync", subscriptionStatus);
     // Don't run until SDK is initialized
     if (isInitializing) return;
     
     Purchases.addCustomerInfoUpdateListener((customerInfo: any) => {
-      console.log("Customer info updated", customerInfo);
       const entitlementIds = Object.keys(customerInfo.entitlements.active);      
       setSubscriptionStatus({
         status: entitlementIds.length === 0 ? "INACTIVE" : "ACTIVE",
@@ -86,8 +84,10 @@ export function SuperwallProvider({ children }: SuperwallProviderProps) {
             }
         },
         onPurchaseRestore: async () => {
+            console.log("Starting restored");
             await restorePurchases()
-            return
+            console.log("Purchase restored");
+            return;
         },
       }}
     >

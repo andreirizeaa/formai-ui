@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, TextInput, Keyboard, KeyboardAvoidingView, TouchableWithoutFeedback } from 'react-native';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, TextInput, Keyboard, KeyboardAvoidingView, TouchableWithoutFeedback, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { hapticFeedback } from '../../../../utils/haptic';
 import { useUserDetails } from '../../../../context/UserDetailsContext';
 import { useTutorialTarget, useTutorial } from '../../../../context/TutorialContext';
+import { WeightUnit } from '../../../../types/Lifts';
 
 interface WeightRepsScreenProps {
   onBack: () => void;
-  onUpload: (data: { weight: number; unit: 'kg' | 'lbs'; reps: number }) => void;
-  initialUnit?: 'kg' | 'lbs';
+  onUpload: (data: { weight: number; unit: WeightUnit; reps: number }) => void;
+  initialUnit?: WeightUnit;
 }
 
 export function WeightRepsScreen({ 
@@ -21,10 +22,11 @@ export function WeightRepsScreen({
   const [reps, setReps] = useState('');
   const [focusedInput, setFocusedInput] = useState<'weight' | 'reps' | null>(null);
   const { userDetails } = useUserDetails();
-  const unit: 'kg' | 'lbs' = userDetails?.unitSystem === 'imperial' ? 'lbs' : 'kg';
+  const unit: WeightUnit = userDetails?.unitSystem === 'imperial' ? 'lbs' : 'kg';
   
   const weightInputRef = useRef<TextInput>(null);
   const repsInputRef = useRef<TextInput>(null);
+  const keyboardHeight = useRef(new Animated.Value(0)).current;
 
   // Auto-focus weight input when component mounts (but not during tutorial)
   useEffect(() => {
@@ -37,6 +39,36 @@ export function WeightRepsScreen({
     }, 100);
     return () => clearTimeout(timer);
   }, [isTutorialActive]);
+
+  // Keyboard event listeners for smooth animation
+  useEffect(() => {
+    const keyboardWillShowListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      (event) => {
+        Animated.timing(keyboardHeight, {
+          toValue: event.endCoordinates.height,
+          duration: Platform.OS === 'ios' ? event.duration || 250 : 250,
+          useNativeDriver: true,
+        }).start();
+      }
+    );
+
+    const keyboardWillHideListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      (event) => {
+        Animated.timing(keyboardHeight, {
+          toValue: 0,
+          duration: Platform.OS === 'ios' ? event.duration || 250 : 250,
+          useNativeDriver: true,
+        }).start();
+      }
+    );
+
+    return () => {
+      keyboardWillShowListener.remove();
+      keyboardWillHideListener.remove();
+    };
+  }, [keyboardHeight]);
 
   const handleBack = () => {
     hapticFeedback.selection();
@@ -151,7 +183,14 @@ export function WeightRepsScreen({
 
         {/* Custom Keyboard Accessory View */}
         {focusedInput && (
-          <View style={styles.keyboardAccessoryView}>
+          <Animated.View 
+            style={[
+              styles.keyboardAccessoryView,
+              {
+                transform: [{ translateY: Animated.multiply(keyboardHeight, -0.5) }]
+              }
+            ]}
+          >
             <TouchableOpacity 
               style={[styles.keyboardButton, isKeyboardButtonDisabled() && styles.keyboardButtonDisabled]}
               onPress={handleKeyboardButtonPress}
@@ -162,7 +201,7 @@ export function WeightRepsScreen({
                 {focusedInput === 'weight' ? 'Next' : 'Complete'}
               </Text>
             </TouchableOpacity>
-          </View>
+          </Animated.View>
         )}
 
         {/* Bottom Buttons - always shown */}
@@ -241,6 +280,10 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
   keyboardAccessoryView: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
     backgroundColor: '#f3f4f6',
     borderTopWidth: 1,
     borderTopColor: '#E5E5EA',

@@ -16,6 +16,7 @@ import { gymMovements, BodyPart } from '../../../../constants/gymMovements';
 import { useCameraPermissions } from 'expo-camera';
 import { ChevronLeft, CircleQuestionMark, X } from 'lucide-react-native';
 import * as MediaLibrary from 'expo-media-library';
+import { checkDuplicateAssetId } from '../../../../services/liftService';
 
 interface RecordModalProps {
   isVisible: boolean;
@@ -225,8 +226,37 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
     }, 50);
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     hapticFeedback.selection();
+    
+    // Check for duplicate video before proceeding
+    if (recordedVideoUri) {
+      const uriParts = recordedVideoUri.split('/');
+      const fileName = uriParts[uriParts.length - 1];
+      const fullAssetId = fileName.split('.')[0];
+      const baseAssetId = fullAssetId.split('/')[0]; // Remove /L0/001 suffix if present
+      
+      const isDuplicate = await checkDuplicateAssetId(baseAssetId);
+      
+      if (isDuplicate) {
+        hapticFeedback.error();
+        Alert.alert(
+          i18n.t('upload.duplicateVideo'),
+          i18n.t('upload.duplicateVideoMessage'),
+          [
+            { 
+              text: i18n.t('upload.selectDifferentVideo'), 
+              onPress: () => {
+                // Go back to camera to record new video
+                handleSelectNewVideo();
+              }
+            },
+          ]
+        );
+        return;
+      }
+    }
+    
     setShowVideoPreview(false);
     setShowMovementSelection(true);
   };
@@ -300,6 +330,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
         weightValue: data.weight,
         reps: data.reps,
         assetId: recordedAssetId,
+        videoDurationSec: recordingTime,
       });
       hapticFeedback.success();
     } catch (error) {

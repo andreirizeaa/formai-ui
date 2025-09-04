@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { LoadingLiftData } from '../context/LoadingLiftsContext';
+import type { LoadingLiftData } from '../types/Lifts.d';
 
 const KEY = 'loading_lifts_v1';
 

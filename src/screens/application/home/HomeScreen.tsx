@@ -28,12 +28,12 @@ interface HomeScreenProps {
 }
 
 export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibrary, onShowShare, onTriggerAddOptions, onNavigateToPerformance }: HomeScreenProps) {
-  const { loadingLifts } = useLoadingLifts();
+  const { loadingLifts, showStreakModal, closeStreakModal } = useLoadingLifts();
   const { liftData , getLiftsByDate , refreshLifts } = useLiftData();
   const { currentStreak } = useUserCheckIns();
   const { selectedDate, setSelectedDate } = useSelectedDate();
   
-  // Fire card popup state
+  // Fire card popup state - manual trigger for fire card press
   const [isFirePopupVisible, setIsFirePopupVisible] = useState(false);
   
   // Accuracy card swipe state
@@ -61,6 +61,21 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
       ? Math.round(liftData.reduce((sum, lift) => sum + lift.analysis.accuracy, 0) / liftData.length)
       : 0;
   }, [liftData]);
+
+  // Format selected date with ordinal suffix
+  const formatSelectedDate = useCallback(() => {
+    const day = selectedDate.getDate();
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const month = monthNames[selectedDate.getMonth()];
+    
+    // Add ordinal suffix to day
+    let suffix = 'th';
+    if (day === 1 || day === 21 || day === 31) suffix = 'st';
+    else if (day === 2 || day === 22) suffix = 'nd';
+    else if (day === 3 || day === 23) suffix = 'rd';
+    
+    return `${day}${suffix} ${month} lifts`;
+  }, [selectedDate]);
   
   // Different data for each card
   const cardData = useMemo(() => [
@@ -143,6 +158,7 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
 
   const handleFireCardPress = useCallback(() => {
     hapticFeedback.selection();
+    // This will show the manual fire popup (different from streak-triggered popup)
     setIsFirePopupVisible(true);
   }, []);
 
@@ -251,7 +267,7 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
       
       <View style={styles.bottomContent}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>{i18n.t('home.lifts')}</Text>
+          <Text style={styles.sectionTitle}>{formatSelectedDate()}</Text>
           <Pressable 
             ref={seeAllLiftsRef}
             style={({ pressed }) => [
@@ -299,7 +315,14 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
         </View>
       </View>
       
-      {/* Fire Card Popup */}
+      {/* Streak-triggered Fire Card Popup */}
+      <StreakModal
+        visible={showStreakModal}
+        currentStreak={currentStreak}
+        onClose={closeStreakModal}
+      />
+      
+      {/* Manual Fire Card Popup */}
       <StreakModal
         visible={isFirePopupVisible}
         currentStreak={currentStreak}

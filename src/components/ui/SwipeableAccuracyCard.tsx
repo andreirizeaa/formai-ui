@@ -20,12 +20,14 @@ interface SwipeableAccuracyCardProps {
   cardData: AccuracyCardData[];
   currentCardIndex: number;
   onCardIndexChange: (index: number) => void;
+  externalScrollGestureRef?: React.RefObject<any>;
 }
 
 export function SwipeableAccuracyCard({
   cardData,
   currentCardIndex,
   onCardIndexChange,
+  externalScrollGestureRef,
 }: SwipeableAccuracyCardProps) {
   const { addLift, formatDateForLift } = useLiftData();
 
@@ -158,6 +160,7 @@ export function SwipeableAccuracyCard({
         renderItem={renderItem}
         pagingEnabled
         snapEnabled
+        enableSnap
         defaultIndex={currentCardIndex}
         onSnapToItem={(index) => {
           if (index !== currentCardIndex) {
@@ -166,6 +169,19 @@ export function SwipeableAccuracyCard({
         }}
         style={{
           backgroundColor: 'transparent',
+        }}
+        onConfigurePanGesture={(g) => {
+          'worklet';
+          // Require strong horizontal intent (> ~20px) before activating - very strict
+          g.activeOffsetX([-20, 20]);
+          // If the user moves vertically by ~15px, fail this pan so the parent ScrollView takes over - strict
+          g.failOffsetY([-15, 15]);
+          // Prevent simultaneous gestures - once this gesture starts, block others
+          g.shouldCancelWhenOutside(true);
+          // Don't allow simultaneous gestures with the parent ScrollView
+          // if (externalScrollGestureRef) {
+          //   g.simultaneousWithExternalGesture(externalScrollGestureRef);
+          // }
         }}
       />
 

@@ -14,8 +14,7 @@ import { useLoadingLifts } from '../../../../context/LoadingLiftsContext';
 import { useSelectedDate } from '../../../../context/SelectedDateContext';
 import { gymMovements, BodyPart } from '../../../../constants/gymMovements';
 import { X } from 'lucide-react-native';
-import { listUserVideoPaths } from '../../../../services/VideoUploadService';
-import { getUserId } from '../../../../services/storageService';
+import { checkDuplicateAssetId } from '../../../../services/liftService';
 
 interface UploadModalProps {
   isVisible: boolean;
@@ -97,59 +96,34 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
     }
   }, [isVisible]);
 
-
-
-  const checkForDuplicateVideo = async (assetId: string): Promise<boolean> => {
-    try {
-      const userId = await getUserId();
-      if (!userId) {
-        return false;
-      }
-
-      const existingVideoPaths = await listUserVideoPaths(userId);
-      
-      // Extract the base asset ID (remove /L0/001 suffix if present)
-      const baseAssetId = assetId.split('/')[0];
-      
-      // Check if any existing video has the same base assetId
-      return existingVideoPaths.includes(baseAssetId);
-    } catch (error) {
-      return false;
+  // Check for pre-selected video from search
+  useEffect(() => {
+    if (isVisible && global.selectedVideoFromSearch) {
+      setSelectedVideo(global.selectedVideoFromSearch);
+      // Clear the global variable after using it
+      global.selectedVideoFromSearch = undefined;
     }
-  };
+  }, [isVisible]);
 
-  const handleUploadPress = async () => {
-    // Selection haptic feedback
-    hapticFeedback.selection();
-    
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: 'videos',
-        allowsEditing: true,
-        aspect: [16, 9],
-        quality: 1,
-      });
-
-      if (result.canceled) {
-        return;
-      }
-
-      const asset = result.assets[0];
-      
-      if (asset) {
+  // Run validation checks when video is selected and preview screen is shown
+  useEffect(() => {
+    if (selectedVideo && !showMovementSelection && !showWeightReps) {
+      const validateVideo = async () => {
         // Check if video duration is available and under 90 seconds
-        let durationInSeconds = asset.duration;
+        let durationInSeconds = selectedVideo.duration;
         
         // Handle different duration formats
-        if (typeof asset.duration === 'number') {
+        if (typeof selectedVideo.duration === 'number') {
           // If duration is in milliseconds, convert to seconds
-          if (asset.duration > 1000) {
-            durationInSeconds = asset.duration / 1000;
+          if (selectedVideo.duration > 1000) {
+            durationInSeconds = selectedVideo.duration / 1000;
           }
         }
 
-        // Check for duplicate video before setting as selected
-        const isDuplicate = await checkForDuplicateVideo(asset.assetId || '');
+        // Check for duplicate video
+        const fullAssetId = selectedVideo.assetId || '';
+        const baseAssetId = fullAssetId.split('/')[0]; // Remove /L0/001 suffix if present
+        const isDuplicate = await checkDuplicateAssetId(baseAssetId);
         
         // Check if video duration is under 90 seconds
         if (durationInSeconds !== undefined && durationInSeconds !== null && durationInSeconds > 90) {
@@ -161,7 +135,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
               { 
                 text: 'OK', 
                 onPress: () => {
-                  // Go back and open media library again
+                  // Open media library again
                   handleUploadPress();
                 }
               },
@@ -187,8 +161,35 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
           );
           return;
         }
+      };
 
-        // Video is valid, not a duplicate, and within duration limit, set it as selected
+      validateVideo();
+    }
+  }, [selectedVideo, showMovementSelection, showWeightReps]);
+
+
+
+
+  const handleUploadPress = async () => {
+    // Selection haptic feedback
+    hapticFeedback.selection();
+    
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: 'videos',
+        allowsEditing: true,
+        aspect: [16, 9],
+        quality: 1,
+      });
+
+      if (result.canceled) {
+        return;
+      }
+
+      const asset = result.assets[0];
+      
+      if (asset) {
+        // Immediately set the video as selected to show preview
         setSelectedVideo(asset);
       }
     } catch (error) {
@@ -222,10 +223,76 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
     setShowMovementSelection(false);
   };
 
-  const handleContinue = () => {
+  const validateVideoBeforeContinue = async (): Promise<boolean> => {
+    if (!selectedVideo) return false;
+
+    // Check if video duration is available and under 90 seconds
+    let durationInSeconds = selectedVideo.duration;
+    
+    // Handle different duration formats
+    if (typeof selectedVideo.duration === 'number') {
+      // If duration is in milliseconds, convert to seconds
+      if (selectedVideo.duration > 1000) {
+        durationInSeconds = selectedVideo.duration / 1000;
+      }
+    }
+
+    // Check for duplicate video
+    const fullAssetId = selectedVideo.assetId || '';
+    const baseAssetId = fullAssetId.split('/')[0]; // Remove /L0/001 suffix if present
+    const isDuplicate = await checkDuplicateAssetId(baseAssetId);
+    
+    // Check if video duration is under 90 seconds
+    if (durationInSeconds !== undefined && durationInSeconds !== null && durationInSeconds > 90) {
+      hapticFeedback.error();
+      Alert.alert(
+        i18n.t('upload.videoTooLong'),
+        i18n.t('upload.videoTooLongMessage'),
+        [
+          { 
+            text: 'OK', 
+            onPress: () => {
+              // Open media library again
+              handleUploadPress();
+            }
+          },
+        ]
+      );
+      return false;
+    }
+    
+    if (isDuplicate) {
+      hapticFeedback.error();
+      Alert.alert(
+        i18n.t('upload.duplicateVideo'),
+        i18n.t('upload.duplicateVideoMessage'),
+        [
+          { 
+            text: i18n.t('upload.selectDifferentVideo'), 
+            onPress: () => {
+              // Open media library again
+              handleUploadPress();
+            }
+          },
+        ]
+      );
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleContinue = async () => {
     // Selection haptic feedback
     hapticFeedback.selection();
     
+    // Validate video before proceeding
+    const isValid = await validateVideoBeforeContinue();
+    if (!isValid) {
+      return; // Don't proceed if validation fails
+    }
+    
+    // Proceed to movement selection
     setShowMovementSelection(true);
   };
 
@@ -279,6 +346,15 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
     try {
       const thumbnailUri = await generateVideoThumbnail(videoUri);
       
+      // Get video duration
+      let videoDurationSec: number | undefined = undefined;
+      if (selectedVideo?.duration) {
+        videoDurationSec = selectedVideo.duration;
+        if (typeof videoDurationSec === 'number' && videoDurationSec > 1000) {
+          videoDurationSec = videoDurationSec / 1000; // Convert from milliseconds to seconds
+        }
+      }
+
       // Enqueue the loading lift without awaiting
       void addLoadingLift({
         videoLink: videoUri,
@@ -289,6 +365,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
         weightValue: data.weight,
         reps: data.reps,
         assetId: baseAssetId,
+        videoDurationSec: videoDurationSec,
       });
       
       hapticFeedback.success();

@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect, memo, useCallback } from 'react';
-import { View, Text, StyleSheet, Platform, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Platform, Pressable, ActivityIndicator } from 'react-native';
 import { Image } from 'expo-image';
 import { ILiftData, useLiftData } from '../context/LiftDataContext';
+import { useLoadingLifts } from '../context/LoadingLiftsContext';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   useSharedValue,
@@ -16,17 +17,9 @@ import { deleteLift as deleteLiftApi } from '../services/liftService';
 import { useTutorialTarget } from '../context/TutorialContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useUserDetails } from '../context/UserDetailsContext';
+import { useUserCheckIns } from '../context/UserCheckInsContext';
 import i18n from '../utils/i18n';
-
-interface LiftDataCardProps {
-  lift?: ILiftData;
-  onPress?: (liftId: string) => void; // Changed to take liftId instead of full lift object
-  showDate?: boolean; // When true, show formatted date instead of time
-  isNoLiftsCard?: boolean; // When true, render as no lifts card
-  noLiftsTitle?: string;
-  noLiftsSubtitle?: string;
-  onNoLiftsPress?: () => void;
-}
+import { LiftDataCardProps } from '../types/Lifts.d';
 
 function LiftDataCardComponent({ 
   lift, 
@@ -42,9 +35,12 @@ function LiftDataCardComponent({
   const loadingProgress = useSharedValue(0);
   const swipeWidth = useSharedValue(0);
   const { removeLift } = useLiftData();
+  const { isLiftAutoDeleted } = useLoadingLifts();
   const { ref: firstLiftCardRef } = useTutorialTarget('home_first_lift_card');
   const [deleting, setDeleting] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const { userDetails } = useUserDetails();
+  const { invalidateAndRefetch: invalidateUserCheckIns } = useUserCheckIns();
 
 
   const autoResetTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -60,13 +56,54 @@ function LiftDataCardComponent({
     });
   };
 
-  const handleDelete = useCallback(() => {
-    if (deleting || !lift) return;
+  const handleDelete = useCallback(async () => {
+    if (deleting || deleteLoading || !lift) return;
+    
     setDeleting(true);
-    hapticFeedback.success();
-    removeLift(lift.id);
-    deleteLiftApi(lift.id).catch(() => {});
-  }, [deleting, lift, removeLift]);
+    setDeleteLoading(true);
+    
+    try {
+      // Stop the spinning circle animation
+      if (autoResetTimeoutRef.current) {
+        clearTimeout(autoResetTimeoutRef.current);
+        autoResetTimeoutRef.current = null;
+      }
+      loadingProgress.value = withTiming(0, { duration: 0 });
+      
+      // Check if this lift has been auto-deleted
+      const isAutoDeleted = isLiftAutoDeleted(lift.id);
+      
+      if (isAutoDeleted) {
+        // Lift was already deleted in the background, just remove from UI instantly
+        hapticFeedback.success();
+        removeLift(lift.id);
+        // Invalidate and refetch user check-ins to update calendar and streak data
+        invalidateUserCheckIns();
+      } else {
+        // Call the API for lifts that haven't been auto-deleted
+        const success = await deleteLiftApi(lift.id);
+        
+        if (success) {
+          hapticFeedback.success();
+          removeLift(lift.id);
+          // Invalidate and refetch user check-ins to update calendar and streak data
+          invalidateUserCheckIns();
+        } else {
+          hapticFeedback.error();
+          // Just close the delete panel on error
+          translateX.value = withTiming(0, { duration: 200, easing: Easing.out(Easing.quad) });
+        }
+      }
+    } catch (error) {
+      console.error('Delete failed:', error);
+      hapticFeedback.error();
+      // Just close the delete panel on error
+      translateX.value = withTiming(0, { duration: 200, easing: Easing.out(Easing.quad) });
+    } finally {
+      setDeleting(false);
+      setDeleteLoading(false);
+    }
+  }, [deleting, deleteLoading, lift, removeLift, invalidateUserCheckIns, loadingProgress, translateX, isLiftAutoDeleted]);
 
   function startAutoReset() {
     if (autoResetTimeoutRef.current) clearTimeout(autoResetTimeoutRef.current);
@@ -80,6 +117,7 @@ function LiftDataCardComponent({
   const pan = Gesture.Pan()
     .activeOffsetX([-10, 10])
     .failOffsetY([-5, 5])
+    .enabled(!deleteLoading)
     .onBegin(() => {
       panStartX.value = translateX.value;
     })
@@ -173,10 +211,20 @@ function LiftDataCardComponent({
     >
       {/* Background: delete zone (2px inset) */}
       <View style={styles.deleteBackground}>
-        <Pressable onPress={handleDelete} style={({ pressed }) => ({ opacity: pressed ? 0.8 : 1 })}>
+        <Pressable 
+          onPress={handleDelete} 
+          disabled={deleteLoading}
+          style={({ pressed }) => ({ opacity: (pressed || deleteLoading) ? 0.8 : 1 })}
+        >
           <View style={circleBaseStyle}>
-            <Animated.View style={[progressBaseStyle, loadingProgressStyle]} />
-            <Trash2 size={20} color="#FFF" />
+            {deleteLoading ? (
+              <ActivityIndicator size="small" color="#FFF" />
+            ) : (
+              <>
+                <Animated.View style={[progressBaseStyle, loadingProgressStyle]} />
+                <Trash2 size={20} color="#FFF" />
+              </>
+            )}
           </View>
         </Pressable>
       </View>
