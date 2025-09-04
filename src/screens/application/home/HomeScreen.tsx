@@ -218,7 +218,7 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
 
   // Render function for loading lifts
   const renderLoadingLiftItem = useCallback(({ item }: { item: any }) => (
-    <LoadingLiftCard lift={item} />
+    <LoadingLiftCard key={item.id} lift={item} />
   ), []);
 
   return (
