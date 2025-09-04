@@ -33,7 +33,9 @@ function LoadingLiftCardComponent({ lift }: LoadingLiftCardProps) {
   const line2Anim = useSharedValue(0);
   const line3Anim = useSharedValue(0);
   const fadeAnim = useSharedValue(1);
-  const initialProgress = lift.uiProgress || 0.02;
+  
+  // For new lifts, always start at 0.02 (2%), for resumed lifts use stored progress
+  const initialProgress = (lift.uiProgress && lift.uiProgress > 0) ? lift.uiProgress : 0.02;
   const targetProgress = useSharedValue(initialProgress);
   const progressRender = useSharedValue(initialProgress);
 
@@ -124,6 +126,17 @@ function LoadingLiftCardComponent({ lift }: LoadingLiftCardProps) {
 
     // Only start progress simulation for uploading or processing states
     if (lift.status === 'uploading' || lift.status === 'processing') {
+      // Ensure we start with the correct initial progress for this specific lift
+      const storedProgress = lift.uiProgress || 0;
+      const initialProgress = storedProgress > 0 ? storedProgress : 0.02;
+      
+      // Reset progress tracking to ensure clean start
+      lastProgressRef.current = initialProgress;
+      targetProgress.value = initialProgress;
+      progressRender.value = initialProgress;
+      setProgressPercentage(Math.round(initialProgress * 100));
+      
+      console.log(`LoadingLiftCard ${lift.id}: Starting progress simulation with ${initialProgress} (${Math.round(initialProgress * 100)}%)`);
       const videoDuration = lift.videoDurationSec || 10; // Default to 10 seconds if not provided
       let targetDuration = ((videoDuration * 2 ) + 20 )* 1000; // Convert to milliseconds
       
@@ -140,16 +153,15 @@ function LoadingLiftCardComponent({ lift }: LoadingLiftCardProps) {
       if (lift.retryStage) {
         // If this is a retry, start from the appropriate stage percentage
         currentProgress = getRetryProgressForStage(lift.retryStage);
+        // Update the progress tracking for retry
+        lastProgressRef.current = currentProgress;
+        targetProgress.value = currentProgress;
+        progressRender.value = currentProgress;
+        setProgressPercentage(Math.round(currentProgress * 100));
       } else {
-        // Otherwise, use stored progress as starting point
-        currentProgress = Math.min(lift.uiProgress || 0.02, 0.95); // Cap at 95% to allow for completion
+        // Use the initial progress we already set above
+        currentProgress = initialProgress;
       }
-      
-      // Reset the progress tracking for this specific lift
-      lastProgressRef.current = currentProgress;
-      targetProgress.value = currentProgress;
-      progressRender.value = currentProgress;
-      setProgressPercentage(Math.round(currentProgress * 100));
       
       // Calculate how much time has already passed based on current progress
       // If we're starting from 0, no time has passed. If we're at 50%, half the time has passed.
@@ -233,14 +245,17 @@ function LoadingLiftCardComponent({ lift }: LoadingLiftCardProps) {
     };
   });
 
-  const [progressPercentage, setProgressPercentage] = useState(() => 
-    Math.round((lift.uiProgress || 0.02) * 100)
-  );
+  const [progressPercentage, setProgressPercentage] = useState(() => {
+    // For new lifts (no stored progress), always start at 0
+    // For resumed lifts, use the stored progress
+    const initialProgress = lift.uiProgress || 0;
+    return Math.round(initialProgress * 100);
+  });
 
 
   // Sync progress state when lift.uiProgress changes (e.g., from AsyncStorage)
   useEffect(() => {
-    const newProgress = lift.uiProgress || 0.02;
+    const newProgress = lift.uiProgress || 0;
     const newPercentage = Math.round(newProgress * 100);
     setProgressPercentage(prev => Math.max(prev, newPercentage));
     setMonotonicProgress(newProgress, false); // Only apply if higher
@@ -248,7 +263,16 @@ function LoadingLiftCardComponent({ lift }: LoadingLiftCardProps) {
 
   // Reset animated values when a new lift is added (lift.id changes)
   useEffect(() => {
-    const initialProgress = lift.uiProgress || 0.02;
+    // Clear any existing timer for this lift
+    if (progressTimerRef.current) {
+      clearInterval(progressTimerRef.current);
+      progressTimerRef.current = null;
+    }
+    
+    // For new lifts, always start at 0.02 (2%)
+    // For resumed lifts, use stored progress
+    const storedProgress = lift.uiProgress || 0;
+    const initialProgress = storedProgress > 0 ? storedProgress : 0.02;
     const initialPercentage = Math.round(initialProgress * 100);
     
     // Reset all progress tracking for this specific lift
@@ -256,6 +280,8 @@ function LoadingLiftCardComponent({ lift }: LoadingLiftCardProps) {
     targetProgress.value = initialProgress;
     progressRender.value = initialProgress;
     setProgressPercentage(initialPercentage);
+    
+    console.log(`LoadingLiftCard ${lift.id}: Reset progress to ${initialProgress} (${initialPercentage}%)`);
   }, [lift.id]); // Only run when lift.id changes (new lift added)
 
   const getRetryProgressForStage = (retryStage?: string): number => {
@@ -837,4 +863,13 @@ const styles = StyleSheet.create({
 });
 
 // Memoized component for performance
-export const LoadingLiftCard = memo(LoadingLiftCardComponent); 
+export const LoadingLiftCard = memo(LoadingLiftCardComponent, (prevProps, nextProps) => {
+  // Return true if props are the same (no re-render needed)
+  // Return false if props are different (re-render needed)
+  return (
+    prevProps.lift.id === nextProps.lift.id &&
+    prevProps.lift.status === nextProps.lift.status &&
+    prevProps.lift.uiProgress === nextProps.lift.uiProgress &&
+    prevProps.lift.errorMessage === nextProps.lift.errorMessage
+  );
+}); 

@@ -162,7 +162,7 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
       sourceThumbnailUri: liftData.thumbnailUri,
       uploadedVideoUrl: undefined,
       uploadedThumbnailUrl: undefined,
-      uiProgress: 0, // Initialize progress at 0
+      uiProgress: 0, // Always initialize new lifts at 0 progress
     };
     setAllLoadingLifts(prev => [newLift, ...prev]);
     
