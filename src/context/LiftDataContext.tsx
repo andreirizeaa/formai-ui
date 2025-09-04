@@ -3,46 +3,10 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { getUserId } from '../services/storageService';
 import { favouriteLift as favouriteLiftApi } from '../services/liftService';
+import { ILiftData, LiftDataContextType } from '../types/Lifts.d';
 
-export interface ILiftData {
-  id: string;
-  isFavourite: boolean;
-  liftType: string;
-  liftDate: string;
-  liftTime: string;
-  weightValue: number;
-  reps: number;
-  rawVideoURL: any;
-  poseVideoURL: any;
-  thumbnailURL?: any;
-  analysis: {
-    accuracy: number;
-    lineGraphValues: number[];
-    feedback: Array<{
-      imageURL: any;
-      flaws: string[];
-      improvement: string[];
-    }>;
-  };
-}
-
-interface LiftDataContextType {
-  liftData: ILiftData[];
-  addLift: (lift: ILiftData) => void;
-  updateLift: (id: string, updatedLift: Partial<ILiftData>) => void;
-  removeLift: (id: string) => void;
-  toggleFavourite: (id: string) => void;
-  getLiftById: (id: string) => ILiftData | undefined;
-  getFavouriteLifts: () => ILiftData[];
-  getLiftsByType: (liftType: string) => ILiftData[];
-  getLiftsByDate: (date: Date) => ILiftData[];
-  getLiftsByDateString: (dateString: string) => ILiftData[];
-  clearAllLifts: () => void;
-  formatDateForLift: (date: Date) => string;
-  refreshLifts: () => Promise<void>;
-  favouriteLiftAndRefresh: (id: string) => Promise<void>;
-  isLiftDataLoaded: boolean;
-}
+// Re-export for backward compatibility
+export { ILiftData };
 
 const LiftDataContext = createContext<LiftDataContextType | undefined>(undefined);
 

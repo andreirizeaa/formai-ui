@@ -13,6 +13,7 @@ const WEEK_HEIGHT = 80;
 interface SwipeableCalendarProps {
   onDateSelect?: (date: Date) => void;
   initialSelectedDate?: Date;
+  externalScrollGestureRef?: React.RefObject<any>;
 }
 
 interface DayData {
@@ -26,7 +27,7 @@ interface DayData {
   dailyAccuracy: number;
 }
 
-export function SwipeableCalendar({ onDateSelect, initialSelectedDate }: SwipeableCalendarProps) {
+export function SwipeableCalendar({ onDateSelect, initialSelectedDate, externalScrollGestureRef }: SwipeableCalendarProps) {
   const { selectedDate, setSelectedDate } = useSelectedDate();
   const { daysLogged } = useUserCheckIns();
   const { getLiftsByDate } = useLiftData();
@@ -185,7 +186,21 @@ export function SwipeableCalendar({ onDateSelect, initialSelectedDate }: Swipeab
         defaultIndex={currentWeekIndex}
         pagingEnabled
         snapEnabled
+        enableSnap
         style={{ backgroundColor: 'transparent' }}
+        onConfigurePanGesture={(g) => {
+          'worklet';
+          // Require strong horizontal intent (> ~20px) before activating - very strict
+          g.activeOffsetX([-20, 20]);
+          // If the user moves vertically by ~15px, fail this pan so the parent ScrollView takes over - strict
+          g.failOffsetY([-15, 15]);
+          // Prevent simultaneous gestures - once this gesture starts, block others
+          g.shouldCancelWhenOutside(true);
+          // Don't allow simultaneous gestures with the parent ScrollView
+          // if (externalScrollGestureRef) {
+          //   g.simultaneousWithExternalGesture(externalScrollGestureRef);
+          // }
+        }}
         renderItem={({ item }) => (
           <View style={styles.weekPage}>
             <View style={styles.weekContent}>
@@ -203,16 +218,8 @@ export function SwipeableCalendar({ onDateSelect, initialSelectedDate }: Swipeab
                       // Hide entire day circle background when has lifts, or for future dates
                       day.dailyAccuracy > 0 || day.isFuture
                         ? styles.transparentCircle
-                        : day.isToday && day.isActive
-                        ? styles.todaySelectedCircle
-                        : day.isToday
-                        ? styles.todayCircle
-                        : day.isActive && day.isLogged
-                        ? styles.loggedDayCircle
                         : day.isActive
                         ? styles.selectedCircle
-                        : day.isLogged
-                        ? styles.loggedDayCircle
                         : styles.inactiveDayCircle,
                     ]}
                   >
@@ -223,9 +230,7 @@ export function SwipeableCalendar({ onDateSelect, initialSelectedDate }: Swipeab
                     <Text
                       style={[
                         styles.dayName,
-                        day.isLogged && !day.isToday
-                          ? styles.loggedDayText
-                          : day.isActive
+                        day.isActive
                           ? styles.activeDayText
                           : styles.inactiveDayText,
                       ]}
@@ -292,24 +297,8 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
     backgroundColor: 'transparent',
   },
-  todayCircle: {
-    borderWidth: 2,
-    borderColor: '#9CA3AF',
-    borderStyle: 'solid',
-    backgroundColor: 'transparent',
-  },
-  todaySelectedCircle: {
-    borderWidth: 2,
-    borderColor: '#000000',
-    borderStyle: 'solid',
-    backgroundColor: 'transparent',
-  },
-  loggedDayCircle: {
-    borderWidth: 1.5,
-    borderColor: '#ff6900',
-    borderStyle: 'solid',
-    backgroundColor: 'transparent',
-  },
+
+
   transparentCircle: {
     borderWidth: 0,
     backgroundColor: 'transparent',
@@ -331,8 +320,5 @@ const styles = StyleSheet.create({
     color: '#000000',
     fontWeight: '700',
   },
-  loggedDayText: {
-    color: '#ff6900',
-    fontWeight: '600',
-  },
+
 }); 

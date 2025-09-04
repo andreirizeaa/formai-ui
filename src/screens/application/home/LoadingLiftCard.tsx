@@ -1,10 +1,16 @@
-import React, { useEffect, memo, useState } from 'react';
-import { View, Text, StyleSheet, Image, Dimensions, Platform, Pressable } from 'react-native';
+import React, { useEffect, memo, useState, useRef } from 'react';
+import { View, Text, StyleSheet, Image, Dimensions, Platform, Pressable, ActivityIndicator } from 'react-native';
 import { BlurView } from 'expo-blur';
-import CircularProgress from 'react-native-circular-progress-indicator';
+import Svg, { Circle } from 'react-native-svg';
+import { Target, Weight, ChartNoAxesCombined } from 'lucide-react-native';
+
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
+
 import Animated, { 
   useSharedValue, 
   useAnimatedStyle, 
+  useAnimatedProps,
+  useDerivedValue,
   withRepeat,
   withTiming,
   withSequence,
@@ -13,45 +19,59 @@ import Animated, {
 import { LinearGradient } from 'expo-linear-gradient';
 import { hapticFeedback } from '../../../utils/haptic';
 import { useLoadingLifts } from '../../../context/LoadingLiftsContext';
+import { deleteUserStorage } from '../../../services/liftService';
 import i18n from '../../../utils/i18n';
-import { CircleCheck, Trash2 } from 'lucide-react-native';
+import { Trash2 } from 'lucide-react-native';
+import { LoadingLiftCardProps } from '../../../types/Lifts.d';
 
-interface LoadingLiftCardProps {
-  lift: {
-    id: string;
-    thumbnailUri: string;
-    movementType: string;
-    weightValue: number;
-    weightUnit?: 'kg' | 'lbs';
-    reps: number;
-    dateToday: string;
-    progress: number;
-    isComplete: boolean;
-    status: 'uploading' | 'processing' | 'completed' | 'error';
-    errorMessage?: string;
-    pipelineStage?: 'upload_video' | 'upload_thumbnail' | 'analyze';
-    finalData?: {
-      id: string;
-      isFavourite: boolean;
-      liftType: string;
-      liftDate: string;
-      weightValue: number;
-      reps: number;
-      thumbnailURL?: string;
-      analysis: { accuracy: number };
-    };
-  };
-}
+// Constants for progress circle
+const R = 36;
+const CIRC = 2 * Math.PI * R;
 
 function LoadingLiftCardComponent({ lift }: LoadingLiftCardProps) {
-  const { retryLift, removeLift } = useLoadingLifts();
+  const { retryLift, removeLift, updateLiftProgress, isLiftAutoDeleted } = useLoadingLifts();
   const pulseAnim = useSharedValue(0);
   const line1Anim = useSharedValue(0);
   const line2Anim = useSharedValue(0);
   const line3Anim = useSharedValue(0);
   const fadeAnim = useSharedValue(1);
-  const [showCheckingVideo, setShowCheckingVideo] = useState(false);
-  const [displayProgress, setDisplayProgress] = useState(0);
+  const completedAnim = useSharedValue(0);
+  const initialProgress = lift.uiProgress || 0.02;
+  const targetProgress = useSharedValue(initialProgress);
+  const progressRender = useSharedValue(initialProgress);
+
+  const [isDeleting, setIsDeleting] = useState(false);
+  const progressTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastProgressRef = useRef(initialProgress);
+
+  // Helper function to ensure progress only moves forward
+  const setMonotonicProgress = (p: number, animate = true) => {
+    // Allow completion to hit 1.0, otherwise cap at 0.97 as you do
+    const cap = p >= 1 ? 1 : 0.97;
+    const next = Math.max(lastProgressRef.current, Math.min(cap, p));
+
+    if (next !== lastProgressRef.current) {
+      lastProgressRef.current = next;
+      targetProgress.value = next;
+      // Keep the label monotonic too - ensure it's specific to this lift
+      const newPercentage = Math.round(next * 100);
+      setProgressPercentage(prev => Math.max(prev, newPercentage));
+      if (!animate) {
+        // Immediate jump forward (never backwards) on UI value too
+        progressRender.value = Math.max(progressRender.value, next);
+      }
+    }
+  };
+
+  // Derive the animated UI value (no JS retargeting jitter)
+  const progressDerived = useDerivedValue(() => withTiming(targetProgress.value, { duration: 100 }));
+
+  // Ensure UI-thread monotonic clamp
+  useDerivedValue(() => {
+    if (progressDerived.value > progressRender.value) {
+      progressRender.value = progressDerived.value;
+    }
+  });
 
   useEffect(() => {
     // Only animate if not in error state
@@ -96,93 +116,109 @@ function LoadingLiftCardComponent({ lift }: LoadingLiftCardProps) {
     // Add fade transition when status changes to completed
     if (lift.status === 'completed') {
       fadeAnim.value = withTiming(0.8, { duration: 300 });
+      // Animate to completed state
+      completedAnim.value = withTiming(1, { duration: 500 });
     }
   }, [lift.status]);
 
-  // Handle "Checking Video" timer for 2 seconds
+
+
+  // Progress simulation hook
   useEffect(() => {
-    if (lift.status === 'processing' && lift.pipelineStage === 'analyze') {
-      setShowCheckingVideo(true);
-      const timer = setTimeout(() => {
-        setShowCheckingVideo(false);
-      }, 2000);
+    // Clear any existing timer
+    if (progressTimerRef.current) {
+      clearInterval(progressTimerRef.current);
+      progressTimerRef.current = null;
+    }
+
+    // Only start progress simulation for uploading or processing states
+    if (lift.status === 'uploading' || lift.status === 'processing') {
+      const videoDuration = lift.videoDurationSec || 10; // Default to 10 seconds if not provided
+      let targetDuration = ((videoDuration * 2 ) + 20 )* 1000; // Convert to milliseconds
       
-      return () => clearTimeout(timer);
-    } else {
-      setShowCheckingVideo(false);
-    }
-  }, [lift.status, lift.pipelineStage]);
-
-  // Calculate and animate progress percentage
-  useEffect(() => {
-    if (lift.status === 'completed') {
-      // When completed, show 100%
-      setDisplayProgress(100);
-      return;
-    }
-
-    if (lift.status === 'error') {
-      // When error, keep current progress
-      return;
-    }
-
-    // Calculate target progress based on status and pipeline stage
-    let targetProgress = 0;
-    let isSlowPhase = false;
-    
-    if (lift.status === 'uploading') {
-      // Uploading phase: 0-33%
-      targetProgress = Math.min(33, lift.progress * 33);
-    } else if (lift.status === 'processing') {
-      switch (lift.pipelineStage) {
-        case 'upload_video':
-        case 'upload_thumbnail':
-          // Still uploading: 0-33%
-          targetProgress = Math.min(33, lift.progress * 33);
-          break;
-        case 'analyze':
-          // Analyzing phase: 33-90% - MUCH SLOWER
-          targetProgress = 33 + Math.min(57, lift.progress * 57);
-          isSlowPhase = true;
-          break;
-        default:
-          // Default processing: 33-90% - MUCH SLOWER
-          targetProgress = 33 + Math.min(57, lift.progress * 57);
-          isSlowPhase = true;
+      // Adjust target duration if this is a retry - reduce by the retry stage percentage
+      if (lift.retryStage) {
+        const retryStagePercentage = getRetryProgressForStage(lift.retryStage);
+        targetDuration = targetDuration * (1 - retryStagePercentage);
       }
+      
+      const tickInterval = 50; // Update every 50ms for smoother animation
+      
+      // Determine starting progress based on retry stage or stored progress
+      let currentProgress: number;
+      if (lift.retryStage) {
+        // If this is a retry, start from the appropriate stage percentage
+        currentProgress = getRetryProgressForStage(lift.retryStage);
+      } else {
+        // Otherwise, use stored progress as starting point
+        currentProgress = Math.min(lift.uiProgress || 0.02, 0.95); // Cap at 95% to allow for completion
+      }
+      
+      // Reset the progress tracking for this specific lift
+      lastProgressRef.current = currentProgress;
+      targetProgress.value = currentProgress;
+      progressRender.value = currentProgress;
+      setProgressPercentage(Math.round(currentProgress * 100));
+      
+      // Calculate how much time has already passed based on current progress
+      // If we're starting from 0, no time has passed. If we're at 50%, half the time has passed.
+      const elapsedTime = currentProgress * targetDuration;
+      
+      let tickCount = 0;
+      let lastStoredProgress = currentProgress;
+      
+      progressTimerRef.current = setInterval(() => {
+        tickCount++;
+        
+        // Calculate progress based on elapsed time from the start of the simulation
+        const totalElapsedTime = elapsedTime + (tickCount * tickInterval);
+        const progressFromStart = Math.min(totalElapsedTime / targetDuration, 0.95);
+        
+        // Only positive noise so it never goes backwards
+        const fluctuation = Math.random() * 0.003; // 0% to 0.3%
+        const candidate = progressFromStart + fluctuation;
+        
+        // Use monotonic helper to ensure progress only moves forward
+        setMonotonicProgress(candidate);
+        currentProgress = lastProgressRef.current;
+        
+        // Only update storage and percentage display every 5 ticks (250ms) to avoid excessive updates
+        if (tickCount % 5 === 0 && Math.abs(currentProgress - lastStoredProgress) > 0.02) {
+          lastStoredProgress = currentProgress;
+          // Update progress in context and AsyncStorage
+          updateLiftProgress(lift.id, currentProgress);
+        }
+        
+        // Stop if we've reached the cap and analysis hasn't returned
+        if (currentProgress >= 0.93 && lift.status === 'processing' && lift.pipelineStage === 'analyze') {
+          if (progressTimerRef.current) {
+            clearInterval(progressTimerRef.current);
+            progressTimerRef.current = null;
+          }
+        }
+      }, tickInterval);
+    }
+    
+    // Handle completion
+    if (lift.status === 'completed') {
+      setMonotonicProgress(1, true);
+      updateLiftProgress(lift.id, 1);
+    }
+    
+    // Handle error - freeze progress
+    if (lift.status === 'error') {
+      // Keep current progress, don't animate
     }
 
-    // Animate progress incrementally
-    const incrementProgress = () => {
-      setDisplayProgress(prev => {
-        const diff = targetProgress - prev;
-        if (diff <= 0) return prev;
-        
-        let increment, delay;
-        
-        if (isSlowPhase) {
-          // Much slower for analyzing phases - smaller increments and longer delays
-          increment = Math.min(Math.max(0.5, Math.floor(diff / 50)), 2); // 0.5-2% increments
-          delay = 800 + Math.random() * 1200; // 800-2000ms delays
-        } else {
-          // Normal speed for uploading
-          increment = Math.min(Math.max(1, Math.floor(diff / 10)), 5); // 1-5% increments
-          delay = 200 + Math.random() * 300; // 200-500ms delays
-        }
-        
-        const newProgress = Math.min(prev + increment, targetProgress);
-        
-        // If we haven't reached target, schedule next update
-        if (newProgress < targetProgress) {
-          setTimeout(incrementProgress, delay);
-        }
-        
-        return newProgress;
-      });
+    return () => {
+      if (progressTimerRef.current) {
+        clearInterval(progressTimerRef.current);
+        progressTimerRef.current = null;
+      }
     };
+  }, [lift.status, lift.pipelineStage, lift.videoDurationSec, lift.uiProgress, lift.id]);
 
-    incrementProgress();
-  }, [lift.status, lift.pipelineStage, lift.progress]);
+
 
   const animatedLine1Style = useAnimatedStyle(() => ({
     opacity: interpolate(line1Anim.value, [0, 1], [0.3, 1]),
@@ -199,18 +235,106 @@ function LoadingLiftCardComponent({ lift }: LoadingLiftCardProps) {
     transform: [{ scale: interpolate(line3Anim.value, [0, 1], [0.95, 1.05]) }],
   }));
 
+  const animatedProgressProps = useAnimatedProps(() => {
+    const progress = progressRender.value;
+    return {
+      strokeDashoffset: CIRC * (1 - progress),
+    };
+  });
+
+  const [progressPercentage, setProgressPercentage] = useState(() => 
+    Math.round((lift.uiProgress || 0.02) * 100)
+  );
+
+  // Sync progress state when lift.uiProgress changes (e.g., from AsyncStorage)
+  useEffect(() => {
+    const newProgress = lift.uiProgress || 0.02;
+    const newPercentage = Math.round(newProgress * 100);
+    setProgressPercentage(prev => Math.max(prev, newPercentage));
+    setMonotonicProgress(newProgress, false); // Only apply if higher
+  }, [lift.uiProgress, lift.id]);
+
+  // Reset animated values when a new lift is added (lift.id changes)
+  useEffect(() => {
+    const initialProgress = lift.uiProgress || 0.02;
+    const initialPercentage = Math.round(initialProgress * 100);
+    
+    // Reset all progress tracking for this specific lift
+    lastProgressRef.current = initialProgress;
+    targetProgress.value = initialProgress;
+    progressRender.value = initialProgress;
+    setProgressPercentage(initialPercentage);
+  }, [lift.id]); // Only run when lift.id changes (new lift added)
+
+  const getRetryProgressForStage = (retryStage?: string): number => {
+    switch (retryStage) {
+      case 'VIDEO_VALIDATION':
+        return 0.20; // 20%
+      case 'POSE_ESTIMATION':
+        return 0.35; // 35%
+      case 'AI_ANALYSIS':
+        return 0.55; // 55%
+      default:
+        return 0.02;
+    }
+  };
+
   const handleRetry = async () => {
     hapticFeedback.selection();
     try {
+      // Get the appropriate progress percentage based on retry stage
+      const retryProgress = getRetryProgressForStage(lift.retryStage);
+      
+      // Reset progress tracking for this specific lift
+      lastProgressRef.current = retryProgress;
+      targetProgress.value = retryProgress;
+      progressRender.value = retryProgress;
+      setProgressPercentage(Math.round(retryProgress * 100));
+      
+      // Also update the stored progress in AsyncStorage
+      updateLiftProgress(lift.id, retryProgress);
       await retryLift(lift.id);
     } catch (error) {
       console.error('Retry failed:', error);
     }
   };
 
-  const handleClose = () => {
+  const handleClose = async () => {
+    if (isDeleting) return; // Prevent multiple clicks during deletion
+    
     hapticFeedback.selection();
-    removeLift(lift.id);
+    
+    // If this is an error card, check if it was already auto-deleted
+    if (lift.status === 'error') {
+      setIsDeleting(true);
+      try {
+        // Check if this lift was already auto-deleted
+        const isAutoDeleted = isLiftAutoDeleted(lift.id);
+        
+        if (isAutoDeleted) {
+          // Lift was already deleted in the background, just remove from UI instantly
+          hapticFeedback.success();
+          removeLift(lift.id);
+        } else {
+          // Call the storage delete API for lifts that haven't been auto-deleted
+          const success = await deleteUserStorage(lift.id);
+          if (success) {
+            hapticFeedback.success();
+            removeLift(lift.id); // Only remove card if API succeeds
+          } else {
+            hapticFeedback.error();
+          }
+        }
+      } catch (error) {
+        console.error('Failed to delete user storage:', error);
+        hapticFeedback.error();
+      } finally {
+        setIsDeleting(false);
+      }
+    } else {
+      // For non-error cards, just remove them directly
+      removeLift(lift.id);
+    }
   };
 
   const getStatusText = () => {
@@ -219,17 +343,16 @@ function LoadingLiftCardComponent({ lift }: LoadingLiftCardProps) {
       return i18n.t('loadingLift.uploadingVideo');
     }
     
-    // If processing, determine message based on pipeline stage
+    // If processing, determine message based on progress percentage
     if (lift.status === 'processing') {
-      switch (lift.pipelineStage) {
-        case 'upload_video':
-        case 'upload_thumbnail':
-          return i18n.t('loadingLift.uploadingVideo');
-        case 'analyze':
-          // Show "Checking video..." for first 2 seconds, then "Analyzing form..."
-          return showCheckingVideo ? i18n.t('loadingLift.checkingVideo') : i18n.t('loadingLift.analyzingForm');
-        default:
-          return i18n.t('loadingLift.analyzingForm');
+      const currentProgress = progressPercentage;
+      
+      if (currentProgress < 20) {
+        return i18n.t('loadingLift.uploadingVideo');
+      } else if (currentProgress < 40) {
+        return i18n.t('loadingLift.estimatingPose');
+      } else {
+        return i18n.t('loadingLift.analyzingVideo');
       }
     }
     
@@ -268,20 +391,66 @@ function LoadingLiftCardComponent({ lift }: LoadingLiftCardProps) {
             
             {/* Content - Right 70% */}
             <View style={styles.liftContent}>
-              <View style={styles.liftDetails}>
-                <Text style={styles.errorTitle}>
-                  {lift.errorMessage === 'No lift found' 
-                    ? i18n.t('loadingLift.noLiftFound.title')
-                    : i18n.t('loadingLift.errorOccurred')
-                  }
-                </Text>
-                <Text style={styles.errorSubtitle}>
-                  {lift.errorMessage === 'No lift found'
-                    ? i18n.t('loadingLift.noLiftFound.subtitle')
-                    : i18n.t('loadingLift.pleaseTryAgain')
-                  }
-                </Text>
-                {lift.errorMessage !== 'No lift found' && (
+              {/* Top row: Error message */}
+              <View style={styles.topRow}>
+                <View style={styles.errorMessageContainer}>
+                  <Text style={styles.errorTitle} numberOfLines={1}>
+                    {lift.errorMessage === 'No lift found' 
+                      ? i18n.t('loadingLift.noLiftFound.title')
+                      : lift.errorMessage === 'Lift mismatch'
+                      ? i18n.t('loadingLift.liftMismatch.title')
+                      : i18n.t('loadingLift.errorOccurred')
+                    }
+                  </Text>
+                  {lift.errorMessage === 'No lift found' && (
+                    <Text style={styles.errorSubtitle} numberOfLines={2}>
+                      {i18n.t('loadingLift.noLiftFound.subtitle')}
+                    </Text>
+                  )}
+                  {lift.errorMessage === 'Lift mismatch' && lift.movementType && (
+                    <Text style={styles.errorSubtitle} numberOfLines={2}>
+                      {i18n.t('loadingLift.liftMismatch.detectedMovement', { movement: lift.movementType })}
+                    </Text>
+                  )}
+                </View>
+                {lift.errorMessage !== 'No lift found' && lift.errorMessage !== 'Lift mismatch' && (
+                  <Pressable 
+                    style={({ pressed }) => [
+                      styles.deleteButton,
+                      { opacity: (pressed || isDeleting) ? 0.7 : 1 }
+                    ]}
+                    onPress={handleClose}
+                    disabled={isDeleting}
+                  >
+                    <View style={styles.deleteButtonCircle}>
+                      {isDeleting ? (
+                        <ActivityIndicator size="small" color="#D70015" />
+                      ) : (
+                        <Trash2 size={16} color="#D70015" />
+                      )}
+                    </View>
+                  </Pressable>
+                )}
+              </View>
+
+              {/* Middle row: Action button */}
+              <View style={styles.middleRow}>
+                {lift.errorMessage === 'No lift found' || lift.errorMessage === 'Lift mismatch' ? (
+                  <Pressable 
+                    style={({ pressed }) => [
+                      styles.deleteErrorButton,
+                      { opacity: (pressed || isDeleting) ? 0.7 : 1 }
+                    ]}
+                    onPress={handleClose}
+                    disabled={isDeleting}
+                  >
+                    {isDeleting ? (
+                      <ActivityIndicator size="small" color="#D70015" />
+                    ) : (
+                      <Text style={styles.deleteErrorButtonText}>Delete</Text>
+                    )}
+                  </Pressable>
+                ) : (
                   <Pressable 
                     style={({ pressed }) => [
                       styles.retryButton,
@@ -293,35 +462,28 @@ function LoadingLiftCardComponent({ lift }: LoadingLiftCardProps) {
                   </Pressable>
                 )}
               </View>
+
+              {/* Bottom row: Empty */}
+              <View style={styles.bottomRow}>
+              </View>
             </View>
           </View>
         </LinearGradient>
-        
-        {/* Close button positioned absolutely */}
-        <Pressable 
-          style={({ pressed }) => [
-            styles.closeButton,
-            { opacity: pressed ? 0.7 : 1 }
-          ]}
-          onPress={handleClose}
-        >
-          <View style={styles.closeButtonCircle}>
-            <Trash2 size={20} color="#000" />
-          </View>
-        </Pressable>
       </View>
     );
   }
 
-  // Show completed state with final data if available
-  if (lift.status === 'completed' && lift.finalData && lift.finalData.id) {
-    const finalData = lift.finalData;
-    const fadeStyle = useAnimatedStyle(() => ({
-      opacity: fadeAnim.value,
+  // Handle completed state - show lift data card layout
+  if (lift.status === 'completed' && lift.finalData) {
+    const completedStyle = useAnimatedStyle(() => ({
+      opacity: completedAnim.value,
+      transform: [
+        { scale: interpolate(completedAnim.value, [0, 1], [0.95, 1]) }
+      ]
     }));
-    
+
     return (
-      <Animated.View style={[styles.liftCard, fadeStyle]}>
+      <Animated.View style={[styles.liftCard, completedStyle]}>
         <LinearGradient
           colors={['#e2e8f0', '#f5f3ff']}
           locations={[0, 0.3]}
@@ -329,38 +491,68 @@ function LoadingLiftCardComponent({ lift }: LoadingLiftCardProps) {
           start={{ x: 0.6, y: 0 }}
           end={{ x: 0, y: 1 }}
         >
-          <View style={styles.liftCardContent}>
+          <Pressable
+            style={({ pressed }) => [
+              styles.liftCardContent,
+              { opacity: pressed ? 0.7 : 1 }
+            ]}
+            onPress={() => {
+              // Handle press to show lift details
+              console.log('Completed lift pressed:', lift.id);
+            }}
+          >
             {/* Video Thumbnail - Left 30% */}
             <View style={styles.videoThumbnailContainer}>
               <Image
-                source={{ uri: finalData.thumbnailURL || lift.thumbnailUri }}
+                source={{ uri: lift.thumbnailUri }}
                 style={styles.videoThumbnail}
                 resizeMode="cover"
-                onError={() => {
-                  console.warn('Failed to load thumbnail:', finalData.thumbnailURL || lift.thumbnailUri);
-                }}
               />
-              {/* Success overlay */}
-              <View style={styles.successOverlay}>
-                <CircleCheck size={32} color="#34C759" />
-              </View>
             </View>
             
             {/* Content - Right 70% */}
             <View style={styles.liftContent}>
-              <View style={styles.liftDetails}>
-                <Text style={styles.completedTitle}>
-                  {finalData.liftType}
+              {/* Top row: Lift name and time */}
+              <View style={styles.topRow}>
+                <Text style={styles.liftName} numberOfLines={1}>
+                  {lift.finalData.liftType}
                 </Text>
-                <Text style={styles.completedSubtitle}>
-                  {finalData.weightValue} {lift.weightUnit || 'kg'} × {finalData.reps} reps
-                </Text>
-                <Text style={styles.accuracyText}>
-                  Accuracy: {finalData.analysis.accuracy}%
-                </Text>
+                <View style={styles.timePill}>
+                  <Text style={styles.timeValue}>
+                    {lift.finalData.liftTime}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Middle row: Target icon and accuracy */}
+              <View style={styles.middleRow}>
+                <Target size={20} color="#000" />
+                <View style={styles.accuracyContainer}>
+                  <Text style={styles.accuracyValue}>{lift.finalData.analysis.accuracy}%</Text>
+                  <Text style={styles.accuracyText}> {i18n.t('feedback.accuracy')}</Text>
+                </View>
+              </View>
+
+              {/* Bottom row: Weight and feedback count */}
+              <View style={styles.bottomRow}>
+                <View style={styles.bottomRowItem}>
+                  <Weight size={16} color="#000000" />
+                  <Text style={styles.bottomRowText}>
+                    {lift.weightUnit === 'lbs' 
+                      ? `${Math.round(lift.weightValue * 2.20462)} lbs`
+                      : `${lift.weightValue} kg`
+                    }
+                  </Text>
+                </View>
+                <View style={styles.bottomRowItem}>
+                  <ChartNoAxesCombined size={16} color="#000000" />
+                  <Text style={styles.bottomRowText}>
+                    {lift.finalData.analysis.feedback?.length || 0} {i18n.t('feedback.improvements')}
+                  </Text>
+                </View>
               </View>
             </View>
-          </View>
+          </Pressable>
         </LinearGradient>
       </Animated.View>
     );
@@ -382,27 +574,36 @@ function LoadingLiftCardComponent({ lift }: LoadingLiftCardProps) {
               source={{ uri: lift.thumbnailUri }}
               style={styles.videoThumbnail}
               resizeMode="cover"
-              onError={() => {
-                console.warn('Failed to load thumbnail:', lift.thumbnailUri);
-              }}
             />
             <BlurView intensity={30} style={styles.blurOverlay}>
               <View style={styles.progressContainer}>
-                <CircularProgress
-                  value={displayProgress}
-                  radius={32}
-                  progressValueColor={'#000000'}
-                  activeStrokeColor={'#000000'}
-                  inActiveStrokeColor={'#E5E5EA'}
-                  activeStrokeWidth={8}
-                  inActiveStrokeWidth={8}
-                  showProgressValue={false}
-                  strokeLinecap={'butt'}
-                />
-                <View style={styles.percentageOverlay}>
-                  <Text style={styles.percentageText}>
-                    {Math.round(displayProgress)}%
-                  </Text>
+                <Svg width={80} height={80} style={styles.progressSvg}>
+                  {/* Background circle */}
+                  <Circle
+                    cx={40}
+                    cy={40}
+                    r={R}
+                    stroke="#E5E5EA"
+                    strokeWidth={7}
+                    fill="transparent"
+                  />
+                  {/* Progress circle */}
+                  <AnimatedCircle
+                    cx={40}
+                    cy={40}
+                    r={R}
+                    stroke="#000000"
+                    strokeWidth={7}
+                    fill="transparent"
+                    strokeLinecap="butt"
+                    strokeDasharray={[CIRC]}
+                    animatedProps={animatedProgressProps}
+                    transform="rotate(-90 40 40)"
+                  />
+                </Svg>
+                {/* Percentage text overlay */}
+                <View style={styles.progressTextContainer}>
+                  <Text style={styles.progressText}>{progressPercentage}%</Text>
                 </View>
               </View>
             </BlurView>
@@ -484,17 +685,32 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     position: 'relative',
   },
-  percentageOverlay: {
+  progressSvg: {
     position: 'absolute',
+    width: 80,
+    height: 80,
+  },
+  progressTextContainer: {
+    position: 'absolute',
+    width: 80,
+    height: 80,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  percentageText: {
-    fontSize: 15,
-    fontWeight: '800',
-    marginLeft: 3,
-    color: '#fff',
+  progressText: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#FFFFFF',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+    textAlign: 'center',
+  },
+  baseCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    borderWidth: 8,
+    borderColor: '#E5E5EA',
+    backgroundColor: 'transparent',
   },
   errorContainer: {
     justifyContent: 'center',
@@ -516,6 +732,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginTop: 0,
   },
   liftName: {
     fontSize: 18,
@@ -579,46 +796,53 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
   retryButton: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#000000',
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 28,
+    borderRadius: 18,
     alignSelf: 'flex-start',
-    marginTop: 12,
-    borderWidth: 1,
-    borderColor: '#E5E5EA',
   },
   retryButtonText: {
     color: '#000000',
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '400',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
+  errorMessageContainer: {
+    flex: 1,
+    marginRight: 8,
+    flexShrink: 1,
+  },
   errorTitle: {
-    fontSize: 20,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '400',
     color: '#D70015',
-    marginTop: -8,
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+    marginTop: 0,
+    marginBottom: 0,
   },
   errorSubtitle: {
     fontSize: 14,
     fontWeight: '400',
-    color: '#000',
+    color: '#8E8E93',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+    marginTop: 2,
+    marginBottom: 4,
+    flexShrink: 1,
+    flexWrap: 'wrap',
   },
-  closeButton: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    zIndex: 10,
-    padding: 8,
+  deleteButton: {
+    padding: 4,
   },
-  closeButtonCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#f3f4f6',
+  deleteButtonCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#D70015',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -650,18 +874,59 @@ const styles = StyleSheet.create({
     color: '#34C759',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
+  deleteErrorButton: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#D70015',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 18,
+    alignSelf: 'flex-start',
+    minWidth: 80,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  deleteErrorButtonText: {
+    color: '#D70015',
+    fontSize: 14,
+    fontWeight: '400',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
+  timePill: {
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  timeValue: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#000',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
+  accuracyContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  accuracyValue: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#000',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
+  bottomRowItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  bottomRowText: {
+    fontSize: 12,
+    fontWeight: '400',
+    color: '#8E8E93',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
 
 });
 
 // Memoized component for performance
-export const LoadingLiftCard = memo(LoadingLiftCardComponent, (prevProps, nextProps) => {
-  return (
-    prevProps.lift.id === nextProps.lift.id &&
-    prevProps.lift.status === nextProps.lift.status &&
-    prevProps.lift.progress === nextProps.lift.progress &&
-    prevProps.lift.thumbnailUri === nextProps.lift.thumbnailUri &&
-    prevProps.lift.movementType === nextProps.lift.movementType &&
-    prevProps.lift.weightValue === nextProps.lift.weightValue &&
-    prevProps.lift.errorMessage === nextProps.lift.errorMessage
-  );
-}); 
+export const LoadingLiftCard = memo(LoadingLiftCardComponent); 

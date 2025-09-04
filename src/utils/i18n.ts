@@ -570,6 +570,18 @@ const i18n = new I18n({
       filterByMovement: 'Filter by movement',
       searchMovements: 'Search movements...',
       allMovements: 'All Movements',
+          search: {
+      analysisFound: 'Analysis Found',
+      analysisFoundNotFavourited: 'An analysis has been found but it wasn\'t favourited.',
+      continueToLift: 'Continue to Lift',
+      noAnalysisFound: 'No Analysis Found',
+      noAnalysisFoundMessage: 'No analysis found for this video. Please make sure the video has been analyzed before.',
+      analyse: 'Analyse',
+      permissionRequired: 'Permission Required',
+      permissionMessage: 'Please allow access to your photo library to search for videos.',
+      error: 'Error',
+      errorMessage: 'Failed to select video. Please try again.',
+    },
     },
     liftCard: {
       accuracy: 'Accuracy',
@@ -577,6 +589,8 @@ const i18n = new I18n({
     loadingLift: {
       uploadingVideo: 'Uploading video...',
       checkingVideo: 'Checking video...',
+      estimatingPose: 'Estimating pose...',
+      analyzingVideo: 'Analyzing video...',
       analyzingForm: 'Analyzing form...',
       analysisFailed: 'Analysis failed',
       processing: 'Processing...',
@@ -586,7 +600,12 @@ const i18n = new I18n({
       notifyWhenDone: 'We\'ll notify you when done!',
       noLiftFound: {
         title: 'No lift found',
-        subtitle: 'Our AI cannot find your lift',
+        subtitle: 'We cannot detect a lift',
+      },
+      liftMismatch: {
+        title: 'Lift mismatch',
+        subtitle: 'The selected movement does not match the video',
+        detectedMovement: 'We cannot detect you performing: {{movement}}',
       },
     },
     feedback: {

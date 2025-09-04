@@ -1,31 +1,19 @@
 import { API_CONFIG } from './api';
-import type { LoadingLiftData } from '../context/LoadingLiftsContext';
 import { getUserId } from './storageService';
+import { LoadingLiftData, AnalyzeLiftPayload, AnalyzeLiftResponse, RetryStage } from '../types/Lifts.d';
+import { ILiftData } from '../context/LiftDataContext';
+import { supabase } from '../lib/supabase';
 
-interface AnalyzeLiftPayload {
-  userId: string;
-  lift: {
-    id: string;
-    videoLink: string;
-    thumbnailUri: string;
-    movementType: string;
-    weightValue: number;
-    reps: number;
-    dateToday: string;
-    timeToday: string;
-  };
-}
-
-export interface AnalyzeLiftResponse<T = any> {
-  success: boolean;
-  data?: T | null;
-}
-
-export async function analyzeLift(userId: string, liftData: LoadingLiftData): Promise<AnalyzeLiftResponse> {
+export async function analyzeLift(
+  userId: string, 
+  liftData: LoadingLiftData, 
+  retryStage?: RetryStage
+): Promise<AnalyzeLiftResponse> {
   if (!userId) return { success: false, data: null };
 
   const payload: AnalyzeLiftPayload = {
     userId,
+    liftId: liftData.id,
     lift: {
       id: liftData.id,
       videoLink: liftData.videoLink,
@@ -35,7 +23,9 @@ export async function analyzeLift(userId: string, liftData: LoadingLiftData): Pr
       reps: liftData.reps,
       dateToday: liftData.dateToday,
       timeToday: liftData.timeToday,
+      assetId: liftData.assetId,
     },
+    ...(retryStage && { stage: retryStage }),
   };
 
   try {
@@ -46,9 +36,12 @@ export async function analyzeLift(userId: string, liftData: LoadingLiftData): Pr
       },
       body: JSON.stringify(payload),
     });
-
+    
     if (!response.ok) return { success: false, data: null };
+    
     const json = (await response.json().catch(() => null)) as AnalyzeLiftResponse | null;
+    console.log(' >>>>>>> <<<<<<<< analysis response', json);
+    
     if (json && typeof json.success === 'boolean') return json;
     return { success: true, data: null };
   } catch (_) {
@@ -87,6 +80,105 @@ export async function deleteLift(liftId: string): Promise<boolean> {
     return !!json?.success;
   } catch (_) {
     return false;
+  }
+}
+
+export async function deleteUserStorage(liftId: string): Promise<boolean> {
+  const userId = await getUserId();
+  if (!userId) return false;
+  try {
+    const response = await fetch(`${API_CONFIG.baseURL}/lifts/storage/delete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, liftId }),
+    });
+    console.log(' >>>>>>> <<<<<<<< delete lift response', response);
+
+    if (!response.ok) return false;
+    const json = (await response.json().catch(() => null)) as { success?: boolean } | null;
+    return !!json?.success;
+  } catch (_) {
+    return false;
+  }
+}
+
+export async function checkDuplicateAssetId(assetId: string): Promise<boolean> {
+  const userId = await getUserId();
+  if (!userId) return false;
+  
+  try {
+    const { data, error } = await supabase
+      .from('lifts')
+      .select('asset_id')
+      .eq('user_id', userId)
+      .eq('asset_id', assetId)
+      .limit(1);
+
+      console.log(' >>>>>>> <<<<<<<< check duplicate asset ID', assetId);
+    
+    if (error) {
+      console.error('Error checking duplicate asset ID:', error);
+      return false;
+    }
+    
+    return data && data.length > 0;
+  } catch (error) {
+    console.error('Error checking duplicate asset ID:', error);
+    return false;
+  }
+}
+
+export async function searchLiftByAssetId(assetId: string): Promise<ILiftData | null> {
+  const userId = await getUserId();
+  if (!userId) return null;
+  
+  try {
+    const { data, error } = await supabase
+      .from('lifts')
+      .select('id, is_favourite, lift_type, lift_date, lift_time, weight_value, reps, raw_video_url, pose_video_url, thumbnail_url, analysis')
+      .eq('user_id', userId)
+      .eq('asset_id', assetId)
+      .limit(1);
+
+    console.log(' >>>>>>> <<<<<<<< search lift by asset ID', assetId);
+    
+    if (error) {
+      console.error('Error searching lift by asset ID:', error);
+      return null;
+    }
+    
+    if (data && data.length > 0) {
+      const lift = data[0];
+      // Convert the database lift to ILiftData format
+      return {
+        id: lift.id,
+        liftType: lift.lift_type,
+        liftDate: (() => {
+          const date = new Date(lift.lift_date);
+          const day = String(date.getDate()).padStart(2, '0');
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const year = date.getFullYear();
+          return `${day}-${month}-${year}`;
+        })(),
+        liftTime: lift.lift_time,
+        weightValue: Number(lift.weight_value),
+        reps: Number(lift.reps),
+        rawVideoURL: lift.raw_video_url,
+        poseVideoURL: lift.pose_video_url || null,
+        isFavourite: !!lift.is_favourite,
+        analysis: lift.analysis || {
+          accuracy: 0,
+          lineGraphValues: [],
+          feedback: []
+        },
+        thumbnailURL: lift.thumbnail_url,
+      };
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Error searching lift by asset ID:', error);
+    return null;
   }
 }
 

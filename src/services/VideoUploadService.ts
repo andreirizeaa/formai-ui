@@ -76,13 +76,13 @@ function contentTypeForImageExt(ext: string): string {
   }
 }
 
-export async function uploadLiftVideo(userId: string, fileUri: string, assetId?: string): Promise<{ publicUrl: string; path: string }> {
+export async function uploadLiftVideo(userId: string, liftId: string, fileUri: string, assetId?: string): Promise<{ publicUrl: string; path: string }> {
   const ext = inferExtensionFromUri(fileUri);
   const contentType = contentTypeForExt(ext);
   
   // Use assetId as filename if provided, otherwise fallback to timestamp
   const fileName = assetId ? `${assetId}.${ext}` : `${Date.now()}.${ext}`;
-  const path = `${userId}/videos/${fileName}`;
+  const path = `${userId}/${liftId}/videos/${fileName}`;
 
   // Read local file reliably in React Native (Expo)
   const base64 = await FileSystem.readAsStringAsync(fileUri, {
@@ -101,11 +101,12 @@ export async function uploadLiftVideo(userId: string, fileUri: string, assetId?:
   return { publicUrl: data.publicUrl, path };
 }
 
-export async function uploadLiftThumbnail(userId: string, fileUri: string): Promise<{ publicUrl: string; path: string }> {
+export async function uploadLiftThumbnail(userId: string, liftId: string, fileUri: string): Promise<{ publicUrl: string; path: string }> {
   const ext = inferImageExtensionFromUri(fileUri);
   const contentType = contentTypeForImageExt(ext);
+  
   const fileName = `${Date.now()}.${ext}`;
-  const path = `${userId}/thumbnails/${fileName}`;
+  const path = `${userId}/${liftId}/thumbnails/${fileName}`;
 
   // Read local file
   const base64 = await FileSystem.readAsStringAsync(fileUri, {
@@ -125,24 +126,56 @@ export async function uploadLiftThumbnail(userId: string, fileUri: string): Prom
 
 export async function listUserVideoPaths(userId: string): Promise<string[]> {
   try {
-    const { data, error } = await supabase.storage
+    // First, list all lift folders for the user
+    const { data: liftFolders, error: liftFoldersError } = await supabase.storage
       .from('lifts')
-      .list(`${userId}/videos`, {
-        limit: 1000, // Adjust limit as needed
+      .list(userId, {
+        limit: 1000,
         sortBy: { column: 'created_at', order: 'desc' }
       });
 
-    if (error) {
-      console.error('Error listing video paths:', error);
+    if (liftFoldersError) {
+      console.error('Error listing lift folders:', liftFoldersError);
       return [];
     }
 
-    // Return assetIds (filename without extension) for comparison
-    return data?.map(file => {
-      // Remove file extension to get the assetId
-      const lastDotIndex = file.name.lastIndexOf('.');
-      return lastDotIndex > 0 ? file.name.substring(0, lastDotIndex) : file.name;
-    }) || [];
+    if (!liftFolders || liftFolders.length === 0) {
+      return [];
+    }
+
+    // Collect all video assetIds from all lift folders
+    const allAssetIds: string[] = [];
+
+    for (const liftFolder of liftFolders) {
+      if (liftFolder.name) {
+        try {
+          const { data: videos, error: videosError } = await supabase.storage
+            .from('lifts')
+            .list(`${userId}/${liftFolder.name}/videos`, {
+              limit: 1000,
+              sortBy: { column: 'created_at', order: 'desc' }
+            });
+
+          if (videosError) {
+            console.error(`Error listing videos for lift ${liftFolder.name}:`, videosError);
+            continue;
+          }
+
+          // Add assetIds (filename without extension) for this lift
+          const liftAssetIds = videos?.map(file => {
+            const lastDotIndex = file.name.lastIndexOf('.');
+            return lastDotIndex > 0 ? file.name.substring(0, lastDotIndex) : file.name;
+          }) || [];
+
+          allAssetIds.push(...liftAssetIds);
+        } catch (error) {
+          console.error(`Error processing lift folder ${liftFolder.name}:`, error);
+          continue;
+        }
+      }
+    }
+
+    return allAssetIds;
   } catch (error) {
     console.error('Error listing user video paths:', error);
     return [];

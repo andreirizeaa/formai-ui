@@ -69,6 +69,8 @@ declare global {
   var openLiftDetails: (() => void) | undefined;
   var showFirstLiftDetails: (() => void) | undefined;
   var openHowItWorksModal: (() => void) | undefined;
+  var selectedVideoFromSearch: any | undefined;
+  var uploadFromLibrarySearch: boolean | undefined;
 }
 
 // Wrapper components for screens that need navigation
@@ -370,7 +372,19 @@ function UploadModalWrapper() {
   const navigation = useNavigation<MainStackNavigationProp>();
   
   const handleClose = () => {
-    navigation.goBack();
+    // Check if upload modal was opened from library search
+    if (global.uploadFromLibrarySearch) {
+      // Clear the flag
+      global.uploadFromLibrarySearch = false;
+      // Go back twice: first to Library, then to MainTabs
+      navigation.goBack(); // Go back to Library
+      setTimeout(() => {
+        navigation.goBack(); // Go back to MainTabs
+      }, 50);
+    } else {
+      // Normal behavior - go back
+      navigation.goBack();
+    }
   };
 
   return (
@@ -522,6 +536,8 @@ function MainTabsNavigator({ onLogout }: { onLogout?: () => void }) {
 
   const handleUploadPress = () => {
     setShowAddOptions(false);
+    // Clear the library search flag when opening normally
+    global.uploadFromLibrarySearch = false;
     navigation.navigate('UploadModal');
   };
 
@@ -552,7 +568,10 @@ function MainTabsNavigator({ onLogout }: { onLogout?: () => void }) {
       // Navigate to home tab
       handleTabPress('home');
     };
-    global.openUploadModal = () => handleUploadPress();
+    global.openUploadModal = () => {
+      global.uploadFromLibrarySearch = false;
+      handleUploadPress();
+    };
     global.closeAddOptions = () => handleCloseAddOptions();
     global.openLiftDetails = () => {
       // Navigate to the first lift in the home screen
@@ -700,6 +719,7 @@ export function MainAppNavigator({ onLogout }: { onLogout?: () => void }) {
             component={FeedbackSlideshowWrapper}
             options={{
               presentation: 'card',
+              freezeOnBlur: true, 
             }}
           />
 
@@ -710,6 +730,7 @@ export function MainAppNavigator({ onLogout }: { onLogout?: () => void }) {
               presentation: 'card',
               freezeOnBlur: true, 
               animation: 'slide_from_bottom',
+              animationDuration: 350,
             }}
           />
         </Stack.Navigator>

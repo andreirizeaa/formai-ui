@@ -1,9 +1,11 @@
 // Unit conversion utilities for weights and heights
 // All internal storage is in metric (kg for weight, cm for height)
 
+import { WeightUnit } from '../types/Lifts.d';
+
 export interface WeightData {
   value: number; // Always in kg
-  unit: 'kg' | 'lbs';
+  unit: WeightUnit;
 }
 
 export interface HeightData {

@@ -1,12 +1,10 @@
 import React, { useEffect } from 'react';
 import { Asset } from 'expo-asset';
-import { removeUserId, setUserId } from './src/services/storageService';
 import { Layout } from './layout';
 import { PurchasesProvider } from './src/context/PurchasesContext';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { LanguageProvider } from './src/context/LanguageContext';
 import { OnboardingProvider } from './src/context/OnboardingContext';
-import Purchases from 'react-native-purchases';
 import { SuperwallProvider } from './src/context/SuperwallContext';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 

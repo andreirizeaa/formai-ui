@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, Platform, Pressable, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, Platform, Pressable, StatusBar, Alert } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FlashList } from '@shopify/flash-list';
 import { hapticFeedback } from '../../../utils/haptic';
@@ -11,7 +12,8 @@ import { FilterModal } from './FilterModal';
 import { DateRangeModal } from './DateRangeModal';
 import { ILiftData, useLiftData } from '../../../context/LiftDataContext';
 import { useTutorialTarget } from '../../../context/TutorialContext';
-import { deleteLift as deleteLiftApi } from '../../../services/liftService';
+import { deleteLift as deleteLiftApi, searchLiftByAssetId } from '../../../services/liftService';
+import { LoadingOverlay } from '../../../components/ui/LoadingOverlay';
 
 import i18n from '../../../utils/i18n';
 import { 
@@ -20,6 +22,7 @@ import {
   SlidersHorizontal, 
   Pencil, 
   X, 
+  Search,
 } from 'lucide-react-native';
 
 interface LibraryScreenProps {
@@ -58,6 +61,7 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
   const [showPopupModal, setShowPopupModal] = useState(false);
   const [isDateRangeModalVisible, setIsDateRangeModalVisible] = useState(false);
   const [dateRange, setDateRange] = useState<DateRange>({ from: null, to: null });
+  const [isSearching, setIsSearching] = useState(false);
 
   // Tutorial target ref for the tabs
   const { ref: libraryScreenRef } = useTutorialTarget('library_screen');
@@ -250,6 +254,121 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
     onBack();
   }, [onBack]);
 
+  const handleSearchPress = useCallback(async () => {
+    hapticFeedback.selection();
+    setIsSearching(true);
+    
+    // Add a small delay to show the loading icon before opening image picker
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: 'videos',
+        allowsEditing: false,
+        quality: 1,
+      });
+
+      if (result.canceled) {
+        setIsSearching(false);
+        return;
+      }
+
+      const asset = result.assets[0];
+      if (asset && asset.assetId) {
+        // Extract the base asset ID (remove /L0/001 suffix if present)
+        const fullAssetId = asset.assetId;
+        const baseAssetId = fullAssetId.split('/')[0];
+        
+        // Search for the lift by asset ID
+        const foundLift = await searchLiftByAssetId(baseAssetId);
+        
+        if (foundLift) {
+          // Check if we're on the favourites tab and the lift is not favourited
+          if (activeTab === 'favourites' && !foundLift.isFavourite) {
+            // Show alert that analysis was found but not favourited
+            Alert.alert(
+              i18n.t('library.search.analysisFound'),
+              i18n.t('library.search.analysisFoundNotFavourited'),
+              [
+                { 
+                  text: i18n.t('library.search.continueToLift'), 
+                  style: 'default',
+                  onPress: () => {
+                    navigation.navigate('LiftDetails', { 
+                      liftData: foundLift,
+                    });
+                  }
+                }
+              ]
+            );
+          } else {
+            // Navigate to the lift details page normally
+            navigation.navigate('LiftDetails', { 
+              liftData: foundLift,
+            });
+          }
+        } else {
+          // Check video duration to determine if we should show the Analyse button
+          let durationInSeconds = asset.duration;
+          
+          // Handle different duration formats
+          if (typeof asset.duration === 'number') {
+            // If duration is in milliseconds, convert to seconds
+            if (asset.duration > 1000) {
+              durationInSeconds = asset.duration / 1000;
+            }
+          }
+
+          // Show alert with Analyse button if video is under 90 seconds
+          if (durationInSeconds !== undefined && durationInSeconds !== null && durationInSeconds <= 90) {
+            Alert.alert(
+              i18n.t('library.search.noAnalysisFound'),
+              i18n.t('library.search.noAnalysisFoundMessage'),
+              [
+                { text: 'OK', style: 'cancel' },
+                { 
+                  text: i18n.t('library.search.analyse'), 
+                  style: 'default',
+                  onPress: () => {
+                    // Store the selected video globally for the upload modal to pick up
+                    global.selectedVideoFromSearch = asset;
+                    // Set flag to indicate upload modal was opened from library search
+                    global.uploadFromLibrarySearch = true;
+                    // Navigate to upload modal
+                    navigation.navigate('UploadModal' as any);
+                  }
+                }
+              ]
+            );
+          } else {
+            // Show regular alert if video is too long or duration unknown
+            Alert.alert(
+              i18n.t('library.search.noAnalysisFound'),
+              i18n.t('library.search.noAnalysisFoundMessage'),
+              [{ text: 'OK' }]
+            );
+          }
+        }
+      }
+      setIsSearching(false);
+    } catch (error) {
+      setIsSearching(false);
+      // Handle permission errors specifically
+      if (error instanceof Error && error.message.includes('permission')) {
+        Alert.alert(
+          i18n.t('library.search.permissionRequired'),
+          i18n.t('library.search.permissionMessage'),
+          [{ text: 'OK' }]
+        );
+      } else {
+        Alert.alert(
+          i18n.t('library.search.error'), 
+          i18n.t('library.search.errorMessage')
+        );
+      }
+    }
+  }, [navigation, activeTab]);
+
 
 
   const handleResetDateRange = useCallback(() => {
@@ -341,13 +460,25 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
 
       {/* Sort and Filter Buttons */}
       <View style={styles.controlsContainer} ref={libraryScreenRef}>
-        <View style={styles.liftCountContainer}>
-          <Text style={styles.liftCountText}>
-            {liftCount} {liftCount === 1 ? i18n.t('library.lift') : i18n.t('library.lifts')}
-          </Text>
+        <View style={styles.leftControlsContainer}>
+          <View style={styles.liftCountContainer}>
+            <Text style={styles.liftCountText}>
+              {liftCount} {liftCount === 1 ? i18n.t('library.lift') : i18n.t('library.lifts')}
+            </Text>
+          </View>
         </View>
         
         <View style={styles.controlsRightContainer}>
+          <Pressable 
+            style={({ pressed }) => [
+              styles.searchPill,
+              { opacity: pressed ? 0.7 : 1 }
+            ]} 
+            onPress={handleSearchPress}
+          >
+            <Search size={17} color="#000000" />
+            <Text style={styles.searchPillText}>Search</Text>
+          </Pressable>
           <Pressable 
             style={({ pressed }) => [
               styles.controlButton,
@@ -355,13 +486,11 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
             ]} 
             onPress={handleSortPress}
           >
-            <View style={styles.sortIconsContainer}>
-              {sortOption === 'newest' ? (
-                <ClockArrowUp size={20} color="#000000" />
-              ) : (
-                <ClockArrowDown size={20} color="#000000" />
-              )}
-            </View>
+            {sortOption === 'newest' ? (
+              <ClockArrowUp size={17} color="#000000" />
+            ) : (
+              <ClockArrowDown size={17} color="#000000" />
+            )}
           </Pressable>
 
           <Pressable 
@@ -371,7 +500,7 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
             ]} 
             onPress={handleFilterPress}
           >
-            <SlidersHorizontal size={20} color="#000000" />
+            <SlidersHorizontal size={17} color="#000000" />
           </Pressable>
         </View>
       </View>
@@ -458,6 +587,8 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
         onReset={handleResetDateRange}
         title={i18n.t('library.editDateRange')}
       />
+      
+      <LoadingOverlay visible={isSearching} />
     </SafeAreaView>
   );
 }
@@ -538,26 +669,38 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   controlButton: {
-    width: 56,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#f3f4f6',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sortIconsContainer: {
     flexDirection: 'row',
-    justifyContent: 'center',
     alignItems: 'center',
-    width: '100%',
+    paddingHorizontal: 16,
+    paddingVertical: 7,
+    borderRadius: 16,
+    backgroundColor: '#f3f4f6',
+    gap: 4,
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 3,
   },
   liftCountContainer: {
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#f3f4f6',
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 7,
+    borderRadius: 16,
+    backgroundColor: '#f3f4f6',
+    gap: 4,
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 3,
   },
   liftCountText: {
     fontSize: 16,
@@ -569,6 +712,34 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
+  leftControlsContainer: {
+    flexDirection: 'row',
+    gap: 12,
+    alignItems: 'center',
+  },
+  searchPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 7,
+    borderRadius: 16,
+    backgroundColor: '#f3f4f6',
+    gap: 4,
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  searchPillText: {
+    fontSize: 16,
+    fontWeight: '400',
+    color: '#000000',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
   controlsRightContainer: {
     flexDirection: 'row',
     gap: 12,
