@@ -8,6 +8,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useQueryClient } from '@tanstack/react-query';
 import { hapticFeedback } from '../../../utils/haptic';
 import { useLiftData, ILiftData } from '../../../context/LiftDataContext';
+import { useLoadingLifts } from '../../../context/LoadingLiftsContext';
 import { deleteLift as deleteLiftApi, favouriteLift as favouriteLiftApi, updateLiftWeight } from '../../../services/liftService';
 import { showAlert } from '../../../services/alertService';
 import { useTutorialTarget } from '../../../context/TutorialContext';
@@ -40,6 +41,7 @@ function VideoPlayerComponent({ videoUri, onReady }: VideoPlayerComponentProps) 
 
 export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initialLiftData }: LiftDetailsProps) {
   const { removeLift, updateLift, refreshLifts, liftData: contextLiftData, favouriteLiftAndRefresh } = useLiftData();
+  const { removeLift: removeLoadingLift } = useLoadingLifts();
   const { userDetails } = useUserDetails();
   const { invalidateAndRefetch } = useUserCheckIns();
   const queryClient = useQueryClient();
@@ -106,9 +108,13 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
       const ok = await deleteLiftApi(currentLiftData.id);
       if (ok) {
         hapticFeedback.success();
+        // Remove from both contexts to ensure UI updates immediately
         removeLift(currentLiftData.id);
+        removeLoadingLift(currentLiftData.id);
         // Invalidate UserCheckIns query to refresh check-in data
         invalidateAndRefetch();
+        // Invalidate LiftDataContext to refresh lift data
+        refreshLifts();
         setShowDeleteModal(false);
         onClose();
       } else {

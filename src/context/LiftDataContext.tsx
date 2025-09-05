@@ -138,6 +138,7 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
         return signed?.signedUrl;
       }
 
+
       async function mapRowToLift(row: any): Promise<ILiftData> {
         const thumbKey = await extractObjectKeyFromUrl(row.thumbnail_url);
         const rawKey = await extractObjectKeyFromUrl(row.raw_video_url);
@@ -191,6 +192,10 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
   });
 
   const refreshLifts = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: ['lifts-by-user', userId] });
+  }, [queryClient, userId]);
+
+  const invalidateAndRefetch = useCallback(async () => {
     await queryClient.invalidateQueries({ queryKey: ['lifts-by-user', userId] });
   }, [queryClient, userId]);
 
@@ -289,6 +294,7 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
     clearAllLifts,
     formatDateForLift,
     refreshLifts,
+    invalidateAndRefetch,
     favouriteLiftAndRefresh,
     isLiftDataLoaded: isLoaded,
   }), [
@@ -305,6 +311,7 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
     clearAllLifts,
     formatDateForLift,
     refreshLifts,
+    invalidateAndRefetch,
     favouriteLiftAndRefresh,
     isLoaded,
   ]);
@@ -383,4 +390,37 @@ export function TutorialLiftSeeder() {
     return () => { if (global.addDummyLift) delete global.addDummyLift; };
   }, [addLift, formatDateForLift]);
   return null;
-} 
+}
+
+// Export URL signing functions for use in other contexts
+export async function extractObjectKeyFromUrl(urlOrKey?: string | null): Promise<string | undefined> {
+  if (!urlOrKey) return undefined;
+  if (urlOrKey.startsWith('http://') || urlOrKey.startsWith('https://')) {
+    // Expect formats like /storage/v1/object/public/lifts/<key>
+    const marker = '/storage/v1/object/';
+    const idx = urlOrKey.indexOf(marker);
+    if (idx === -1) return undefined;
+    const after = urlOrKey.substring(idx + marker.length); // e.g. 'public/lifts/uid/path...'
+    const parts = after.split('/');
+    // parts[0] is 'public' or 'sign', parts[1] should be bucket id
+    if (parts.length < 3) return undefined;
+    const bucketId = parts[1];
+    if (bucketId !== 'lifts') return undefined;
+    const pathWithQuery = parts.slice(2).join('/');
+    const key = pathWithQuery.split('?')[0];
+    return key;
+  }
+  // Already a key
+  return urlOrKey;
+}
+
+export async function signPath(key?: string): Promise<string | undefined> {
+  if (!key) return undefined;
+  const { data: signed, error: signError } = await supabase.storage
+    .from('lifts')
+    .createSignedUrl(key, 60 * 30); // 30 minutes
+  if (signError) {
+    return undefined;
+  }
+  return signed?.signedUrl;
+}

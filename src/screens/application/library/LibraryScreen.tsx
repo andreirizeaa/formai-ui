@@ -4,15 +4,16 @@ import * as ImagePicker from 'expo-image-picker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FlashList } from '@shopify/flash-list';
 import { hapticFeedback } from '../../../utils/haptic';
-import { LiftDataCard } from '../../../components/LiftDataCard';
+import { LiftCard } from '../../../components/LiftCard';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { FilterModal } from './FilterModal';
 import { DateRangeModal } from './DateRangeModal';
 import { ILiftData, useLiftData } from '../../../context/LiftDataContext';
+import { useLoadingLifts } from '../../../context/LoadingLiftsContext';
 import { useTutorialTarget } from '../../../context/TutorialContext';
-import { deleteLift as deleteLiftApi, searchLiftByAssetId } from '../../../services/liftService';
+import { searchLiftByAssetId } from '../../../services/liftService';
 import { LoadingOverlay } from '../../../components/ui/LoadingOverlay';
 
 import i18n from '../../../utils/i18n';
@@ -52,7 +53,8 @@ type LibraryRouteProp = RouteProp<MainStackParamList, 'Library'>;
 export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProps) {
   const navigation = useNavigation<LibraryNavigationProp>();
   const route = useRoute<LibraryRouteProp>();
-  const { liftData, removeLift, toggleFavourite, refreshLifts } = useLiftData();
+  const { liftData, toggleFavourite, refreshLifts } = useLiftData();
+  const { loadingLifts } = useLoadingLifts();
   
   const [sortOption, setSortOption] = useState<SortOption>('newest');
   const [filterOption, setFilterOption] = useState<FilterOption>(route.params?.selectedFilters || []);
@@ -105,15 +107,7 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
     };
   }, [onBack]);
 
-  // Memoize handlers to prevent unnecessary re-renders
-  const handleDeleteLift = useCallback(async (liftId: string) => {
-    hapticFeedback.success();
-    const ok = await deleteLiftApi(liftId);
-    if (ok) {
-      // Refresh data from backend after successful deletion
-      await refreshLifts();
-    }
-  }, [refreshLifts]);
+  // Note: LiftCard handles deletion internally through context
 
   // Filter lift data based on date range
   const filteredByDateLiftData = useMemo(() => {
@@ -131,27 +125,74 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
     });
   }, [liftData, dateRange]);
 
+  // Combined lifts for seamless transition - loading lifts + final lifts (excluding duplicates)
+  const combinedLiftsForDay = useMemo(() => {
+    // loading lifts are already filtered by selected date in context
+    const loading = loadingLifts;
+
+    // any completed loading items with finalData should hide the same ILiftData (by id)
+    const completedMap = new Set<string>(
+      loading
+        .filter(l => l.status === 'completed' && l.finalData?.id)
+        .map(l => l.finalData!.id)
+    );
+
+    const finals = filteredByDateLiftData.filter(l => !completedMap.has(l.id));
+
+    // show loading first, then finals (or mix if you prefer)
+    return [...loading, ...finals];
+  }, [loadingLifts, filteredByDateLiftData]);
+
   // Optimize the filtering and sorting logic
   const filteredAndSortedLifts = useMemo(() => {
-    let filtered = filteredByDateLiftData;
+    let filtered = combinedLiftsForDay;
 
-    // Apply tab filter (All vs Favourites)
+    // Apply tab filter (All vs Favourites) - only for final lifts
     if (activeTab === 'favourites') {
-      filtered = filtered.filter(lift => lift.isFavourite);
+      filtered = filtered.filter(lift => {
+        // For loading lifts, check if they have finalData and if it's favourite
+        if ('status' in lift) {
+          return lift.finalData?.isFavourite || false;
+        }
+        // For final lifts, check isFavourite directly
+        return lift.isFavourite;
+      });
     }
 
-    // Apply movement type filter
+    // Apply movement type filter - only for final lifts
     if (filterOption.length > 0) {
-      filtered = filtered.filter(lift => filterOption.includes(lift.liftType));
+      filtered = filtered.filter(lift => {
+        // For loading lifts, check if they have finalData and if it matches filter
+        if ('status' in lift) {
+          return lift.finalData?.liftType && filterOption.includes(lift.finalData.liftType);
+        }
+        // For final lifts, check liftType directly
+        return lift.liftType && filterOption.includes(lift.liftType);
+      });
     }
 
     // Apply sort - use a more efficient sort
     return filtered.sort((a, b) => {
-      const dateA = new Date(a.liftDate.split('-').reverse().join('-')).getTime();
-      const dateB = new Date(b.liftDate.split('-').reverse().join('-')).getTime();
+      // For loading lifts, use the dateToday field
+      const getDateA = (lift: any) => {
+        if ('status' in lift) {
+          return new Date(lift.dateToday).getTime();
+        }
+        return new Date(lift.liftDate.split('-').reverse().join('-')).getTime();
+      };
+      
+      const getDateB = (lift: any) => {
+        if ('status' in lift) {
+          return new Date(lift.dateToday).getTime();
+        }
+        return new Date(lift.liftDate.split('-').reverse().join('-')).getTime();
+      };
+
+      const dateA = getDateA(a);
+      const dateB = getDateB(b);
       return sortOption === 'newest' ? dateB - dateA : dateA - dateB;
     });
-  }, [filteredByDateLiftData, activeTab, filterOption, sortOption]);
+  }, [combinedLiftsForDay, activeTab, filterOption, sortOption]);
 
   // Get date range for display
   const dateRangeText = useMemo(() => {
@@ -186,7 +227,8 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
     hapticFeedback.selection();
     
     // If there are lifts but none match the current filters, open the filter modal
-    if (liftData.length > 0 && filteredAndSortedLifts.length === 0) {
+    const totalLifts = liftData.length + loadingLifts.length;
+    if (totalLifts > 0 && filteredAndSortedLifts.length === 0) {
       setShowFilterModal(true);
     } else {
       // Otherwise, go back and trigger add options (for when there are no lifts at all)
@@ -195,7 +237,7 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
         onTriggerAddOptions();
       }, 100);
     }
-  }, [liftData.length, filteredAndSortedLifts.length, onBack, onTriggerAddOptions]);
+  }, [liftData.length, loadingLifts.length, filteredAndSortedLifts.length, onBack, onTriggerAddOptions]);
 
   const handleSortPress = useCallback(() => {
     hapticFeedback.selection();
@@ -243,6 +285,17 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
     hapticFeedback.selection();
     const lift = filteredAndSortedLifts.find(l => l.id === liftId);
     if (lift) {
+      // For loading lifts, only navigate if they have finalData
+      if ('status' in lift) {
+        if (lift.finalData) {
+          navigation.navigate('LiftDetails', { 
+            liftData: lift.finalData as ILiftData,
+          });
+        }
+        // Don't navigate for loading lifts without finalData
+        return;
+      }
+      // For final lifts, navigate normally
       navigation.navigate('LiftDetails', { 
         liftData: lift,
       });
@@ -403,11 +456,11 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
   const liftCount = useMemo(() => filteredAndSortedLifts.length, [filteredAndSortedLifts.length]);
 
   // Render function for FlashList
-  const renderLiftItem = useCallback(({ item }: { item: ILiftData }) => (
-    <LiftDataCard 
+  const renderLiftItem = useCallback(({ item }: { item: any }) => (
+    <LiftCard 
       lift={item} 
       onPress={handleLiftPress}
-      showDate={true}
+      showDate={!('status' in item)} // show date pill for final lifts only
     />
   ), [handleLiftPress]);
 
@@ -517,14 +570,15 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
             contentContainerStyle={styles.scrollContentContainer}
           />
         ) : (
-          <LiftDataCard
+          <LiftCard
+            lift={null}
             isNoLiftsCard={true}
             noLiftsTitle={
-              liftData.length === 0 ? i18n.t('library.noLiftsAnalysed') : 
+              (liftData.length === 0 && loadingLifts.length === 0) ? i18n.t('library.noLiftsAnalysed') : 
               activeTab === 'favourites' ? i18n.t('library.noFavouriteLifts') : i18n.t('library.noLiftsFound')
             }
             noLiftsSubtitle={
-              liftData.length === 0 
+              (liftData.length === 0 && loadingLifts.length === 0)
                 ? i18n.t('library.startAnalysingWorkout')
                 : activeTab === 'favourites'
                 ? i18n.t('library.markLiftsAsFavourites')

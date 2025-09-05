@@ -75,38 +75,6 @@ export interface ILiftData extends BaseLiftData {
   };
 }
 
-export interface LoadingLiftCardProps {
-  lift: {
-    id: string;
-    thumbnailUri: string;
-    movementType: string;
-    weightValue: number;
-    weightUnit?: WeightUnit;
-    reps: number;
-    dateToday: string;
-    isComplete: boolean;
-    status: LiftStatus;
-    errorMessage?: string;
-    pipelineStage?: PipelineStage;
-    videoDurationSec?: number;
-    uiProgress?: number;
-    retryStage?: RetryStage;
-    finalData?: BaseLiftData & {
-      liftTime: string;
-      analysis: LiftAnalysis;
-    };
-  };
-}
-
-export interface LiftDataCardProps {
-  lift?: ILiftData;
-  onPress?: (liftId: string) => void; // Changed to take liftId instead of full lift object
-  showDate?: boolean; // When true, show formatted date instead of time
-  isNoLiftsCard?: boolean; // When true, render as no lifts card
-  noLiftsTitle?: string;
-  noLiftsSubtitle?: string;
-  onNoLiftsPress?: () => void;
-}
 
 export interface LoadingLiftsContextType {
   loadingLifts: LoadingLiftData[];
@@ -137,6 +105,7 @@ export interface LiftDataContextType {
   clearAllLifts: () => void;
   formatDateForLift: (date: Date) => string;
   refreshLifts: () => Promise<void>;
+  invalidateAndRefetch: () => Promise<void>;
   favouriteLiftAndRefresh: (id: string) => Promise<void>;
   isLiftDataLoaded: boolean;
 }
