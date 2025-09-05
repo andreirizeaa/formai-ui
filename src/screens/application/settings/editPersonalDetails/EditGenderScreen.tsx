@@ -6,6 +6,7 @@ import { editUserDetails } from '../../../../services/userService';
 import { hapticFeedback } from '../../../../utils/haptic';
 import i18n from '../../../../utils/i18n';
 import { ChevronLeft } from 'lucide-react-native';
+import { AnimatedOptionButton } from '../../../../components/onboarding/AnimatedOptionButton';
 
 interface EditGenderScreenProps {
   onBack: () => void;
@@ -65,16 +66,14 @@ export function EditGenderScreen({ onBack, currentValue, onSave }: EditGenderScr
       <View style={styles.content}>
         {/* Gender Selection Buttons */}
         <View style={styles.optionsContainer}>
-          <TouchableOpacity
-            style={[
-              styles.optionButton,
-              selectedGender === 'male' && styles.selectedOption,
-            ]}
+          <AnimatedOptionButton
+            isSelected={selectedGender === 'male'}
+            isDark={false}
+            delay={0}
             onPress={() => {
               hapticFeedback.selection();
               setSelectedGender('male');
             }}
-            activeOpacity={0.7}
           >
             <Text
               style={[
@@ -84,18 +83,16 @@ export function EditGenderScreen({ onBack, currentValue, onSave }: EditGenderScr
             >
               {i18n.t('onboarding.gender.male')}
             </Text>
-          </TouchableOpacity>
+          </AnimatedOptionButton>
 
-          <TouchableOpacity
-            style={[
-              styles.optionButton,
-              selectedGender === 'female' && styles.selectedOption,
-            ]}
+          <AnimatedOptionButton
+            isSelected={selectedGender === 'female'}
+            isDark={false}
+            delay={100}
             onPress={() => {
               hapticFeedback.selection();
               setSelectedGender('female');
             }}
-            activeOpacity={0.7}
           >
             <Text
               style={[
@@ -105,7 +102,7 @@ export function EditGenderScreen({ onBack, currentValue, onSave }: EditGenderScr
             >
               {i18n.t('onboarding.gender.female')}
             </Text>
-          </TouchableOpacity>
+          </AnimatedOptionButton>
         </View>
       </View>
 
@@ -175,18 +172,6 @@ const styles = StyleSheet.create({
   },
   optionsContainer: {
     gap: 16,
-  },
-  optionButton: {
-    paddingVertical: 20,
-    paddingHorizontal: 24,
-    borderRadius: 18,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E5E5EA',
-  },
-  selectedOption: {
-    backgroundColor: '#000000',
-    borderColor: '#000000',
   },
   optionText: {
     fontSize: 18,

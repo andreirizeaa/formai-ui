@@ -5,6 +5,7 @@ import Svg, { Circle } from 'react-native-svg';
 import { useUserCheckIns } from '../../context/UserCheckInsContext';
 import { useSelectedDate } from '../../context/SelectedDateContext';
 import { useLiftData } from '../../context/LiftDataContext';
+import { BASE_WEEKS, INITIAL_INDEX } from '../../utils/calendarData';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const WEEK_WIDTH = SCREEN_WIDTH * 0.9;
@@ -34,7 +35,7 @@ export function SwipeableCalendar({ onDateSelect, initialSelectedDate, externalS
 
   // ⏳ control when calendar is ready to mount
   const [ready, setReady] = useState(false);
-  const [currentWeekIndex, setCurrentWeekIndex] = useState(0);
+  const [currentWeekIndex, setCurrentWeekIndex] = useState(INITIAL_INDEX);
   
   useEffect(() => {
     const task = InteractionManager.runAfterInteractions(() => {
@@ -91,21 +92,11 @@ export function SwipeableCalendar({ onDateSelect, initialSelectedDate, externalS
   };
 
   const generateWeekData = useCallback(
-    (weekOffset: number): DayData[] => {
+    (weekDates: Date[]): DayData[] => {
       const today = new Date();
-      const startOfCurrentWeek = new Date(today);
-      const dayOfWeek = today.getDay();
-      startOfCurrentWeek.setDate(today.getDate() - dayOfWeek);
-
-      const startOfTargetWeek = new Date(startOfCurrentWeek);
-      startOfTargetWeek.setDate(startOfCurrentWeek.getDate() + weekOffset * 7);
-
       const dayNames = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
-      return Array.from({ length: 7 }, (_, i) => {
-        const date = new Date(startOfTargetWeek);
-        date.setDate(startOfTargetWeek.getDate() + i);
-
+      return weekDates.map((date, i) => {
         const isToday = date.toDateString() === today.toDateString();
         const isSelected = date.toDateString() === selectedDate.toDateString();
         const isFuture = date > today;
@@ -128,38 +119,31 @@ export function SwipeableCalendar({ onDateSelect, initialSelectedDate, externalS
     [selectedDate, daysLogged, getLiftsByDate]
   );
 
-  const WEEKS_BACK = 3;
   const weeks = useMemo(() => {
-    const arr: DayData[][] = [];
-    for (let i = -WEEKS_BACK; i <= 0; i++) {
-      arr.push(generateWeekData(i));
-    }
-    return arr;
+    return BASE_WEEKS.map(weekDates => generateWeekData(weekDates));
   }, [generateWeekData]);
 
   // Calculate which week index contains the selected date
   const getWeekIndexForDate = useCallback((targetDate: Date) => {
-    const today = new Date();
-    const startOfCurrentWeek = new Date(today);
-    const dayOfWeek = today.getDay();
-    startOfCurrentWeek.setDate(today.getDate() - dayOfWeek);
+    const targetDateString = targetDate.toDateString();
     
-    const startOfTargetWeek = new Date(targetDate);
-    const dayOfTargetWeek = targetDate.getDay();
-    startOfTargetWeek.setDate(targetDate.getDate() - dayOfTargetWeek);
+    // Find the week that contains the target date
+    for (let i = 0; i < BASE_WEEKS.length; i++) {
+      const weekDates = BASE_WEEKS[i];
+      const hasTargetDate = weekDates.some(date => date.toDateString() === targetDateString);
+      if (hasTargetDate) {
+        return i;
+      }
+    }
     
-    const diffTime = startOfTargetWeek.getTime() - startOfCurrentWeek.getTime();
-    const diffWeeks = Math.round(diffTime / (1000 * 60 * 60 * 24 * 7));
-    
-    // Convert to our week array index (0 = current week, negative = past weeks)
-    return Math.max(-WEEKS_BACK, Math.min(0, diffWeeks));
+    // If not found, return the last week (current week)
+    return BASE_WEEKS.length - 1;
   }, []);
 
   // Update current week index when selected date changes
   useEffect(() => {
     const weekIndex = getWeekIndexForDate(selectedDate);
-    const arrayIndex = weekIndex + WEEKS_BACK; // Convert to array index
-    setCurrentWeekIndex(Math.max(0, Math.min(weeks.length - 1, arrayIndex)));
+    setCurrentWeekIndex(Math.max(0, Math.min(weeks.length - 1, weekIndex)));
   }, [selectedDate, getWeekIndexForDate, weeks.length]);
 
   const handleDatePress = (day: DayData) => {
