@@ -59,18 +59,22 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
     });
 
     // Process loading lifts and replace with final data if available
-    const processedLoading = loading.map(loadingLift => {
-      // If this loading lift has been completed and we have final data, use the final data
-      if (loadingLift.status === 'completed' && loadingLift.finalData?.id) {
-        const finalData = finalLiftsMap.get(loadingLift.finalData.id);
-        if (finalData) {
-          // Return the final data which has the latest changes (favorite status, weight, etc.)
-          return finalData;
+    const processedLoading = loading
+      .map(loadingLift => {
+        // If this loading lift has been completed and we have final data, use the final data
+        if (loadingLift.status === 'completed' && loadingLift.finalData?.id) {
+          const finalData = finalLiftsMap.get(loadingLift.finalData.id);
+          if (finalData) {
+            // Return the final data which has the latest changes (favorite status, weight, etc.)
+            return finalData;
+          }
+          // If finalData exists but the lift was deleted from context, return null to filter it out
+          return null;
         }
-      }
-      // Otherwise return the loading lift as-is
-      return loadingLift;
-    });
+        // Otherwise return the loading lift as-is
+        return loadingLift;
+      })
+      .filter((item): item is NonNullable<typeof item> => item !== null);
 
     // Add any final lifts that don't have corresponding loading lifts
     const loadingIds = new Set(loading.map(l => l.id));
