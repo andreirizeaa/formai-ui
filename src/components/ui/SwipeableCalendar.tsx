@@ -1,15 +1,17 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Platform, InteractionManager } from 'react-native';
-import Carousel from 'react-native-reanimated-carousel';
+import { FlashList } from '@shopify/flash-list';
 import Svg, { Circle } from 'react-native-svg';
 import { useUserCheckIns } from '../../context/UserCheckInsContext';
 import { useSelectedDate } from '../../context/SelectedDateContext';
 import { useLiftData } from '../../context/LiftDataContext';
 import { BASE_WEEKS, INITIAL_INDEX } from '../../utils/calendarData';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const WEEK_WIDTH = SCREEN_WIDTH * 0.9;
+const { width: RAW_W } = Dimensions.get('window');
+const SCREEN_WIDTH = Math.round(RAW_W);
+const ITEM_WIDTH = SCREEN_WIDTH;           // page width
 const WEEK_HEIGHT = 80;
+const WEEK_WIDTH = Math.round(SCREEN_WIDTH * 0.9);
 
 interface SwipeableCalendarProps {
   onDateSelect?: (date: Date) => void;
@@ -28,23 +30,144 @@ interface DayData {
   dailyAccuracy: number;
 }
 
-export function SwipeableCalendar({ onDateSelect, initialSelectedDate, externalScrollGestureRef }: SwipeableCalendarProps) {
+// CircularProgress component
+const CircularProgress = ({ percentage, size = 36, strokeWidth = 2 }: { percentage: number; size?: number; strokeWidth?: number }) => {
+  const radius = (size - strokeWidth) / 2;
+  const circumference = radius * 2 * Math.PI;
+  const strokeDasharray = circumference;
+  const strokeDashoffset = circumference - (percentage / 100) * circumference;
+  
+  return (
+    <Svg width={size} height={size} style={{ position: 'absolute' }}>
+      {/* Progress circle only - no background circle */}
+      <Circle
+        cx={size / 2}
+        cy={size / 2}
+        r={radius}
+        stroke="#000000"
+        strokeWidth={strokeWidth}
+        fill="transparent"
+        strokeDasharray={strokeDasharray}
+        strokeDashoffset={strokeDashoffset}
+        strokeLinecap="round"
+        transform={`rotate(-90 ${size / 2} ${size / 2})`}
+      />
+    </Svg>
+  );
+};
+
+// Memoized WeekPage Component with lazy rendering
+const WeekPage = React.memo(function WeekPage({
+  days,
+  onPressDay,
+  shouldRender,
+}: {
+  days: DayData[];
+  onPressDay: (d: DayData) => void;
+  shouldRender: boolean;
+}) {
+  return (
+    <View 
+      style={styles.weekPage} 
+      renderToHardwareTextureAndroid
+      shouldRasterizeIOS
+    >
+      <View style={styles.weekContent}>
+        {days.map((day, i) => (
+          <TouchableOpacity
+            key={`${day.date.toISOString()}-${i}`}
+            style={styles.dayContainer}
+            onPress={() => !day.isFuture && onPressDay(day)}
+            activeOpacity={day.isFuture ? 1 : 0.7}
+            disabled={day.isFuture}
+          >
+            <View
+              style={[
+                styles.dayCircle,
+                // Hide entire day circle background when has lifts, or for future dates
+                day.dailyAccuracy > 0 || day.isFuture
+                  ? styles.transparentCircle
+                  : day.isActive
+                  ? styles.selectedCircle
+                  : styles.inactiveDayCircle,
+              ]}
+            >
+              {/* Circular progress indicator for days with lifts - only render when visible AND needed */}
+              {shouldRender && day.dailyAccuracy > 0 && (
+                <CircularProgress percentage={day.dailyAccuracy} size={36} strokeWidth={2} />
+              )}
+              <Text
+                style={[
+                  styles.dayName,
+                  day.isActive
+                    ? styles.activeDayText
+                    : styles.inactiveDayText,
+                ]}
+              >
+                {day.dayName}
+              </Text>
+            </View>
+            <Text
+              style={[
+                styles.dayNumber,
+                day.isActive 
+                  ? styles.activeDayText 
+                  : styles.inactiveDayText,
+              ]}
+            >
+              {day.dayNumber}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </View>
+  );
+}, (a, b) =>
+  a.shouldRender === b.shouldRender &&
+  a.days.length === b.days.length &&
+  a.days.every((day, i) => 
+    day.date.toISOString() === b.days[i]?.date.toISOString() &&
+    day.isActive === b.days[i]?.isActive &&
+    day.dailyAccuracy === b.days[i]?.dailyAccuracy
+  )
+);
+
+export function SwipeableCalendar({ onDateSelect, initialSelectedDate }: SwipeableCalendarProps) {
+  // hooks (unchanged)
   const { selectedDate, setSelectedDate } = useSelectedDate();
   const { daysLogged } = useUserCheckIns();
   const { getLiftsByDate } = useLiftData();
 
-  // ⏳ control when calendar is ready to mount
+  const listRef = useRef<FlashList<DayData[]> | null>(null);
   const [ready, setReady] = useState(false);
-  const [currentWeekIndex, setCurrentWeekIndex] = useState(INITIAL_INDEX);
-  
+  const hasInitialJump = useRef(false);
+
+  // Seed indices from selected date (or initialSelectedDate) before first paint
+  const initialIndexRef = useRef<number>(0);
+
+  // compute once (selectedDate fallback if prop is absent)
+  if (initialIndexRef.current === 0 && BASE_WEEKS.length) {
+    const seedDate = initialSelectedDate ?? selectedDate;
+    const t = seedDate.toDateString();
+    for (let i = 0; i < BASE_WEEKS.length; i++) {
+      if (BASE_WEEKS[i].some(d => d.toDateString() === t)) {
+        initialIndexRef.current = i;
+        break;
+      }
+    }
+    if (initialIndexRef.current === 0) {
+      initialIndexRef.current = BASE_WEEKS.length - 1;
+    }
+  }
+
+  const [currentWeekIndex, setCurrentWeekIndex] = useState(initialIndexRef.current);
+  const [localIndex, setLocalIndex] = useState(initialIndexRef.current);
+
   useEffect(() => {
-    const task = InteractionManager.runAfterInteractions(() => {
-      setReady(true);
-    });
+    const task = InteractionManager.runAfterInteractions(() => setReady(true));
     return () => task.cancel();
   }, []);
 
-  // Set initial date if provided and different from current selected date
   useEffect(() => {
     if (initialSelectedDate && initialSelectedDate.toDateString() !== selectedDate.toDateString()) {
       setSelectedDate(initialSelectedDate);
@@ -61,34 +184,8 @@ export function SwipeableCalendar({ onDateSelect, initialSelectedDate, externalS
   const calculateDailyAccuracy = (date: Date): number => {
     const liftsForDate = getLiftsByDate(date);
     if (liftsForDate.length === 0) return 0;
-    
     const totalAccuracy = liftsForDate.reduce((sum, lift) => sum + lift.analysis.accuracy, 0);
     return Math.round(totalAccuracy / liftsForDate.length);
-  };
-
-  const CircularProgress = ({ percentage, size = 36, strokeWidth = 2 }: { percentage: number; size?: number; strokeWidth?: number }) => {
-    const radius = (size - strokeWidth) / 2;
-    const circumference = radius * 2 * Math.PI;
-    const strokeDasharray = circumference;
-    const strokeDashoffset = circumference - (percentage / 100) * circumference;
-    
-    return (
-      <Svg width={size} height={size} style={{ position: 'absolute' }}>
-        {/* Progress circle only - no background circle */}
-        <Circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke="#000000"
-          strokeWidth={strokeWidth}
-          fill="transparent"
-          strokeDasharray={strokeDasharray}
-          strokeDashoffset={strokeDashoffset}
-          strokeLinecap="round"
-          transform={`rotate(-90 ${size / 2} ${size / 2})`}
-        />
-      </Svg>
-    );
   };
 
   const generateWeekData = useCallback(
@@ -119,127 +216,138 @@ export function SwipeableCalendar({ onDateSelect, initialSelectedDate, externalS
     [selectedDate, daysLogged, getLiftsByDate]
   );
 
-  const weeks = useMemo(() => {
-    return BASE_WEEKS.map(weekDates => generateWeekData(weekDates));
-  }, [generateWeekData]);
+  const weeks: DayData[][] = useMemo(
+    () => BASE_WEEKS.map(dates => generateWeekData(dates)),
+    [generateWeekData]
+  );
 
-  // Calculate which week index contains the selected date
   const getWeekIndexForDate = useCallback((targetDate: Date) => {
-    const targetDateString = targetDate.toDateString();
-    
-    // Find the week that contains the target date
+    const t = targetDate.toDateString();
     for (let i = 0; i < BASE_WEEKS.length; i++) {
-      const weekDates = BASE_WEEKS[i];
-      const hasTargetDate = weekDates.some(date => date.toDateString() === targetDateString);
-      if (hasTargetDate) {
-        return i;
-      }
+      if (BASE_WEEKS[i].some(d => d.toDateString() === t)) return i;
     }
-    
-    // If not found, return the last week (current week)
     return BASE_WEEKS.length - 1;
   }, []);
 
-  // Update current week index when selected date changes
+  // When the selected date changes externally, compute the week index
   useEffect(() => {
-    const weekIndex = getWeekIndexForDate(selectedDate);
-    setCurrentWeekIndex(Math.max(0, Math.min(weeks.length - 1, weekIndex)));
+    const idx = Math.max(0, Math.min(weeks.length - 1, getWeekIndexForDate(selectedDate)));
+    setCurrentWeekIndex(idx);        // committed index
+    setLocalIndex(idx);              // keep local window in sync
   }, [selectedDate, getWeekIndexForDate, weeks.length]);
 
+  // one-time jump to the correct page as soon as we're ready
+  useEffect(() => {
+    if (!ready || hasInitialJump.current) return;
+    hasInitialJump.current = true;
+    listRef.current?.scrollToIndex({
+      index: initialIndexRef.current,
+      animated: false, // no flicker on first paint
+    });
+  }, [ready]);
+
+  // later changes (e.g., tapping a date or external selectedDate updates)
+  useEffect(() => {
+    if (!ready) return;
+    if (!hasInitialJump.current) return; // first jump handled above
+    listRef.current?.scrollToIndex({ index: currentWeekIndex, animated: true });
+  }, [currentWeekIndex, ready]);
+
+  // (Optional) If initialSelectedDate can arrive late
+  useEffect(() => {
+    if (!initialSelectedDate || !ready) return;
+    const idx = getWeekIndexForDate(initialSelectedDate);
+    setCurrentWeekIndex(idx);
+    setLocalIndex(idx);
+    listRef.current?.scrollToIndex({ index: idx, animated: false });
+  }, [initialSelectedDate, ready, getWeekIndexForDate]);
+
   const handleDatePress = (day: DayData) => {
-    // Don't allow selection of future dates
-    if (day.isFuture) {
-      return;
-    }
+    if (day.isFuture) return;
     setSelectedDate(day.date);
     onDateSelect?.(day.date);
   };
 
-  // ⏳ Render placeholder until calendar is mounted
-  if (!ready) {
-    return <View style={{ height: WEEK_HEIGHT }} />; // simple spacer, could replace with skeleton
-  }
-
-  return (
-    <View style={styles.container}>
-      <Carousel
-        loop={false}
-        width={SCREEN_WIDTH}
-        height={WEEK_HEIGHT}
-        data={weeks}
-        defaultIndex={currentWeekIndex}
-        pagingEnabled
-        snapEnabled
-        enableSnap
-        style={{ backgroundColor: 'transparent' }}
-        onConfigurePanGesture={(g) => {
-          'worklet';
-          // Require strong horizontal intent (> ~20px) before activating - very strict
-          g.activeOffsetX([-20, 20]);
-          // If the user moves vertically by ~15px, fail this pan so the parent ScrollView takes over - strict
-          g.failOffsetY([-15, 15]);
-          // Prevent simultaneous gestures - once this gesture starts, block others
-          g.shouldCancelWhenOutside(true);
-          // Don't allow simultaneous gestures with the parent ScrollView
-          // if (externalScrollGestureRef) {
-          //   g.simultaneousWithExternalGesture(externalScrollGestureRef);
-          // }
-        }}
-        renderItem={({ item }) => (
-          <View style={styles.weekPage}>
-            <View style={styles.weekContent}>
-              {item.map((day, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={styles.dayContainer}
-                  onPress={() => handleDatePress(day)}
-                  activeOpacity={day.isFuture ? 1 : 0.7}
-                  disabled={day.isFuture}
-                >
-                  <View
-                    style={[
-                      styles.dayCircle,
-                      // Hide entire day circle background when has lifts, or for future dates
-                      day.dailyAccuracy > 0 || day.isFuture
-                        ? styles.transparentCircle
-                        : day.isActive
-                        ? styles.selectedCircle
-                        : styles.inactiveDayCircle,
-                    ]}
-                  >
-                    {/* Circular progress indicator for days with lifts */}
-                    {day.dailyAccuracy > 0 && (
-                      <CircularProgress percentage={day.dailyAccuracy} size={36} strokeWidth={2} />
-                    )}
-                    <Text
-                      style={[
-                        styles.dayName,
-                        day.isActive
-                          ? styles.activeDayText
-                          : styles.inactiveDayText,
-                      ]}
-                    >
-                      {day.dayName}
-                    </Text>
-                  </View>
-                  <Text
-                    style={[
-                      styles.dayNumber,
-                      day.isActive 
-                        ? styles.activeDayText 
-                        : styles.inactiveDayText,
-                    ]}
-                  >
-                    {day.dayNumber}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        )}
-      />
-    </View>
+  // 🔥 lazy window uses localIndex (same as working components)
+  const shouldRenderIndex = useCallback(
+    (index: number) => Math.abs(index - localIndex) <= 1,
+    [localIndex]
   );
+
+  // Follow finger smoothly — local only
+  const onScroll = useCallback((e: any) => {
+    const x = e?.nativeEvent?.contentOffset?.x || 0;
+    const idx = Math.max(
+      0,
+      Math.min(Math.floor((x + ITEM_WIDTH / 2) / ITEM_WIDTH), weeks.length - 1)
+    );
+    if (idx !== localIndex) setLocalIndex(idx);
+  }, [localIndex, weeks.length]);
+
+  // Commit page on settle
+  const onMomentumScrollEnd = useCallback((e: any) => {
+    const x = e?.nativeEvent?.contentOffset?.x ?? 0;
+    const idx = Math.max(0, Math.min(Math.round(x / ITEM_WIDTH), weeks.length - 1));
+    if (idx !== currentWeekIndex) setCurrentWeekIndex(idx);
+    if (idx !== localIndex) setLocalIndex(idx);
+  }, [weeks.length, currentWeekIndex, localIndex]);
+
+  const renderItem = useCallback(
+    ({ item, index }: { item: DayData[]; index: number }) => (
+      <View style={{ width: ITEM_WIDTH, alignItems: 'center' }}>
+        <WeekPage
+          days={item}
+          onPressDay={handleDatePress}
+          shouldRender={shouldRenderIndex(index)}
+        />
+      </View>
+    ),
+    [shouldRenderIndex]
+  );
+
+  const content = ready ? (
+    <FlashList
+      ref={listRef}
+      data={weeks}
+      horizontal
+      showsHorizontalScrollIndicator={false}
+
+      // ✅ same snap mode as the fixed components
+      snapToInterval={ITEM_WIDTH}
+      snapToAlignment="start"
+      decelerationRate="fast"
+      disableIntervalMomentum
+      contentInsetAdjustmentBehavior="never"
+
+      // exact layout (size + offset) so FlashList never guesses
+      overrideItemLayout={(layout, index) => {
+        layout.size = ITEM_WIDTH;
+        // @ts-ignore
+        layout.offset = ITEM_WIDTH * index;
+      }}
+      estimatedItemSize={ITEM_WIDTH}
+      estimatedListSize={{ width: SCREEN_WIDTH, height: WEEK_HEIGHT }}
+
+      keyExtractor={(_, i) => `week-${i}`}
+      renderItem={renderItem}
+      removeClippedSubviews
+      nestedScrollEnabled
+
+      // smooth UI updates while dragging; no parent/committed state churn
+      onScroll={onScroll}
+      scrollEventThrottle={16}
+      onMomentumScrollEnd={onMomentumScrollEnd}
+
+      // re-render cells when selection/logs or local window change
+      extraData={{ selectedDate, daysLogged, localIndex }}
+
+      initialScrollIndex={initialIndexRef.current}  // ✅ start on selected week
+    />
+  ) : (
+    <View style={{ height: WEEK_HEIGHT }} />
+  );
+
+  return <View style={styles.container}>{content}</View>;
 }
 
 const styles = StyleSheet.create({
@@ -281,8 +389,6 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
     backgroundColor: 'transparent',
   },
-
-
   transparentCircle: {
     borderWidth: 0,
     backgroundColor: 'transparent',
@@ -304,5 +410,4 @@ const styles = StyleSheet.create({
     color: '#000000',
     fontWeight: '700',
   },
-
 }); 

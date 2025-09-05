@@ -1,15 +1,15 @@
-import React from 'react';
+import React, { useRef, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
-import Carousel from 'react-native-reanimated-carousel';
+import { FlashList, ListRenderItemInfo } from '@shopify/flash-list';
 import { hapticFeedback } from '../../utils/haptic';
 import { CircularProgressChart } from '../icons/icons';
 import { useLiftData } from '../../context/LiftDataContext';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
-// Config
+// Use integer dimensions for precise snapping
+const SCREEN_WIDTH = Math.round(Dimensions.get('window').width);
+const ITEM_WIDTH = SCREEN_WIDTH;                 // page width = screen width
+const CARD_WIDTH = Math.round(SCREEN_WIDTH * 0.9);
 const CARD_HEIGHT = 160;
-const CARD_WIDTH = SCREEN_WIDTH * 0.9; // ✅ slightly smaller than screen
 
 interface AccuracyCardData {
   percentage: number;
@@ -30,33 +30,44 @@ export function SwipeableAccuracyCard({
   externalScrollGestureRef,
 }: SwipeableAccuracyCardProps) {
   const { addLift, formatDateForLift } = useLiftData();
+  
+  // Create a ref to control the list
+  const listRef = useRef<FlashList<AccuracyCardData> | null>(null);
 
-  const renderItem = ({ item }: { item: AccuracyCardData }) => (
-    <View style={styles.cardWrapper}>
-      <View style={styles.accuracyCard}>
-        <View style={styles.accuracyCardContent}>
-          <View style={styles.accuracyCardLeftSection}>
-            <Text style={styles.accuracyCardNumber}>{item.percentage}%</Text>
-            <Text style={styles.accuracyCardLabel}>{item.label}</Text>
-          </View>
-          <View style={styles.accuracyCardRightSection}>
-            <CircularProgressChart
-              width={120}
-              height={120}
-              percentage={item.percentage}
-              progressColor="#000000"
-              backgroundColor="#E5E5E5"
-              strokeWidth={10}
-              radius={54}
-              showTargetIcon={true}
-              iconColor="#000000"
-              iconSize={20}
-            />
-          </View>
-        </View>
-      </View>
-    </View>
+  // Track a local index for UI/lazy render; notify parent only on settle
+  const [localIndex, setLocalIndex] = React.useState(currentCardIndex);
+
+  // Keep local index in sync when parent jumps
+  useEffect(() => {
+    setLocalIndex(Math.max(0, Math.min(currentCardIndex, cardData.length - 1)));
+  }, [currentCardIndex, cardData.length]);
+
+  // Use local index for lazy mount window
+  const shouldRenderIndex = useCallback(
+    (index: number) => Math.abs(index - localIndex) <= 1,
+    [localIndex]
   );
+
+
+  // Update local index smoothly while dragging (NO parent calls here)
+  const onScroll = useCallback((e: any) => {
+    const x = e?.nativeEvent?.contentOffset?.x || 0;
+    const idx = Math.max(0, Math.min(Math.floor((x + ITEM_WIDTH / 2) / ITEM_WIDTH), (cardData.length || 1) - 1));
+    if (idx !== localIndex) setLocalIndex(idx);
+  }, [localIndex, cardData.length]);
+
+  // Only tell parent when momentum ends (commit)
+  const onMomentumScrollEnd = useCallback((e: any) => {
+    const x = e?.nativeEvent?.contentOffset?.x || 0;
+    const idx = Math.max(0, Math.min(Math.round(x / ITEM_WIDTH), (cardData.length || 1) - 1));
+    if (idx !== currentCardIndex) onCardIndexChange(idx);
+  }, [currentCardIndex, cardData.length, onCardIndexChange]);
+
+  // Keep the list in sync if the parent changes currentCardIndex
+  useEffect(() => {
+    const i = Math.max(0, Math.min(currentCardIndex, cardData.length - 1));
+    listRef.current?.scrollToIndex({ index: i, animated: true });
+  }, [currentCardIndex, cardData.length]);
 
   const handleAddTestLift = () => {
     hapticFeedback.selection();
@@ -152,51 +163,79 @@ export function SwipeableAccuracyCard({
 
   return (
     <View style={styles.root}>
-      <Carousel
-        loop={false}
-        width={SCREEN_WIDTH}
-        height={CARD_HEIGHT}
-        data={cardData}
-        renderItem={renderItem}
-        pagingEnabled
-        snapEnabled
-        enableSnap
-        defaultIndex={currentCardIndex}
-        onSnapToItem={(index) => {
-          if (index !== currentCardIndex) {
-            onCardIndexChange(index);
-          }
-        }}
-        style={{
-          backgroundColor: 'transparent',
-        }}
-        onConfigurePanGesture={(g) => {
-          'worklet';
-          // Require strong horizontal intent (> ~20px) before activating - very strict
-          g.activeOffsetX([-20, 20]);
-          // If the user moves vertically by ~15px, fail this pan so the parent ScrollView takes over - strict
-          g.failOffsetY([-15, 15]);
-          // Prevent simultaneous gestures - once this gesture starts, block others
-          g.shouldCancelWhenOutside(true);
-          // Don't allow simultaneous gestures with the parent ScrollView
-          // if (externalScrollGestureRef) {
-          //   g.simultaneousWithExternalGesture(externalScrollGestureRef);
-          // }
-        }}
-      />
+      <View style={{ width: SCREEN_WIDTH, height: CARD_HEIGHT }}>
+        <FlashList
+          ref={listRef}
+          data={cardData}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+
+          // same snap config as LineGraph
+          snapToInterval={ITEM_WIDTH}
+          snapToAlignment="start"
+          decelerationRate="fast"
+          disableIntervalMomentum   // ← helps remove the "pause then snap" on iOS
+
+          // ✅ Exact layout (no guessing)
+          overrideItemLayout={(layout, index) => {
+            layout.size = ITEM_WIDTH;
+            // @ts-ignore
+            layout.offset = ITEM_WIDTH * index;
+          }}
+          estimatedItemSize={ITEM_WIDTH}
+          estimatedListSize={{ width: SCREEN_WIDTH, height: CARD_HEIGHT }}
+
+          keyExtractor={(item, i) => `${item.label}-${i}`}
+          renderItem={({ item, index }) => (
+            <View style={{ width: ITEM_WIDTH, height: CARD_HEIGHT, justifyContent: 'center', alignItems: 'center' }}>
+              <View style={styles.accuracyCard} renderToHardwareTextureAndroid shouldRasterizeIOS>
+                <View style={styles.accuracyCardContent}>
+                  <View style={styles.accuracyCardLeftSection}>
+                    <Text style={styles.accuracyCardNumber}>{item.percentage}%</Text>
+                    <Text style={styles.accuracyCardLabel}>{item.label}</Text>
+                  </View>
+                  <View style={styles.accuracyCardRightSection}>
+                    {shouldRenderIndex(index) && (
+                      <CircularProgressChart
+                        width={120}
+                        height={120}
+                        percentage={item.percentage}
+                        progressColor="#000000"
+                        backgroundColor="#E5E5E5"
+                        strokeWidth={10}
+                        radius={54}
+                        showTargetIcon
+                        iconColor="#000000"
+                        iconSize={20}
+                      />
+                    )}
+                  </View>
+                </View>
+              </View>
+            </View>
+          )}
+
+          removeClippedSubviews
+          nestedScrollEnabled
+          contentInsetAdjustmentBehavior="never"
+          onScroll={onScroll}
+          scrollEventThrottle={16}
+          onMomentumScrollEnd={onMomentumScrollEnd}
+
+          // re-render items when these change (dots + lazy window)
+          extraData={{ localIndex, len: cardData.length }}
+        />
+      </View>
 
       {/* Pagination Dots */}
       <View style={styles.paginationContainer}>
-        {cardData.map((_, index) => (
-          <TouchableOpacity
-            key={index}
+        {cardData.map((_, i) => (
+          <View
+            key={i}
             style={[
               styles.paginationDot,
-              index === currentCardIndex
-                ? styles.paginationDotActive
-                : styles.paginationDotInactive,
+              i === localIndex ? styles.paginationDotActive : styles.paginationDotInactive,
             ]}
-            activeOpacity={0.7}
           />
         ))}
       </View>
@@ -225,9 +264,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 2,
+    // 🚫 no paddingBottom / marginBottom here
   },
   cardWrapper: {
-    width: SCREEN_WIDTH,               // ✅ each page = screen width
+    width: ITEM_WIDTH,                 // ✅ each page = screen width
+    height: CARD_HEIGHT,               // <-- clamp
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -238,7 +279,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     width: CARD_WIDTH,                 // ✅ narrower card = gap at edges
-    height: CARD_HEIGHT,
+    height: CARD_HEIGHT,               // <-- fixed, no auto growth
   },
   accuracyCardContent: {
     flexDirection: 'row',
@@ -264,20 +305,23 @@ const styles = StyleSheet.create({
   paginationContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 12,
-    marginBottom: 24,
+    marginBottom: 12,
+    marginTop: 30,
   },
   paginationDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
+    marginTop: -20,
     marginHorizontal: 4,
   },
-  paginationDotActive: { backgroundColor: '#000000' },
+  paginationDotActive: {
+    backgroundColor: '#000',
+  },
   paginationDotInactive: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: '#000000',
+    borderColor: '#000',
   },
   testLiftButton: {
     backgroundColor: '#007AFF',
