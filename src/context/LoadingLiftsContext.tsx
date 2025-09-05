@@ -3,7 +3,7 @@ import { ILiftData } from './LiftDataContext';
 import { getUserId } from '../services/storageService';
 import { analyzeLift } from '../services/liftService';
 import { uploadLiftVideo, uploadLiftThumbnail } from '../services/VideoUploadService';
-import { useLiftData } from './LiftDataContext';
+import { useLiftData, extractObjectKeyFromUrl, signPath } from './LiftDataContext';
 import { useSelectedDate } from './SelectedDateContext';
 import { useUserCheckIns } from './UserCheckInsContext';
 import { loadLoadingLifts, saveLoadingLifts } from '../services/loadingLiftsStorage';
@@ -376,9 +376,16 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
           return;
         }
       }
-      // If API returns the final data for the card, store it to prevent flicker
+      // Store final data & flip to 'completed' (keep the same id so the UI swaps content seamlessly)
       if (result.data) {
-        setAllLoadingLifts(prev => prev.map(l => l.id === current.id ? { ...l, finalData: mapApiDataToFinalData(result.data) } : l));
+        const mapped = await mapApiDataToFinalData(result.data);
+        setAllLoadingLifts(prev => prev.map(l => l.id === current.id ? { 
+          ...l, 
+          finalData: mapped,
+          status: 'completed',
+          uiProgress: 1,
+          pipelineStage: 'analyze'
+        } : l));
       }
       
       // Check if streak should be shown and trigger modal
@@ -386,11 +393,8 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
         openStreakModal();
       }
       
-      // Mark as complete with the analysis data
-      completeLift(current.id, result.data);
-      // Refresh lifts in background
+      // pull latest lifts from backend (so ILiftData exists for future screens)
       void (async () => { try { await refreshLifts(); } catch (_) {} })();
-      // Invalidate and refetch user check-ins to update streak data
       invalidateUserCheckIns();
     } catch (error) {
       setAllLoadingLifts(prev => {
@@ -410,7 +414,21 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
     }
   }
 
-  function mapApiDataToFinalData(data: any) {
+  async function mapApiDataToFinalData(data: any): Promise<ILiftData> {
+    // Sign the thumbnail URL
+    const thumbKey = await extractObjectKeyFromUrl(data.thumbnail_url);
+    const thumbnailURL = await signPath(thumbKey);
+    
+    // Sign feedback image URLs if they exist
+    const rawFeedback: Array<{ imageURL: any; flaws: any; improvement: any }> = Array.isArray(data.analysis?.feedback) ? data.analysis.feedback : [];
+    const signedFeedback = await Promise.all(
+      rawFeedback.map(async (f) => {
+        const feedbackKey = await extractObjectKeyFromUrl(typeof f.imageURL === 'string' ? f.imageURL : undefined);
+        const signedUrl = await signPath(feedbackKey);
+        return { ...f, imageURL: signedUrl ?? f.imageURL };
+      })
+    );
+
     return {
       id: data.id,
       isFavourite: !!data.is_favourite,
@@ -419,11 +437,13 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
       liftTime: data.lift_time,
       weightValue: Number(data.weight_value),
       reps: Number(data.reps),
-      thumbnailURL: data.thumbnail_url ?? data.thumbnailURL ?? undefined,
+      rawVideoURL: undefined, // Not needed for final data display
+      poseVideoURL: undefined, // Not needed for final data display
+      thumbnailURL: thumbnailURL ?? data.thumbnail_url ?? undefined,
       analysis: {
         accuracy: Number(data.analysis?.accuracy ?? 0),
         lineGraphValues: Array.isArray(data.analysis?.lineGraphValues) ? data.analysis.lineGraphValues : [],
-        feedback: Array.isArray(data.analysis?.feedback) ? data.analysis.feedback : [],
+        feedback: signedFeedback,
       },
     };
   }
@@ -448,14 +468,9 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
       }
     }
     
-    // Immediately remove the loading lift and refresh regular lifts to show LiftDataCard
-    removeLift(id);
-    // Refresh lifts in background to show the new data card
-    void (async () => { 
-      try { 
-        await refreshLifts(); 
-      } catch (_) {} 
-    })();
+    // Note: We no longer immediately remove the loading lift here
+    // The UI will show the completed loading lift with finalData until it's cleaned up
+    // This prevents the "pop" effect when transitioning from loading to final state
   };
 
   const retryLift = async (id: string) => {

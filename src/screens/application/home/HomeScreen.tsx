@@ -6,8 +6,7 @@ import { hapticFeedback } from '../../../utils/haptic';
 import { useLoadingLifts } from '../../../context/LoadingLiftsContext';
 import { useLiftData, ILiftData } from '../../../context/LiftDataContext';
 import { deleteLift as deleteLiftApi } from '../../../services/liftService';
-import { LoadingLiftCard } from './LoadingLiftCard';
-import { LiftDataCard } from '../../../components/LiftDataCard';
+import { LiftCard } from '../../../components/LiftCard';
 import { SwipeableCalendar } from '../../../components/ui/SwipeableCalendar';
 import { SwipeableAccuracyCard } from '../../../components/ui/SwipeableAccuracyCard';
 import { StreakModal } from '../../../components/ui/StreakModal';
@@ -47,6 +46,24 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
   
   // Lifts for the selected date from LiftDataContext only
   const liftsForSelectedDate: ILiftData[] = getLiftsByDate(selectedDate);
+  
+  // Combined lifts for seamless transition - loading lifts + final lifts (excluding duplicates)
+  const combinedLiftsForDay = useMemo(() => {
+    // loading lifts are already filtered by selected date in context
+    const loading = loadingLifts;
+
+    // any completed loading items with finalData should hide the same ILiftData (by id)
+    const completedMap = new Set<string>(
+      loading
+        .filter(l => l.status === 'completed' && l.finalData?.id)
+        .map(l => l.finalData!.id)
+    );
+
+    const finals = liftsForSelectedDate.filter(l => !completedMap.has(l.id));
+
+    // show loading first, then finals (or mix if you prefer)
+    return [...loading, ...finals];
+  }, [loadingLifts, liftsForSelectedDate]);
   
   // Calculate average accuracy for the selected date
   const averageAccuracy = useMemo(() => {
@@ -207,19 +224,14 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
     };
   }, [onShowLibrary]);
 
-  // Render function for FlashList
-  const renderLiftItem = useCallback(({ item }: { item: ILiftData }) => (
-    <LiftDataCard 
-      lift={item} 
+  // Render function for unified FlashList
+  const renderLiftItem = useCallback(({ item }: { item: any }) => (
+    <LiftCard
+      lift={item}
       onPress={handleLiftPress}
-      showDate={false}
+      showDate={!('status' in item)} // show date pill for true final only
     />
   ), [handleLiftPress]);
-
-  // Render function for loading lifts
-  const renderLoadingLiftItem = useCallback(({ item }: { item: any }) => (
-    <LoadingLiftCard key={item.id} lift={item} />
-  ), []);
 
   return (
     <ScrollView 
@@ -281,37 +293,25 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
           </Pressable>
         </View>
         <View style={styles.liftsScrollView}>
-          {/* Show loading lifts first */}
-          {loadingLifts.length > 0 && (
+          {/* Show unified list of loading and final lifts */}
+          {combinedLiftsForDay.length > 0 ? (
             <FlashList
-              data={loadingLifts}
-              renderItem={renderLoadingLiftItem}
-              keyExtractor={(item) => item.id}
-              estimatedItemSize={146}
-              showsVerticalScrollIndicator={false}
-              scrollEnabled={false}
-              contentContainerStyle={styles.loadingLiftsContainer}
-            />
-          )}
-          
-          {/* Show completed lifts for selected date */}
-          {liftsForSelectedDate.length > 0 ? (
-            <FlashList
-              data={liftsForSelectedDate}
+              data={combinedLiftsForDay}
               renderItem={renderLiftItem}
               keyExtractor={(item) => item.id}
               estimatedItemSize={146}
               showsVerticalScrollIndicator={false}
               scrollEnabled={false}
             />
-          ) : loadingLifts.length === 0 ? (
-            <LiftDataCard
+          ) : (
+            <LiftCard
+              lift={null}
               isNoLiftsCard={true}
               noLiftsTitle={i18n.t('home.noRecordedLifts')}
               noLiftsSubtitle={i18n.t('home.startAnalyzingWorkout')}
               onNoLiftsPress={handleNoLiftsPress}
             />
-          ) : null}
+          )}
         </View>
       </View>
       
