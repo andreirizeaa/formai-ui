@@ -507,7 +507,7 @@ const i18n = new I18n({
       seeAll: 'See all',
       noRecordedLifts: 'No recorded lifts for this date',
       startAnalyzingWorkout: 'Start analysing your workout by taking a quick video',
-      dayStreak: '{{count}} day streak!',
+      dayStreak: '{{count}} Day streak',
       onFireMessage: 'You\'re on fire! Keep up the great work with your daily streaks.',
       zeroDayStreak: '0 day streak',
       noStreakMessage: 'No streak yet. Record on consecutive days to start your streak.',
@@ -629,6 +629,7 @@ const i18n = new I18n({
       step4: 'Then, it is up to you to improve on your form and then review in a week.',
       // Additional translations for liftDetails.tsx
       accuracy: 'Accuracy',
+      accuracyScore: 'Accuracy score',
       improvements: 'improvements',
       noVideoAvailable: 'No video available',
       deleteLiftConfirmation: 'Are you sure you want to delete this lift? This action cannot be undone.',
