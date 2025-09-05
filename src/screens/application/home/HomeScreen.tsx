@@ -52,17 +52,32 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
     // loading lifts are already filtered by selected date in context
     const loading = loadingLifts;
 
-    // any completed loading items with finalData should hide the same ILiftData (by id)
-    const completedMap = new Set<string>(
-      loading
-        .filter(l => l.status === 'completed' && l.finalData?.id)
-        .map(l => l.finalData!.id)
-    );
+    // Create a map of final lifts by ID for easy lookup
+    const finalLiftsMap = new Map<string, ILiftData>();
+    liftsForSelectedDate.forEach(lift => {
+      finalLiftsMap.set(lift.id, lift);
+    });
 
-    const finals = liftsForSelectedDate.filter(l => !completedMap.has(l.id));
+    // Process loading lifts and replace with final data if available
+    const processedLoading = loading.map(loadingLift => {
+      // If this loading lift has been completed and we have final data, use the final data
+      if (loadingLift.status === 'completed' && loadingLift.finalData?.id) {
+        const finalData = finalLiftsMap.get(loadingLift.finalData.id);
+        if (finalData) {
+          // Return the final data which has the latest changes (favorite status, weight, etc.)
+          return finalData;
+        }
+      }
+      // Otherwise return the loading lift as-is
+      return loadingLift;
+    });
 
-    // show loading first, then finals (or mix if you prefer)
-    return [...loading, ...finals];
+    // Add any final lifts that don't have corresponding loading lifts
+    const loadingIds = new Set(loading.map(l => l.id));
+    const additionalFinals = liftsForSelectedDate.filter(lift => !loadingIds.has(lift.id));
+
+    // Combine processed loading lifts with additional finals
+    return [...processedLoading, ...additionalFinals];
   }, [loadingLifts, liftsForSelectedDate]);
   
   // Calculate average accuracy for the selected date
@@ -229,9 +244,11 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
     <LiftCard
       lift={item}
       onPress={handleLiftPress}
-      showDate={!('status' in item)} // show date pill for true final only
+      showDate={false} // always show time instead of date
     />
   ), [handleLiftPress]);
+
+  console.log(' >>>>>>> <<<<<<<< combinedLiftsForDay', JSON.stringify(combinedLiftsForDay, null, 2));
 
   return (
     <ScrollView 

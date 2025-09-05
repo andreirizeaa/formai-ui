@@ -40,8 +40,6 @@ export async function analyzeLift(
     if (!response.ok) return { success: false, data: null };
     
     const json = (await response.json().catch(() => null)) as AnalyzeLiftResponse | null;
-    console.log(' >>>>>>> <<<<<<<< analysis response', json);
-    
     if (json && typeof json.success === 'boolean') return json;
     return { success: true, data: null };
   } catch (_) {

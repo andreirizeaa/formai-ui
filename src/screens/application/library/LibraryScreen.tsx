@@ -125,23 +125,11 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
     });
   }, [liftData, dateRange]);
 
-  // Combined lifts for seamless transition - loading lifts + final lifts (excluding duplicates)
+  // Only show completed lifts (final lifts only)
   const combinedLiftsForDay = useMemo(() => {
-    // loading lifts are already filtered by selected date in context
-    const loading = loadingLifts;
-
-    // any completed loading items with finalData should hide the same ILiftData (by id)
-    const completedMap = new Set<string>(
-      loading
-        .filter(l => l.status === 'completed' && l.finalData?.id)
-        .map(l => l.finalData!.id)
-    );
-
-    const finals = filteredByDateLiftData.filter(l => !completedMap.has(l.id));
-
-    // show loading first, then finals (or mix if you prefer)
-    return [...loading, ...finals];
-  }, [loadingLifts, filteredByDateLiftData]);
+    // Only return the filtered final lifts, no loading lifts
+    return filteredByDateLiftData;
+  }, [filteredByDateLiftData]);
 
   // Optimize the filtering and sorting logic
   const filteredAndSortedLifts = useMemo(() => {
@@ -149,47 +137,20 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
 
     // Apply tab filter (All vs Favourites) - only for final lifts
     if (activeTab === 'favourites') {
-      filtered = filtered.filter(lift => {
-        // For loading lifts, check if they have finalData and if it's favourite
-        if ('status' in lift) {
-          return lift.finalData?.isFavourite || false;
-        }
-        // For final lifts, check isFavourite directly
-        return lift.isFavourite;
-      });
+      filtered = filtered.filter(lift => lift.isFavourite);
     }
 
     // Apply movement type filter - only for final lifts
     if (filterOption.length > 0) {
-      filtered = filtered.filter(lift => {
-        // For loading lifts, check if they have finalData and if it matches filter
-        if ('status' in lift) {
-          return lift.finalData?.liftType && filterOption.includes(lift.finalData.liftType);
-        }
-        // For final lifts, check liftType directly
-        return lift.liftType && filterOption.includes(lift.liftType);
-      });
+      filtered = filtered.filter(lift => 
+        lift.liftType && filterOption.includes(lift.liftType)
+      );
     }
 
     // Apply sort - use a more efficient sort
     return filtered.sort((a, b) => {
-      // For loading lifts, use the dateToday field
-      const getDateA = (lift: any) => {
-        if ('status' in lift) {
-          return new Date(lift.dateToday).getTime();
-        }
-        return new Date(lift.liftDate.split('-').reverse().join('-')).getTime();
-      };
-      
-      const getDateB = (lift: any) => {
-        if ('status' in lift) {
-          return new Date(lift.dateToday).getTime();
-        }
-        return new Date(lift.liftDate.split('-').reverse().join('-')).getTime();
-      };
-
-      const dateA = getDateA(a);
-      const dateB = getDateB(b);
+      const dateA = new Date(a.liftDate.split('-').reverse().join('-')).getTime();
+      const dateB = new Date(b.liftDate.split('-').reverse().join('-')).getTime();
       return sortOption === 'newest' ? dateB - dateA : dateA - dateB;
     });
   }, [combinedLiftsForDay, activeTab, filterOption, sortOption]);
@@ -226,8 +187,8 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
   const handleEmptyCardPress = useCallback(() => {
     hapticFeedback.selection();
     
-    // If there are lifts but none match the current filters, open the filter modal
-    const totalLifts = liftData.length + loadingLifts.length;
+    // If there are completed lifts but none match the current filters, open the filter modal
+    const totalLifts = liftData.length;
     if (totalLifts > 0 && filteredAndSortedLifts.length === 0) {
       setShowFilterModal(true);
     } else {
@@ -237,7 +198,7 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
         onTriggerAddOptions();
       }, 100);
     }
-  }, [liftData.length, loadingLifts.length, filteredAndSortedLifts.length, onBack, onTriggerAddOptions]);
+  }, [liftData.length, filteredAndSortedLifts.length, onBack, onTriggerAddOptions]);
 
   const handleSortPress = useCallback(() => {
     hapticFeedback.selection();
@@ -285,17 +246,7 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
     hapticFeedback.selection();
     const lift = filteredAndSortedLifts.find(l => l.id === liftId);
     if (lift) {
-      // For loading lifts, only navigate if they have finalData
-      if ('status' in lift) {
-        if (lift.finalData) {
-          navigation.navigate('LiftDetails', { 
-            liftData: lift.finalData as ILiftData,
-          });
-        }
-        // Don't navigate for loading lifts without finalData
-        return;
-      }
-      // For final lifts, navigate normally
+      // Navigate to lift details for completed lifts
       navigation.navigate('LiftDetails', { 
         liftData: lift,
       });
@@ -460,7 +411,7 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
     <LiftCard 
       lift={item} 
       onPress={handleLiftPress}
-      showDate={!('status' in item)} // show date pill for final lifts only
+      showDate={true} // show date pill for all completed lifts
     />
   ), [handleLiftPress]);
 
@@ -574,11 +525,11 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
             lift={null}
             isNoLiftsCard={true}
             noLiftsTitle={
-              (liftData.length === 0 && loadingLifts.length === 0) ? i18n.t('library.noLiftsAnalysed') : 
+              liftData.length === 0 ? i18n.t('library.noLiftsAnalysed') : 
               activeTab === 'favourites' ? i18n.t('library.noFavouriteLifts') : i18n.t('library.noLiftsFound')
             }
             noLiftsSubtitle={
-              (liftData.length === 0 && loadingLifts.length === 0)
+              liftData.length === 0
                 ? i18n.t('library.startAnalysingWorkout')
                 : activeTab === 'favourites'
                 ? i18n.t('library.markLiftsAsFavourites')

@@ -140,6 +140,9 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
     
     // Make API call in background - no need to wait for response
     favouriteLiftAndRefresh(currentLiftData.id);
+    
+    // Invalidate the main lifts query to refresh the UI
+    queryClient.invalidateQueries({ queryKey: ['lifts-by-user'] });
   };
 
   const handleActionSheet = () => {
@@ -193,6 +196,9 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
           
           // Invalidate the specific lift query to refresh data
           queryClient.invalidateQueries({ queryKey: ['lift', currentLiftData.id] });
+          
+          // Invalidate the main lifts query to refresh the UI
+          queryClient.invalidateQueries({ queryKey: ['lifts-by-user'] });
           
           hapticFeedback.success();
           setShowEditWeightModal(false);
@@ -347,6 +353,9 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
               <View style={styles.pill}>
                 <Text style={styles.pillText}>{formatDate(currentLiftData.liftDate)}</Text>
               </View>
+              <View style={styles.pill}>
+                <Text style={styles.pillText}>{currentLiftData.liftTime || '--:--'}</Text>
+              </View>
             </View>
           </View>
           {/* Form Score Chart Card */}
@@ -357,7 +366,8 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
                 <LineChart
                   data={chartData}
                   width={width - 51} // Match the width of the weight/reps cards row
-                  height={180} // Increased height to show x-axis labels
+                  height={150} // Increased height to show x-axis labels
+                  xLabelsOffset={-4}  
                   chartConfig={{
                     backgroundColor: '#FFFFFF',
                     backgroundGradientFrom: '#FFFFFF',
@@ -408,7 +418,7 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
                   onPress={handleEditWeight}
                   activeOpacity={0.7}
                 >
-                  <Pencil size={14} color="#8E8E93" />
+                  <Pencil size={12} color="#8E8E93" />
                 </TouchableOpacity>
               </View>
               <Text style={styles.infoCardValue}>
@@ -815,7 +825,7 @@ const styles = StyleSheet.create({
     top: 120,
     right: 20,
     width: 180,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#0F0F0F',
     borderRadius: 12,
     padding: 8,
     shadowColor: '#000',
@@ -835,18 +845,18 @@ const styles = StyleSheet.create({
   dropdownOptionText: {
     fontSize: 14,
     fontWeight: '400',
-    color: '#000000',
+    color: '#FFFFFF',
     fontFamily: 'SF Pro Text',
   },
   dropdownOptionTextDestructive: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#FF3B30',
+    color: '#FF6B6B',
     fontFamily: 'SF Pro Display',
   },
   dropdownDivider: {
     height: 1,
-    backgroundColor: '#E5E5EA',
+    backgroundColor: '#333333',
     marginVertical: 8,
   },
   modalOverlay: {
@@ -950,11 +960,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#fff',
-    marginBottom: 4,
+    marginBottom: 16,
   },
   reviewFeedbackButtonText: {
-    fontSize: 18,
-    fontWeight: '400',
+    fontSize: 17,
+    fontWeight: '500',
     color: '#000000',
     fontFamily: 'SF Pro Display',
   },
@@ -1026,7 +1036,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'transparent',
     borderRadius: 18,
-    padding: 16,
+    padding: 12,
     borderWidth: 1,
     borderColor: '#e2e8f0',
     shadowColor: 'transparent',
@@ -1081,10 +1091,11 @@ const styles = StyleSheet.create({
     flex: 0, // Override flex to use fixed width
   },
   editWeightButton: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     borderWidth: 0.5,
+    marginTop: -6,
     borderColor: '#000000',
     alignItems: 'center',
     justifyContent: 'center',

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, Platform, ScrollView, Animated, PanResponder } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Text, Platform, ScrollView, Animated, PanResponder, useWindowDimensions } from 'react-native';
+import { Image as RNImage } from 'react-native';
 import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { X, ChevronLeft, ChevronRight, CircleCheck, CircleX } from 'lucide-react-native';
@@ -11,6 +12,31 @@ import LottieView from 'lottie-react-native';
 import { useUserDetails } from '../../../context/UserDetailsContext';
 import * as StoreReview from 'expo-store-review';
 import { editUserDetails } from '../../../services/userService';
+
+// Custom hook to get image aspect ratio from remote URL
+function useRemoteImageRatio(uri?: string) {
+  const [ratio, setRatio] = React.useState<number | null>(null);
+
+  React.useEffect(() => {
+    if (!uri) return;
+    let cancelled = false;
+
+    RNImage.getSize(
+      uri,
+      (w, h) => { 
+        if (!cancelled) setRatio(w / h); 
+      },
+      () => { 
+        // Ignore errors - fallback to default height
+        if (!cancelled) setRatio(null);
+      }
+    );
+
+    return () => { cancelled = true; };
+  }, [uri]);
+
+  return ratio;
+}
 
 interface FeedbackSlideshowProps {
   onClose: () => void;
@@ -36,6 +62,7 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
   const [isBottomExpanded, setIsBottomExpanded] = useState(false);
   const [screenMode, setScreenMode] = useState<ScreenMode>('howItWorks');
   const { userDetails, updateHasRated } = useUserDetails();
+  const { height: screenHeight } = useWindowDimensions();
 
   
   // Setup slide animation and pan responder for bottom drawer
@@ -430,6 +457,12 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
   };
 
   const feedbackItem = getCurrentFeedbackItem();
+  
+  // Get image URI and aspect ratio
+  const imageUri = feedbackItem && typeof feedbackItem.imageURL === 'string' 
+    ? feedbackItem.imageURL 
+    : undefined;
+  const imageRatio = useRemoteImageRatio(imageUri);
 
   // Render How It Works screen
   if (screenMode === 'howItWorks') {
@@ -603,9 +636,13 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
           {feedbackItem && (
             <View style={styles.imageContainer} ref={feedbackSlideshowRef}>
               <Image 
-                source={typeof feedbackItem.imageURL === 'string' ? { uri: feedbackItem.imageURL } : feedbackItem.imageURL}
-                style={styles.feedbackImage}
-                resizeMode="cover"
+                source={imageUri ? { uri: imageUri } : feedbackItem.imageURL}
+                style={[
+                  styles.feedbackImage,
+                  { width: '100%' },
+                  imageRatio ? { aspectRatio: imageRatio, maxHeight: screenHeight * 0.5 } : { height: 220 }
+                ]}
+                contentFit="contain"
               />
             </View>
           )}
@@ -844,14 +881,14 @@ const styles = StyleSheet.create({
   viewFeedbackButton: {
     backgroundColor: '#000000',
     borderRadius: 28,
-    paddingVertical: 16,
+    paddingVertical: 20,
     paddingHorizontal: 24,
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',
   },
   viewFeedbackButtonText: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '500',
     color: '#FFFFFF',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
@@ -860,22 +897,19 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 20,
     paddingTop: 0,
-    paddingBottom: 40,
+    paddingBottom: 120, // Increased to account for closed bottom navigation section
   },
   imageContainer: {
-    flex: 1,
+    alignSelf: 'stretch',
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 28,
     overflow: 'hidden',
     marginTop: 20,
-    marginHorizontal: 20,
-    minHeight: 400,
+    backgroundColor: '#000', // nice letterbox for landscape
   },
   feedbackImage: {
-    width: '100%',
-    height: '100%',
-    minHeight: 400,
+    // Let aspect ratio determine height, no fixed heights
   },
   navigationRow: {
     flexDirection: 'row',
