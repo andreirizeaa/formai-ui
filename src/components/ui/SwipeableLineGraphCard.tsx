@@ -1,15 +1,18 @@
-import React, { useState, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useMemo, useCallback, useRef, useTransition } from 'react';
 import { View, Text, StyleSheet, Platform, TouchableOpacity, Dimensions, ActivityIndicator } from 'react-native';
-import Carousel from 'react-native-reanimated-carousel';
+import { FlashList, ListRenderItemInfo } from '@shopify/flash-list';
 import { LineChart } from 'react-native-chart-kit';
 import { hapticFeedback } from '../../utils/haptic';
 import { formatWeightForDisplay } from '../../utils/unitConversions';
 import { CircleQuestionMark } from 'lucide-react-native';
 import i18n from '../../utils/i18n';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const CARD_WIDTH = SCREEN_WIDTH * 0.9;
-const CARD_HEIGHT = 320; // Increased to accommodate shadow and padding
+// Use integers to avoid floating rounding drift
+const { width: RAW_W } = Dimensions.get('window');
+const SCREEN_WIDTH = Math.round(RAW_W);
+const CARD_WIDTH = Math.round(SCREEN_WIDTH * 0.9);
+const CARD_HEIGHT = 320;
+const ITEM_WIDTH = SCREEN_WIDTH;
 
 type Lift = {
   liftType: string;
@@ -36,7 +39,6 @@ interface ProcessedCardData {
 }
 
 interface SwipeableLineGraphCardProps {
-  ref?: React.RefObject<any>;
   cardData: Lift[];
   onTriggerAddOptions?: () => void;
   hasNoLifts?: boolean;
@@ -113,8 +115,32 @@ const chartConfig = {
   formatYLabel: (val: string) => `${val}%`,
 };
 
-// Memoized regression cache
-const regressionCache = new Map<string, number[]>();
+// Simple LRU cache to prevent memory creep
+class LRU<K, V> {
+  private map = new Map<K, V>();
+  constructor(private cap = 50) {}
+  get(k: K) {
+    const v = this.map.get(k);
+    if (v !== undefined) {
+      this.map.delete(k);
+      this.map.set(k, v);
+    }
+    return v;
+  }
+  set(k: K, v: V) {
+    if (this.map.has(k)) this.map.delete(k);
+    this.map.set(k, v);
+    if (this.map.size > this.cap) {
+      const firstKey = this.map.keys().next().value;
+      if (firstKey !== undefined) {
+        this.map.delete(firstKey);
+      }
+    }
+  }
+}
+
+// Memoized regression cache with LRU
+const regressionCache = new LRU<string, number[]>(60);
 
 const getRegression = (key: string, points: number[]) => {
   const k = key + '|' + points.join(',');
@@ -125,21 +151,30 @@ const getRegression = (key: string, points: number[]) => {
   return line;
 };
 
-// Memoized Chart Page Component
-const ChartPage = React.memo(function ChartPage({ 
-  item, 
+// Memoized Chart Page Component with lazy rendering
+const ChartPage = React.memo(function ChartPage({
+  item,
   onInfoPress,
-  ref, 
-}: { 
-  item: ProcessedCardData; 
+  shouldRender,
+  cardWidth,
+}: {
+  item: ProcessedCardData;
   onInfoPress?: () => void;
-  ref: any;
+  shouldRender: boolean;
+  cardWidth: number;
 }) {
   const isPlaceholder = item.title === 'Loading...';
+  const dataLength = item.chartData?.datasets?.[0]?.data?.length || 0;
+  const shouldUseBezier = dataLength <= 25;
+  const shouldUseShadow = dataLength <= 25;
   
   return (
     <View style={styles.page}>
-      <View style={[styles.performanceCard, { width: CARD_WIDTH }]} ref={ref}>
+      <View 
+        style={[styles.performanceCard, { width: cardWidth }]}
+        renderToHardwareTextureAndroid
+        shouldRasterizeIOS
+      >
         <View style={styles.performanceCardContent}>
           <View style={styles.performanceCardHeader}>
             <View style={styles.headerLeft}>
@@ -160,27 +195,39 @@ const ChartPage = React.memo(function ChartPage({
           </View>
 
           <View style={styles.chartContainer}>
-            <LineChart
-              data={item.chartData}
-              width={CARD_WIDTH - 20}
-              height={180}
-              chartConfig={chartConfig}
-              bezier
-              style={styles.chart}
-              withDots={false}
-              withShadow
-              withInnerLines
-              withOuterLines={false}
-              withVerticalLines={false}
-              withHorizontalLines
-              yAxisSuffix="%"
-            />
+            {shouldRender ? (
+              <LineChart
+                data={item.chartData}
+                width={cardWidth - 20}
+                height={180}
+                chartConfig={chartConfig}
+                bezier={shouldUseBezier}
+                style={styles.chart}
+                withDots={false}
+                withShadow={shouldUseShadow}
+                withInnerLines
+                withOuterLines={false}
+                withVerticalLines={false}
+                withHorizontalLines
+                yAxisSuffix="%"
+              />
+            ) : (
+              // Super lightweight placeholder
+              <View style={[styles.chart, { width: cardWidth - 20, height: 180, justifyContent: 'center', alignItems: 'center' }]}>
+                <Text style={{ color: '#8E8E93' }}>{i18n.t('performance.chartTitles.loading')}</Text>
+              </View>
+            )}
           </View>
         </View>
       </View>
     </View>
   );
-});
+}, (a, b) =>
+  a.shouldRender === b.shouldRender &&
+  a.item.title === b.item.title &&
+  a.item.subtitle === b.item.subtitle &&
+  a.item.chartData?.datasets?.[0]?.data === b.item.chartData?.datasets?.[0]?.data
+);
 
 // Memoized Pagination Component
 const Pagination = React.memo(function Pagination({ 
@@ -250,8 +297,8 @@ const SegmentedControl = React.memo(function SegmentedControl({
   );
 });
 
-export function SwipeableLineGraphCard({
-  ref,
+export const SwipeableLineGraphCard = React.forwardRef<any, SwipeableLineGraphCardProps>(
+function SwipeableLineGraphCard({
   cardData,
   onTriggerAddOptions,
   hasNoLifts = false,
@@ -259,9 +306,15 @@ export function SwipeableLineGraphCard({
   unitPreference = 'metric',
   onInfoPress,
   externalScrollGestureRef,
-}: SwipeableLineGraphCardProps) {
+}, _ref) {
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
-  const [timeRange, setTimeRange] = useState<TimeRange>('90d');
+  const [timeRange, _setTimeRange] = useState<TimeRange>('90d');
+
+  // Defer heavy recompute on range switch
+  const [isPending, startTransition] = useTransition();
+  const setTimeRange = useCallback((r: TimeRange) => {
+    startTransition(() => _setTimeRange(r));
+  }, []);
 
   // Filter cardData by selected time range
   const rangedCardData = useMemo(() => {
@@ -507,58 +560,104 @@ export function SwipeableLineGraphCard({
     }
   }, [rangedCardData, chartType, unitPreference]);
 
-  // Memoized render item function
-  const renderItem = useCallback(({ item }: { item: ProcessedCardData }) => {
-    return <ChartPage item={item} onInfoPress={onInfoPress} ref={ref} />;
-  }, [onInfoPress]);
+  // Guard: if no data (initially or empty), don't mount FlashList
+  const isEmpty = !processedCardData || processedCardData.length === 0;
 
-  // Memoized onSnapToItem handler
-  const handleSnapToItem = useCallback((index: number) => {
-    setCurrentCardIndex(index);
-  }, []);
+  // Render window: only mount charts near current index
+  const shouldRenderIndex = useCallback(
+    (index: number) => Math.abs(index - currentCardIndex) <= 1,
+    [currentCardIndex]
+  );
+
+  const renderItem = useCallback(
+    ({ item, index }: ListRenderItemInfo<ProcessedCardData>) => {
+      const visible = shouldRenderIndex(index);
+      return (
+        <View style={{ width: ITEM_WIDTH, alignItems: 'center' }}>
+          <ChartPage
+            item={item}
+            onInfoPress={onInfoPress}
+            shouldRender={visible}
+            cardWidth={CARD_WIDTH} // pass explicit width
+          />
+        </View>
+      );
+    },
+    [onInfoPress, shouldRenderIndex]
+  );
+
+  const onScroll = useCallback((e: any) => {
+    const x = e?.nativeEvent?.contentOffset?.x || 0;
+    // center-based snap avoids rounding drift
+    const idx = Math.max(
+      0,
+      Math.min(
+        Math.floor((x + ITEM_WIDTH / 2) / ITEM_WIDTH),
+        (processedCardData.length || 1) - 1
+      )
+    );
+    if (idx !== currentCardIndex) setCurrentCardIndex(idx);
+  }, [currentCardIndex, processedCardData.length]);
+
+  const onMomentumScrollEnd = useCallback((e: any) => {
+    const x = e?.nativeEvent?.contentOffset?.x || 0;
+    const idx = Math.max(0, Math.min(Math.round(x / ITEM_WIDTH), (processedCardData.length || 1) - 1));
+    if (idx !== currentCardIndex) setCurrentCardIndex(idx);
+  }, [currentCardIndex, processedCardData.length]);
+
+
+  if (isEmpty) {
+    return (
+      <View style={styles.cardsContainer}>
+        <SegmentedControl timeRange={timeRange} onTimeRangeChange={setTimeRange} />
+        <View style={[styles.performanceCard, { width: CARD_WIDTH, height: CARD_HEIGHT }]}>
+          <Text style={styles.performanceCardLabel}>{i18n.t('performance.chartTitles.noDataAvailable')}</Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.cardsContainer}>
-      {/* Segmented control ABOVE the carousel and card */}
-      <SegmentedControl 
-        timeRange={timeRange} 
-        onTimeRangeChange={setTimeRange} 
-      />
+      <SegmentedControl timeRange={timeRange} onTimeRangeChange={setTimeRange} />
 
-      <View style={styles.carouselContainer}>
-        <Carousel
-          loop={false}
-          width={SCREEN_WIDTH}
-          height={CARD_HEIGHT}
+      <View style={[styles.carouselContainer, { width: SCREEN_WIDTH, height: CARD_HEIGHT }]}>
+        <FlashList
           data={processedCardData}
-          renderItem={renderItem}
-          onSnapToItem={handleSnapToItem}
-          defaultIndex={0}
-          pagingEnabled
-          snapEnabled
-          enableSnap
-          style={{ backgroundColor: 'transparent' }}
-          onConfigurePanGesture={(g) => {
-            'worklet';
-            // Require strong horizontal intent (> ~20px) before activating - very strict
-            g.activeOffsetX([-20, 20]);
-            // If the user moves vertically by ~15px, fail this pan so the parent ScrollView takes over - strict
-            g.failOffsetY([-15, 15]);
-            // Prevent simultaneous gestures - once this gesture starts, block others
-            g.shouldCancelWhenOutside(true);
-            // Don't allow simultaneous gestures with the parent ScrollView
-            // if (externalScrollGestureRef) {
-            //   g.simultaneousWithExternalGesture(externalScrollGestureRef);
-            // }
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          // Avoid pagingEnabled quirks; use snapToInterval for exact paging
+          snapToInterval={ITEM_WIDTH}
+          snapToAlignment="start"
+          decelerationRate="fast"
+          // Important: tell FlashList exact size and offset for each index
+          overrideItemLayout={(layout, index) => {
+            layout.size = ITEM_WIDTH;          // width along scroll axis
+            // @ts-ignore - FlashList internal property
+            layout.offset = ITEM_WIDTH * index; // starting x
           }}
+          estimatedItemSize={ITEM_WIDTH} // still good to provide
+          estimatedListSize={{ width: SCREEN_WIDTH, height: CARD_HEIGHT }}
+          keyExtractor={(_, i) => `graph-${i}`}
+          renderItem={renderItem}
+          removeClippedSubviews
+          nestedScrollEnabled
+          contentContainerStyle={{ alignItems: 'center' } as any}
+          onScroll={onScroll}
+          scrollEventThrottle={16}
+          onMomentumScrollEnd={onMomentumScrollEnd}
+          // Force re-renders when currentCardIndex or timeRange changes
+          extraData={{ currentCardIndex, timeRange }}
+          // optional: initialScrollIndex={0}
+          // optional: disableIntervalMomentum (RN iOS), but snapToInterval handles it
+          // contentInsetAdjustmentBehavior avoids auto safe-area shifts on iOS
+          contentInsetAdjustmentBehavior="never"
         />
-        
-        {/* Pagination Dots */}
         <Pagination count={processedCardData.length} active={currentCardIndex} />
       </View>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   cardsContainer: {
@@ -696,7 +795,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
   },
   paginationDotInactive: {
-    backgroundColor: '#FFF',
+    backgroundColor: 'transparent',
     borderWidth: 1,
     borderColor: '#000',
   },
