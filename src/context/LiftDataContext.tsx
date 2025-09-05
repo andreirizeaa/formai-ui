@@ -104,7 +104,6 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
         if (error) return [] as ILiftData[];
-
       async function extractObjectKeyFromUrl(urlOrKey?: string | null): Promise<string | undefined> {
         if (!urlOrKey) return undefined;
         if (urlOrKey.startsWith('http://') || urlOrKey.startsWith('https://')) {
