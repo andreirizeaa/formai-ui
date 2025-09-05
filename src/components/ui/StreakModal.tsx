@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
 import { Image } from 'expo-image';
 import { hapticFeedback } from '../../utils/haptic';
 import i18n from '../../utils/i18n';
+import { StreakCalendar } from './StreakCalendar';
 
 interface StreakModalProps {
   visible: boolean;
@@ -37,13 +38,21 @@ export function StreakModal({ visible, currentStreak, onClose }: StreakModalProp
           activeOpacity={1} 
           onPress={(e) => e.stopPropagation()}
         >
-          {/* Title with FormAI logo */}
+          {/* Header with FormAI logo and streak pill */}
           <View style={styles.modalHeader}>
             <Image
               source={require('../../../assets/formai-light-icon.png')}
               style={styles.modalLogo}
               contentFit="contain"
             />
+            <View style={styles.streakBadge}>
+              <Image
+                source={require('../../../assets/icons/fire.png')}
+                style={styles.streakBadgeIcon}
+                contentFit="contain"
+              />
+              <Text style={styles.streakBadgeText}>{currentStreak}</Text>
+            </View>
           </View>
 
           {/* Large centered fire icon */}
@@ -61,6 +70,9 @@ export function StreakModal({ visible, currentStreak, onClose }: StreakModalProp
               ? i18n.t('home.zeroDayStreak')
               : i18n.t('home.dayStreak', { count: currentStreak })}
           </Text>
+
+          {/* Streak Calendar */}
+          <StreakCalendar />
 
           {/* Message */}
           <Text style={styles.message}>
@@ -104,32 +116,49 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 8,
   },
-  closeButton: {
-    position: 'absolute',
-    top: 16,
-    right: 16,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: '#E5E5EA',
-    backgroundColor: 'transparent',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1,
-  },
   modalHeader: {
-    alignItems: 'flex-start',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 16,
   },
   modalLogo: {
     width: 100,
     height: 30,
   },
+  streakBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 16,
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  streakBadgeIcon: {
+    width: 18,
+    height: 18,
+  },
+  streakBadgeText: {
+    marginLeft: 2,
+    marginTop: 4,
+    fontSize: 17,
+    fontWeight: '500',
+    color: '#000000',
+    fontFamily: 'SF Pro Display',
+  },
   fireModalContent: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: 32,
+    marginTop: 32,
   },
   fireModalIcon: {
     width: 118,
@@ -141,27 +170,28 @@ const styles = StyleSheet.create({
     color: '#ed694a',
     fontFamily: 'SF Pro Display',
     textAlign: 'center',
-    marginBottom: 32,
+    marginBottom: 40,
     marginTop: -16,
   },
   message: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '400',
     color: '#000000',
-    marginBottom: 24,
+    marginBottom: 40,
     textAlign: 'center',
     lineHeight: 22,
   },
   button: {
-    height: 56,
+    height: 60,
     borderRadius: 28,
-    backgroundColor: '#ed694a',
+    marginBottom: 6,
+    backgroundColor: '#000000',
     justifyContent: 'center',
     alignItems: 'center',
   },
   buttonText: {
-    fontSize: 20,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '500',
     color: '#ffffff',
   },
 });

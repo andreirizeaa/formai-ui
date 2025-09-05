@@ -12,6 +12,12 @@ import LottieView from 'lottie-react-native';
 import { useUserDetails } from '../../../context/UserDetailsContext';
 import * as StoreReview from 'expo-store-review';
 import { editUserDetails } from '../../../services/userService';
+import ReanimatedAnimated, { 
+  useSharedValue, 
+  useAnimatedStyle, 
+  withSpring, 
+  withDelay 
+} from 'react-native-reanimated';
 
 // Custom hook to get image aspect ratio from remote URL
 function useRemoteImageRatio(uri?: string) {
@@ -36,6 +42,53 @@ function useRemoteImageRatio(uri?: string) {
   }, [uri]);
 
   return ratio;
+}
+
+// Animated component for how it works items
+interface AnimatedHowItWorksItemProps {
+  children: React.ReactNode;
+  delay: number;
+}
+
+function AnimatedHowItWorksItem({ children, delay }: AnimatedHowItWorksItemProps) {
+  const translateY = useSharedValue(delay === 0 ? 0 : 30);
+  const opacity = useSharedValue(delay === 0 ? 1 : 0);
+
+  React.useEffect(() => {
+    // If delay is 0, don't animate - show immediately
+    if (delay === 0) return;
+    
+    // Animate in with a staggered delay
+    translateY.value = withDelay(
+      delay,
+      withSpring(0, {
+        damping: 25,
+        stiffness: 200,
+        mass: 0.6,
+      })
+    );
+    
+    opacity.value = withDelay(
+      delay,
+      withSpring(1, {
+        damping: 25,
+        stiffness: 200,
+      })
+    );
+  }, [delay]);
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateY: translateY.value }],
+      opacity: opacity.value,
+    };
+  });
+
+  return (
+    <ReanimatedAnimated.View style={animatedStyle}>
+      {children}
+    </ReanimatedAnimated.View>
+  );
 }
 
 interface FeedbackSlideshowProps {
@@ -334,6 +387,7 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
         });
               } else {
           // We're on the last feedback item's improvement page, show accuracy score page
+          hapticFeedback.success();
           setScreenMode('accuracyScore');
         }
     }
@@ -484,49 +538,57 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
           <View style={styles.content}>
             <View style={styles.howItWorksContainer}>
               <View style={styles.howItWorksItems} ref={howItWorksModalRef}>
-                <View style={styles.howItWorksItem}>
-                  <View style={styles.howItWorksIcon}>
-                    <Text style={styles.howItWorksNumber}>1</Text>
+                <AnimatedHowItWorksItem delay={0}>
+                  <View style={styles.howItWorksItem}>
+                    <View style={styles.howItWorksIcon}>
+                      <Text style={styles.howItWorksNumber}>1</Text>
+                    </View>
+                    <View style={styles.howItWorksContent}>
+                      <Text style={styles.howItWorksText}>
+                        {i18n.t('feedback.step1')}
+                      </Text>
+                    </View>
                   </View>
-                  <View style={styles.howItWorksContent}>
-                    <Text style={styles.howItWorksText}>
-                      {i18n.t('feedback.step1')}
-                    </Text>
-                  </View>
-                </View>
+                </AnimatedHowItWorksItem>
 
-                <View style={styles.howItWorksItem}>
-                  <View style={styles.howItWorksIcon}>
-                    <Text style={styles.howItWorksNumber}>2</Text>
+                <AnimatedHowItWorksItem delay={100}>
+                  <View style={styles.howItWorksItem}>
+                    <View style={styles.howItWorksIcon}>
+                      <Text style={styles.howItWorksNumber}>2</Text>
+                    </View>
+                    <View style={styles.howItWorksContent}>
+                      <Text style={styles.howItWorksText}>
+                        {i18n.t('feedback.step2')}
+                      </Text>
+                    </View>
                   </View>
-                  <View style={styles.howItWorksContent}>
-                    <Text style={styles.howItWorksText}>
-                      {i18n.t('feedback.step2')}
-                    </Text>
-                  </View>
-                </View>
+                </AnimatedHowItWorksItem>
 
-                <View style={styles.howItWorksItem}>
-                  <View style={styles.howItWorksIcon}>
-                    <Text style={styles.howItWorksNumber}>3</Text>
+                <AnimatedHowItWorksItem delay={200}>
+                  <View style={styles.howItWorksItem}>
+                    <View style={styles.howItWorksIcon}>
+                      <Text style={styles.howItWorksNumber}>3</Text>
+                    </View>
+                    <View style={styles.howItWorksContent}>
+                      <Text style={styles.howItWorksText}>
+                        {i18n.t('feedback.step3')}
+                      </Text>
+                    </View>
                   </View>
-                  <View style={styles.howItWorksContent}>
-                    <Text style={styles.howItWorksText}>
-                      {i18n.t('feedback.step3')}
-                    </Text>
-                  </View>
-                </View>
+                </AnimatedHowItWorksItem>
 
-                <View style={styles.howItWorksItem}>
-                  <View style={styles.howItWorksIcon}>
-                    <Text style={styles.howItWorksNumber}>4</Text>
+                <AnimatedHowItWorksItem delay={300}>
+                  <View style={styles.howItWorksItem}>
+                    <View style={styles.howItWorksIcon}>
+                      <Text style={styles.howItWorksNumber}>4</Text>
+                    </View>
+                    <View style={styles.howItWorksContent}>
+                      <Text style={styles.howItWorksText}>
+                        {i18n.t('feedback.step4')}
+                      </Text>
+                    </View>
                   </View>
-                  <View style={styles.howItWorksContent}>
-                    <Text style={styles.howItWorksText}>
-                      {i18n.t('feedback.step4')}
-                    </Text>
-                  </View>
-                </View>
+                </AnimatedHowItWorksItem>
               </View>
             </View>
           </View>
@@ -578,26 +640,11 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
                 />
               </View>
 
-              <LinearGradient
-                colors={['#e2e8f0', '#f5f3ff']}
-                locations={[0, 0.9]}
-                style={styles.accuracyScoreCard}
-                start={{ x: 0.5, y: 0 }}
-                end={{ x: 0, y: 1 }}
-              >
-                <View style={styles.accuracyScoreContent}>
-                  {/* Accuracy Score Display */}
-                  <View style={styles.scoreDisplay}>
-                    <Text style={styles.scoreLabel}>Form Accuracy</Text>
-                    <Text style={styles.scoreValue}>{accuracyScore}%</Text>
-                  </View>
-
-                  {/* Subtitle */}
-                  <Text style={styles.accuracySubtitle}>
-                    Great job! Your form analysis is complete.
-                  </Text>
-                </View>
-              </LinearGradient>
+              <View style={styles.accuracyScoreContent}>
+                {/* Large Accuracy Score Display */}
+                <Text style={styles.largeScoreValue}>{accuracyScore}%</Text>
+                <Text style={styles.accuracyScoreLabel}>{i18n.t('feedback.accuracyScore')}</Text>
+              </View>
             </View>
           </View>
 
@@ -840,6 +887,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 20,
+    paddingTop: 40, // Increased padding to center better
   },
   howItWorksItems: {
     width: '100%',
@@ -949,6 +997,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     position: 'relative',
+    paddingTop: 60, // Add some top padding to center better
   },
   animationContainer: {
     position: 'absolute',
@@ -964,53 +1013,24 @@ const styles = StyleSheet.create({
     width: 700,
     height: 700,
   },
-  accuracyScoreCard: {
-    borderRadius: 20,
-    padding: 24,
-    width: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
-  },
   accuracyScoreContent: {
     alignItems: 'center',
+    justifyContent: 'center',
     zIndex: 1, // Ensure it's above the animation
   },
-  scoreDisplay: {
-    backgroundColor: 'transparent',
-    borderRadius: 18,
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    marginBottom: 20,
-  },
-  scoreLabel: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#000000',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  scoreValue: {
-    fontSize: 48,
-    fontWeight: '700',
+  largeScoreValue: {
+    fontSize: 100,
+    fontWeight: '800',
     color: '#ffb86a',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
     textAlign: 'center',
+    marginBottom: 6,
   },
-  accuracySubtitle: {
-    fontSize: 18,
-    fontWeight: '400',
+  accuracyScoreLabel: {
+    fontSize: 24,
+    fontWeight: '600',
     color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
-    lineHeight: 26,
     textAlign: 'center',
   },
   exitButton: {
