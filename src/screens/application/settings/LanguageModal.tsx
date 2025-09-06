@@ -23,15 +23,23 @@ export function LanguageModal({ isVisible, onClose }: LanguageModalProps) {
   const handleLanguageSelect = async (languageCode: string) => {
     if (savingCode) return;
     hapticFeedback.selection();
+    
+    // Store the previous language to restore on error
+    const previousLanguage = currentLanguage;
+    
+    // Immediately update UI to show new selection
+    setLanguage(languageCode);
     setPendingCode(languageCode);
     setSavingCode(languageCode);
+    
     try {
       await editUserDetails({ language: languageCode });
-      setLanguage(languageCode);
       await refetchUserDetails();
       hapticFeedback.success();
       onClose();
     } catch (e) {
+      // Restore previous language on error
+      setLanguage(previousLanguage);
       hapticFeedback.error();
       showEditFailedAlert(i18n.t('settings.editFailed.language'), i18n.t('settings.editFailed.message'), () => {
         hapticFeedback.selection();
@@ -113,11 +121,13 @@ export function LanguageModal({ isVisible, onClose }: LanguageModalProps) {
                     >
                       {language.nativeName}
                     </Text>
-                    {isSavingThis ? (
-                      <ActivityIndicator style={{ marginLeft: 8 }} color={isSelected ? '#FFFFFF' : '#000000'} />
-                    ) : (
-                      <Text style={styles.flag}>{language.flag}</Text>
-                    )}
+                    <View style={styles.flagContainer}>
+                      {isSavingThis ? (
+                        <ActivityIndicator size="small" color={isSelected ? '#FFFFFF' : '#000000'} />
+                      ) : (
+                        <Text style={styles.flag}>{language.flag}</Text>
+                      )}
+                    </View>
                   </View>
                 </TouchableOpacity>
               );
@@ -190,6 +200,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  flagContainer: {
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   flag: {
     fontSize: 24,

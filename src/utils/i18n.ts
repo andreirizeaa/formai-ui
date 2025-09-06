@@ -567,6 +567,7 @@ const i18n = new I18n({
       tryAdjustingFilters: 'Try adjusting your filters',
       lifts: 'lifts',
       lift: 'lift',
+      noLifts: 'No lifts',
       selectDateRange: 'Select date range',
       allLifts: 'All lifts',
       oneLift: '1 Lift',

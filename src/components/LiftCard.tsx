@@ -312,16 +312,22 @@ export const LiftCard = memo(function LiftCard({
     return Math.round(p * 100);
   });
 
+  // Reset progress values when lift ID changes (prevents cell reuse issues)
   useEffect(() => {
     if (!lift || !isLoadingLift(lift)) return;
-
+    
+    // Reset all animation values to initial state
+    targetProgress.value = 0.02;
+    progressRender.value = 0.02;
+    setProgressPercentage(2);
+    
     if (lift.status !== 'error') {
       pulseAnim.value = withRepeat(withTiming2(1, { duration: 1500 }), -1, true);
       line1Anim.value = withRepeat(withSequence(withTiming2(1, { duration: 800 }), withTiming2(0.3, { duration: 800 })), -1, true);
       line2Anim.value = withRepeat(withSequence(withTiming2(0.3, { duration: 400 }), withTiming2(1, { duration: 800 }), withTiming2(0.3, { duration: 400 })), -1, true);
       line3Anim.value = withRepeat(withSequence(withTiming2(0.3, { duration: 800 }), withTiming2(1, { duration: 800 })), -1, true);
     }
-  }, [lift && isLoadingLift(lift) ? lift.status : 'final']);
+  }, [lift && isLoadingLift(lift) ? lift.id : 'final']); // Depend on lift.id instead of status
 
   useEffect(() => {
     if (!lift || !isLoadingLift(lift)) return;

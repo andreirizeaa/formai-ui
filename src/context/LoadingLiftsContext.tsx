@@ -211,6 +211,12 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
             analysis: found.analysis,
           });
           markCompleted(lift.id, mapped);
+          // Refresh lifts data to show completed lift in Library
+          try {
+            await refreshLifts();
+          } catch (error) {
+            console.warn('Failed to refresh lifts after polling completion:', error);
+          }
           // Invalidate user check-ins to refresh streak data
           invalidateUserCheckIns();
         }
@@ -384,6 +390,15 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
         retryTimersRef.current.clear();
         queuedRef.current.clear();
 
+        // Refresh lifts data when coming back to foreground to catch any completed lifts
+        void (async () => {
+          try {
+            await refreshLifts();
+          } catch (error) {
+            console.warn('Failed to refresh lifts on foreground:', error);
+          }
+        })();
+
         // Ensure we resume any analyze cards without ever showing error
         setTimeout(() => {
           latestLiftsRef.current.forEach(l => {
@@ -442,7 +457,7 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
   };
 
   const addLoadingLift = async (liftData: Omit<LoadingLiftData, 'id' | 'isComplete' | 'status'>): Promise<string> => {
-    const liftId = Date.now().toString();
+    const liftId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     
     // Check if we already have a lift with the same video source to prevent duplicates
     const existingLift = allLoadingLifts.find(lift => 
@@ -684,6 +699,12 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
               analysis: found.analysis,
             });
             markCompleted(current.id, mapped);
+            // Refresh lifts data to show completed lift in Library
+            try {
+              await refreshLifts();
+            } catch (error) {
+              console.warn('Failed to refresh lifts after pipeline completion:', error);
+            }
             invalidateUserCheckIns();
             return;
           }
@@ -740,7 +761,11 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
       }
       
       // pull latest lifts from backend (so ILiftData exists for future screens)
-      void (async () => { try { await refreshLifts(); } catch (_) {} })();
+      try {
+        await refreshLifts();
+      } catch (error) {
+        console.warn('Failed to refresh lifts after completion:', error);
+      }
       invalidateUserCheckIns();
     } catch (error) {
       // Never show error card here — only analyze() hard server codes may do that
