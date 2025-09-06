@@ -87,7 +87,7 @@ export const LiftCard = memo(function LiftCard({
   const animDur = 420; // slower overall for more obvious fade
 
   const { removeLift: removeFinalLift, formatDateForLift, refreshLifts } = useLiftData();
-  const { isLiftAutoDeleted, retryLift, removeLift: removeLoadingLift, updateLiftProgress } = useLoadingLifts();
+  const { isLiftAutoDeleted, retryLift, removeLift: removeLoadingLift, updateLiftProgress, removeLoadingLiftByFinalId } = useLoadingLifts();
   const { userDetails } = useUserDetails();
   const { invalidateAndRefetch: invalidateUserCheckIns } = useUserCheckIns();
 
@@ -188,21 +188,19 @@ export const LiftCard = memo(function LiftCard({
     try {
       const success = await deleteLift(lift.id, lift, invalidateUserCheckIns);
       if (success) {
-        // Handle auto-deleted loading lifts
         if (isLoadingLift(lift)) {
-          const autoDeleted = isLiftAutoDeleted(lift.id);
-          if (autoDeleted) {
-            removeLoadingLift(lift.id);
-          } else {
-            removeLoadingLift(lift.id);
-          }
+          // deleting a loading card (error/in-flight/completed)
+          removeLoadingLift(lift.id);
         } else {
+          // deleting a true server card — also remove any shadow completed loading twin
           removeFinalLift(lift.id);
+          removeLoadingLiftByFinalId(lift.id); // kill the twin so it can't reappear
         }
         
         // Background refresh
         refreshLifts();
         
+        hapticFeedback.success?.();
         translateX.value = withTiming(0, { duration: 200, easing: Easing.out(Easing.quad) });
       } else {
         translateX.value = withTiming(0, { duration: 200, easing: Easing.out(Easing.quad) });
@@ -213,7 +211,7 @@ export const LiftCard = memo(function LiftCard({
       setDeleting(false);
       setDeleteLoading(false);
     }
-  }, [deleting, deleteLoading, lift, removeFinalLift, removeLoadingLift, invalidateUserCheckIns, isLiftAutoDeleted, loadingProgress, translateX, refreshLifts]);
+  }, [deleting, deleteLoading, lift, removeFinalLift, removeLoadingLift, removeLoadingLiftByFinalId, refreshLifts, invalidateUserCheckIns, loadingProgress, translateX]);
 
   useEffect(() => () => { if (autoResetTimeoutRef.current) clearTimeout(autoResetTimeoutRef.current); }, []);
 
@@ -328,30 +326,39 @@ export const LiftCard = memo(function LiftCard({
   useEffect(() => {
     if (!lift || !isLoadingLift(lift)) return;
 
+    const simStartAt = (lift as any).simStartAt ?? Date.now();
+    const simDurationMs = (lift as any).simDurationMs ?? (((lift.videoDurationSec || 10) * 2) + 20) * 1000;
+    const base = Math.max(0.02, lift.uiProgress || 0.02);
+
     // Initialize progress values
-    const start = (lift.uiProgress && lift.uiProgress > 0) ? lift.uiProgress : 0.02;
+    const start = (lift.uiProgress && lift.uiProgress > 0) ? lift.uiProgress : base;
     targetProgress.value = start;
     progressRender.value = start;
     setProgressPercentage(Math.round(start * 100));
 
-    // Simple progress simulation
-    let timer: NodeJS.Timeout | null = null;
+    let raf: number | null = null;
 
     if (lift.status === 'uploading' || lift.status === 'processing') {
-      const durationMs = (((lift.videoDurationSec || 10) * 2) + 20) * 1000;
-      const tick = 50;
-      let elapsed = start * durationMs;
-      
-      timer = setInterval(() => {
-        elapsed += tick;
-        const prog = Math.min(0.95, elapsed / durationMs + Math.random() * 0.003);
-        if (prog > targetProgress.value) {
+      const loop = () => {
+        const now = Date.now();
+        const raw = (now - simStartAt) / simDurationMs;
+        const prog = Math.min(0.95, Math.max(base, raw));
+        
+        if (prog > progressRender.value) {
           targetProgress.value = prog;
           progressRender.value = prog;
-          setProgressPercentage(prev => Math.max(prev, Math.round(prog * 100)));
-          if (Math.abs((lift.uiProgress || 0) - prog) > 0.02) updateLiftProgress(lift.id, prog);
+          const pct = Math.round(prog * 100);
+          setProgressPercentage(prev => (pct > prev ? pct : prev));
+          if (Math.abs((lift.uiProgress || 0) - prog) > 0.02) {
+            updateLiftProgress(lift.id, prog);
+          }
         }
-      }, tick);
+        
+        if (lift.status === 'uploading' || lift.status === 'processing') {
+          raf = requestAnimationFrame(loop);
+        }
+      };
+      raf = requestAnimationFrame(loop);
     }
 
     if (lift.status === 'completed') {
@@ -361,8 +368,8 @@ export const LiftCard = memo(function LiftCard({
       updateLiftProgress(lift.id, 1);
     }
 
-    return () => { if (timer) clearInterval(timer); };
-  }, [lift && isLoadingLift(lift) ? `${lift.status}-${lift.uiProgress}-${lift.videoDurationSec}` : 'final']);
+    return () => { if (raf) cancelAnimationFrame(raf); };
+  }, [lift && isLoadingLift(lift) ? `${lift.id}-${lift.status}-${lift.uiProgress}-${(lift as any).simStartAt}-${(lift as any).simDurationMs}` : 'final']);
 
   // helpers
   const formatLiftDate = (dateString: string) => {

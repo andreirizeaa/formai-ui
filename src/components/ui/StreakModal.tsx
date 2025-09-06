@@ -18,7 +18,7 @@ export function StreakModal({ visible, currentStreak, onClose }: StreakModalProp
   };
 
   const handleContinue = () => {
-    hapticFeedback.success();
+    hapticFeedback.selection();
     onClose();
   };
 
