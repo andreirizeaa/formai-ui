@@ -66,7 +66,15 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
 
   // Retry configuration
   const ANALYZE_BACKOFF = [2000, 4000, 8000]; // ms
-  const isTransientErrorCode = (c?: string) => !!c && /(NETWORK|TIMEOUT|HTTP_5\d\d|HTTP_429|BAD_JSON)/i.test(c);
+  const isTransientErrorCode = (c?: string) =>
+    !!c && /(NETWORK|TIMEOUT|HTTP_5\d\d|HTTP_429|BAD_JSON|ABORT|ABORTED|CANCEL|CANCELLED)/i.test(c);
+  
+  // Only these server codes may show an error card
+  const HARD_API_ERRORS = new Set([
+    'NO_GYM_VIDEO_FOUND',
+    'WRONG_MOVEMENT',
+    'ERROR_OCCURED',       // keep your server spelling
+  ]);
   
   // Polling configuration
   const ANALYZE_TTL_MS = 10 * 60 * 1000;   // consider "in-progress" for up to 10m
@@ -253,23 +261,24 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
           stored.forEach(lift => {
             if (lift.status === 'completed') return; // Skip completed lifts
             if (lift.status === 'error') {
-              // Auto-resume analyze errors that aren't permanent server results
               const isPermanent =
-                lift.errorMessage === 'No lift found' ||
-                lift.errorMessage === 'Lift mismatch';
-              if (!isPermanent && lift.failureStage === 'analyze') {
+                lift.failureStage === 'analyze' &&
+                (lift.errorMessage === 'No lift found' || lift.errorMessage === 'Lift mismatch');
+
+              if (!isPermanent) {
                 safeUpdateLift(lift.id, l => ({ ...l, status: 'processing', errorMessage: undefined, failureStage: undefined }));
-                // If we already kicked it off recently, just poll; else check queue and run pipeline.
-                if (lift.analysisStartedAt && (Date.now() - lift.analysisStartedAt) < ANALYZE_TTL_MS) {
-                  startAnalyzePoll(lift);
-                } else if (hasActiveAnalyzeJob(lift.id)) {
-                  // defer kicking analyze
-                  setTimeout(() => { void processLiftPipeline(lift, 'analyze', lift.retryStage); }, 4000);
+                // resume analyze or stage…
+                if (deriveStage(lift) === 'analyze') {
+                  if (lift.analysisStartedAt && (Date.now() - lift.analysisStartedAt) < ANALYZE_TTL_MS) {
+                    startAnalyzePoll(lift);
+                  } else {
+                    void processLiftPipeline(lift, 'analyze', lift.retryStage);
+                  }
                 } else {
-                  void processLiftPipeline(lift, 'analyze', lift.retryStage);
+                  void processLiftPipeline(lift, deriveStage(lift));
                 }
               }
-              return; // Keep other error lifts visible for retry
+              return;
             }
             
             // Update status to processing to reflect we're resuming, but preserve progress
@@ -324,6 +333,16 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
       } else if (s === 'active') {
         // App is coming to foreground, catch up progress based on wall clock
         tickProgressFromClock();
+
+        // Ensure we resume any analyze cards without ever showing error
+        setTimeout(() => {
+          latestLiftsRef.current.forEach(l => {
+            if (l.pipelineStage === 'analyze' && l.status !== 'completed' && !inflight.current.has(l.id)) {
+              safeUpdateLift(l.id, x => ({ ...x, status: 'processing', errorMessage: 'Resuming…' }));
+              void processLiftPipeline(l, 'analyze', l.retryStage);
+            }
+          });
+        }, 200);
       }
       appState.current = s;
     });
@@ -349,13 +368,19 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
     retryStage?: RetryStage
   ) => {
     const userId = await getUserId();
-    if (!userId) return { success: false, data: null, transient: false };
-    
-    // Create a new abort controller for this analysis
+    if (!userId) return { success: false, error: 'CLIENT_NO_USERID' };
+
     analyzeAbortRef.current = new AbortController();
-    
-    const result = await analyzeLift(userId, liftData, retryStage, { signal: analyzeAbortRef.current.signal });
-    return result;
+    try {
+      const result = await analyzeLift(userId, liftData, retryStage, { signal: analyzeAbortRef.current.signal });
+      return result;
+    } catch (err: any) {
+      const msg = String(err?.message || '');
+      const isAbort = err?.name === 'AbortError' || /abort|cancell?ed/i.test(msg);
+      if (isAbort) return { success: false, error: 'ABORT' };
+      // Any thrown client-side issue is soft
+      return { success: false, error: 'CLIENT_THROW' };
+    }
   };
 
   const addLoadingLift = async (liftData: Omit<LoadingLiftData, 'id' | 'isComplete' | 'status'>): Promise<string> => {
@@ -465,9 +490,14 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
           }, 2000);
           return;
         } else {
-          safeUpdateLift(current.id, l => ({ ...l, status: 'error' as const, failureStage: 'upload_video' as const, errorMessage: error instanceof Error ? error.message : 'Video upload failed' }));
-          // Persist the error state
-          void saveLoadingLifts(allLoadingLifts.map(l => l.id === current.id ? { ...l, status: 'error' as const, failureStage: 'upload_video' as const, errorMessage: error instanceof Error ? error.message : 'Video upload failed' } : l));
+          // Non-transient upload failures are also SOFT (never show error card)
+          safeUpdateLift(current.id, l => ({
+            ...l,
+            status: 'processing',
+            errorMessage: 'Upload issue — retrying…',
+          }));
+          inflight.current.delete(current.id);
+          setTimeout(() => { void processLiftPipeline(current, 'upload_video'); }, 3000);
           return;
         }
       }
@@ -503,9 +533,14 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
           }, 2000);
           return;
         } else {
-          safeUpdateLift(current.id, l => ({ ...l, status: 'error' as const, failureStage: 'upload_thumbnail' as const, errorMessage: error instanceof Error ? error.message : 'Thumbnail upload failed' }));
-          // Persist the error state
-          void saveLoadingLifts(allLoadingLifts.map(l => l.id === current.id ? { ...l, status: 'error' as const, failureStage: 'upload_thumbnail' as const, errorMessage: error instanceof Error ? error.message : 'Thumbnail upload failed' } : l));
+          // Non-transient upload failures are also SOFT (never show error card)
+          safeUpdateLift(current.id, l => ({
+            ...l,
+            status: 'processing',
+            errorMessage: 'Upload issue — retrying…',
+          }));
+          inflight.current.delete(current.id);
+          setTimeout(() => { void processLiftPipeline(current, 'upload_thumbnail'); }, 3000);
           return;
         }
       }
@@ -579,7 +614,7 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
       if (!result.success) {
         if (isCompletedNow(current.id)) return;
 
-        // If backend already wrote the row, finish from DB instead of showing error
+        // If backend already wrote the row, finish from DB
         if (current.assetId) {
           const found = await searchLiftByAssetId(current.assetId);
           if (found) {
@@ -600,57 +635,40 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
           }
         }
 
-        // Treat network/5xx/429/timeouts as soft while within TTL
-        const transient = isTransientErrorCode(result.error);
-        const stillWithinTTL =
-          typeof current.analysisStartedAt === 'number' &&
-          (Date.now() - current.analysisStartedAt) < SOFT_FAIL_TTL_MS;
-
-        if (transient && stillWithinTTL) {
-          softFail(current.id, 'Temporary network/server issue — retrying…');
-          // schedule retry (your existing backoff)
-          const prev = analyzeAttempts.current.get(current.id) ?? 0;
-          if (prev < ANALYZE_BACKOFF.length) {
-            analyzeAttempts.current.set(current.id, prev + 1);
-            inflight.current.delete(current.id);
-            setTimeout(() => { void processLiftPipeline(current, 'analyze', retryStage); }, ANALYZE_BACKOFF[prev]);
-            return;
-          }
-        }
-
-        // Permanent server signals → real error
-        if (result.error === 'NO_GYM_VIDEO_FOUND') {
-          safeUpdateLift(current.id, l => ({
-            ...l, status: 'error' as const, failureStage: 'analyze' as const,
-            errorMessage: 'No lift found', retryStage: result.stage
-          }));
-          void autoDeleteErrorLift(current.id);
-          return;
-        }
-        if (result.error === 'WRONG_MOVEMENT') {
-          safeUpdateLift(current.id, l => ({
-            ...l, status: 'error' as const, failureStage: 'analyze' as const,
-            errorMessage: 'Lift mismatch', retryStage: result.stage
-          }));
-          void autoDeleteErrorLift(current.id);
-          return;
-        }
-
-        // Out of retries or not transient → final error
-        if (!isCompletedNow(current.id)) {
+        // Hard server errors → show error card
+        if (HARD_API_ERRORS.has(String(result.error))) {
+          const err = String(result.error);
           safeUpdateLift(current.id, l => ({
             ...l,
             status: 'error' as const,
             failureStage: 'analyze' as const,
             errorMessage:
-              result.error === 'EMPTY_DATA' ? 'Analysis failed — no data returned' :
-              result.error === 'BAD_JSON'   ? 'Server error — invalid response'  :
-              result.error === 'TIMEOUT'    ? 'Server timeout — please try again' :
-              result.error === 'NETWORK_ERROR' ? 'Network error — check connection and retry' :
-              (result.error || 'Analysis failed. Please try again.'),
+              err === 'NO_GYM_VIDEO_FOUND' ? 'No lift found' :
+              err === 'WRONG_MOVEMENT'     ? 'Lift mismatch' :
+              'Analysis failed. Please try again.',
             retryStage: result.stage
           }));
+          // Optional: auto-delete only for those two well-defined cases
+          if (err === 'NO_GYM_VIDEO_FOUND' || err === 'WRONG_MOVEMENT') {
+            void autoDeleteErrorLift(current.id);
+          }
+          return;
         }
+
+        // Everything else (ABORT, TIMEOUT, 5xx, client throw, etc.) is SOFT
+        safeUpdateLift(current.id, l => ({
+          ...l,
+          status: 'processing',
+          errorMessage:
+            result.error === 'ABORT' ? 'Paused — resuming…' :
+            'Temporary issue — retrying…',
+        }));
+        // backoff/resume
+        const prev = analyzeAttempts.current.get(current.id) ?? 0;
+        const delay = ANALYZE_BACKOFF[Math.min(prev, ANALYZE_BACKOFF.length - 1)];
+        analyzeAttempts.current.set(current.id, prev + 1);
+        inflight.current.delete(current.id);
+        setTimeout(() => { void processLiftPipeline(current, 'analyze', retryStage); }, delay);
         return;
       }
       
@@ -672,20 +690,15 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
       void (async () => { try { await refreshLifts(); } catch (_) {} })();
       invalidateUserCheckIns();
     } catch (error) {
+      // Never show error card here — only analyze() hard server codes may do that
       if (!isCompletedNow(initialLift.id)) {
         safeUpdateLift(initialLift.id, l => ({
           ...l,
-          status: 'error' as const,
-          failureStage: 'analyze' as const,
-          errorMessage: error instanceof Error ? error.message : 'Analysis failed',
+          status: 'processing',
+          errorMessage: 'Temporary issue — retrying…'
         }));
-        // Persist the error state
-        void saveLoadingLifts(allLoadingLifts.map(l => l.id === initialLift.id ? { 
-          ...l, 
-          status: 'error' as const, 
-          failureStage: 'analyze' as const, 
-          errorMessage: error instanceof Error ? error.message : 'Analysis failed' 
-        } : l));
+        inflight.current.delete(initialLift.id);
+        setTimeout(() => { void processLiftPipeline(initialLift, startStage ?? deriveStage(initialLift), retryStage); }, 1500);
       }
     } finally {
       // Always clean up the inflight set
