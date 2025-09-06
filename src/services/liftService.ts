@@ -78,6 +78,7 @@ export async function analyzeLift(
     }
 
     const json = (await response.json().catch(() => null)) as AnalyzeLiftResponse | null;
+    console.log('analyzeLift response', json);
     if (!json) {
       // server died mid-response, or empty body
       return { success: false, data: null, error: 'BAD_JSON', transient: false };

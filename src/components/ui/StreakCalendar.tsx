@@ -11,6 +11,8 @@ const WEEK_HEIGHT = 70;
 
 interface StreakCalendarProps {
   onDateSelect?: (date: Date) => void;
+  circleRadius?: number;
+  iconSize?: number;
 }
 
 interface DayData {
@@ -23,7 +25,17 @@ interface DayData {
 }
 
 // Current week component for streak calendar
-function CurrentWeek({ days, onPressDay }: { days: DayData[]; onPressDay: (d: DayData) => void }) {
+function CurrentWeek({ 
+  days, 
+  onPressDay, 
+  circleRadius = 16, 
+  iconSize = 14 
+}: { 
+  days: DayData[]; 
+  onPressDay: (d: DayData) => void;
+  circleRadius?: number;
+  iconSize?: number;
+}) {
   return (
     <View style={styles.weekContent}>
       {days.map((day, i) => (
@@ -47,14 +59,19 @@ function CurrentWeek({ days, onPressDay }: { days: DayData[]; onPressDay: (d: Da
           <View
             style={[
               styles.dayCircle,
+              {
+                width: circleRadius * 2,
+                height: circleRadius * 2,
+                borderRadius: circleRadius,
+              },
               day.hasStreak
                 ? styles.streakCircle
                 : styles.noStreakCircle,
             ]}
           >
-                               {day.hasStreak && (
-                     <Check size={14} color="#FFFFFF" />
-                   )}
+            {day.hasStreak && (
+              <Check size={iconSize} color="#FFFFFF" />
+            )}
           </View>
         </TouchableOpacity>
       ))}
@@ -62,7 +79,7 @@ function CurrentWeek({ days, onPressDay }: { days: DayData[]; onPressDay: (d: Da
   );
 }
 
-export function StreakCalendar({ onDateSelect }: StreakCalendarProps) {
+export function StreakCalendar({ onDateSelect, circleRadius = 16, iconSize = 14 }: StreakCalendarProps) {
   const { daysLogged } = useUserCheckIns();
 
   // Convert daysLogged to a Set for faster lookup
@@ -109,6 +126,8 @@ export function StreakCalendar({ onDateSelect }: StreakCalendarProps) {
       <CurrentWeek
         days={currentWeek}
         onPressDay={handlePressDay}
+        circleRadius={circleRadius}
+        iconSize={iconSize}
       />
     </View>
   );
@@ -133,9 +152,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   dayCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     marginVertical: 5,

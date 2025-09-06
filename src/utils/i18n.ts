@@ -544,6 +544,10 @@ const i18n = new I18n({
           title: 'Improvement',
           message: 'How your form changed over the selected range. We compare the first third of your lifts to the last third and show the difference in average accuracy.'
         }
+      },
+      metricsFeedback: {
+        title: 'Want other metrics? Let us know!',
+        subtitle: 'Help us improve your experience',
       }
     },
     library: {

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback, ReactNode } from 'react';
 import { AppState } from 'react-native';
 import { ILiftData } from './LiftDataContext';
 import { getUserId } from '../services/storageService';
@@ -35,6 +35,54 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
   // keep latest snapshot in sync
   const latestLiftsRef = useRef<LoadingLiftData[]>([]);
   useEffect(() => { latestLiftsRef.current = allLoadingLifts; }, [allLoadingLifts]);
+
+  // Strong per-lift lock + queued retries
+  const inflightRef = useRef(new Set<string>());
+  const retryTimersRef = useRef(new Map<string, NodeJS.Timeout>());
+  const queuedRef = useRef(new Set<string>()); // ids with a scheduled retry
+
+  // Utility helpers
+  const isLockedOrQueued = (id: string) =>
+    inflightRef.current.has(id) || queuedRef.current.has(id);
+
+  const tryLock = (id: string) => {
+    if (inflightRef.current.has(id) || queuedRef.current.has(id)) return false;
+    inflightRef.current.add(id);
+    return true;
+  };
+
+  const releaseLock = (id: string) => {
+    inflightRef.current.delete(id);
+  };
+
+  const cancelRetry = (id: string) => {
+    const t = retryTimersRef.current.get(id);
+    if (t) {
+      clearTimeout(t);
+      retryTimersRef.current.delete(id);
+    }
+    queuedRef.current.delete(id);
+  };
+
+  const scheduleRetry = (
+    id: string,
+    stage: PipelineStage,
+    ms: number,
+    retryStage?: RetryStage
+  ) => {
+    // prevent multiple timers
+    cancelRetry(id);
+    queuedRef.current.add(id);
+    const t = setTimeout(() => {
+      // release the "queued" flag and lock just-in-time for the next run
+      queuedRef.current.delete(id);
+      releaseLock(id);
+      retryTimersRef.current.delete(id);
+      const latest = latestLiftsRef.current.find(x => x.id === id);
+      void processLiftPipeline(latest ?? { ...(latest as any), id }, stage, retryStage);
+    }, ms);
+    retryTimersRef.current.set(id, t);
+  };
 
   // hard guard
   const isCompletedNow = (id: string) =>
@@ -267,15 +315,15 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
 
               if (!isPermanent) {
                 safeUpdateLift(lift.id, l => ({ ...l, status: 'processing', errorMessage: undefined, failureStage: undefined }));
-                // resume analyze or stage…
-                if (deriveStage(lift) === 'analyze') {
+                const stage = deriveStage(lift);
+                if (stage === 'analyze') {
                   if (lift.analysisStartedAt && (Date.now() - lift.analysisStartedAt) < ANALYZE_TTL_MS) {
                     startAnalyzePoll(lift);
-                  } else {
+                  } else if (!isLockedOrQueued(lift.id) && tryLock(lift.id)) {
                     void processLiftPipeline(lift, 'analyze', lift.retryStage);
                   }
-                } else {
-                  void processLiftPipeline(lift, deriveStage(lift));
+                } else if (!isLockedOrQueued(lift.id) && tryLock(lift.id)) {
+                  void processLiftPipeline(lift, stage);
                 }
               }
               return;
@@ -289,13 +337,10 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
             if (stage === 'analyze') {
               if (lift.analysisStartedAt && (Date.now() - lift.analysisStartedAt) < ANALYZE_TTL_MS) {
                 startAnalyzePoll(lift); // already started previously
-              } else if (hasActiveAnalyzeJob(lift.id)) {
-                // defer kicking analyze
-                setTimeout(() => { void processLiftPipeline(lift, 'analyze', lift.retryStage); }, 4000);
-              } else {
+              } else if (!isLockedOrQueued(lift.id) && tryLock(lift.id)) {
                 void processLiftPipeline(lift, 'analyze', lift.retryStage);
               }
-            } else {
+            } else if (!isLockedOrQueued(lift.id) && tryLock(lift.id)) {
               void processLiftPipeline(lift, stage);
             }
           });
@@ -333,13 +378,26 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
       } else if (s === 'active') {
         // App is coming to foreground, catch up progress based on wall clock
         tickProgressFromClock();
+        
+        // kill pending retries when coming back
+        retryTimersRef.current.forEach(clearTimeout);
+        retryTimersRef.current.clear();
+        queuedRef.current.clear();
 
         // Ensure we resume any analyze cards without ever showing error
         setTimeout(() => {
           latestLiftsRef.current.forEach(l => {
-            if (l.pipelineStage === 'analyze' && l.status !== 'completed' && !inflight.current.has(l.id)) {
-              safeUpdateLift(l.id, x => ({ ...x, status: 'processing', errorMessage: 'Resuming…' }));
-              void processLiftPipeline(l, 'analyze', l.retryStage);
+            if (l.pipelineStage === 'analyze' && l.status !== 'completed' && !isLockedOrQueued(l.id)) {
+              const fresh =
+                typeof l.analysisStartedAt === 'number' &&
+                (Date.now() - l.analysisStartedAt) < ANALYZE_TTL_MS;
+              if (fresh) {
+                // Just poll; don't re-kick
+                startAnalyzePoll(l);
+              } else if (tryLock(l.id)) {
+                safeUpdateLift(l.id, x => ({ ...x, status: 'processing', errorMessage: 'Resuming…' }));
+                void processLiftPipeline(l, 'analyze', l.retryStage);
+              }
             }
           });
         }, 200);
@@ -429,12 +487,11 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
     startStage?: PipelineStage,
     retryStage?: RetryStage
   ) {
-    // ⚠️ FIRST THING: guard + lock to prevent re-entry for this lift
-    if (inflight.current.has(initialLift.id)) {
-      return; // already running a pipeline for this lift
+    console.log('processing lift pipeline', initialLift.id, 'locked?', isLockedOrQueued(initialLift.id));
+    if (!tryLock(initialLift.id)) {
+      console.log('already locked/queued', initialLift.id);
+      return;
     }
-    
-    inflight.current.add(initialLift.id);
     
     try {
       // Set processing state
@@ -496,8 +553,7 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
             status: 'processing',
             errorMessage: 'Upload issue — retrying…',
           }));
-          inflight.current.delete(current.id);
-          setTimeout(() => { void processLiftPipeline(current, 'upload_video'); }, 3000);
+          scheduleRetry(current.id, 'upload_video', 3000);
           return;
         }
       }
@@ -539,8 +595,7 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
             status: 'processing',
             errorMessage: 'Upload issue — retrying…',
           }));
-          inflight.current.delete(current.id);
-          setTimeout(() => { void processLiftPipeline(current, 'upload_thumbnail'); }, 3000);
+          scheduleRetry(current.id, 'upload_thumbnail', 3000);
           return;
         }
       }
@@ -571,9 +626,7 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
       if (shouldDefer && !current.analysisStartedAt) {
         // Don't call analyze yet — queue a retry and keep the card in "processing"
         safeUpdateLift(current.id, l => ({ ...l, status: 'processing', errorMessage: 'Queued — waiting for previous analysis' }));
-        // let this invocation end so the "inflight" Set releases in finally{}
-        inflight.current.delete(current.id);
-        setTimeout(() => { void processLiftPipeline(current, 'analyze', retryStage); }, 4000);
+        scheduleRetry(current.id, 'analyze', 4000, retryStage);
         return;
       }
 
@@ -603,6 +656,7 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
         allLoadingLifts.map(l => l.id === current.id ? { ...l, analysisStartedAt: liftForAnalysis.analysisStartedAt } : l)
       );
 
+      current.analysisStartedAt = liftForAnalysis.analysisStartedAt; // sync local snapshot
       // start polling right away (even if the call is still running)
       startAnalyzePoll(liftForAnalysis);
 
@@ -667,8 +721,7 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
         const prev = analyzeAttempts.current.get(current.id) ?? 0;
         const delay = ANALYZE_BACKOFF[Math.min(prev, ANALYZE_BACKOFF.length - 1)];
         analyzeAttempts.current.set(current.id, prev + 1);
-        inflight.current.delete(current.id);
-        setTimeout(() => { void processLiftPipeline(current, 'analyze', retryStage); }, delay);
+        scheduleRetry(current.id, 'analyze', delay, retryStage);
         return;
       }
       
@@ -697,12 +750,11 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
           status: 'processing',
           errorMessage: 'Temporary issue — retrying…'
         }));
-        inflight.current.delete(initialLift.id);
-        setTimeout(() => { void processLiftPipeline(initialLift, startStage ?? deriveStage(initialLift), retryStage); }, 1500);
+        scheduleRetry(initialLift.id, startStage ?? deriveStage(initialLift), 1500, retryStage);
       }
     } finally {
-      // Always clean up the inflight set
-      inflight.current.delete(initialLift.id);
+      // Always clean up the lock
+      releaseLock(initialLift.id);
     }
   }
 
@@ -857,6 +909,21 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
     return autoDeletedLifts.has(liftId);
   };
 
+  // Emergency purge helper for debugging
+  const purgeAllLoadingLifts = useCallback(() => {
+    inflight.current.clear();
+    inflightRef.current.clear();
+    retryTimersRef.current.forEach(clearTimeout);
+    retryTimersRef.current.clear();
+    queuedRef.current.clear();
+    analyzeAttempts.current.clear();
+    pollersRef.current.forEach(clearInterval);
+    pollersRef.current.clear();
+    setAllLoadingLifts([]);
+    void saveLoadingLifts([]);
+    console.log('All loading lifts purged from memory and storage');
+  }, []);
+
 
   // Cleanup effect
   useEffect(() => {
@@ -883,6 +950,7 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
         closeStreakModal,
         isLiftAutoDeleted,
         removeLoadingLiftByFinalId,
+        purgeAllLoadingLifts,
       }}
     >
       {children}
