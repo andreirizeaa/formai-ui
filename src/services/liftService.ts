@@ -90,8 +90,6 @@ export async function deleteUserStorage(liftId: string): Promise<boolean> {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId, liftId }),
     });
-    console.log(' >>>>>>> <<<<<<<< delete lift response', response);
-
     if (!response.ok) return false;
     const json = (await response.json().catch(() => null)) as { success?: boolean } | null;
     return !!json?.success;
@@ -111,8 +109,6 @@ export async function checkDuplicateAssetId(assetId: string): Promise<boolean> {
       .eq('user_id', userId)
       .eq('asset_id', assetId)
       .limit(1);
-
-      console.log(' >>>>>>> <<<<<<<< check duplicate asset ID', assetId);
     
     if (error) {
       return false;
@@ -135,8 +131,6 @@ export async function searchLiftByAssetId(assetId: string): Promise<ILiftData | 
       .eq('user_id', userId)
       .eq('asset_id', assetId)
       .limit(1);
-
-    console.log(' >>>>>>> <<<<<<<< search lift by asset ID', assetId);
     
     if (error) {
       return null;

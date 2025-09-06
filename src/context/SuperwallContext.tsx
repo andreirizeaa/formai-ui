@@ -84,9 +84,7 @@ export function SuperwallProvider({ children }: SuperwallProviderProps) {
             }
         },
         onPurchaseRestore: async () => {
-            console.log("Starting restored");
             await restorePurchases()
-            console.log("Purchase restored");
             return;
         },
       }}

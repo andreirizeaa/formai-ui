@@ -270,7 +270,6 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
               feedback: signedFeedback,
             },
           };
-          console.log(mappedLift);
           return mappedLift;
         })();
         setLiftData(prev => prev.map(l => l.id === id ? updated : l));

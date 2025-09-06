@@ -21,8 +21,6 @@ export function CameraPermissionScreen({ onNext }: CameraPermissionScreenProps) 
       const result = await requestPermission();
       if (result.granted) {
         onNext();
-      } else {
-        console.log('Camera permission denied');
       }
     } catch (error) {
       console.error('Error requesting camera permission:', error);
