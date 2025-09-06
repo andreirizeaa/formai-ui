@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
+import { AppState } from 'react-native';
 import { ILiftData } from './LiftDataContext';
 import { getUserId } from '../services/storageService';
 import { analyzeLift } from '../services/liftService';
@@ -9,7 +10,7 @@ import { useUserCheckIns } from './UserCheckInsContext';
 import { loadLoadingLifts, saveLoadingLifts } from '../services/loadingLiftsStorage';
 import { hapticFeedback } from '../utils/haptic';
 import { LoadingLiftData, LoadingLiftsContextType, PipelineStage, RetryStage } from '../types/Lifts.d';
-import { deleteUserStorage } from '../services/liftService';
+import { deleteUserStorage, searchLiftByAssetId } from '../services/liftService';
 
 const LoadingLiftsContext = createContext<LoadingLiftsContextType | undefined>(undefined);
 
@@ -27,15 +28,143 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
   const { invalidateAndRefetch: invalidateUserCheckIns } = useUserCheckIns();
   const persistTimer = useRef<NodeJS.Timeout | null>(null);
   const inflight = useRef<Set<string>>(new Set());
+  const appState = useRef(AppState.currentState);
+  const analyzeAbortRef = useRef<AbortController | null>(null);
+  const analyzeAttempts = useRef(new Map<string, number>());
+  const pollersRef = useRef(new Map<string, NodeJS.Timeout>());
+  // keep latest snapshot in sync
+  const latestLiftsRef = useRef<LoadingLiftData[]>([]);
+  useEffect(() => { latestLiftsRef.current = allLoadingLifts; }, [allLoadingLifts]);
 
-  // Safe haptic wrapper to prevent non-API throws from triggering error state
-  const safeHaptic = (kind: 'error' | 'success' | 'impact' = 'error') => {
-    try {
-      const fn = (hapticFeedback as any)?.[kind];
-      if (typeof fn === 'function') fn();
-    } catch { 
-      // Never let haptics flip UI state
+  // hard guard
+  const isCompletedNow = (id: string) =>
+    latestLiftsRef.current.some(l => l.id === id && l.status === 'completed' && !!l.finalData);
+
+  // never downgrade a completed card
+  const safeUpdateLift = (id: string, updater: (l: LoadingLiftData) => LoadingLiftData) => {
+    setAllLoadingLifts(prev =>
+      prev.map(l => {
+        if (l.id !== id) return l;
+        if (l.status === 'completed') return l;     // lock
+        return updater(l);
+      })
+    );
+  };
+
+  // one place to mark completion
+  const markCompleted = (id: string, mapped: ILiftData) => {
+    setAllLoadingLifts(prev =>
+      prev.map(l =>
+        l.id === id
+          ? { ...l, finalData: mapped, status: 'completed', uiProgress: 1, pipelineStage: 'analyze' }
+          : l
+      )
+    );
+    analyzeAttempts.current.delete(id);
+    stopPoller(id);
+  };
+
+  // Retry configuration
+  const ANALYZE_BACKOFF = [2000, 4000, 8000]; // ms
+  const isTransientErrorCode = (c?: string) => !!c && /(NETWORK|TIMEOUT|HTTP_5\d\d|HTTP_429|BAD_JSON)/i.test(c);
+  
+  // Polling configuration
+  const ANALYZE_TTL_MS = 10 * 60 * 1000;   // consider "in-progress" for up to 10m
+  const POLL_EVERY_MS = 7000;              // poll every 7 seconds
+
+  // Only "soft fail" while analysis is in flight
+  const SOFT_FAIL_TTL_MS = ANALYZE_TTL_MS; // during this window, don't flip to hard error
+
+  const softFail = (id: string, msg: string) => {
+    safeUpdateLift(id, l => ({
+      ...l,
+      status: 'processing',
+      errorMessage: msg || 'Temporary issue — retrying…'
+    }));
+  };
+
+  // Serialization helpers
+  const hasActiveAnalyzeJob = (exceptId?: string) => {
+    const now = Date.now();
+    return latestLiftsRef.current.some(l =>
+      l.id !== exceptId &&
+      l.pipelineStage === 'analyze' &&
+      typeof l.analysisStartedAt === 'number' &&
+      (now - l.analysisStartedAt) < ANALYZE_TTL_MS &&
+      (l.status === 'processing' || l.status === 'uploading')
+    );
+  };
+  // Utility function to compute simulation duration
+  const computeSimDurationMs = (videoDurationSec?: number) =>
+    (((videoDurationSec || 10) * 2) + 20) * 1000; // same formula as before
+
+  // Wall-clock progress calculation
+  const tickProgressFromClock = () => {
+    const now = Date.now();
+    setAllLoadingLifts(prev => {
+      const updated = prev.map(l => {
+        if (!(l.status === 'uploading' || l.status === 'processing')) return l;
+        const start = l.simStartAt ?? now;
+        const dur = l.simDurationMs ?? computeSimDurationMs(l.videoDurationSec);
+        const base = l.simStartProgress ?? 0.02;
+        const frac = Math.min(0.95, Math.max(base, (now - start) / dur));
+        if (typeof l.uiProgress === 'number' && frac <= l.uiProgress) return l;
+        return { ...l, uiProgress: frac };
+      });
+      return updated;
+    });
+  };
+
+  // Polling helpers
+  const stopPoller = (id: string) => {
+    const t = pollersRef.current.get(id);
+    if (t) {
+      clearInterval(t);
+      pollersRef.current.delete(id);
     }
+  };
+
+  const startAnalyzePoll = (lift: LoadingLiftData) => {
+    stopPoller(lift.id);
+    const startedAt = lift.analysisStartedAt ?? Date.now();
+    setAllLoadingLifts(prev => prev.map(l => l.id === lift.id ? { ...l, analysisStartedAt: startedAt } : l));
+
+    const tick = async () => {
+      // if expired, stop and allow retry by pipeline
+      if (Date.now() - (startedAt || 0) > ANALYZE_TTL_MS) {
+        stopPoller(lift.id);
+        // leave it "processing" — the pipeline may decide to retry
+        return;
+      }
+
+      // check if server wrote the lift row yet
+      if (lift.assetId) {
+        const found = await searchLiftByAssetId(lift.assetId);
+        if (found) {
+          stopPoller(lift.id);
+          // map to final state directly
+          const mapped = await mapApiDataToFinalData({
+            id: found.id,
+            is_favourite: found.isFavourite,
+            lift_type: found.liftType,
+            lift_date: found.liftDate,
+            lift_time: found.liftTime,
+            weight_value: found.weightValue,
+            reps: found.reps,
+            thumbnail_url: found.thumbnailURL,
+            analysis: found.analysis,
+          });
+          markCompleted(lift.id, mapped);
+          // Invalidate user check-ins to refresh streak data
+          invalidateUserCheckIns();
+        }
+      }
+    };
+
+    // fire once immediately on resume, then every N seconds
+    void tick();
+    const t = setInterval(() => { if (AppState.currentState === 'active') void tick(); }, POLL_EVERY_MS);
+    pollersRef.current.set(lift.id, t);
   };
 
   // Helper to detect transient errors that should be retryable
@@ -56,12 +185,30 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
     return transientPatterns.some(pattern => pattern.test(errorMessage));
   };
 
+  // Helper function to parse DD-MM-YYYY format dates
+  const parseLiftDate = (dateString: string): Date => {
+    // Handle DD-MM-YYYY format
+    const match = dateString.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+    if (match) {
+      const [, day, month, year] = match.map(Number);
+      return new Date(year, month - 1, day); // month is 0-indexed in Date constructor
+    }
+    // Fallback for other formats
+    return new Date(dateString);
+  };
+
+  // Helper function to check if two dates are the same day
+  const isSameDay = (date1: Date, date2: Date): boolean => {
+    return date1.getFullYear() === date2.getFullYear() &&
+           date1.getMonth() === date2.getMonth() &&
+           date1.getDate() === date2.getDate();
+  };
+
   // Filter loading lifts to only show those matching the selected date
   const loadingLifts = allLoadingLifts.filter(lift => {
-    const liftDate = new Date(lift.dateToday);
+    const liftDate = parseLiftDate(lift.dateToday);
     const selectedDateOnly = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
-    const liftDateOnly = new Date(liftDate.getFullYear(), liftDate.getMonth(), liftDate.getDate());
-    return liftDateOnly.getTime() === selectedDateOnly.getTime();
+    return isSameDay(liftDate, selectedDateOnly);
   });
 
   /**
@@ -89,19 +236,59 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
           // Put stored lifts into state so the UI shows cards immediately
           setAllLoadingLifts(stored);
 
+          // Ensure sim fields exist for in-flight lifts so progress can catch up
+          setAllLoadingLifts(prev => prev.map(l => {
+            if ((l.status === 'uploading' || l.status === 'processing') && !l.simStartAt) {
+              return {
+                ...l,
+                simStartAt: Date.now(),
+                simDurationMs: l.simDurationMs || computeSimDurationMs(l.videoDurationSec),
+                simStartProgress: typeof l.uiProgress === 'number' ? Math.max(0.02, l.uiProgress) : 0.02,
+              };
+            }
+            return l;
+          }));
+
           // Resume processing for any lifts that were in-flight
           stored.forEach(lift => {
             if (lift.status === 'completed') return; // Skip completed lifts
-            if (lift.status === 'error') return; // Keep error lifts visible for retry
+            if (lift.status === 'error') {
+              // Auto-resume analyze errors that aren't permanent server results
+              const isPermanent =
+                lift.errorMessage === 'No lift found' ||
+                lift.errorMessage === 'Lift mismatch';
+              if (!isPermanent && lift.failureStage === 'analyze') {
+                safeUpdateLift(lift.id, l => ({ ...l, status: 'processing', errorMessage: undefined, failureStage: undefined }));
+                // If we already kicked it off recently, just poll; else check queue and run pipeline.
+                if (lift.analysisStartedAt && (Date.now() - lift.analysisStartedAt) < ANALYZE_TTL_MS) {
+                  startAnalyzePoll(lift);
+                } else if (hasActiveAnalyzeJob(lift.id)) {
+                  // defer kicking analyze
+                  setTimeout(() => { void processLiftPipeline(lift, 'analyze', lift.retryStage); }, 4000);
+                } else {
+                  void processLiftPipeline(lift, 'analyze', lift.retryStage);
+                }
+              }
+              return; // Keep other error lifts visible for retry
+            }
             
             // Update status to processing to reflect we're resuming, but preserve progress
-            setAllLoadingLifts(prev =>
-              prev.map(l => l.id === lift.id ? { ...l, status: 'processing' } : l)
-            );
+            safeUpdateLift(lift.id, l => ({ ...l, status: 'processing' }));
             
             // Resume from the appropriate stage with preserved progress
             const stage = deriveStage(lift);
-            void processLiftPipeline(lift, stage);
+            if (stage === 'analyze') {
+              if (lift.analysisStartedAt && (Date.now() - lift.analysisStartedAt) < ANALYZE_TTL_MS) {
+                startAnalyzePoll(lift); // already started previously
+              } else if (hasActiveAnalyzeJob(lift.id)) {
+                // defer kicking analyze
+                setTimeout(() => { void processLiftPipeline(lift, 'analyze', lift.retryStage); }, 4000);
+              } else {
+                void processLiftPipeline(lift, 'analyze', lift.retryStage);
+              }
+            } else {
+              void processLiftPipeline(lift, stage);
+            }
           });
         }
       } catch (error) {
@@ -125,6 +312,35 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
     };
   }, [allLoadingLifts]);
 
+  // Listen for background/foreground to abort long-running requests and catch up progress
+  useEffect(() => {
+    // Catch up immediately at boot
+    tickProgressFromClock();
+
+    const sub = AppState.addEventListener('change', s => {
+      if (appState.current === 'active' && s.match(/inactive|background/)) {
+        // App is going to background, abort any ongoing analysis
+        analyzeAbortRef.current?.abort();
+      } else if (s === 'active') {
+        // App is coming to foreground, catch up progress based on wall clock
+        tickProgressFromClock();
+      }
+      appState.current = s;
+    });
+    return () => sub.remove();
+  }, []);
+
+  // Optional: Update progress every second while active for smooth animation
+  useEffect(() => {
+    let id: NodeJS.Timeout | null = null;
+    id = setInterval(() => { 
+      if (AppState.currentState === 'active') {
+        tickProgressFromClock(); 
+      }
+    }, 1000);
+    return () => { if (id) clearInterval(id); };
+  }, []);
+
 
 
   // Call backend to analyze the lift
@@ -133,8 +349,12 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
     retryStage?: RetryStage
   ) => {
     const userId = await getUserId();
-    if (!userId) return { success: false, data: null };
-    const result = await analyzeLift(userId, liftData, retryStage);
+    if (!userId) return { success: false, data: null, transient: false };
+    
+    // Create a new abort controller for this analysis
+    analyzeAbortRef.current = new AbortController();
+    
+    const result = await analyzeLift(userId, liftData, retryStage, { signal: analyzeAbortRef.current.signal });
     return result;
   };
 
@@ -151,6 +371,8 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
       return existingLift.id;
     }
 
+    const now = Date.now();
+    const startProg = 0.02;
     const newLift: LoadingLiftData = {
       ...liftData,
       id: liftId,
@@ -162,7 +384,10 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
       sourceThumbnailUri: liftData.thumbnailUri,
       uploadedVideoUrl: undefined,
       uploadedThumbnailUrl: undefined,
-      uiProgress: 0, // Always initialize new lifts at 0 progress
+      uiProgress: startProg,
+      simStartAt: now,
+      simDurationMs: computeSimDurationMs(liftData.videoDurationSec),
+      simStartProgress: startProg,
     };
     setAllLoadingLifts(prev => [newLift, ...prev]);
     
@@ -179,22 +404,30 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
     startStage?: PipelineStage,
     retryStage?: RetryStage
   ) {
-    // Prevent multiple simultaneous pipelines for the same lift
+    // ⚠️ FIRST THING: guard + lock to prevent re-entry for this lift
     if (inflight.current.has(initialLift.id)) {
-      return;
+      return; // already running a pipeline for this lift
     }
     
     inflight.current.add(initialLift.id);
     
     try {
       // Set processing state
-      setAllLoadingLifts(prev => 
-        prev.map(lift => lift.id === initialLift.id ? { ...lift, status: 'processing', errorMessage: undefined, failureStage: undefined } : lift)
-      );
+      safeUpdateLift(initialLift.id, l => ({ 
+        ...l, 
+        status: 'processing', 
+        errorMessage: undefined, 
+        failureStage: undefined,
+        simStartAt: l.simStartAt ?? Date.now(),
+        simDurationMs: l.simDurationMs ?? computeSimDurationMs(l.videoDurationSec),
+        simStartProgress: typeof l.simStartProgress === 'number'
+          ? l.simStartProgress
+          : (typeof l.uiProgress === 'number' ? Math.max(0.02, l.uiProgress) : 0.02),
+      }));
 
       const userId = await getUserId();
       if (!userId) {
-        setAllLoadingLifts(prev => prev.map(lift => lift.id === initialLift.id ? { ...lift, status: 'error', failureStage: startStage ?? 'upload_video', errorMessage: 'No userId available' } : lift));
+        safeUpdateLift(initialLift.id, l => ({ ...l, status: 'error', failureStage: startStage ?? 'upload_video', errorMessage: 'No userId available' }));
         return;
       }
 
@@ -219,11 +452,11 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
       } catch (error) {
         if (isTransientError(error)) {
           // For transient errors, keep processing and show retryable message
-          setAllLoadingLifts(prev => prev.map(l => l.id === current.id ? ({
+          safeUpdateLift(current.id, l => ({
             ...l,
             status: 'processing',
             errorMessage: 'Network issue - will retry automatically...'
-          }) : l));
+          }));
           // Schedule a retry after a short delay
           setTimeout(() => {
             if (!inflight.current.has(current.id)) {
@@ -232,12 +465,9 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
           }, 2000);
           return;
         } else {
-          setAllLoadingLifts(prev => {
-            const updated = prev.map(l => l.id === current.id ? { ...l, status: 'error' as const, failureStage: 'upload_video' as const, errorMessage: error instanceof Error ? error.message : 'Video upload failed' } : l);
-            // Immediately persist error state
-            void saveLoadingLifts(updated);
-            return updated;
-          });
+          safeUpdateLift(current.id, l => ({ ...l, status: 'error' as const, failureStage: 'upload_video' as const, errorMessage: error instanceof Error ? error.message : 'Video upload failed' }));
+          // Persist the error state
+          void saveLoadingLifts(allLoadingLifts.map(l => l.id === current.id ? { ...l, status: 'error' as const, failureStage: 'upload_video' as const, errorMessage: error instanceof Error ? error.message : 'Video upload failed' } : l));
           return;
         }
       }
@@ -260,11 +490,11 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
       } catch (error) {
         if (isTransientError(error)) {
           // For transient errors, keep processing and show retryable message
-          setAllLoadingLifts(prev => prev.map(l => l.id === current.id ? ({
+          safeUpdateLift(current.id, l => ({
             ...l,
             status: 'processing',
             errorMessage: 'Network issue - will retry automatically...'
-          }) : l));
+          }));
           // Schedule a retry after a short delay
           setTimeout(() => {
             if (!inflight.current.has(current.id)) {
@@ -273,12 +503,9 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
           }, 2000);
           return;
         } else {
-          setAllLoadingLifts(prev => {
-            const updated = prev.map(l => l.id === current.id ? { ...l, status: 'error' as const, failureStage: 'upload_thumbnail' as const, errorMessage: error instanceof Error ? error.message : 'Thumbnail upload failed' } : l);
-            // Immediately persist error state
-            void saveLoadingLifts(updated);
-            return updated;
-          });
+          safeUpdateLift(current.id, l => ({ ...l, status: 'error' as const, failureStage: 'upload_thumbnail' as const, errorMessage: error instanceof Error ? error.message : 'Thumbnail upload failed' }));
+          // Persist the error state
+          void saveLoadingLifts(allLoadingLifts.map(l => l.id === current.id ? { ...l, status: 'error' as const, failureStage: 'upload_thumbnail' as const, errorMessage: error instanceof Error ? error.message : 'Thumbnail upload failed' } : l));
           return;
         }
       }
@@ -295,96 +522,145 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
       
       if (!videoUrl || !thumbUrl) {
         // Instead of hard error, keep processing (or mark retryable) – missing prerequisites usually means a race
-        setAllLoadingLifts(prev => prev.map(l => l.id === current.id ? ({
+        safeUpdateLift(current.id, l => ({
           ...l,
           status: 'processing', // don't flip to error
           errorMessage: 'Waiting for uploads to complete…'
-        }) : l));
+        }));
         return; // exit gracefully; caller/hydrator can re-invoke
       }
-      
-      const liftForAnalysis: LoadingLiftData = { ...current, videoLink: videoUrl, thumbnailUri: thumbUrl };
+
+      // Check if another lift is currently analyzing (serialization guard)
+      const shouldDefer = hasActiveAnalyzeJob(current.id);
+
+      if (shouldDefer && !current.analysisStartedAt) {
+        // Don't call analyze yet — queue a retry and keep the card in "processing"
+        safeUpdateLift(current.id, l => ({ ...l, status: 'processing', errorMessage: 'Queued — waiting for previous analysis' }));
+        // let this invocation end so the "inflight" Set releases in finally{}
+        inflight.current.delete(current.id);
+        setTimeout(() => { void processLiftPipeline(current, 'analyze', retryStage); }, 4000);
+        return;
+      }
+
+      // If we recently kicked off analyze, DO NOT call the API again — just poll.
+      const freshKick = typeof current.analysisStartedAt === 'number'
+        && (Date.now() - current.analysisStartedAt) < ANALYZE_TTL_MS;
+
+      if (freshKick) {
+        // make sure polling is running
+        startAnalyzePoll(current);
+        return;
+      }
+
+      // First-time kick: mark start time, call API once (idempotent), and start polling.
+      const liftForAnalysis: LoadingLiftData = {
+        ...current,
+        videoLink: videoUrl,
+        thumbnailUri: thumbUrl,
+        analysisStartedAt: Date.now(),
+      };
+
+      setAllLoadingLifts(prev => prev.map(l =>
+        l.id === current.id ? { ...l, analysisStartedAt: liftForAnalysis.analysisStartedAt } : l
+      ));
+      // persist immediately so a crash/resume knows we already started
+      void saveLoadingLifts(
+        allLoadingLifts.map(l => l.id === current.id ? { ...l, analysisStartedAt: liftForAnalysis.analysisStartedAt } : l)
+      );
+
+      // start polling right away (even if the call is still running)
+      startAnalyzePoll(liftForAnalysis);
+
+      // make the call once, pass abort signal & idempotency key under the hood
       const result = await analyzeVideo(liftForAnalysis, retryStage);
       
+      if (isCompletedNow(current.id)) return;
+      
       if (!result.success) {
-        // Store the retry stage if provided by the API
-        const retryStage = result.stage;
-        
-        // Handle specific error cases from the API
+        if (isCompletedNow(current.id)) return;
+
+        // If backend already wrote the row, finish from DB instead of showing error
+        if (current.assetId) {
+          const found = await searchLiftByAssetId(current.assetId);
+          if (found) {
+            const mapped = await mapApiDataToFinalData({
+              id: found.id,
+              is_favourite: found.isFavourite,
+              lift_type: found.liftType,
+              lift_date: found.liftDate,
+              lift_time: found.liftTime,
+              weight_value: found.weightValue,
+              reps: found.reps,
+              thumbnail_url: found.thumbnailURL,
+              analysis: found.analysis,
+            });
+            markCompleted(current.id, mapped);
+            invalidateUserCheckIns();
+            return;
+          }
+        }
+
+        // Treat network/5xx/429/timeouts as soft while within TTL
+        const transient = isTransientErrorCode(result.error);
+        const stillWithinTTL =
+          typeof current.analysisStartedAt === 'number' &&
+          (Date.now() - current.analysisStartedAt) < SOFT_FAIL_TTL_MS;
+
+        if (transient && stillWithinTTL) {
+          softFail(current.id, 'Temporary network/server issue — retrying…');
+          // schedule retry (your existing backoff)
+          const prev = analyzeAttempts.current.get(current.id) ?? 0;
+          if (prev < ANALYZE_BACKOFF.length) {
+            analyzeAttempts.current.set(current.id, prev + 1);
+            inflight.current.delete(current.id);
+            setTimeout(() => { void processLiftPipeline(current, 'analyze', retryStage); }, ANALYZE_BACKOFF[prev]);
+            return;
+          }
+        }
+
+        // Permanent server signals → real error
         if (result.error === 'NO_GYM_VIDEO_FOUND') {
-          setAllLoadingLifts(prev => {
-            const updated = prev.map(l => l.id === current.id ? { 
-              ...l, 
-              status: 'error' as const, 
-              failureStage: 'analyze' as const, 
-              errorMessage: 'No lift found',
-              retryStage
-            } : l);
-            // Immediately persist error state
-            void saveLoadingLifts(updated);
-            return updated;
-          });
-          // Automatically delete this lift from storage in the background
+          safeUpdateLift(current.id, l => ({
+            ...l, status: 'error' as const, failureStage: 'analyze' as const,
+            errorMessage: 'No lift found', retryStage: result.stage
+          }));
           void autoDeleteErrorLift(current.id);
-          return;
-        } else if (result.error === 'WRONG_MOVEMENT') {
-          setAllLoadingLifts(prev => {
-            const updated = prev.map(l => l.id === current.id ? { 
-              ...l, 
-              status: 'error' as const, 
-              failureStage: 'analyze' as const, 
-              errorMessage: 'Lift mismatch',
-              retryStage
-            } : l);
-            // Immediately persist error state
-            void saveLoadingLifts(updated);
-            return updated;
-          });
-          // Automatically delete this lift from storage in the background
-          void autoDeleteErrorLift(current.id);
-          return;
-        } else if (result.error === 'ERROR_OCCURED') {
-          setAllLoadingLifts(prev => {
-            const updated = prev.map(l => l.id === current.id ? { 
-              ...l, 
-              status: 'error' as const, 
-              failureStage: 'analyze' as const, 
-              errorMessage: 'Analysis failed. Please try again.',
-              retryStage
-            } : l);
-            // Immediately persist error state
-            void saveLoadingLifts(updated);
-            return updated;
-          });
-          return;
-        } else {
-          // Handle other API errors
-          const errorMessage = result.error || 'Analysis failed';
-          setAllLoadingLifts(prev => {
-            const updated = prev.map(l => l.id === current.id ? { 
-              ...l, 
-              status: 'error' as const, 
-              failureStage: 'analyze' as const, 
-              errorMessage,
-              retryStage
-            } : l);
-            // Immediately persist error state
-            void saveLoadingLifts(updated);
-            return updated;
-          });
           return;
         }
+        if (result.error === 'WRONG_MOVEMENT') {
+          safeUpdateLift(current.id, l => ({
+            ...l, status: 'error' as const, failureStage: 'analyze' as const,
+            errorMessage: 'Lift mismatch', retryStage: result.stage
+          }));
+          void autoDeleteErrorLift(current.id);
+          return;
+        }
+
+        // Out of retries or not transient → final error
+        if (!isCompletedNow(current.id)) {
+          safeUpdateLift(current.id, l => ({
+            ...l,
+            status: 'error' as const,
+            failureStage: 'analyze' as const,
+            errorMessage:
+              result.error === 'EMPTY_DATA' ? 'Analysis failed — no data returned' :
+              result.error === 'BAD_JSON'   ? 'Server error — invalid response'  :
+              result.error === 'TIMEOUT'    ? 'Server timeout — please try again' :
+              result.error === 'NETWORK_ERROR' ? 'Network error — check connection and retry' :
+              (result.error || 'Analysis failed. Please try again.'),
+            retryStage: result.stage
+          }));
+        }
+        return;
       }
+      
+      // success path - clear retry attempts
+      analyzeAttempts.current.delete(current.id);
+      
       // Store final data & flip to 'completed' (keep the same id so the UI swaps content seamlessly)
       if (result.data) {
         const mapped = await mapApiDataToFinalData(result.data);
-        setAllLoadingLifts(prev => prev.map(l => l.id === current.id ? { 
-          ...l, 
-          finalData: mapped,
-          status: 'completed',
-          uiProgress: 1,
-          pipelineStage: 'analyze'
-        } : l));
+        markCompleted(current.id, mapped);   // <- single place, no flicker
       }
       
       // Check if streak should be shown and trigger modal
@@ -396,17 +672,21 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
       void (async () => { try { await refreshLifts(); } catch (_) {} })();
       invalidateUserCheckIns();
     } catch (error) {
-      setAllLoadingLifts(prev => {
-        const updated = prev.map(l => l.id === initialLift.id ? { 
+      if (!isCompletedNow(initialLift.id)) {
+        safeUpdateLift(initialLift.id, l => ({
+          ...l,
+          status: 'error' as const,
+          failureStage: 'analyze' as const,
+          errorMessage: error instanceof Error ? error.message : 'Analysis failed',
+        }));
+        // Persist the error state
+        void saveLoadingLifts(allLoadingLifts.map(l => l.id === initialLift.id ? { 
           ...l, 
           status: 'error' as const, 
           failureStage: 'analyze' as const, 
           errorMessage: error instanceof Error ? error.message : 'Analysis failed' 
-        } : l);
-        // Immediately persist error state
-        void saveLoadingLifts(updated);
-        return updated;
-      });
+        } : l));
+      }
     } finally {
       // Always clean up the inflight set
       inflight.current.delete(initialLift.id);
@@ -501,12 +781,20 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
     }
     
     // Reset error and set processing
-    setAllLoadingLifts(prev => prev.map(l => l.id === id ? { ...l, status: 'processing', errorMessage: undefined, failureStage: undefined } : l));
+    safeUpdateLift(id, l => ({ ...l, status: 'processing', errorMessage: undefined, failureStage: undefined }));
     await processLiftPipeline(lift, stage, lift.retryStage);
   };
 
   const removeLift = (id: string) => {
+    analyzeAttempts.current.delete(id);
+    stopPoller(id);
     setAllLoadingLifts(prev => prev.filter(lift => lift.id !== id));
+  };
+
+  const removeLoadingLiftByFinalId = (finalId: string) => {
+    setAllLoadingLifts(prev =>
+      prev.filter(l => !(l.status === 'completed' && l.finalData?.id === finalId))
+    );
   };
 
   const removeCompletedLift = (id: string) => {
@@ -536,10 +824,14 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
   const autoDeleteErrorLift = async (liftId: string) => {
     try {
       // Call the storage delete API in the background
-      await deleteUserStorage(liftId);
+      const success = await deleteUserStorage(liftId);
       
-      // Mark this lift as auto-deleted for instant UI removal later
-      setAutoDeletedLifts(prev => new Set([...prev, liftId]));
+      if (success) {
+        // Mark this lift as auto-deleted for instant UI removal later
+        setAutoDeletedLifts(prev => new Set([...prev, liftId]));
+        // Invalidate user check-ins to refresh streak data
+        invalidateUserCheckIns();
+      }
     } catch (error) {
       console.warn(`Failed to auto-delete lift ${liftId}:`, error);
     }
@@ -551,6 +843,16 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
   const isLiftAutoDeleted = (liftId: string): boolean => {
     return autoDeletedLifts.has(liftId);
   };
+
+
+  // Cleanup effect
+  useEffect(() => {
+    return () => {
+      // Clean up all pollers on unmount
+      pollersRef.current.forEach((timer) => clearInterval(timer));
+      pollersRef.current.clear();
+    };
+  }, []);
 
   return (
     <LoadingLiftsContext.Provider
@@ -567,6 +869,7 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
         openStreakModal,
         closeStreakModal,
         isLiftAutoDeleted,
+        removeLoadingLiftByFinalId,
       }}
     >
       {children}

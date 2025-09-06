@@ -4,12 +4,43 @@ import { LoadingLiftData, AnalyzeLiftPayload, AnalyzeLiftResponse, RetryStage } 
 import { ILiftData } from '../context/LiftDataContext';
 import { supabase } from '../lib/supabase';
 
+// Helper to merge two abort signals (timeout + external)
+function mergeSignals(a?: AbortSignal, b?: AbortSignal) {
+  if (!a && !b) return undefined;
+  const ctrl = new AbortController();
+  const relay = (s?: AbortSignal) => {
+    if (!s) return;
+    if (s.aborted) return ctrl.abort();
+    s.addEventListener('abort', () => ctrl.abort(), { once: true });
+  };
+  relay(a); relay(b);
+  return ctrl.signal;
+}
+
+// Helper: fetch with timeout and external abort signal
+async function fetchWithTimeout(
+  input: RequestInfo, 
+  init: RequestInit = {}, 
+  timeoutMs = 15000,
+  externalSignal?: AbortSignal
+) {
+  const timeoutCtrl = new AbortController();
+  const timer = setTimeout(() => timeoutCtrl.abort(), timeoutMs);
+  try {
+    const signal = mergeSignals(timeoutCtrl.signal, externalSignal);
+    return await fetch(input, { ...init, signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export async function analyzeLift(
   userId: string, 
   liftData: LoadingLiftData, 
-  retryStage?: RetryStage
-): Promise<AnalyzeLiftResponse> {
-  if (!userId) return { success: false, data: null };
+  retryStage?: RetryStage,
+  opts?: { signal?: AbortSignal }
+): Promise<AnalyzeLiftResponse & { transient?: boolean }> {
+  if (!userId) return { success: false, data: null, error: 'NO_USER_ID', transient: false };
 
   const payload: AnalyzeLiftPayload = {
     userId,
@@ -27,23 +58,41 @@ export async function analyzeLift(
     },
     ...(retryStage && { stage: retryStage }),
   };
+  console.log('analyzinggggg Lift',);
 
   try {
-    const response = await fetch(`${API_CONFIG.baseURL}/lifts/analyse`, {
+    const response = await fetchWithTimeout(`${API_CONFIG.baseURL}/lifts/analyse`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        // Idempotency key to prevent duplicate server calls
+        'Idempotency-Key': liftData.id,
       },
       body: JSON.stringify(payload),
-    });
-    
-    if (!response.ok) return { success: false, data: null };
-    
+    }, 300000, // 5 minute timeout for analysis
+    opts?.signal // Pass through external abort signal
+    );
+
+    if (!response.ok) {
+      return { success: false, data: null, error: `HTTP_${response.status}`, transient: false };
+    }
+
     const json = (await response.json().catch(() => null)) as AnalyzeLiftResponse | null;
-    if (json && typeof json.success === 'boolean') return json;
-    return { success: true, data: null };
-  } catch (_) {
-    return { success: false, data: null };
+    if (!json) {
+      // server died mid-response, or empty body
+      return { success: false, data: null, error: 'BAD_JSON', transient: false };
+    }
+    
+    // Only treat as success if we actually have data
+    if (json.success && json.data) return json;
+
+    // Surface the server error if provided; otherwise fail hard
+    return { success: false, data: null, error: json.error || 'EMPTY_DATA', transient: false };
+  } catch (e: any) {
+    // Distinguish abort/timeout vs other network errors (both should be transient)
+    const msg = (e && e.name === 'AbortError') ? 'TIMEOUT' : 'NETWORK_ERROR';
+    const isTransient = e?.name === 'AbortError' || /network|timeout|connection|abort|fetch|ECONN|ENET|EAI/i.test(String(e?.message || e || ''));
+    return { success: false, data: null, error: msg, transient: isTransient };
   }
 }
 

@@ -58,6 +58,12 @@ export interface LoadingLiftData {
   // Progress tracking
   videoDurationSec?: number; // Length of video in seconds
   uiProgress?: number; // Current progress 0-1
+  // Simulation metadata for wall-clock progress
+  simStartAt?: number;       // ms timestamp when we started showing progress
+  simDurationMs?: number;    // total simulated ms until ~95%
+  simStartProgress?: number; // where we started (e.g. 0.02)
+  // Analysis tracking to prevent duplicate calls
+  analysisStartedAt?: number; // epoch ms when /analyse was kicked off
   // In-place completion data to avoid flicker (subset for card rendering)
   finalData?: BaseLiftData & {
     liftTime: string;
@@ -89,6 +95,7 @@ export interface LoadingLiftsContextType {
   openStreakModal: () => void;
   closeStreakModal: () => void;
   isLiftAutoDeleted: (liftId: string) => boolean;
+  removeLoadingLiftByFinalId: (finalId: string) => void;
 }
 
 export interface LiftDataContextType {

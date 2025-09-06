@@ -67,17 +67,25 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
             // Return the final data which has the latest changes (favorite status, weight, etc.)
             return finalData;
           }
-          // If finalData exists but the lift was deleted from context, return null to filter it out
-          return null;
+          // If finalData exists but server data isn't available yet, keep the completed loading lift
+          // This prevents the disappear/reappear issue
+          return loadingLift;
         }
         // Otherwise return the loading lift as-is
         return loadingLift;
-      })
-      .filter((item): item is NonNullable<typeof item> => item !== null);
+      });
 
     // Add any final lifts that don't have corresponding loading lifts
     const loadingIds = new Set(loading.map(l => l.id));
-    const additionalFinals = liftsForSelectedDate.filter(lift => !loadingIds.has(lift.id));
+    // Also exclude final lifts that have corresponding completed loading lifts
+    const completedLoadingFinalIds = new Set(
+      loading
+        .filter(l => l.status === 'completed' && l.finalData?.id)
+        .map(l => l.finalData!.id)
+    );
+    const additionalFinals = liftsForSelectedDate.filter(lift => 
+      !loadingIds.has(lift.id) && !completedLoadingFinalIds.has(lift.id)
+    );
 
     // Combine processed loading lifts with additional finals
     return [...processedLoading, ...additionalFinals];
