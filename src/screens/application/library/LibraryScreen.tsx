@@ -467,7 +467,7 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
         <View style={styles.leftControlsContainer}>
           <View style={styles.liftCountContainer}>
             <Text style={styles.liftCountText}>
-              {liftCount} {liftCount === 1 ? i18n.t('library.lift') : i18n.t('library.lifts')}
+              {liftCount === 0 ? i18n.t('library.noLifts') : `${liftCount} ${liftCount === 1 ? i18n.t('library.lift') : i18n.t('library.lifts')}`}
             </Text>
           </View>
         </View>
@@ -519,6 +519,7 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
             estimatedItemSize={146}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollContentContainer}
+            extraData={filteredAndSortedLifts}
           />
         ) : (
           <LiftCard

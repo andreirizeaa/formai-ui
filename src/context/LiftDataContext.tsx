@@ -191,11 +191,17 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
   });
 
   const refreshLifts = useCallback(async () => {
+    if (!userId) return;
+    // Force an immediate refetch by invalidating and then refetching
     await queryClient.invalidateQueries({ queryKey: ['lifts-by-user', userId] });
+    await queryClient.refetchQueries({ queryKey: ['lifts-by-user', userId] });
   }, [queryClient, userId]);
 
   const invalidateAndRefetch = useCallback(async () => {
+    if (!userId) return;
+    // Force an immediate refetch by invalidating and then refetching
     await queryClient.invalidateQueries({ queryKey: ['lifts-by-user', userId] });
+    await queryClient.refetchQueries({ queryKey: ['lifts-by-user', userId] });
   }, [queryClient, userId]);
 
   const favouriteLiftAndRefresh = useCallback(async (id: string) => {

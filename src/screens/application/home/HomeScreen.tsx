@@ -321,6 +321,7 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
               estimatedItemSize={146}
               showsVerticalScrollIndicator={false}
               scrollEnabled={false}
+              extraData={combinedLiftsForDay}
             />
           ) : (
             <LiftCard
