@@ -346,16 +346,20 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
         <View style={styles.bottomBackground}>
           {/* Pills Row */}
           <View style={styles.pillsRow}>
-            <View style={styles.leftPills}>
-              <View style={styles.pill}>
-                <Text style={styles.pillText}>{currentLiftData.liftType || 'Bench Press'}</Text>
-              </View>
-              <View style={styles.pill}>
-                <Text style={styles.pillText}>{formatDate(currentLiftData.liftDate)}</Text>
-              </View>
-              <View style={styles.pill}>
-                <Text style={styles.pillText}>{currentLiftData.liftTime || '--:--'}</Text>
-              </View>
+            <View style={styles.pillWithMaxWidth}>
+              <Text 
+                style={styles.pillTextEllipsis}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                {currentLiftData.liftType || 'Bench Press'}
+              </Text>
+            </View>
+            <View style={styles.pill}>
+              <Text style={styles.pillText}>{formatDate(currentLiftData.liftDate)}</Text>
+            </View>
+            <View style={styles.pill}>
+              <Text style={styles.pillText}>{currentLiftData.liftTime || '--:--'}</Text>
             </View>
           </View>
           {/* Form Score Chart Card */}
@@ -756,15 +760,10 @@ const styles = StyleSheet.create({
   pillsRow: {
     marginTop: -8,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
     paddingHorizontal: 6,
-  },
-  leftPills: {
-    flexDirection: 'row',
     gap: 12,
-    flex: 1,
   },
   pill: {
     backgroundColor: '#000000',
@@ -773,12 +772,30 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    alignSelf: 'flex-start',
+  },
+  pillWithMaxWidth: {
+    backgroundColor: '#000000',
+    borderRadius: 18,
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'flex-start',
+    maxWidth: '90%',
   },
   pillText: {
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '400',
     fontFamily: 'SF Pro Display',
+  },
+  pillTextEllipsis: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '400',
+    fontFamily: 'SF Pro Display',
+    flexShrink: 1,
   },
   orangePillText: {
     color: '#fff',
@@ -844,9 +861,9 @@ const styles = StyleSheet.create({
   },
   dropdownOptionText: {
     fontSize: 14,
-    fontWeight: '400',
+    fontWeight: '500',
     color: '#FFFFFF',
-    fontFamily: 'SF Pro Text',
+    fontFamily: 'SF Pro Display',
   },
   dropdownOptionTextDestructive: {
     fontSize: 14,
