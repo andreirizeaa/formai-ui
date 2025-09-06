@@ -5,7 +5,6 @@ import { FlashList } from '@shopify/flash-list';
 import { hapticFeedback } from '../../../utils/haptic';
 import { useLoadingLifts } from '../../../context/LoadingLiftsContext';
 import { useLiftData, ILiftData } from '../../../context/LiftDataContext';
-import { deleteLift as deleteLiftApi } from '../../../services/liftService';
 import { LiftCard } from '../../../components/LiftCard';
 import { SwipeableCalendar } from '../../../components/ui/SwipeableCalendar';
 import { SwipeableAccuracyCard } from '../../../components/ui/SwipeableAccuracyCard';
@@ -27,9 +26,9 @@ interface HomeScreenProps {
 }
 
 export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibrary, onShowShare, onTriggerAddOptions, onNavigateToPerformance }: HomeScreenProps) {
-  const { loadingLifts, showStreakModal, closeStreakModal } = useLoadingLifts();
-  const { liftData , getLiftsByDate , refreshLifts } = useLiftData();
-  const { currentStreak } = useUserCheckIns();
+  const { loadingLifts, showStreakModal, closeStreakModal, removeLift: removeLoadingLift } = useLoadingLifts();
+  const { liftData , getLiftsByDate , refreshLifts, removeLift } = useLiftData();
+  const { currentStreak, invalidateAndRefetch } = useUserCheckIns();
   const { selectedDate, setSelectedDate } = useSelectedDate();
   
   // Fire card popup state - manual trigger for fire card press
@@ -169,13 +168,6 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
     }
   }, [liftsForSelectedDate, liftData, onShowFeedback]);
 
-  const handleDeleteLift = useCallback(async (liftId: string) => {
-    hapticFeedback.success();
-    const ok = await deleteLiftApi(liftId);
-    if (ok) {
-      await refreshLifts();
-    }
-  }, [refreshLifts]);
 
   const handleLibraryPress = useCallback(() => {
     hapticFeedback.selection();
@@ -251,8 +243,6 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
       showDate={false} // always show time instead of date
     />
   ), [handleLiftPress]);
-
-  console.log(' >>>>>>> <<<<<<<< combinedLiftsForDay', JSON.stringify(combinedLiftsForDay, null, 2));
 
   return (
     <ScrollView 

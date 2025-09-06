@@ -35,7 +35,7 @@ export function UserCheckInsProvider({ children }: UserCheckInsProviderProps) {
     error,
     refetch,
   } = useQuery({
-    queryKey: ['userCheckIns', userId],
+    queryKey: ['user_id', userId],
     queryFn: () => {
       if (!userId) throw new Error('No user ID available');
       return fetchUserCheckIns(userId);
@@ -48,9 +48,10 @@ export function UserCheckInsProvider({ children }: UserCheckInsProviderProps) {
   // Function to invalidate and refetch data
   const invalidateAndRefetch = React.useCallback(() => {
     if (userId) {
-      queryClient.invalidateQueries({ queryKey: ['userCheckIns', userId] });
+      queryClient.invalidateQueries({ queryKey: ['user_id', userId] });
+      refetch();
     }
-  }, [userId, queryClient]);
+  }, [userId, queryClient, refetch]);
 
   // Format dates for backward compatibility
   const daysLogged = React.useMemo(() => {

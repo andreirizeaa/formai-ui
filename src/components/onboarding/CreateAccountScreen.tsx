@@ -78,7 +78,6 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
         throw new Error('no ID token present!');
       }
     } catch (error: any) {
-      console.log('Google sign-in error:', error);
       setIsSigningIn(false);
     }
   };
@@ -121,11 +120,6 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
         throw new Error('No identityToken.');
       }
     } catch (e: any) {
-      if (e.code === 'ERR_REQUEST_CANCELED') {
-        console.log('Apple sign-in cancelled');
-      } else {
-        console.log('Apple sign-in error:', e);
-      }
       setIsSigningIn(false);
     }
   };

@@ -31,7 +31,8 @@ import { hapticFeedback } from '../utils/haptic';
 import { useLiftData, ILiftData } from '../context/LiftDataContext';
 import { useLoadingLifts } from '../context/LoadingLiftsContext';
 import { useUserDetails } from '../context/UserDetailsContext';
-import { deleteLift as deleteLiftApi, deleteUserStorage } from '../services/liftService';
+import { useUserCheckIns } from '../context/UserCheckInsContext';
+import { deleteLift } from '../services/liftDeletionService';
 import i18n from '../utils/i18n';
 import { LoadingLiftData } from '../types/Lifts.d';
 
@@ -85,9 +86,10 @@ export const LiftCard = memo(function LiftCard({
   const [prevPhase, setPrevPhase] = useState<Phase | null>(null);
   const animDur = 420; // slower overall for more obvious fade
 
-  const { removeLift: removeFinalLift, formatDateForLift, refreshLifts, invalidateAndRefetch: invalidateUserCheckIns } = useLiftData();
+  const { removeLift: removeFinalLift, formatDateForLift, refreshLifts } = useLiftData();
   const { isLiftAutoDeleted, retryLift, removeLift: removeLoadingLift, updateLiftProgress } = useLoadingLifts();
   const { userDetails } = useUserDetails();
+  const { invalidateAndRefetch: invalidateUserCheckIns } = useUserCheckIns();
 
   // derived flags
   const isLoading = lift && isLoadingLift(lift) && lift.status !== 'completed';
@@ -171,7 +173,6 @@ export const LiftCard = memo(function LiftCard({
 
   // delete handlers (branch on loading/final)
   const handleDelete = useCallback(async () => {
-    hapticFeedback.selection();
     if (deleting || deleteLoading || !lift) return;
 
     setDeleting(true);
@@ -185,53 +186,28 @@ export const LiftCard = memo(function LiftCard({
     loadingProgress.value = withTiming(0, { duration: 0 });
 
     try {
-      if (isLoadingLift(lift)) {
-        // for loading items (error or otherwise), respect auto-deleted shortcut
-        const autoDeleted = isLiftAutoDeleted(lift.id);
-        if (autoDeleted) {
-          // Immediate UI update
-          hapticFeedback.success();
-          removeLoadingLift(lift.id);
-          translateX.value = withTiming(0, { duration: 200, easing: Easing.out(Easing.quad) });
-          
-          // Background refresh (don't await)
-          invalidateUserCheckIns();
-          refreshLifts();
-        } else {
-          const ok = await deleteUserStorage(lift.id);
-          if (ok) {
-            // Immediate UI update
-            hapticFeedback.success();
+      const success = await deleteLift(lift.id, lift, invalidateUserCheckIns);
+      if (success) {
+        // Handle auto-deleted loading lifts
+        if (isLoadingLift(lift)) {
+          const autoDeleted = isLiftAutoDeleted(lift.id);
+          if (autoDeleted) {
             removeLoadingLift(lift.id);
-            translateX.value = withTiming(0, { duration: 200, easing: Easing.out(Easing.quad) });
-            
-            // Background refresh (don't await)
-            invalidateUserCheckIns();
-            refreshLifts();
           } else {
-            hapticFeedback.error();
-            translateX.value = withTiming(0, { duration: 200, easing: Easing.out(Easing.quad) });
+            removeLoadingLift(lift.id);
           }
-        }
-      } else {
-        // final ILiftData
-        const ok = await deleteLiftApi(lift.id);
-        if (ok) {
-          // Immediate UI update
-          hapticFeedback.success();
-          removeFinalLift(lift.id);
-          translateX.value = withTiming(0, { duration: 200, easing: Easing.out(Easing.quad) });
-          
-          // Background refresh (don't await)
-          invalidateUserCheckIns();
-          refreshLifts();
         } else {
-          hapticFeedback.error();
-          translateX.value = withTiming(0, { duration: 200, easing: Easing.out(Easing.quad) });
+          removeFinalLift(lift.id);
         }
+        
+        // Background refresh
+        refreshLifts();
+        
+        translateX.value = withTiming(0, { duration: 200, easing: Easing.out(Easing.quad) });
+      } else {
+        translateX.value = withTiming(0, { duration: 200, easing: Easing.out(Easing.quad) });
       }
-    } catch (e) {
-      hapticFeedback.error();
+    } catch (error) {
       translateX.value = withTiming(0, { duration: 200, easing: Easing.out(Easing.quad) });
     } finally {
       setDeleting(false);

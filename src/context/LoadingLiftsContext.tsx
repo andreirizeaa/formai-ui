@@ -181,7 +181,6 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
   ) {
     // Prevent multiple simultaneous pipelines for the same lift
     if (inflight.current.has(initialLift.id)) {
-      console.log(`Pipeline already running for lift ${initialLift.id}, skipping duplicate`);
       return;
     }
     
@@ -541,8 +540,6 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
       
       // Mark this lift as auto-deleted for instant UI removal later
       setAutoDeletedLifts(prev => new Set([...prev, liftId]));
-      
-      console.log(`Auto-deleted lift ${liftId} from storage`);
     } catch (error) {
       console.warn(`Failed to auto-delete lift ${liftId}:`, error);
     }

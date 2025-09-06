@@ -9,7 +9,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { hapticFeedback } from '../../../utils/haptic';
 import { useLiftData, ILiftData } from '../../../context/LiftDataContext';
 import { useLoadingLifts } from '../../../context/LoadingLiftsContext';
-import { deleteLift as deleteLiftApi, favouriteLift as favouriteLiftApi, updateLiftWeight } from '../../../services/liftService';
+import { favouriteLift as favouriteLiftApi, updateLiftWeight } from '../../../services/liftService';
+import { deleteLift } from '../../../services/liftDeletionService';
 import { showAlert } from '../../../services/alertService';
 import { useTutorialTarget } from '../../../context/TutorialContext';
 import { useUserDetails } from '../../../context/UserDetailsContext';
@@ -102,26 +103,20 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
   };
 
   const handleDeleteConfirm = async () => {
-    hapticFeedback.selection();
     setIsDeleting(true);
     try {
-      const ok = await deleteLiftApi(currentLiftData.id);
-      if (ok) {
-        hapticFeedback.success();
+      const success = await deleteLift(currentLiftData.id, currentLiftData, invalidateAndRefetch);
+      if (success) {
         // Remove from both contexts to ensure UI updates immediately
         removeLift(currentLiftData.id);
         removeLoadingLift(currentLiftData.id);
-        // Invalidate UserCheckIns query to refresh check-in data
-        invalidateAndRefetch();
         // Invalidate LiftDataContext to refresh lift data
         refreshLifts();
         setShowDeleteModal(false);
         onClose();
-      } else {
-        hapticFeedback.error();
       }
     } catch (error) {
-      hapticFeedback.error();
+      // Error handling is done in the deleteLift function
     } finally {
       setIsDeleting(false);
     }

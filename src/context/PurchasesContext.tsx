@@ -139,7 +139,6 @@ export function PurchasesProvider({ children, onSubscriptionUpdate }: PurchasesP
       try {
         await saveOnboardingProgress(updatedData);
       } catch (persistError) {
-        console.log('Error persisting payment data:', persistError);
       }
     }
   }
