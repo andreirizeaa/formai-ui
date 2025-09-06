@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { View, Text, StyleSheet, Platform, TouchableOpacity, ScrollView, Animated } from 'react-native';
 import { Image, ImageBackground } from 'expo-image';
-import showAlert from '../../../services/alertService';
-import * as MailComposer from 'expo-mail-composer';
 import Constants from 'expo-constants';
 import { User, Languages, Ruler, FileText, ShieldCheck, MailPlus, UserMinus, LogOut } from 'lucide-react-native';
 import i18n from '../../../utils/i18n';
@@ -14,6 +12,8 @@ import { removeUserId, getUserId } from '../../../services/storageService';
 import { deleteUserAccount } from '../../../services/authService';
 import { useTutorialTarget } from '../../../context/TutorialContext';
 import { supabase } from '../../../lib/supabase';
+import { openSupportEmail } from '../../../services/emailService';
+import { showAlert } from '../../../services/alertService';
 
 interface SettingsScreenProps {
   onPersonalDetailsPress: () => void;
@@ -143,19 +143,10 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onSharePr
   const [isDeleting, setIsDeleting] = useState(false);
   const iconSize = 26;
   const iconColor = '#000000';
-  const [userId, setUserId] = useState<string | null>(null);
   
   // Tutorial target registration
   const { ref: settingsFirstCardRef } = useTutorialTarget('settings_first_card');
   const { ref: settingsSupportEmailRef } = useTutorialTarget('settings_support_email');
-
-  useEffect(() => {
-    const fetchUserId = async () => {
-      const userId = await getUserId();
-      setUserId(userId);
-    };
-    fetchUserId();
-  }, []);
 
   const handleDeleteAccountPress = () => {
     setShowDeleteModal(true);
@@ -225,35 +216,7 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onSharePr
   };
 
   const handleSupportEmailPress = async () => {
-    try {
-      const isAvailable = await MailComposer.isAvailableAsync();
-      
-      if (!isAvailable) {
-        showAlert('Email Not Available', 'No email app is available on this device.');
-        return;
-      }
-
-      await MailComposer.composeAsync({
-        recipients: ['support@formai.com'],
-        subject: 'FormAI Support Request',
-        body: `Hello FormAI Support Team,
-
-
-        
-
-
-
-              Meta data (Please do not remove this as it will help us identify your account)
-
-              - Platform: ${Platform.OS}
-              - Device Version: ${Platform.Version}
-              - User ID: ${userId}
-          `,
-      });
-    } catch (error) {
-      console.error('Error opening email composer:', error);
-      showAlert('Error', 'Failed to open email composer. Please try again.');
-    }
+    await openSupportEmail();
   };
 
   return (

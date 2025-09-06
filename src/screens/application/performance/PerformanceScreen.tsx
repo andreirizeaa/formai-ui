@@ -1,14 +1,18 @@
 import React, { useMemo, useState, useRef } from 'react';
 import { View, Text, StyleSheet, Platform, TouchableOpacity, Modal, Dimensions } from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
+import { Image } from 'expo-image';
 import { SwipeableLineGraphCard } from '../../../components/ui/SwipeableLineGraphCard';
+import { StreakCalendar } from '../../../components/ui/StreakCalendar';
 import { useLiftData } from '../../../context/LiftDataContext';
 import { useUserDetails } from '../../../context/UserDetailsContext';
+import { useUserCheckIns } from '../../../context/UserCheckInsContext';
 import { hapticFeedback } from '../../../utils/haptic';
 import i18n from '../../../utils/i18n';
 import { useTutorialTarget } from '../../../context/TutorialContext';
-import { CircleQuestionMark, X } from 'lucide-react-native';
+import { CircleQuestionMark, X, MailPlus } from 'lucide-react-native';
 import { CircularProgressChart } from '../../../components/icons/icons';
+import { openMetricsFeedbackEmail } from '../../../services/emailService';
 
 interface PerformanceScreenProps {
   onTriggerAddOptions?: () => void;
@@ -19,6 +23,7 @@ interface PerformanceScreenProps {
 export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProps) {
   const { liftData } = useLiftData();
   const { userDetails } = useUserDetails();
+  const { currentStreak } = useUserCheckIns();
   const [infoModalVisible, setInfoModalVisible] = useState(false);
   const [infoModalContent, setInfoModalContent] = useState<{ title: string; message: string }>({ title: '', message: '' });
   
@@ -123,6 +128,11 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
     setInfoModalVisible(false);
   };
 
+  const handleMetricsFeedbackPress = async () => {
+    hapticFeedback.selection();
+    await openMetricsFeedbackEmail();
+  };
+
   return (
     <>
       <ScrollView
@@ -209,6 +219,49 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
             onInfoPress={() => openInfoModal('accuracyOverTime')}
             externalScrollGestureRef={scrollRef}
           />
+
+          {/* Streak Calendar Card */}
+          <View style={styles.streakCardContainer}>
+            <View style={styles.streakCard}>
+              {/* Streak Badge */}
+              <View style={styles.streakBadgeContainer}>
+                <View style={styles.streakBadge}>
+                  <Image
+                    source={require('../../../../assets/icons/fire.png')}
+                    style={styles.streakBadgeIcon}
+                    contentFit="contain"
+                  />
+                  <Text style={styles.streakBadgeText}>{currentStreak}</Text>
+                </View>
+              </View>
+              
+              {/* Calendar */}
+              <View style={styles.streakCalendarWrapper}>
+                <StreakCalendar />
+              </View>
+            </View>
+          </View>
+
+          {/* Metrics Feedback Card */}
+          <View style={styles.metricsFeedbackCard}>
+            <TouchableOpacity 
+              style={styles.metricsFeedbackRow} 
+              onPress={handleMetricsFeedbackPress}
+              activeOpacity={0.7}
+            >
+              <View style={styles.metricsFeedbackIconContainer}>
+                <MailPlus size={26} color="#000000" />
+              </View>
+              <View style={styles.metricsFeedbackTextContainer}>
+                <Text style={styles.metricsFeedbackTitle}>
+                  {i18n.t('performance.metricsFeedback.title')}
+                </Text>
+                <Text style={styles.metricsFeedbackSubtitle}>
+                  {i18n.t('performance.metricsFeedback.subtitle')}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          </View>
         </View>
       </ScrollView>
 
@@ -367,5 +420,89 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#1C1C1E',
     lineHeight: 20,
+  },
+  streakCardContainer: {
+    marginBottom: 32,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  streakCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 16,
+  },
+  streakBadgeContainer: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  streakBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 26,
+    paddingVertical: 6,
+    borderRadius: 16,
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  streakBadgeIcon: {
+    width: 18,
+    height: 18,
+  },
+  streakBadgeText: {
+    marginLeft: 2,
+    marginTop: 4,
+    fontSize: 17,
+    fontWeight: '500',
+    color: '#000000',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
+  },
+  streakCalendarWrapper: {
+    alignItems: 'center',
+  },
+  metricsFeedbackCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 50,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.15,
+    shadowRadius: 2,
+  },
+  metricsFeedbackRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  metricsFeedbackIconContainer: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  metricsFeedbackTextContainer: {
+    flex: 1,
+  },
+  metricsFeedbackTitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#000000',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
+  metricsFeedbackSubtitle: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: '#8E8E93',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+    marginTop: 2,
   },
 }); 

@@ -36,6 +36,7 @@ interface ProcessedCardData {
   title: string;
   subtitle: string;
   chartData: ChartData;
+  liftCount: number;
 }
 
 interface SwipeableLineGraphCardProps {
@@ -192,6 +193,13 @@ const ChartPage = React.memo(function ChartPage({
               </View>
               <Text style={styles.performanceCardSubtitle}>{item.subtitle}</Text>
             </View>
+            {item.liftCount > 0 && (
+              <View style={styles.liftCountPill}>
+                <Text style={styles.liftCountText}>
+                  {`${item.liftCount} lift${item.liftCount === 1 ? '' : 's'}`}
+                </Text>
+              </View>
+            )}
           </View>
 
           <View style={styles.chartContainer}>
@@ -340,13 +348,14 @@ function SwipeableLineGraphCard({
             strokeWidth: 1.5,
           }],
         },
+        liftCount: 0,
       }];
     }
 
     const uniqueLiftTypes = [...new Set(rangedCardData.map((lift) => lift.liftType))];
 
     if (chartType === 'accuracyPerWeight') {
-      return uniqueLiftTypes.map((liftType) => {
+      const cards = uniqueLiftTypes.map((liftType) => {
         const liftsOfType = rangedCardData.filter((lift) => lift.liftType === liftType);
         
         // Group lifts by weight and calculate average accuracy for each weight
@@ -447,10 +456,14 @@ function SwipeableLineGraphCard({
           title: i18n.t('performance.chartTitles.accuracyPerWeight'),
           subtitle: liftType,
           chartData,
+          liftCount: liftsOfType.length,
         };
       });
+      
+      // Sort cards by lift count (descending) so the card with most lifts appears first
+      return cards.sort((a, b) => b.liftCount - a.liftCount);
     } else {
-      return uniqueLiftTypes.map((liftType) => {
+      const cards = uniqueLiftTypes.map((liftType) => {
         const liftsOfType = rangedCardData.filter((lift) => lift.liftType === liftType);
 
         const liftsByDate = liftsOfType.reduce((acc: Record<string, Lift[]>, lift: Lift) => {
@@ -555,8 +568,12 @@ function SwipeableLineGraphCard({
           title: i18n.t('performance.chartTitles.accuracyOverTime'),
           subtitle: liftType,
           chartData,
+          liftCount: liftsOfType.length,
         };
       });
+      
+      // Sort cards by lift count (descending) so the card with most lifts appears first
+      return cards.sort((a, b) => b.liftCount - a.liftCount);
     }
   }, [rangedCardData, chartType, unitPreference]);
 
@@ -642,7 +659,7 @@ function SwipeableLineGraphCard({
           renderItem={renderItem}
           removeClippedSubviews
           nestedScrollEnabled
-          contentContainerStyle={{ alignItems: 'center' } as any}
+          contentContainerStyle={{}}
           onScroll={onScroll}
           scrollEventThrottle={16}
           onMomentumScrollEnd={onMomentumScrollEnd}
@@ -664,7 +681,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',
-    paddingHorizontal: 0,
+    marginBottom: 12,
   },
 
   // --- Segmented control styles ---
@@ -747,7 +764,7 @@ const styles = StyleSheet.create({
   },
   performanceCardHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
     paddingLeft: 8,
     width: '100%',
@@ -808,5 +825,18 @@ const styles = StyleSheet.create({
   },
   chart: {
     borderRadius: 16,
+  },
+  liftCountPill: {
+    backgroundColor: '#f4f4f8',
+    width: 'auto',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  liftCountText: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: '#000000',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
 });

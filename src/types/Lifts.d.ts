@@ -96,6 +96,7 @@ export interface LoadingLiftsContextType {
   closeStreakModal: () => void;
   isLiftAutoDeleted: (liftId: string) => boolean;
   removeLoadingLiftByFinalId: (finalId: string) => void;
+  purgeAllLoadingLifts: () => void;
 }
 
 export interface LiftDataContextType {
