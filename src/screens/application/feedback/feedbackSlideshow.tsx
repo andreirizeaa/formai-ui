@@ -1036,14 +1036,14 @@ const styles = StyleSheet.create({
   exitButton: {
     backgroundColor: '#000000',
     borderRadius: 28,
-    paddingVertical: 16,
+    paddingVertical: 18,
     paddingHorizontal: 24,
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',
   },
   exitButtonText: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '500',
     color: '#FFFFFF',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
