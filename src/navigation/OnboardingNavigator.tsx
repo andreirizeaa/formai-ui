@@ -11,7 +11,6 @@ import { NotificationPermissionScreen } from '../screens/onboarding/Notification
 import { AccountLoadingScreen } from '../screens/onboarding/AccountLoadingScreen';
 import { PaymentScreen } from '../screens/payment/PaymentScreen';
 import { SignInScreen } from '../screens/auth/SignInScreen';
-import { CameraPermissionScreen } from '../screens/onboarding/CameraPermissionScreen';
 import Purchases from 'react-native-purchases';
 import { usePurchases } from '../context/PurchasesContext';
 
@@ -27,11 +26,9 @@ export type OnboardingStackParamList = {
   Welcome: undefined;
   Onboarding: undefined;
   NotificationPermission: undefined;
-  SetupLoading: undefined;
   AccountLoading: undefined;
   Payment: undefined;
   SignIn: undefined;
-  CameraPermission: undefined;
   AllDone: undefined;
 };
 
@@ -74,8 +71,8 @@ function PaymentScreenWrapper() {
   return (
     <PaymentScreen
       onComplete={() => {
-        // After payment completion, go directly to camera permission
-        navigation.navigate('CameraPermission');
+        // After payment completion, go to account loading
+        navigation.navigate('AccountLoading');
       }}
     />
   );
@@ -96,15 +93,12 @@ function SignInScreenWrapper({ onSignIn, onUserNeedsOnboarding }: { onSignIn: ()
   return <SignInScreen onSignIn={onSignIn} onBack={() => navigation.goBack()} onNavigateToOnboarding={handleNavigateToOnboarding} onRequirePayment={handleRequirePayment} />;
 }
 
-function CameraPermissionScreenWrapper({ onComplete }: { onComplete: () => void }) {
-  return <CameraPermissionScreen onNext={onComplete} />;
-}
 
 function NotificationPermissionScreenWrapper() {
   const navigation = useNavigation<OnboardingNavigationProp>();
   
   const handleNext = () => {
-    navigation.navigate('SetupLoading');
+    navigation.navigate('AccountLoading');
   };
 
   const handleBack = () => {
@@ -116,14 +110,13 @@ function NotificationPermissionScreenWrapper() {
 
 function AccountLoadingScreenWrapper({ onComplete }: { onComplete: () => void }) {
   const navigation = useNavigation<OnboardingNavigationProp>();
-  const { customerInfo, storePaymentInfo } = usePurchases();
+  const { customerInfo } = usePurchases();
   
   const handleNext = async () => {
     const entitlementIds = Object.keys(customerInfo?.entitlements.active ?? []);
     if (entitlementIds.length === 0) {
       navigation.navigate('Payment');
     } else {
-      await storePaymentInfo(customerInfo!);
       onComplete();
     }
   };
@@ -174,11 +167,6 @@ export function OnboardingNavigator({ onComplete, onSignIn, onUserNeedsOnboardin
           {() => <SignInScreenWrapper onSignIn={onSignIn} onUserNeedsOnboarding={onUserNeedsOnboarding} />}
         </Stack.Screen>
 
-        <Stack.Screen 
-          name="CameraPermission"
-        >
-          {() => <CameraPermissionScreenWrapper onComplete={onComplete} />}
-        </Stack.Screen>
       </Stack.Navigator>
     </NavigationContainer>
   );

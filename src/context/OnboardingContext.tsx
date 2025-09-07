@@ -25,8 +25,6 @@ const initialOnboardingData: OnboardingData = {
   hasRated: null,
   signInMethod: null,
   onboardingCompleted: false,
-  revenueCatAppUserId: null,
-  activeSubscription: null,
 };
 
 interface OnboardingProviderProps {

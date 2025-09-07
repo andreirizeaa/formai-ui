@@ -11,6 +11,7 @@ import { useColorScheme } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Picker } from '@react-native-picker/picker';
 import * as StoreReview from 'expo-store-review';
+import * as Notifications from 'expo-notifications';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ReferralService } from '../../services/referralService';
 import { OnboardingLayout } from '../../components/onboarding/OnboardingLayout';
@@ -171,6 +172,20 @@ interface GymChallengeInfoStepConfig {
   subtitle?: string;
 }
 
+interface NotificationPermissionStepConfig {
+  type: 'notificationPermission';
+  id: string;
+  title: string;
+  subtitle?: string;
+}
+
+interface CameraPermissionStepConfig {
+  type: 'cameraPermission';
+  id: string;
+  title: string;
+  subtitle?: string;
+}
+
 type StepConfig =
   | OptionsStepConfig<keyof OnboardingData>
   | MeasurementsStepConfig
@@ -183,7 +198,9 @@ type StepConfig =
   | InjuryChanceInfoStepConfig
   | PerfectFormGoalMessageStepConfig
   | GraphStepConfig
-  | GymChallengeInfoStepConfig;
+  | GymChallengeInfoStepConfig
+  | NotificationPermissionStepConfig
+  | CameraPermissionStepConfig;
 
 export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
   const navigation = useNavigation();
@@ -263,6 +280,12 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       type: 'gymChallengeInfo',
       id: 'gymChallengeInfo',
       title: '',
+      subtitle: '',
+    },
+    {
+      type: 'cameraPermission',
+      id: 'cameraPermission',
+      title: i18n.t('onboarding.cameraPermission.title'),
       subtitle: '',
     },
     {
@@ -390,6 +413,12 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
         { value: 'other', label: i18n.t('onboarding.discovery.other'), icon: <BookCopy size={iconSize} color={iconColor} /> },
       ],
     },
+    {
+      type: 'notificationPermission',
+      id: 'notificationPermission',
+      title: i18n.t('onboarding.notificationPermission.title'),
+      subtitle: '',
+    },
     // {
     //   type: 'rating',
     //   id: 'rating',
@@ -428,6 +457,9 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
   // Animation values for info step
   const percentageBoxHeight = useMemo(() => new Animated.Value(0), []);
   const formaiBoxHeight = useMemo(() => new Animated.Value(0), []);
+  
+  // Animation value for finger icon
+  const fingerTranslateY = useMemo(() => new Animated.Value(0), []);
 
   // Helpers for measurements
   const isMetric = onboardingData.unitSystem === 'metric';
@@ -519,6 +551,33 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       formaiBoxHeight.setValue(0);
     }
   }, [currentStep.id, percentageBoxHeight, formaiBoxHeight]);
+
+  // Finger animation effect
+  useEffect(() => {
+    if (currentStep.type === 'notificationPermission' || currentStep.type === 'cameraPermission') {
+      const startFingerAnimation = () => {
+        Animated.loop(
+          Animated.sequence([
+            Animated.timing(fingerTranslateY, {
+              toValue: -15,
+              duration: 600,
+              useNativeDriver: true,
+            }),
+            Animated.timing(fingerTranslateY, {
+              toValue: 0,
+              duration: 600,
+              useNativeDriver: true,
+            }),
+          ])
+        ).start();
+      };
+      
+      startFingerAnimation();
+    } else {
+      // Reset animation when leaving permission steps
+      fingerTranslateY.setValue(0);
+    }
+  }, [currentStep.type, fingerTranslateY]);
 
   useEffect(() => {
     if (currentStep.type === 'allDone') {
@@ -764,6 +823,10 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
     nextDisabled = false; // always enabled for info step
   } else if (currentStep.type === 'gymChallengeInfo') {
     nextDisabled = false; // always enabled for gym challenge info step
+  } else if (currentStep.type === 'cameraPermission') {
+    nextDisabled = false; // always enabled for camera permission step
+  } else if (currentStep.type === 'notificationPermission') {
+    nextDisabled = false; // always enabled for notification permission step
   } else if (currentStep.type === 'referral') {
     nextLoading = referralValidating; // show loading while validating
   } else if (currentStep.type === 'allDone') {
@@ -784,7 +847,8 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       nextTitle={nextLabel}
       nextDisabled={nextDisabled}
       nextLoading={nextLoading}
-      hideNextButton={currentStep.type === 'saveProgress'}
+      hideNextButton={currentStep.type === 'saveProgress' || currentStep.type === 'notificationPermission' || currentStep.type === 'cameraPermission'}
+      hideTitle={currentStep.type === 'notificationPermission' || currentStep.type === 'cameraPermission'}
       
     >
       {currentStep.id === 'trainSafer' && (
@@ -1553,6 +1617,249 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
           }}
         />
       )}
+
+      {currentStep.type === 'notificationPermission' && (
+        <View style={styles.notificationPermissionContainer}>
+          {/* Dialog container with flex to center dialog */}
+          <View style={styles.dialogWrapper}>
+            {/* Title above the dialog */}
+            <Text style={[
+              styles.permissionTitle,
+              { color: isDark ? '#FFFFFF' : '#000000' }
+            ]}>
+              {i18n.t('onboarding.notificationPermission.title')}
+            </Text>
+            {/* iOS-style Notification Permission Dialog */}
+            <View style={[
+              styles.dialog,
+              {
+                backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF',
+                shadowColor: isDark ? '#000000' : '#000000',
+              }
+            ]}>
+              {/* Text Area */}
+              <View style={[
+                styles.textArea,
+                {
+                  backgroundColor: isDark ? '#2C2C2E' : '#f3f4f6',
+                }
+              ]}>
+                <Text style={[
+                  styles.dialogText,
+                  {
+                    color: isDark ? '#FFFFFF' : '#000000',
+                    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
+                  }
+                ]}>
+                  {i18n.t('onboarding.notificationPermission.dialogText')}
+                </Text>
+              </View>
+              
+              {/* Buttons Container */}
+              <View style={[
+                styles.buttonContainer,
+                {
+                  borderTopColor: isDark ? '#2C2C2E' : '#E5E5EA',
+                  borderTopWidth: 1,
+                }
+              ]}>
+                <TouchableOpacity
+                  style={[
+                    styles.button,
+                    styles.dontAllowButton,
+                    {
+                      backgroundColor: isDark ? '#2C2C2E' : '#f3f4f6',
+                    }
+                  ]}
+                  onPress={() => {
+                    hapticFeedback.selection();
+                    handleNext();
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[
+                    styles.buttonText,
+                    {
+                      color: isDark ? '#FFFFFF' : '#000000',
+                      fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
+                    }
+                  ]}>
+                    {i18n.t('onboarding.notificationPermission.dontAllow')}
+                  </Text>
+                </TouchableOpacity>
+                
+                <View style={[
+                  styles.buttonDivider,
+                  {
+                    backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF',
+                  }
+                ]} />
+                
+                <TouchableOpacity
+                  style={[
+                    styles.button,
+                    styles.allowButton,
+                    {
+                      backgroundColor: isDark ? '#FFFFFF' : '#000000',
+                    }
+                  ]}
+                  onPress={async () => {
+                    hapticFeedback.selection();
+                    try {
+                      await Notifications.requestPermissionsAsync();
+                      handleNext();
+                    } catch (error) {
+                      console.error('Error requesting notification permission:', error);
+                      handleNext();
+                    }
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[
+                    styles.buttonText,
+                    {
+                      color: isDark ? '#000000' : '#FFFFFF',
+                      fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
+                    }
+                  ]}>
+                    {i18n.t('onboarding.notificationPermission.allow')}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+            
+            {/* Animated upwards pointing finger emoji */}
+            <Animated.View style={[
+              styles.animatedFingerContainer,
+              {
+                transform: [{ translateY: fingerTranslateY }]
+              }
+            ]}>
+              <Text style={styles.pointingEmoji}>👆</Text>
+            </Animated.View>
+          </View>
+        </View>
+      )}
+
+      {currentStep.type === 'cameraPermission' && (
+        <View style={styles.cameraPermissionContainer}>
+          {/* Dialog container with flex to center dialog */}
+          <View style={styles.dialogWrapper}>
+            {/* Title above the dialog */}
+            <Text style={[
+              styles.permissionTitle,
+              { color: isDark ? '#FFFFFF' : '#000000' }
+            ]}>
+              {i18n.t('onboarding.cameraPermission.title')}
+            </Text>
+            {/* iOS-style Camera Permission Dialog */}
+            <View style={[
+              styles.dialog,
+              {
+                backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF',
+                shadowColor: isDark ? '#000000' : '#000000',
+              }
+            ]}>
+              {/* Text Area */}
+              <View style={[
+                styles.textArea,
+                {
+                  backgroundColor: isDark ? '#2C2C2E' : '#f3f4f6',
+                }
+              ]}>
+                <Text style={[
+                  styles.dialogText,
+                  {
+                    color: isDark ? '#FFFFFF' : '#000000',
+                    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
+                  }
+                ]}>
+                  {i18n.t('onboarding.cameraPermission.dialogText')}
+                </Text>
+              </View>
+              
+              {/* Buttons Container */}
+              <View style={[
+                styles.buttonContainer,
+                {
+                  borderTopColor: isDark ? '#2C2C2E' : '#E5E5EA',
+                  borderTopWidth: 1,
+                }
+              ]}>
+                <View
+                  style={[
+                    styles.button,
+                    styles.dontAllowButton,
+                    {
+                      backgroundColor: isDark ? '#2C2C2E' : '#f3f4f6',
+                      paddingVertical: 0,
+                      marginVertical: 0,
+                    }
+                  ]}
+                >
+                  <Text style={[
+                    styles.buttonText,
+                    {
+                      color: isDark ? '#FFFFFF' : '#000000',
+                      fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
+                    }
+                  ]}>
+                    {i18n.t('onboarding.cameraPermission.dontAllow')}
+                  </Text>
+                </View>
+                
+                <View style={[
+                  styles.buttonDivider,
+                  {
+                    backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF',
+                  }
+                ]} />
+                
+                <TouchableOpacity
+                  style={[
+                    styles.button,
+                    styles.allowButton,
+                    {
+                      backgroundColor: isDark ? '#FFFFFF' : '#000000',
+                      paddingVertical: 0,
+                      marginVertical: 0,
+                    }
+                  ]}
+                  onPress={async () => {
+                    hapticFeedback.selection();
+                    try {
+                      const { Camera } = await import('expo-camera');
+                      const result = await Camera.requestCameraPermissionsAsync();
+                      result.granted && handleNext();
+                    } catch (error) {}
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[
+                    styles.buttonText,
+                    {
+                      color: isDark ? '#000000' : '#FFFFFF',
+                      fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
+                    }
+                  ]}>
+                    {i18n.t('onboarding.cameraPermission.allow')}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+            
+            {/* Animated upwards pointing finger emoji */}
+            <Animated.View style={[
+              styles.animatedFingerContainer,
+              {
+                transform: [{ translateY: fingerTranslateY }]
+              }
+            ]}>
+              <Text style={styles.pointingEmoji}>👆</Text>
+            </Animated.View>
+          </View>
+        </View>
+      )}
     </OnboardingLayout>
   );
 }
@@ -2080,5 +2387,93 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
     flex: 1,
+  },
+  // Notification permission styles
+  notificationPermissionContainer: {
+    flex: 1,
+    paddingHorizontal: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  // Camera permission styles
+  cameraPermissionContainer: {
+    flex: 1,
+    paddingHorizontal: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  permissionTitle: {
+    fontSize: 32,
+    fontWeight: '700',
+    textAlign: 'center',
+    lineHeight: 38,
+    marginBottom: 30,
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
+  },
+  notificationPermissionTitle: {
+    fontSize: 32,
+    marginTop: 60,
+    fontWeight: '700',
+    textAlign: 'center',
+    lineHeight: 38,
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
+  },
+  dialogWrapper: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dialog: {
+    width: '100%',
+    maxWidth: 320,
+    borderRadius: 16,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 8,
+    overflow: 'hidden',
+  },
+  textArea: {
+    padding: 24,
+    paddingBottom: 20,
+  },
+  dialogText: {
+    fontSize: 17,
+    fontWeight: '600',
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    height: 44,
+  },
+  button: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dontAllowButton: {
+    // Styled above
+  },
+  allowButton: {
+    // Styled above
+  },
+  buttonText: {
+    fontSize: 17,
+    fontWeight: '600',
+  },
+  buttonDivider: {
+    width: 1,
+    height: '100%',
+  },
+  pointingEmoji: {
+    fontSize: 40,
+  },
+  animatedFingerContainer: {
+    marginTop: 20,
+    marginLeft: '55%',
   },
 }); 

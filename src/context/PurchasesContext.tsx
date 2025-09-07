@@ -21,7 +21,6 @@ interface PurchasesContextValue {
 
   hasActiveSubscription: boolean;
   activeEntitlementIds: string[];
-  storePaymentInfo: (customerInfo: CustomerInfo) => Promise<void>;
   refreshOfferings: () => Promise<void>;
   refreshCustomerInfo: () => Promise<void>;
   purchasePackage: (pkg: PurchasesPackage) => Promise<CustomerInfo | null>;
@@ -66,7 +65,8 @@ export function PurchasesProvider({ children, onSubscriptionUpdate }: PurchasesP
       try {
         Purchases.setLogLevel(LOG_LEVEL.WARN);
         if (Platform.OS === 'ios') {
-          Purchases.configure({ apiKey: 'appl_GUYEEZQfOpAHzaNTEHKrIuRLGuY' });
+          Purchases.configure({ apiKey: 'appl_GUYEEZQfOpAHzaNTEHKrIuRLGuY'});
+          
         }
         // else if (Platform.OS === 'android') {3
         //   Purchases.configure({ apiKey: 'your_android_api_key' });
@@ -79,6 +79,16 @@ export function PurchasesProvider({ children, onSubscriptionUpdate }: PurchasesP
         setIsInitializing(false);
       }
     }
+
+    // Set up customer info update listener
+    const customerInfoUpdateListener = (customerInfo: CustomerInfo) => {
+      setCustomerInfo(customerInfo);
+      if (onSubscriptionUpdate) {
+        onSubscriptionUpdate(customerInfo);
+      }
+    };
+
+    Purchases.addCustomerInfoUpdateListener(customerInfoUpdateListener);
 
     initialize();
   }, []);
@@ -108,7 +118,6 @@ export function PurchasesProvider({ children, onSubscriptionUpdate }: PurchasesP
     setPurchaseError(null);
     try {
       const { customerInfo } = await Purchases.purchasePackage(pkg);
-      await storePaymentInfo(customerInfo);
       setCustomerInfo(customerInfo);
       return customerInfo;
     } catch (error) {
@@ -120,35 +129,9 @@ export function PurchasesProvider({ children, onSubscriptionUpdate }: PurchasesP
     }
   }
 
-  async function storePaymentInfo(customerInfo: CustomerInfo) {
-    const activeSubscription = customerInfo.activeSubscriptions[0];
-    const rcAppId = customerInfo.originalAppUserId;
-
-    // Keep the context updates for state consistency
-    updateOnboardingData('activeSubscription', activeSubscription);
-    updateOnboardingData('revenueCatAppUserId', rcAppId);
-    
-    if (onboardingData.signInMethod !== null) {
-      // Build the updated onboarding data with the new payment values
-      const updatedData = {
-        ...onboardingData,
-        activeSubscription: activeSubscription,
-        revenueCatAppUserId: rcAppId
-      };
-
-      try {
-        await saveOnboardingProgress(updatedData);
-      } catch (persistError) {
-      }
-    }
-  }
-
   async function restorePurchases() {
     try {
       const restoredInfo = await Purchases.restorePurchases();
-      if (restoredInfo.activeSubscriptions.length > 0) {
-        await storePaymentInfo(restoredInfo);
-      }
       setCustomerInfo(restoredInfo);
       return restoredInfo;
     } catch (error) {
@@ -168,7 +151,6 @@ export function PurchasesProvider({ children, onSubscriptionUpdate }: PurchasesP
     customerInfo,
     hasActiveSubscription,
     activeEntitlementIds,
-    storePaymentInfo,
     refreshOfferings,
     refreshCustomerInfo,
     purchasePackage,

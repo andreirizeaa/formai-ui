@@ -19,6 +19,7 @@ export function MainAppLayout({ children, onLogout }: MainAppLayoutProps) {
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
 
   React.useEffect(() => {
+    console.log('userDetails', userDetails);
     // Show welcome modal if walkthrough is not completed (false or null)
     if (userDetails && userDetails.walkthroughCompleted !== true) {
       setShowWelcome(true);

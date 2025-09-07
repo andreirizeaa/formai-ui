@@ -139,6 +139,7 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
     updateOnboardingData('userId', data.user.id);
     
     if (data.user?.id) {
+      await Purchases.logIn(data.user.id);
       try {
         const { saveOnboardingProgress } = await import('../../services/onboardingService');
         await saveOnboardingProgress(updatedData);

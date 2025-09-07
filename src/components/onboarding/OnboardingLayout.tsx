@@ -20,6 +20,7 @@ interface OnboardingLayoutProps {
   nextLoading?: boolean;
   hideNextButton?: boolean;
   hideBackButton?: boolean;
+  hideTitle?: boolean;
 }
 
 export function OnboardingLayout({
@@ -35,6 +36,7 @@ export function OnboardingLayout({
   nextLoading = false,
   hideNextButton = false,
   hideBackButton = false,
+  hideTitle = false,
 }: OnboardingLayoutProps) {
   
   const colorScheme = useColorScheme();
@@ -62,32 +64,34 @@ export function OnboardingLayout({
         </View>
         
         {/* Integrated Header Content */}
-        <View style={styles.headerContent}>
-          <Text 
-            style={[
-              styles.title, 
-              { 
-                color: isDark ? '#FFFFFF' : '#000000',
-                fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto'
-              }
-            ]}
-          >
-            {title}
-          </Text>
-          {subtitle && (
+        {!hideTitle && (
+          <View style={styles.headerContent}>
             <Text 
               style={[
-                styles.subtitle, 
+                styles.title, 
                 { 
-                  color: isDark ? '#AEAEB2' : '#8E8E93',
-                  fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
+                  color: isDark ? '#FFFFFF' : '#000000',
+                  fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto'
                 }
               ]}
             >
-              {subtitle}
+              {title}
             </Text>
-          )}
-        </View>
+            {subtitle && (
+              <Text 
+                style={[
+                  styles.subtitle, 
+                  { 
+                    color: isDark ? '#AEAEB2' : '#8E8E93',
+                    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
+                  }
+                ]}
+              >
+                {subtitle}
+              </Text>
+            )}
+          </View>
+        )}
 
         {/* Content area with vertical centering */}
         <View style={styles.contentWrapper}>

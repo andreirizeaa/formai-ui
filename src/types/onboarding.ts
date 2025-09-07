@@ -26,8 +26,6 @@ export interface OnboardingData {
   hasRated: boolean | null;
   onboardingCompleted: boolean;
   signInMethod: string | null;
-  revenueCatAppUserId: string | null;
-  activeSubscription: string | null;
 }
 
 export interface OnboardingContextType {
