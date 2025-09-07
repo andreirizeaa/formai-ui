@@ -7,6 +7,7 @@ import { LanguageProvider } from './src/context/LanguageContext';
 import { OnboardingProvider } from './src/context/OnboardingContext';
 import { SuperwallProvider } from './src/context/SuperwallContext';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { removeUserId } from './src/services/storageService';
 
 export default function App() {
   useEffect(() => {

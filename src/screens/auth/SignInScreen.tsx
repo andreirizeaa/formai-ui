@@ -11,7 +11,7 @@ import { supabase } from '../../lib/supabase';
 import { BackButton } from '../../components/ui/BackButton';
 import { LoadingOverlay } from '../../components/ui/LoadingOverlay';
 import { removeUserId, setUserId } from '../../services/storageService';
-import { fetchUserById, requiresOnboarding, requiresPayment } from '../../services/userService';
+import { fetchUserById, requiresOnboarding } from '../../services/userService';
 import Purchases from 'react-native-purchases';
 import { usePurchases } from '../../context/PurchasesContext';
 
@@ -49,6 +49,7 @@ export function SignInScreen({ onSignIn, onBack, onNavigateToOnboarding, onRequi
     try {
       await setUserId(userId);
       const { user } = await fetchUserById(userId);
+      console.log('user', user);
 
       if (!user) {
         hapticFeedback.error();
@@ -56,6 +57,8 @@ export function SignInScreen({ onSignIn, onBack, onNavigateToOnboarding, onRequi
         else onSignIn();
         return;
       }
+      await Purchases.logIn(userId);
+      console.log('|||||||||||||||| customerInfo', customerInfo);
       if (requiresOnboarding(user)) {
         hapticFeedback.error();
         await removeUserId();
@@ -286,15 +289,15 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   appleButton: {
-    width: '80%',
-    height: 65,
+    width: '90%',
+    height: 60,
     borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
   },
   googleButton: {
-    width: '80%',
-    height: 65,
+    width: '90%',
+    height: 60,
     borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
