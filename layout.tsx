@@ -8,15 +8,14 @@ import { UserDetailsProvider } from './src/context/UserDetailsContext';
 import { OnboardingNavigator } from './src/navigation/OnboardingNavigator';
 import { MainAppLayout } from './src/components/layout/MainAppLayout';
 import { UserCheckInsProvider } from './src/context/UserCheckInsContext';
-import { WalletCreditProvider } from './src/context/WalletCreditContext';
 import { SelectedDateProvider } from './src/context/SelectedDateContext';
 import { supabase } from './src/lib/supabase';
 import { getUserId, removeUserId } from './src/services/storageService';
 import { LoadingScreen } from './src/screens/onboarding/LoadingScreen';
 import { fetchUserById, requiresOnboarding } from './src/services/userService';
-import { usePurchases } from './src/context/PurchasesContext';
 import { useUserDetails } from './src/context/UserDetailsContext';
 import { useLiftData } from './src/context/LiftDataContext';
+import { useSuperwallContext } from './src/context/SuperwallContext';
 
 // Component that can access context providers to check loading states
 function AppContent() {
@@ -28,9 +27,9 @@ function AppContent() {
   >('Welcome');
   const [isTransitioning, setIsTransitioning] = useState(false);
   const fadeAnim = useRef(new Animated.Value(1)).current;
-  const { customerInfo, isInitializing } = usePurchases();
   const { isUserDetailsLoaded } = useUserDetails();
   const { isLiftDataLoaded } = useLiftData();
+  const { superwallCustomerInfo, identifyUser } = useSuperwallContext();
 
   useEffect(() => {
     async function setActiveLayout() {
@@ -54,7 +53,9 @@ function AppContent() {
           return;
         }
 
-        if (customerInfo?.activeSubscriptions.length === 0) {
+        console.log('>>>>>>>>>>>>>>superwallCustomerInfo', superwallCustomerInfo);
+
+        if (!superwallCustomerInfo.active) {
           setShowOnboarding(true);
           setOnboardingInitialRoute('Payment');
           return;
@@ -70,10 +71,10 @@ function AppContent() {
     }
 
     setActiveLayout();
-  }, [customerInfo]);
+  }, [superwallCustomerInfo]);
 
   // Check if all required data is loaded before showing the app
-  const isAllDataLoaded = !isInitializing && isUserDetailsLoaded && isLiftDataLoaded;
+  const isAllDataLoaded = isUserDetailsLoaded && isLiftDataLoaded;
 
   const handleOnboardingComplete = () => {
     setIsTransitioning(true);
@@ -225,7 +226,6 @@ export function Layout() {
 
   return (
     <QueryClientProvider client={queryClientRef.current}>
-      <WalletCreditProvider>
         <UserDetailsProvider>
           <LiftDataProvider>
             <UserCheckInsProvider>
@@ -237,7 +237,6 @@ export function Layout() {
             </UserCheckInsProvider>
           </LiftDataProvider>
         </UserDetailsProvider>
-      </WalletCreditProvider>
     </QueryClientProvider>
   );
 }

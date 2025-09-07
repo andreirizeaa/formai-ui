@@ -1,105 +1,71 @@
-import React, { createContext, useContext, useEffect, ReactNode } from 'react';
-import { CustomPurchaseControllerProvider, SuperwallProvider as ExpoSuperwallProvider, SuperwallLoaded, useUser } from 'expo-superwall';
-import Purchases from 'react-native-purchases';
-import { usePurchases } from './PurchasesContext';
+import React, { createContext, useContext, ReactNode } from 'react';
+import { SuperwallProvider as ExpoSuperwallProvider, SubscriptionStatus, SuperwallLoaded, useSuperwall as useExpoSuperwall } from 'expo-superwall';
+
+interface SuperwallCustomerInfo {
+  userId: string;
+  isLoggedIn: boolean;
+  userAttributes: Record<string, any>;
+  subscriptionStatus: SubscriptionStatus;
+  active: boolean;
+}
 
 interface SuperwallContextValue {
-  // Add any Superwall-specific state or methods here if needed
+  superwallCustomerInfo: SuperwallCustomerInfo;
+  identifyUser: (userId: string) => Promise<void>;
 }
 
 const SuperwallContext = createContext<SuperwallContextValue | undefined>(undefined);
-
-function SubscriptionSync() {
-  const { setSubscriptionStatus, subscriptionStatus } = useUser();
-  const { isInitializing, customerInfo } = usePurchases();
-  
-  useEffect(() => {
-    // Don't run until SDK is initialized
-    if (isInitializing) return;
-    
-    Purchases.addCustomerInfoUpdateListener((customerInfo: any) => {
-      const entitlementIds = Object.keys(customerInfo.entitlements.active);      
-      setSubscriptionStatus({
-        status: entitlementIds.length === 0 ? "INACTIVE" : "ACTIVE",
-        entitlements: entitlementIds.map(id => ({ 
-          id, 
-          type: "SERVICE_LEVEL" 
-        }))
-      });
-    });
-    
-    // Get initial customer info only after initialization
-    const syncInitialStatus = async () => {
-      try {
-        // Use the customerInfo from context if available, otherwise fetch it
-        let info = customerInfo;
-        if (!info) {
-          info = await Purchases.getCustomerInfo();
-        }
-        
-        const entitlementIds = Object.keys(info.entitlements.active);
-        
-        setSubscriptionStatus({
-          status: entitlementIds.length === 0 ? "INACTIVE" : "ACTIVE",
-          entitlements: entitlementIds.map(id => ({ 
-            id, 
-            type: "SERVICE_LEVEL" 
-          }))
-        });
-      } catch (error) {
-        console.error("Failed to sync initial subscription status:", error);
-      }
-    };
-    
-    syncInitialStatus();
-  }, [setSubscriptionStatus, isInitializing, customerInfo]);
-  
-  return null; // This component just handles the sync
-}
 
 interface SuperwallProviderProps {
   children: ReactNode;
 }
 
-export function SuperwallProvider({ children }: SuperwallProviderProps) {
-  const { purchasePackage, restorePurchases, offerings } = usePurchases();
+// Component that uses Superwall hooks and provides context
+function SuperwallContextProvider({ children }: SuperwallProviderProps) {
+  const superwall = useExpoSuperwall();
   
+
+
+  async function identifyUser(userId: string) {
+    await superwall.identify(userId);
+  }
+
+  // Get subscription status from Superwall
+  const subscriptionStatus = superwall.subscriptionStatus;
+
+  const superwallCustomerInfo: SuperwallCustomerInfo = {
+    userId: superwall.user?.id ?? '',
+    isLoggedIn: superwall.user?.isLoggedIn ?? false,
+    userAttributes: {},
+    subscriptionStatus,
+    active: subscriptionStatus?.status === 'ACTIVE',
+  };
+
+  const contextValue: SuperwallContextValue = {
+    superwallCustomerInfo,
+    identifyUser,
+  };
+
   return (
-    <CustomPurchaseControllerProvider
-      controller={{
-        onPurchase: async (params) => {
-            try {
-              const packageToPurchase = offerings?.current?.availablePackages.find(
-                pkg => pkg.product.identifier === params.productId
-              );
-              
-              if (!packageToPurchase) {
-                throw new Error(`Package not found for product: ${params.productId}`);
-              }
-              
-              await purchasePackage(packageToPurchase);
-              return;
-            } catch (error) {
-              throw error;
-            }
-        },
-        onPurchaseRestore: async () => {
-            await restorePurchases()
-            return;
-        },
+    <SuperwallContext.Provider value={contextValue}>
+      {children}
+    </SuperwallContext.Provider>
+  );
+}
+
+export function SuperwallProvider({ children }: SuperwallProviderProps) {
+  return (
+    <ExpoSuperwallProvider 
+      apiKeys={{ 
+        ios: "pk_zkKfyLcFhibPvjADIBNgv", 
       }}
     >
-      <ExpoSuperwallProvider 
-        apiKeys={{ 
-          ios: "pk_zkKfyLcFhibPvjADIBNgv", 
-        }}
-      >
-        <SubscriptionSync />
-        <SuperwallLoaded>
+      <SuperwallLoaded>
+        <SuperwallContextProvider>
           {children}
-        </SuperwallLoaded>
-      </ExpoSuperwallProvider>
-    </CustomPurchaseControllerProvider>
+        </SuperwallContextProvider>
+      </SuperwallLoaded>
+    </ExpoSuperwallProvider>
   );
 }
 
@@ -109,5 +75,8 @@ export function useSuperwall() {
   return ctx;
 }
 
-// Export the useUser hook from expo-superwall for convenience
-export { useUser };
+export function useSuperwallContext() {
+  const ctx = useContext(SuperwallContext);
+  if (!ctx) throw new Error('useSuperwallContext must be used within a SuperwallProvider');
+  return ctx;
+}

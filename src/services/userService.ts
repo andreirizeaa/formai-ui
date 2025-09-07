@@ -115,6 +115,7 @@ export async function fetchUserDetailsById(userId: string): Promise<UserDetailsR
     .select('id, unit_system, metric_height, metric_weight, birth_date, gender, language, current_streak, walkthrough_completed, has_rated')
     .eq('id', userId)
     .maybeSingle();
+  console.log('data', data);
   if (error) throw new Error(error.message);
   return (data as UserDetailsRow) ?? null;
 }

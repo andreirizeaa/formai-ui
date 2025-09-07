@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { hapticFeedback } from '../../utils/haptic';
-import { usePurchases } from '../../context/PurchasesContext';
+import { useSuperwallContext } from '../../context/SuperwallContext';
 
 interface PaymentScreenProps {
   onComplete: () => void;
@@ -12,8 +12,7 @@ interface PaymentScreenProps {
 export function PaymentScreen({ onComplete }: PaymentScreenProps) {
   const { registerPlacement } = usePlacement();
   const { dismiss } = useSuperwall();
-  const { customerInfo, refreshCustomerInfo } = usePurchases();
-  const [ hasSeenDiscountPaywall, setHasSeenDiscountPaywall ] = useState(false)
+  const { superwallCustomerInfo } = useSuperwallContext();
 
   // Listen for transactionAbandon events to show discount paywall
   useSuperwallEvents({
@@ -23,28 +22,16 @@ export function PaymentScreen({ onComplete }: PaymentScreenProps) {
       }
     },
     onSuperwallEvent: async (eventInfo) => {
-      if (String(eventInfo.event.event) === "transactionComplete") {
-        await refreshCustomerInfo();
-        if (customerInfo?.activeSubscriptions?.length !== 0) {
+      console.log('onSuperwallEvent', eventInfo);
+
+      if (String(eventInfo.event.event) === "transactionComplete" || String(eventInfo.event.event) === "restoreComplete") {
+        if (superwallCustomerInfo.subscriptionStatus.status === 'ACTIVE') {
           onComplete();
         }
       }
       if (String(eventInfo.event.event) === "transactionAbandon" && String(eventInfo.params.abandoned_product_id) === "formai_yearly") {
         // Dismiss the current paywall first
         dismiss();
-        
-        setTimeout(async() => {
-          if (customerInfo?.activeSubscriptions?.length === 0 && !hasSeenDiscountPaywall) {
-            await registerPlacement({
-              placement: "discount_trigger",
-            });
-            setHasSeenDiscountPaywall(true)
-          } else if (customerInfo?.activeSubscriptions?.length === 0 && hasSeenDiscountPaywall) {
-            await registerPlacement({
-              placement: "default_trigger",
-            });
-          }
-        }, 500);
       }
     },
     onPaywallDismiss: async(info, result) => {
@@ -54,16 +41,9 @@ export function PaymentScreen({ onComplete }: PaymentScreenProps) {
           placement: "default_trigger",
         });
       } else {
-        if (customerInfo?.activeSubscriptions?.length === 0 && !hasSeenDiscountPaywall) {
-          await registerPlacement({
-            placement: "discount_trigger",
-          });
-          setHasSeenDiscountPaywall(true)
-        } else if (customerInfo?.activeSubscriptions?.length === 0 && hasSeenDiscountPaywall) {
-          await registerPlacement({
-            placement: "default_trigger",
-          });
-        }
+        await registerPlacement({
+          placement: "discount_trigger",
+        });
       }
     },
   });

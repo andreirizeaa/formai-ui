@@ -12,6 +12,7 @@ import { setUserId } from '../../services/storageService';
 import i18n from '../../utils/i18n';
 import { usePlacement } from 'expo-superwall';
 import Purchases from 'react-native-purchases';
+import { useSuperwallContext } from '../../context/SuperwallContext';
 
 interface CreateAccountScreenProps {
   onNext: () => void;
@@ -24,7 +25,7 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
   const isDark = colorScheme === 'dark';
   const { onboardingData, updateOnboardingData } = useOnboarding();
   const [isSigningIn, setIsSigningIn] = React.useState(false);
-  
+  const { identifyUser } = useSuperwallContext();
   const isExpoGo = Constants.appOwnership === 'expo';
 
   React.useEffect(() => {
@@ -125,6 +126,7 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
   };
 
   const handleNewAccount = async (data: any) => {
+    identifyUser(data.user.id);
     const signInMethod = data.user?.app_metadata?.provider || 'apple';
     
     const updatedData = {

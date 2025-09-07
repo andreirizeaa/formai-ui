@@ -12,8 +12,7 @@ import { AccountLoadingScreen } from '../screens/onboarding/AccountLoadingScreen
 import { PaymentScreen } from '../screens/payment/PaymentScreen';
 import { SignInScreen } from '../screens/auth/SignInScreen';
 import { CameraPermissionScreen } from '../screens/onboarding/CameraPermissionScreen';
-import Purchases from 'react-native-purchases';
-import { usePurchases } from '../context/PurchasesContext';
+import { useSuperwallContext } from '../context/SuperwallContext';
 
 interface OnboardingNavigatorProps {
   onComplete: () => void;
@@ -116,14 +115,15 @@ function NotificationPermissionScreenWrapper() {
 
 function AccountLoadingScreenWrapper({ onComplete }: { onComplete: () => void }) {
   const navigation = useNavigation<OnboardingNavigationProp>();
-  const { customerInfo, storePaymentInfo } = usePurchases();
+  const { superwallCustomerInfo} = useSuperwallContext();
   
   const handleNext = async () => {
-    const entitlementIds = Object.keys(customerInfo?.entitlements.active ?? []);
-    if (entitlementIds.length === 0) {
+    const entitlementsIds = superwallCustomerInfo.subscriptionStatus.status === "ACTIVE" 
+      ? superwallCustomerInfo.subscriptionStatus.entitlements
+      : [];
+    if (entitlementsIds.length === 0) {
       navigation.navigate('Payment');
     } else {
-      await storePaymentInfo(customerInfo!);
       onComplete();
     }
   };

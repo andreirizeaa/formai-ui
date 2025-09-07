@@ -12,8 +12,7 @@ import { BackButton } from '../../components/ui/BackButton';
 import { LoadingOverlay } from '../../components/ui/LoadingOverlay';
 import { removeUserId, setUserId } from '../../services/storageService';
 import { fetchUserById, requiresOnboarding, requiresPayment } from '../../services/userService';
-import Purchases from 'react-native-purchases';
-import { usePurchases } from '../../context/PurchasesContext';
+import { useSuperwallContext } from '../../context/SuperwallContext';
 
 interface SignInScreenProps {
   onSignIn: () => void;
@@ -26,7 +25,7 @@ export function SignInScreen({ onSignIn, onBack, onNavigateToOnboarding, onRequi
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const [isSigningIn, setIsSigningIn] = React.useState(false);
-  const { customerInfo } = usePurchases();
+  const { superwallCustomerInfo, identifyUser } = useSuperwallContext();
   
   // Check if we're running in Expo Go
   const isExpoGo = Constants.appOwnership === 'expo';
@@ -46,6 +45,7 @@ export function SignInScreen({ onSignIn, onBack, onNavigateToOnboarding, onRequi
   }, [isExpoGo]);
 
   const handlePostAuthentication = async (userId: string) => {
+    identifyUser(userId);
     try {
       await setUserId(userId);
       const { user } = await fetchUserById(userId);
@@ -63,7 +63,7 @@ export function SignInScreen({ onSignIn, onBack, onNavigateToOnboarding, onRequi
         else onSignIn();
         return;
       }
-      if (customerInfo?.activeSubscriptions.length === 0) {
+      if (!superwallCustomerInfo.active) {
         hapticFeedback.success();
         if (onRequirePayment) onRequirePayment();
         else onSignIn();

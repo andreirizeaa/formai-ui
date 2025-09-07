@@ -89,7 +89,7 @@ export function WelcomeScreen({ onGetStarted, onSignIn }: WelcomeScreenProps) {
         {!userId && (
         <TouchableOpacity onPress={handleSignIn} activeOpacity={0.7}>
           <Text style={styles.signInText}>
-            {i18n.t('signIn')}
+            {i18n.t('welcomeScreenSignIn')}
           </Text>
         </TouchableOpacity>
         )}
@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
     paddingBottom: 34,
   },
   getStartedButton: {
-    height: 56,
+    height: 60,
     borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
@@ -141,13 +141,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#000000',
   },
   getStartedText: {
-    fontSize: 20,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '500',
     color: '#FFFFFF',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
   },
   signInText: {
-    fontSize: 17,
+    fontSize: 15,
     fontWeight: '400',
     textAlign: 'center',
     textDecorationLine: 'underline',

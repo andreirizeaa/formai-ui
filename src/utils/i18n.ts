@@ -6,6 +6,7 @@ const i18n = new I18n({
     loading: 'Loading...',
     getStarted: 'Get Started',
     signIn: 'Sign In',
+    welcomeScreenSignIn: 'Already have an account? Sign in',
     next: 'Continue',
     back: 'Back',
     tabs: {
@@ -544,6 +545,10 @@ const i18n = new I18n({
           title: 'Improvement',
           message: 'How your form changed over the selected range. We compare the first third of your lifts to the last third and show the difference in average accuracy.'
         }
+      },
+      metricsFeedback: {
+        title: 'Want other metrics? Let us know!',
+        subtitle: 'Help us improve your experience',
       }
     },
     library: {
@@ -563,6 +568,7 @@ const i18n = new I18n({
       tryAdjustingFilters: 'Try adjusting your filters',
       lifts: 'lifts',
       lift: 'lift',
+      noLifts: 'No lifts',
       selectDateRange: 'Select date range',
       allLifts: 'All lifts',
       oneLift: '1 Lift',

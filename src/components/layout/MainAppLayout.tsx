@@ -25,6 +25,7 @@ export function MainAppLayout({ children, onLogout }: MainAppLayoutProps) {
     }
   }, [userDetails]);
 
+
   // Fade in animation when component mounts
   React.useEffect(() => {
     Animated.timing(fadeAnim, {
