@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
   },
   tipText: {
     fontSize: 16,
-    fontWeight: '400',
+    fontWeight: '600',
     color: '#333333',
     flex: 1,
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
@@ -180,15 +180,15 @@ const styles = StyleSheet.create({
   nextButton: {
     backgroundColor: '#000000',
     paddingHorizontal: 24,
-    paddingVertical: 16,
+    paddingVertical: 20,
     borderRadius: 28,
     width: '100%',
     alignItems: 'center',
   },
   nextButtonText: {
     color: '#FFFFFF',
-    fontSize: 17,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '800',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
 }); 

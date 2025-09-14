@@ -460,6 +460,10 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
   
   // Animation value for finger icon
   const fingerTranslateY = useMemo(() => new Animated.Value(0), []);
+  
+  // State for confetti animation delay
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [showAllDoneConfetti, setShowAllDoneConfetti] = useState(false);
 
   // Helpers for measurements
   const isMetric = onboardingData.unitSystem === 'metric';
@@ -469,6 +473,10 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
   const weightOptions = isMetric
     ? Array.from({ length: 151 }, (_, i) => 40 + i) // 40-190 kg
     : Array.from({ length: 251 }, (_, i) => 90 + i); // 90-340 lbs
+
+  // Repeated picker logic (20 repeats with middle selected by default)
+  const repeats = 20;
+  const middleRepeatIndex = Math.floor(repeats / 2);
 
   function getCurrentHeight() {
     if (!onboardingData.metricHeight) return isMetric ? 170 : { feet: 5, inches: 7, totalInches: 67 };
@@ -582,6 +590,35 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
   useEffect(() => {
     if (currentStep.type === 'allDone') {
       hapticFeedback.success();
+    }
+  }, [currentStep.type]);
+
+  // Confetti animation delay effect
+  useEffect(() => {
+    if (currentStep.type === 'perfectFormGoalMessage') {
+      // Reset confetti state when entering the step
+      setShowConfetti(false);
+      
+      // Start confetti animation after 1ms delay
+      const timer = setTimeout(() => {
+        setShowConfetti(true);
+      }, 1);
+      
+      return () => clearTimeout(timer);
+    } else if (currentStep.type === 'allDone') {
+      // Reset allDone confetti state when entering the step
+      setShowAllDoneConfetti(false);
+      
+      // Start confetti animation after 1ms delay
+      const timer = setTimeout(() => {
+        setShowAllDoneConfetti(true);
+      }, 1);
+      
+      return () => clearTimeout(timer);
+    } else {
+      // Hide confetti when leaving the steps
+      setShowConfetti(false);
+      setShowAllDoneConfetti(false);
     }
   }, [currentStep.type]);
 
@@ -854,11 +891,11 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       {currentStep.id === 'trainSafer' && (
         <View style={styles.infoStepContainer}>
           <LinearGradient
-            colors={['#e2e8f0', '#f5f3ff']}
-            locations={[0, 0.9]}
-            style={styles.comparisonCard}
-            start={{ x: 0.5, y: 0 }}
-            end={{ x: 0, y: 1 }}
+              colors={['rgba(246, 51, 154, 0.25)', 'rgba(255, 149, 0, 0.25)']}
+              locations={[0, 0.9963]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.comparisonCard}
           >
               <View style={styles.comparisonRow}>
                 {/* Without FormAI */}
@@ -867,8 +904,8 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                     <Text style={[styles.sectionTitle, { color: '#000000' }]}>
                       {i18n.t('onboarding.trainSafer.withoutFormAI')}
                     </Text>
-                        <Animated.View style={[styles.percentageBox, { backgroundColor: '#f3f4f6', height: percentageBoxHeight }]}>
-                        <Text style={[styles.percentageText, { color: '#000000' }]}>
+                        <Animated.View style={[styles.percentageBox, { backgroundColor: '#1d293d', height: percentageBoxHeight }]}>
+                        <Text style={[styles.percentageText, { color: '#fff' }]}>
                           60%
                         </Text>
                       </Animated.View>
@@ -883,14 +920,14 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                     </Text>
                         <Animated.View style={[styles.formaiBox, { backgroundColor: '#000000', height: formaiBoxHeight }]}>
                         <Text style={[styles.formaiText, { color: '#FFFFFF' }]}>
-                          3X less
+                          3x less
                         </Text>
                       </Animated.View>
                   </View>
                 </View>
               </View>
 
-            <Text style={[styles.description, { color: '#000000' }]}>
+            <Text style={[styles.description, { color: '#ffffff' }]}>
               {i18n.t('onboarding.trainSafer.description')}
             </Text>
           </LinearGradient>
@@ -900,11 +937,11 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       {currentStep.id === 'costComparison' && (
         <View style={styles.infoStepContainer}>
           <LinearGradient
-            colors={['#e2e8f0', '#f5f3ff']}
-            locations={[0, 0.9]}
+            colors={['rgba(246, 51, 154, 0.25)', 'rgba(255, 149, 0, 0.25)']}
+            locations={[0, 0.9963]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
             style={styles.comparisonCard}
-            start={{ x: 0.5, y: 0 }}
-            end={{ x: 0, y: 1 }}
           >
               <View style={styles.comparisonRow}>
                 {/* Personal Trainer */}
@@ -913,8 +950,8 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                     <Text style={[styles.sectionTitle, { color: '#000000' }]}>
                       {i18n.t('onboarding.costComparison.personalTrainer')}
                     </Text>
-                        <Animated.View style={[styles.percentageBox, { backgroundColor: '#f3f4f6', height: percentageBoxHeight }]}>
-                        <Text style={[styles.percentageText, { color: '#000000' }]}>
+                        <Animated.View style={[styles.percentageBox, { backgroundColor: '#1d293d', height: percentageBoxHeight }]}>
+                        <Text style={[styles.percentageText, { color: '#ffffff' }]}>
                           $5000+/yr
                         </Text>
                       </Animated.View>
@@ -936,7 +973,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                 </View>
               </View>
 
-            <Text style={[styles.description, { color: '#000000' }]}>
+            <Text style={[styles.description, { color: '#ffffff' }]}>
               {i18n.t('onboarding.costComparison.description')}
             </Text>
           </LinearGradient>
@@ -945,15 +982,30 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
 
       {currentStep.type === 'perfectFormGoalMessage' && (
         <View style={styles.perfectFormGoalMessageContainer}>
-          <Text style={[styles.perfectFormGoalMessageTitle, { color: isDark ? '#FFFFFF' : '#000000' }]}>
-            <Text style={[styles.highlightedText, { color: '#ffb86a' }]}>
-              {getPerfectFormGoalMessage().highlighted}
+          {/* Confetti animation positioned behind content */}
+          {showConfetti && (
+            <View style={styles.animationContainer}>
+              <LottieView
+                source={require('../../../assets/animations/confetti.json')}
+                speed={0.7}
+                loop={false}
+                autoPlay
+                style={styles.confettiAnimation}
+              />
+            </View>
+          )}
+
+          <View style={styles.perfectFormGoalMessageContent}>
+            <Text style={[styles.perfectFormGoalMessageTitle]}>
+              <Text style={[styles.highlightedText, { color: '#fe9a00' }]}>
+                {getPerfectFormGoalMessage().highlighted}
+              </Text>
+              {getPerfectFormGoalMessage().rest}
             </Text>
-            {getPerfectFormGoalMessage().rest}
-          </Text>
-          <Text style={[styles.perfectFormGoalMessageSubtitle, { color: isDark ? '#FFFFFF' : '#000000' }]}>
-            {i18n.t('onboarding.perfectFormGoalMessage.subtitle')}
-          </Text>
+            <Text style={[styles.perfectFormGoalMessageSubtitle]}>
+              {i18n.t('onboarding.perfectFormGoalMessage.subtitle')}
+            </Text>
+          </View>
         </View>
       )}
 
@@ -967,22 +1019,22 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
         >
           {/* Main card with headline and message */}
           <LinearGradient
-            colors={['#e2e8f0', '#f5f3ff']}
-            locations={[0, 0.9]}
+            colors={['rgba(246, 51, 154, 0.25)', 'rgba(255, 149, 0, 0.25)']}
+            locations={[0, 0.9963]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
             style={styles.gymChallengeInfoCard}
-            start={{ x: 0.5, y: 0 }}
-            end={{ x: 0, y: 1 }}
           >
-            <Text style={[styles.gymChallengeInfoHeadline, { color: '#000000' }]}>
+            <Text style={[styles.gymChallengeInfoHeadline, { color: '#ffffff' }]}>
               {getGymChallengeInfo().headline}
             </Text>
-            <Text style={[styles.gymChallengeInfoMessage, { color: '#000000' }]}>
+            <Text style={[styles.gymChallengeInfoMessage, { color: '#ffffff' }]}>
               {getGymChallengeInfo().message}
             </Text>
           </LinearGradient>
 
           {/* How we get you there section */}
-          <Text style={[styles.howWeGetYouThereTitle, { color: isDark ? '#FFFFFF' : '#000000' }]}>
+          <Text style={[styles.howWeGetYouThereTitle]}>
             {i18n.t('onboarding.gymChallengeInfo.howWeGetYouThereTitle')}:
           </Text>
 
@@ -993,7 +1045,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                 <View style={styles.howWeGetYouThereIcon}>
                   <Text style={styles.howWeGetYouThereNumber}>{index + 1}</Text>
                 </View>
-                <Text style={[styles.howWeGetYouThereItem, { color: isDark ? '#FFFFFF' : '#000000' }]}>
+                <Text style={[styles.howWeGetYouThereItem]}>
                   {item}
                 </Text>
               </View>
@@ -1005,11 +1057,11 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       {currentStep.type === 'graph' && (
         <View style={styles.graphContainer}>
           <LinearGradient
-            colors={['#e2e8f0', '#f5f3ff']}
-            locations={[0, 0.9]}
+            colors={['rgba(246, 51, 154, 0.25)', 'rgba(255, 149, 0, 0.25)']}
+            locations={[0, 0.9963]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
             style={styles.graphGradient}
-            start={{ x: 0.5, y: 0 }}
-            end={{ x: 0, y: 1 }}
           >
             <View style={styles.titleContainer}>
               <Text style={styles.graphTitle}>{i18n.t('onboarding.potentialGraph.chartTitle')}</Text>
@@ -1053,10 +1105,10 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                 backgroundGradientToOpacity: 0,  
                 decimalPlaces: 0,
                 color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-                labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+                labelColor: () => `#ffffff`,
                 propsForLabels: {
                   fontSize: 12,
-                  fontWeight: '600',
+                  fontWeight: '800',
                 },
                 style: {
                   borderRadius: 16,
@@ -1132,11 +1184,19 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                 >
                   <View style={currentStep.id === 'language' || currentStep.id === 'units' || currentStep.id === 'gender' ? styles.optionContentRowCentered : styles.optionContentRow}>
                     {item.icon ? (
-                      <View style={styles.optionIconContainer}>
-                        {item.icon}
+                      <View style={[
+                        styles.optionIconContainer,
+                        { backgroundColor: selectedValue === item.value ? '#364153' : '#FFFFFF' }
+                      ]}>
+                        {React.cloneElement(item.icon as React.ReactElement<any>, {
+                          color: selectedValue === item.value ? '#FFFFFF' : iconColor
+                        })}
                       </View>
                     ) : item.iconImage ? (
-                      <View style={styles.optionIconContainer}>
+                      <View style={[
+                        styles.optionIconContainer,
+                        { backgroundColor: selectedValue === item.value ? '#364153' : '#FFFFFF' }
+                      ]}>
                         <Image 
                           source={item.iconImage} 
                           style={[
@@ -1153,7 +1213,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                         style={[
                           styles.optionLabel,
                           {
-                            color: selectedValue === item.value ? '#FFFFFF' : isDark ? '#FFFFFF' : '#000000',
+                            color: selectedValue === item.value ? '#000' : '#ffffff',
                             fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
                           },
                         ]}
@@ -1201,11 +1261,19 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                 >
                   <View style={currentStep.id === 'language' || currentStep.id === 'units' || currentStep.id === 'gender' ? styles.optionContentRowCentered : styles.optionContentRow}>
                     {option.icon ? (
-                      <View style={styles.optionIconContainer}>
-                        {option.icon}
+                      <View style={[
+                        styles.optionIconContainer,
+                        { backgroundColor: selectedValue === option.value ? '#364153' : '#FFFFFF' }
+                      ]}>
+                        {React.cloneElement(option.icon as React.ReactElement<any>, {
+                          color: selectedValue === option.value ? '#FFFFFF' : iconColor
+                        })}
                       </View>
                     ) : option.iconImage ? (
-                      <View style={styles.optionIconContainer}>
+                      <View style={[
+                        styles.optionIconContainer,
+                        { backgroundColor: selectedValue === option.value ? '#364153' : '#FFFFFF' }
+                      ]}>
                         <Image 
                           source={option.iconImage} 
                           style={[
@@ -1222,7 +1290,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                         style={[
                           styles.optionLabel,
                           {
-                            color: selectedValue === option.value ? '#FFFFFF' : isDark ? '#FFFFFF' : '#000000',
+                            color: selectedValue === option.value ? '#00000' : '#FFFFFF',
                             fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
                           },
                         ]}
@@ -1233,7 +1301,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                         <Text
                           style={[
                             styles.optionDescription,
-                            { color: selectedValue === option.value ? '#FFFFFF' : '#000000' },
+                            { color: selectedValue === option.value ? '#000000' : '#ffffff' },
                           ]}
                         >
                           {option.description}
@@ -1258,47 +1326,86 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
         >
           <View style={styles.measurementsRow}>
             <View style={styles.measurePickerSection}>
-              <Text style={[styles.pickerLabel, { color: isDark ? '#FFFFFF' : '#000000' }]}>
+              <Text style={[styles.pickerLabel]}>
                 {i18n.t('onboarding.measurements.height')}
               </Text>
               <View style={styles.pickerWrapper}> 
                 {isMetric ? (
                   <Picker
-                    selectedValue={getCurrentHeight() as number}
-                    onValueChange={value => value && handleHeightSelect(value)}
+                    selectedValue={
+                      (() => {
+                        const current = getCurrentHeight() as number;
+                        const base = 100;
+                        const len = heightOptions.length;
+                        const idx = Math.max(0, Math.min(len - 1, current - base));
+                        return middleRepeatIndex * len + idx;
+                      })()
+                    }
+                    onValueChange={value => {
+                      const len = heightOptions.length;
+                      const optionIndex = Number(value) % len;
+                      const selected = heightOptions[optionIndex];
+                      handleHeightSelect(selected);
+                    }}
                     style={[styles.picker, { color: isDark ? '#FFFFFF' : '#000000' }]}
                     itemStyle={Platform.OS === 'ios' ? { color: isDark ? '#FFFFFF' : '#000000', fontSize: 14 } : undefined}
                     dropdownIconColor={isDark ? '#FFFFFF' : '#000000'}
                   >
-                    {heightOptions.map(height => (
-                      <Picker.Item key={height} label={`${height} ${i18n.t('onboarding.measurements.cm')}`} value={height} color={isDark ? '#FFFFFF' : '#000000'} />
+                    {Array.from({ length: repeats * heightOptions.length }, (_, i) => heightOptions[i % heightOptions.length]).map((height, index) => (
+                      <Picker.Item key={`h-${index}`} label={`${height} ${i18n.t('onboarding.measurements.cm')}`} value={index} color={'#ffffff'}/>
                     ))}
                   </Picker>
                 ) : (
                   <View style={styles.imperialPickersContainer}>
                     <View style={styles.imperialPickerWrapper}>
                       <Picker
-                        selectedValue={(getCurrentHeight() as { feet: number }).feet}
-                        onValueChange={value => value && handleFeetSelect(value)}
+                        selectedValue={
+                          (() => {
+                            const { feet } = getCurrentHeight() as { feet: number; inches: number };
+                            const base = 1;
+                            const len = feetOptions.length;
+                            const idx = Math.max(0, Math.min(len - 1, feet - base));
+                            return middleRepeatIndex * len + idx;
+                          })()
+                        }
+                        onValueChange={value => {
+                          const len = feetOptions.length;
+                          const optionIndex = Number(value) % len;
+                          const selected = feetOptions[optionIndex];
+                          handleFeetSelect(selected);
+                        }}
                         style={[styles.imperialPicker, { color: isDark ? '#FFFFFF' : '#000000' }]}
                         itemStyle={Platform.OS === 'ios' ? { color: isDark ? '#FFFFFF' : '#000000', fontSize: 14 } : undefined}
                         dropdownIconColor={isDark ? '#FFFFFF' : '#000000'}
                       >
-                        {feetOptions.map(feet => (
-                          <Picker.Item key={feet} label={`${feet} ft`} value={feet} color={isDark ? '#FFFFFF' : '#000000'} />
+                        {Array.from({ length: repeats * feetOptions.length }, (_, i) => feetOptions[i % feetOptions.length]).map((feet, index) => (
+                          <Picker.Item key={`f-${index}`} label={`${feet} ft`} value={index} color={'#ffffff'} />
                         ))}
                       </Picker>
                     </View>
                     <View style={styles.imperialPickerWrapper}>
                       <Picker
-                        selectedValue={(getCurrentHeight() as { inches: number }).inches}
-                        onValueChange={value => value && handleInchesSelect(value)}
+                        selectedValue={
+                          (() => {
+                            const { inches } = getCurrentHeight() as { feet: number; inches: number };
+                            const base = 0;
+                            const len = inchesOptions.length;
+                            const idx = Math.max(0, Math.min(len - 1, inches - base));
+                            return middleRepeatIndex * len + idx;
+                          })()
+                        }
+                        onValueChange={value => {
+                          const len = inchesOptions.length;
+                          const optionIndex = Number(value) % len;
+                          const selected = inchesOptions[optionIndex];
+                          handleInchesSelect(selected);
+                        }}
                         style={[styles.imperialPicker, { color: isDark ? '#FFFFFF' : '#000000' }]}
                         itemStyle={Platform.OS === 'ios' ? { color: isDark ? '#FFFFFF' : '#000000', fontSize: 14 } : undefined}
                         dropdownIconColor={isDark ? '#FFFFFF' : '#000000'}
                       >
-                        {inchesOptions.map(inches => (
-                          <Picker.Item key={inches} label={`${inches} in`} value={inches} color={isDark ? '#FFFFFF' : '#000000'} />
+                        {Array.from({ length: repeats * inchesOptions.length }, (_, i) => inchesOptions[i % inchesOptions.length]).map((inches, index) => (
+                          <Picker.Item key={`i-${index}`} label={`${inches} in`} value={index} color={'#ffffff'} />
                         ))}
                       </Picker>
                     </View>
@@ -1308,19 +1415,32 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
             </View>
 
             <View style={styles.measurePickerSection}>
-              <Text style={[styles.pickerLabel, { color: isDark ? '#FFFFFF' : '#000000' }]}>
+              <Text style={[styles.pickerLabel]}>
                 {i18n.t('onboarding.measurements.weight')}
               </Text>
               <View style={styles.pickerWrapper}>
                 <Picker
-                  selectedValue={getCurrentWeight()}
-                  onValueChange={value => value && handleWeightSelect(value)}
+                  selectedValue={
+                    (() => {
+                      const current = getCurrentWeight();
+                      const base = isMetric ? 40 : 90;
+                      const len = weightOptions.length;
+                      const idx = Math.max(0, Math.min(len - 1, Math.round(current) - base));
+                      return middleRepeatIndex * len + idx;
+                    })()
+                  }
+                  onValueChange={value => {
+                    const len = weightOptions.length;
+                    const optionIndex = Number(value) % len;
+                    const selected = weightOptions[optionIndex];
+                    handleWeightSelect(selected);
+                  }}
                   style={[styles.picker, { color: isDark ? '#FFFFFF' : '#000000' }]}
                   itemStyle={Platform.OS === 'ios' ? { color: isDark ? '#FFFFFF' : '#000000', fontSize: 14 } : undefined}
                   dropdownIconColor={isDark ? '#FFFFFF' : '#000000'}
                 >
-                  {weightOptions.map(weight => (
-                    <Picker.Item key={weight} label={`${weight} ${isMetric ? i18n.t('onboarding.measurements.kg') : i18n.t('onboarding.measurements.lbs')}`} value={weight} color={isDark ? '#FFFFFF' : '#000000'} />
+                  {Array.from({ length: repeats * weightOptions.length }, (_, i) => weightOptions[i % weightOptions.length]).map((weight, index) => (
+                    <Picker.Item key={`w-${index}`} label={`${weight} ${isMetric ? i18n.t('onboarding.measurements.kg') : i18n.t('onboarding.measurements.lbs')}`} value={index} color={isDark ? '#FFFFFF' : '#ffffff'} />
                   ))}
                 </Picker>
               </View>
@@ -1341,14 +1461,19 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
             <View style={[styles.birthdatePickerSection, { flex: 1.4 }]}> 
               <View style={styles.pickerWrapper}>
                 <Picker
-                  selectedValue={effectiveBirthDate.month}
-                  onValueChange={value => updateBirthDate('month', value)}
+                  selectedValue={
+                    (() => {
+                      const month = effectiveBirthDate.month || 1;
+                      return middleRepeatIndex * 12 + (month - 1);
+                    })()
+                  }
+                  onValueChange={value => updateBirthDate('month', (Number(value) % 12) + 1)}
                   style={[styles.picker, { color: isDark ? '#FFFFFF' : '#000000' }]}
                   itemStyle={Platform.OS === 'ios' ? { color: isDark ? '#FFFFFF' : '#000000', fontSize: 14 } : undefined}
                   dropdownIconColor={isDark ? '#FFFFFF' : '#000000'}
                 >
-                  {months.map((month, index) => (
-                    <Picker.Item key={index + 1} label={month} value={index + 1} color={isDark ? '#FFFFFF' : '#000000'} />
+                  {Array.from({ length: repeats * 12 }, (_, i) => months[i % 12]).map((month, index) => (
+                    <Picker.Item key={`m-${index}`} label={month} value={index} color={'#ffffff'} />
                   ))}
                 </Picker>
               </View>
@@ -1356,30 +1481,66 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
             <View style={styles.birthdatePickerSection}>
               <View style={styles.pickerWrapper}>
                 <Picker
-                  selectedValue={effectiveBirthDate.day}
-                  onValueChange={value => updateBirthDate('day', value)}
+                  selectedValue={
+                    (() => {
+                      const year = effectiveBirthDate.year || currentYear - 25;
+                      const month = effectiveBirthDate.month || 1;
+                      const day = effectiveBirthDate.day || 1;
+                      const maxDays = new Date(year, month, 0).getDate();
+                      return middleRepeatIndex * maxDays + (Math.min(day, maxDays) - 1);
+                    })()
+                  }
+                  onValueChange={value => {
+                    const year = effectiveBirthDate.year || currentYear - 25;
+                    const month = effectiveBirthDate.month || 1;
+                    const maxDays = new Date(year, month, 0).getDate();
+                    const selectedDay = (Number(value) % maxDays) + 1;
+                    updateBirthDate('day', selectedDay);
+                  }}
                   style={[styles.picker, { color: isDark ? '#FFFFFF' : '#000000' }]}
                   itemStyle={Platform.OS === 'ios' ? { color: isDark ? '#FFFFFF' : '#000000', fontSize: 14 } : undefined}
                   dropdownIconColor={isDark ? '#FFFFFF' : '#000000'}
                 >
-                  {Array.from({ length: effectiveBirthDate.month && effectiveBirthDate.year ? new Date(effectiveBirthDate.year, effectiveBirthDate.month, 0).getDate() : 31 }, (_, i) => i + 1).map(day => (
-                    <Picker.Item key={day} label={String(day)} value={day} color={isDark ? '#FFFFFF' : '#000000'} />
-                  ))}
+                  {(() => {
+                    const year = effectiveBirthDate.year || currentYear - 25;
+                    const month = effectiveBirthDate.month || 1;
+                    const maxDays = new Date(year, month, 0).getDate();
+                    return Array.from({ length: repeats * maxDays }, (_, i) => (i % maxDays) + 1).map((d, index) => (
+                      <Picker.Item key={`d-${index}`} label={String(d)} value={index} color={'#ffffff'} />
+                    ));
+                  })()}
                 </Picker>
               </View>
             </View>
             <View style={styles.birthdatePickerSection}>
               <View style={styles.pickerWrapper}>
                 <Picker
-                  selectedValue={effectiveBirthDate.year}
-                  onValueChange={value => updateBirthDate('year', value)}
+                  selectedValue={
+                    (() => {
+                      const selectedYear = effectiveBirthDate.year || currentYear - 25;
+                      const baseYear = 1950;
+                      const yearCount = currentYear - baseYear + 1;
+                      const idx = Math.max(0, Math.min(yearCount - 1, selectedYear - baseYear));
+                      return middleRepeatIndex * yearCount + idx;
+                    })()
+                  }
+                  onValueChange={value => {
+                    const baseYear = 1950;
+                    const yearCount = currentYear - baseYear + 1;
+                    const selectedYear = baseYear + (Number(value) % yearCount);
+                    updateBirthDate('year', selectedYear);
+                  }}
                   style={[styles.picker, { color: isDark ? '#FFFFFF' : '#000000' }]}
                   itemStyle={Platform.OS === 'ios' ? { color: isDark ? '#FFFFFF' : '#000000', fontSize: 14 } : undefined}
                   dropdownIconColor={isDark ? '#FFFFFF' : '#000000'}
                 >
-                  {Array.from({ length: (currentYear - 1940 - 3) }, (_, i) => currentYear - 4 - i).reverse().map(year => (
-                    <Picker.Item key={year} label={String(year)} value={year} color={isDark ? '#FFFFFF' : '#000000'} />
-                  ))}
+                  {(() => {
+                    const baseYear = 1950;
+                    const yearCount = currentYear - baseYear + 1;
+                    return Array.from({ length: repeats * yearCount }, (_, i) => baseYear + (i % yearCount)).map((yearVal, index) => (
+                      <Picker.Item key={`y-${index}`} label={String(yearVal)} value={index} color={'#ffffff'} />
+                    ));
+                  })()}
                 </Picker>
               </View>
             </View>
@@ -1546,14 +1707,17 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       {currentStep.type === 'allDone' && (
         <View style={styles.allDoneContainer}>
           {/* Confetti animation positioned behind content */}
-          <View style={styles.animationContainer}>
-            <LottieView
-              source={require('../../../assets/animations/confetti.json')}
-              autoPlay
-              speed={0.6}
-              style={styles.confettiAnimation}
-            />
-          </View>
+          {showAllDoneConfetti && (
+            <View style={styles.animationContainer}>
+              <LottieView
+                source={require('../../../assets/animations/confetti.json')}
+                autoPlay
+                loop={false}
+                speed={0.7}
+                style={styles.confettiAnimation}
+              />
+            </View>
+          )}
 
           <View style={styles.allDoneContent}>
             {/* Header with checkmark and "All done!" text */}
@@ -1561,11 +1725,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
               <CircleCheck size={36} color={'#34C759'} />
               <Text 
                 style={[
-                  styles.allDoneText,
-                  { 
-                    color: isDark ? '#FFFFFF' : '#000000',
-                    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
-                  }
+                  styles.allDoneText
                 ]}
               >
                 {i18n.t('onboarding.allDone.allDone')}
@@ -1575,11 +1735,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
             {/* Main thank you message */}
             <Text 
               style={[
-                styles.thankYouText,
-                { 
-                  color: isDark ? '#FFFFFF' : '#000000',
-                  fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto'
-                }
+                styles.thankYouText
               ]}
             >
               {i18n.t('onboarding.allDone.thankYou')}
@@ -1589,10 +1745,6 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
             <Text 
               style={[
                 styles.privacyText,
-                { 
-                  color: isDark ? '#FFFFFF' : '#000000',
-                  fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
-                }
               ]}
             >
               {i18n.t('onboarding.allDone.privacy')}
@@ -1624,8 +1776,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
           <View style={styles.dialogWrapper}>
             {/* Title above the dialog */}
             <Text style={[
-              styles.permissionTitle,
-              { color: isDark ? '#FFFFFF' : '#000000' }
+              styles.permissionTitle
             ]}>
               {i18n.t('onboarding.notificationPermission.title')}
             </Text>
@@ -1700,7 +1851,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                     styles.button,
                     styles.allowButton,
                     {
-                      backgroundColor: isDark ? '#FFFFFF' : '#000000',
+                      backgroundColor: isDark ? '#FFFFFF' : '#364153',
                     }
                   ]}
                   onPress={async () => {
@@ -1748,7 +1899,6 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
             {/* Title above the dialog */}
             <Text style={[
               styles.permissionTitle,
-              { color: isDark ? '#FFFFFF' : '#000000' }
             ]}>
               {i18n.t('onboarding.cameraPermission.title')}
             </Text>
@@ -1820,7 +1970,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                     styles.button,
                     styles.allowButton,
                     {
-                      backgroundColor: isDark ? '#FFFFFF' : '#000000',
+                      backgroundColor: isDark ? '#FFFFFF' : '#364153',
                       paddingVertical: 0,
                       marginVertical: 0,
                     }
@@ -1903,7 +2053,7 @@ const styles = StyleSheet.create({
   },
   optionLabel: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '800',
   },
   optionDescription: {
     fontSize: 14,
@@ -1927,8 +2077,9 @@ const styles = StyleSheet.create({
   },
   pickerLabel: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '800',
     marginBottom: 20,
+    color: '#ffffff',
     textAlign: 'center',
   },
   pickerWrapper: {
@@ -2083,7 +2234,7 @@ const styles = StyleSheet.create({
   },
   allDoneContent: {
     alignItems: 'center',
-    maxWidth: 300,
+    maxWidth: 340,
     zIndex: 2,
   },
   header: {
@@ -2094,19 +2245,26 @@ const styles = StyleSheet.create({
   allDoneText: {
     fontSize: 24,
     fontWeight: '600',
+    color: '#ffffff',
     marginLeft: 8,
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
   },
   thankYouText: {
     fontSize: 40,
-    fontWeight: '600',
+    fontWeight: '800',
+    color: '#ffffff',
     textAlign: 'center',
     marginBottom: 16,
     lineHeight: 44,
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto'
+
   },
   privacyText: {
-    fontSize: 16,
-    fontWeight: '400',
+    fontSize: 17,
+    fontWeight: '600',
     textAlign: 'center',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+    color: '#ffffff',
     lineHeight: 22,
   },
   animationContainer: {
@@ -2186,38 +2344,43 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     width: 80,
     fontSize: 20,
-    fontWeight: '600',
+    fontWeight: '800',
     textAlign: 'center',
     flexWrap: 'wrap',
   },
   percentageBox: {
-    width: 120,
+    width: 125,
     height: 150,
     borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
     margin: 0,
     marginTop: 'auto',
+    marginBottom: -2,
+    marginHorizontal: -2,
   },
   percentageText: {
     fontSize: 20,
     fontWeight: 'bold',
   },
   formaiBox: {
-    width: 120,
+    width: 125,
     height: 50,
     borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
     margin: 0,
     marginTop: 'auto',
+    marginBottom: -2,
+    marginHorizontal: -2,
   },
   formaiText: {
     fontSize: 20,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   description: {
     fontSize: 17,
+    fontWeight: '600',  
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: 24,
@@ -2227,24 +2390,36 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    position: 'relative',
+  },
+  perfectFormGoalMessageContent: {
+    alignItems: 'center',
+    maxWidth: 300,
+    width: '100%',
+    zIndex: 2,
+    position: 'relative',
   },
   perfectFormGoalMessageTitle: {
     fontSize: 40,
-    fontWeight: '600',
+    fontWeight: '800',
     textAlign: 'center',
+    color: '#ffffff',
     marginBottom: 16,
     lineHeight: 44,
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
+    width: '100%',
   },
   perfectFormGoalMessageSubtitle: {
     width: '80%',
     fontSize: 18,
+    fontWeight: '600',
     textAlign: 'center',
+    color: '#ffffff',
     lineHeight: 24,
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
   highlightedText: {
-    fontWeight: '700',
+    fontWeight: '800',
   },
   // Graph styles
   graphContainer: {
@@ -2271,18 +2446,18 @@ const styles = StyleSheet.create({
   },
   graphTitle: {
     fontSize: 22,
-    fontWeight: '500',
+    fontWeight: '700',
     textAlign: 'left',
     marginBottom: 16,
-    color: '#000000',
+    color: '#ffffff',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
   },
   graphSubtitle: {
     fontSize: 17,
-    fontWeight: '400',
+    fontWeight: '600',
     textAlign: 'center',
     marginTop: 16,
-    color: '#000000',
+    color: '#ffffff',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
     lineHeight: 22,
   },
@@ -2314,7 +2489,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#ffb86a',
+    backgroundColor: '#fe9a00',
     borderWidth: 2,
     borderColor: '#FFFFFF',
     justifyContent: 'center',
@@ -2340,26 +2515,29 @@ const styles = StyleSheet.create({
   },
   gymChallengeInfoHeadline: {
     fontSize: 32,
-    fontWeight: '700',
+    fontWeight: '800',
     textAlign: 'center',
     marginBottom: 16,
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
   },
   gymChallengeInfoMessage: {
     fontSize: 18,
-    fontWeight: '500',
+    fontWeight: '600',
     textAlign: 'center',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
   howWeGetYouThereTitle: {
-    fontSize: 16,
-    fontWeight: '500',
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#ffffff',
     textAlign: 'left',
     marginBottom: 4,
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
   },
   howWeGetYouThereCard: {
-    backgroundColor: '#F4F4F8',
+    backgroundColor: '#1d293d',
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
     borderRadius: 18,
     paddingHorizontal: 24,
     paddingVertical: 22,
@@ -2385,6 +2563,7 @@ const styles = StyleSheet.create({
   howWeGetYouThereItem: {
     fontSize: 16,
     fontWeight: '500',
+    color: '#ffffff',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
     flex: 1,
   },
@@ -2404,8 +2583,9 @@ const styles = StyleSheet.create({
   },
   permissionTitle: {
     fontSize: 32,
-    fontWeight: '700',
+    fontWeight: '800',
     textAlign: 'center',
+    color: '#ffffff',
     lineHeight: 38,
     marginBottom: 30,
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',

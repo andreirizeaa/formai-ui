@@ -90,12 +90,22 @@ export function DateRangeModal({
     onClose();
   };
 
-  // Generate years from 2020 to current year
+  // Repetition config
   const currentYear = new Date().getFullYear();
-  const years = Array.from(
-    { length: currentYear - 2020 + 1 },
-    (_, i) => 2020 + i
-  );
+  const yearCount = currentYear - 1950 + 1;
+  const repeats = 20;
+  const middleRepeatIndex = Math.floor(repeats / 2);
+
+  // Repeat months 'repeats' times
+  const repeatedMonths = Array.from({ length: repeats }, () => months).flat();
+
+  // Compute max days for each section
+  const fromMaxDays = dateRange.from?.month && dateRange.from?.year
+    ? getDaysInMonth(dateRange.from.month, dateRange.from.year)
+    : 31;
+  const toMaxDays = dateRange.to?.month && dateRange.to?.year
+    ? getDaysInMonth(dateRange.to.month, dateRange.to.year)
+    : 31;
 
   return (
     <Modal
@@ -129,20 +139,20 @@ export function DateRangeModal({
               <Text style={styles.dateSectionTitle}>{i18n.t('performance.from')}</Text>
               <View style={styles.pickersContainer}>
                 {/* Month Picker */}
-                <View style={[styles.pickerSection, styles.monthPickerSection]}>
+                <View style={styles.pickerSection}>
                   <View style={styles.pickerWrapper}>
                     <Picker
-                      selectedValue={dateRange.from?.month}
-                      onValueChange={(value) => updateDateRange('from', 'month', value)}
+                      selectedValue={dateRange.from?.month ? (middleRepeatIndex * 12) + (dateRange.from.month - 1) : undefined}
+                      onValueChange={(value) => updateDateRange('from', 'month', (value % 12) + 1)}
                       style={styles.picker}
                       itemStyle={Platform.OS === 'ios' ? { color: '#000000', fontSize: 14 } : undefined}
                       dropdownIconColor="#000000"
                     >
-                      {months.map((month, index) => (
+                      {repeatedMonths.map((month, index) => (
                         <Picker.Item 
-                          key={index + 1} 
+                          key={`${index}`}
                           label={month} 
-                          value={index + 1}
+                          value={index}
                           color="#000000"
                         />
                       ))}
@@ -151,26 +161,20 @@ export function DateRangeModal({
                 </View>
 
                 {/* Day Picker */}
-                <View style={styles.pickerSection}>
+                <View style={styles.dayPickerSection}>
                   <View style={styles.pickerWrapper}>
                     <Picker
-                      selectedValue={dateRange.from?.day}
-                      onValueChange={(value) => updateDateRange('from', 'day', value)}
+                      selectedValue={dateRange.from?.day ? (middleRepeatIndex * fromMaxDays) + (dateRange.from.day - 1) : undefined}
+                      onValueChange={(value) => updateDateRange('from', 'day', (value % fromMaxDays) + 1)}
                       style={styles.picker}
                       itemStyle={Platform.OS === 'ios' ? { color: '#000000', fontSize: 14 } : undefined}
                       dropdownIconColor="#000000"
                     >
-                      {Array.from(
-                        { length: dateRange.from?.month && dateRange.from?.year 
-                          ? getDaysInMonth(dateRange.from.month, dateRange.from.year) 
-                          : 31 
-                        }, 
-                        (_, i) => i + 1
-                      ).map(day => (
+                      {Array.from({ length: repeats * fromMaxDays }, (_, i) => (i % fromMaxDays) + 1).map((day, index) => (
                         <Picker.Item 
-                          key={day} 
+                          key={`${index}`}
                           label={day.toString()} 
-                          value={day}
+                          value={index}
                           color="#000000"
                         />
                       ))}
@@ -179,20 +183,23 @@ export function DateRangeModal({
                 </View>
 
                 {/* Year Picker */}
-                <View style={styles.pickerSection}>
+                <View style={styles.yearPickerSection}>
                   <View style={styles.pickerWrapper}>
                     <Picker
-                      selectedValue={dateRange.from?.year}
-                      onValueChange={(value) => updateDateRange('from', 'year', value)}
+                      selectedValue={dateRange.from?.year ? (middleRepeatIndex * yearCount) + (dateRange.from.year - 1950) : undefined}
+                      onValueChange={(value) => {
+                        const adjustedYear = (value % yearCount) + 1950;
+                        updateDateRange('from', 'year', adjustedYear);
+                      }}
                       style={styles.picker}
                       itemStyle={Platform.OS === 'ios' ? { color: '#000000', fontSize: 14 } : undefined}
                       dropdownIconColor="#000000"
                     >
-                      {years.map(year => (
+                      {Array.from({ length: repeats * yearCount }, (_, i) => 1950 + (i % yearCount)).map((yearVal, index) => (
                         <Picker.Item 
-                          key={year} 
-                          label={year.toString()} 
-                          value={year}
+                          key={`${index}`} 
+                          label={yearVal.toString()} 
+                          value={index}
                           color="#000000"
                         />
                       ))}
@@ -207,20 +214,20 @@ export function DateRangeModal({
               <Text style={styles.dateSectionTitle}>{i18n.t('performance.to')}</Text>
               <View style={styles.pickersContainer}>
                 {/* Month Picker */}
-                <View style={[styles.pickerSection, styles.monthPickerSection]}>
+                <View style={styles.pickerSection}>
                   <View style={styles.pickerWrapper}>
                     <Picker
-                      selectedValue={dateRange.to?.month}
-                      onValueChange={(value) => updateDateRange('to', 'month', value)}
+                      selectedValue={dateRange.to?.month ? (middleRepeatIndex * 12) + (dateRange.to.month - 1) : undefined}
+                      onValueChange={(value) => updateDateRange('to', 'month', (value % 12) + 1)}
                       style={styles.picker}
                       itemStyle={Platform.OS === 'ios' ? { color: '#000000', fontSize: 14 } : undefined}
                       dropdownIconColor="#000000"
                     >
-                      {months.map((month, index) => (
+                      {repeatedMonths.map((month, index) => (
                         <Picker.Item 
-                          key={index + 1} 
+                          key={`${index}`}
                           label={month} 
-                          value={index + 1}
+                          value={index}
                           color="#000000"
                         />
                       ))}
@@ -229,26 +236,20 @@ export function DateRangeModal({
                 </View>
 
                 {/* Day Picker */}
-                <View style={styles.pickerSection}>
+                <View style={styles.dayPickerSection}>
                   <View style={styles.pickerWrapper}>
                     <Picker
-                      selectedValue={dateRange.to?.day}
-                      onValueChange={(value) => updateDateRange('to', 'day', value)}
+                      selectedValue={dateRange.to?.day ? (middleRepeatIndex * toMaxDays) + (dateRange.to.day - 1) : undefined}
+                      onValueChange={(value) => updateDateRange('to', 'day', (value % toMaxDays) + 1)}
                       style={styles.picker}
                       itemStyle={Platform.OS === 'ios' ? { color: '#000000', fontSize: 14 } : undefined}
                       dropdownIconColor="#000000"
                     >
-                      {Array.from(
-                        { length: dateRange.to?.month && dateRange.to?.year 
-                          ? getDaysInMonth(dateRange.to.month, dateRange.to.year) 
-                          : 31 
-                        }, 
-                        (_, i) => i + 1
-                      ).map(day => (
+                      {Array.from({ length: repeats * toMaxDays }, (_, i) => (i % toMaxDays) + 1).map((day, index) => (
                         <Picker.Item 
-                          key={day} 
+                          key={`${index}`}
                           label={day.toString()} 
-                          value={day}
+                          value={index}
                           color="#000000"
                         />
                       ))}
@@ -257,20 +258,23 @@ export function DateRangeModal({
                 </View>
 
                 {/* Year Picker */}
-                <View style={styles.pickerSection}>
+                <View style={styles.yearPickerSection}>
                   <View style={styles.pickerWrapper}>
                     <Picker
-                      selectedValue={dateRange.to?.year}
-                      onValueChange={(value) => updateDateRange('to', 'year', value)}
+                      selectedValue={dateRange.to?.year ? (middleRepeatIndex * yearCount) + (dateRange.to.year - 1950) : undefined}
+                      onValueChange={(value) => {
+                        const adjustedYear = (value % yearCount) + 1950;
+                        updateDateRange('to', 'year', adjustedYear);
+                      }}
                       style={styles.picker}
                       itemStyle={Platform.OS === 'ios' ? { color: '#000000', fontSize: 14 } : undefined}
                       dropdownIconColor="#000000"
                     >
-                      {years.map(year => (
+                      {Array.from({ length: repeats * yearCount }, (_, i) => 1950 + (i % yearCount)).map((yearVal, index) => (
                         <Picker.Item 
-                          key={year} 
-                          label={year.toString()} 
-                          value={year}
+                          key={`${index}`} 
+                          label={yearVal.toString()} 
+                          value={index}
                           color="#000000"
                         />
                       ))}
@@ -333,8 +337,8 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: '600',
+    fontSize: 22,
+    fontWeight: '800',
     color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
     textAlign: 'left',
@@ -376,11 +380,16 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   pickerSection: {
-    flex: 1,
+    flex: 1.5, // wider flex for month
     alignItems: 'center',
   },
-  monthPickerSection: {
-    flex: 1.4, // Make month picker wider
+  dayPickerSection: {
+    flex: 0.9,
+    alignItems: 'center',
+  },
+  yearPickerSection: {
+    flex: 1.1, // normal flex for year
+    alignItems: 'center',
   },
   pickerWrapper: {
     width: '100%',
@@ -409,13 +418,13 @@ const styles = StyleSheet.create({
     borderColor: '#000000',
     borderRadius: 28,
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 19,
     alignItems: 'center',
   },
   resetButtonText: {
     color: '#000000',
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '800',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
   applyButton: {
@@ -423,13 +432,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#000000',
     borderRadius: 28,
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 20,
     alignItems: 'center',
   },
   applyButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '800',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
 });

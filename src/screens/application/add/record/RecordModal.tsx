@@ -1,7 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, Alert, Keyboard, useColorScheme, Linking } from 'react-native';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Alert, Keyboard, useColorScheme, Linking, Modal, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Camera, useCameraDevice, type VideoFile } from 'react-native-vision-camera';
+import { Camera, useCameraDevice, type VideoFile, useCameraFormat } from 'react-native-vision-camera';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import i18n from '../../../../utils/i18n';
 import { hapticFeedback } from '../../../../utils/haptic';
@@ -14,7 +14,7 @@ import { useLoadingLifts } from '../../../../context/LoadingLiftsContext';
 import { useSelectedDate } from '../../../../context/SelectedDateContext';
 import { gymMovements, BodyPart } from '../../../../constants/gymMovements';
 import { useCameraPermissions } from 'expo-camera';
-import { ChevronLeft, CircleQuestionMark, X } from 'lucide-react-native';
+import { ChevronLeft, CircleQuestionMark, X, Timer, TimerOff } from 'lucide-react-native';
 import * as MediaLibrary from 'expo-media-library';
 import { checkDuplicateAssetId } from '../../../../services/liftService';
 
@@ -48,12 +48,26 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
   const [isAudioEnabled, setIsAudioEnabled] = useState(false);
   const device = useCameraDevice(cameraFacing);
   const [permission, requestPermission] = useCameraPermissions();
+  const format = useCameraFormat(device, [
+    { videoResolution: { width: 1280, height: 720 } },
+    { fps: 30 },
+  ]);
 
   // Screen states
   const [showWeightReps, setShowWeightReps] = useState(false);
 
+  // Countdown state
+  const [countdownSetting, setCountdownSetting] = useState<number>(5); // default 5s
+  const [showCountdownModal, setShowCountdownModal] = useState(false);
+  const [isPreCountdown, setIsPreCountdown] = useState(false);
+  const [preCountdownValue, setPreCountdownValue] = useState<number>(0);
+  const preCountdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Animation value for finger icon
+  const fingerTranslateY = useMemo(() => new Animated.Value(0), []);
+
   useEffect(() => {
-    if (isRecording && recordingTime >= 90) {
+    if (isRecording && recordingTime >= 60) {
       handleStopRecording();
     }
   }, [isRecording, recordingTime]);
@@ -73,6 +87,14 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
       setFilteredMovements(gymMovements.map(m => m.name));
       setIsCameraReady(false);
       setShowCamera(true);
+      setShowCountdownModal(false);
+      // reset any ongoing pre-countdown
+      if (preCountdownIntervalRef.current) {
+        clearInterval(preCountdownIntervalRef.current);
+        preCountdownIntervalRef.current = null;
+      }
+      setIsPreCountdown(false);
+      setPreCountdownValue(0);
     } else {
       // Reset states when modal becomes invisible
       setIsRecording(false);
@@ -85,6 +107,13 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
       setSelectedMovement('');
       setSearchQuery('');
       setFilteredMovements(gymMovements.map(m => m.name));
+      setShowCountdownModal(false);
+      if (preCountdownIntervalRef.current) {
+        clearInterval(preCountdownIntervalRef.current);
+        preCountdownIntervalRef.current = null;
+      }
+      setIsPreCountdown(false);
+      setPreCountdownValue(0);
     }
   }, [isVisible]);
 
@@ -92,6 +121,33 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
   useEffect(() => {
     checkCameraPermission();
   }, [permission]);
+
+  // Finger animation effect
+  useEffect(() => {
+    if (hasPermission === false && isVisible) {
+      const startFingerAnimation = () => {
+        Animated.loop(
+          Animated.sequence([
+            Animated.timing(fingerTranslateY, {
+              toValue: -15,
+              duration: 600,
+              useNativeDriver: true,
+            }),
+            Animated.timing(fingerTranslateY, {
+              toValue: 0,
+              duration: 600,
+              useNativeDriver: true,
+            }),
+          ])
+        ).start();
+      };
+      
+      startFingerAnimation();
+    } else {
+      // Reset animation when not showing permission screen
+      fingerTranslateY.setValue(0);
+    }
+  }, [hasPermission, isVisible, fingerTranslateY]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -113,7 +169,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     const currentTime = `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-    const maxTime = '1:30'; // 90 seconds maximum
+    const maxTime = '1:00'; // 60 seconds maximum
     return `${currentTime} / ${maxTime}`;
   };
 
@@ -173,14 +229,51 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
           }
         },
         onRecordingError: error => {
-          Alert.alert('Error', 'Recording failed. Please try again.');
+          Alert.alert(i18n.t('upload.error'), i18n.t('upload.recordingFailed'));
           setIsRecording(false);
         },
       });
     } catch (error) {
       setIsRecording(false);
-      Alert.alert('Error', 'Failed to start recording. Please try again.');
+      Alert.alert(i18n.t('upload.error'), i18n.t('upload.failedToStartRecording'));
     }
+  };
+
+  const cancelPreCountdown = () => {
+    if (preCountdownIntervalRef.current) {
+      clearInterval(preCountdownIntervalRef.current);
+      preCountdownIntervalRef.current = null;
+    }
+    setIsPreCountdown(false);
+    setPreCountdownValue(0);
+  };
+
+  const startPreCountdown = () => {
+    if (isRecording || isPreCountdown) return;
+    if (countdownSetting <= 0) {
+      handleStartRecording();
+      return;
+    }
+
+    hapticFeedback.selection();
+    setIsPreCountdown(true);
+    setPreCountdownValue(countdownSetting);
+    preCountdownIntervalRef.current = setInterval(() => {
+      setPreCountdownValue(prev => {
+        if (prev <= 1) {
+          // start recording when about to hit 0
+          if (preCountdownIntervalRef.current) {
+            clearInterval(preCountdownIntervalRef.current);
+            preCountdownIntervalRef.current = null;
+          }
+          setIsPreCountdown(false);
+          setPreCountdownValue(0);
+          handleStartRecording();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
   };
 
   const handleStopRecording = async () => {
@@ -192,7 +285,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
       cameraRef.current.stopRecording();
       hapticFeedback.success();
     } catch (e) {
-      Alert.alert('Error', 'Recording failed to finish. Please try again.');
+      Alert.alert(i18n.t('upload.error'), i18n.t('upload.failedToFinishRecording'));
     } finally {
       setIsRecording(false);
       setRecordingTime(0);
@@ -205,7 +298,8 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
     if (isRecording) {
       handleStopRecording();
     } else {
-      handleStartRecording();
+      if (countdownSetting > 0) startPreCountdown();
+      else handleStartRecording();
     }
   };
 
@@ -327,14 +421,15 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
         dateToday: date,
         timeToday: time,
         movementType: selectedMovement,
-        weightValue: data.weight,
+        metricWeight: data.weight,
         reps: data.reps,
         assetId: recordedAssetId,
         videoDurationSec: recordingTime,
+        pipelineStage: 'upload_video',
       });
       hapticFeedback.success();
     } catch (error) {
-      Alert.alert('Error', 'Failed to generate video thumbnail. Please try again.');
+      Alert.alert(i18n.t('upload.error'), i18n.t('upload.failedToGenerateThumbnail'));
     }
   };
 
@@ -376,11 +471,11 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
     hapticFeedback.selection();
     if (isRecording) {
       Alert.alert(
-        'Stop Recording?',
-        'Are you sure you want to stop recording?',
+        i18n.t('upload.stopRecording'),
+        i18n.t('upload.stopRecordingMessage'),
         [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Stop', style: 'destructive', onPress: () => {
+          { text: i18n.t('upload.cancel'), style: 'cancel' },
+          { text: i18n.t('upload.stop'), style: 'destructive', onPress: () => {
             handleStopRecording();
             setIsRecording(false);
             setShowPractices(true);
@@ -422,72 +517,117 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
             hapticFeedback.selection();
             onClose();
           }} style={[styles.closeButton]}>
-            <X width={24} height={24} color={'#ffffff'} />
+            <X width={24} height={24} color={'#000000'} />
           </TouchableOpacity>
         </View>
 
-        {/* Main content */}
-        <View style={styles.permissionContentWrapper}>
-          {/* Title */}
-          <Text style={[styles.permissionMainTitle, { color: isDark ? '#FFFFFF' : '#000000' }]}>
-            {i18n.t('onboarding.cameraPermission.title')}
-          </Text>
-
-          {/* Subtitle */}
-          <Text style={[styles.permissionSubtitle, { color: '#8E8E93' }]}>
-            {i18n.t('onboarding.cameraPermission.subtitle')}
-          </Text>
-
-          {/* Dialog */}
-          <View style={styles.permissionDialogWrapper}>
+        <View style={styles.cameraPermissionContainer}>
+          {/* Dialog container with flex to center dialog */}
+          <View style={styles.dialogWrapper}>
+            {/* Title above the dialog */}
+            <Text style={[
+              styles.permissionTitle,
+            ]}>
+              {i18n.t('onboarding.cameraPermission.title')}
+            </Text>
+            {/* iOS-style Camera Permission Dialog */}
             <View style={[
-              styles.permissionDialog,
+              styles.dialog,
               {
                 backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF',
-                shadowColor: '#000000',
+                shadowColor: isDark ? '#000000' : '#000000',
               }
             ]}>
+              {/* Text Area */}
               <View style={[
-                styles.permissionTextArea,
-                { backgroundColor: isDark ? '#2C2C2E' : '#f3f4f6' }
+                styles.textArea,
+                {
+                  backgroundColor: isDark ? '#2C2C2E' : '#f3f4f6',
+                }
               ]}>
                 <Text style={[
-                  styles.permissionDialogText,
-                  { color: isDark ? '#FFFFFF' : '#000000', fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto' }
+                  styles.dialogText,
+                  {
+                    color: isDark ? '#FFFFFF' : '#000000',
+                    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
+                  }
                 ]}>
                   {i18n.t('onboarding.cameraPermission.dialogText')}
                 </Text>
               </View>
-
+              
+              {/* Buttons Container */}
               <View style={[
-                styles.permissionButtonContainer,
-                { borderTopColor: isDark ? '#2C2C2E' : '#E5E5EA', borderTopWidth: 1 }
+                styles.buttonContainer,
+                {
+                  borderTopColor: isDark ? '#2C2C2E' : '#E5E5EA',
+                  borderTopWidth: 1,
+                }
               ]}>
-                <TouchableOpacity
-                  style={[styles.permissionButtonCommon, styles.permissionDontAllowButton, { backgroundColor: isDark ? '#2C2C2E' : '#f3f4f6' }]}
-                  onPress={() => hapticFeedback.selection()}
-                  activeOpacity={0.7}
+                <View
+                  style={[
+                    styles.button,
+                    styles.dontAllowButton,
+                    {
+                      backgroundColor: isDark ? '#2C2C2E' : '#f3f4f6',
+                      paddingVertical: 0,
+                      marginVertical: 0,
+                    }
+                  ]}
                 >
-                  <Text style={[styles.permissionButtonText, { color: isDark ? '#FFFFFF' : '#000000', fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto' }]}>
+                  <Text style={[
+                    styles.buttonText,
+                    {
+                      color: isDark ? '#FFFFFF' : '#000000',
+                      fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
+                    }
+                  ]}>
                     {i18n.t('onboarding.cameraPermission.dontAllow')}
                   </Text>
-                </TouchableOpacity>
-
-                <View style={[styles.permissionButtonDivider, { backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF' }]} />
-
+                </View>
+                
+                <View style={[
+                  styles.buttonDivider,
+                  {
+                    backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF',
+                  }
+                ]} />
+                
                 <TouchableOpacity
-                  style={[styles.permissionButtonCommon, styles.permissionAllowButton, { backgroundColor: isDark ? '#FFFFFF' : '#000000' }]}
+                  style={[
+                    styles.button,
+                    styles.allowButton,
+                    {
+                      backgroundColor: isDark ? '#FFFFFF' : '#364153',
+                      paddingVertical: 0,
+                      marginVertical: 0,
+                    }
+                  ]}
                   onPress={requestCameraPermissionFromUser}
                   activeOpacity={0.8}
                 >
-                  <Text style={[styles.permissionButtonText, { color: isDark ? '#000000' : '#FFFFFF', fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto' }]}>
+                  <Text style={[
+                    styles.buttonText,
+                    {
+                      color: isDark ? '#000000' : '#FFFFFF',
+                      fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
+                    }
+                  ]}>
                     {i18n.t('onboarding.cameraPermission.allow')}
                   </Text>
                 </TouchableOpacity>
               </View>
             </View>
-
-            <Text style={styles.permissionPointingEmoji}>👆</Text>
+            
+            {/* Animated upwards pointing finger emoji */}
+            <Animated.View style={[
+              styles.animatedFingerContainer,
+              {
+                transform: [{ translateY: fingerTranslateY }]
+              }
+            ]}>
+              <Text style={styles.pointingEmoji}>👆</Text>
+            </Animated.View>
           </View>
         </View>
       </SafeAreaView>
@@ -506,7 +646,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
           {/* Close Button and Title */}
           <View style={styles.topControls}>
             <View style={styles.titleContainer}>
-              <Text style={styles.title}>Record Video</Text>
+              <Text style={styles.title}>{i18n.t('add.recordVideo')}</Text>
             </View>
             <TouchableOpacity onPress={() => {
               hapticFeedback.selection();
@@ -520,10 +660,10 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
           <View style={styles.content}>
             <PracticesScreen
               onNext={handleNext}
-              buttonText="Next"
+              buttonText={i18n.t('next')}
               tips={[
-                "Ensure good lighting and a stable camera",
-                "Try to record yourself from the side"
+                i18n.t('add.recordingTips.0'),
+                i18n.t('add.recordingTips.1')
               ]}
             />
           </View>
@@ -534,7 +674,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
           {/* Close Button and Title */}
           <View style={styles.topControls}>
             <View style={styles.titleContainer}>
-              <Text style={styles.title}>Record Video</Text>
+              <Text style={styles.title}>{i18n.t('add.recordVideo')}</Text>
             </View>
             <TouchableOpacity onPress={handleClose} style={[styles.closeButton]}>
               <X width={24} height={24} color="#000000" />
@@ -548,7 +688,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
               onSelectNewVideo={handleSelectNewVideo}
               onContinue={handleContinue}
               onClose={handleClose}
-              selectNewVideoText="Record New Video"
+              selectNewVideoText={i18n.t('add.recordVideo')}
             />
           </View>
         </SafeAreaView>
@@ -558,7 +698,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
           {/* Close Button and Title */}
           <View style={styles.topControls}>
             <View style={styles.titleContainer}>
-              <Text style={styles.title}>Record Video</Text>
+              <Text style={styles.title}>{i18n.t('add.recordVideo')}</Text>
             </View>
             <TouchableOpacity onPress={handleClose} style={[styles.closeButton]}>
               <X width={24} height={24} color="#000000" />
@@ -588,7 +728,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
           {/* Close Button and Title */}
           <View style={styles.topControls}>
             <View style={styles.titleContainer}>
-              <Text style={styles.title}>Record Video</Text>
+              <Text style={styles.title}>{i18n.t('add.recordVideo')}</Text>
             </View>
             <TouchableOpacity onPress={handleClose} style={[styles.closeButton]}>
               <X width={24} height={24} color="#000000" />
@@ -613,6 +753,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
                 ref={cameraRef}
                 style={styles.camera}
                 device={device}
+                format={format}
                 isActive={showCamera}
                 video={true}
                 audio={isAudioEnabled}
@@ -640,6 +781,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
               <View style={styles.topControls}>
                 <TouchableOpacity onPress={() => {
                   hapticFeedback.selection();
+                  cancelPreCountdown();
                   setShowCamera(false);
                   setShowPractices(true);
                 }} style={styles.backButtonCamera} disabled={isRecording}>
@@ -647,6 +789,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => {
                   hapticFeedback.selection();
+                  cancelPreCountdown();
                   onClose();
                 }} style={styles.closeButtonCamera}>
                   <X width={24} height={24} color="#ffffff" />
@@ -656,7 +799,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
               {/* Side Toggles (Vision Camera style) */}
               <View style={styles.sideToggles}>
                 <TouchableOpacity
-                  accessibilityLabel="Flip camera"
+                  accessibilityLabel={i18n.t('upload.accessibility.flipCamera')}
                   onPress={() => {
                     hapticFeedback.selection();
                     setCameraFacing(prev => (prev === 'back' ? 'front' : 'back'));
@@ -666,7 +809,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
                   <Ionicons name="camera-reverse" size={20} color="#FFFFFF" />
                 </TouchableOpacity>
                 <TouchableOpacity
-                  accessibilityLabel="Toggle torch"
+                  accessibilityLabel={i18n.t('upload.accessibility.toggleTorch')}
                   onPress={() => {
                     hapticFeedback.selection();
                     setIsTorchOn(v => !v);
@@ -676,7 +819,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
                   <Ionicons name={isTorchOn ? 'flash' : 'flash-off'} size={20} color="#FFFFFF" />
                 </TouchableOpacity>
                 <TouchableOpacity
-                  accessibilityLabel="Toggle mic"
+                  accessibilityLabel={i18n.t('upload.accessibility.toggleMic')}
                   onPress={() => {
                     hapticFeedback.selection();
                     setIsAudioEnabled(v => !v);
@@ -685,7 +828,28 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
                 >
                   <Ionicons name={isAudioEnabled ? 'mic' : 'mic-off'} size={20} color="#FFFFFF" />
                 </TouchableOpacity>
+                <TouchableOpacity
+                  accessibilityLabel={i18n.t('upload.accessibility.countdown')}
+                  onPress={() => {
+                    hapticFeedback.selection();
+                    setShowCountdownModal(true);
+                  }}
+                  style={[
+                    countdownSetting > 0 ? styles.countdownButton : styles.toggleButton,
+                    countdownSetting > 0 && styles.countdownButtonActive,
+                  ]}
+                >
+                  {countdownSetting > 0 ? (
+                    <>
+                      <Text style={styles.countdownText}>{countdownSetting}s</Text>
+                      <Timer size={24} color="#000000" />
+                    </>
+                  ) : (
+                    <TimerOff size={20} color="#FFFFFF" />
+                  )}
+                </TouchableOpacity>
               </View>
+          
 
               {/* Bottom Controls */}
               <View style={styles.bottomControls}>
@@ -707,6 +871,96 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
                   </TouchableOpacity>
                 </View>
               </View>
+
+              {/* Pre-record Countdown Overlay */}
+              {isPreCountdown && (
+                <View style={styles.preCountdownContainer}>
+                  <Text style={styles.preCountdownText}>{preCountdownValue}</Text>
+                </View>
+              )}
+
+              {/* Countdown Selection Modal */}
+              <Modal
+                visible={showCountdownModal}
+                transparent
+                onRequestClose={() => setShowCountdownModal(false)}
+              >
+                <TouchableOpacity
+                  style={styles.modalOverlay}
+                  activeOpacity={1}
+                  onPress={() => setShowCountdownModal(false)}
+                >
+                  <TouchableOpacity
+                    style={styles.modalContainerSmall}
+                    activeOpacity={1}
+                    onPress={e => e.stopPropagation()}
+                  >
+                    <TouchableOpacity
+                      style={styles.modalCloseButton}
+                      onPress={() => {
+                        hapticFeedback.selection();
+                        setShowCountdownModal(false);
+                      }}
+                    >
+                      <X size={20} color="#000000" />
+                    </TouchableOpacity>
+                    <Text style={styles.modalTitle}>{i18n.t('add.countdown.title')}</Text>
+                    <View style={styles.modalButtonsRow}>
+                      <TouchableOpacity
+                        style={[
+                          styles.modalButton,
+                          countdownSetting === 0 && styles.modalButtonActive,
+                        ]}
+                        onPress={() => {
+                          hapticFeedback.selection();
+                          setCountdownSetting(0);
+                          setShowCountdownModal(false);
+                        }}
+                        activeOpacity={0.8}
+                      >
+                        <Text style={[
+                          styles.modalButtonText,
+                          countdownSetting === 0 && { color: '#FFFFFF' }
+                        ]}>{i18n.t('add.countdown.off')}</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[
+                          styles.modalButton,
+                          countdownSetting === 5 && styles.modalButtonActive,
+                        ]}
+                        onPress={() => {
+                          hapticFeedback.selection();
+                          setCountdownSetting(5);
+                          setShowCountdownModal(false);
+                        }}
+                        activeOpacity={0.8}
+                      >
+                        <Text style={[
+                          styles.modalButtonText,
+                          countdownSetting === 5 && { color: '#FFFFFF' }
+                        ]}>{i18n.t('add.countdown.fiveSeconds')}</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[
+                          styles.modalButton,
+                          countdownSetting === 10 && styles.modalButtonActive,
+                        ]}
+                        onPress={() => {
+                          hapticFeedback.selection();
+                          setCountdownSetting(10);
+                          setShowCountdownModal(false);
+                        }}
+                        activeOpacity={0.8}
+                      >
+                        <Text style={[
+                          styles.modalButtonText,
+                          countdownSetting === 10 && { color: '#FFFFFF' }
+                        ]}>{i18n.t('add.countdown.tenSeconds')}</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </TouchableOpacity>
+                </TouchableOpacity>
+              </Modal>
             </View>
           </View>
         </SafeAreaView>
@@ -838,7 +1092,7 @@ const styles = StyleSheet.create({
   timerText: {
     color: 'black',
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   timerPillRecording: {
     backgroundColor: '#FF3B30',
@@ -919,6 +1173,25 @@ const styles = StyleSheet.create({
   toggleDisabled: {
     opacity: 0.4,
   },
+  countdownButton: {
+    width: 40,
+    height: 60,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'column',
+    gap: 2,
+  },
+  countdownButtonActive: {
+    backgroundColor: '#FFFFFF',
+  },
+  countdownText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#000000',
+    marginBottom: 4,
+  },
   permissionContainer: {
     flex: 1,
     alignItems: 'center',
@@ -995,11 +1268,12 @@ const styles = StyleSheet.create({
     marginLeft: '55%',
   },
   permissionTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: 'white',
+    fontSize: 32,
+    fontWeight: '800',
     textAlign: 'center',
-    marginBottom: 16,
+    color: '#000000',
+    lineHeight: 38,
+    marginBottom: 30,
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
   },
   permissionDescription: {
@@ -1032,6 +1306,71 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 10,
   },
+  dialogWrapper: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dialog: {
+    width: '100%',
+    maxWidth: 320,
+    borderRadius: 16,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 8,
+    overflow: 'hidden',
+  },
+  textArea: {
+    padding: 24,
+    paddingBottom: 20,
+  },
+  dialogText: {
+    fontSize: 17,
+    fontWeight: '600',
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    height: 44,
+  },
+  button: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dontAllowButton: {
+    // Styled above
+  },
+  allowButton: {
+    // Styled above
+  },
+  buttonText: {
+    fontSize: 17,
+    fontWeight: '600',
+  },
+  buttonDivider: {
+    width: 1,
+    height: '100%',
+  },
+  pointingEmoji: {
+    fontSize: 40,
+    marginRight: 24
+  },
+  animatedFingerContainer: {
+    marginTop: 20,
+    marginLeft: '55%',
+  },
+  cameraPermissionContainer: {
+    flex: 1,
+    paddingHorizontal: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 
   cameraSafeArea: {
     flex: 1,
@@ -1049,7 +1388,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 36,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#000000',
     textAlign: 'left',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
@@ -1062,5 +1401,84 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
     paddingBottom: 40,
+  },
+  preCountdownContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  preCountdownText: {
+    color: '#FFFFFF',
+    fontSize: 200,
+    fontWeight: '800',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  modalContainerSmall: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 24,
+    width: '100%',
+    maxWidth: 380,
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  modalCloseButton: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: '#E5E5EA',
+    backgroundColor: 'transparent',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#000000',
+    marginBottom: 16,
+    textAlign: 'left',
+  },
+  modalButtonsRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  modalButton: {
+    flex: 1,
+    height: 60,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#000000',
+    backgroundColor: '#FFFFFF',
+  },
+  modalButtonActive: {
+    backgroundColor: '#000000',
+},
+  modalButtonText: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#000000',
   },
 }); 

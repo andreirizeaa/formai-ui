@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import * as FileSystem from 'expo-file-system';
+import { Video as VideoCompressor } from 'react-native-compressor';
 
 function base64ToArrayBuffer(base64: string): ArrayBuffer {
   const base64Chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
@@ -76,18 +77,49 @@ function contentTypeForImageExt(ext: string): string {
   }
 }
 
-export async function uploadLiftVideo(userId: string, liftId: string, fileUri: string, assetId?: string): Promise<{ publicUrl: string; path: string }> {
-  const ext = inferExtensionFromUri(fileUri);
+export async function uploadLiftVideo(userId: string, liftId: string, fileUri: string, assetId?: string, hasHdVideos?: boolean): Promise<{ publicUrl: string; path: string }> {
+  let uploadUri = fileUri;
+
+  // Only compress video if user doesn't have HD videos entitlement
+  if (!hasHdVideos) {
+    // Compress video to reduce size (works on iOS and Android)
+    const compressedPath = await VideoCompressor.compress(
+      fileUri,
+      {
+        compressionMethod: 'manual',
+        // 540p target at ~0.6 Mbps
+        bitrate: 600_000,
+        maxSize: 540,
+        // Always allow compression (0 disables threshold)
+        minimumFileSizeForCompress: 0,
+      }
+    );
+
+    uploadUri = compressedPath.startsWith('file://') ? compressedPath : `file://${compressedPath}`;
+
+    // Validate compressed file; if missing/empty, fall back to original URI
+    try {
+      const info = await FileSystem.getInfoAsync(uploadUri);
+      if (!info.exists || !info.size || info.size === 0) {
+        // Fallback to original
+        console.warn('Compressed video missing or empty; falling back to original file');
+        uploadUri = fileUri;
+      }
+    } catch (_) {
+      // If we fail to stat the file, proceed but prefer original URI for safety
+      uploadUri = fileUri;
+    }
+  }
+
+  const ext = inferExtensionFromUri(uploadUri);
   const contentType = contentTypeForExt(ext);
-  
+
   // Use assetId as filename if provided, otherwise fallback to timestamp
   const fileName = assetId ? `${assetId}.${ext}` : `${Date.now()}.${ext}`;
   const path = `${userId}/${liftId}/videos/${fileName}`;
 
-  // Read local file reliably in React Native (Expo)
-  const base64 = await FileSystem.readAsStringAsync(fileUri, {
-    encoding: FileSystem.EncodingType.Base64,
-  });
+  // Read file as base64 (RN-friendly) and convert to ArrayBuffer for Supabase
+  const base64 = await FileSystem.readAsStringAsync(uploadUri, { encoding: FileSystem.EncodingType.Base64 });
   const arrayBuffer = base64ToArrayBuffer(base64);
 
   const { error } = await supabase.storage.from('lifts').upload(path, arrayBuffer, {
@@ -104,14 +136,11 @@ export async function uploadLiftVideo(userId: string, liftId: string, fileUri: s
 export async function uploadLiftThumbnail(userId: string, liftId: string, fileUri: string): Promise<{ publicUrl: string; path: string }> {
   const ext = inferImageExtensionFromUri(fileUri);
   const contentType = contentTypeForImageExt(ext);
-  
   const fileName = `${Date.now()}.${ext}`;
   const path = `${userId}/${liftId}/thumbnails/${fileName}`;
 
-  // Read local file
-  const base64 = await FileSystem.readAsStringAsync(fileUri, {
-    encoding: FileSystem.EncodingType.Base64,
-  });
+  // Read file as base64 and convert to ArrayBuffer for Supabase
+  const base64 = await FileSystem.readAsStringAsync(fileUri, { encoding: FileSystem.EncodingType.Base64 });
   const arrayBuffer = base64ToArrayBuffer(base64);
 
   const { error } = await supabase.storage.from('lifts').upload(path, arrayBuffer, {

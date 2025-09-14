@@ -74,7 +74,7 @@ export function DeleteAccountModal({ isVisible, onClose, onConfirm }: DeleteAcco
           {/* Message */}
           {isAcknowledgementStep ? (
             <Text style={styles.message}>
-              Deleting your Form AI account through the app does not cancel your subscription. Please remember to cancel your subscription separately in your device's subscription settings so you aren't charged again.
+              {i18n.t('settings.deleteAccountSubscriptionWarning')}
             </Text>
           ) : (
             <Text style={styles.message}>{i18n.t('settings.deleteAccountMessage')}</Text>
@@ -99,7 +99,7 @@ export function DeleteAccountModal({ isVisible, onClose, onConfirm }: DeleteAcco
                     styles.acknowledgeButtonText,
                     hasAcknowledged && styles.deleteButtonText
                   ]}>
-                    {hasAcknowledged ? 'Delete account' : 'I acknowledge'}
+                    {hasAcknowledged ? i18n.t('settings.deleteAccountButton') : i18n.t('settings.iAcknowledge')}
                   </Text>
                 )}
               </TouchableOpacity>
@@ -169,15 +169,15 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   title: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 20,
+    fontWeight: '800',
     color: '#000000',
     marginBottom: 24,
     textAlign: 'left',
   },
   message: {
     fontSize: 16,
-    fontWeight: '400',
+    fontWeight: '500',
     color: '#000000',
     lineHeight: 22,
     marginBottom: 24,
@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
   },
   button: {
     flex: 1,
-    height: 56,
+    height: 60,
     borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
@@ -203,13 +203,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#000000',
   },
   buttonOutlinedText: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '800',
     color: '#000000',
   },
   buttonPrimaryText: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '800',
     color: '#FFFFFF',
   },
   acknowledgeContainer: {
@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
   },
   acknowledgeButton: {
     width: '100%',
-    height: 56,
+    height: 60,
     borderRadius: 28,
     backgroundColor: '#000000',
     alignItems: 'center',
@@ -225,8 +225,8 @@ const styles = StyleSheet.create({
   },
   acknowledgeButtonText: {
     color: '#FFFFFF',
-    fontSize: 17,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '800',
   },
   deleteButton: {
     backgroundColor: '#fb2c36',

@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, ActivityIndicator, Alert } from 'react-native';
-import { RulerPicker } from 'react-native-ruler-picker';
+import { Picker } from '@react-native-picker/picker';
 import i18n from '../../../../utils/i18n';
 import { hapticFeedback } from '../../../../utils/haptic';
 import { useUserDetails } from '../../../../context/UserDetailsContext';
@@ -26,6 +26,20 @@ export function EditCurrentWeightScreen({ onBack, currentValue, onSave }: EditCu
   const [isSaving, setIsSaving] = useState(false);
   const didMount = useRef(false);
 
+  // Generate weight options similar to onboarding
+  const weightOptions = useMemo(() => {
+    if (isMetric) {
+      // 30kg to 300kg in 0.1kg increments (2701 options)
+      return Array.from({ length: 2701 }, (_, i) => Number((30 + i * 0.1).toFixed(1)));
+    } else {
+      // 66lbs to 660lbs in 0.1lb increments (5941 options) - equivalent to 30-300kg
+      return Array.from({ length: 5941 }, (_, i) => Number((66 + i * 0.1).toFixed(1)));
+    }
+  }, [isMetric]);
+
+  const repeats = 3; // Number of repeats for infinite scroll effect
+  const middleRepeatIndex = 1; // Use middle repeat for initial selection
+
   // Set didMount after first render
   useEffect(() => {
     didMount.current = true;
@@ -38,8 +52,8 @@ export function EditCurrentWeightScreen({ onBack, currentValue, onSave }: EditCu
     const weightKg = parseWeightToMetric(currentValue);
     const imperialWeight = convertMetricWeightToImperial(weightKg);
     
-    // For metric, preserve decimal precision; for imperial, round to whole numbers
-    const initialValue = isMetric ? weightKg : Math.round(imperialWeight);
+    // Always round to 1 decimal place for both metric and imperial
+    const initialValue = Number((isMetric ? weightKg : imperialWeight).toFixed(1));
     setSelectedWeight(initialValue);
 
     // IMPORTANT: reset didMount so that onValueChange doesn't fire right away
@@ -53,11 +67,13 @@ export function EditCurrentWeightScreen({ onBack, currentValue, onSave }: EditCu
     return () => clearTimeout(timer);
   }, [currentValue, isMetric]);
 
-  const handleWeightChange = (weight: string | number) => {
+  const handleWeightChange = (value: number) => {
     if (!didMount.current) return;
 
-    const numWeight = typeof weight === 'string' ? parseFloat(weight) : weight;
-    setSelectedWeight(numWeight);
+    const len = weightOptions.length;
+    const optionIndex = value % len;
+    const selected = weightOptions[optionIndex];
+    setSelectedWeight(selected);
   };
 
   const handleSave = async () => {
@@ -73,10 +89,8 @@ export function EditCurrentWeightScreen({ onBack, currentValue, onSave }: EditCu
       hapticFeedback.success();
 
       const unit = isMetric ? 'kg' : 'lbs';
-      // For metric, show 1 decimal place; for imperial, show whole numbers
-      const displayValue = isMetric 
-        ? `${Number(weightKg.toFixed(1))} ${unit}`
-        : `${Math.round(selectedWeight)} ${unit}`;
+      // Always show 1 decimal place for both metric and imperial
+      const displayValue = `${Number(selectedWeight.toFixed(1))} ${unit}`;
 
       onSave(displayValue);
     } catch (e) {
@@ -109,18 +123,33 @@ export function EditCurrentWeightScreen({ onBack, currentValue, onSave }: EditCu
 
       {/* Content */}
       <View style={styles.content}>
-        <View style={styles.rulerContainer}>
-          <RulerPicker
-            min={isMetric ? 30 : 90}
-            max={isMetric ? 300 : 340}
-            step={isMetric ? 0.1 : 1}
-            unit={isMetric ? 'kg' : 'lbs'}
-            initialValue={selectedWeight}
-            onValueChange={handleWeightChange}
-            onValueChangeEnd={handleWeightChange}
-            width={350}
-            height={100}
-          />
+        <View style={styles.pickerContainer}>
+          <Text style={styles.pickerLabel}>
+            {i18n.t('personalDetails.weight')}
+          </Text>
+          <View style={styles.pickerWrapper}>
+            <Picker
+              selectedValue={(() => {
+                const base = isMetric ? 30 : 66;
+                const len = weightOptions.length;
+                const idx = Math.max(0, Math.min(len - 1, Math.round((selectedWeight - base) * 10)));
+                return middleRepeatIndex * len + idx;
+              })()}
+              onValueChange={handleWeightChange}
+              style={[styles.picker, { color: '#000000' }]}
+              itemStyle={Platform.OS === 'ios' ? { color: '#000000', fontSize: 16 } : undefined}
+              dropdownIconColor="#000000"
+            >
+              {Array.from({ length: repeats * weightOptions.length }, (_, i) => weightOptions[i % weightOptions.length]).map((weight, index) => (
+                <Picker.Item 
+                  key={`w-${index}`} 
+                  label={`${weight.toFixed(1)} ${isMetric ? 'kg' : 'lbs'}`} 
+                  value={index} 
+                  color="#000000" 
+                />
+              ))}
+            </Picker>
+          </View>
         </View>
       </View>
 
@@ -170,8 +199,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: '400',
+    fontSize: 22,
+    fontWeight: '700',
     color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
@@ -184,10 +213,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
   },
-  rulerContainer: {
+  pickerContainer: {
     width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  pickerLabel: {
+    fontSize: 18,
+    fontWeight: '800',
+    marginBottom: 20,
+    color: '#000000',
+    textAlign: 'center',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
+  pickerWrapper: {
+    width: '100%',
+    alignItems: 'center',
+  },
+  picker: {
+    height: Platform.OS === 'ios' ? 280 : 80,
+    width: '100%',
   },
   bottomContainer: {
     paddingHorizontal: 20,
@@ -195,14 +240,14 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     backgroundColor: '#000000',
-    paddingVertical: 16,
+    paddingVertical: 20,
     paddingHorizontal: 24,
     borderRadius: 28,
     alignItems: 'center',
   },
   saveButtonText: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '800',
     color: '#FFFFFF',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },

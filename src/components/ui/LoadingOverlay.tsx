@@ -19,10 +19,10 @@ export function LoadingOverlay({ visible }: LoadingOverlayProps) {
       animationType="fade"
     >
       <View style={styles.overlay}>
-        <View style={[styles.container, { backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF' }]}>
+        <View style={[styles.container, { backgroundColor: 'rgba(50, 50, 50, 0.95)' }]}>
           <ActivityIndicator 
             size="large" 
-            color={isDark ? '#FFFFFF' : '#000000'} 
+            color="#FFFFFF"
           />
         </View>
       </View>
@@ -33,22 +33,18 @@ export function LoadingOverlay({ visible }: LoadingOverlayProps) {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   container: {
-    width: 80,
-    height: 80,
-    borderRadius: 16,
+    width: 85,
+    height: 85,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 8,
     paddingLeft: 4,
     paddingTop: 8,
+    paddingBottom: 2,
   },
 }); 

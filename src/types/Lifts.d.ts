@@ -2,9 +2,10 @@
 
 // Base type aliases
 export type PipelineStage = 'upload_video' | 'upload_thumbnail' | 'analyze';
-export type RetryStage = 'VIDEO_VALIDATION' | 'POST_ESTIMATION' | 'AI_ANALYSIS';
+export type RetryStage = 'VIDEO_VALIDATION' | 'POST_ESTIMATION' | 'AI_ANALYSIS' | 'force';
 export type LiftStatus = 'uploading' | 'processing' | 'completed' | 'error';
 export type WeightUnit = 'kg' | 'lbs';
+export type JobStatus = 'queued' | 'running' | 'succeeded' | 'failed';
 
 // Common interfaces
 export interface LiftAnalysis {
@@ -19,50 +20,60 @@ export interface LiftFeedback {
   improvement: string[];
 }
 
+export interface JobRow {
+  id: string;
+  user_id: string;
+  status: JobStatus;
+  progress: number;
+  error?: string | null;
+  created_at: string;
+  started_at?: string | null;
+  finished_at?: string | null;
+}
+
 export interface BaseLiftData {
   id: string;
-  weightValue: number;
+  metricWeight: number;
   reps: number;
   liftType: string;
   liftDate: string;
   isFavourite: boolean;
   thumbnailURL?: string;
+  is_streak?: boolean;
 }
 
 export interface LoadingLiftData {
   id: string;
-  videoLink: string;
-  thumbnailUri: string;
-  movementType: string;
-  weightValue: number;
+  assetId?: string;          // Caller-provided correlation id; never override
+  videoLink?: string;
+  thumbnailUri?: string;
+  uploadedVideoUrl?: string; // set after client upload
+  uploadedThumbnailUrl?: string;
+  movementType?: string;
+  metricWeight?: number;
   weightUnit?: WeightUnit;
-  reps: number;
+  reps?: number;
   dateToday: string;
   timeToday: string;
+
+  status: 'uploading' | 'processing' | 'completed' | 'error';
+  pipelineStage: 'upload_video' | 'upload_thumbnail' | 'analyze';
   isComplete: boolean;
-  status: LiftStatus;
+  uiProgress?: number;
+  simStartAt?: number;
+  simStartProgress?: number;
+  simDurationMs?: number;
+
   errorMessage?: string;
-  // Pipeline metadata
-  pipelineStage?: PipelineStage;
-  failureStage?: PipelineStage;
-  // Source local URIs for retrying uploads
+  failureStage?: 'upload_video' | 'upload_thumbnail' | 'analyze';
+  finalData?: ILiftData;
+  
+  // Legacy fields for backward compatibility
   sourceVideoUri?: string;
   sourceThumbnailUri?: string;
-  // Uploaded URLs retained for retrying analysis
-  uploadedVideoUrl?: string;
-  uploadedThumbnailUrl?: string;
-  // Asset ID for unique video identification
-  assetId?: string;
-  // Retry stage for analysis errors
   retryStage?: RetryStage;
-  // Progress tracking
-  videoDurationSec?: number; // Length of video in seconds
-  uiProgress?: number; // Current progress 0-1
-  // In-place completion data to avoid flicker (subset for card rendering)
-  finalData?: BaseLiftData & {
-    liftTime: string;
-    analysis: LiftAnalysis;
-  };
+  videoDurationSec?: number;
+  analysisStartedAt?: number;
 }
 
 export interface ILiftData extends BaseLiftData {
@@ -71,6 +82,7 @@ export interface ILiftData extends BaseLiftData {
   poseVideoURL: any;
   analysis: LiftAnalysis & {
     lineGraphValues: number[];
+    barChartValues: number[];
     feedback: LiftFeedback[];
   };
 }
@@ -88,7 +100,11 @@ export interface LoadingLiftsContextType {
   showStreakModal: boolean;
   openStreakModal: () => void;
   closeStreakModal: () => void;
+  handleStreakModalContinue: () => void;
   isLiftAutoDeleted: (liftId: string) => boolean;
+  removeLoadingLiftByFinalId: (finalId: string) => void;
+  purgeAllLoadingLifts: () => void;
+  setHomeActive?: (isActive: boolean) => void;
 }
 
 export interface LiftDataContextType {
@@ -118,7 +134,7 @@ export interface AnalyzeLiftPayload {
     videoLink: string;
     thumbnailUri: string;
     movementType: string;
-    weightValue: number;
+    metricWeight: number;
     reps: number;
     dateToday: string;
     timeToday: string;
@@ -133,6 +149,7 @@ export interface AnalyzeLiftResponse<T = any> {
   stage?: RetryStage;
   error?: string;
   is_streak?: boolean;
+  assetId?: string;
 }
 
 export interface VideoPlayerComponentProps {

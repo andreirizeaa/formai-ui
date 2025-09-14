@@ -14,6 +14,7 @@ import { removeUserId, setUserId } from '../../services/storageService';
 import { fetchUserById, requiresOnboarding } from '../../services/userService';
 import Purchases from 'react-native-purchases';
 import { usePurchases } from '../../context/PurchasesContext';
+import { registerAndSaveExpoPushToken } from '../../services/push';
 
 interface SignInScreenProps {
   onSignIn: () => void;
@@ -49,8 +50,6 @@ export function SignInScreen({ onSignIn, onBack, onNavigateToOnboarding, onRequi
     try {
       await setUserId(userId);
       const { user } = await fetchUserById(userId);
-      console.log('user', user);
-
       if (!user) {
         hapticFeedback.error();
         if (onNavigateToOnboarding) onNavigateToOnboarding();
@@ -58,7 +57,8 @@ export function SignInScreen({ onSignIn, onBack, onNavigateToOnboarding, onRequi
         return;
       }
       await Purchases.logIn(userId);
-      console.log('|||||||||||||||| customerInfo', customerInfo);
+      // Ensure push token is registered for signed-in users
+      await registerAndSaveExpoPushToken(userId);
       if (requiresOnboarding(user)) {
         hapticFeedback.error();
         await removeUserId();
@@ -150,7 +150,7 @@ export function SignInScreen({ onSignIn, onBack, onNavigateToOnboarding, onRequi
     <SafeAreaView 
       style={[
         styles.container, 
-        { backgroundColor: isDark ? '#000000' : '#FFFFFF' }
+        { backgroundColor: '#1d293d' }
       ]}
     >
       {/* Header with back button and title */}
@@ -158,7 +158,7 @@ export function SignInScreen({ onSignIn, onBack, onNavigateToOnboarding, onRequi
         <BackButton onPress={onBack} />
         <Text style={[
           styles.mainTitle,
-          { color: isDark ? '#FFFFFF' : '#000000' }
+          { color: '#FFFFFF' }
         ]}>
           {i18n.t('signIn')}
         </Text>
@@ -174,7 +174,7 @@ export function SignInScreen({ onSignIn, onBack, onNavigateToOnboarding, onRequi
               <TouchableOpacity
                 style={[
                   styles.appleButton,
-                  { backgroundColor: isDark ? '#FFFFFF' : '#000000' }
+                  { backgroundColor: '#000000' }
                 ]}
                 onPress={handleAppleSignIn}
                 activeOpacity={0.8}
@@ -184,13 +184,13 @@ export function SignInScreen({ onSignIn, onBack, onNavigateToOnboarding, onRequi
                     source={require('../../../assets/icons/apple.png')}
                     style={[
                       styles.appleIcon,
-                      { tintColor: isDark ? '#000000' : '#FFFFFF' }
+                      { tintColor: '#FFFFFF' }
                     ]}
                     resizeMode="contain"
                   />
                   <Text style={[
                     styles.appleButtonText,
-                    { color: isDark ? '#000000' : '#FFFFFF' }
+                    { color: '#FFFFFF' }
                   ]}>
                     {i18n.t('onboarding.createAccount.signInWithApple')}
                   </Text>
@@ -202,8 +202,8 @@ export function SignInScreen({ onSignIn, onBack, onNavigateToOnboarding, onRequi
               style={[
                 styles.googleButton,
                 { 
-                  backgroundColor: isDark ? '#000000' : '#FFFFFF',
-                  borderColor: isDark ? '#FFFFFF' : '#000000'
+                  backgroundColor: '#FFFFFF',
+                  borderColor: '#FFFFFF'
                 }
               ]}
               onPress={handleGoogleSignIn}
@@ -217,7 +217,7 @@ export function SignInScreen({ onSignIn, onBack, onNavigateToOnboarding, onRequi
                 />
                 <Text style={[
                   styles.googleButtonText,
-                  { color: isDark ? '#FFFFFF' : '#000000' }
+                  { color: '#000000' }
                 ]}>
                   {i18n.t('onboarding.createAccount.signInWithGoogle')}
                 </Text>
@@ -228,7 +228,7 @@ export function SignInScreen({ onSignIn, onBack, onNavigateToOnboarding, onRequi
             <View style={styles.noAccountContainer}>
               <Text style={[
                 styles.noAccountText,
-                { color: isDark ? '#8E8E93' : '#8E8E93' }
+                { color: '#ffffff' }
               ]}>
                 Don't have an account?{' '}
               </Text>
@@ -238,7 +238,7 @@ export function SignInScreen({ onSignIn, onBack, onNavigateToOnboarding, onRequi
               }}>
                 <Text style={[
                   styles.startTodayLink,
-                  { color: isDark ? '#007AFF' : '#007AFF' }
+                  { color: '#007AFF' }
                 ]}>
                   Start today
                 </Text>
@@ -289,14 +289,14 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   appleButton: {
-    width: '90%',
+    width: '80%',
     height: 60,
     borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
   },
   googleButton: {
-    width: '90%',
+    width: '80%',
     height: 60,
     borderRadius: 28,
     alignItems: 'center',
@@ -319,13 +319,13 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   appleButtonText: {
-    fontSize: 20,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '800',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
   googleButtonText: {
-    fontSize: 20,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '800',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
   noAccountContainer: {

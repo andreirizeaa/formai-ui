@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
   },
   tabText: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '700',
     marginTop: 4,
     fontFamily: 'System',
   },

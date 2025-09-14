@@ -17,10 +17,14 @@ interface PurchasesContextValue {
 
   offerings: PurchasesOfferings | null;
   packages: PurchasesPackage[];
+  defaultPackages: PurchasesPackage[];
+  upgradePackages: PurchasesPackage[];
   customerInfo: CustomerInfo | null;
 
   hasActiveSubscription: boolean;
   activeEntitlementIds: string[];
+  allEntitlementIds: string[];
+  hasHdVideos: boolean;
   refreshOfferings: () => Promise<void>;
   refreshCustomerInfo: () => Promise<void>;
   purchasePackage: (pkg: PurchasesPackage) => Promise<CustomerInfo | null>;
@@ -47,8 +51,23 @@ export function PurchasesProvider({ children, onSubscriptionUpdate }: PurchasesP
   const { onboardingData, updateOnboardingData } = useOnboarding();
 
   const packages = useMemo(() => {
-    if (!offerings?.current) return [];
-    return offerings.current.availablePackages;
+    if (!offerings?.all) return [];
+    // Get packages from all offerings (default + add-ons)
+    const allPackages: PurchasesPackage[] = [];
+    Object.values(offerings.all).forEach(offering => {
+      allPackages.push(...offering.availablePackages);
+    });
+    return allPackages;
+  }, [offerings]);
+
+  const defaultPackages = useMemo(() => {
+    if (!offerings?.all?.default) return [];
+    return offerings.all.default.availablePackages;
+  }, [offerings]);
+
+  const upgradePackages = useMemo(() => {
+    if (!offerings?.all?.upgrades) return [];
+    return offerings.all.upgrades.availablePackages;
   }, [offerings]);
 
   const activeEntitlementIds = useMemo(() => {
@@ -56,7 +75,17 @@ export function PurchasesProvider({ children, onSubscriptionUpdate }: PurchasesP
     return Object.keys(customerInfo.entitlements.active ?? {});
   }, [customerInfo]);
 
+  const allEntitlementIds = useMemo(() => {
+    if (!customerInfo) return [];
+    const activeIds = Object.keys(customerInfo.entitlements.active ?? {});
+    const allIds = Object.keys(customerInfo.entitlements.all ?? {});
+    // Combine active and all entitlements, removing duplicates
+    return [...new Set([...activeIds, ...allIds])];
+  }, [customerInfo]);
+
   const hasActiveSubscription = useMemo(() => activeEntitlementIds.length > 0, [activeEntitlementIds]);
+
+  const hasHdVideos = useMemo(() => allEntitlementIds.includes('hd_videos'), [allEntitlementIds]);
 
   useEffect(() => {
     async function initialize() {
@@ -148,9 +177,13 @@ export function PurchasesProvider({ children, onSubscriptionUpdate }: PurchasesP
     purchaseError,
     offerings,
     packages,
+    defaultPackages,
+    upgradePackages,
     customerInfo,
     hasActiveSubscription,
     activeEntitlementIds,
+    allEntitlementIds,
+    hasHdVideos,
     refreshOfferings,
     refreshCustomerInfo,
     purchasePackage,

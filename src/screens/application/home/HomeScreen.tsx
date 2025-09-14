@@ -1,17 +1,27 @@
 import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, Dimensions, ImageSourcePropType, ImageBackground, Modal, Animated as RNAnimated } from 'react-native';
 import { Image } from 'expo-image';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FlashList } from '@shopify/flash-list';
 import { hapticFeedback } from '../../../utils/haptic';
 import { useLoadingLifts } from '../../../context/LoadingLiftsContext';
+import { useFocusEffect } from '@react-navigation/native';
 import { useLiftData, ILiftData } from '../../../context/LiftDataContext';
+import { LoadingLiftData } from '../../../types/Lifts.d';
+
+// Type guard for loading lifts
+function isLoadingLift(x: ILiftData | LoadingLiftData): x is LoadingLiftData {
+  return 'status' in x;
+}
 import { LiftCard } from '../../../components/LiftCard';
 import { SwipeableCalendar } from '../../../components/ui/SwipeableCalendar';
 import { SwipeableAccuracyCard } from '../../../components/ui/SwipeableAccuracyCard';
 import { StreakModal } from '../../../components/ui/StreakModal';
+import { FormAILogo } from '../../../components/FormAILogo';
 import { useUserCheckIns } from '../../../context/UserCheckInsContext';
 import { useTutorialTarget } from '../../../context/TutorialContext';
 import { useSelectedDate } from '../../../context/SelectedDateContext';
+import { TutorialAllDoneModal } from '../settings/TutorialAllDoneModal';
 
 import i18n from '../../../utils/i18n';
 import { ChevronRight, FileVideoCamera } from 'lucide-react-native';
@@ -26,7 +36,7 @@ interface HomeScreenProps {
 }
 
 export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibrary, onShowShare, onTriggerAddOptions, onNavigateToPerformance }: HomeScreenProps) {
-  const { loadingLifts, showStreakModal, closeStreakModal, removeLift: removeLoadingLift } = useLoadingLifts();
+  const { loadingLifts, showStreakModal, closeStreakModal, handleStreakModalContinue, removeLift: removeLoadingLift, setHomeActive } = useLoadingLifts();
   const { liftData , getLiftsByDate , refreshLifts, removeLift } = useLiftData();
   const { currentStreak, invalidateAndRefetch } = useUserCheckIns();
   const { selectedDate, setSelectedDate } = useSelectedDate();
@@ -36,6 +46,7 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
   
   // Accuracy card swipe state
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
+  const [showTutorialDone, setShowTutorialDone] = useState(false);
   
   // ScrollView ref for gesture handling
   const scrollViewRef = useRef<ScrollView>(null);
@@ -51,36 +62,23 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
     // loading lifts are already filtered by selected date in context
     const loading = loadingLifts;
 
-    // Create a map of final lifts by ID for easy lookup
-    const finalLiftsMap = new Map<string, ILiftData>();
-    liftsForSelectedDate.forEach(lift => {
-      finalLiftsMap.set(lift.id, lift);
-    });
+    // Stable keys: never replace the completed loading card with final ILiftData
+    const completedFinalIds = new Set(
+      loading
+        .filter(l => l.status === 'completed' && l.finalData?.id)
+        .map(l => l.finalData!.id)
+    );
 
-    // Process loading lifts and replace with final data if available
-    const processedLoading = loading
-      .map(loadingLift => {
-        // If this loading lift has been completed and we have final data, use the final data
-        if (loadingLift.status === 'completed' && loadingLift.finalData?.id) {
-          const finalData = finalLiftsMap.get(loadingLift.finalData.id);
-          if (finalData) {
-            // Return the final data which has the latest changes (favorite status, weight, etc.)
-            return finalData;
-          }
-          // If finalData exists but the lift was deleted from context, return null to filter it out
-          return null;
-        }
-        // Otherwise return the loading lift as-is
-        return loadingLift;
-      })
-      .filter((item): item is NonNullable<typeof item> => item !== null);
+    // Show all loading cards (including completed-with-finalData)
+    const loadingCards = loading;
 
-    // Add any final lifts that don't have corresponding loading lifts
-    const loadingIds = new Set(loading.map(l => l.id));
-    const additionalFinals = liftsForSelectedDate.filter(lift => !loadingIds.has(lift.id));
+    // Only add final ILiftData that don't have a completed twin
+    const additionalFinals = liftsForSelectedDate.filter(
+      l => !completedFinalIds.has(l.id)
+    );
 
-    // Combine processed loading lifts with additional finals
-    return [...processedLoading, ...additionalFinals];
+    // Stable, no key swapping
+    return [...loadingCards, ...additionalFinals];
   }, [loadingLifts, liftsForSelectedDate]);
   
   // Calculate average accuracy for the selected date
@@ -162,11 +160,18 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
 
   const handleLiftPress = useCallback((liftId: string) => {
     hapticFeedback.selection();
+    // First try from final lists
     const lift = liftsForSelectedDate.find(l => l.id === liftId) || liftData.find(l => l.id === liftId);
     if (lift) {
       onShowFeedback(lift);
+      return;
     }
-  }, [liftsForSelectedDate, liftData, onShowFeedback]);
+    // Fallback: if pressed from a completed loading card that hasn't synced to final list yet
+    const completedLoading = loadingLifts.find(l => l.status === 'completed' && l.finalData?.id === liftId);
+    if (completedLoading?.finalData) {
+      onShowFeedback(completedLoading.finalData);
+    }
+  }, [liftsForSelectedDate, liftData, loadingLifts, onShowFeedback]);
 
 
   const handleLibraryPress = useCallback(() => {
@@ -202,6 +207,29 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
     void refreshLifts();
   }, []);
 
+  // Show tutorial done modal if flag is set
+  useEffect(() => {
+    let isMounted = true;
+    (async () => {
+      try {
+        const flag = await AsyncStorage.getItem('justFinishedTutorial');
+        if (isMounted && flag === 'true') {
+          setShowTutorialDone(true);
+          await AsyncStorage.removeItem('justFinishedTutorial');
+        }
+      } catch {}
+    })();
+    return () => { isMounted = false; };
+  }, []);
+
+  // Track Home screen focus to control streak modal triggering
+  useFocusEffect(
+    React.useCallback(() => {
+      setHomeActive?.(true);
+      return () => setHomeActive?.(false);
+    }, [setHomeActive])
+  );
+
   // Expose showFirstLiftDetails function globally for tutorial
   useEffect(() => {
     (global as any).showFirstLiftDetails = () => {
@@ -229,9 +257,12 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
       hapticFeedback.selection();
       onShowLibrary();
     };
+    // Expose setShowTutorialDone function globally for immediate modal display
+    (global as any).setShowTutorialDone = setShowTutorialDone;
 
     return () => {
       (global as any).navigateToLibrary = undefined;
+      (global as any).setShowTutorialDone = undefined;
     };
   }, [onShowLibrary]);
 
@@ -252,10 +283,9 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
       ref={scrollViewRef}
     >
       <View style={styles.header}>
-        <Image
-          source={require('../../../../assets/formai-light-icon.png')}
-          style={styles.logo}
-          contentFit="contain"
+        <FormAILogo 
+          iconSize={40}
+          containerStyle={styles.logoContainer}
         />
         <Pressable 
           style={({ pressed }) => [
@@ -310,9 +340,11 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
               data={combinedLiftsForDay}
               renderItem={renderLiftItem}
               keyExtractor={(item) => item.id}
+              getItemType={(item) => (isLoadingLift(item) ? 'loading' : 'final')}
               estimatedItemSize={146}
               showsVerticalScrollIndicator={false}
               scrollEnabled={false}
+              extraData={combinedLiftsForDay}
             />
           ) : (
             <LiftCard
@@ -330,7 +362,7 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
       <StreakModal
         visible={showStreakModal}
         currentStreak={currentStreak}
-        onClose={closeStreakModal}
+        onClose={handleStreakModalContinue}
       />
       
       {/* Manual Fire Card Popup */}
@@ -338,6 +370,12 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
         visible={isFirePopupVisible}
         currentStreak={currentStreak}
         onClose={handleFirePopupClose}
+      />
+
+      {/* Tutorial Completion Modal */}
+      <TutorialAllDoneModal
+        isVisible={showTutorialDone}
+        onComplete={() => setShowTutorialDone(false)}
       />
     </ScrollView>
   );
@@ -368,9 +406,15 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  logo: {
-    width: 160,
-    height: 40,
+  logoContainer: {
+    marginBottom: 0,
+  },
+  logoText: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#000000',
+    fontFamily: 'SF Pro Display',
+    marginBottom: 0,
   },
   streakBadge: {
     flexDirection: 'row',
@@ -388,7 +432,7 @@ const styles = StyleSheet.create({
     marginLeft: 2,
     marginTop: 4,
     fontSize: 17,
-    fontWeight: '500',
+    fontWeight: '700',
     color: '#000000',
     fontFamily: 'SF Pro Display',
   },
@@ -402,13 +446,13 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 22,
-    fontWeight: '600',
+    fontWeight: '800',
     color: '#000000',
     fontFamily: 'SF Pro Display',
   },
   seeAllText: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '600',
     color: '#8E8E93',
     fontFamily: 'SF Pro Text',
     marginRight: 2,

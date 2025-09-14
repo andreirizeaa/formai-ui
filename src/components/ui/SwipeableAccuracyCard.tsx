@@ -4,6 +4,8 @@ import { FlashList, ListRenderItemInfo } from '@shopify/flash-list';
 import { hapticFeedback } from '../../utils/haptic';
 import { CircularProgressChart } from '../icons/icons';
 import { useLiftData } from '../../context/LiftDataContext';
+import { useLoadingLifts } from '../../context/LoadingLiftsContext';
+import { useSelectedDate } from '../../context/SelectedDateContext';
 
 // Use integer dimensions for precise snapping
 const SCREEN_WIDTH = Math.round(Dimensions.get('window').width);
@@ -30,6 +32,8 @@ export function SwipeableAccuracyCard({
   externalScrollGestureRef,
 }: SwipeableAccuracyCardProps) {
   const { addLift, formatDateForLift } = useLiftData();
+  const { purgeAllLoadingLifts } = useLoadingLifts();
+  const { selectedDate } = useSelectedDate();
   
   // Create a ref to control the list
   const listRef = useRef<FlashList<AccuracyCardData> | null>(null);
@@ -128,7 +132,7 @@ export function SwipeableAccuracyCard({
         liftType: randomMovement,
         liftDate: formatDateForLift(randomDate),
         liftTime: randomTime,
-        weightValue: randomWeight,
+        metricWeight: randomWeight,
         reps: randomReps,
         rawVideoURL: require('../../../assets/tutorial/formai-example-video.mp4'),
         poseVideoURL: require('../../../assets/tutorial/formai-example-pose.mp4'),
@@ -136,6 +140,7 @@ export function SwipeableAccuracyCard({
         analysis: {
           accuracy: randomAccuracy,
           lineGraphValues: randomLineGraphValues,
+          barChartValues: randomLineGraphValues,
           feedback: [
             {
               imageURL: require('../../../assets/tutorial/formai-example-feedback.png'),
@@ -159,6 +164,13 @@ export function SwipeableAccuracyCard({
         },
       });
     }
+  };
+
+  const handlePruneLifts = () => {
+    hapticFeedback.selection();
+    
+    // Purge all loading lifts from memory and AsyncStorage
+    purgeAllLoadingLifts();
   };
 
   return (
@@ -202,11 +214,12 @@ export function SwipeableAccuracyCard({
                         percentage={item.percentage}
                         progressColor="#000000"
                         backgroundColor="#E5E5E5"
-                        strokeWidth={10}
+                        strokeWidth={11}
                         radius={54}
                         showTargetIcon
                         iconColor="#000000"
                         iconSize={20}
+                        animationKey={selectedDate.toDateString()}
                       />
                     )}
                   </View>
@@ -242,13 +255,23 @@ export function SwipeableAccuracyCard({
 
       {/* Test Lift Button - Only visible in development */}
       {__DEV__ && (
-        <TouchableOpacity
-          style={styles.testLiftButton}
-          onPress={handleAddTestLift}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.testLiftButtonText}>Add 1000 Test Lifts</Text>
-        </TouchableOpacity>
+        <View style={styles.devButtonsContainer}>
+          <TouchableOpacity
+            style={styles.testLiftButton}
+            onPress={handleAddTestLift}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.testLiftButtonText}>Add 1000 Test Lifts</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={styles.pruneLiftsButton}
+            onPress={handlePruneLifts}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.pruneLiftsButtonText}>Prune Loading Lifts</Text>
+          </TouchableOpacity>
+        </View>
       )}
     </View>
   );
@@ -290,13 +313,13 @@ const styles = StyleSheet.create({
   accuracyCardLeftSection: { alignItems: 'flex-start', paddingLeft: 8 },
   accuracyCardNumber: {
     fontSize: 48,
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#000000',
     fontFamily: 'SF Pro Display',
   },
   accuracyCardLabel: {
-    fontSize: 14,
-    fontWeight: '400',
+    fontSize: 16,
+    fontWeight: '600',
     color: '#000000',
     fontFamily: 'SF Pro Text',
   },
@@ -323,15 +346,32 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#000',
   },
+  devButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 20,
+    gap: 12,
+  },
   testLiftButton: {
     backgroundColor: '#007AFF',
     borderRadius: 12,
     paddingVertical: 12,
     paddingHorizontal: 24,
-    marginTop: 20,
-    alignSelf: 'center',
   },
   testLiftButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+    fontFamily: 'SF Pro Display',
+  },
+  pruneLiftsButton: {
+    backgroundColor: '#FF3B30',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+  },
+  pruneLiftsButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',

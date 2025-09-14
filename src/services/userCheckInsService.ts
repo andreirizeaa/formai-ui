@@ -1,5 +1,4 @@
-import axios from 'axios';
-import { API_CONFIG } from './api';
+import { supabase } from '../lib/supabase';
 
 export interface CheckInsResponse {
   success: boolean;
@@ -16,41 +15,63 @@ function formatDateAsDDMMYYYY(dateIso: string): string {
   return `${day}-${month}-${year}`;
 }
 
-export async function fetchUserCheckIns(userId: string): Promise<CheckInsResponse> {
-  try {
-    const response = await axios.get(`${API_CONFIG.baseURL}/check-ins/get`, {
-      params: { user_id: userId },
-      timeout: API_CONFIG.timeout,
-    });
-    
-    // Validate response structure
-    const data = response.data;
-    if (!data || typeof data !== 'object') {
-      throw new Error('Invalid response format from server');
-    }
-    
-    if (!data.success) {
-      throw new Error(data.message || 'Request was not successful');
-    }
-    
-    // Ensure required fields are present
-    if (!data.user_id || !Array.isArray(data.check_in_dates) || typeof data.current_streak !== 'number') {
-      throw new Error('Missing required fields in response');
-    }
-    
-    return data as CheckInsResponse;
-  } catch (error: any) {
-    if (error.response) {
-      const errorMessage = error.response.data?.detail || 
-                          error.response.data?.message || 
-                          `HTTP ${error.response.status}: ${error.response.statusText}`;
-      throw new Error(errorMessage);
-    }
-    if (error.code === 'ECONNABORTED') {
-      throw new Error('Request timeout - please check your connection');
-    }
-    throw new Error(error.message || 'Network error occurred');
+function computeCurrentStreak(isoDates: string[]): number {
+  if (!isoDates?.length) return 0;
+  const today = new Date().toISOString().slice(0, 10);
+  const set = new Set(isoDates);
+
+  const latest = isoDates
+    .filter(d => d <= today)
+    .sort((a, b) => (a < b ? 1 : -1))[0];
+  if (!latest) return 0;
+
+  let streak = 0;
+  let cursor = latest;
+  while (set.has(cursor)) {
+    streak += 1;
+    const d = new Date(cursor);
+    d.setUTCDate(d.getUTCDate() - 1);
+    cursor = d.toISOString().slice(0, 10);
   }
+  return streak;
+}
+
+export async function fetchUserCheckIns(userId: string): Promise<CheckInsResponse> {
+
+  // Verify user exists and is not soft-deleted
+  const { data: userRow, error: userErr } = await supabase
+    .from('users')
+    .select('user_id, has_deleted')
+    .eq('user_id', userId)
+    .eq('has_deleted', false)
+    .maybeSingle();
+  if (userErr) throw new Error(userErr.message);
+  if (!userRow) throw new Error('User not found or deleted');
+
+  // Fetch check-in dates from user_check_ins (only user_id and date exist)
+  const { data: rows, error } = await supabase
+    .from('user_check_ins')
+    .select('date')
+    .eq('user_id', userId);
+  if (error) throw new Error(error.message);
+
+  const rawDates = (rows ?? []).map((r: any) => {
+    const raw = r?.date ?? null;
+    if (!raw) return null;
+    return String(raw).split('T')[0];
+  }).filter(Boolean) as string[];
+
+  const unique = Array.from(new Set(rawDates));
+  const sortedDesc = unique.sort((a, b) => (a < b ? 1 : -1));
+  const currentStreak = computeCurrentStreak(sortedDesc);
+
+  return {
+    success: true,
+    message: `Found ${sortedDesc.length} check-ins for user`,
+    user_id: userId,
+    check_in_dates: sortedDesc,
+    current_streak: currentStreak,
+  };
 }
 
 // Legacy function for backward compatibility
