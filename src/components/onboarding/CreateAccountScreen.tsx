@@ -63,6 +63,7 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
         } else {
           updateOnboardingData('signInMethod', 'google');
           updateOnboardingData('onboardingCompleted', true);
+          updateOnboardingData('walkthroughCompleted', false);
     
           if (data.user?.id) {
             try {
@@ -106,6 +107,7 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
         } else {
           updateOnboardingData('signInMethod', 'apple');
           updateOnboardingData('onboardingCompleted', true);
+          updateOnboardingData('walkthroughCompleted', false);
           if (data.user?.id) {
             try {
               updateOnboardingData('userId', data.user.id);
@@ -132,11 +134,13 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
       ...onboardingData,
       signInMethod: signInMethod,
       onboardingCompleted: true,
+      walkthroughCompleted: false,
       userId: data.user?.id
     };
 
     updateOnboardingData('signInMethod', signInMethod);
     updateOnboardingData('onboardingCompleted', true);
+    updateOnboardingData('walkthroughCompleted', false);
     updateOnboardingData('userId', data.user.id);
     
     if (data.user?.id) {

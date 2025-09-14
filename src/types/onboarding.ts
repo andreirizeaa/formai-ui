@@ -25,6 +25,7 @@ export interface OnboardingData {
   birthDate: string | null;
   hasRated: boolean | null;
   onboardingCompleted: boolean;
+  walkthroughCompleted: boolean;
   signInMethod: string | null;
 }
 
