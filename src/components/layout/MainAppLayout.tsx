@@ -6,6 +6,7 @@ import { WelcomeModal } from '../../screens/application/settings/WelcomeModal';
 import { TutorialProvider, useTutorial } from '../../context/TutorialContext';
 import { TutorialLiftSeeder } from '../../context/LiftDataContext';
 import { TutorialOverlay } from '../TutorialOverlay';
+import { hapticFeedback } from '../../utils/haptic';
 
 interface MainAppLayoutProps {
   children?: React.ReactNode;
@@ -19,10 +20,14 @@ export function MainAppLayout({ children, onLogout }: MainAppLayoutProps) {
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
 
   React.useEffect(() => {
-    console.log('userDetails', userDetails);
     // Show welcome modal if walkthrough is not completed (false or null)
     if (userDetails && userDetails.walkthroughCompleted !== true) {
-      setShowWelcome(true);
+      const timer = setTimeout(() => {
+        setShowWelcome(true);
+        hapticFeedback.success();
+      }, 200);
+      
+      return () => clearTimeout(timer);
     }
   }, [userDetails]);
 
@@ -49,9 +54,9 @@ export function MainAppLayout({ children, onLogout }: MainAppLayoutProps) {
     React.useEffect(() => {
       if (!trigger) return;
       try {
-        const t = setTimeout(() => {
+        const t = setTimeout(async () => {
           try {
-            tutorial.start();
+            await tutorial.start();
           } catch (error) {
             console.warn('Failed to start tutorial:', error);
           }

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, TextInput, Keyboard, KeyboardAvoidingView, TouchableWithoutFeedback, Animated } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, TextInput, Keyboard, KeyboardAvoidingView, TouchableWithoutFeedback, Animated, Easing } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { hapticFeedback } from '../../../../utils/haptic';
 import { useUserDetails } from '../../../../context/UserDetailsContext';
 import { useTutorialTarget, useTutorial } from '../../../../context/TutorialContext';
@@ -26,49 +26,66 @@ export function WeightRepsScreen({
   
   const weightInputRef = useRef<TextInput>(null);
   const repsInputRef = useRef<TextInput>(null);
-  const keyboardHeight = useRef(new Animated.Value(0)).current;
+  const accessoryBottom = useRef(new Animated.Value(0)).current;
+  const GAP_ADJUSTMENT = -42;
+  const insets = useSafeAreaInsets();
 
-  // Auto-focus weight input when component mounts (but not during tutorial)
+  // Auto focus weight input on mount to open keyboard and show accessory (skip if tutorial is active)
   useEffect(() => {
-    if (isTutorialActive) {
-      return; // Don't auto-focus during tutorial
-    }
-    
-    const timer = setTimeout(() => {
+    if (isTutorialActive) return;
+    const t = setTimeout(() => {
+      setFocusedInput('weight');
       weightInputRef.current?.focus();
-    }, 100);
-    return () => clearTimeout(timer);
+    }, 250);
+    return () => clearTimeout(t);
   }, [isTutorialActive]);
 
-  // Keyboard event listeners for smooth animation
+  // Animate accessory with keyboard height
   useEffect(() => {
-    const keyboardWillShowListener = Keyboard.addListener(
-      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
-      (event) => {
-        Animated.timing(keyboardHeight, {
-          toValue: event.endCoordinates.height,
-          duration: Platform.OS === 'ios' ? event.duration || 250 : 250,
-          useNativeDriver: true,
-        }).start();
-      }
-    );
+    const showSub = Platform.OS === 'ios'
+      ? Keyboard.addListener('keyboardWillShow', e => {
+          const height = e.endCoordinates?.height ?? 0;
+          Animated.timing(accessoryBottom, {
+            toValue: Math.max(height - insets.bottom + GAP_ADJUSTMENT, 0),
+            duration: e.duration ?? 250,
+            easing: Easing.out(Easing.ease),
+            useNativeDriver: false,
+          }).start();
+        })
+      : Keyboard.addListener('keyboardDidShow', e => {
+          const height = e.endCoordinates?.height ?? 0;
+          Animated.timing(accessoryBottom, {
+            toValue: Math.max(height + GAP_ADJUSTMENT, 0),
+            duration: 250,
+            easing: Easing.out(Easing.ease),
+            useNativeDriver: false,
+          }).start();
+        });
 
-    const keyboardWillHideListener = Keyboard.addListener(
-      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
-      (event) => {
-        Animated.timing(keyboardHeight, {
-          toValue: 0,
-          duration: Platform.OS === 'ios' ? event.duration || 250 : 250,
-          useNativeDriver: true,
-        }).start();
-      }
-    );
+    const hideSub = Platform.OS === 'ios'
+      ? Keyboard.addListener('keyboardWillHide', e => {
+          Animated.timing(accessoryBottom, {
+            toValue: 0,
+            duration: e.duration ?? 200,
+            easing: Easing.out(Easing.ease),
+            useNativeDriver: false,
+          }).start();
+        })
+      : Keyboard.addListener('keyboardDidHide', () => {
+          Animated.timing(accessoryBottom, {
+            toValue: 0,
+            duration: 200,
+            easing: Easing.out(Easing.ease),
+            useNativeDriver: false,
+          }).start();
+        });
 
     return () => {
-      keyboardWillShowListener.remove();
-      keyboardWillHideListener.remove();
+      showSub.remove();
+      hideSub.remove();
     };
-  }, [keyboardHeight]);
+  }, [accessoryBottom, insets.bottom]);
+
 
   const handleBack = () => {
     hapticFeedback.selection();
@@ -77,12 +94,12 @@ export function WeightRepsScreen({
 
   const handleUpload = () => {
     hapticFeedback.selection();
-    const weightValue = parseFloat(weight) || 0;
+    const metricWeight = parseFloat(weight) || 0;
     const repsValue = parseInt(reps) || 0;
     
-    if (weightValue > 0 && repsValue > 0) {
+    if (metricWeight > 0 && repsValue > 0) {
       onUpload({
-        weight: weightValue,
+        weight: metricWeight,
         unit,
         reps: repsValue
       });
@@ -112,7 +129,8 @@ export function WeightRepsScreen({
     setFocusedInput(inputType);
   };
 
-  const isUploadDisabled = !weight || parseFloat(weight) <= 0 || !reps || parseInt(reps) <= 0;
+  const isWeightValid = weight && parseFloat(weight) > 0;
+  const isUploadDisabled = !isWeightValid || !reps || parseInt(reps) <= 0;
   
   const isKeyboardButtonDisabled = () => {
     if (focusedInput === 'weight') {
@@ -131,8 +149,8 @@ export function WeightRepsScreen({
         style={styles.keyboardAvoidingView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <View style={styles.content}>
+        <TouchableWithoutFeedback>
+          <View style={styles.content} ref={completeButtonRef}>
             {/* Weight Section */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Weight</Text>
@@ -162,72 +180,52 @@ export function WeightRepsScreen({
             {/* Sets Section */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Reps</Text>
-              <View style={styles.inputContainer}>
+              <View style={[styles.inputContainer, !isWeightValid && styles.inputContainerDisabled]}>
                 <TextInput
                   ref={repsInputRef}
-                  style={styles.input}
+                  style={[styles.input, !isWeightValid && styles.inputDisabled]}
                   value={reps}
                   onChangeText={setReps}
                   placeholder="1"
-                  placeholderTextColor="#8E8E93"
+                  placeholderTextColor={isWeightValid ? "#8E8E93" : "#C7C7CC"}
                   keyboardType="numeric"
                   onSubmitEditing={handleRepsSubmit}
                   blurOnSubmit={true}
                   onFocus={() => handleInputFocus('reps')}
                   onBlur={() => setFocusedInput(null)}
+                  editable={!!isWeightValid}
+                  pointerEvents={isWeightValid ? 'auto' : 'none'}
                 />
               </View>
             </View>
           </View>
         </TouchableWithoutFeedback>
 
-        {/* Custom Keyboard Accessory View */}
-        {focusedInput && (
-          <Animated.View 
-            style={[
-              styles.keyboardAccessoryView,
-              {
-                transform: [{ translateY: Animated.multiply(keyboardHeight, -0.5) }]
-              }
-            ]}
-          >
+      </KeyboardAvoidingView>
+      {/* Custom Keyboard Accessory View (outside KAV to avoid overlap) - hide during tutorial */}
+      {focusedInput && !isTutorialActive && (
+        <Animated.View style={[styles.keyboardAccessoryView, { bottom: accessoryBottom }]}> 
+          <View style={styles.keyboardRow}>
             <TouchableOpacity 
-              style={[styles.keyboardButton, isKeyboardButtonDisabled() && styles.keyboardButtonDisabled]}
+              style={styles.keyboardBackButton}
+              onPress={handleBack}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.keyboardBackButtonText}>Back</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.keyboardPrimaryButton, isKeyboardButtonDisabled() && styles.keyboardPrimaryButtonDisabled]}
               onPress={handleKeyboardButtonPress}
               disabled={isKeyboardButtonDisabled()}
               activeOpacity={0.7}
             >
-              <Text style={[styles.keyboardButtonText, isKeyboardButtonDisabled() && styles.keyboardButtonTextDisabled]}>
+              <Text style={[styles.keyboardPrimaryButtonText, isKeyboardButtonDisabled() && styles.keyboardPrimaryButtonTextDisabled]}>
                 {focusedInput === 'weight' ? 'Next' : 'Complete'}
               </Text>
             </TouchableOpacity>
-          </Animated.View>
-        )}
-
-        {/* Bottom Buttons - always shown */}
-        <View style={styles.bottomContainer}>
-          <View style={styles.buttonStack}>
-            <TouchableOpacity 
-              style={styles.backButton} 
-              onPress={handleBack}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.backButtonText}>Back</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              ref={completeButtonRef}
-              style={[styles.uploadButton, isUploadDisabled && styles.uploadButtonDisabled]}
-              onPress={handleUpload}
-              disabled={isUploadDisabled}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.uploadButtonText, isUploadDisabled && styles.uploadButtonTextDisabled]}>
-                Complete
-              </Text>
-            </TouchableOpacity>
           </View>
-        </View>
-      </KeyboardAvoidingView>
+        </Animated.View>
+      )}
     </SafeAreaView>
   );
 }
@@ -238,19 +236,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   keyboardAvoidingView: {
+    paddingHorizontal: 20,
     flex: 1,
   },
   content: {
-    flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 40,
+    marginTop: -40,
   },
   section: {
     marginBottom: 40,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 22,
+    fontWeight: '500',
     color: '#000000',
     marginBottom: 16,
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
@@ -262,41 +259,87 @@ const styles = StyleSheet.create({
     backgroundColor: '#f3f4f6',
     borderRadius: 16,
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
   input: {
     flex: 1,
     color: '#000000',
     fontSize: 18,
-    fontWeight: '400',
+    fontWeight: '500',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
     textAlign: 'center',
+    height: 60,
+    
   },
   unitText: {
     fontSize: 18,
-    fontWeight: '500',
+    fontWeight: '700',
     color: '#000000',
     marginLeft: 8,
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
   keyboardAccessoryView: {
     position: 'absolute',
-    bottom: 0,
     left: 0,
     right: 0,
     backgroundColor: '#f3f4f6',
     borderTopWidth: 1,
     borderTopColor: '#E5E5EA',
     paddingHorizontal: 20,
-    paddingVertical: 12,
+    paddingTop: 12,
+    paddingBottom: 12,
     alignItems: 'center',
-    paddingBottom: 50,
+  },
+  keyboardRow: {
+    flexDirection: 'row',
+    width: '100%',
+    gap: 12,
+  },
+  keyboardBackButton: {
+    flex: 1,
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#000000',
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    borderRadius: 28,
+    alignItems: 'center',
+  },
+  keyboardBackButtonText: {
+    color: '#000000',
+    fontSize: 18,
+    fontWeight: '800',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
+  keyboardPrimaryButton: {
+    flex: 1,
+    backgroundColor: '#000000',
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    borderRadius: 28,
+    alignItems: 'center',
+  },
+  keyboardPrimaryButtonDisabled: {
+    backgroundColor: '#8E8E93',
+    opacity: 0.7,
+  },
+  keyboardPrimaryButtonText: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
+  keyboardPrimaryButtonTextDisabled: {
+    color: '#FFFFFF',
   },
   keyboardButton: {
     backgroundColor: '#000000',
     borderRadius: 28,
     paddingHorizontal: 24,
-    paddingVertical: 12,
+    paddingVertical: 16,
     width: '100%',
     alignItems: 'center',
     marginBottom: 0,
@@ -307,7 +350,7 @@ const styles = StyleSheet.create({
   },
   keyboardButtonText: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '800',
     color: '#FFFFFF',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
@@ -329,21 +372,21 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#000000',
     paddingHorizontal: 24,
-    paddingVertical: 16,
+    paddingVertical: 18,
     borderRadius: 28,
     alignItems: 'center',
     marginBottom: 12,
   },
   backButtonText: {
     color: '#000000',
-    fontSize: 17,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '800',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
   uploadButton: {
     backgroundColor: '#000000',
     paddingHorizontal: 24,
-    paddingVertical: 16,
+    paddingVertical: 20,
     borderRadius: 28,
     width: '100%',
     alignItems: 'center',
@@ -354,11 +397,18 @@ const styles = StyleSheet.create({
   },
   uploadButtonText: {
     color: '#FFFFFF',
-    fontSize: 17,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '800',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
   uploadButtonTextDisabled: {
+    color: '#C7C7CC',
+  },
+  inputContainerDisabled: {
+    backgroundColor: '#F2F2F7',
+    opacity: 0.6,
+  },
+  inputDisabled: {
     color: '#C7C7CC',
   },
   dismissOverlay: {

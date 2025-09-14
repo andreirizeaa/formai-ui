@@ -24,6 +24,9 @@ import { ILiftData } from '../context/LiftDataContext';
 import { FeedbackSlideshow } from '../screens/application/feedback/feedbackSlideshow';
 import { LibraryScreen } from '../screens/application/library/LibraryScreen';
 import { BottomNavigationBar } from './BottomNavigationBar';
+import { useLiftData } from '../context/LiftDataContext';
+import { supabase } from '../lib/supabase';
+import { extractObjectKeyFromUrl, signPath } from '../context/LiftDataContext';
 import { useUserDetails } from '../context/UserDetailsContext';
 
 // Types for navigation
@@ -71,11 +74,17 @@ declare global {
   var openHowItWorksModal: (() => void) | undefined;
   var selectedVideoFromSearch: any | undefined;
   var uploadFromLibrarySearch: boolean | undefined;
+  var pendingLiftId: string | undefined;
+  var __navigateToHomeBase: (() => void) | undefined;
+  var __lastHomeNavAt: number | undefined;
+  var showTutorialAllDoneModal: (() => void) | undefined;
+  var setShowTutorialDone: ((show: boolean) => void) | undefined;
 }
 
 // Wrapper components for screens that need navigation
 function HomeScreenWrapper() {
   const navigation = useNavigation<MainStackNavigationProp>();
+  const { getLiftById, isLiftDataLoaded } = useLiftData();
   
   const handleShowFeedback = (liftData: ILiftData) => {
     navigation.navigate('LiftDetails', { 
@@ -111,6 +120,85 @@ function HomeScreenWrapper() {
       global.navigateToPerformance();
     }
   };
+
+  React.useEffect(() => {
+    (global as any).openLiftById = async (liftId: string) => {
+      try {
+        const lift = getLiftById(liftId);
+        if (lift) {
+          navigation.navigate('LiftDetails', { liftData: lift });
+          return;
+        }
+
+        // Fallback: fetch the lift by id and navigate
+        const { data, error } = await supabase
+          .from('lifts')
+          .select('id, is_favourite, lift_type, lift_date, lift_time, metric_weight, reps, raw_video_url, pose_video_url, thumbnail_url, analysis')
+          .eq('id', liftId)
+          .maybeSingle();
+        if (error || !data) {
+          (global as any).pendingLiftId = liftId;
+          // Optionally bring user to home tab
+          try { (global as any).navigateToHome?.(); } catch {}
+          return;
+        }
+
+        const thumbKey = await extractObjectKeyFromUrl(data.thumbnail_url);
+        const rawKey = await extractObjectKeyFromUrl(data.raw_video_url);
+        const poseKey = await extractObjectKeyFromUrl(data.pose_video_url);
+        const [thumbnailURL, rawVideoURL, poseVideoURL] = await Promise.all([
+          signPath(thumbKey),
+          signPath(rawKey),
+          signPath(poseKey),
+        ]);
+        const mapped = {
+          id: data.id,
+          isFavourite: !!data.is_favourite,
+          liftType: data.lift_type,
+          liftDate: new Date(data.lift_date).toLocaleDateString('en-GB').replace(/\//g, '-'),
+          liftTime: data.lift_time,
+          metricWeight: Number(data.metric_weight),
+          reps: Number(data.reps),
+          rawVideoURL,
+          poseVideoURL,
+          thumbnailURL,
+          analysis: {
+            accuracy: Number(data.analysis?.accuracy ?? 0),
+            lineGraphValues: Array.isArray(data.analysis?.lineGraphValues) ? data.analysis.lineGraphValues : [],
+            barChartValues: Array.isArray(data.analysis?.barChartValues) ? data.analysis.barChartValues : [],
+            feedback: Array.isArray(data.analysis?.feedback) ? data.analysis.feedback : [],
+          },
+        } as ILiftData;
+        navigation.navigate('LiftDetails', { liftData: mapped });
+      } catch {
+        (global as any).pendingLiftId = liftId;
+        try { (global as any).navigateToHome?.(); } catch {}
+      }
+    };
+    // If app launched from notification before navigator mounted, process pending lift id now
+    if ((global as any).pendingLiftId) {
+      const id = (global as any).pendingLiftId as string;
+      try { delete (global as any).pendingLiftId; } catch {}
+      try { (global as any).openLiftById?.(id); } catch {}
+    }
+    return () => {
+      try {
+        delete (global as any).openLiftById;
+      } catch {}
+    };
+  }, [getLiftById, navigation]);
+
+  // If lifts finished loading and we have a pending lift id, try to open now
+  React.useEffect(() => {
+    if (isLiftDataLoaded && (global as any).pendingLiftId) {
+      const id = (global as any).pendingLiftId as string;
+      try { delete (global as any).pendingLiftId; } catch {}
+      const lift = getLiftById(id);
+      if (lift) {
+        navigation.navigate('LiftDetails', { liftData: lift });
+      }
+    }
+  }, [isLiftDataLoaded, getLiftById, navigation]);
 
   return (
     <HomeScreen 
@@ -551,7 +639,11 @@ function MainTabsNavigator({ onLogout }: { onLogout?: () => void }) {
     global.triggerAddOptions = handleAddPress;
     global.navigateToPerformance = () => handleTabPress('progress');
     global.navigateToSettings = () => handleTabPress('settings');
-    global.navigateToHome = () => handleTabPress('home');
+    global.__navigateToHomeBase = () => {
+      (global as any).__lastHomeNavAt = Date.now();
+      handleTabPress('home');
+    };
+    global.navigateToHome = global.__navigateToHomeBase;
     global.navigateToPersonalDetails = () => {
       // Navigate to personal details screen
       navigation.navigate('PersonalDetails');
@@ -567,6 +659,12 @@ function MainTabsNavigator({ onLogout }: { onLogout?: () => void }) {
       }
       // Navigate to home tab
       handleTabPress('home');
+    };
+    global.showTutorialAllDoneModal = () => {
+      // This will be set by HomeScreen to show the modal immediately
+      if (global.setShowTutorialDone) {
+        global.setShowTutorialDone(true);
+      }
     };
     global.openUploadModal = () => {
       global.uploadFromLibrarySearch = false;

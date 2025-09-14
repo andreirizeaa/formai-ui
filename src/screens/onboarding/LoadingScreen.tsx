@@ -1,8 +1,9 @@
-import React, { useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, StyleSheet, Animated } from 'react-native';
 import { Image } from 'expo-image';
 import { useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { FormAILogo } from '../../components/FormAILogo';
 
 interface LoadingScreenProps {
   onLoadComplete: () => void;
@@ -11,15 +12,23 @@ interface LoadingScreenProps {
 export function LoadingScreen({ onLoadComplete }: LoadingScreenProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // Simulate loading time
+    // Fade in animation
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+
+    // Simulate loading time with additional 2 second delay
     const timer = setTimeout(() => {
       onLoadComplete();
     }, 3000);
 
     return () => clearTimeout(timer);
-  }, [onLoadComplete]);
+  }, [onLoadComplete, fadeAnim]);
 
   return (
     <SafeAreaView 
@@ -30,16 +39,14 @@ export function LoadingScreen({ onLoadComplete }: LoadingScreenProps) {
     >
       <View style={styles.content}>
         {/* FormAI Icon */}
-        <View style={styles.iconContainer}>
-          <Image 
-            source={isDark 
-              ? require('../../../assets/formai-dark-icon.png')
-              : require('../../../assets/formai-light-icon.png')
-            }
-            style={styles.icon}
-            resizeMode="contain"
+        <Animated.View style={[styles.iconContainer, { opacity: fadeAnim }]}>
+          <FormAILogo 
+            iconSize={60}
+            containerStyle={styles.logoContainer}
+            textStyle={styles.logoText}
           />
-        </View>
+        </Animated.View>
+        
       </View>
     </SafeAreaView>
   );
@@ -55,13 +62,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   iconContainer: {
-    width: 300,
-    height: 300,
     justifyContent: 'center',
     alignItems: 'center',
   },
   icon: {
-    width: 260,
-    height: 260,
+    width: 200,
+    height: 200,
+  },
+  logoContainer: {
+    marginBottom: 0,
+  },
+  logoText: {
+    fontSize: 48,
+    fontWeight: '800',
+    color: '#000000',
+    fontFamily: 'SF Pro Display',
+    marginBottom: 0,
   },
 }); 

@@ -131,15 +131,15 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   title: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 20,
+    fontWeight: '800',
     color: '#000000',
     marginBottom: 24,
     textAlign: 'left',
   },
   message: {
     fontSize: 16,
-    fontWeight: '400',
+    fontWeight: '500',
     color: '#000000',
     marginBottom: 24,
     textAlign: 'left',
@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
   },
   button: {
     flex: 1,
-    height: 56,
+    height: 60,
     borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
@@ -165,13 +165,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#000000',
   },
   buttonOutlinedText: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '800',
     color: '#000000',
   },
   buttonPrimaryText: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '800',
     color: '#FFFFFF',
   },
 }); 

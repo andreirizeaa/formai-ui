@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, ActivityIndicator } from 'react-native';
-import showEditFailedAlert from '../../../../services/alertService';
 import { useUserDetails } from '../../../../context/UserDetailsContext';
 import { editUserDetails } from '../../../../services/userService';
 import { hapticFeedback } from '../../../../utils/haptic';
 import i18n from '../../../../utils/i18n';
 import { ChevronLeft } from 'lucide-react-native';
 import { AnimatedOptionButton } from '../../../../components/onboarding/AnimatedOptionButton';
+import { showAlert } from '../../../../services/alertService';
 
 interface EditGenderScreenProps {
   onBack: () => void;
@@ -31,7 +31,7 @@ export function EditGenderScreen({ onBack, currentValue, onSave }: EditGenderScr
     } catch (e) {
       hapticFeedback.error();
       setSelectedGender(currentValue);
-      showEditFailedAlert(i18n.t('settings.editFailed.gender'), i18n.t('settings.editFailed.message'), () => {
+      showAlert(i18n.t('settings.editFailed.gender'), i18n.t('settings.editFailed.message'), () => {
         hapticFeedback.selection();
         onBack();
       });
@@ -57,19 +57,21 @@ export function EditGenderScreen({ onBack, currentValue, onSave }: EditGenderScr
         <View style={styles.placeholder} />
       </View>
 
-      {/* Title */}
-      <View style={styles.titleContainer}>
-        <Text style={styles.title}>{i18n.t('onboarding.gender.title')}</Text>
-      </View>
-
       {/* Content */}
       <View style={styles.content}>
+        {/* Title */}
+        <Text style={styles.title}>{i18n.t('onboarding.gender.title')}</Text>
+        
         {/* Gender Selection Buttons */}
         <View style={styles.optionsContainer}>
           <AnimatedOptionButton
             isSelected={selectedGender === 'male'}
             isDark={false}
             delay={0}
+            style={[
+              styles.genderButton,
+              selectedGender === 'male' ? styles.selectedGenderButton : styles.unselectedGenderButton
+            ]}
             onPress={() => {
               hapticFeedback.selection();
               setSelectedGender('male');
@@ -78,7 +80,7 @@ export function EditGenderScreen({ onBack, currentValue, onSave }: EditGenderScr
             <Text
               style={[
                 styles.optionText,
-                selectedGender === 'male' && styles.selectedOptionText,
+                selectedGender === 'male' ? styles.selectedOptionText : styles.unselectedOptionText,
               ]}
             >
               {i18n.t('onboarding.gender.male')}
@@ -89,6 +91,10 @@ export function EditGenderScreen({ onBack, currentValue, onSave }: EditGenderScr
             isSelected={selectedGender === 'female'}
             isDark={false}
             delay={100}
+            style={[
+              styles.genderButton,
+              selectedGender === 'female' ? styles.selectedGenderButton : styles.unselectedGenderButton
+            ]}
             onPress={() => {
               hapticFeedback.selection();
               setSelectedGender('female');
@@ -97,7 +103,7 @@ export function EditGenderScreen({ onBack, currentValue, onSave }: EditGenderScr
             <Text
               style={[
                 styles.optionText,
-                selectedGender === 'female' && styles.selectedOptionText,
+                selectedGender === 'female' ? styles.selectedOptionText : styles.unselectedOptionText,
               ]}
             >
               {i18n.t('onboarding.gender.female')}
@@ -128,7 +134,7 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    bottom: 12,
+    bottom: 0,
   },
   header: {
     flexDirection: 'row',
@@ -147,23 +153,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: '400',
+    fontSize: 22,
+    fontWeight: '700',
     color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
   placeholder: {
     width: 44,
   },
-  titleContainer: {
-    paddingHorizontal: 20,
-  },
   title: {
-    fontSize: 24,
-    fontWeight: '600',
+    fontSize: 20,
+    fontWeight: '800',
     color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
-    textAlign: 'left', // Align text to the left
+    textAlign: 'center',
+    marginBottom: 32,
   },
   content: {
     flex: 1,
@@ -175,8 +179,6 @@ const styles = StyleSheet.create({
   },
   optionText: {
     fontSize: 18,
-    fontWeight: '500',
-    color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
     textAlign: 'center',
   },
@@ -184,20 +186,33 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '600',
   },
+  unselectedOptionText: {
+    color: '#000000',
+    fontWeight: '500',
+  },
+  genderButton: {
+    // Base styles for gender buttons
+  },
+  selectedGenderButton: {
+    backgroundColor: '#000000',
+  },
+  unselectedGenderButton: {
+    backgroundColor: '#f3f4f6',
+  },
   bottomContainer: {
     paddingHorizontal: 20,
     paddingBottom: 40,
   },
   nextButton: {
     backgroundColor: '#000000',
-    paddingVertical: 16,
+    paddingVertical: 20,
     paddingHorizontal: 24,
     borderRadius: 28,
     alignItems: 'center',
   },
   nextButtonText: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '800',
     color: '#FFFFFF',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },

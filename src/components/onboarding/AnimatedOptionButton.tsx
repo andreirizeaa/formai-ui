@@ -68,6 +68,9 @@ export function AnimatedOptionButton({
   });
 
   const handlePress = () => {
+    // Call the original onPress function immediately to update selection state
+    onPress();
+    
     // Bounce animation: scale down to 0.95, then back to 1 (slightly faster)
     scale.value = withSequence(
       withSpring(0.95, {
@@ -81,9 +84,6 @@ export function AnimatedOptionButton({
         mass: 0.6,
       })
     );
-    
-    // Call the original onPress function
-    onPress();
   };
 
   return (
@@ -93,8 +93,8 @@ export function AnimatedOptionButton({
           styles.button,
           {
             backgroundColor: isSelected
-              ? '#000000'  // Black background when selected
-              : '#F4F4F8',
+              ? '#ffffff'  // Black background when selected
+              : '#364153',
             paddingVertical: hasIcon ? 14 : 22, // Conditional padding
           },
           style

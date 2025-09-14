@@ -32,9 +32,13 @@ import { useLiftData, ILiftData } from '../context/LiftDataContext';
 import { useLoadingLifts } from '../context/LoadingLiftsContext';
 import { useUserDetails } from '../context/UserDetailsContext';
 import { useUserCheckIns } from '../context/UserCheckInsContext';
+import { extractObjectKeyFromUrl, signPath } from '../context/LiftDataContext';
 import { deleteLift } from '../services/liftDeletionService';
+import { deleteJob } from '../services/liftApi';
+import { getUserId } from '../services/storageService';
 import i18n from '../utils/i18n';
 import { LoadingLiftData } from '../types/Lifts.d';
+import { useTutorialTarget } from '../context/TutorialContext';
 
 // ---------- types / guards ----------
 type LiftLike = ILiftData | LoadingLiftData;
@@ -79,7 +83,12 @@ export const LiftCard = memo(function LiftCard({
 
   const [deleting, setDeleting] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [resolvedThumb, setResolvedThumb] = useState<string | number | null>(null);
   const autoResetTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Identify the row (one id regardless of phase)
+  const displayId = lift ? (isLoadingLift(lift) ? lift.id : (lift as ILiftData)?.id) : null;
+  const idRef = useRef(displayId);
 
   // --- crossfade between phases (stronger + guaranteed) ---
   const crossfade = useSharedValue(1); // 1 = show current, 0 = show previous
@@ -89,7 +98,8 @@ export const LiftCard = memo(function LiftCard({
   const { removeLift: removeFinalLift, formatDateForLift, refreshLifts } = useLiftData();
   const { isLiftAutoDeleted, retryLift, removeLift: removeLoadingLift, updateLiftProgress, removeLoadingLiftByFinalId } = useLoadingLifts();
   const { userDetails } = useUserDetails();
-  const { invalidateAndRefetch: invalidateUserCheckIns } = useUserCheckIns();
+  const { invalidateAndRefetch: invalidateUserCheckIns, optimisticRemoveToday } = useUserCheckIns();
+  const { ref: homeFirstLiftCardRef } = useTutorialTarget('home_first_lift_card');
 
   // derived flags
   const isLoading = lift && isLoadingLift(lift) && lift.status !== 'completed';
@@ -112,10 +122,70 @@ export const LiftCard = memo(function LiftCard({
 
   const phaseRef = useRef<Phase>(currentPhase);
 
-  // pick one source for the left image (final wins, then loading, else placeholder)
+  // pick one source for the left image (final wins, then loading local, then loading uploaded, else placeholder)
   const finalThumb = finalView?.thumbnailURL;
-  const loadingThumb = lift && isLoadingLift(lift) ? (lift as LoadingLiftData).thumbnailUri : undefined;
+  const loadingThumb = lift && isLoadingLift(lift) 
+    ? (lift as LoadingLiftData).thumbnailUri || (lift as LoadingLiftData).sourceThumbnailUri || (lift as LoadingLiftData).uploadedThumbnailUrl
+    : undefined;
   const thumbUri = finalThumb || loadingThumb || null;
+
+  // Reset visual state when item ID changes (prevents flash to previous card)
+  useEffect(() => {
+    if (idRef.current !== displayId) {
+      idRef.current = displayId;
+
+      // Hard reset any visual memory from previous item
+      setPrevPhase(null);
+      phaseRef.current = currentPhase;
+      crossfade.value = 1;           // current fully visible, no fade
+      loadingProgress.value = 0.02;  // progress reset
+    }
+  }, [displayId, currentPhase]);
+
+  // Resolve thumbnail URL with proper signing for uploaded URLs
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      if (!lift || !isLoadingLift(lift)) {
+        setResolvedThumb(finalThumb ?? null);
+        return;
+      }
+
+      const loadingLift = lift as LoadingLiftData;
+
+      // Prefer uploaded thumbnail (signed), otherwise use the local thumbnailUri
+      const local = loadingLift.thumbnailUri ?? null;
+      const uploaded = loadingLift.uploadedThumbnailUrl ?? null;
+
+      // Always set local thumbnail immediately to avoid black thumbnail
+      if (local && !cancelled) {
+        setResolvedThumb(local);
+      }
+
+      if (uploaded) {
+        try {
+          const key = await extractObjectKeyFromUrl(uploaded);
+          const signed = key ? await signPath(key) : null;
+          if (!cancelled) setResolvedThumb(signed ?? uploaded);
+          return;
+        } catch (_) {
+          if (!cancelled) setResolvedThumb(uploaded);
+          return;
+        }
+      }
+
+      // If no uploaded thumbnail yet, keep the local one we already set
+    })();
+
+    return () => { cancelled = true; };
+  }, [
+    // Recompute when ID or thumbnail inputs change
+    lift && isLoadingLift(lift) ? (lift as LoadingLiftData).id : 'final',
+    lift && isLoadingLift(lift) ? (lift as LoadingLiftData).uploadedThumbnailUrl : finalThumb,
+    lift && isLoadingLift(lift) ? (lift as LoadingLiftData).thumbnailUri : undefined,
+    finalThumb,
+  ]);
 
   // only show ring overlay while *actively* loading (not error/final)
   const showProgressOverlay = isLoading && !isError;
@@ -186,19 +256,50 @@ export const LiftCard = memo(function LiftCard({
     loadingProgress.value = withTiming(0, { duration: 0 });
 
     try {
-      const success = await deleteLift(lift.id, lift, invalidateUserCheckIns);
+      const success = await deleteLift(lift.id, lift);
       if (success) {
         if (isLoadingLift(lift)) {
           // deleting a loading card (error/in-flight/completed)
           removeLoadingLift(lift.id);
+          
+          // If it's an error card, also try to delete the job
+          if (lift.status === 'error') {
+            try {
+              const userId = await getUserId();
+              if (userId) {
+                if (lift.assetId) {
+                  await deleteJob(lift.assetId, userId);
+                }
+              }
+            } catch (_) {}
+          }
         } else {
           // deleting a true server card — also remove any shadow completed loading twin
           removeFinalLift(lift.id);
           removeLoadingLiftByFinalId(lift.id); // kill the twin so it can't reappear
+
+          // Optimistically adjust check-ins if this was for today
+          try {
+            const today = new Date().toISOString().slice(0, 10);
+            const liftDateIso = (() => {
+              // finalView may be stale if already removed; derive from lift
+              const d = (lift as ILiftData)?.liftDate || '';
+              const m = d.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+              if (m) {
+                const [, dd, mm, yyyy] = m;
+                return `${yyyy}-${mm}-${dd}`;
+              }
+              return today; // fallback
+            })();
+            if (liftDateIso === today) {
+              optimisticRemoveToday();
+            }
+          } catch (_) {}
         }
         
-        // Background refresh
+        // Background refresh + ensure check-ins refetch
         refreshLifts();
+        invalidateUserCheckIns();
         
         hapticFeedback.success?.();
         translateX.value = withTiming(0, { duration: 200, easing: Easing.out(Easing.quad) });
@@ -216,35 +317,10 @@ export const LiftCard = memo(function LiftCard({
   useEffect(() => () => { if (autoResetTimeoutRef.current) clearTimeout(autoResetTimeoutRef.current); }, []);
 
   useEffect(() => {
-    if (currentPhase !== phaseRef.current) {
-      const old = phaseRef.current;
-      phaseRef.current = currentPhase;
-      
-      // No fade when entering or leaving the error phase
-      const shouldFade = !(old === 'error' || currentPhase === 'error');
-
-      if (!shouldFade) {
-        // instant swap (no prev layer, no animation)
-        setPrevPhase(null);
-        crossfade.value = 1; // ensure current layer is fully visible
-        return;
-      }
-
-      // Normal crossfade for loading <-> final
-      setPrevPhase(old); // mount the prev layer
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          crossfade.value = 0;
-          crossfade.value = withTiming(
-            1,
-            { duration: animDur, easing: Easing.inOut(Easing.cubic) },
-            (finished) => {
-              if (finished) runOnJS(setPrevPhase)(null); // drop old layer after fade
-            }
-          );
-        });
-      });
-    }
+    // Disable crossfade: instantly switch content
+    phaseRef.current = currentPhase;
+    setPrevPhase(null);
+    crossfade.value = 1;
   }, [currentPhase]);
 
   // prev fades OUT (slower power curve)
@@ -561,7 +637,7 @@ export const LiftCard = memo(function LiftCard({
           <View style={styles.middleRow}>
             <Target size={20} color="#000" />
             <View style={styles.accuracyContainer}>
-              <Text style={styles.accuracyValue}>{finalView?.analysis.accuracy}%</Text>
+              <Text style={styles.accuracyValue}>{Math.round(finalView?.analysis.accuracy || 0)}%</Text>
               <Text style={styles.accuracyText}> {i18n.t('feedback.accuracy')}</Text>
             </View>
           </View>
@@ -572,8 +648,8 @@ export const LiftCard = memo(function LiftCard({
               <Text style={styles.bottomRowText}>
                 {finalView
                   ? (userDetails?.unitSystem === 'imperial'
-                      ? `${Math.round(finalView.weightValue * 2.20462)} lbs`
-                      : `${finalView.weightValue} kg`)
+                      ? `${Math.round(finalView.metricWeight * 2.20462)} lbs`
+                      : `${finalView.metricWeight} kg`)
                   : ''}
               </Text>
             </View>
@@ -624,23 +700,16 @@ export const LiftCard = memo(function LiftCard({
               end={{ x: 0, y: 1 }}
             >
               {/* CONTENT: single row with a constant left thumbnail + crossfading right side */}
-              <View style={styles.contentRow}>
+              <View style={styles.contentRow} ref={homeFirstLiftCardRef}>
                 {/* LEFT: one persistent thumbnail */}
                 <View style={styles.thumbContainer}>
-                  {thumbUri ? (
-                    <Image
-                      source={{ uri: thumbUri }}
-                      style={styles.thumbnail}
-                      transition={200}       // smooth swap when uri changes
-                      contentFit="cover"
-                    />
-                  ) : (
-                    <Image
-                      source={require('../../assets/placeholder-thumbnail.png')}
-                      style={styles.thumbnail}
-                      contentFit="cover"
-                    />
-                  )}
+                  <Image
+                    source={typeof resolvedThumb === 'number' ? resolvedThumb : { uri: resolvedThumb || '' }}
+                    style={styles.thumbnail}
+                    transition={isLoadingLift(lift) ? 0 : 150}
+                    contentFit="cover"
+                    cachePolicy="memory-disk"
+                  />
 
                   {/* overlay the progress ring only while loading */}
                   {showProgressOverlay && (
@@ -672,18 +741,7 @@ export const LiftCard = memo(function LiftCard({
                 {/* RIGHT: crossfade the content only */}
                 <View style={styles.rightPane}>
                   <View style={styles.crossfadeRight}>
-                    {prevPhase && (
-                      <Animated.View
-                        key={`prev-${prevPhase}`}
-                        style={[styles.crossfadeLayer, prevLayerStyle]}
-                        pointerEvents="none"
-                      >
-                        {renderPhaseContent(prevPhase)}
-                      </Animated.View>
-                    )}
-                    <Animated.View key={`curr-${currentPhase}`} style={[styles.crossfadeLayer, currLayerStyle]}>
-                      {renderPhaseContent(currentPhase)}
-                    </Animated.View>
+                    {renderPhaseContent(currentPhase)}
                   </View>
                 </View>
               </View>
@@ -725,25 +783,25 @@ const styles = StyleSheet.create({
   liftContent: { flex: 1, padding: 16, justifyContent: 'space-between' },
   topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   liftName: {
-    fontSize: 18, fontWeight: '400', color: '#000',
+    fontSize: 18, fontWeight: '700', color: '#000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto', flex: 1, marginRight: 8,
   },
   timePill: { backgroundColor: '#ffffff', borderRadius: 18, paddingHorizontal: 6, paddingVertical: 4 },
-  timeValue: { color: '#000000', fontSize: 14, fontWeight: '400' },
+  timeValue: { color: '#000000', fontSize: 14, fontWeight: '600' },
   middleRow: { marginTop: -4, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' },
   accuracyContainer: { flexDirection: 'row', alignItems: 'baseline', marginLeft: 8 },
   accuracyValue: {
-    fontSize: 20, fontWeight: '600', color: '#000000',
+    fontSize: 20, fontWeight: '800', color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
   accuracyText: {
-    fontSize: 18, color: '#000000', fontWeight: '600',
+    fontSize: 20, color: '#000000', fontWeight: '800',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
   bottomRow: { flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center', gap: 20 },
   bottomRowItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   bottomRowText: {
-    fontSize: 14, color: '#000000', fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto', fontWeight: '500',
+    fontSize: 14, color: '#000000', fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto', fontWeight: '600',
   },
 
   // loading bits
@@ -755,34 +813,34 @@ const styles = StyleSheet.create({
   progressSvg: { position: 'absolute', width: 80, height: 80 },
   progressTextContainer: { position: 'absolute', width: 80, height: 80, justifyContent: 'center', alignItems: 'center' },
   progressText: {
-    fontSize: 17, fontWeight: '600', color: '#FFFFFF',
+    fontSize: 18, fontWeight: '800', color: '#FFFFFF',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto', textAlign: 'center',
   },
   placeholderLines: { marginBottom: 8, marginTop: 8, width: '100%' },
   placeholderLine: { height: 6, backgroundColor: '#71717b', borderRadius: 3, marginBottom: 6 },
   placeholderLine1: { width: '80%' }, placeholderLine2: { width: '60%' }, placeholderLine3: { width: '40%' },
-  notificationText: { fontSize: 14, fontWeight: '400', color: '#8E8E93', fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto' },
+  notificationText: { fontSize: 14, fontWeight: '500', color: '#8E8E93', fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto' },
 
   // error state bits
   errorMessageContainer: { flex: 1, marginRight: 8, flexShrink: 1 },
   errorTitle: {
-    fontSize: 18, fontWeight: '400', color: '#D70015',
+    fontSize: 18, fontWeight: '700', color: '#D70015',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto', marginTop: 0, marginBottom: 0,
   },
   errorSubtitle: {
-    fontSize: 14, fontWeight: '400', color: '#8E8E93',
+    fontSize: 14, fontWeight: '500', color: '#8E8E93',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto', marginTop: 2, marginBottom: 4, flexShrink: 1, flexWrap: 'wrap',
   },
   retryButton: {
     backgroundColor: 'transparent', borderWidth: 1, borderColor: '#000000',
     paddingHorizontal: 16, paddingVertical: 8, borderRadius: 18, alignSelf: 'flex-start',
   },
-  retryButtonText: { color: '#000000', fontSize: 14, fontWeight: '400', fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto' },
+  retryButtonText: { color: '#000000', fontSize: 14, fontWeight: '700', fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto' },
   deleteErrorButton: {
     backgroundColor: 'transparent', borderWidth: 1, borderColor: '#D70015',
     paddingHorizontal: 16, paddingVertical: 8, borderRadius: 18, alignSelf: 'flex-start', minWidth: 80, alignItems: 'center', justifyContent: 'center',
   },
-  deleteErrorButtonText: { color: '#D70015', fontSize: 14, fontWeight: '400', fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto' },
+  deleteErrorButtonText: { color: '#D70015', fontSize: 14, fontWeight: '700', fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto' },
   deleteButton: { padding: 4 },
   deleteButtonCircle: {
     width: 28, height: 28, borderRadius: 14, backgroundColor: 'transparent',
@@ -812,14 +870,14 @@ const styles = StyleSheet.create({
   },
   noLiftsTitle: {
     fontSize: 20,
-    fontWeight: '600',
+    fontWeight: '800',
     color: '#000000',
     marginBottom: 8,
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
   },
   noLiftsSubtitle: {
     fontSize: 16,
-    fontWeight: '400',
+    fontWeight: '600',
     color: '#8E8E93',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
     textAlign: 'center',

@@ -7,7 +7,7 @@ import { useLanguage } from '../../../context/LanguageContext';
 import { useUserDetails } from '../../../context/UserDetailsContext';
 import { editUserDetails } from '../../../services/userService';
 import { X } from 'lucide-react-native';
-import showEditFailedAlert from '../../../services/alertService';
+import { showAlert } from '../../../services/alertService';
 
 interface LanguageModalProps {
   isVisible: boolean;
@@ -19,7 +19,6 @@ export function LanguageModal({ isVisible, onClose }: LanguageModalProps) {
   const { refetchUserDetails } = useUserDetails();
   const [pendingCode, setPendingCode] = React.useState<string | null>(null);
   const [savingCode, setSavingCode] = React.useState<string | null>(null);
-
   const handleLanguageSelect = async (languageCode: string) => {
     if (savingCode) return;
     hapticFeedback.selection();
@@ -41,7 +40,7 @@ export function LanguageModal({ isVisible, onClose }: LanguageModalProps) {
       // Restore previous language on error
       setLanguage(previousLanguage);
       hapticFeedback.error();
-      showEditFailedAlert(i18n.t('settings.editFailed.language'), i18n.t('settings.editFailed.message'), () => {
+      showAlert(i18n.t('settings.editFailed.language'), i18n.t('settings.editFailed.message'), () => {
         hapticFeedback.selection();
         onClose();
       });
@@ -177,8 +176,8 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   title: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 24,
+    fontWeight: '800',
     color: '#000000',
     marginBottom: 20,
     textAlign: 'left',
@@ -212,6 +211,6 @@ const styles = StyleSheet.create({
   },
   languageName: {
     fontSize: 18,
-    fontWeight: '500',
+    fontWeight: '800',
   },
 }); 

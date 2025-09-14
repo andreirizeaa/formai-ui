@@ -1,4 +1,4 @@
-import { deleteLift as deleteLiftApi, deleteUserStorage } from './liftService';
+import { manualDeleteLiftCardData, autoDeleteLiftErrorCardData } from './liftService';
 import { hapticFeedback } from '../utils/haptic';
 
 /**
@@ -7,21 +7,18 @@ import { hapticFeedback } from '../utils/haptic';
  */
 export async function deleteLift(
   liftId: string, 
-  lift?: any, 
-  invalidateUserCheckIns?: () => void
+  lift: any, 
 ): Promise<boolean> {
   hapticFeedback.selection();
-
   try {
     // Check if it's a loading lift
     const isLoadingLift = (lift: any) => lift && typeof lift.status !== 'undefined';
     
     if (isLoadingLift(lift)) {
       // Handle loading lift deletion
-      const ok = await deleteUserStorage(liftId);
+      const ok = await autoDeleteLiftErrorCardData(liftId);
       if (ok) {
         hapticFeedback.success();
-        invalidateUserCheckIns?.();
         return true;
       } else {
         hapticFeedback.error();
@@ -29,10 +26,9 @@ export async function deleteLift(
       }
     } else {
       // Handle final lift deletion
-      const ok = await deleteLiftApi(liftId);
+      const ok = await manualDeleteLiftCardData(liftId);
       if (ok) {
         hapticFeedback.success();
-        invalidateUserCheckIns?.();
         return true;
       } else {
         hapticFeedback.error();

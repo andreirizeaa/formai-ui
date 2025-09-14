@@ -1,5 +1,8 @@
 import React from 'react';
-import { Modal, View, Text, TouchableOpacity, StyleSheet, Platform, Dimensions } from 'react-native';
+import { Modal, View, Text, TouchableOpacity, StyleSheet, Platform, Dimensions, ActivityIndicator } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import LottieView from 'lottie-react-native';
+import { OrangeGradientButton } from './ui/OrangeGradientButton';
 import { useTutorial } from '../context/TutorialContext';
 import { useUserDetails } from '../context/UserDetailsContext';
 import Svg, { Path, Rect } from 'react-native-svg';
@@ -7,7 +10,7 @@ import { hapticFeedback } from '../utils/haptic';
 import i18n from '../utils/i18n';
 
 export function TutorialOverlay() {
-  const { isActive, isTransitioning, steps, currentStepIndex, currentRect, next, prev, stop } = useTutorial();
+  const { isActive, isTransitioning, isProcessingStep, steps, currentStepIndex, currentRect, next, stop, setCurrentStepIndex, setCurrentRect } = useTutorial();
   const { updateUserDetails, refetchUserDetails } = useUserDetails();
   
   // Add a small delay before rendering to prevent flickering during transitions
@@ -24,6 +27,10 @@ export function TutorialOverlay() {
     };
   }, [currentStepIndex, currentRect]);
   
+  // Get current step
+  const step = isActive && steps[currentStepIndex] ? steps[currentStepIndex] : undefined;
+
+
   // Don't render anything if tutorial is not active, is transitioning, or has no current rect
   if (!isActive || isTransitioning || !currentRect) return null;
 
@@ -33,24 +40,8 @@ export function TutorialOverlay() {
     return null;
   }
 
-  const step = steps[currentStepIndex];
   if (!step) return null; // Safety check
   
-  // Tutorial IDs that should not allow going back
-  const noPreviousTutorialIds = [
-    'add_button',
-    'upload_practices_cta', 
-    'home_first_lift_card',
-    'how_it_works_modal',
-    'home_performance_icon',
-    'feedback_slideshow',
-    'lift_details_form_graph',
-    'performance_filters',
-    'settings_first_card',
-    'home_see_all_lifts'
-  ];
-  
-  const hasPrev = currentStepIndex > 0 && !noPreviousTutorialIds.includes(step.id);
   const hasNext = currentStepIndex < steps.length - 1; // Changed to prevent going beyond last step
   
   // Check if this is the add_button tutorial step
@@ -77,7 +68,7 @@ export function TutorialOverlay() {
   return (
     <Modal visible transparent animationType="fade">
       <View style={styles.overlay} pointerEvents="box-none">
-        {/* Dim with cut-out around the target */}
+        {/* Dim with cut-out around the target (skip for final modal) */}
         {highlight && !isLibraryScreenStep && (
           <Svg style={styles.mask} pointerEvents="none">
             <Path
@@ -106,7 +97,7 @@ export function TutorialOverlay() {
           </View>
         )}
 
-        {/* Tooltip container */}
+        {/* Tooltip container (acts as modal for final step) */}
         <View 
           pointerEvents="box-none" 
           style={[
@@ -114,12 +105,12 @@ export function TutorialOverlay() {
             {
               // Position based on tooltipPlacement parameter
               ...(isLibraryScreenStep ? {
-                // For library screen step: center the tooltip on screen
+                // Center the tooltip on screen for library and final modal
                 top: '50%',
                 bottom: undefined,
                 left: 16,
                 right: 16,
-                transform: [{ translateY: -100 }], // Center vertically only, let flexbox handle horizontal centering
+                transform: [{ translateY: -100 }],
               } : step.tooltipPlacement === 'inside-bottom' ? {
                 // For inside-bottom placement: position tooltip inside the bottom portion of the highlight
                 top: currentRect ? currentRect.y + currentRect.height - 200 : undefined,
@@ -175,16 +166,15 @@ export function TutorialOverlay() {
           {isAddButtonStep ? (
             // Single button layout for add_button tutorial
             <View>
-              <TouchableOpacity
-                style={styles.navButtonPrimaryFullWidth}
+              <OrangeGradientButton
+                title={i18n.t('tutorial.buttons.next')}
                 onPress={() => {
                   hapticFeedback.selection();
                   next();
                 }}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.navButtonPrimaryText}>{i18n.t('tutorial.buttons.next')}</Text>
-              </TouchableOpacity>
+                style={styles.navButtonPrimaryFullWidth}
+                textStyle={styles.navButtonPrimaryText}
+              />
               
               {/* Skip guide hyperlink */}
               <TouchableOpacity
@@ -192,7 +182,12 @@ export function TutorialOverlay() {
                 onPress={async () => {
                   hapticFeedback.selection();
                   try {
-                    stop();
+                    // Stop the tutorial immediately
+                    await stop();
+                    // Show the modal immediately using global function (no flag needed)
+                    if ((global as any).showTutorialAllDoneModal) {
+                      (global as any).showTutorialAllDoneModal();
+                    }
                   } catch (error) {
                     console.error('Error in skip guide:', error);
                   }
@@ -203,34 +198,28 @@ export function TutorialOverlay() {
               </TouchableOpacity>
             </View>
           ) : (
-            // Previous/Next button layout for all other tutorials
-            <View style={styles.buttonsRow}>
-              <TouchableOpacity
-                style={[styles.navButton, !hasPrev && styles.navButtonDisabled]}
-                onPress={() => {
-                  hapticFeedback.selection();
-                  prev();
-                }}
-                disabled={!hasPrev}
-                activeOpacity={0.8}
+            step.id === 'settings_support_email' && isProcessingStep ? (
+              <OrangeGradientButton
+                title=""
+                onPress={() => {}}
+                disabled={true}
+                style={styles.navButtonPrimaryFullWidth}
+                textStyle={styles.navButtonPrimaryText}
               >
-                <Text style={[styles.navButtonText, !hasPrev && styles.navButtonTextDisabled]}>
-                  {i18n.t('tutorial.buttons.previous')}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.navButtonPrimary}
-                onPress={() => {
+                <ActivityIndicator color="#FFFFFF" />
+              </OrangeGradientButton>
+            ) : (
+              <OrangeGradientButton
+                title={step.id === 'settings_support_email' ? i18n.t('tutorial.buttons.complete') : hasNext ? i18n.t('tutorial.buttons.next') : i18n.t('tutorial.buttons.complete')}
+                onPress={async () => {
                   hapticFeedback.selection();
-                  next();
+                  await next();
                 }}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.navButtonPrimaryText}>
-                  {hasNext ? i18n.t('tutorial.buttons.next') : i18n.t('tutorial.buttons.complete')}
-                </Text>
-              </TouchableOpacity>
-            </View>
+                disabled={step.id === 'settings_support_email' && isProcessingStep}
+                style={styles.navButtonPrimaryFullWidth}
+                textStyle={styles.navButtonPrimaryText}
+              />
+            )
           )}
         </View>
       </View>
@@ -286,16 +275,17 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   title: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 24,
+    fontWeight: '800',
     color: '#000000',
-    marginBottom: 6,
+    marginBottom: 12,
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
   },
   description: {
-    fontSize: 14,
+    fontSize: 17,
+    fontWeight: '500',
     color: '#333333',
-    marginBottom: 12,
+    marginBottom: 24,
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
   buttonsRow: {
@@ -308,14 +298,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#000000',
     borderRadius: 28,
-    paddingVertical: 14,
+    paddingVertical: 20,
     alignItems: 'center',
   },
   navButtonDisabled: {
     borderColor: '#C7C7CC',
   },
   navButtonText: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '600',
     color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
@@ -333,16 +323,20 @@ const styles = StyleSheet.create({
   },
   navButtonPrimaryText: {
     color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 22,
+    fontWeight: '800',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
   navButtonPrimaryFullWidth: {
     width: '100%',
-    backgroundColor: '#000000',
     borderRadius: 28,
-    paddingVertical: 16,
+    paddingVertical: 20,
     alignItems: 'center',
+  },
+  buttonContentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   skipGuideButton: {
     marginTop: 8,
