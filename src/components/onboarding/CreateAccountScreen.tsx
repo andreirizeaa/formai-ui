@@ -12,6 +12,7 @@ import { setUserId } from '../../services/storageService';
 import i18n from '../../utils/i18n';
 import { usePlacement } from 'expo-superwall';
 import Purchases from 'react-native-purchases';
+import { registerAndSaveExpoPushToken } from '../../services/push';
 
 interface CreateAccountScreenProps {
   onNext: () => void;
@@ -141,6 +142,8 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
     if (data.user?.id) {
       await Purchases.logIn(data.user.id);
       try {
+        // Register Expo push token and persist it before onboarding persistence
+        await registerAndSaveExpoPushToken(data.user.id);
         const { saveOnboardingProgress } = await import('../../services/onboardingService');
         await saveOnboardingProgress(updatedData);
         setIsSigningIn(false);
@@ -163,7 +166,7 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
           <TouchableOpacity
             style={[
               styles.appleButton,
-              { backgroundColor: isDark ? '#FFFFFF' : '#000000' }
+              { backgroundColor: '#000000' }
             ]}
             onPress={handleAppleSignIn}
             activeOpacity={0.8}
@@ -175,7 +178,6 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
                   styles.appleIcon,
                   { tintColor: isDark ? '#000000' : '#FFFFFF' }
                 ]}
-                resizeMode="contain"
               />
               <Text style={[
                 styles.appleButtonText,
@@ -192,7 +194,6 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
               styles.googleButton,
               { 
                 backgroundColor: isDark ? '#000000' : '#FFFFFF',
-                borderColor: isDark ? '#FFFFFF' : '#000000'
               }
             ]}
             onPress={isExpoGo ? () => {
@@ -204,7 +205,6 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
               <Image 
                 source={require('../../../assets/icons/google.png')}
                 style={styles.googleIcon}
-                resizeMode="contain"
               />
               <Text style={[
                 styles.googleButtonText,
@@ -219,7 +219,7 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
           <View style={styles.haveAccountContainer}>
             <Text style={[
               styles.haveAccountText,
-              { color: isDark ? '#8E8E93' : '#8E8E93' }
+              { color: '#ffffff' }
             ]}>
               Already have an account?{' '}
             </Text>
@@ -264,18 +264,17 @@ const styles = StyleSheet.create({
   },
   appleButton: {
     width: '90%',
-    height: 65,
+    height: 60,
     borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
   },
   googleButton: {
     width: '90%',
-    height: 65,
+    height: 60,
     borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
   },
   buttonContent: {
     flexDirection: 'row',
@@ -293,20 +292,21 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   appleButtonText: {
-    fontSize: 20,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '800',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
   googleButtonText: {
-    fontSize: 20,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '800',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
   haveAccountContainer: {
     flexDirection: 'row',
   },
   haveAccountText: {
-    fontSize: 16,
+    fontSize: 17,
+    fontWeight: '500',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
   signInLink: {

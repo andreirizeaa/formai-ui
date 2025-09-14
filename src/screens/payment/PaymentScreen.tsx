@@ -92,7 +92,7 @@ export function PaymentScreen({ onComplete }: PaymentScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#1d293d',
   },
   content: {
     flex: 1,

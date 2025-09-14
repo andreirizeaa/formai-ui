@@ -95,15 +95,23 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
     }
   }, [route.params?.selectedFilters]);
 
-  // Expose navigateToHome function globally for tutorial
+  // Expose navigateToHome function globally for tutorial, preserving base
   useEffect(() => {
+    const previousNavigateToHome = (global as any).navigateToHome;
     (global as any).navigateToHome = () => {
       hapticFeedback.selection();
+      (global as any).__lastHomeNavAt = Date.now();
       onBack();
     };
 
     return () => {
-      (global as any).navigateToHome = undefined;
+      if (previousNavigateToHome) {
+        (global as any).navigateToHome = previousNavigateToHome;
+      } else if ((global as any).__navigateToHomeBase) {
+        (global as any).navigateToHome = (global as any).__navigateToHomeBase;
+      } else {
+        delete (global as any).navigateToHome;
+      }
     };
   }, [onBack]);
 
@@ -620,8 +628,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: '400',
+    fontSize: 22,
+    fontWeight: '700',
     color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
@@ -657,12 +665,12 @@ const styles = StyleSheet.create({
   },
   tabText: {
     fontSize: 20,
-    fontWeight: '600',
+    fontWeight: '500',
     color: '#8E8E93',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
   tabTextActive: {
-    fontWeight: '600',
+    fontWeight: '800',
     color: '#000000',
   },
   controlsContainer: {
@@ -710,7 +718,7 @@ const styles = StyleSheet.create({
   },
   liftCountText: {
     fontSize: 16,
-    fontWeight: '400',
+    fontWeight: '500',
     color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
@@ -742,7 +750,7 @@ const styles = StyleSheet.create({
   },
   searchPillText: {
     fontSize: 16,
-    fontWeight: '400',
+    fontWeight: '500',
     color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
@@ -784,7 +792,7 @@ const styles = StyleSheet.create({
   },
   popupOptionText: {
     fontSize: 14,
-    fontWeight: '400',
+    fontWeight: '800',
     color: '#000000',
     fontFamily: 'SF Pro Text',
   },

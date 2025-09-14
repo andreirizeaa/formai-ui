@@ -13,6 +13,7 @@ import { SelectedDateProvider } from './src/context/SelectedDateContext';
 import { supabase } from './src/lib/supabase';
 import { getUserId, removeUserId } from './src/services/storageService';
 import { LoadingScreen } from './src/screens/onboarding/LoadingScreen';
+import { AccountLoadingScreen } from './src/screens/onboarding/AccountLoadingScreen';
 import { fetchUserById, requiresOnboarding } from './src/services/userService';
 import { usePurchases } from './src/context/PurchasesContext';
 import { useUserDetails } from './src/context/UserDetailsContext';
@@ -22,11 +23,13 @@ import { useLiftData } from './src/context/LiftDataContext';
 function AppContent() {
   const [showOnboarding, setShowOnboarding] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
+  const [extraDelayDone, setExtraDelayDone] = useState(false);
   const [userNeedsOnboarding, setUserNeedsOnboarding] = useState(false);
   const [onboardingInitialRoute, setOnboardingInitialRoute] = useState<
     'Welcome' | 'Payment'
   >('Welcome');
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [showAccountLoading, setShowAccountLoading] = useState(false);
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const { customerInfo, isInitializing } = usePurchases();
   const { isUserDetailsLoaded } = useUserDetails();
@@ -72,6 +75,12 @@ function AppContent() {
     setActiveLayout();
   }, [customerInfo]);
 
+  // Add an artificial universal 2s boot delay
+  useEffect(() => {
+    const t = setTimeout(() => setExtraDelayDone(true), 2500);
+    return () => clearTimeout(t);
+  }, []);
+
   // Check if all required data is loaded before showing the app
   const isAllDataLoaded = !isInitializing && isUserDetailsLoaded && isLiftDataLoaded;
 
@@ -100,17 +109,15 @@ function AppContent() {
   };
 
   const handleSignIn = () => {
-    setIsTransitioning(true);
+    // Instantly transition to account loading screen (no fade out)
+    setShowOnboarding(false);
+    setUserNeedsOnboarding(false);
+    setShowAccountLoading(true);
     
-    // Start fade out animation
-    Animated.timing(fadeAnim, {
-      toValue: 0,
-      duration: 300,
-      useNativeDriver: true,
-    }).start(() => {
-      // After fade out completes, switch to main app
-      setShowOnboarding(false);
-      setUserNeedsOnboarding(false);
+    // Show account loading screen for 2 seconds
+    setTimeout(() => {
+      setIsTransitioning(true);
+      setShowAccountLoading(false);
       
       // Start fade in animation for main app
       Animated.timing(fadeAnim, {
@@ -120,7 +127,7 @@ function AppContent() {
       }).start(() => {
         setIsTransitioning(false);
       });
-    });
+    }, 4000);
   };
 
   const handlePaymentComplete = () => {
@@ -182,10 +189,18 @@ function AppContent() {
   };
 
   // Show loading screen until all data is loaded
-  if (isLoading || !isAllDataLoaded) {
+  if (isLoading || !isAllDataLoaded || !extraDelayDone) {
     return (
       <SafeAreaProvider>
         <LoadingScreen onLoadComplete={() => {}} />
+      </SafeAreaProvider>
+    );
+  }
+
+  if (showAccountLoading) {
+    return (
+      <SafeAreaProvider>
+        <AccountLoadingScreen onComplete={() => {}} />
       </SafeAreaProvider>
     );
   }
@@ -203,14 +218,22 @@ function AppContent() {
 
   if (showOnboarding || userNeedsOnboarding) {
     return (
-      <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
+      <Animated.View style={{ 
+        flex: 1, 
+        opacity: fadeAnim,
+        backgroundColor: isTransitioning ? '#1d293d' : 'transparent'
+      }}>
         {onboardingContent}
       </Animated.View>
     );
   }
 
   return (
-    <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
+    <Animated.View style={{ 
+      flex: 1, 
+      opacity: fadeAnim,
+      backgroundColor: isTransitioning ? '#1d293d' : 'transparent'
+    }}>
       {mainAppContent}
     </Animated.View>
   );

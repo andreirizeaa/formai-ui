@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useRef } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, Modal, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, Modal, Dimensions, InteractionManager } from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
 import { Image } from 'expo-image';
 import { SwipeableLineGraphCard } from '../../../components/ui/SwipeableLineGraphCard';
@@ -29,10 +29,57 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
   
   // Tutorial target registration
   const { ref: performanceMetricsRef } = useTutorialTarget('performance_metrics');
-  const { ref: performanceChartsRef } = useTutorialTarget('performance_charts');
+  const { ref: performanceOverWeightRef } = useTutorialTarget('performance_over_weight');
+  const { ref: performanceOverTimeRef } = useTutorialTarget('performance_charts_over_time');
+
+  // Expose scroll helpers for tutorial to bring charts into view
+  React.useEffect(() => {
+    (global as any).scrollToPerformanceOverWeight = () => {
+      try {
+        (performanceOverWeightRef as any)?.current?.measure?.((x: number, y: number, w: number, h: number, pageX: number, pageY: number) => {
+          try { (scrollRef as any)?.current?.scrollTo({ y: Math.max(0, pageY - 120), animated: true }); } catch {}
+        });
+      } catch {}
+    };
+    // Removed scrollToPerformanceOverTime in favor of scrollToPerformanceBottom
+    (global as any).scrollToPerformanceBottom = () => {
+      try {
+        // Scroll down by 50% of the viewport height from current offset, clamped to max
+        const halfScreen = Math.max(0, Math.round(viewHeightRef.current * 0.6));
+        const maxScroll = Math.max(0, contentHeightRef.current - viewHeightRef.current);
+        const nextY = Math.min(maxScroll, Math.max(0, currentScrollYRef.current + halfScreen));
+        (scrollRef as any)?.current?.scrollTo?.({ y: nextY, animated: true });
+
+        // After the animated scroll, force tutorial to remeasure to get final position
+        setTimeout(() => {
+          try {
+            InteractionManager.runAfterInteractions(() => {
+              try { (global as any).remeasureTutorialTarget?.(); } catch {}
+            });
+          } catch {
+            try { (global as any).remeasureTutorialTarget?.(); } catch {}
+          }
+        }, 700);
+      } catch {}
+    };
+    (global as any).scrollToPerformanceTop = () => {
+      try { (scrollRef as any)?.current?.scrollTo({ y: 0, animated: true }); } catch {}
+    };
+    return () => {
+      try { delete (global as any).scrollToPerformanceOverWeight; } catch {}
+      // Removed cleanup for scrollToPerformanceOverTime
+      try { delete (global as any).scrollToPerformanceBottom; } catch {}
+      try { delete (global as any).scrollToPerformanceTop; } catch {}
+    };
+  }, [performanceOverWeightRef, performanceOverTimeRef]);
   
   // Scroll ref for gesture coordination
   const scrollRef = useRef(null);
+  const streakCardRef = useRef<any>(null);
+  const streakTopYRef = useRef(0);
+  const contentHeightRef = useRef(0);
+  const viewHeightRef = useRef(0);
+  const currentScrollYRef = useRef(0);
 
   // Memoize liftData to ensure stable reference
   const stableLiftData = useMemo(() => liftData, [liftData]);
@@ -97,6 +144,7 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
     };
   }, [stableLiftData]);
 
+
   // Info handlers
   const openInfoModal = (key: 'accuracyPerWeight' | 'accuracyOverTime' | 'accuracy' | 'improvement') => {
     hapticFeedback.selection();
@@ -141,6 +189,10 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
         nestedScrollEnabled
         directionalLockEnabled
         contentInsetAdjustmentBehavior="automatic"
+        onLayout={(e) => { try { viewHeightRef.current = e.nativeEvent.layout.height; } catch {} }}
+        onContentSizeChange={(w, h) => { try { contentHeightRef.current = h; } catch {} }}
+        onScroll={(e) => { try { currentScrollYRef.current = e.nativeEvent.contentOffset.y; } catch {} }}
+        scrollEventThrottle={16}
       >
         <View style={styles.content}>
           <Text style={styles.title}>{i18n.t('performance.title')}</Text>
@@ -175,7 +227,7 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
             {/* Improvement Card */}
             <View style={styles.metricCard}>
               <View style={styles.metricHeaderRow}>
-                <Text style={styles.metricTitle}>Improvement</Text>
+                <Text style={styles.metricTitle}>Trend</Text>
                 <TouchableOpacity onPress={() => openInfoModal('improvement')} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Show improvement information" style={styles.metricTitleIcon}>
                   <CircleQuestionMark width={20} height={20} color="#000000" />
                 </TouchableOpacity>
@@ -184,7 +236,7 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
                 <CircularProgressChart
                   width={100}
                   height={100}
-                  percentage={Math.abs(improvementValue)}
+                  percentage={Math.max(0, Math.min(100, Math.abs(improvementValue)))}
                   progressColor={improvementColor}
                   backgroundColor="#E5E5E5"
                   strokeWidth={10}
@@ -200,7 +252,7 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
           
           {/* Performance Cards */}
           <SwipeableLineGraphCard 
-            ref={performanceChartsRef}
+            ref={performanceOverWeightRef}
             cardData={stableLiftData}
             onTriggerAddOptions={onTriggerAddOptions}
             hasNoLifts={stableLiftData.length === 0}
@@ -212,6 +264,7 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
 
           {/* Accuracy Over Time Cards */}
           <SwipeableLineGraphCard 
+            ref={performanceOverTimeRef}
             cardData={stableLiftData}
             hasNoLifts={stableLiftData.length === 0}
             chartType="accuracyOverTime"
@@ -221,7 +274,7 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
           />
 
           {/* Streak Calendar Card */}
-          <View style={styles.streakCardContainer}>
+          <View style={styles.streakCardContainer} ref={streakCardRef} onLayout={(e) => { try { streakTopYRef.current = e.nativeEvent.layout.y; } catch {} }}>
             <View style={styles.streakCard}>
               {/* Streak Badge */}
               <View style={styles.streakBadgeContainer}>
@@ -273,11 +326,15 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
       >
         <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={closeInfoModal}>
           <TouchableOpacity style={styles.infoModalContainer} activeOpacity={1} onPress={(e) => e.stopPropagation()}>
-            <TouchableOpacity style={styles.closeButton} onPress={closeInfoModal}>
-              <X width={20} height={20} color="#000000" />
-            </TouchableOpacity>
             <Text style={styles.infoTitle}>{infoModalContent.title}</Text>
             <Text style={styles.infoMessage}>{infoModalContent.message}</Text>
+            <TouchableOpacity 
+              style={styles.closeButton} 
+              onPress={closeInfoModal}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.closeButtonText}>Close</Text>
+            </TouchableOpacity>
           </TouchableOpacity>
         </TouchableOpacity>
       </Modal>
@@ -297,7 +354,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 36,
-    fontWeight: '600',
+    fontWeight: '800',
     color: '#000000',
     textAlign: 'left',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
@@ -312,18 +369,19 @@ const styles = StyleSheet.create({
     paddingVertical: 40,
   },
   closeButton: {
-    position: 'absolute',
-    top: 16,
-    right: 16,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: '#E5E5EA',
-    backgroundColor: 'transparent',
-    justifyContent: 'center',
+    width: '100%',
+    height: 60,
+    borderRadius: 28,
+    backgroundColor: '#000000',
     alignItems: 'center',
-    zIndex: 1,
+    justifyContent: 'center',
+    marginTop: 24,
+  },
+  closeButtonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '800',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
 
   performanceCard: {
@@ -375,7 +433,7 @@ const styles = StyleSheet.create({
   },
   metricTitle: {
     fontSize: 22,
-    fontWeight: '600',
+    fontWeight: '800',
     color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
     marginBottom: 12,
@@ -393,8 +451,8 @@ const styles = StyleSheet.create({
   },
   progressText: {
     position: 'absolute',
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: 22,
+    fontWeight: '800',
     color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
   },
@@ -410,14 +468,15 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   infoTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 20,
+    fontWeight: '800',
     color: '#000000',
-    marginBottom: 8,
+    marginBottom: 16,
     textAlign: 'left',
   },
   infoMessage: {
-    fontSize: 14,
+    fontSize: 15,
+    fontWeight: '500',
     color: '#1C1C1E',
     lineHeight: 20,
   },
@@ -461,7 +520,7 @@ const styles = StyleSheet.create({
     marginLeft: 2,
     marginTop: 4,
     fontSize: 17,
-    fontWeight: '500',
+    fontWeight: '700',
     color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
   },
@@ -494,14 +553,14 @@ const styles = StyleSheet.create({
   },
   metricsFeedbackTitle: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '800',
     color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
   metricsFeedbackSubtitle: {
     fontSize: 14,
-    fontWeight: '400',
-    color: '#8E8E93',
+    fontWeight: '500',
+    color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
     marginTop: 2,
   },

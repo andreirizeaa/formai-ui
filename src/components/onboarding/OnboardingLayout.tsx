@@ -46,7 +46,7 @@ export function OnboardingLayout({
     <SafeAreaView 
       style={[
         styles.container, 
-        { backgroundColor: isDark ? '#000000' : '#FFFFFF' }
+        { backgroundColor: '#1d293d' }
       ]}
     >
       <View style={{ flex: 1 }}>
@@ -70,7 +70,7 @@ export function OnboardingLayout({
               style={[
                 styles.title, 
                 { 
-                  color: isDark ? '#FFFFFF' : '#000000',
+                  color: '#FFFFFF',
                   fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto'
                 }
               ]}
@@ -82,7 +82,7 @@ export function OnboardingLayout({
                 style={[
                   styles.subtitle, 
                   { 
-                    color: isDark ? '#AEAEB2' : '#8E8E93',
+                    color: '#E2E8F0',
                     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
                   }
                 ]}
@@ -144,13 +144,13 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 32,
-    fontWeight: '700',
+    fontWeight: '800',
     lineHeight: 38,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 18,
-    fontWeight: '400',
+    fontWeight: '500',
     lineHeight: 22,
   },
   contentWrapper: {
@@ -166,15 +166,15 @@ const styles = StyleSheet.create({
     bottom: 0,
     marginBottom: -32,
     paddingTop: 4,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#1d293d',
     borderTopLeftRadius: 0,
     borderTopRightRadius: 0,
     borderTopWidth: 0.7,
-    borderTopColor: '#E5E5EA',
-    shadowColor: '#000000',
+    borderTopColor: '#1d293d',
+    shadowColor: '#364153',
     shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
     ...Platform.select({ android: { elevation: 4 } }),
   },
 });

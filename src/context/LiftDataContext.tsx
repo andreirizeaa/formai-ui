@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { getUserId } from '../services/storageService';
 import { favouriteLift as favouriteLiftApi } from '../services/liftService';
+import { subscribeLiftDeleted } from '../services/liftEvents';
 import { ILiftData, LiftDataContextType } from '../types/Lifts.d';
 
 // Re-export for backward compatibility
@@ -100,7 +101,7 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
         if (!userId) return [] as ILiftData[];
         const { data, error } = await supabase
         .from('lifts')
-        .select('id, is_favourite, lift_type, lift_date, lift_time, weight_value, reps, raw_video_url, pose_video_url, thumbnail_url, analysis')
+        .select('id, is_favourite, lift_type, lift_date, lift_time, metric_weight, reps, raw_video_url, pose_video_url, thumbnail_url, analysis')
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
         if (error) return [] as ILiftData[];
@@ -161,7 +162,7 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
           liftType: row.lift_type,
           liftDate: formatDateForLift(new Date(row.lift_date)),
           liftTime: row.lift_time,
-          weightValue: Number(row.weight_value),
+          metricWeight: Number(row.metric_weight),
           reps: Number(row.reps),
           rawVideoURL,
           poseVideoURL,
@@ -169,6 +170,7 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
           analysis: {
             accuracy: Number(row.analysis?.accuracy ?? 0),
             lineGraphValues: Array.isArray(row.analysis?.lineGraphValues) ? row.analysis.lineGraphValues : [],
+            barChartValues: Array.isArray(row.analysis?.barChartValues) ? row.analysis.barChartValues : [],
             feedback: signedFeedback,
           },
         } as ILiftData;
@@ -191,18 +193,28 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
   });
 
   const refreshLifts = useCallback(async () => {
-    if (!userId) return;
-    // Force an immediate refetch by invalidating and then refetching
-    await queryClient.invalidateQueries({ queryKey: ['lifts-by-user', userId] });
-    await queryClient.refetchQueries({ queryKey: ['lifts-by-user', userId] });
-  }, [queryClient, userId]);
+    // Force an immediate refetch by invalidating and then refetching (match all userId variants)
+    await queryClient.invalidateQueries({ queryKey: ['lifts-by-user'] });
+    await queryClient.refetchQueries({ queryKey: ['lifts-by-user'] });
+  }, [queryClient]);
 
   const invalidateAndRefetch = useCallback(async () => {
-    if (!userId) return;
-    // Force an immediate refetch by invalidating and then refetching
-    await queryClient.invalidateQueries({ queryKey: ['lifts-by-user', userId] });
-    await queryClient.refetchQueries({ queryKey: ['lifts-by-user', userId] });
-  }, [queryClient, userId]);
+    // Force an immediate refetch by invalidating and then refetching (match all userId variants)
+    await queryClient.invalidateQueries({ queryKey: ['lifts-by-user'] });
+    await queryClient.refetchQueries({ queryKey: ['lifts-by-user'] });
+  }, [queryClient]);
+
+  // Subscribe to lift deletions to invalidate per-lift query and overall list
+  useEffect(() => {
+    const unsubscribe = subscribeLiftDeleted((liftId: string) => {
+      try {
+        queryClient.removeQueries({ queryKey: ['lift', liftId], exact: true });
+      } catch (_) {}
+      void refreshLifts();
+      setLiftData(prev => prev.filter(l => l.id !== liftId));
+    });
+    return () => { try { unsubscribe(); } catch (_) {} };
+  }, [queryClient, refreshLifts]);
 
   const favouriteLiftAndRefresh = useCallback(async (id: string) => {
     try {
@@ -211,7 +223,7 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
       // Fetch only this lift by id and update state
       const { data, error } = await supabase
         .from('lifts')
-        .select('id, is_favourite, lift_type, lift_date, lift_time, weight_value, reps, raw_video_url, pose_video_url, thumbnail_url, analysis')
+        .select('id, is_favourite, lift_type, lift_date, lift_time, metric_weight, reps, raw_video_url, pose_video_url, thumbnail_url, analysis')
         .eq('id', id)
         .maybeSingle();
       if (!error && data) {
@@ -265,7 +277,7 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
             liftType: data.lift_type,
             liftDate: formatDateForLift(new Date(data.lift_date)),
             liftTime: data.lift_time,
-            weightValue: Number(data.weight_value),
+            metricWeight: Number(data.metric_weight),
             reps: Number(data.reps),
             rawVideoURL,
             poseVideoURL,
@@ -273,6 +285,7 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
             analysis: {
               accuracy: Number(data.analysis?.accuracy ?? 0),
               lineGraphValues: Array.isArray(data.analysis?.lineGraphValues) ? data.analysis.lineGraphValues : [],
+              barChartValues: Array.isArray(data.analysis?.barChartValues) ? data.analysis.barChartValues : [],
               feedback: signedFeedback,
             },
           };
@@ -352,44 +365,74 @@ export function TutorialLiftSeeder() {
   const { addLift, formatDateForLift } = useLiftData();
   React.useEffect(() => {
     global.addDummyLift = () => {
-      const today = new Date();
-      const id = `demo-${today.getTime()}`;
-      addLift({
-        id,
-        isFavourite: false,
-        liftType: 'Barbell Front Squat',
-        liftDate: formatDateForLift(today),
-        liftTime: '10:35 PM',
-        weightValue: 60,
-        reps: 1,
-        rawVideoURL: require('../../assets/tutorial/formai-example-video.mp4'),
-        poseVideoURL: require('../../assets/tutorial/formai-example-pose.mp4'),
-        thumbnailURL: require('../../assets/tutorial/formai-example-video-thumbnail.jpg'),
-        analysis: {
-          accuracy: 67,
-          lineGraphValues: [67],
-          feedback: [
-            {
-              imageURL: require('../../assets/tutorial/formai-example-feedback.png'),
-              flaws: [
-                "Right knee is caving inward compared to the left, showing knee valgus.",
-                "Right ankle angle suggests the heel may be lifting more than the left.",
-                "Torso is leaning forward excessively, which stresses the lower back.",
-                "Barbell path is slightly forward of mid-foot, reducing lifting efficiency.",
-                "Hip angle indicates possible butt wink or pelvic tuck at the bottom."
-              ],
-              improvement: [
-                "Actively push knees out and think 'spread the floor' with your feet to prevent valgus.",
-                "Improve ankle dorsiflexion with stretches and banded mobilizations to keep heels grounded.",
-                "Brace your core harder using the Valsalva maneuver to maintain an upright torso.",
-                "Keep the bar over mid-foot and adjust grip width to tighten the upper back.",
-                "Strengthen glutes and hamstrings with RDLs, hip thrusts, and pause squats to control hip position.",
-                "Consider weightlifting shoes with a heel lift if ankle mobility limits squat depth."
+      // Generate 10 lifts, one for each day starting from today going back 9 days
+      for (let i = 0; i < 10; i++) {
+        const today = new Date();
+        const liftDate = new Date(today);
+        liftDate.setDate(today.getDate() - i);
+        
+        // Use Barbell Front Squat for all tutorial lifts
+        const randomMovement = 'Barbell Front Squat';
+        
+        // Random weight between 80-110 kg
+        const randomWeight = Math.floor(Math.random() * (110 - 80 + 1)) + 80;
+        
+        // Random accuracy between 65-85%
+        const randomAccuracy = Math.floor(Math.random() * (85 - 65 + 1)) + 65;
+        
+        // Random reps between 1-10
+        const randomReps = Math.floor(Math.random() * 10) + 1;
+        
+        // Random time between 6 AM and 10 PM
+        const randomHour = Math.floor(Math.random() * 16) + 6; // 6-21 (6 AM to 9 PM)
+        const randomMinute = Math.floor(Math.random() * 60);
+        const randomTime = `${randomHour > 12 ? randomHour - 12 : randomHour}:${randomMinute.toString().padStart(2, '0')} ${randomHour >= 12 ? 'PM' : 'AM'}`;
+        
+        // Generate line graph values based on accuracy
+        const lineGraphValues = Array.from({ length: randomReps }, () => 
+          Math.floor(Math.random() * 20) + (randomAccuracy - 10) // ±10 variation around accuracy
+        );
+        
+        const id = `demo-${liftDate.getTime()}-${i}`;
+        
+        addLift({
+          id,
+          isFavourite: Math.random() > 0.8, // 20% chance of being favourite
+          liftType: randomMovement,
+          liftDate: formatDateForLift(liftDate),
+          liftTime: randomTime,
+          metricWeight: randomWeight,
+          reps: randomReps,
+          rawVideoURL: require('../../assets/tutorial/formai-example-video.mp4'),
+          poseVideoURL: require('../../assets/tutorial/formai-example-pose.mp4'),
+          thumbnailURL: require('../../assets/tutorial/formai-example-video-thumbnail.jpg'),
+          analysis: {
+            accuracy: randomAccuracy,
+            lineGraphValues: lineGraphValues,
+            barChartValues: lineGraphValues,
+            feedback: [
+              {
+                imageURL: require('../../assets/tutorial/formai-example-feedback.png'),
+                flaws: [
+                  "Right knee is caving inward compared to the left, showing knee valgus.",
+                  "Right ankle angle suggests the heel may be lifting more than the left.",
+                  "Torso is leaning forward excessively, which stresses the lower back.",
+                  "Barbell path is slightly forward of mid-foot, reducing lifting efficiency.",
+                  "Hip angle indicates possible butt wink or pelvic tuck at the bottom."
+                ],
+                improvement: [
+                  "Actively push knees out and think 'spread the floor' with your feet to prevent valgus.",
+                  "Improve ankle dorsiflexion with stretches and banded mobilizations to keep heels grounded.",
+                  "Brace your core harder using the Valsalva maneuver to maintain an upright torso.",
+                  "Keep the bar over mid-foot and adjust grip width to tighten the upper back.",
+                  "Strengthen glutes and hamstrings with RDLs, hip thrusts, and pause squats to control hip position.",
+                  "Consider weightlifting shoes with a heel lift if ankle mobility limits squat depth."
+                ],
+              },
             ],
-            },
-          ],
-        },
-      });
+          },
+        });
+      }
     };
     return () => { if (global.addDummyLift) delete global.addDummyLift; };
   }, [addLift, formatDateForLift]);

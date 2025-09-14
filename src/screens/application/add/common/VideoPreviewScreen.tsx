@@ -1,12 +1,14 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { VideoView, useVideoPlayer } from 'expo-video';
+import { Asset } from 'expo-asset';
 import { useTutorialTarget } from '../../../../context/TutorialContext';
+import { generateVideoThumbnailWithMetadata } from '../../../../utils/generateVideoThumbnail';
 
 interface VideoPreviewScreenProps {
-  videoUri: string;
-  onSelectNewVideo: () => void;
+  videoUri: string | number;
+onSelectNewVideo: () => void;
   onContinue: () => void;
   onClose: () => void;
   title?: string;
@@ -14,14 +16,37 @@ interface VideoPreviewScreenProps {
 }
 
 interface VideoPlayerComponentProps {
-  videoUri: string;
+  videoUri: string | number;
 }
 
 function VideoPlayerComponent({ videoUri }: VideoPlayerComponentProps) {
-  const player = useVideoPlayer(videoUri, (player) => {
+  const [actualVideoUri, setActualVideoUri] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    (async () => {
+      if (typeof videoUri === 'number') {
+        // Convert require() number to actual URI
+        const asset = Asset.fromModule(videoUri);
+        await asset.downloadAsync();
+        setActualVideoUri(asset.localUri || asset.uri);
+      } else {
+        setActualVideoUri(videoUri);
+      }
+    })();
+  }, [videoUri]);
+
+  const player = useVideoPlayer(actualVideoUri || '', (player) => {
     player.loop = true;
     player.play();
   });
+
+  if (!actualVideoUri) {
+    return (
+      <View style={styles.noVideoContainer}>
+        <Text style={styles.noVideoText}>Loading video...</Text>
+      </View>
+    );
+  }
 
   return (
     <VideoView
@@ -40,14 +65,48 @@ export function VideoPreviewScreen({
   selectNewVideoText = "Select New Video"
 }: VideoPreviewScreenProps) {
   const { ref: continueButtonRef } = useTutorialTarget('video_preview_continue');
+  const { height: screenHeight } = useWindowDimensions();
+  const [videoRatio, setVideoRatio] = useState<number | null>(null);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!videoUri) { setVideoRatio(null); return; }
+      try {
+        // Handle both string URIs and require() numbers
+        let actualVideoUri: string;
+        if (typeof videoUri === 'number') {
+          // Convert require() number to actual URI
+          const asset = Asset.fromModule(videoUri);
+          await asset.downloadAsync();
+          actualVideoUri = asset.localUri || asset.uri;
+        } else {
+          actualVideoUri = videoUri;
+        }
+        
+        const meta = await generateVideoThumbnailWithMetadata(actualVideoUri, { time: 2000, quality: 0.5 });
+        if (!cancelled && meta.width && meta.height) {
+          setVideoRatio(meta.width / meta.height);
+        }
+      } catch (_) {
+        if (!cancelled) setVideoRatio(null);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [videoUri]);
   
   return (
-    <>
-      {/* Content */}
+    <View style={styles.container}>
       <View style={styles.content}>
-        {/* Video Preview */}
         <View style={styles.videoPreviewWrapper}>
-          <View style={styles.videoPreviewContainer} ref={continueButtonRef}>
+          <View 
+            style={[
+              styles.videoPreviewContainer,
+              { width: '100%' },
+              videoRatio ? { aspectRatio: videoRatio, maxHeight: screenHeight * 0.5 } : { height: 220 }
+            ]}
+            ref={continueButtonRef}
+          >
             {videoUri ? (
               <VideoPlayerComponent videoUri={videoUri} />
             ) : (
@@ -59,7 +118,6 @@ export function VideoPreviewScreen({
         </View>
       </View>
 
-      {/* Bottom Buttons */}
       <View style={styles.bottomControls}>
         <View style={styles.buttonStack}>
           <TouchableOpacity style={styles.selectNewVideoButton} onPress={onSelectNewVideo}>
@@ -70,23 +128,25 @@ export function VideoPreviewScreen({
           </TouchableOpacity>
         </View>
       </View>
-    </>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  content: {
+  container: {
     flex: 1,
+    justifyContent: 'space-between',
+  },
+  content: {
     paddingHorizontal: 20,
+    marginTop: 0,
   },
   videoPreviewWrapper: {
-    flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'center',
   },
   videoPreviewContainer: {
-    width: '100%',
-    aspectRatio: 16 / 9,
+    marginTop: 24,
     borderRadius: 16,
     overflow: 'hidden',
     backgroundColor: 'black',
@@ -108,8 +168,6 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   bottomControls: {
-    flex: 1,
-    justifyContent: 'flex-end',
     width: '100%',
     paddingHorizontal: 20,
     paddingBottom: 4,
@@ -122,7 +180,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#000000',
     paddingHorizontal: 24,
-    paddingVertical: 16,
+    paddingVertical: 18,
     borderRadius: 28,
     width: '100%',
     alignItems: 'center',
@@ -130,22 +188,22 @@ const styles = StyleSheet.create({
   },
   selectNewVideoButtonText: {
     color: '#000000',
-    fontSize: 17,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '800',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
   continueButton: {
     backgroundColor: '#000000',
     paddingHorizontal: 24,
-    paddingVertical: 16,
+    paddingVertical: 20,
     borderRadius: 28,
     width: '100%',
     alignItems: 'center',
   },
   continueButtonText: {
     color: '#FFFFFF',
-    fontSize: 17,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '800',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
 }); 

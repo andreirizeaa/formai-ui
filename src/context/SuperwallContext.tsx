@@ -69,15 +69,24 @@ export function SuperwallProvider({ children }: SuperwallProviderProps) {
       controller={{
         onPurchase: async (params) => {
             try {
-              const packageToPurchase = offerings?.current?.availablePackages.find(
-                pkg => pkg.product.identifier === params.productId
-              );
+              // Search through all offerings (default + upgrades)
+              let packageToPurchase = null;
+              if (offerings?.all) {
+                for (const offering of Object.values(offerings.all)) {
+                  packageToPurchase = offering.availablePackages.find(
+                    pkg => pkg.product.identifier === params.productId
+                  );
+                  if (packageToPurchase) break;
+                }
+              }
               
               if (!packageToPurchase) {
+                console.log('Package not found for product:', params.productId);
                 throw new Error(`Package not found for product: ${params.productId}`);
               }
               
               await purchasePackage(packageToPurchase);
+              console.log('purchasePackage called with packageToPurchase:', packageToPurchase);
               return;
             } catch (error) {
               throw error;

@@ -4,6 +4,8 @@ import { Image } from 'expo-image';
 import { hapticFeedback } from '../../utils/haptic';
 import i18n from '../../utils/i18n';
 import { StreakCalendar } from './StreakCalendar';
+import { OrangeGradientButton } from './OrangeGradientButton';
+import { FormAILogo } from '../FormAILogo';
 
 interface StreakModalProps {
   visible: boolean;
@@ -12,6 +14,7 @@ interface StreakModalProps {
 }
 
 export function StreakModal({ visible, currentStreak, onClose }: StreakModalProps) {
+
   const handleClose = () => {
     hapticFeedback.selection();
     onClose();
@@ -40,10 +43,10 @@ export function StreakModal({ visible, currentStreak, onClose }: StreakModalProp
         >
           {/* Header with FormAI logo and streak pill */}
           <View style={styles.modalHeader}>
-            <Image
-              source={require('../../../assets/formai-light-icon.png')}
-              style={styles.modalLogo}
-              contentFit="contain"
+            <FormAILogo 
+              iconSize={24}
+              containerStyle={styles.modalLogoContainer}
+              textStyle={styles.modalLogoText}
             />
             <View style={styles.streakBadge}>
               <Image
@@ -82,12 +85,11 @@ export function StreakModal({ visible, currentStreak, onClose }: StreakModalProp
           </Text>
 
           {/* Action button */}
-          <TouchableOpacity 
-            style={styles.button} 
+          <OrangeGradientButton
+            title={i18n.t('home.continue')}
             onPress={handleContinue}
-          >
-            <Text style={styles.buttonText}>{i18n.t('home.continue')}</Text>
-          </TouchableOpacity>
+            style={styles.button}
+          />
         </TouchableOpacity>
       </TouchableOpacity>
     </Modal>
@@ -122,9 +124,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-  modalLogo: {
-    width: 100,
-    height: 30,
+  modalLogoContainer: {
+    marginBottom: 0,
+  },
+  modalLogoText: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#000000',
+    fontFamily: 'SF Pro Display',
+    marginBottom: 0,
   },
   streakBadge: {
     flexDirection: 'row',
@@ -150,7 +158,7 @@ const styles = StyleSheet.create({
     marginLeft: 2,
     marginTop: 4,
     fontSize: 17,
-    fontWeight: '500',
+    fontWeight: '700',
     color: '#000000',
     fontFamily: 'SF Pro Display',
   },
@@ -165,9 +173,9 @@ const styles = StyleSheet.create({
     height: 118,
   },
   streakText: {
-    fontSize: 36,
-    fontWeight: '700',
-    color: '#ed694a',
+    fontSize: 38,
+    fontWeight: '800',
+    color: '#fe9a00',
     fontFamily: 'SF Pro Display',
     textAlign: 'center',
     marginBottom: 40,
@@ -175,23 +183,13 @@ const styles = StyleSheet.create({
   },
   message: {
     fontSize: 16,
-    fontWeight: '400',
+    fontWeight: '500',
     color: '#000000',
     marginBottom: 40,
     textAlign: 'center',
     lineHeight: 22,
   },
   button: {
-    height: 60,
-    borderRadius: 28,
     marginBottom: 6,
-    backgroundColor: '#000000',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  buttonText: {
-    fontSize: 18,
-    fontWeight: '500',
-    color: '#ffffff',
   },
 });

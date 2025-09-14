@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, Alert, Keyboard } from 'react-native';
+import React, { useState, useEffect, useMemo } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Alert, Keyboard, Linking, Animated } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
-import { Camera } from 'expo-camera';
 import i18n from '../../../../utils/i18n';
 import { hapticFeedback } from '../../../../utils/haptic';
 import { generateVideoThumbnail } from '../../../../utils/generateVideoThumbnail';
@@ -15,6 +16,13 @@ import { useSelectedDate } from '../../../../context/SelectedDateContext';
 import { gymMovements, BodyPart } from '../../../../constants/gymMovements';
 import { X } from 'lucide-react-native';
 import { checkDuplicateAssetId } from '../../../../services/liftService';
+import { searchLiftByAssetId } from '../../../../services/liftService';
+import { getUserId } from '../../../../services/storageService';
+import { extractObjectKeyFromUrl, signPath, ILiftData } from '../../../../context/LiftDataContext';
+import type { MainStackParamList } from '../../../../navigation/MainAppNavigator';
+import { DuplicateVideoModal } from '../../../../components/ui/DuplicateVideoModal';
+import { VideoTooLongModal } from '../../../../components/ui/VideoTooLongModal';
+import { VideoTooShortModal } from '../../../../components/ui/VideoTooShortModal';
 
 interface UploadModalProps {
   isVisible: boolean;
@@ -22,11 +30,155 @@ interface UploadModalProps {
 }
 
 export function UploadModal({ isVisible, onClose }: UploadModalProps) {
+  const navigation = useNavigation<NativeStackNavigationProp<MainStackParamList>>();
   const { addLoadingLift } = useLoadingLifts();
   const { selectedDate } = useSelectedDate();
   const [selectedVideo, setSelectedVideo] = useState<ImagePicker.ImagePickerAsset | null>(null);
-    const [showMovementSelection, setShowMovementSelection] = useState(false);
+  const [showMovementSelection, setShowMovementSelection] = useState(false);
   const [showWeightReps, setShowWeightReps] = useState(false);
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+  const [duplicateAssetId, setDuplicateAssetId] = useState<string>('');
+  const [showVideoTooLongModal, setShowVideoTooLongModal] = useState(false);
+  const [showVideoTooShortModal, setShowVideoTooShortModal] = useState(false);
+  
+  // Media library permission state
+  const [hasMediaPermission, setHasMediaPermission] = useState<boolean | null>(null);
+  const [showMediaPermission, setShowMediaPermission] = useState(false);
+  
+  // Animation value for finger icon
+  const fingerTranslateY = useMemo(() => new Animated.Value(0), []);
+
+  // Check media library permission
+  const checkMediaPermission = async () => {
+    try {
+      const { status } = await ImagePicker.getMediaLibraryPermissionsAsync();
+      setHasMediaPermission(status === 'granted');
+    } catch (e) {
+      setHasMediaPermission(false);
+    }
+  };
+
+  // Request media library permission
+  const requestMediaPermissionFromUser = async () => {
+    try {
+      const result = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!result.granted && result.canAskAgain === false) {
+        Linking.openSettings();
+        setHasMediaPermission(false);
+        return;
+      }
+      setHasMediaPermission(result.granted);
+      if (result.granted) {
+        setShowMediaPermission(false);
+      }
+    } catch (e) {
+      setHasMediaPermission(false);
+    }
+  };
+
+  // Check permission on modal open
+  useEffect(() => {
+    if (isVisible) {
+      checkMediaPermission();
+    }
+  }, [isVisible]);
+
+  // Show permission screen if no permission
+  useEffect(() => {
+    if (isVisible && hasMediaPermission === false) {
+      setShowMediaPermission(true);
+    } else if (hasMediaPermission === true) {
+      setShowMediaPermission(false);
+    }
+  }, [isVisible, hasMediaPermission]);
+
+  // Finger animation effect
+  useEffect(() => {
+    if (showMediaPermission && isVisible) {
+      const startFingerAnimation = () => {
+        Animated.loop(
+          Animated.sequence([
+            Animated.timing(fingerTranslateY, {
+              toValue: -15,
+              duration: 600,
+              useNativeDriver: true,
+            }),
+            Animated.timing(fingerTranslateY, {
+              toValue: 0,
+              duration: 600,
+              useNativeDriver: true,
+            }),
+          ])
+        ).start();
+      };
+      
+      startFingerAnimation();
+    } else {
+      // Reset animation when not showing permission screen
+      fingerTranslateY.setValue(0);
+    }
+  }, [showMediaPermission, isVisible, fingerTranslateY]);
+  
+  async function formatDateForLift(date: Date): Promise<string> {
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+  }
+
+  async function openLiftDetailsForAssetId(assetId: string) {
+    try {
+      const userId = await getUserId();
+      if (!userId) return;
+      const row = await searchLiftByAssetId(assetId, userId);
+      if (!row) return;
+
+      const thumbKey = await extractObjectKeyFromUrl(row.thumbnail_url);
+      const rawKey = await extractObjectKeyFromUrl(row.raw_video_url);
+      const poseKey = await extractObjectKeyFromUrl(row.pose_video_url);
+      const [thumbnailURL, rawVideoURL, poseVideoURL] = await Promise.all([
+        signPath(thumbKey),
+        signPath(rawKey),
+        signPath(poseKey),
+      ]);
+
+      const rawFeedback: Array<{ imageURL: any; flaws: any; improvement: any }> = Array.isArray(row.analysis?.feedback) ? row.analysis.feedback : [];
+      const signedFeedback = await Promise.all(
+        rawFeedback.map(async (f) => {
+          const feedbackKey = await extractObjectKeyFromUrl(typeof f.imageURL === 'string' ? f.imageURL : undefined);
+          const signedUrl = await signPath(feedbackKey);
+          return { ...f, imageURL: signedUrl ?? f.imageURL };
+        })
+      );
+
+      const liftData: ILiftData = {
+        id: row.id,
+        isFavourite: !!row.is_favourite,
+        liftType: row.lift_type,
+        liftDate: await formatDateForLift(new Date(row.lift_date)),
+        liftTime: row.lift_time,
+        metricWeight: Number(row.metric_weight),
+        reps: Number(row.reps),
+        rawVideoURL,
+        poseVideoURL,
+        thumbnailURL,
+        analysis: {
+          accuracy: Number(row.analysis?.accuracy ?? 0),
+          lineGraphValues: Array.isArray(row.analysis?.lineGraphValues) ? row.analysis.lineGraphValues : [],
+          barChartValues: Array.isArray(row.analysis?.barChartValues) ? row.analysis.barChartValues : [],
+          feedback: signedFeedback,
+        },
+      };
+
+      // First close the upload modal, then navigate to lift details
+      onClose();
+      setTimeout(() => {
+        navigation.navigate('LiftDetails', { liftData });
+      }, 120);
+    } catch (_) {
+      // No-op on failure
+    }
+  }
   
   // Tutorial global functions
   React.useEffect(() => {
@@ -93,6 +245,10 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
       setSelectedMovement('');
       setSearchQuery('');
       setFilteredMovements(gymMovements.map(m => m.name));
+      setShowDuplicateModal(false);
+      setShowVideoTooLongModal(false);
+      setShowVideoTooShortModal(false);
+      setDuplicateAssetId('');
     }
   }, [isVisible]);
 
@@ -109,7 +265,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
   useEffect(() => {
     if (selectedVideo && !showMovementSelection && !showWeightReps) {
       const validateVideo = async () => {
-        // Check if video duration is available and under 90 seconds
+        // Check if video duration boundaries
         let durationInSeconds = selectedVideo.duration;
         
         // Handle different duration formats
@@ -125,40 +281,24 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
         const baseAssetId = fullAssetId.split('/')[0]; // Remove /L0/001 suffix if present
         const isDuplicate = await checkDuplicateAssetId(baseAssetId);
         
-        // Check if video duration is under 90 seconds
-        if (durationInSeconds !== undefined && durationInSeconds !== null && durationInSeconds > 90) {
+        // Too long (> 60s)
+        if (durationInSeconds !== undefined && durationInSeconds !== null && durationInSeconds > 60) {
           hapticFeedback.error();
-          Alert.alert(
-            i18n.t('upload.videoTooLong'),
-            i18n.t('upload.videoTooLongMessage'),
-            [
-              { 
-                text: 'OK', 
-                onPress: () => {
-                  // Open media library again
-                  handleUploadPress();
-                }
-              },
-            ]
-          );
+          setShowVideoTooLongModal(true);
+          return;
+        }
+
+        // Too short (< 3s)
+        if (durationInSeconds !== undefined && durationInSeconds !== null && durationInSeconds < 3) {
+          hapticFeedback.error();
+          setShowVideoTooShortModal(true);
           return;
         }
         
         if (isDuplicate) {
           hapticFeedback.error();
-          Alert.alert(
-            i18n.t('upload.duplicateVideo'),
-            i18n.t('upload.duplicateVideoMessage'),
-            [
-              { 
-                text: i18n.t('upload.selectDifferentVideo'), 
-                onPress: () => {
-                  // Open media library again
-                  handleUploadPress();
-                }
-              },
-            ]
-          );
+          setDuplicateAssetId(baseAssetId);
+          setShowDuplicateModal(true);
           return;
         }
       };
@@ -168,18 +308,42 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
   }, [selectedVideo, showMovementSelection, showWeightReps]);
 
 
-
-
   const handleUploadPress = async () => {
     // Selection haptic feedback
     hapticFeedback.selection();
+    
+    // Check for media library permissions first
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    
+    if (permissionResult.status !== 'granted') {
+      Alert.alert(
+        i18n.t('upload.permissionRequired'),
+        i18n.t('upload.permissionMessage'),
+        [
+          { text: i18n.t('upload.cancel'), style: 'cancel' },
+          { text: i18n.t('upload.settings'), onPress: () => {
+            // Open app settings
+            if (Platform.OS === 'ios') {
+              Linking.openURL('app-settings:');
+            } else {
+              Linking.openSettings();
+            }
+          }}
+        ]
+      );
+      return;
+    }
     
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: 'videos',
         allowsEditing: true,
         aspect: [16, 9],
-        quality: 1,
+        quality: 0,
+        // iOS: transcode to 720p H.264 to reduce size; no effect on Android
+        videoExportPreset: ImagePicker.VideoExportPreset.H264_1280x720,
+        videoQuality: ImagePicker.UIImagePickerControllerQualityType.Medium,
+        preferredAssetRepresentationMode: ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible,
       });
 
       if (result.canceled) {
@@ -198,7 +362,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
         Alert.alert(
           i18n.t('upload.permissionRequired'),
           i18n.t('upload.permissionMessage'),
-          [{ text: 'OK' }]
+          [{ text: i18n.t('upload.ok') }]
         );
       } else {
         Alert.alert(i18n.t('upload.error'), i18n.t('upload.failedToSelectVideo'));
@@ -206,14 +370,69 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
     }
   };
 
-  const handleSelectNewVideo = () => {
-    // Selection haptic feedback
+
+  const handleDuplicateModalViewAnalysis = async () => {
+    await openLiftDetailsForAssetId(duplicateAssetId);
+  };
+
+  const handleSelectNewVideoForErrors = async () => {
     hapticFeedback.selection();
     
-    setSelectedVideo(null);
-    setShowMovementSelection(false);
-    setSelectedMovement('');
-    setSearchQuery('');
+    // Check for media library permissions first
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    
+    if (permissionResult.status !== 'granted') {
+      Alert.alert(
+        i18n.t('upload.permissionRequired'),
+        i18n.t('upload.permissionMessage'),
+        [
+          { text: i18n.t('upload.cancel'), style: 'cancel' },
+          { text: i18n.t('upload.settings'), onPress: () => {
+            // Open app settings
+            if (Platform.OS === 'ios') {
+              Linking.openURL('app-settings:');
+            } else {
+              Linking.openSettings();
+            }
+          }}
+        ]
+      );
+      return;
+    }
+    
+    // Directly open image picker without resetting state first
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: 'videos',
+        allowsEditing: true,
+        aspect: [16, 9],
+        quality: 0,
+        videoExportPreset: ImagePicker.VideoExportPreset.H264_1280x720,
+        videoQuality: ImagePicker.UIImagePickerControllerQualityType.Low,
+        preferredAssetRepresentationMode: ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible,
+      });
+
+      if (!result.canceled && result.assets?.[0]) {
+        const asset = result.assets[0];
+        // Reset state and set new video
+        setSelectedVideo(null);
+        setShowMovementSelection(false);
+        setSelectedMovement('');
+        setSearchQuery('');
+        setSelectedVideo(asset);
+      }
+    } catch (error) {
+      // Handle permission errors specifically
+      if (error instanceof Error && error.message.includes('permission')) {
+        Alert.alert(
+          i18n.t('upload.permissionRequired'),
+          i18n.t('upload.permissionMessage'),
+          [{ text: i18n.t('upload.ok') }]
+        );
+      } else {
+        Alert.alert(i18n.t('upload.error'), i18n.t('upload.failedToSelectVideo'));
+      }
+    }
   };
 
   const handleBack = () => {
@@ -226,7 +445,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
   const validateVideoBeforeContinue = async (): Promise<boolean> => {
     if (!selectedVideo) return false;
 
-    // Check if video duration is available and under 90 seconds
+    // Check if video duration is available and under 60 seconds
     let durationInSeconds = selectedVideo.duration;
     
     // Handle different duration formats
@@ -242,40 +461,23 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
     const baseAssetId = fullAssetId.split('/')[0]; // Remove /L0/001 suffix if present
     const isDuplicate = await checkDuplicateAssetId(baseAssetId);
     
-    // Check if video duration is under 90 seconds
-    if (durationInSeconds !== undefined && durationInSeconds !== null && durationInSeconds > 90) {
+    // Too long (> 60s)
+    if (durationInSeconds !== undefined && durationInSeconds !== null && durationInSeconds > 60) {
       hapticFeedback.error();
-      Alert.alert(
-        i18n.t('upload.videoTooLong'),
-        i18n.t('upload.videoTooLongMessage'),
-        [
-          { 
-            text: 'OK', 
-            onPress: () => {
-              // Open media library again
-              handleUploadPress();
-            }
-          },
-        ]
-      );
+      setShowVideoTooLongModal(true);
+      return false;
+    }
+    // Too short (< 3s)
+    if (durationInSeconds !== undefined && durationInSeconds !== null && durationInSeconds < 3) {
+      hapticFeedback.error();
+      setShowVideoTooShortModal(true);
       return false;
     }
     
     if (isDuplicate) {
       hapticFeedback.error();
-      Alert.alert(
-        i18n.t('upload.duplicateVideo'),
-        i18n.t('upload.duplicateVideoMessage'),
-        [
-          { 
-            text: i18n.t('upload.selectDifferentVideo'), 
-            onPress: () => {
-              // Open media library again
-              handleUploadPress();
-            }
-          },
-        ]
-      );
+      setDuplicateAssetId(baseAssetId);
+      setShowDuplicateModal(true);
       return false;
     }
 
@@ -362,10 +564,11 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
         dateToday: date,
         timeToday: time,
         movementType: selectedMovement,
-        weightValue: data.weight,
+        metricWeight: data.weight,
         reps: data.reps,
         assetId: baseAssetId,
         videoDurationSec: videoDurationSec,
+        pipelineStage: 'upload_video',
       });
       
       hapticFeedback.success();
@@ -416,6 +619,9 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
     setSearchQuery('');
     setSelectedBodyPart('all');
     setFilteredMovements(gymMovements.map(m => m.name));
+    setShowDuplicateModal(false);
+    setShowVideoTooLongModal(false);
+    setDuplicateAssetId('');
   };
 
   const handleClose = () => {
@@ -428,12 +634,148 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
     return null;
   }
 
+  // Show permission screen if no media library permission
+  if (hasMediaPermission === false && isVisible) {
+    return (
+      <SafeAreaView 
+        style={[
+          styles.container,
+          { backgroundColor: '#000000' }
+        ]}
+      >
+        {/* Close Button */}
+        <View style={styles.permissionTopControls}>
+          <TouchableOpacity onPress={() => {
+            hapticFeedback.selection();
+            onClose();
+          }} style={[styles.closeButton]}>
+            <X width={24} height={24} color={'#000000'} />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.mediaPermissionContainer}>
+          {/* Dialog container with flex to center dialog */}
+          <View style={styles.dialogWrapper}>
+            {/* Title above the dialog */}
+            <Text style={[
+              styles.permissionTitle,
+            ]}>
+              {i18n.t('upload.mediaPermissionTitle')}
+            </Text>
+            {/* iOS-style Media Permission Dialog */}
+            <View style={[
+              styles.dialog,
+              {
+                backgroundColor: '#1C1C1E',
+                shadowColor: '#000000',
+              }
+            ]}>
+              {/* Text Area */}
+              <View style={[
+                styles.textArea,
+                {
+                  backgroundColor: '#2C2C2E',
+                }
+              ]}>
+                <Text style={[
+                  styles.dialogText,
+                  {
+                    color: '#FFFFFF',
+                    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
+                  }
+                ]}>
+                  {i18n.t('upload.mediaPermissionDialogText')}
+                </Text>
+              </View>
+              
+              {/* Buttons Container */}
+              <View style={[
+                styles.buttonContainer,
+                {
+                  borderTopColor: '#2C2C2E',
+                  borderTopWidth: 1,
+                }
+              ]}>
+                <View
+                  style={[
+                    styles.button,
+                    styles.dontAllowButton,
+                    {
+                      backgroundColor: '#2C2C2E',
+                      paddingVertical: 0,
+                      marginVertical: 0,
+                    }
+                  ]}
+                >
+                  <Text style={[
+                    styles.buttonText,
+                    {
+                      color: '#FFFFFF',
+                      fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
+                    }
+                  ]}>
+                    {i18n.t('upload.dontAllow')}
+                  </Text>
+                </View>
+                
+                <View style={[
+                  styles.buttonDivider,
+                  {
+                    backgroundColor: '#1C1C1E',
+                  }
+                ]} />
+                
+                <TouchableOpacity
+                  style={[
+                    styles.button,
+                    styles.allowButton,
+                    {
+                      backgroundColor: '#FFFFFF',
+                      paddingVertical: 0,
+                      marginVertical: 0,
+                    }
+                  ]}
+                  onPress={requestMediaPermissionFromUser}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[
+                    styles.buttonText,
+                    {
+                      color: '#000000',
+                      fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
+                    }
+                  ]}>
+                    {i18n.t('upload.allow')}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+            
+            {/* Animated upwards pointing finger emoji */}
+            <Animated.View style={[
+              styles.animatedFingerContainer,
+              {
+                transform: [{ translateY: fingerTranslateY }]
+              }
+            ]}>
+              <Text style={styles.pointingEmoji}>👆</Text>
+            </Animated.View>
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!isVisible) {
+    return null;
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Close Button and Title */}
       <View style={styles.topControls}>
         <View style={styles.titleContainer}>
-          <Text style={styles.title}>Upload Video</Text>
+          <Text style={styles.title}>{i18n.t('add.uploadVideo')}</Text>
         </View>
         <TouchableOpacity onPress={() => {
           hapticFeedback.selection();
@@ -480,7 +822,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
           // Video Preview - shown when video is selected but movement not yet selected
           <VideoPreviewScreen
             videoUri={selectedVideo?.uri || ''}
-            onSelectNewVideo={handleSelectNewVideo}
+            onSelectNewVideo={handleSelectNewVideoForErrors}
             onContinue={handleContinue}
             onClose={handleClose}
             selectNewVideoText={i18n.t('upload.selectNewVideo')}
@@ -496,6 +838,28 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
           </View>
         </View>
       )}
+
+      {/* Duplicate Video Modal */}
+      <DuplicateVideoModal
+        isVisible={showDuplicateModal}
+        onClose={() => setShowDuplicateModal(false)}
+        onViewAnalysis={handleDuplicateModalViewAnalysis}
+        onSelectNewVideo={handleSelectNewVideoForErrors}
+      />
+
+      {/* Video Too Long Modal */}
+      <VideoTooLongModal
+        isVisible={showVideoTooLongModal}
+        onClose={() => setShowVideoTooLongModal(false)}
+        onSelectNewVideo={handleSelectNewVideoForErrors}
+      />
+
+      {/* Video Too Short Modal */}
+      <VideoTooShortModal
+        isVisible={showVideoTooShortModal}
+        onClose={() => setShowVideoTooShortModal(false)}
+        onSelectNewVideo={handleSelectNewVideoForErrors}
+      />
     </SafeAreaView>
   );
 }
@@ -524,7 +888,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 36,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#000000',
     textAlign: 'left',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
@@ -585,5 +949,86 @@ const styles = StyleSheet.create({
   },
   uploadButtonTextDisabled: {
     color: '#C7C7CC',
+  },
+  // Media permission styles (copied from RecordModal)
+  permissionTopControls: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    paddingHorizontal: 20,
+    paddingTop: 10,
+  },
+  mediaPermissionContainer: {
+    flex: 1,
+    paddingHorizontal: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dialogWrapper: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dialog: {
+    width: '100%',
+    maxWidth: 320,
+    borderRadius: 16,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 8,
+    overflow: 'hidden',
+  },
+  textArea: {
+    padding: 24,
+    paddingBottom: 20,
+  },
+  dialogText: {
+    fontSize: 17,
+    fontWeight: '600',
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    height: 44,
+  },
+  button: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dontAllowButton: {
+    // Styled above
+  },
+  allowButton: {
+    // Styled above
+  },
+  buttonText: {
+    fontSize: 17,
+    fontWeight: '600',
+  },
+  buttonDivider: {
+    width: 1,
+    height: '100%',
+  },
+  pointingEmoji: {
+    fontSize: 40,
+    marginRight: 24
+  },
+  animatedFingerContainer: {
+    marginTop: 20,
+    marginLeft: '55%',
+  },
+  permissionTitle: {
+    fontSize: 32,
+    fontWeight: '800',
+    textAlign: 'center',
+    color: '#ffffff',
+    lineHeight: 38,
+    marginBottom: 30,
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
   },
 }); 

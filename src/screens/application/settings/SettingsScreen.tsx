@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { View, Text, StyleSheet, Platform, TouchableOpacity, ScrollView, Animated } from 'react-native';
 import { Image, ImageBackground } from 'expo-image';
 import Constants from 'expo-constants';
-import { User, Languages, Ruler, FileText, ShieldCheck, MailPlus, UserMinus, LogOut } from 'lucide-react-native';
+import * as StoreReview from 'expo-store-review';
+import { User, Languages, Ruler, FileText, ShieldCheck, MailPlus, UserMinus, LogOut, TvMinimalPlay, Star, FileVideoCamera } from 'lucide-react-native';
 import i18n from '../../../utils/i18n';
 import { hapticFeedback } from '../../../utils/haptic';
 import { DeleteAccountModal } from './DeleteAccountModal';
@@ -10,10 +11,13 @@ import { LogoutModal } from './LogoutModal';
 import { LanguageModal } from './LanguageModal';
 import { removeUserId, getUserId } from '../../../services/storageService';
 import { deleteUserAccount } from '../../../services/authService';
-import { useTutorialTarget } from '../../../context/TutorialContext';
+import { useTutorialTarget, useTutorial } from '../../../context/TutorialContext';
+import { usePurchases } from '../../../context/PurchasesContext';
+import { usePlacement } from 'expo-superwall';
 import { supabase } from '../../../lib/supabase';
 import { openSupportEmail } from '../../../services/emailService';
 import { showAlert } from '../../../services/alertService';
+import { FormAILogo } from '../../../components/FormAILogo';
 
 interface SettingsScreenProps {
   onPersonalDetailsPress: () => void;
@@ -140,6 +144,7 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onSharePr
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showLanguageModal, setShowLanguageModal] = useState(false);
+  const { hasHdVideos } = usePurchases();
   const [isDeleting, setIsDeleting] = useState(false);
   const iconSize = 26;
   const iconColor = '#000000';
@@ -147,6 +152,12 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onSharePr
   // Tutorial target registration
   const { ref: settingsFirstCardRef } = useTutorialTarget('settings_first_card');
   const { ref: settingsSupportEmailRef } = useTutorialTarget('settings_support_email');
+  
+  // Tutorial context
+  const { start: startTutorial } = useTutorial();
+  
+  // Superwall placement
+  const { registerPlacement } = usePlacement();
 
   const handleDeleteAccountPress = () => {
     setShowDeleteModal(true);
@@ -219,6 +230,49 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onSharePr
     await openSupportEmail();
   };
 
+  const handleShowTutorialPress = async () => {
+    hapticFeedback.selection();
+    // First navigate to home screen, then start tutorial
+    if ((global as any).navigateToHome) {
+      (global as any).navigateToHome();
+    }
+    // Small delay to ensure navigation completes before starting tutorial
+    setTimeout(async () => {
+      await startTutorial();
+    }, 300);
+  };
+
+  const handleLeaveRatingPress = async () => {
+    hapticFeedback.selection();
+    try {
+      const isAvailable = await StoreReview.isAvailableAsync();
+      if (isAvailable) {
+        await StoreReview.requestReview();
+      } else {
+        // Fallback: open app store page
+        await StoreReview.requestReview();
+      }
+    } catch (error) {
+      console.error('Error requesting review:', error);
+      // Still try to open the store as fallback
+      try {
+        await StoreReview.requestReview();
+      } catch (fallbackError) {
+        console.error('Fallback review request failed:', fallbackError);
+      }
+    }
+  };
+
+  const handleHdVideoPress = async () => {
+    try {
+      await registerPlacement({
+        placement: 'hd_video_trigger',
+      });
+    } catch (error) {
+      console.error('Error showing HD video paywall:', error);
+    }
+  };
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
       <View style={styles.content}>
@@ -251,7 +305,18 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onSharePr
           /> */}
         </View>
 
-        {/* Second Card */}
+        {/* Second Card - Video Quality (only show if user doesn't have HD videos) */}
+        {!hasHdVideos && (
+          <View style={styles.card}>
+            <SettingsOption
+              icon={<FileVideoCamera size={iconSize} color={iconColor} />}
+              title={i18n.t('settings.whyLowQualityVideos')}
+              onPress={handleHdVideoPress}
+            />
+          </View>
+        )}
+
+        {/* Third Card */}
         {/* <View style={styles.card}>
           <MemoizedReferFriendOption
             icon={<ReferFriendIcon width={iconSize} height={iconSize} color={iconColor} />}
@@ -261,7 +326,35 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onSharePr
           />
         </View> */}
 
-        {/* Third Card */}
+        {/* Fourth Card */}
+        <View style={styles.card}>
+          <SettingsOption
+            ref={settingsSupportEmailRef}
+            icon={<MailPlus size={iconSize} color={iconColor} />}
+            title={i18n.t('settings.supportEmail')}
+            onPress={handleSupportEmailPress}
+          />
+          <View style={styles.separator} />
+          <SettingsOption
+            icon={<TvMinimalPlay size={iconSize} color={iconColor} />}
+            title={i18n.t('settings.replayTutorial')}
+            onPress={handleShowTutorialPress}
+          />
+          <View style={styles.separator} />
+          <SettingsOption
+            icon={<Star size={iconSize} color={iconColor} />}
+            title={i18n.t('settings.leaveRating')}
+            onPress={handleLeaveRatingPress}
+          />
+          <View style={styles.separator} />
+          <SettingsOption
+            icon={<UserMinus size={iconSize} color={iconColor} />}
+            title={i18n.t('settings.deleteAccount')}
+            onPress={handleDeleteAccountPress}
+          />
+        </View>
+
+        {/* Fifth Card - Legal */}
         <View style={styles.card}>
           <SettingsOption
             icon={<FileText size={iconSize} color={iconColor} />}
@@ -274,22 +367,9 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onSharePr
             title={i18n.t('settings.privacyPolicy')}
             onPress={() => {}}
           />
-          <View style={styles.separator} />
-          <SettingsOption
-            ref={settingsSupportEmailRef}
-            icon={<MailPlus size={iconSize} color={iconColor} />}
-            title={i18n.t('settings.supportEmail')}
-            onPress={handleSupportEmailPress}
-          />
-          <View style={styles.separator} />
-          <SettingsOption
-            icon={<UserMinus size={iconSize} color={iconColor} />}
-            title={i18n.t('settings.deleteAccount')}
-            onPress={handleDeleteAccountPress}
-          />
         </View>
 
-        {/* Forth Card */}
+        {/* Sixth Card - Logout */}
         <View style={styles.card}>
           <SettingsOption
             icon={<LogOut size={iconSize} color={iconColor} />}
@@ -323,11 +403,11 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onSharePr
       {/* This component is now rendered by the parent based on the onPersonalDetailsPress prop */}
       
       {/* Footer with FormAI Logo and Version */}
-      <View style={styles.footer}>
-        <Image 
-          source={require('../../../../assets/formai-light-icon.png')} 
-          style={styles.footerLogo}
-          resizeMode="contain"
+      <View style={styles.footerCard}>
+        <FormAILogo 
+          iconSize={32}
+          containerStyle={styles.footerLogoContainer}
+          textStyle={styles.footerLogoText}
         />
         <Text style={styles.versionText}>
           Version {Constants.expoConfig?.version || '1.0.0'}
@@ -349,7 +429,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 36,
-    fontWeight: '600',
+    fontWeight: '800',
     color: '#000000',
     textAlign: 'left',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
@@ -385,8 +465,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   optionTitle: {
-    fontSize: 16,
-    fontWeight: '500',
+    fontSize: 17,
+    fontWeight: '700',
     color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
@@ -466,19 +546,40 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
   },
-  footer: {
-    marginTop: -30,
+  footerCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 16,
+    marginHorizontal: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingBottom: 40,
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  footer: {
+    marginTop: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
     paddingHorizontal: 20,
   },
-  footerLogo: {
-    width: 100,
-    height: 100,
+  footerLogoContainer: {
+    marginBottom: 0,
+  },
+  footerLogoText: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#000000',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
+    marginBottom: 0,
   },
   versionText: {
-    marginTop: -36,
+    marginTop: 4,
     fontSize: 14,
     color: '#8E8E93',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',

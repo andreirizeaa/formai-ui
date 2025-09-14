@@ -99,6 +99,8 @@ export function EditHeightScreen({ onBack, currentValue, onSave }: EditHeightScr
   const heightOptions = Array.from({ length: 151 }, (_, i) => 100 + i); // 100-250 cm
   const feetOptions = Array.from({ length: 8 }, (_, i) => 1 + i); // 1-8 feet
   const inchesOptions = Array.from({ length: 12 }, (_, i) => i); // 0-11 inches
+  const repeats = 20;
+  const middleRepeatIndex = Math.floor(repeats / 2);
 
   return (
     <View style={styles.container}>
@@ -127,18 +129,28 @@ export function EditHeightScreen({ onBack, currentValue, onSave }: EditHeightScr
           </Text>
           <View style={styles.pickerWrapper}>
             {isMetric ? (
-              // Single picker for metric
+              // Single picker for metric with repeats
               <Picker
-                selectedValue={selectedHeight}
-                onValueChange={(value) => value && handleHeightChange(value)}
+                selectedValue={(() => {
+                  const base = 100;
+                  const len = heightOptions.length;
+                  const idx = Math.max(0, Math.min(len - 1, selectedHeight - base));
+                  return middleRepeatIndex * len + idx;
+                })()}
+                onValueChange={(value) => {
+                  const len = heightOptions.length;
+                  const idx = Number(value) % len;
+                  const cm = heightOptions[idx];
+                  handleHeightChange(cm);
+                }}
                 style={styles.picker}
                 itemStyle={Platform.OS === 'ios' ? { fontSize: 16 } : undefined}
               >
-                {heightOptions.map(height => (
+                {Array.from({ length: repeats * heightOptions.length }, (_, i) => heightOptions[i % heightOptions.length]).map((height, index) => (
                   <Picker.Item 
-                    key={height} 
+                    key={`h-${index}`} 
                     label={`${height} ${i18n.t('onboarding.measurements.cm')}`} 
-                    value={height}
+                    value={index}
                   />
                 ))}
               </Picker>
@@ -147,32 +159,50 @@ export function EditHeightScreen({ onBack, currentValue, onSave }: EditHeightScr
               <View style={styles.imperialPickersContainer}>
                 <View style={styles.imperialPickerWrapper}>
                   <Picker
-                    selectedValue={selectedFeet}
-                    onValueChange={(value) => value && handleFeetChange(value)}
+                    selectedValue={(() => {
+                      const base = 1;
+                      const len = feetOptions.length;
+                      const idx = Math.max(0, Math.min(len - 1, selectedFeet - base));
+                      return middleRepeatIndex * len + idx;
+                    })()}
+                    onValueChange={(value) => {
+                      const len = feetOptions.length;
+                      const idx = Number(value) % len;
+                      handleFeetChange(feetOptions[idx]);
+                    }}
                     style={styles.imperialPicker}
                     itemStyle={Platform.OS === 'ios' ? { fontSize: 16 } : undefined}
                   >
-                    {feetOptions.map(feet => (
+                    {Array.from({ length: repeats * feetOptions.length }, (_, i) => feetOptions[i % feetOptions.length]).map((feet, index) => (
                       <Picker.Item 
-                        key={feet} 
+                        key={`f-${index}`} 
                         label={`${feet} ft`} 
-                        value={feet}
+                        value={index}
                       />
                     ))}
                   </Picker>
                 </View>
                 <View style={styles.imperialPickerWrapper}>
                   <Picker
-                    selectedValue={selectedInches}
-                    onValueChange={(value) => value && handleInchesChange(value)}
+                    selectedValue={(() => {
+                      const base = 0;
+                      const len = inchesOptions.length;
+                      const idx = Math.max(0, Math.min(len - 1, selectedInches - base));
+                      return middleRepeatIndex * len + idx;
+                    })()}
+                    onValueChange={(value) => {
+                      const len = inchesOptions.length;
+                      const idx = Number(value) % len;
+                      handleInchesChange(inchesOptions[idx]);
+                    }}
                     style={styles.imperialPicker}
                     itemStyle={Platform.OS === 'ios' ? { fontSize: 16 } : undefined}
                   >
-                    {inchesOptions.map(inches => (
+                    {Array.from({ length: repeats * inchesOptions.length }, (_, i) => inchesOptions[i % inchesOptions.length]).map((inches, index) => (
                       <Picker.Item 
-                        key={inches} 
+                        key={`i-${index}`} 
                         label={`${inches} in`} 
-                        value={inches}
+                        value={index}
                       />
                     ))}
                   </Picker>
@@ -224,8 +254,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: '400',
+    fontSize: 22,
+    fontWeight: '700',
     color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
@@ -245,7 +275,7 @@ const styles = StyleSheet.create({
   },
   pickerLabel: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '800',
     color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
     marginBottom: 20,
@@ -271,7 +301,7 @@ const styles = StyleSheet.create({
   },
   imperialPickerLabel: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '800',
     color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
     marginBottom: 15,
@@ -287,14 +317,14 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     backgroundColor: '#000000',
-    paddingVertical: 16,
+    paddingVertical: 20,
     paddingHorizontal: 24,
     borderRadius: 28,
     alignItems: 'center',
   },
   saveButtonText: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '800',
     color: '#FFFFFF',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },

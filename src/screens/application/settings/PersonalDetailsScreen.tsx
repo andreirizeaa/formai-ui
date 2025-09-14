@@ -4,6 +4,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import i18n from '../../../utils/i18n';
 import { hapticFeedback } from '../../../utils/haptic';
 import { useUserDetails } from '../../../context/UserDetailsContext';
+import { usePurchases } from '../../../context/PurchasesContext';
+import { usePlacement } from 'expo-superwall';
 import { Pencil, X } from 'lucide-react-native';
 
 interface PersonalDetailsScreenProps {
@@ -29,14 +31,17 @@ function PersonalDetailOption({ title, value, onPress }: PersonalDetailOptionPro
         onPress?.();
       }} 
       activeOpacity={0.7}
+      disabled={!onPress}
     >
       <View style={styles.textContainer}>
         <Text style={styles.optionTitle}>{title}</Text>
         <Text style={styles.optionValue}>{value}</Text>
       </View>
-      <View style={styles.iconContainer}>
-        <Pencil width={20} height={20} color="#8E8E93" />
-      </View>
+      {onPress && (
+        <View style={styles.iconContainer}>
+          <Pencil width={20} height={20} color="#8E8E93" />
+        </View>
+      )}
     </TouchableOpacity>
   );
 }
@@ -112,6 +117,10 @@ export function PersonalDetailsScreen({
   onEditGender
 }: PersonalDetailsScreenProps) {
   const { userDetails, getWeightDisplay, getHeightDisplay, getDateOfBirthDisplay } = useUserDetails();
+  const { hasHdVideos } = usePurchases();
+  const { registerPlacement } = usePlacement();
+  
+  const videoQuality = hasHdVideos ? 'High Definition' : 'Low';
 
   const handleEditCurrentWeight = () => {
     onEditCurrentWeight(getWeightDisplay());
@@ -127,6 +136,18 @@ export function PersonalDetailsScreen({
 
   const handleEditGender = () => {
     onEditGender(userDetails?.gender ?? '');
+  };
+
+  const handleHdVideoPress = async () => {
+    console.log('handleHdVideoPress called');
+    hapticFeedback.selection();
+    try {
+      await registerPlacement({
+        placement: 'hd_video_trigger',
+      });
+    } catch (error) {
+      console.error('Error showing HD video paywall:', error);
+    }
   };
 
   return (
@@ -175,6 +196,18 @@ export function PersonalDetailsScreen({
             onPress={handleEditGender}
           />
         </View>
+
+        {/* Video Quality Card */}
+        <View style={styles.card}>
+          <PersonalDetailOption
+            title={i18n.t('personalDetails.videoQuality')}
+            value={videoQuality}
+            onPress={!hasHdVideos ? () => {
+              console.log('Video Quality onPress called, hasHdVideos:', hasHdVideos);
+              handleHdVideoPress();
+            } : undefined}
+          />
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -201,8 +234,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: '400',
+    fontSize: 22,
+    fontWeight: '700',
     color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
@@ -220,6 +253,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderWidth: 1,
     borderColor: '#E5E5EA',
+    marginBottom: 16,
   },
   optionRow: {
     flexDirection: 'row',
@@ -233,14 +267,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   optionTitle: {
-    fontSize: 18,
-    fontWeight: '400',
+    fontSize: 17,
+    fontWeight: '600',
     color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
   optionValue: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 19,
+    fontWeight: '800',
     color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },

@@ -222,8 +222,8 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: '600',
+    fontSize: 22,
+    fontWeight: '800',
     color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
     textAlign: 'left',
@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     width: '100%',
-    height: 50,
+    height: 60,
     borderRadius: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
@@ -270,10 +270,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#f3f4f6',
     paddingHorizontal: 15,
     paddingRight: 50, // Make room for the clear button
+    paddingVertical: 0,
     fontSize: 16,
-    fontWeight: '400',
+    fontWeight: '500',
     color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+    textAlignVertical: 'center',
+    includeFontPadding: false,
+    lineHeight: Platform.OS === 'ios' ? 20 : 24,
   },
   clearButton: {
     position: 'absolute',
@@ -302,7 +306,7 @@ const styles = StyleSheet.create({
   },
   movementItemText: {
     fontSize: 16,
-    fontWeight: '400',
+    fontWeight: '500',
     color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
     textAlign: 'left',
@@ -330,13 +334,13 @@ const styles = StyleSheet.create({
     borderColor: '#000000',
     borderRadius: 28,
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 19,
     alignItems: 'center',
   },
   resetButtonText: {
     color: '#000000',
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '800',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
   applyButton: {
@@ -344,13 +348,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#000000',
     borderRadius: 28,
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 20,
     alignItems: 'center',
   },
   applyButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '800',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
 }); 

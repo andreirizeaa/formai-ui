@@ -156,10 +156,13 @@ export function EditDateOfBirthScreen({ onBack, currentValue, onSave }: EditDate
   };
 
   // Generate years from 1940 to current year - 4 (descending order for better UX)
+  const baseYear = 1950;
   const years = Array.from(
-    { length: currentYear - 1940 - 3 }, // -3 because we want to go up to currentYear - 4
-    (_, i) => currentYear - 4 - i
-  ).reverse(); // Reverse to show in ascending order
+    { length: currentYear - baseYear + 1 },
+    (_, i) => baseYear + i
+  );
+  const repeats = 20;
+  const middleRepeatIndex = Math.floor(repeats / 2);
   
   // Generate days based on selected month and year
   const maxDays = getDaysInMonth(selectedMonth, selectedYear);
@@ -190,16 +193,16 @@ export function EditDateOfBirthScreen({ onBack, currentValue, onSave }: EditDate
           <View style={[styles.pickerSection, styles.monthPickerSection]}>
             <View style={styles.pickerWrapper}>
               <Picker
-                selectedValue={selectedMonth}
-                onValueChange={handleMonthChange}
+                selectedValue={middleRepeatIndex * 12 + (selectedMonth - 1)}
+                onValueChange={value => handleMonthChange((Number(value) % 12) + 1)}
                 style={styles.picker}
                 itemStyle={Platform.OS === 'ios' ? { fontSize: 14 } : undefined}
               >
-                {months.map((month, index) => (
+                {Array.from({ length: repeats * 12 }, (_, i) => months[i % 12]).map((m, index) => (
                   <Picker.Item 
-                    key={index + 1} 
-                    label={month} 
-                    value={index + 1}
+                    key={`m-${index}`} 
+                    label={m} 
+                    value={index}
                   />
                 ))}
               </Picker>
@@ -210,18 +213,29 @@ export function EditDateOfBirthScreen({ onBack, currentValue, onSave }: EditDate
           <View style={styles.pickerSection}>
             <View style={styles.pickerWrapper}>
               <Picker
-                selectedValue={selectedDay}
-                onValueChange={handleDayChange}
+                selectedValue={(() => {
+                  const maxDays = getDaysInMonth(selectedMonth, selectedYear);
+                  const safeDay = Math.min(selectedDay, maxDays);
+                  return middleRepeatIndex * maxDays + (safeDay - 1);
+                })()}
+                onValueChange={value => {
+                  const maxDays = getDaysInMonth(selectedMonth, selectedYear);
+                  const day = (Number(value) % maxDays) + 1;
+                  handleDayChange(day);
+                }}
                 style={styles.picker}
                 itemStyle={Platform.OS === 'ios' ? { fontSize: 14 } : undefined}
               >
-                {days.map(day => (
-                  <Picker.Item 
-                    key={day} 
-                    label={day.toString()} 
-                    value={day}
-                  />
-                ))}
+                {(() => {
+                  const maxDays = getDaysInMonth(selectedMonth, selectedYear);
+                  return Array.from({ length: repeats * maxDays }, (_, i) => (i % maxDays) + 1).map((d, index) => (
+                    <Picker.Item 
+                      key={`d-${index}`} 
+                      label={d.toString()} 
+                      value={index}
+                    />
+                  ));
+                })()}
               </Picker>
             </View>
           </View>
@@ -230,16 +244,25 @@ export function EditDateOfBirthScreen({ onBack, currentValue, onSave }: EditDate
           <View style={styles.pickerSection}>
             <View style={styles.pickerWrapper}>
               <Picker
-                selectedValue={selectedYear}
-                onValueChange={handleYearChange}
+                selectedValue={(() => {
+                  const yearIdx = selectedYear - baseYear;
+                  const len = years.length;
+                  const safeIdx = Math.max(0, Math.min(len - 1, yearIdx));
+                  return middleRepeatIndex * len + safeIdx;
+                })()}
+                onValueChange={value => {
+                  const len = years.length;
+                  const idx = Number(value) % len;
+                  handleYearChange(years[idx]);
+                }}
                 style={styles.picker}
                 itemStyle={Platform.OS === 'ios' ? { fontSize: 14 } : undefined}
               >
-                {years.map(year => (
+                {Array.from({ length: repeats * years.length }, (_, i) => years[i % years.length]).map((yearVal, index) => (
                   <Picker.Item 
-                    key={year} 
-                    label={year.toString()} 
-                    value={year}
+                    key={`y-${index}`} 
+                    label={yearVal.toString()} 
+                    value={index}
                   />
                 ))}
               </Picker>
@@ -289,8 +312,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: '400',
+    fontSize: 22,
+    fontWeight: '700',
     color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
@@ -337,14 +360,14 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     backgroundColor: '#000000',
-    paddingVertical: 16,
+    paddingVertical: 20,
     paddingHorizontal: 24,
     borderRadius: 28,
     alignItems: 'center',
   },
   saveButtonText: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '800',
     color: '#FFFFFF',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },

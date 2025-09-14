@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
   },
   dayName: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '800',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
     marginBottom: 8,
   },

@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Platform, Animated } from 're
 import { Image } from 'expo-image';
 import { useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { OrangeGradientButton } from '../../components/ui/OrangeGradientButton';
 import i18n from '../../utils/i18n';
 import { hapticFeedback } from '../../utils/haptic';
 import { getUserId } from '../../services/storageService';
@@ -65,26 +66,16 @@ export function WelcomeScreen({ onGetStarted, onSignIn }: WelcomeScreenProps) {
       {/* Content area with text and buttons */}
       <View style={styles.content}>
         <Text style={styles.subtitle}>
-          {i18n.t('welcome.subtitle')}
+          {i18n.t('welcome.subtitle')}.
         </Text>
       </View>
 
       <View style={styles.actions}>
-        <TouchableOpacity 
-          style={[
-            styles.getStartedButton,
-            { backgroundColor: isDark ? '#FFFFFF' : '#000000' }
-          ]}
+        <OrangeGradientButton
+          title={`${i18n.t('getStarted')}!`}
           onPress={handleGetStarted}
-          activeOpacity={0.8}
-        >
-          <Text style={[
-            styles.getStartedText,
-            { color: isDark ? '#000000' : '#FFFFFF' }
-          ]}>
-            {i18n.t('getStarted')}
-          </Text>
-        </TouchableOpacity>
+          style={styles.getStartedButton}
+        />
 
         <TouchableOpacity onPress={handleSignIn} activeOpacity={0.7}>
           <Text style={styles.signInText}>
@@ -112,15 +103,14 @@ const styles = StyleSheet.create({
     height: '90%',
   },
   content: {
-    paddingHorizontal: 20,
     paddingBottom: 20,
     alignItems: 'center',
   },
   subtitle: {
-    fontSize: 36,
-    fontWeight: '600',
+    fontSize: 32,
+    fontWeight: '800',
     textAlign: 'center',
-    maxWidth: 280,
+    maxWidth: 340,
     color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
   },
@@ -129,27 +119,14 @@ const styles = StyleSheet.create({
     paddingBottom: 34,
   },
   getStartedButton: {
-    height: 60,
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
     marginBottom: 8,
-  },
-  getStartedButtonTheme: {
-    backgroundColor: '#000000',
-  },
-  getStartedText: {
-    fontSize: 18,
-    fontWeight: '500',
-    color: '#FFFFFF',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
   },
   signInText: {
     fontSize: 16,
-    fontWeight: '400',
+    fontWeight: '600',
     textAlign: 'center',
     textDecorationLine: 'underline',
-    color: '#8E8E93',
+    color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
 }); 
