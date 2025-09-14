@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal, Platform } from 'react-native';
+import { View, Text, StyleSheet, Modal, Platform, Dimensions } from 'react-native';
 import { useColorScheme } from 'react-native';
 import LottieView from 'lottie-react-native';
+import { OrangeGradientButton } from '../../../components/ui/OrangeGradientButton';
 import i18n from '../../../utils/i18n';
 import { hapticFeedback } from '../../../utils/haptic';
 
@@ -13,6 +14,19 @@ interface WelcomeModalProps {
 export function WelcomeModal({ isVisible, onGetStarted }: WelcomeModalProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+  const confettiRef = React.useRef<LottieView>(null as any);
+
+  React.useEffect(() => {
+    if (!isVisible) return;
+    const timer = setTimeout(() => {
+      try {
+        confettiRef.current?.reset?.();
+        confettiRef.current?.play?.();
+      } catch {}
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [isVisible]);
 
   const handleGetStarted = () => {
     hapticFeedback.success();
@@ -32,19 +46,21 @@ export function WelcomeModal({ isVisible, onGetStarted }: WelcomeModalProps) {
       onRequestClose={() => {}}
     >
       <View style={styles.overlay}>
+        {/* Full-screen confetti behind the modal */}
+        <View style={styles.fullscreenConfettiContainer} pointerEvents="none">
+          <LottieView
+            source={require('../../../../assets/animations/confetti.json')}
+            autoPlay={false}
+            loop={false}
+            resizeMode="cover"
+            ref={confettiRef}
+            style={{ width: screenWidth, height: screenHeight * 1.35 }}
+          />
+        </View>
         <View style={[
           styles.modalContainer,
           { backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF' }
         ]}>
-          {/* Confetti animation behind the modal content */}
-          <View style={styles.confettiContainer}>
-            <LottieView
-              source={require('../../../../assets/animations/confetti.json')}
-              autoPlay
-              loop={false}
-              style={styles.confetti}
-            />
-          </View>
           
           <Text style={[
             styles.title,
@@ -56,24 +72,10 @@ export function WelcomeModal({ isVisible, onGetStarted }: WelcomeModalProps) {
           ]}>{i18n.t('welcome.modal.message')}</Text>
 
           <View style={styles.footer}>
-            <TouchableOpacity 
-              style={[
-                styles.ctaButton, 
-                { 
-                  backgroundColor: isDark ? '#FFFFFF' : '#000000'
-                }
-              ]} 
-              onPress={handleGetStarted} 
-              activeOpacity={0.8}
-            >
-              <Text style={[
-                styles.ctaText,
-                { 
-                  color: isDark ? '#000000' : '#FFFFFF',
-                  fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto'
-                }
-              ]}>{i18n.t('welcome.modal.ctaButton')}</Text>
-            </TouchableOpacity>
+            <OrangeGradientButton
+              title={i18n.t('welcome.modal.ctaButton')}
+              onPress={handleGetStarted}
+            />
           </View>
         </View>
       </View>
@@ -100,16 +102,16 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
+    fontSize: 36,
+    fontWeight: '800',
     marginBottom: 12,
     textAlign: 'center',
   },
   message: {
-    fontSize: 16,
-    fontWeight: '400',
+    fontSize: 17,
+    fontWeight: '600',
     marginBottom: 24,
-    textAlign: 'left',
+    textAlign: 'center',
     lineHeight: 22,
   },
   subMessage: {
@@ -120,16 +122,6 @@ const styles = StyleSheet.create({
   },
   footer: {
     marginTop: 8,
-  },
-  ctaButton: {
-    height: 65,
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  ctaText: {
-    fontSize: 20,
-    fontWeight: '500',
   },
   confettiContainer: {
     position: 'absolute',
@@ -144,6 +136,16 @@ const styles = StyleSheet.create({
   confetti: {
     width: '150%',
     height: '150%',
+  },
+  fullscreenConfettiContainer: {
+    position: 'absolute',
+    top: 0,
+    left: -16,
+    right: -16,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 0,
   },
 });
 

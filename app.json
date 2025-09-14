@@ -17,17 +17,18 @@
         "foregroundImage": "./assets/formai-ios-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.useformai.formai"
+      "package": "com.useformai.formai",
+      "useNextNotificationsApi": true
     },
     "web": {
-      "favicon": "./assets/favicon.png",
-      "proxy": "http://192.168.1.224:8000"
+      "proxy": "https://formai-service.onrender.com"
     },
     
     "plugins": [
       "expo-mail-composer",
       "expo-video",
       "expo-apple-authentication",
+      "expo-notifications",
       "react-native-vision-camera",
       [
         "expo-media-library",
@@ -48,12 +49,15 @@
         {
           "photosPermission": "The app accesses your photo library to allow you to select videos to upload for analysis."
         }
-      ]
+      ],
+      "react-native-compressor",
+      "expo-notifications"
     ],
     "ios": {
       "bundleIdentifier": "com.useformai.formai",
       
       "infoPlist": {
+        "UIBackgroundModes": ["remote-notification"],
         "CFBundleURLTypes": [
           {
             "CFBundleURLName": "Google Sign-In",

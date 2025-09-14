@@ -1,6 +1,4 @@
-import axios from 'axios';
 import { supabase } from '../lib/supabase';
-import { API_CONFIG } from './api';
 import { getUserId } from './storageService';
 
 export interface UserRow {
@@ -29,12 +27,13 @@ export interface UserFetchResult {
 export async function fetchUserById(userId: string): Promise<UserFetchResult> {
 	try {
 		const { data, error } = await supabase
-			.from('users')
-			.select('id, onboarding_completed')
-			.eq('id', userId)
+			.from('user_onboarding')
+			.select('user_id, onboarding_completed')
+			.eq('user_id', userId)
 			.maybeSingle();
 		if (error) return { user: null, error: error.message };
-		return { user: data ?? null };
+		if (!data) return { user: null };
+		return { user: { id: (data as any).user_id, onboarding_completed: Boolean((data as any).onboarding_completed) } };
 	} catch (e: any) {
 		return { user: null, error: e?.message ?? 'Unknown error' };
 	}
@@ -68,47 +67,96 @@ export interface EditUserDetailsResponse {
 export async function editUserDetails(
   partial: EditUserDetailsPayload
 ): Promise<EditUserDetailsResponse> {
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
+  // Helpers (mirror backend normalization/sanitization)
+  function isoDateOrNull(value?: string | null): string | null {
+    if (!value) return null;
+    const m = /^\d{4}-\d{2}-\d{2}/.exec(value);
+    return m?.[0] ?? null;
+  }
 
-  try {
-    const { data: sessionData } = await supabase.auth.getSession();
-    const accessToken = sessionData?.session?.access_token;
-    if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
-  } catch (_) {
-    // ignore token fetch errors
+  function buildUpdatePayload(req: EditUserDetailsPayload): Record<string, any> {
+    const payload: Record<string, any> = {};
+    if (req.height != null) payload.metric_height = req.height;
+    if (req.weight != null) payload.metric_weight = req.weight;
+    if (req.birth_date != null) {
+      const normalized = isoDateOrNull(req.birth_date);
+      if (normalized) payload.birth_date = normalized;
+    }
+    if (req.gender != null) payload.gender = req.gender;
+    if (req.language != null) payload.language = req.language;
+    if (req.unit_system != null) payload.unit_system = req.unit_system;
+    if (req.walkthrough_completed != null) payload.walkthrough_completed = req.walkthrough_completed;
+    return payload;
   }
 
   const userId = await getUserId();
-  if (!userId) {
-    throw new Error('Missing user_id');
+  if (!userId) throw new Error('Missing user_id');
+
+  const updatePayload = buildUpdatePayload(partial);
+  if (!Object.keys(updatePayload).length) throw new Error('No valid fields to update');
+
+  // Ensure user row exists in user_info
+  const { data: userRow, error: userErr } = await supabase
+    .from('user_info')
+    .select('user_id')
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (userErr) throw new Error(userErr.message);
+  if (!userRow) throw new Error('User not found');
+
+  // Perform update only (avoids requiring INSERT RLS)
+  const { error: updateErr } = await supabase
+    .from('user_info')
+    .update(updatePayload)
+    .eq('user_id', userId);
+  if (updateErr) throw new Error(updateErr.message);
+
+  // Then fetch the updated row explicitly (more reliable across PostgREST modes)
+  const { data: updated, error: selErr } = await supabase
+    .from('user_info')
+    .select('user_id, metric_height, metric_weight, birth_date, gender, language, unit_system, walkthrough_completed')
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (selErr) throw new Error(selErr.message);
+  if (!updated) throw new Error('Failed to retrieve updated user details');
+
+  const updatedFields: Record<string, any> = {};
+  for (const field of Object.keys(updatePayload)) {
+    if (field === 'metric_height') updatedFields.height = (updated as any).metric_height;
+    else if (field === 'metric_weight') updatedFields.weight = (updated as any).metric_weight;
+    else if (field === 'birth_date') updatedFields.birth_date = (updated as any).birth_date;
+    else if (field === 'gender') updatedFields.gender = (updated as any).gender;
+    else if (field === 'language') updatedFields.language = (updated as any).language;
+    else if (field === 'unit_system') updatedFields.unit_system = (updated as any).unit_system;
+    else if (field === 'walkthrough_completed') updatedFields.walkthrough_completed = (updated as any).walkthrough_completed;
   }
-
-  const body = {
+  return {
+    success: true,
+    message: 'User details updated successfully',
     user_id: userId,
-    ...partial,
+    updated_fields: updatedFields,
   };
-
-  const response = await axios.put<EditUserDetailsResponse>(
-    `${API_CONFIG.baseURL}/user/details/edit`,
-    body,
-    {
-      headers,
-      timeout: API_CONFIG.timeout,
-    }
-  );
-
-  return response.data;
 }
 
 export async function fetchUserDetailsById(userId: string): Promise<UserDetailsRow | null> {
   const { data, error } = await supabase
-    .from('users')
-    .select('id, unit_system, metric_height, metric_weight, birth_date, gender, language, current_streak, walkthrough_completed, has_rated')
-    .eq('id', userId)
+    .from('user_info')
+    .select('user_id, unit_system, metric_height, metric_weight, birth_date, gender, language, walkthrough_completed, has_rated')
+    .eq('user_id', userId)
     .maybeSingle();
   if (error) throw new Error(error.message);
-  return (data as UserDetailsRow) ?? null;
+  if (!data) return null;
+  return {
+    id: (data as any).user_id,
+    unit_system: (data as any).unit_system,
+    metric_height: (data as any).metric_height,
+    metric_weight: (data as any).metric_weight,
+    birth_date: (data as any).birth_date,
+    gender: (data as any).gender,
+    language: (data as any).language,
+    current_streak: null,
+    walkthrough_completed: (data as any).walkthrough_completed,
+    has_rated: (data as any).has_rated,
+  };
 }
 

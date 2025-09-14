@@ -3,11 +3,12 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Activ
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft, Ellipsis, Heart, Trash2, X, Pencil } from 'lucide-react-native';
 import { VideoView, useVideoPlayer } from 'expo-video';
-import { LineChart } from 'react-native-chart-kit';
 import { LinearGradient } from 'expo-linear-gradient';
+import SwipeableLiftDetailsGraphs from '../../../components/ui/SwipeableLiftDetailsGraphs';
+import { OrangeGradientButton } from '../../../components/ui/OrangeGradientButton';
 import { useQueryClient } from '@tanstack/react-query';
 import { hapticFeedback } from '../../../utils/haptic';
-import { useLiftData, ILiftData } from '../../../context/LiftDataContext';
+import { useLiftData, ILiftData, extractObjectKeyFromUrl, signPath } from '../../../context/LiftDataContext';
 import { useLoadingLifts } from '../../../context/LoadingLiftsContext';
 import { favouriteLift as favouriteLiftApi, updateLiftWeight } from '../../../services/liftService';
 import { deleteLift } from '../../../services/liftDeletionService';
@@ -18,8 +19,8 @@ import { useUserCheckIns } from '../../../context/UserCheckInsContext';
 import i18n from '../../../utils/i18n';
 import { VideoPlayerComponentProps, LiftDetailsProps } from '../../../types/Lifts';
 
-function VideoPlayerComponent({ videoUri, onReady }: VideoPlayerComponentProps) {
-  const player = useVideoPlayer(videoUri, (player) => {
+function VideoPlayerComponent({ videoUri, onReady }: { videoUri: string | number; onReady: () => void }) {
+  const player = useVideoPlayer(videoUri as any, (player) => {
     player.loop = false;
     player.showNowPlayingNotification = false;
     player.play();
@@ -44,12 +45,12 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
   const { removeLift, updateLift, refreshLifts, liftData: contextLiftData, favouriteLiftAndRefresh } = useLiftData();
   const { removeLift: removeLoadingLift } = useLoadingLifts();
   const { userDetails } = useUserDetails();
-  const { invalidateAndRefetch } = useUserCheckIns();
+  const { invalidateAndRefetch, optimisticRemoveToday } = useUserCheckIns();
   const queryClient = useQueryClient();
   const [showDropdown, setShowDropdown] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showEditWeightModal, setShowEditWeightModal] = useState(false);
-  const [isVideoLoading, setIsVideoLoading] = useState(true);
+  const [resolvedPoseUrl, setResolvedPoseUrl] = useState<string | number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUpdatingWeight, setIsUpdatingWeight] = useState(false);
   const [editWeight, setEditWeight] = useState('');
@@ -58,8 +59,9 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
   // Tutorial target for the review feedback button
   const { ref: reviewFeedbackRef } = useTutorialTarget('lift_details_review_feedback');
   
-  // Tutorial target for the form graph
+  // Tutorial targets for graphs
   const { ref: formGraphRef } = useTutorialTarget('lift_details_form_graph');
+  const { ref: depthGraphRef } = useTutorialTarget('lift_details_depth_graph');
   
   // Simple boolean for favourite state - starts with the initial value
   const [isFavourite, setIsFavourite] = useState(initialLiftData.isFavourite);
@@ -73,6 +75,25 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
     if (freshData) {
       setIsFavourite(freshData.isFavourite);
     }
+  }, [contextLiftData, initialLiftData.id]);
+
+  // Re-sign pose video URL on open for fresh access
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const source = (contextLiftData.find(l => l.id === initialLiftData.id)?.poseVideoURL) || initialLiftData.poseVideoURL;
+      if (!source) { setResolvedPoseUrl(null); return; }
+      // If this is a static require() number, use it directly
+      if (typeof source === 'number') { setResolvedPoseUrl(source); return; }
+      try {
+        const key = await extractObjectKeyFromUrl(typeof source === 'string' ? source : undefined);
+        const signed = await signPath(key);
+        if (!cancelled) setResolvedPoseUrl(signed || (typeof source === 'string' ? source : null));
+      } catch (_) {
+        if (!cancelled) setResolvedPoseUrl(typeof source === 'string' ? source : null);
+      }
+    })();
+    return () => { cancelled = true; };
   }, [contextLiftData, initialLiftData.id]);
 
   // Auto-focus input when edit weight modal opens
@@ -105,18 +126,29 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
   const handleDeleteConfirm = async () => {
     setIsDeleting(true);
     try {
-      const success = await deleteLift(currentLiftData.id, currentLiftData, invalidateAndRefetch);
+      const success = await deleteLift(currentLiftData.id, currentLiftData);
       if (success) {
         // Remove from both contexts to ensure UI updates immediately
         removeLift(currentLiftData.id);
         removeLoadingLift(currentLiftData.id);
         // Invalidate LiftDataContext to refresh lift data
         refreshLifts();
+        // Optimistically update check-ins if deleting today's lift
+        try {
+          const today = new Date().toISOString().slice(0, 10);
+          const m = currentLiftData.liftDate.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+          if (m) {
+            const [, dd, mm, yyyy] = m;
+            const iso = `${yyyy}-${mm}-${dd}`;
+            if (iso === today) optimisticRemoveToday();
+          }
+        } catch (_) {}
+        invalidateAndRefetch();
         setShowDeleteModal(false);
         onClose();
       }
     } catch (error) {
-      // Error handling is done in the deleteLift function
+      // Error handling is done in the manualDeleteLiftCardData function
     } finally {
       setIsDeleting(false);
     }
@@ -136,8 +168,8 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
     // Make API call in background - no need to wait for response
     favouriteLiftAndRefresh(currentLiftData.id);
     
-    // Invalidate the main lifts query to refresh the UI
-    queryClient.invalidateQueries({ queryKey: ['lifts-by-user'] });
+    // Ensure the main lifts list refetches with the correct key
+    void refreshLifts();
   };
 
   const handleActionSheet = () => {
@@ -161,8 +193,8 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
     hapticFeedback.selection();
     // Initialize edit weight with current weight value
     const currentWeight = userDetails?.unitSystem === 'imperial' 
-      ? Math.round((currentLiftData.weightValue || 0) * 2.20462).toString()
-      : (currentLiftData.weightValue || 0).toString();
+      ? Math.round((currentLiftData.metricWeight || 0) * 2.20462).toString()
+      : (currentLiftData.metricWeight || 0).toString();
     setEditWeight(currentWeight);
     setShowEditWeightModal(true);
   };
@@ -175,25 +207,25 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
 
   const handleEditWeightApply = async () => {
     hapticFeedback.selection();
-    const weightValue = parseFloat(editWeight);
-    if (weightValue > 0 && !isUpdatingWeight) {
+    const metricWeight = parseFloat(editWeight);
+    if (metricWeight > 0 && !isUpdatingWeight) {
       setIsUpdatingWeight(true);
       try {
         const result = await updateLiftWeight(
           currentLiftData.id, 
-          weightValue, 
+          metricWeight, 
           userDetails?.unitSystem || 'metric'
         );
         
         if (result.success) {
           // Update the lift data immediately for instant UI feedback
-          updateLift(currentLiftData.id, { weightValue: userDetails?.unitSystem === 'imperial' ? weightValue / 2.20462 : weightValue });
+          updateLift(currentLiftData.id, { metricWeight: userDetails?.unitSystem === 'imperial' ? metricWeight / 2.20462 : metricWeight });
           
           // Invalidate the specific lift query to refresh data
           queryClient.invalidateQueries({ queryKey: ['lift', currentLiftData.id] });
           
-          // Invalidate the main lifts query to refresh the UI
-          queryClient.invalidateQueries({ queryKey: ['lifts-by-user'] });
+          // Ensure the main lifts list refetches with the correct key
+          void refreshLifts();
           
           hapticFeedback.success();
           setShowEditWeightModal(false);
@@ -222,36 +254,15 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
   };
 
   const isEditWeightValid = () => {
-    const weightValue = parseFloat(editWeight);
-    if (weightValue <= 0) return false;
+    const metricWeight = parseFloat(editWeight);
+    if (metricWeight <= 0) return false;
     
     // Get current weight in the same unit system as the input
     const currentWeight = userDetails?.unitSystem === 'imperial' 
-      ? Math.round((currentLiftData.weightValue || 0) * 2.20462)
-      : (currentLiftData.weightValue || 0);
+      ? Math.round((currentLiftData.metricWeight || 0) * 2.20462)
+      : (currentLiftData.metricWeight || 0);
     
-    return weightValue !== currentWeight;
-  };
-
-  // Form score data using currentLiftData
-  const repsCount = Math.max(1, Number(currentLiftData.reps || 0));
-  const labels = Array.from({ length: repsCount }, (_, i) => String(i + 1));
-  const dataArray = Array.isArray(currentLiftData.analysis.lineGraphValues)
-    ? currentLiftData.analysis.lineGraphValues
-    : [];
-  const paddedData = dataArray.length >= repsCount
-    ? dataArray.slice(0, repsCount)
-    : [...dataArray, ...Array(repsCount - dataArray.length).fill(0)];
-
-  const formScoreData = {
-    labels,
-    datasets: [
-      {
-        data: paddedData,
-        color: (opacity = 1) => `#000000`,
-        strokeWidth: 2,
-      },
-    ],
+    return metricWeight !== currentWeight;
   };
 
   // Format date to "Aug 25th, 2025" format
@@ -280,14 +291,7 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
     return `${monthName} ${day}${suffix}, ${year}`;
   }
 
-  // Ensure we have valid data for the chart
-  const chartData = {
-    labels: formScoreData.labels,
-    datasets: formScoreData.datasets.map(dataset => ({
-      ...dataset,
-      data: dataset.data || [0, 0, 0, 0, 0, 0, 0, 0], // Fallback to zeros if data is undefined
-    })),
-  };
+  // No chart data computed here; handled by SwipeableLiftDetailsGraphs
   
   return (
     <View style={styles.container}>
@@ -315,23 +319,10 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
         <View style={styles.content}>
           {/* Video Player */}
           <View style={styles.videoContainer}>
-            {currentLiftData.poseVideoURL ? (
-              <>
-                <VideoPlayerComponent 
-                  videoUri={currentLiftData.poseVideoURL}
-                  onReady={() => setIsVideoLoading(false)}
-                />
-                {isVideoLoading && (
-                  <View style={styles.videoLoadingOverlay}>
-                    <ActivityIndicator size="large" color="#FFFFFF" />
-                  </View>
-                )}
-              </>
-            ) : (
-              <View style={styles.noVideoContainer}>
-                <Text style={styles.noVideoText}>{i18n.t('feedback.noVideoAvailable')}</Text>
-              </View>
-            )}
+            <VideoPlayerComponent 
+              videoUri={resolvedPoseUrl!}
+              onReady={() => {}}
+            />
           </View>
         </View>
       </SafeAreaView>
@@ -357,54 +348,8 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
               <Text style={styles.pillText}>{currentLiftData.liftTime || '--:--'}</Text>
             </View>
           </View>
-          {/* Form Score Chart Card */}
-          <View style={[styles.card, styles.bottomCard]} ref={formGraphRef}>
-             <Text style={styles.cardTitle}>{i18n.t('feedback.formAccuracyAcrossReps')}</Text>
-            <View style={styles.chartContainer}>
-              {chartData && chartData.datasets && chartData.datasets[0] && chartData.datasets[0].data && (
-                <LineChart
-                  data={chartData}
-                  width={width - 51} // Match the width of the weight/reps cards row
-                  height={150} // Increased height to show x-axis labels
-                  xLabelsOffset={-4}  
-                  chartConfig={{
-                    backgroundColor: '#FFFFFF',
-                    backgroundGradientFrom: '#FFFFFF',
-                    backgroundGradientTo: '#FFFFFF',
-                    backgroundGradientFromOpacity: 0,
-                    backgroundGradientToOpacity: 0,
-                    fillShadowGradientFrom: '#000',
-                    fillShadowGradientTo: '#ffffff',
-                    decimalPlaces: 0,
-                    color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-                    labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-                    style: {
-                      borderRadius: 16,
-                    },
-                    propsForDots: {
-                      r: '4',
-                      strokeWidth: '2',
-                      stroke: '#000000',
-                      fill: '#FFFFFF',
-                    },
-                    propsForBackgroundLines: {
-                      strokeDasharray: '2,2',
-                    },
-                  }}
-                  bezier
-                  withShadow
-                  style={styles.chart}
-                  // withInnerLines={true}
-                  // withOuterLines={true}
-                  withVerticalLines={false}
-                  // withHorizontalLines={false}
-                  yAxisLabel=""
-                  yAxisSuffix="%"
-                  xAxisLabel=""
-                />
-              )}
-            </View>
-          </View>
+          {/* Swipeable graphs (line + bar) */}
+          <SwipeableLiftDetailsGraphs data={currentLiftData} formGraphRef={formGraphRef} depthGraphRef={depthGraphRef} />
 
           {/* Weight, Reps, and Accuracy Cards Row */}
           <View style={[styles.cardsRow, styles.bottomCardsRow]}>
@@ -422,8 +367,8 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
               </View>
               <Text style={styles.infoCardValue}>
                 {userDetails?.unitSystem === 'imperial' 
-                  ? `${Math.round((currentLiftData.weightValue || 0) * 2.20462)} ${i18n.t('feedback.lbs')}`
-                  : `${currentLiftData.weightValue || '--'} ${i18n.t('feedback.kg')}`
+                  ? `${Math.round((currentLiftData.metricWeight || 0) * 2.20462)} ${i18n.t('feedback.lbs')}`
+                  : `${currentLiftData.metricWeight || '--'} ${i18n.t('feedback.kg')}`
                 }
               </Text>
             </View>
@@ -437,24 +382,29 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
             </View>
 
             {/* Accuracy Card */}
-            <View style={[styles.infoCard, styles.infoCardOrange, styles.accuracyCard]}>
+            <LinearGradient
+              colors={['#f6339a', '#fb2c36', '#ff6900', '#fe9a00']}
+              locations={[0, 0.5, 0.8, 1]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={[styles.infoCard, styles.accuracyCard]}
+            >
               <Text style={styles.infoCardTitleOrange}>{i18n.t('feedback.accuracy')}</Text>
               <Text style={styles.infoCardValueOrange}>
                 {currentLiftData.analysis.accuracy || 91}%
               </Text>
-            </View>
+            </LinearGradient>
           </View>
 
           {/* Review Feedback Button Card */}
           <View style={styles.feedbackButtonCard}>
-            <TouchableOpacity 
-              ref={reviewFeedbackRef}
-              style={styles.reviewFeedbackButton}
-              onPress={handleReviewFeedback}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.reviewFeedbackButtonText}>{i18n.t('feedback.reviewFeedback')}</Text>
-            </TouchableOpacity>
+            <View ref={reviewFeedbackRef}>
+              <OrangeGradientButton
+                title={i18n.t('feedback.reviewFeedback')}
+                onPress={handleReviewFeedback}
+                style={styles.reviewFeedbackButton}
+              />
+            </View>
           </View>
         </View>
       </View>
@@ -481,7 +431,7 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
               onPress={handleDelete}
               activeOpacity={0.7}
             >
-              <Text style={styles.dropdownOptionTextDestructive}>{i18n.t('feedback.deleteLift')}</Text>
+              <Text style={styles.dropdownOptionTextDestructive}>{i18n.t('feedback.manualDeleteLiftCardData')}</Text>
               <Trash2 size={20} color="#FF3B30" />
             </TouchableOpacity>
           </View>
@@ -509,7 +459,7 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
             </TouchableOpacity>
 
             {/* Title */}
-            <Text style={styles.modalTitle}>{i18n.t('feedback.deleteLift')}</Text>
+            <Text style={styles.modalTitle}>{i18n.t('feedback.manualDeleteLiftCardData')}</Text>
 
             {/* Message */}
             <Text style={styles.modalMessage}>{i18n.t('feedback.deleteLiftConfirmation')}</Text>
@@ -662,7 +612,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 20,
-    fontWeight: '400',
+    fontWeight: '700',
     color: '#ffffff',
     fontFamily: 'SF Pro Display',
     textAlign: 'center',
@@ -707,18 +657,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(0,0,0,0.3)'
-  },
-  noVideoContainer: {
-    width: '100%',
-    height: 200,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#000000'
-  },
-  noVideoText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600'
   },
   optionRow: {
     flexDirection: 'row',
@@ -856,13 +794,13 @@ const styles = StyleSheet.create({
   },
   dropdownOptionText: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
     color: '#FFFFFF',
     fontFamily: 'SF Pro Display',
   },
   dropdownOptionTextDestructive: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
     color: '#FF6B6B',
     fontFamily: 'SF Pro Display',
   },
@@ -915,7 +853,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: '#000000',
-    marginBottom: 8,
+    marginBottom: 24,
     textAlign: 'left',
   },
   modalMessage: {
@@ -932,7 +870,7 @@ const styles = StyleSheet.create({
   },
   modalButton: {
     flex: 1,
-    height: 56,
+    height: 60,
     borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
@@ -946,12 +884,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#000000',
   },
   modalButtonOutlinedText: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '600',
     color: '#000000',
   },
   modalButtonPrimaryText: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '600',
     color: '#FFFFFF',
   },
@@ -963,22 +901,8 @@ const styles = StyleSheet.create({
     color: '#C7C7CC',
   },
   reviewFeedbackButton: {
-    borderWidth: 1,
-    borderColor: '#000000',
-    borderRadius: 28,
     width: '100%',
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#fff',
     marginBottom: 16,
-  },
-  reviewFeedbackButtonText: {
-    fontSize: 17,
-    fontWeight: '500',
-    color: '#000000',
-    fontFamily: 'SF Pro Display',
   },
   bottomContainer: {
     borderTopLeftRadius: 16,
@@ -1059,30 +983,29 @@ const styles = StyleSheet.create({
   },
   infoCardTitle: {
     fontSize: 14,
-    fontWeight: '400',
+    fontWeight: '600',
     color: '#000000',
     fontFamily: 'SF Pro Display',
     marginBottom: 4,
   },
   infoCardValue: {
     fontSize: 24,
-    fontWeight: '600',
+    fontWeight: '800',
     color: '#000000',
     fontFamily: 'SF Pro Display',
   },
   infoCardValueOrange: {
     fontSize: 24,
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#fff',
     fontFamily: 'SF Pro Display',
   },
   infoCardOrange: {
-    backgroundColor: '#ffb86a',
-    borderColor: '#ffb86a',
+    // Gradient background is handled by LinearGradient component
   },
   infoCardTitleOrange: {
     fontSize: 14,
-    fontWeight: '400',
+    fontWeight: '600',
     color: '#fff',
     fontFamily: 'SF Pro Display',
     marginBottom: 4,

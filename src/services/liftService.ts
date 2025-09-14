@@ -3,47 +3,203 @@ import { getUserId } from './storageService';
 import { LoadingLiftData, AnalyzeLiftPayload, AnalyzeLiftResponse, RetryStage } from '../types/Lifts.d';
 import { ILiftData } from '../context/LiftDataContext';
 import { supabase } from '../lib/supabase';
+import { emitLiftDeleted } from './liftEvents';
+
+// Helper to merge two abort signals (timeout + external)
+function mergeSignals(a?: AbortSignal, b?: AbortSignal) {
+  if (!a && !b) return undefined;
+  const ctrl = new AbortController();
+  const relay = (s?: AbortSignal) => {
+    if (!s) return;
+    if (s.aborted) return ctrl.abort();
+    s.addEventListener('abort', () => ctrl.abort(), { once: true });
+  };
+  relay(a); relay(b);
+  return ctrl.signal;
+}
+
+// Helper: fetch with timeout and external abort signal
+async function fetchWithTimeout(
+  input: RequestInfo, 
+  init: RequestInit = {}, 
+  timeoutMs = 15000,
+  externalSignal?: AbortSignal
+) {
+  const timeoutCtrl = new AbortController();
+  const timer = setTimeout(() => timeoutCtrl.abort(), timeoutMs);
+  try {
+    const signal = mergeSignals(timeoutCtrl.signal, externalSignal);
+    return await fetch(input, { ...init, signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// --- Storage helpers (client-side equivalents of backend utilities) ---
+
+function isSupabaseStorageUrl(url: string): boolean {
+  if (!url || typeof url !== 'string') return false;
+  try {
+    const u = new URL(url);
+    return Boolean((u.protocol === 'http:' || u.protocol === 'https:') && u.pathname.includes('/storage/v1/object/'));
+  } catch (_) {
+    return false;
+  }
+}
+
+function parseStorageUrl(url: string): { bucket: string; objectPath: string } | null {
+  try {
+    const u = new URL(url);
+    const base = '/storage/v1/object/';
+    const idx = u.pathname.indexOf(base);
+    if (idx === -1) return null;
+    let remainder = u.pathname.slice(idx + base.length);
+    if (remainder.startsWith('public/')) remainder = remainder.slice('public/'.length);
+    const slash = remainder.indexOf('/');
+    if (slash === -1) return null;
+    const bucket = remainder.slice(0, slash);
+    const objectPath = remainder.slice(slash + 1);
+    return { bucket, objectPath };
+  } catch (_) {
+    return null;
+  }
+}
+
+async function listAllObjectsUnderPrefix(bucket: string, prefix: string): Promise<string[]> {
+  // Normalize prefix (no leading slash)
+  const normalized = prefix.replace(/^\/+/, '').replace(/\/+$/, '');
+  const queue: string[] = [normalized];
+  const seen = new Set<string>();
+  const files: string[] = [];
+
+  while (queue.length) {
+    const current = queue.shift() as string; // may be '' for bucket root
+    if (seen.has(current)) continue;
+    seen.add(current);
+
+    let offset = 0;
+    const pageSize = 1000;
+    // list(path, { limit, offset })
+    // current may be '' which lists bucket root
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const { data, error } = await supabase.storage.from(bucket).list(current, { limit: pageSize, offset });
+      if (error) break;
+      const items = data || [];
+      if (!items.length) break;
+      for (const item of items) {
+        const name = item.name as string;
+        const isFile = !!item?.metadata; // folders typically have null metadata
+        const fullPath = current ? `${current}/${name}` : name;
+        if (isFile) files.push(fullPath);
+        else queue.push(fullPath);
+      }
+      if (items.length < pageSize) break;
+      offset += pageSize;
+    }
+  }
+  return files;
+}
+
+async function deleteStoragePrefix(bucket: string, prefix: string): Promise<void> {
+  const keys = await listAllObjectsUnderPrefix(bucket, prefix);
+  if (!keys.length) return;
+  // Remove in chunks
+  const chunkSize = 100;
+  for (let i = 0; i < keys.length; i += chunkSize) {
+    const chunk = keys.slice(i, i + chunkSize);
+    // remove expects object paths relative to bucket
+    // Ensure no leading slash
+    const toRemove = chunk.map(k => k.replace(/^\/+/, ''));
+    // eslint-disable-next-line no-await-in-loop
+    await supabase.storage.from(bucket).remove(toRemove);
+  }
+}
+
+async function deleteStorageByUrl(url: string, alreadyHandledPrefix?: string): Promise<boolean> {
+  if (!isSupabaseStorageUrl(url)) return true;
+  const parsed = parseStorageUrl(url);
+  if (!parsed) return true;
+  const { bucket, objectPath } = parsed;
+  if (bucket === 'lifts' && alreadyHandledPrefix && objectPath.startsWith(alreadyHandledPrefix.replace(/\/+$/, '/') )) {
+    // Already deleted by prefix operation
+    return true;
+  }
+  const { error } = await supabase.storage.from(bucket).remove([objectPath]);
+  return !error;
+}
+
+function extractScreenshotUrlsFromAnalysis(analysis: any): string[] {
+  const urls: string[] = [];
+  if (!analysis || typeof analysis !== 'object') return urls;
+  const feedback = Array.isArray(analysis?.feedback) ? analysis.feedback : [];
+  for (const entry of feedback) {
+    if (entry && typeof entry === 'object' && typeof entry.imageURL === 'string' && entry.imageURL) {
+      urls.push(entry.imageURL);
+    }
+  }
+  return urls;
+}
 
 export async function analyzeLift(
   userId: string, 
   liftData: LoadingLiftData, 
-  retryStage?: RetryStage
-): Promise<AnalyzeLiftResponse> {
-  if (!userId) return { success: false, data: null };
+  retryStage?: RetryStage,
+  opts?: { signal?: AbortSignal }
+): Promise<AnalyzeLiftResponse & { transient?: boolean }> {
+  if (!userId) return { success: false, data: null, error: 'NO_USER_ID', transient: false };
 
   const payload: AnalyzeLiftPayload = {
     userId,
     liftId: liftData.id,
     lift: {
       id: liftData.id,
-      videoLink: liftData.videoLink,
-      thumbnailUri: liftData.thumbnailUri,
-      movementType: liftData.movementType,
-      weightValue: liftData.weightValue,
-      reps: liftData.reps,
+      videoLink: liftData.videoLink || '',
+      thumbnailUri: liftData.thumbnailUri || '',
+      movementType: liftData.movementType || '',
+      metricWeight: liftData.metricWeight || 0,
+      reps: liftData.reps || 0,
       dateToday: liftData.dateToday,
       timeToday: liftData.timeToday,
       assetId: liftData.assetId,
     },
     ...(retryStage && { stage: retryStage }),
   };
-
   try {
-    const response = await fetch(`${API_CONFIG.baseURL}/lifts/analyse`, {
+    const response = await fetchWithTimeout(`${API_CONFIG.baseURL}/lifts/analyse`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        // Idempotency key to prevent duplicate server calls
+        'Idempotency-Key': liftData.id,
       },
       body: JSON.stringify(payload),
-    });
-    
-    if (!response.ok) return { success: false, data: null };
-    
+    }, 300000, // 5 minute timeout for analysis
+    opts?.signal // Pass through external abort signal
+    );
+
+    if (!response.ok) {
+      return { success: false, data: null, error: `HTTP_${response.status}`, transient: false };
+    }
+
     const json = (await response.json().catch(() => null)) as AnalyzeLiftResponse | null;
-    if (json && typeof json.success === 'boolean') return json;
-    return { success: true, data: null };
-  } catch (_) {
-    return { success: false, data: null };
+    if (!json) {
+      // server died mid-response, or empty body
+      return { success: false, data: null, error: 'BAD_JSON', transient: false };
+    }
+    
+    // Handle success cases - either with data or with assetId for polling
+    if (json.success) {
+      return json; // Return the full response including assetId if present
+    }
+
+    // Surface the server error if provided; otherwise fail hard
+    return { success: false, data: null, error: json.error || 'EMPTY_DATA', transient: false };
+  } catch (e: any) {
+    // Distinguish abort/timeout vs other network errors (both should be transient)
+    const msg = (e && e.name === 'AbortError') ? 'TIMEOUT' : 'NETWORK_ERROR';
+    const isTransient = e?.name === 'AbortError' || /network|timeout|connection|abort|fetch|ECONN|ENET|EAI/i.test(String(e?.message || e || ''));
+    return { success: false, data: null, error: msg, transient: isTransient };
   }
 }
 
@@ -51,48 +207,95 @@ export async function favouriteLift(liftId: string): Promise<boolean> {
   const userId = await getUserId();
   if (!userId) return false;
   try {
-    const response = await fetch(`${API_CONFIG.baseURL}/lifts/favourite`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, liftId }),
-    });
-    if (!response.ok) return false;
-    const json = (await response.json().catch(() => null)) as { success?: boolean } | null;
-    return !!json?.success;
+    // Fetch current favourite state
+    const { data: rows, error } = await supabase
+      .from('lifts')
+      .select('is_favourite')
+      .eq('id', liftId)
+      .eq('user_id', userId)
+      .maybeSingle();
+    if (error) return false;
+    if (!rows) return false;
+    const nextFavourite = !Boolean(rows?.is_favourite);
+    const { error: updErr } = await supabase
+      .from('lifts')
+      .update({ is_favourite: nextFavourite })
+      .eq('id', liftId)
+      .eq('user_id', userId);
+    return !updErr;
   } catch (_) {
     return false;
   }
 }
 
-export async function deleteLift(liftId: string): Promise<boolean> {
+export async function manualDeleteLiftCardData(liftId: string): Promise<boolean> {
   const userId = await getUserId();
   if (!userId) return false;
   try {
-    const response = await fetch(`${API_CONFIG.baseURL}/lifts/delete`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, liftId }),
-    });
-    if (!response.ok) return false;
-    const json = (await response.json().catch(() => null)) as { success?: boolean } | null;
-    return !!json?.success;
+    // Fetch lift row to collect URLs
+    const { data: liftRow, error: liftErr } = await supabase
+      .from('lifts')
+      .select('id, raw_video_url, pose_video_url, thumbnail_url, analysis')
+      .eq('id', liftId)
+      .eq('user_id', userId)
+      .maybeSingle();
+    if (liftErr || !liftRow) return false;
+
+    // 1) Delete storage under userId/liftId/**
+    const prefix = `${userId}/${liftId}`;
+    await deleteStoragePrefix('lifts', prefix);
+
+    // 2) Delete stray URLs not under prefix
+    const strayUrls: string[] = [];
+    for (const key of ['raw_video_url', 'pose_video_url', 'thumbnail_url'] as const) {
+      const url = (liftRow as any)?.[key];
+      if (url) strayUrls.push(String(url));
+    }
+    const screenshotUrls = extractScreenshotUrlsFromAnalysis(liftRow?.analysis);
+    strayUrls.push(...screenshotUrls);
+    const uniqueStrays = Array.from(new Set(strayUrls));
+    for (const url of uniqueStrays) await deleteStorageByUrl(url, prefix);
+
+    // 3) Delete DB row
+    const { error: delErr } = await supabase
+      .from('lifts')
+      .delete()
+      .eq('id', liftId)
+      .eq('user_id', userId);
+    if (delErr) return false;
+
+    // Notify listeners so contexts can invalidate their queries/caches
+    try { emitLiftDeleted(liftId); } catch (_) {}
+
+    // Optionally, we could reconcile streaks here if needed using UserCheckIns context.
+    return true;
   } catch (_) {
     return false;
   }
 }
 
-export async function deleteUserStorage(liftId: string): Promise<boolean> {
+export async function autoDeleteLiftErrorCardData(liftId: string): Promise<boolean> {
   const userId = await getUserId();
   if (!userId) return false;
   try {
-    const response = await fetch(`${API_CONFIG.baseURL}/lifts/storage/delete`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, liftId }),
-    });
-    if (!response.ok) return false;
-    const json = (await response.json().catch(() => null)) as { success?: boolean } | null;
-    return !!json?.success;
+    const prefix = `${userId}/${liftId}`;
+    await deleteStoragePrefix('lifts', prefix);
+
+    // Try to delete DB row if present (idempotent)
+    await supabase
+      .from('lifts')
+      .delete()
+      .eq('id', liftId)
+      .eq('user_id', userId);
+    
+    await supabase
+      .from('lift_failures')
+      .delete()
+      .eq('lift_id', liftId)
+      .eq('user_id', userId);
+
+    try { emitLiftDeleted(liftId); } catch (_) {}
+    return true;
   } catch (_) {
     return false;
   }
@@ -120,81 +323,93 @@ export async function checkDuplicateAssetId(assetId: string): Promise<boolean> {
   }
 }
 
-export async function searchLiftByAssetId(assetId: string): Promise<ILiftData | null> {
-  const userId = await getUserId();
+export async function searchLiftByAssetId(key: string, userId?: string): Promise<any | null> {
   if (!userId) return null;
-  
   try {
     const { data, error } = await supabase
       .from('lifts')
-      .select('id, is_favourite, lift_type, lift_date, lift_time, weight_value, reps, raw_video_url, pose_video_url, thumbnail_url, analysis')
+      .select('id,user_id,is_favourite,lift_type,lift_date,lift_time,metric_weight,reps,thumbnail_url,analysis,asset_id')
       .eq('user_id', userId)
-      .eq('asset_id', assetId)
-      .limit(1);
-    
-    if (error) {
-      return null;
-    }
-    
-    if (data && data.length > 0) {
-      const lift = data[0];
-      // Convert the database lift to ILiftData format
-      return {
-        id: lift.id,
-        liftType: lift.lift_type,
-        liftDate: (() => {
-          const date = new Date(lift.lift_date);
-          const day = String(date.getDate()).padStart(2, '0');
-          const month = String(date.getMonth() + 1).padStart(2, '0');
-          const year = date.getFullYear();
-          return `${day}-${month}-${year}`;
-        })(),
-        liftTime: lift.lift_time,
-        weightValue: Number(lift.weight_value),
-        reps: Number(lift.reps),
-        rawVideoURL: lift.raw_video_url,
-        poseVideoURL: lift.pose_video_url || null,
-        isFavourite: !!lift.is_favourite,
-        analysis: lift.analysis || {
-          accuracy: 0,
-          lineGraphValues: [],
-          feedback: []
-        },
-        thumbnailURL: lift.thumbnail_url,
-      };
-    }
-    
-    return null;
-  } catch (error) {
+      .eq('asset_id', key)
+      .maybeSingle();
+    if (error) return null;
+    return data || null;
+  } catch (_) {
     return null;
   }
 }
 
-export async function updateLiftWeight(liftId: string, weightValue: number, unitSystem: 'metric' | 'imperial'): Promise<{ success: boolean; error?: string }> {
+export async function lookupLift(key: string, userId: string): Promise<any | null> {
+  try {
+    const { data, error } = await supabase
+      .from('lifts')
+      .select('id,user_id,is_favourite,lift_type,lift_date,lift_time,metric_weight,reps,thumbnail_url,analysis,asset_id')
+      .eq('user_id', userId)
+      .eq('asset_id', key)
+      .maybeSingle();
+    if (error) return null;
+    return data || null;
+  } catch (_) {
+    return null;
+  }
+}
+
+export async function updateLiftWeight(liftId: string, metricWeight: number, unitSystem: 'metric' | 'imperial'): Promise<{ success: boolean; error?: string }> {
   const userId = await getUserId();
   if (!userId) return { success: false, error: 'NO_USER_ID' };
 
   try {
     // Convert to metric if imperial
-    const metricWeight = unitSystem === 'imperial' ? weightValue / 2.20462 : weightValue;
+    const weight = unitSystem === 'imperial' ? metricWeight / 2.20462 : metricWeight;
 
-    const response = await fetch(`${API_CONFIG.baseURL}/lifts/update`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        userId, 
-        liftId, 
-        metricWeight 
-      }),
-    });
+    // Verify lift exists
+    const { data: existing, error: selErr } = await supabase
+      .from('lifts')
+      .select('id')
+      .eq('id', liftId)
+      .eq('user_id', userId)
+      .maybeSingle();
+    if (selErr || !existing) return { success: false, error: 'LIFT_NOT_FOUND' };
 
-    if (!response.ok) return { success: false, error: 'API_ERROR' };
-    
-    const json = (await response.json().catch(() => null)) as { success?: boolean; error?: string } | null;
-    return { success: !!json?.success, error: json?.error };
+    const { error: updErr } = await supabase
+      .from('lifts')
+      .update({ metric_weight: weight })
+      .eq('id', liftId)
+      .eq('user_id', userId);
+    if (updErr) return { success: false, error: 'UPDATE_FAILED' };
+    return { success: true };
   } catch (error) {
     return { success: false, error: 'NETWORK_ERROR' };
   }
 }
 
 
+
+export async function findLiftFailure(params: { userId: string; liftId?: string; assetId?: string }): Promise<{ id: string; error: string; assetId?: string } | null> {
+  try {
+    const { userId, liftId, assetId } = params;
+    let q = supabase
+      .from('lift_failures')
+      .select('id,error,lift_id,asset_id,created_at')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    if (liftId && assetId) {
+      // Match either lift_id or asset_id for safety
+      q = q.or(`lift_id.eq.${liftId},asset_id.eq.${assetId}`);
+    } else if (liftId) {
+      q = q.eq('lift_id', liftId);
+    } else if (assetId) {
+      q = q.eq('asset_id', assetId);
+    }
+
+    const { data, error } = await q;
+    if (error) return null;
+    const row = Array.isArray(data) ? data[0] : null;
+    if (!row) return null;
+    return { id: row.id as string, error: String(row.error), assetId: (row as any)?.asset_id ? String((row as any).asset_id) : undefined };
+  } catch {
+    return null;
+  }
+}

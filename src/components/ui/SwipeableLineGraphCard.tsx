@@ -16,7 +16,7 @@ const ITEM_WIDTH = SCREEN_WIDTH;
 
 type Lift = {
   liftType: string;
-  weightValue: number;
+  metricWeight: number;
   liftDate: string; // "DD-MM-YYYY"
   analysis: { accuracy: number };
 };
@@ -36,6 +36,7 @@ interface ProcessedCardData {
   title: string;
   subtitle: string;
   chartData: ChartData;
+  liftCount: number;
 }
 
 interface SwipeableLineGraphCardProps {
@@ -151,6 +152,29 @@ const getRegression = (key: string, points: number[]) => {
   return line;
 };
 
+// Evenly sample exactly N indices from a list of length L (including endpoints)
+function createEvenlySpacedIndices(total: number, desiredCount: number) {
+  const count = Math.min(desiredCount, total);
+  if (count <= 0) return [] as number[];
+  if (count === 1) return [0];
+  const lastIndex = total - 1;
+  const indices: number[] = [];
+  for (let i = 0; i < count; i++) {
+    const idx = Math.floor((i * lastIndex) / (count - 1));
+    if (indices.length === 0 || idx > indices[indices.length - 1]) {
+      indices.push(idx);
+    } else {
+      indices.push(indices[indices.length - 1] + 1);
+    }
+  }
+  // Clamp to ensure we never exceed bounds and end at lastIndex
+  for (let i = indices.length - 1; i >= 0; i--) {
+    const maxAllowed = lastIndex - (indices.length - 1 - i);
+    if (indices[i] > maxAllowed) indices[i] = maxAllowed;
+  }
+  return indices;
+}
+
 // Memoized Chart Page Component with lazy rendering
 const ChartPage = React.memo(function ChartPage({
   item,
@@ -192,6 +216,13 @@ const ChartPage = React.memo(function ChartPage({
               </View>
               <Text style={styles.performanceCardSubtitle}>{item.subtitle}</Text>
             </View>
+            {item.liftCount > 0 && (
+              <View style={styles.liftCountPill}>
+                <Text style={styles.liftCountText}>
+                  {`${item.liftCount} lift${item.liftCount === 1 ? '' : 's'}`}
+                </Text>
+              </View>
+            )}
           </View>
 
           <View style={styles.chartContainer}>
@@ -340,18 +371,19 @@ function SwipeableLineGraphCard({
             strokeWidth: 1.5,
           }],
         },
+        liftCount: 0,
       }];
     }
 
     const uniqueLiftTypes = [...new Set(rangedCardData.map((lift) => lift.liftType))];
 
     if (chartType === 'accuracyPerWeight') {
-      return uniqueLiftTypes.map((liftType) => {
+      const cards = uniqueLiftTypes.map((liftType) => {
         const liftsOfType = rangedCardData.filter((lift) => lift.liftType === liftType);
         
         // Group lifts by weight and calculate average accuracy for each weight
         const weightGroups = liftsOfType.reduce((acc: Record<number, { totalAccuracy: number; count: number }>, lift) => {
-          const weight = lift.weightValue;
+          const weight = lift.metricWeight;
           if (!acc[weight]) {
             acc[weight] = { totalAccuracy: 0, count: 0 };
           }
@@ -373,11 +405,12 @@ function SwipeableLineGraphCard({
 
         if (weightAccuracyData.length <= 25) {
           // If 25 or fewer unique weights, use all of them
+          const targetLastPos = unitPreference === 'imperial' ? 23 : 24;
           chartLabels = weightAccuracyData.map((data, idx) => {
             const position = idx + 1; // Convert to 1-based indexing
-            if (position === 1 || position === 9 || position === 16 || position === 22) {
-              if (position === 22 && idx !== weightAccuracyData.length - 1) {
-                // Position 22 should show the last data point's weight if it's not already the last
+            if (position === 1 || position === 9 || position === 16 || position === targetLastPos) {
+              if (position === targetLastPos && idx !== weightAccuracyData.length - 1) {
+                // Last label slot (23 for imperial, 24 for metric) shows the final weight
                 return formatWeightForDisplay(weightAccuracyData[weightAccuracyData.length - 1].weight, unitPreference);
               }
               return formatWeightForDisplay(data.weight, unitPreference);
@@ -386,36 +419,19 @@ function SwipeableLineGraphCard({
           });
           chartDataPoints = weightAccuracyData.map((data) => data.averageAccuracy);
         } else {
-          // If more than 25 unique weights, select 25 strategic points
-          const selectedIndices = new Set<number>();
-          
-          // Always include the first (lowest weight) and last (highest weight)
-          selectedIndices.add(0);
-          selectedIndices.add(weightAccuracyData.length - 1);
-          
-          // Add evenly distributed points in between
-          const remainingSlots = 23; // 25 total - 2 (first and last)
-          const step = (weightAccuracyData.length - 2) / (remainingSlots - 1);
-          
-          for (let i = 1; i < remainingSlots; i++) {
-            const index = Math.round(step * i);
-            if (index > 0 && index < weightAccuracyData.length - 1) {
-              selectedIndices.add(index);
-            }
-          }
-          
-          // Convert to sorted array and get the data
-          const selectedIndicesArray = Array.from(selectedIndices).sort((a, b) => a - b);
+          // If more than 25 unique weights, select exactly 25 evenly spaced points
+          const selectedIndicesArray = createEvenlySpacedIndices(weightAccuracyData.length, 25);
           chartDataPoints = selectedIndicesArray.map((index) => 
             weightAccuracyData[index].averageAccuracy
           );
           
-          // For labels, only show positions 1, 9, 16, 22 (1-based indexing), empty strings elsewhere
+          // For labels, only show positions 1, 9, 16, and the last slot (23 for imperial, 24 for metric)
           chartLabels = selectedIndicesArray.map((index, labelIndex) => {
             const position = labelIndex + 1; // Convert to 1-based indexing
-            if (position === 1 || position === 9 || position === 16 || position === 22) {
-              if (position === 22) {
-                // Position 22 should show the last data point's weight
+            const targetLastPos = unitPreference === 'imperial' ? 23 : 24;
+            if (position === 1 || position === 9 || position === 16 || position === targetLastPos) {
+              if (position === targetLastPos) {
+                // The last label slot shows the final weight
                 return formatWeightForDisplay(weightAccuracyData[weightAccuracyData.length - 1].weight, unitPreference);
               }
               return formatWeightForDisplay(weightAccuracyData[index].weight, unitPreference);
@@ -447,10 +463,14 @@ function SwipeableLineGraphCard({
           title: i18n.t('performance.chartTitles.accuracyPerWeight'),
           subtitle: liftType,
           chartData,
+          liftCount: liftsOfType.length,
         };
       });
+      
+      // Sort cards by lift count (descending) so the card with most lifts appears first
+      return cards.sort((a, b) => b.liftCount - a.liftCount);
     } else {
-      return uniqueLiftTypes.map((liftType) => {
+      const cards = uniqueLiftTypes.map((liftType) => {
         const liftsOfType = rangedCardData.filter((lift) => lift.liftType === liftType);
 
         const liftsByDate = liftsOfType.reduce((acc: Record<string, Lift[]>, lift: Lift) => {
@@ -484,46 +504,37 @@ function SwipeableLineGraphCard({
         let chartDataPoints: number[];
 
         if (averagedLifts.length <= 25) {
-          // If 25 or fewer data points, use all of them but only show first and last labels
-          chartLabels = averagedLifts.map((lift, idx) => {
-            if (idx === 0 || idx === averagedLifts.length - 1) {
-              return formatDate(lift.date);
-            }
-            return '';
-          });
+          // If 25 or fewer unique dates, use all points.
+          // Show anchors corresponding to 1, 11, 22 of a 25-slot grid.
+          const total = averagedLifts.length;
+          const firstIndex = 0;
+          const lastIndex = total - 1;
+          const midIndexRaw = Math.floor(lastIndex * (10 / 24));
+          const midIndex = total >= 3 ? Math.max(1, Math.min(lastIndex - 1, midIndexRaw)) : -1;
+          const pos22IndexRaw = Math.floor(lastIndex * (21 / 24));
+          const pos22Index = total >= 2 ? Math.max(1, Math.min(lastIndex - 1, pos22IndexRaw)) : -1;
+
+          const labels = Array<string>(total).fill('');
+          labels[firstIndex] = formatDate(averagedLifts[firstIndex].date);
+          if (midIndex >= 0) labels[midIndex] = formatDate(averagedLifts[midIndex].date);
+          if (pos22Index >= 0) labels[pos22Index] = formatDate(averagedLifts[lastIndex].date);
+
+          chartLabels = labels;
           chartDataPoints = averagedLifts.map((lift) => lift.averageAccuracy);
         } else {
-          // If more than 25 data points, select strategic points
-          const selectedIndices = new Set<number>();
-          
-          // Always include the first and last
-          selectedIndices.add(0);
-          selectedIndices.add(averagedLifts.length - 1);
-          
-          // Add evenly distributed points in between
-          const remainingSlots = 23; // 25 total - 2 (first and last)
-          const step = (averagedLifts.length - 2) / (remainingSlots - 1);
-          
-          for (let i = 1; i < remainingSlots; i++) {
-            const index = Math.round(step * i);
-            if (index > 0 && index < averagedLifts.length - 1) {
-              selectedIndices.add(index);
-            }
-          }
-          
-          // Convert to sorted array and get the data
-          const selectedIndicesArray = Array.from(selectedIndices).sort((a, b) => a - b);
+          // If more than 25 data points, select exactly 25 evenly spaced points
+          const selectedIndicesArray = createEvenlySpacedIndices(averagedLifts.length, 25);
           chartDataPoints = selectedIndicesArray.map((index) => 
             averagedLifts[index].averageAccuracy
           );
           
-          // For labels, only show positions 1, 11, 21 (1-based indexing), empty strings elsewhere
-          // Note: position 21 should show the value for the last data point (position 25)
+          // For labels, only show positions 1, 11, 22 (1-based indexing), empty strings elsewhere
+          // Note: position 22 should show the value for the last data point (position 25)
           chartLabels = selectedIndicesArray.map((index, labelIndex) => {
             const position = labelIndex + 1; // Convert to 1-based indexing
-            if (position === 1 || position === 11 || position === 21) {
-              if (position === 21) {
-                // Position 21 should show the last data point's date
+            if (position === 1 || position === 11 || position === 22) {
+              if (position === 22) {
+                // Position 22 should show the last data point's date
                 return formatDate(averagedLifts[averagedLifts.length - 1].date);
               }
               return formatDate(averagedLifts[index].date);
@@ -555,8 +566,12 @@ function SwipeableLineGraphCard({
           title: i18n.t('performance.chartTitles.accuracyOverTime'),
           subtitle: liftType,
           chartData,
+          liftCount: liftsOfType.length,
         };
       });
+      
+      // Sort cards by lift count (descending) so the card with most lifts appears first
+      return cards.sort((a, b) => b.liftCount - a.liftCount);
     }
   }, [rangedCardData, chartType, unitPreference]);
 
@@ -618,7 +633,7 @@ function SwipeableLineGraphCard({
   }
 
   return (
-    <View style={styles.cardsContainer}>
+    <View style={styles.cardsContainer} ref={_ref as any}>
       <SegmentedControl timeRange={timeRange} onTimeRangeChange={setTimeRange} />
 
       <View style={[styles.carouselContainer, { width: SCREEN_WIDTH, height: CARD_HEIGHT }]}>
@@ -642,7 +657,7 @@ function SwipeableLineGraphCard({
           renderItem={renderItem}
           removeClippedSubviews
           nestedScrollEnabled
-          contentContainerStyle={{ alignItems: 'center' } as any}
+          contentContainerStyle={{}}
           onScroll={onScroll}
           scrollEventThrottle={16}
           onMomentumScrollEnd={onMomentumScrollEnd}
@@ -664,7 +679,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',
-    paddingHorizontal: 0,
+    marginBottom: 12,
   },
 
   // --- Segmented control styles ---
@@ -690,7 +705,7 @@ const styles = StyleSheet.create({
   },
   segment: {
     flex: 1,
-    paddingVertical: 8,
+    paddingVertical: 10,
     paddingHorizontal: 12,
     borderRadius: 8,
     alignItems: 'center',
@@ -708,13 +723,13 @@ const styles = StyleSheet.create({
   },
   segmentText: {
     fontSize: 14,
-    fontWeight: '400',
+    fontWeight: '500',
     color: '#000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
   segmentTextActive: {
     color: '#000',
-    fontWeight: '700',
+    fontWeight: '800',
   },
   // --- Card / chart ---
   carouselContainer: {
@@ -747,7 +762,7 @@ const styles = StyleSheet.create({
   },
   performanceCardHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
     paddingLeft: 8,
     width: '100%',
@@ -768,14 +783,14 @@ const styles = StyleSheet.create({
   },
   performanceCardLabel: {
     fontSize: 22,
-    fontWeight: '600',
+    fontWeight: '800',
     color: '#000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
     marginBottom: 8,
   },
   performanceCardSubtitle: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '600',
     color: '#8E8E93',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
@@ -808,5 +823,18 @@ const styles = StyleSheet.create({
   },
   chart: {
     borderRadius: 16,
+  },
+  liftCountPill: {
+    backgroundColor: '#f4f4f8',
+    width: 'auto',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  liftCountText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#000000',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
 });

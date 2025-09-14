@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Platform, InteractionManager } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Platform } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import Svg, { Circle } from 'react-native-svg';
 import { useUserCheckIns } from '../../context/UserCheckInsContext';
@@ -139,8 +139,7 @@ export function SwipeableCalendar({ onDateSelect, initialSelectedDate }: Swipeab
   const { getLiftsByDate } = useLiftData();
 
   const listRef = useRef<FlashList<DayData[]> | null>(null);
-  const [ready, setReady] = useState(false);
-  const hasInitialJump = useRef(false);
+  const hasMounted = useRef(false);
 
   // Seed indices from selected date (or initialSelectedDate) before first paint
   const initialIndexRef = useRef<number>(0);
@@ -162,11 +161,6 @@ export function SwipeableCalendar({ onDateSelect, initialSelectedDate }: Swipeab
 
   const [currentWeekIndex, setCurrentWeekIndex] = useState(initialIndexRef.current);
   const [localIndex, setLocalIndex] = useState(initialIndexRef.current);
-
-  useEffect(() => {
-    const task = InteractionManager.runAfterInteractions(() => setReady(true));
-    return () => task.cancel();
-  }, []);
 
   useEffect(() => {
     if (initialSelectedDate && initialSelectedDate.toDateString() !== selectedDate.toDateString()) {
@@ -236,31 +230,23 @@ export function SwipeableCalendar({ onDateSelect, initialSelectedDate }: Swipeab
     setLocalIndex(idx);              // keep local window in sync
   }, [selectedDate, getWeekIndexForDate, weeks.length]);
 
-  // one-time jump to the correct page as soon as we're ready
-  useEffect(() => {
-    if (!ready || hasInitialJump.current) return;
-    hasInitialJump.current = true;
-    listRef.current?.scrollToIndex({
-      index: initialIndexRef.current,
-      animated: false, // no flicker on first paint
-    });
-  }, [ready]);
-
   // later changes (e.g., tapping a date or external selectedDate updates)
   useEffect(() => {
-    if (!ready) return;
-    if (!hasInitialJump.current) return; // first jump handled above
+    if (!hasMounted.current) {
+      hasMounted.current = true;
+      return;
+    }
     listRef.current?.scrollToIndex({ index: currentWeekIndex, animated: true });
-  }, [currentWeekIndex, ready]);
+  }, [currentWeekIndex]);
 
   // (Optional) If initialSelectedDate can arrive late
   useEffect(() => {
-    if (!initialSelectedDate || !ready) return;
+    if (!initialSelectedDate) return;
     const idx = getWeekIndexForDate(initialSelectedDate);
     setCurrentWeekIndex(idx);
     setLocalIndex(idx);
     listRef.current?.scrollToIndex({ index: idx, animated: false });
-  }, [initialSelectedDate, ready, getWeekIndexForDate]);
+  }, [initialSelectedDate, getWeekIndexForDate]);
 
   const handleDatePress = (day: DayData) => {
     if (day.isFuture) return;
@@ -305,49 +291,47 @@ export function SwipeableCalendar({ onDateSelect, initialSelectedDate }: Swipeab
     [shouldRenderIndex]
   );
 
-  const content = ready ? (
-    <FlashList
-      ref={listRef}
-      data={weeks}
-      horizontal
-      showsHorizontalScrollIndicator={false}
+  return (
+    <View style={styles.container}>
+      <FlashList
+        ref={listRef}
+        data={weeks}
+        horizontal
+        showsHorizontalScrollIndicator={false}
 
-      // ✅ same snap mode as the fixed components
-      snapToInterval={ITEM_WIDTH}
-      snapToAlignment="start"
-      decelerationRate="fast"
-      disableIntervalMomentum
-      contentInsetAdjustmentBehavior="never"
+        // ✅ same snap mode as the fixed components
+        snapToInterval={ITEM_WIDTH}
+        snapToAlignment="start"
+        decelerationRate="fast"
+        disableIntervalMomentum
+        contentInsetAdjustmentBehavior="never"
 
-      // exact layout (size + offset) so FlashList never guesses
-      overrideItemLayout={(layout, index) => {
-        layout.size = ITEM_WIDTH;
-        // @ts-ignore
-        layout.offset = ITEM_WIDTH * index;
-      }}
-      estimatedItemSize={ITEM_WIDTH}
-      estimatedListSize={{ width: SCREEN_WIDTH, height: WEEK_HEIGHT }}
+        // exact layout (size + offset) so FlashList never guesses
+        overrideItemLayout={(layout, index) => {
+          layout.size = ITEM_WIDTH;
+          // @ts-ignore
+          layout.offset = ITEM_WIDTH * index;
+        }}
+        estimatedItemSize={ITEM_WIDTH}
+        estimatedListSize={{ width: SCREEN_WIDTH, height: WEEK_HEIGHT }}
 
-      keyExtractor={(_, i) => `week-${i}`}
-      renderItem={renderItem}
-      removeClippedSubviews
-      nestedScrollEnabled
+        keyExtractor={(_, i) => `week-${i}`}
+        renderItem={renderItem}
+        removeClippedSubviews
+        nestedScrollEnabled
 
-      // smooth UI updates while dragging; no parent/committed state churn
-      onScroll={onScroll}
-      scrollEventThrottle={16}
-      onMomentumScrollEnd={onMomentumScrollEnd}
+        // smooth UI updates while dragging; no parent/committed state churn
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+        onMomentumScrollEnd={onMomentumScrollEnd}
 
-      // re-render cells when selection/logs or local window change
-      extraData={{ selectedDate, daysLogged, localIndex }}
+        // re-render cells when selection/logs or local window change
+        extraData={{ selectedDate, daysLogged, localIndex }}
 
-      initialScrollIndex={initialIndexRef.current}  // ✅ start on selected week
-    />
-  ) : (
-    <View style={{ height: WEEK_HEIGHT }} />
+        initialScrollIndex={initialIndexRef.current}
+      />
+    </View>
   );
-
-  return <View style={styles.container}>{content}</View>;
 }
 
 const styles = StyleSheet.create({
@@ -395,12 +379,12 @@ const styles = StyleSheet.create({
   },
   dayName: {
     fontSize: 18,
-    fontWeight: '500',
+    fontWeight: '800',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
   dayNumber: {
     fontSize: 18,
-    fontWeight: '500',
+    fontWeight: '600',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
   inactiveDayText: {

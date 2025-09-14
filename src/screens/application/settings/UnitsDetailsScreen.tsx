@@ -74,23 +74,26 @@ export function UnitsDetailsScreen({ onBack }: UnitsDetailsScreenProps) {
             isDark={isDark}
             delay={0}
             onPress={() => handleUnitSelect('metric')}
-            style={styles.unitButton}
+            style={[
+              styles.unitButton,
+              selectedUnit === 'metric' ? styles.selectedUnitButton : styles.unselectedUnitButton
+            ]}
           >
             <View style={styles.unitContent}>
               <Text 
                 style={[
                   styles.unitName,
-                  { 
-                    color: selectedUnit === 'metric'
-                      ? '#FFFFFF'  // White text when selected
-                      : (isDark ? '#FFFFFF' : '#000000'),
-                    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
-                  }
+                  selectedUnit === 'metric' ? styles.selectedUnitName : styles.unselectedUnitName,
                 ]}
               >
                 {i18n.t('onboarding.units.metric')}
               </Text>
-              <Text style={styles.unitDescription}>
+              <Text 
+                style={[
+                  styles.unitDescription,
+                  selectedUnit === 'metric' ? styles.selectedUnitDescription : styles.unselectedUnitDescription
+                ]}
+              >
                 {i18n.t('onboarding.units.metricDescription')}
               </Text>
             </View>
@@ -101,23 +104,26 @@ export function UnitsDetailsScreen({ onBack }: UnitsDetailsScreenProps) {
             isDark={isDark}
             delay={100}
             onPress={() => handleUnitSelect('imperial')}
-            style={styles.unitButton}
+            style={[
+              styles.unitButton,
+              selectedUnit === 'imperial' ? styles.selectedUnitButton : styles.unselectedUnitButton
+            ]}
           >
             <View style={styles.unitContent}>
               <Text 
                 style={[
                   styles.unitName,
-                  { 
-                    color: selectedUnit === 'imperial'
-                      ? '#FFFFFF'  // White text when selected
-                      : (isDark ? '#FFFFFF' : '#000000'),
-                    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
-                  }
+                  selectedUnit === 'imperial' ? styles.selectedUnitName : styles.unselectedUnitName,
                 ]}
               >
                 {i18n.t('onboarding.units.imperial')}
               </Text>
-              <Text style={styles.unitDescription}>
+              <Text 
+                style={[
+                  styles.unitDescription,
+                  selectedUnit === 'imperial' ? styles.selectedUnitDescription : styles.unselectedUnitDescription
+                ]}
+              >
                 {i18n.t('onboarding.units.imperialDescription')}
               </Text>
             </View>
@@ -165,8 +171,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: '400',
+    fontSize: 22,
+    fontWeight: '700',
     color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
@@ -186,6 +192,12 @@ const styles = StyleSheet.create({
     minHeight: 80,
     justifyContent: 'center',
   },
+  selectedUnitButton: {
+    backgroundColor: '#000000',
+  },
+  unselectedUnitButton: {
+    backgroundColor: '#f3f4f6',
+  },
   unitContent: {
     alignItems: 'center',
   },
@@ -193,12 +205,25 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '600',
     marginBottom: 4,
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
+  selectedUnitName: {
+    color: '#FFFFFF',
+  },
+  unselectedUnitName: {
+    color: '#000000',
   },
   unitDescription: {
-    fontSize: 14,
-    color: '#9CA3AF',
+    fontSize: 15,
+    fontWeight: '600',
     textAlign: 'center',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
+  selectedUnitDescription: {
+    color: '#E5E7EB',
+  },
+  unselectedUnitDescription: {
+    color: '#9CA3AF',
   },
   saveButtonContainer: {
     paddingHorizontal: 20,
@@ -207,7 +232,7 @@ const styles = StyleSheet.create({
   saveButton: {
     backgroundColor: '#000000',
     borderRadius: 28,
-    paddingVertical: 16,
+    paddingVertical: 20,
     paddingHorizontal: 24,
     alignItems: 'center',
     justifyContent: 'center',
@@ -215,7 +240,7 @@ const styles = StyleSheet.create({
   saveButtonText: {
     color: '#FFFFFF',
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '800',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
 }); 

@@ -5,6 +5,7 @@ import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { X, ChevronLeft, ChevronRight, CircleCheck, CircleX } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { OrangeGradientButton } from '../../../components/ui/OrangeGradientButton';
 import { hapticFeedback } from '../../../utils/haptic';
 import { useTutorialTarget } from '../../../context/TutorialContext';
 import i18n from '../../../utils/i18n';
@@ -117,14 +118,74 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
   const { userDetails, updateHasRated } = useUserDetails();
   const { height: screenHeight } = useWindowDimensions();
 
+  // Track when user is interacting with the bottom ScrollView to avoid stealing gestures
+  const interactingWithBottomScrollRef = React.useRef(false);
+  const handleBottomScrollTouchStart = React.useCallback(() => {
+    interactingWithBottomScrollRef.current = true;
+  }, []);
+  const handleBottomScrollTouchEnd = React.useCallback(() => {
+    interactingWithBottomScrollRef.current = false;
+  }, []);
+  const handleBottomScrollEndDrag = React.useCallback(() => {
+    interactingWithBottomScrollRef.current = false;
+  }, []);
+  const handleBottomMomentumEnd = React.useCallback(() => {
+    interactingWithBottomScrollRef.current = false;
+  }, []);
+
   
   // Setup slide animation and pan responder for bottom drawer
   const slideAnim = React.useRef(new Animated.Value(390)).current; // start collapsed (panel mostly hidden, only header showing)
   const currentSlidePosition = React.useRef(390); // track current position for pan responder
   
+  // Tap toggle for bottom container
+  const toggleBottomContainer = React.useCallback(() => {
+    hapticFeedback.selection();
+    const currentPos = currentSlidePosition.current;
+    // If fully expanded, move to peek (200) without collapsing fully
+    if (currentPos === 0) {
+      Animated.timing(slideAnim, {
+        toValue: 390,
+        duration: 250,
+        useNativeDriver: true,
+      }).start(() => {
+        // Keep expanded state true; we're just peeking
+        currentSlidePosition.current = 200;
+      });
+      return;
+    }
+    // If at peek, expand fully
+    if (currentPos === 200) {
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 250,
+        useNativeDriver: true,
+      }).start(() => {
+        currentSlidePosition.current = 0;
+      });
+      return;
+    }
+    // If fully collapsed, expand fully
+    Animated.timing(slideAnim, {
+      toValue: 0,
+      duration: 250,
+      useNativeDriver: true,
+    }).start(() => {
+      setIsBottomExpanded(true);
+      currentSlidePosition.current = 0;
+    });
+  }, [slideAnim]);
+  
   const panResponder = React.useRef(
     PanResponder.create({
+      onStartShouldSetPanResponder: () => {
+        // Do not start pan responder if user is touching the ScrollView content
+        if (interactingWithBottomScrollRef.current) return false;
+        return false;
+      },
       onMoveShouldSetPanResponder: (_: any, gestureState: any) => {
+        // If interacting with ScrollView, don't capture; let ScrollView handle
+        if (interactingWithBottomScrollRef.current) return false;
         // start gesture if vertical swipe > horizontal
         return Math.abs(gestureState.dy) > 10;
       },
@@ -332,14 +393,18 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
       }, 800);
     };
     
-    global.navigateToHome = () => {
-      // Navigate directly to home screen for the tutorial
+    const previousNavigateToHome = (global as any).navigateToHome;
+    (global as any).navigateToHome = () => {
       if (onNavigateToHome) {
+        (global as any).__lastHomeNavAt = Date.now();
         onNavigateToHome();
-      } else if (onClose) {
-        // Fallback to closing if onNavigateToHome is not provided
-        onClose();
+        return;
       }
+      if ((global as any).__navigateToHomeBase) {
+        (global as any).__navigateToHomeBase();
+        return;
+      }
+      if (onClose) onClose();
     };
     
     return () => {
@@ -348,7 +413,14 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
       delete global.navigateToImage;
       delete global.navigateToHowItWorksStep;
       delete global.navigateToFeedbackPage;
-      delete global.navigateToHome;
+      // Restore previous handler or fallback to base
+      if (previousNavigateToHome) {
+        (global as any).navigateToHome = previousNavigateToHome;
+      } else if ((global as any).__navigateToHomeBase) {
+        (global as any).navigateToHome = (global as any).__navigateToHomeBase;
+      } else {
+        delete (global as any).navigateToHome;
+      }
       delete global.onFeedbackPageReady;
     };
   }, [currentPageType, onClose, onNavigateToHome]);
@@ -489,6 +561,11 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
           style={styles.scrollContainer}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContentContainer}
+          onTouchStart={handleBottomScrollTouchStart}
+          onTouchEnd={handleBottomScrollTouchEnd}
+          onScrollBeginDrag={handleBottomScrollTouchStart}
+          onScrollEndDrag={handleBottomScrollEndDrag}
+          onMomentumScrollEnd={handleBottomMomentumEnd}
         >
           <View style={styles.listContainer}>
             {items.map((text, idx) => (
@@ -540,9 +617,15 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
               <View style={styles.howItWorksItems} ref={howItWorksModalRef}>
                 <AnimatedHowItWorksItem delay={0}>
                   <View style={styles.howItWorksItem}>
-                    <View style={styles.howItWorksIcon}>
+                    <LinearGradient
+                      colors={['#f6339a', '#fb2c36', '#ff6900', '#fe9a00']}
+                      locations={[0, 0.5, 0.8, 1]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={styles.howItWorksIcon}
+                    >
                       <Text style={styles.howItWorksNumber}>1</Text>
-                    </View>
+                    </LinearGradient>
                     <View style={styles.howItWorksContent}>
                       <Text style={styles.howItWorksText}>
                         {i18n.t('feedback.step1')}
@@ -553,9 +636,15 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
 
                 <AnimatedHowItWorksItem delay={100}>
                   <View style={styles.howItWorksItem}>
-                    <View style={styles.howItWorksIcon}>
+                    <LinearGradient
+                      colors={['#f6339a', '#fb2c36', '#ff6900', '#fe9a00']}
+                      locations={[0, 0.5, 0.8, 1]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={styles.howItWorksIcon}
+                    >
                       <Text style={styles.howItWorksNumber}>2</Text>
-                    </View>
+                    </LinearGradient>
                     <View style={styles.howItWorksContent}>
                       <Text style={styles.howItWorksText}>
                         {i18n.t('feedback.step2')}
@@ -566,9 +655,15 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
 
                 <AnimatedHowItWorksItem delay={200}>
                   <View style={styles.howItWorksItem}>
-                    <View style={styles.howItWorksIcon}>
+                    <LinearGradient
+                      colors={['#f6339a', '#fb2c36', '#ff6900', '#fe9a00']}
+                      locations={[0, 0.5, 0.8, 1]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={styles.howItWorksIcon}
+                    >
                       <Text style={styles.howItWorksNumber}>3</Text>
-                    </View>
+                    </LinearGradient>
                     <View style={styles.howItWorksContent}>
                       <Text style={styles.howItWorksText}>
                         {i18n.t('feedback.step3')}
@@ -579,9 +674,15 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
 
                 <AnimatedHowItWorksItem delay={300}>
                   <View style={styles.howItWorksItem}>
-                    <View style={styles.howItWorksIcon}>
+                    <LinearGradient
+                      colors={['#f6339a', '#fb2c36', '#ff6900', '#fe9a00']}
+                      locations={[0, 0.5, 0.8, 1]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={styles.howItWorksIcon}
+                    >
                       <Text style={styles.howItWorksNumber}>4</Text>
-                    </View>
+                    </LinearGradient>
                     <View style={styles.howItWorksContent}>
                       <Text style={styles.howItWorksText}>
                         {i18n.t('feedback.step4')}
@@ -595,13 +696,11 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
 
           {/* Bottom Button */}
           <View style={styles.bottomContainer}>
-            <TouchableOpacity 
-              style={styles.viewFeedbackButton}
+            <OrangeGradientButton
+              title={i18n.t('feedback.viewFeedback')}
               onPress={handleViewFeedback}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.viewFeedbackButtonText}>{i18n.t('feedback.viewFeedback')}</Text>
-            </TouchableOpacity>
+              style={styles.viewFeedbackButton}
+            />
           </View>
         </SafeAreaView>
       </View>
@@ -650,13 +749,11 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
 
           {/* Bottom Button */}
           <View style={styles.bottomContainer}>
-            <TouchableOpacity 
-              style={styles.exitButton}
+            <OrangeGradientButton
+              title="Exit"
               onPress={handleExitToLiftDetails}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.exitButtonText}>Exit</Text>
-            </TouchableOpacity>
+              style={styles.exitButton}
+            />
           </View>
         </SafeAreaView>
       </View>
@@ -705,6 +802,18 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
             },
           ]}
         >
+          {/* Top Line when expanded on issues/tips */}
+          {((currentPageType === 'flaws' || currentPageType === 'improvement') && isBottomExpanded) && (
+            <TouchableOpacity 
+              style={styles.topMinusIcon} 
+              activeOpacity={0.8} 
+              onPress={toggleBottomContainer}
+              hitSlop={{ top: 12, bottom: 12, left: 24, right: 24 }}
+            >
+              <View style={styles.topLine} />
+            </TouchableOpacity>
+          )}
+
           {/* Bottom Content - Above navigation when expanded */}
           {getBottomContent()}
 
@@ -731,6 +840,17 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
 
             {/* Center Column - Page Indicator and Expand/Collapse */}
             <View style={styles.centerColumn}>
+              {/* Tappable line above page indicator when collapsed on issues/tips */}
+              {((currentPageType === 'flaws' || currentPageType === 'improvement') && !isBottomExpanded) && (
+                <TouchableOpacity 
+                  style={styles.expandCollapseButton} 
+                  activeOpacity={0.8} 
+                  onPress={toggleBottomContainer}
+                  hitSlop={{ top: 12, bottom: 12, left: 24, right: 24 }}
+                >
+                  <View style={styles.topLine} />
+                </TouchableOpacity>
+              )}
               {/* Page Indicator */}
               <View style={styles.bottomPageIndicator}>
                 <Text style={styles.bottomPageIndicatorText}>
@@ -757,7 +877,7 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#1d293d',
   },
   safeArea: {
     flex: 1,
@@ -788,8 +908,8 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 36,
-    fontWeight: '600',
-    color: '#000000',
+    fontWeight: '700',
+    color: '#ffffff',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
   },
   bottomNavigationSection: {
@@ -797,22 +917,31 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: 500, // fixed max height
-    backgroundColor: '#FFFFFF',
+    height: 480, // fixed max height
+    backgroundColor: '#1d293d',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: -2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowColor: '#45556c',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
     paddingHorizontal: 20,
     paddingBottom: 30,
+    marginBottom: 10
   },
-
+  topMinusIcon: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 20,
+    paddingBottom: 8,
+    paddingHorizontal: 2,
+  },
+  topLine: {
+    width: 40,
+    height: 2.5,
+    backgroundColor: '#ffffff',
+    borderRadius: 28,
+  },
   bottomChevron: {
     width: 44,
     height: 44,
@@ -861,18 +990,18 @@ const styles = StyleSheet.create({
   },
   listItemText: {
     fontSize: 16,
-    fontWeight: '400',
-    color: '#000000',
+    fontWeight: '500',
+    color: '#ffffff',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
     flexShrink: 1,
   },
   bottomContentTitle: {
     fontSize: 24,
     fontWeight: '600',
-    color: '#000000',
+    color: '#ffffff',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
     marginBottom: 12,
-    marginTop: 24,
+    marginTop: 12,
   },
   bottomContentText: {
     fontSize: 18,
@@ -901,7 +1030,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#000000',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 15,
@@ -916,9 +1044,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   howItWorksText: {
-    fontSize: 18,
-    fontWeight: '400',
-    color: '#000000',
+    fontSize: 17,
+    fontWeight: '500',
+    color: '#ffffff',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
     lineHeight: 24,
   },
@@ -927,19 +1055,7 @@ const styles = StyleSheet.create({
     paddingVertical: 30,
   },
   viewFeedbackButton: {
-    backgroundColor: '#000000',
-    borderRadius: 28,
-    paddingVertical: 20,
-    paddingHorizontal: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
     width: '100%',
-  },
-  viewFeedbackButtonText: {
-    fontSize: 17,
-    fontWeight: '500',
-    color: '#FFFFFF',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
   },
   content: {
     flex: 1,
@@ -974,13 +1090,13 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   expandCollapseButton: {
-    width: 44,
-    height: 44,
     borderRadius: 22,
     backgroundColor: '#f3f4f6',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 24,
   },
   tutorialRefContainer: {
     position: 'absolute',
@@ -1021,31 +1137,19 @@ const styles = StyleSheet.create({
   largeScoreValue: {
     fontSize: 100,
     fontWeight: '800',
-    color: '#ffb86a',
+    color: '#fe9a00',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
     textAlign: 'center',
     marginBottom: 6,
   },
   accuracyScoreLabel: {
     fontSize: 24,
-    fontWeight: '600',
-    color: '#000000',
+    fontWeight: '800',
+    color: '#fff',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
     textAlign: 'center',
   },
   exitButton: {
-    backgroundColor: '#000000',
-    borderRadius: 28,
-    paddingVertical: 18,
-    paddingHorizontal: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
     width: '100%',
-  },
-  exitButtonText: {
-    fontSize: 18,
-    fontWeight: '500',
-    color: '#FFFFFF',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
   },
 }); 
