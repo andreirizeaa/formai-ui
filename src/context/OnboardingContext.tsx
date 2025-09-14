@@ -25,6 +25,7 @@ const initialOnboardingData: OnboardingData = {
   hasRated: null,
   signInMethod: null,
   onboardingCompleted: false,
+  walkthroughCompleted: false,
 };
 
 interface OnboardingProviderProps {

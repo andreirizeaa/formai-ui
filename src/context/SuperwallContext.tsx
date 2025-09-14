@@ -86,7 +86,6 @@ export function SuperwallProvider({ children }: SuperwallProviderProps) {
               }
               
               await purchasePackage(packageToPurchase);
-              console.log('purchasePackage called with packageToPurchase:', packageToPurchase);
               return;
             } catch (error) {
               throw error;
