@@ -43,12 +43,12 @@ const supabase = createClient(
 async function getExpoPushTokenForUser(userId: string): Promise<string | null> {
   const { data, error } = await supabase
     .from('user_notifications')
-    .select('expo_push_notification, has_deleted')
+    .select('expo_push_notification')
     .eq('user_id', userId)
     .maybeSingle()
 
   if (error) return null
-  if (!data || (data as any).has_deleted) return null
+  if (!data) return null
   return (data as any)?.expo_push_notification ?? null
 }
 

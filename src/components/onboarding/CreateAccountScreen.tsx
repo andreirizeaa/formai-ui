@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, Alert } from 'react-native';
 import { Image } from 'expo-image';
 import { useColorScheme } from 'react-native';
 import * as AppleAuthentication from 'expo-apple-authentication';
@@ -58,7 +58,7 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
           token: userInfo.idToken,
         });
         if (error) {
-          console.error('Supabase auth error:', error);
+          Alert.alert('Sign In Error', 'Unable to sign in with Google. Please try again.');
           setIsSigningIn(false);
         } else {
           updateOnboardingData('signInMethod', 'google');
@@ -71,7 +71,7 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
               await setUserId(data.user.id);
               handleNewAccount(data);
             } catch (persistError) {
-              console.error('Error persisting onboarding data:', persistError);
+              Alert.alert('Error', 'An error occurred while setting up your account. Please try again.');
               setIsSigningIn(false);
             }
           }
@@ -102,7 +102,7 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
         });
         
         if (error) {
-          console.error('Supabase auth error:', error);
+          Alert.alert('Sign In Error', 'Unable to sign in with Apple. Please try again.');
           setIsSigningIn(false);
         } else {
           updateOnboardingData('signInMethod', 'apple');
@@ -114,7 +114,7 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
               await setUserId(data.user.id);
               handleNewAccount(data);
             } catch (persistError) {
-              console.error('Error persisting onboarding data:', persistError);
+              Alert.alert('Error', 'An error occurred while setting up your account. Please try again.');
               setIsSigningIn(false);
             }
           }
@@ -153,7 +153,7 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
         setIsSigningIn(false);
         onNext();
       } catch (persistError) {
-        console.error('Error persisting onboarding data:', persistError);
+        Alert.alert('Error', 'An error occurred while setting up your account. Please try again.');
         setIsSigningIn(false);
       }
     } else {

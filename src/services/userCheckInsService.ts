@@ -38,15 +38,14 @@ function computeCurrentStreak(isoDates: string[]): number {
 
 export async function fetchUserCheckIns(userId: string): Promise<CheckInsResponse> {
 
-  // Verify user exists and is not soft-deleted
+  // Verify user exists
   const { data: userRow, error: userErr } = await supabase
     .from('users')
-    .select('user_id, has_deleted')
+    .select('user_id')
     .eq('user_id', userId)
-    .eq('has_deleted', false)
     .maybeSingle();
   if (userErr) throw new Error(userErr.message);
-  if (!userRow) throw new Error('User not found or deleted');
+  if (!userRow) throw new Error('User not found');
 
   // Fetch check-in dates from user_check_ins (only user_id and date exist)
   const { data: rows, error } = await supabase

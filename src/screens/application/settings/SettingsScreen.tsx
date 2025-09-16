@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, ScrollView, Animated } from 'react-native';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, ScrollView, Animated, Alert } from 'react-native';
 import { Image, ImageBackground } from 'expo-image';
 import Constants from 'expo-constants';
 import * as StoreReview from 'expo-store-review';
@@ -11,6 +11,7 @@ import { LogoutModal } from './LogoutModal';
 import { LanguageModal } from './LanguageModal';
 import { removeUserId, getUserId } from '../../../services/storageService';
 import { deleteUserAccount } from '../../../services/authService';
+import { clearUserSpecificData } from '../../../services/contextCleanupService';
 import { useTutorialTarget, useTutorial } from '../../../context/TutorialContext';
 import { usePurchases } from '../../../context/PurchasesContext';
 import { usePlacement } from 'expo-superwall';
@@ -18,6 +19,9 @@ import { supabase } from '../../../lib/supabase';
 import { openSupportEmail } from '../../../services/emailService';
 import { showAlert } from '../../../services/alertService';
 import { FormAILogo } from '../../../components/FormAILogo';
+import { useQueryClient } from '@tanstack/react-query';
+import { useLiftData } from '../../../context/LiftDataContext';
+import { useLoadingLifts } from '../../../context/LoadingLiftsContext';
 
 interface SettingsScreenProps {
   onPersonalDetailsPress: () => void;
@@ -148,6 +152,9 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onSharePr
   const [isDeleting, setIsDeleting] = useState(false);
   const iconSize = 26;
   const iconColor = '#000000';
+  const queryClient = useQueryClient();
+  const { addLift, formatDateForLift } = useLiftData();
+  const { purgeAllLoadingLifts } = useLoadingLifts();
   
   // Tutorial target registration
   const { ref: settingsFirstCardRef } = useTutorialTarget('settings_first_card');
@@ -179,10 +186,19 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onSharePr
         return;
       }
 
+      // Delete user account from database
       const res = await deleteUserAccount(userId);
       if (!res?.success) throw new Error(res?.message || 'Delete failed');
+      
+      // Clear all user data from contexts and React Query cache
+      await clearUserSpecificData(queryClient, userId);
+      
+      // Sign out from Supabase
       await supabase.auth.signOut();
+      
+      // Remove user ID from storage (redundant but safe)
       await removeUserId();
+      
       setShowDeleteModal(false);
       if (onLogout) onLogout();
     } catch (e: any) {
@@ -253,12 +269,12 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onSharePr
         await StoreReview.requestReview();
       }
     } catch (error) {
-      console.error('Error requesting review:', error);
+      Alert.alert('Error', 'Unable to open the app store. Please try again later.');
       // Still try to open the store as fallback
       try {
         await StoreReview.requestReview();
       } catch (fallbackError) {
-        console.error('Fallback review request failed:', fallbackError);
+        Alert.alert('Error', 'Unable to open the app store. Please try again later.');
       }
     }
   };
@@ -269,8 +285,118 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onSharePr
         placement: 'hd_video_trigger',
       });
     } catch (error) {
-      console.error('Error showing HD video paywall:', error);
+      Alert.alert('Error', 'Unable to access premium features. Please try again.');
     }
+  };
+
+  const handleAddTestLift = () => {
+    hapticFeedback.selection();
+    
+    // Random movement selection
+    const movements = [
+      'Barbell Front Squat',
+      'Deadlift',
+      'Bench Press',
+      'Overhead Press',
+      'Romanian Deadlift',
+      'Goblet Squat',
+      'Push-ups',
+      'Pull-ups',
+      'Lunges',
+      'Planks',
+      'Bent Over Rows',
+      'Shoulder Press',
+      'Bicep Curls',
+      'Tricep Dips',
+      'Leg Press'
+    ];
+
+    // Add 1000 test lifts
+    for (let i = 0; i < 1000; i++) {
+      const randomMovement = movements[Math.floor(Math.random() * movements.length)];
+      
+      // Generate random date within the last 30 days
+      const today = new Date();
+      const randomDaysAgo = Math.floor(Math.random() * 30);
+      const randomDate = new Date(today);
+      randomDate.setDate(today.getDate() - randomDaysAgo);
+      
+      // Calculate accuracy based on date: older dates (30 days ago) = 40%, recent dates (today) = 80%
+      // This creates a linear progression from 40% to 80% over 30 days
+      const dateProgress = randomDaysAgo / 30; // 0 = today, 1 = 30 days ago
+      const baseAccuracy = 80 - (dateProgress * 40); // 80% for today, 40% for 30 days ago
+      
+      // Add significant variation to create realistic ups and downs
+      // Some days will be much better or worse than the trend
+      const variation = (Math.random() - 0.5) * 20; // ±10% variation
+      const randomAccuracy = Math.floor(baseAccuracy + variation);
+      const clampedAccuracy = Math.max(30, Math.min(90, randomAccuracy)); // Clamp between 30-90%
+      
+      // Random reps between 1-12
+      const randomReps = Math.floor(Math.random() * 12) + 1;
+      
+      // Random weight between 1-500
+      const randomWeight = Math.floor(Math.random() * 500) + 1;
+      
+      // Generate line graph values that follow the same improvement pattern with variation
+      const lineGraphBaseAccuracy = baseAccuracy;
+      const randomLineGraphValues = Array.from({ length: randomReps }, () => {
+        const variation = (Math.random() - 0.5) * 15; // ±7.5% variation
+        return Math.max(25, Math.min(95, Math.floor(lineGraphBaseAccuracy + variation)));
+      });
+      
+      // Random time between 8 AM and 10 PM
+      const randomHour = Math.floor(Math.random() * 14) + 8;
+      const randomMinute = Math.floor(Math.random() * 60);
+      const randomTime = `${randomHour > 12 ? randomHour - 12 : randomHour}:${randomMinute.toString().padStart(2, '0')} ${randomHour >= 12 ? 'PM' : 'AM'}`;
+      
+      const id = `demo-${today.getTime()}-${i}-${Math.random().toString(36).substr(2, 9)}`;
+
+      addLift({
+        id,
+        isFavourite: Math.random() > 0.7, // 30% chance of being favourite
+        liftType: randomMovement,
+        liftDate: formatDateForLift(randomDate),
+        liftTime: randomTime,
+        metricWeight: randomWeight,
+        reps: randomReps,
+        rawVideoURL: require('../../../../assets/tutorial/formai-example-video.mp4'),
+        poseVideoURL: require('../../../../assets/tutorial/formai-example-pose.mp4'),
+        thumbnailURL: require('../../../../assets/tutorial/formai-example-video-thumbnail.jpg'),
+        analysis: {
+          accuracy: clampedAccuracy,
+          lineGraphValues: randomLineGraphValues,
+          barChartValues: randomLineGraphValues,
+          feedback: [
+            {
+              imageURL: require('../../../../assets/tutorial/formai-example-feedback.png'),
+              flaws: [
+                "Right knee is caving inward compared to the left, showing knee valgus.",
+                "Right ankle angle suggests the heel may be lifting more than the left.",
+                "Torso is leaning forward excessively, which stresses the lower back.",
+                "Barbell path is slightly forward of mid-foot, reducing lifting efficiency.",
+                "Hip angle indicates possible butt wink or pelvic tuck at the bottom."
+              ],
+              improvement: [
+                "Actively push knees out and think 'spread the floor' with your feet to prevent valgus.",
+                "Improve ankle dorsiflexion with stretches and banded mobilizations to keep heels grounded.",
+                "Brace your core harder using the Valsalva maneuver to maintain an upright torso.",
+                "Keep the bar over mid-foot and adjust grip width to tighten the upper back.",
+                "Strengthen glutes and hamstrings with RDLs, hip thrusts, and pause squats to control hip position.",
+                "Consider weightlifting shoes with a heel lift if ankle mobility limits squat depth."
+              ],
+            },
+          ],
+        },
+      });
+    }
+  };
+
+  const handlePruneLifts = () => {
+    hapticFeedback.selection();
+    
+    // Purge all loading lifts from memory and AsyncStorage
+    purgeAllLoadingLifts();
   };
 
   return (
@@ -377,6 +503,28 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onSharePr
             onPress={handleLogoutPress}
           />
         </View>
+
+        {/* Development Test Buttons - Only visible in development */}
+        {__DEV__ && (
+          <View style={styles.card}>
+            <Text style={styles.devSectionTitle}>Development Tools</Text>
+            <TouchableOpacity
+              style={styles.devButton}
+              onPress={handleAddTestLift}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.devButtonText}>Add 1000 Test Lifts</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={[styles.devButton, styles.devButtonSecondary]}
+              onPress={handlePruneLifts}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.devButtonText, styles.devButtonTextSecondary]}>Prune Loading Lifts</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
 
       {/* Delete Account Modal */}
@@ -584,5 +732,35 @@ const styles = StyleSheet.create({
     color: '#8E8E93',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
     fontWeight: '400',
+  },
+  // Development button styles
+  devSectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#000000',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  devButton: {
+    backgroundColor: '#007AFF',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    marginBottom: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  devButtonSecondary: {
+    backgroundColor: '#FF3B30',
+  },
+  devButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
+  },
+  devButtonTextSecondary: {
+    color: '#FFFFFF',
   },
 }); 

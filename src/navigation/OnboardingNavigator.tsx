@@ -13,6 +13,7 @@ import { PaymentScreen } from '../screens/payment/PaymentScreen';
 import { SignInScreen } from '../screens/auth/SignInScreen';
 import Purchases from 'react-native-purchases';
 import { usePurchases } from '../context/PurchasesContext';
+import { useUserDetails } from '../context/UserDetailsContext';
 
 interface OnboardingNavigatorProps {
   onComplete: () => void;
@@ -111,14 +112,22 @@ function NotificationPermissionScreenWrapper() {
 function AccountLoadingScreenWrapper({ onComplete }: { onComplete: () => void }) {
   const navigation = useNavigation<OnboardingNavigationProp>();
   const { customerInfo } = usePurchases();
+  const { refetchUserDetails } = useUserDetails();
+  const isRunningRef = React.useRef(false);
   
   const handleNext = async () => {
+    if (isRunningRef.current) return; // guard against double-taps
+    isRunningRef.current = true;
+
     const entitlementIds = Object.keys(customerInfo?.entitlements.active ?? []);
     if (entitlementIds.length === 0) {
       navigation.navigate('Payment');
     } else {
-      onComplete();
+      await refetchUserDetails(); // ensure context is populated, silently
+      onComplete();               // this triggers your fade to MainAppLayout
     }
+
+    isRunningRef.current = false;
   };
 
   return <AccountLoadingScreen onComplete={handleNext} />;

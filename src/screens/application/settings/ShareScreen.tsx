@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Share, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Share, Platform, Alert } from 'react-native';
 import showAlert from '../../../services/alertService';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
@@ -23,7 +23,7 @@ export function ShareScreen({ onBack }: ShareScreenProps) {
       setIsCopied(true);
       setTimeout(() => setIsCopied(false), 2000); // Reset copied state after 2 seconds
     } catch (error) {
-      console.error('Failed to copy to clipboard:', error);
+      Alert.alert('Error', 'Failed to copy to clipboard. Please try again.');
       showAlert(i18n.t('share.error'), i18n.t('share.failedToCopy'));
     }
   };
@@ -38,7 +38,7 @@ export function ShareScreen({ onBack }: ShareScreenProps) {
         title: i18n.t('share.shareTitle'),
       });
     } catch (error) {
-      console.error('Failed to share:', error);
+      Alert.alert('Error', 'Failed to share. Please try again.');
       showAlert(i18n.t('share.error'), i18n.t('share.failedToShare'));
     }
   };

@@ -7,6 +7,7 @@ import { TutorialProvider, useTutorial } from '../../context/TutorialContext';
 import { TutorialLiftSeeder } from '../../context/LiftDataContext';
 import { TutorialOverlay } from '../TutorialOverlay';
 import { hapticFeedback } from '../../utils/haptic';
+import { LoadingScreen } from '../../screens/onboarding/LoadingScreen';
 
 interface MainAppLayoutProps {
   children?: React.ReactNode;
@@ -14,31 +15,32 @@ interface MainAppLayoutProps {
 }
 
 export function MainAppLayout({ children, onLogout }: MainAppLayoutProps) {
-  const { userDetails, updateUserDetails } = useUserDetails();
+  const { userDetails } = useUserDetails();
   const [showWelcome, setShowWelcome] = React.useState(false);
   const [shouldStartTutorial, setShouldStartTutorial] = React.useState(false);
-  const fadeAnim = React.useRef(new Animated.Value(0)).current;
-
+  const fadeAnim = React.useRef(new Animated.Value(0)).current; // Start hidden
+  
   React.useEffect(() => {
-    // Show welcome modal if walkthrough is not completed (false or null)
-    if (userDetails && userDetails.walkthroughCompleted !== true) {
-      const timer = setTimeout(() => {
-        setShowWelcome(true);
-        hapticFeedback.success();
-      }, 200);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [userDetails]);
-
-  // Fade in animation when component mounts
-  React.useEffect(() => {
+    // Trigger fade in animation on mount
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 300,
       useNativeDriver: true,
     }).start();
-  }, [fadeAnim]);
+  }, []);
+
+  React.useEffect(() => {
+    // Only show welcome modal if walkthrough is explicitly not completed
+    // Add a delay to prevent showing during initial app load
+    if (userDetails && userDetails.walkthroughCompleted === false) {
+      const timer = setTimeout(() => {
+        setShowWelcome(true);
+        hapticFeedback.success();
+      }, 500); // Short delay after main loading is complete
+      
+      return () => clearTimeout(timer);
+    }
+  }, [userDetails]);
 
   const handleGetStarted = async () => {
     setShowWelcome(false);
@@ -48,7 +50,7 @@ export function MainAppLayout({ children, onLogout }: MainAppLayoutProps) {
   // TutorialStarter component defined inside to access TutorialProvider context
   function TutorialStarter({ trigger }: { trigger: boolean }) {
     const tutorial = useTutorial();
-    if (tutorial.isActive || userDetails?.walkthroughCompleted === true) {
+    if (tutorial.isActive || userDetails?.walkthroughCompleted !== false) {
       return;
     }
     React.useEffect(() => {

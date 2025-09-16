@@ -617,15 +617,9 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
               <View style={styles.howItWorksItems} ref={howItWorksModalRef}>
                 <AnimatedHowItWorksItem delay={0}>
                   <View style={styles.howItWorksItem}>
-                    <LinearGradient
-                      colors={['#f6339a', '#fb2c36', '#ff6900', '#fe9a00']}
-                      locations={[0, 0.5, 0.8, 1]}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 0 }}
-                      style={styles.howItWorksIcon}
-                    >
+                    <View style={styles.howItWorksIcon}>
                       <Text style={styles.howItWorksNumber}>1</Text>
-                    </LinearGradient>
+                    </View>
                     <View style={styles.howItWorksContent}>
                       <Text style={styles.howItWorksText}>
                         {i18n.t('feedback.step1')}
@@ -636,15 +630,9 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
 
                 <AnimatedHowItWorksItem delay={100}>
                   <View style={styles.howItWorksItem}>
-                    <LinearGradient
-                      colors={['#f6339a', '#fb2c36', '#ff6900', '#fe9a00']}
-                      locations={[0, 0.5, 0.8, 1]}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 0 }}
-                      style={styles.howItWorksIcon}
-                    >
+                    <View style={styles.howItWorksIcon}>
                       <Text style={styles.howItWorksNumber}>2</Text>
-                    </LinearGradient>
+                    </View>
                     <View style={styles.howItWorksContent}>
                       <Text style={styles.howItWorksText}>
                         {i18n.t('feedback.step2')}
@@ -655,15 +643,9 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
 
                 <AnimatedHowItWorksItem delay={200}>
                   <View style={styles.howItWorksItem}>
-                    <LinearGradient
-                      colors={['#f6339a', '#fb2c36', '#ff6900', '#fe9a00']}
-                      locations={[0, 0.5, 0.8, 1]}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 0 }}
-                      style={styles.howItWorksIcon}
-                    >
+                    <View style={styles.howItWorksIcon}>
                       <Text style={styles.howItWorksNumber}>3</Text>
-                    </LinearGradient>
+                    </View>
                     <View style={styles.howItWorksContent}>
                       <Text style={styles.howItWorksText}>
                         {i18n.t('feedback.step3')}
@@ -674,15 +656,9 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
 
                 <AnimatedHowItWorksItem delay={300}>
                   <View style={styles.howItWorksItem}>
-                    <LinearGradient
-                      colors={['#f6339a', '#fb2c36', '#ff6900', '#fe9a00']}
-                      locations={[0, 0.5, 0.8, 1]}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 0 }}
-                      style={styles.howItWorksIcon}
-                    >
+                    <View style={styles.howItWorksIcon}>
                       <Text style={styles.howItWorksNumber}>4</Text>
-                    </LinearGradient>
+                    </View>
                     <View style={styles.howItWorksContent}>
                       <Text style={styles.howItWorksText}>
                         {i18n.t('feedback.step4')}
@@ -696,11 +672,15 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
 
           {/* Bottom Button */}
           <View style={styles.bottomContainer}>
-            <OrangeGradientButton
-              title={i18n.t('feedback.viewFeedback')}
-              onPress={handleViewFeedback}
+            <TouchableOpacity
               style={styles.viewFeedbackButton}
-            />
+              onPress={handleViewFeedback}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.viewFeedbackButtonText}>
+                {i18n.t('feedback.viewFeedback')}
+              </Text>
+            </TouchableOpacity>
           </View>
         </SafeAreaView>
       </View>
@@ -734,7 +714,7 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
                   source={require('../../../../assets/animations/confetti.json')}
                   autoPlay
                   loop={false}
-                  speed={0.6}
+                  speed={0.7}
                   style={styles.confettiAnimation}
                 />
               </View>
@@ -1030,6 +1010,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
+    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 15,
@@ -1037,7 +1018,7 @@ const styles = StyleSheet.create({
   howItWorksNumber: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
   },
   howItWorksContent: {
@@ -1056,6 +1037,17 @@ const styles = StyleSheet.create({
   },
   viewFeedbackButton: {
     width: '100%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 28,
+    paddingVertical: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  viewFeedbackButtonText: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#000000',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
   content: {
     flex: 1,

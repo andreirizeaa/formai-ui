@@ -4,15 +4,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import LottieView from 'lottie-react-native';
 
 interface AccountLoadingScreenProps {
-  onComplete: () => void;
+  onComplete: () => void | Promise<void>;
 }
 
 export function AccountLoadingScreen({ onComplete }: AccountLoadingScreenProps) {
   useEffect(() => {
-    // Show loading animation for 2 seconds
-    const timer = setTimeout(() => {
-      onComplete();
-    }, 3000);
+    // Show loading animation for 2 seconds for consistent experience
+    const timer = setTimeout(async () => {
+      await onComplete();
+    }, 2000);
 
     return () => clearTimeout(timer);
   }, [onComplete]);
@@ -21,7 +21,7 @@ export function AccountLoadingScreen({ onComplete }: AccountLoadingScreenProps) 
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         <LottieView
-          speed={1.5}
+          speed={1}
           source={require('../../../assets/animations/loading.json')}
           autoPlay
           style={styles.lottieAnimation}

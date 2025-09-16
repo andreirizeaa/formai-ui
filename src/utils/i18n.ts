@@ -34,7 +34,7 @@ const i18n = new I18n({
       logout: 'Logout',
       save: 'Save',
       deleteAccountTitle: 'Delete Account?',
-      deleteAccountMessage: 'Are you sure you want to permanently delete your account?',
+      deleteAccountMessage: 'Are you sure you want to permanently delete your account? This action cannot be undone and all data will be deleted.',
       deleteAccountSubscriptionWarning: 'Deleting your Form AI account through the app does not cancel your subscription. Please remember to cancel your subscription separately in your device\'s subscription settings so you aren\'t charged again.',
       iAcknowledge: 'I acknowledge',
       deleteAccountButton: 'Delete account',

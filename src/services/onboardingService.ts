@@ -1,5 +1,6 @@
 import { OnboardingData } from '../types/onboarding';
 import { supabase } from '../lib/supabase';
+import { clearAllUserData } from './storageService';
 
 interface OnboardingApiResponse {
   success: boolean;
@@ -96,11 +97,6 @@ export async function saveOnboardingProgress(
   if (info.walkthrough_completed === undefined) info.walkthrough_completed = false;
   // 1) Ensure parent row exists in public.users (FK target) and not soft-deleted
   await upsertWithRetry('users', { user_id: data.userId });
-  // If a previously soft-deleted row exists, revive it by clearing flags
-  await supabase
-    .from('users')
-    .update({ has_deleted: false, has_deleted_at: null })
-    .eq('user_id', data.userId);
   // 2) Upsert dependent tables
   await upsertWithRetry('user_info', info);
   await upsertWithRetry('user_onboarding', onboarding);
@@ -134,22 +130,19 @@ export async function deleteUser(
     if (authUser?.user?.id && authUser.user.id !== userId) throw new Error('User mismatch');
   }
 
-  const payload = {
-    has_deleted: true,
-    has_deleted_at: new Date().toISOString(),
-    full_name: 'DELETED',
-    email: 'DELETED',
-  };
-
-  const { error: updateErr } = await supabase
+  // Delete user from user_info table
+  const { error: deleteUserInfoErr } = await supabase
     .from('user_info')
-    .update(payload)
+    .delete()
     .eq('user_id', userId.trim());
-  if (updateErr) throw new Error(updateErr.message);
+  if (deleteUserInfoErr) throw new Error(deleteUserInfoErr.message);
+
+  // Clear all user data from AsyncStorage and memory
+  await clearAllUserData();
 
   return {
     success: true,
-    message: 'User successfully marked as deleted',
+    message: 'User successfully deleted',
     user_id: userId,
   };
 }

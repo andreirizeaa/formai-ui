@@ -173,7 +173,6 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
     }
   }, [liftsForSelectedDate, liftData, loadingLifts, onShowFeedback]);
 
-
   const handleLibraryPress = useCallback(() => {
     hapticFeedback.selection();
     onShowLibrary();
@@ -202,10 +201,8 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
 
 
 
-  // Ensure we load lifts from backend on first mount
-  useEffect(() => {
-    void refreshLifts();
-  }, []);
+  // Note: Removed refreshLifts() call as it was causing lifts to disappear when reopening home screen
+  // The LiftDataContext will fetch data naturally when it mounts
 
   // Show tutorial done modal if flag is set
   useEffect(() => {

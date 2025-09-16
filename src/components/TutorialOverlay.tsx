@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, View, Text, TouchableOpacity, StyleSheet, Platform, Dimensions, ActivityIndicator } from 'react-native';
+import { Modal, View, Text, TouchableOpacity, StyleSheet, Platform, Dimensions, ActivityIndicator, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LottieView from 'lottie-react-native';
 import { OrangeGradientButton } from './ui/OrangeGradientButton';
@@ -182,14 +182,14 @@ export function TutorialOverlay() {
                 onPress={async () => {
                   hapticFeedback.selection();
                   try {
-                    // Stop the tutorial immediately
-                    await stop();
-                    // Show the modal immediately using global function (no flag needed)
+                    // Show the modal immediately first
                     if ((global as any).showTutorialAllDoneModal) {
                       (global as any).showTutorialAllDoneModal();
                     }
+                    // Then stop the tutorial
+                    await stop();
                   } catch (error) {
-                    console.error('Error in skip guide:', error);
+                    Alert.alert('Error', 'An error occurred while skipping the tutorial. Please try again.');
                   }
                 }}
                 activeOpacity={0.8}

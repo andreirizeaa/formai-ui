@@ -382,28 +382,26 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
             </View>
 
             {/* Accuracy Card */}
-            <LinearGradient
-              colors={['#f6339a', '#fb2c36', '#ff6900', '#fe9a00']}
-              locations={[0, 0.5, 0.8, 1]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={[styles.infoCard, styles.accuracyCard]}
-            >
-              <Text style={styles.infoCardTitleOrange}>{i18n.t('feedback.accuracy')}</Text>
-              <Text style={styles.infoCardValueOrange}>
-                {currentLiftData.analysis.accuracy || 91}%
+            <View style={[styles.infoCard, styles.accuracyCard]}>
+              <Text style={styles.infoCardTitle}>{i18n.t('feedback.accuracy')}</Text>
+              <Text style={styles.infoCardValue}>
+                {Math.round(currentLiftData.analysis.accuracy || 91)}%
               </Text>
-            </LinearGradient>
+            </View>
           </View>
 
           {/* Review Feedback Button Card */}
           <View style={styles.feedbackButtonCard}>
             <View ref={reviewFeedbackRef}>
-              <OrangeGradientButton
-                title={i18n.t('feedback.reviewFeedback')}
-                onPress={handleReviewFeedback}
+              <TouchableOpacity
                 style={styles.reviewFeedbackButton}
-              />
+                onPress={handleReviewFeedback}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.reviewFeedbackButtonText}>
+                  {i18n.t('feedback.reviewFeedback')}
+                </Text>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
@@ -903,6 +901,17 @@ const styles = StyleSheet.create({
   reviewFeedbackButton: {
     width: '100%',
     marginBottom: 16,
+    backgroundColor: '#000000',
+    borderRadius: 28,
+    paddingVertical: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  reviewFeedbackButtonText: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    fontFamily: 'SF Pro Text',
   },
   bottomContainer: {
     borderTopLeftRadius: 16,
@@ -993,22 +1002,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#000000',
     fontFamily: 'SF Pro Display',
-  },
-  infoCardValueOrange: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: '#fff',
-    fontFamily: 'SF Pro Display',
-  },
-  infoCardOrange: {
-    // Gradient background is handled by LinearGradient component
-  },
-  infoCardTitleOrange: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
-    fontFamily: 'SF Pro Display',
-    marginBottom: 4,
   },
   // Weight card styles
   weightCard: {

@@ -22,10 +22,10 @@ export function LoadingScreen({ onLoadComplete }: LoadingScreenProps) {
       useNativeDriver: true,
     }).start();
 
-    // Simulate loading time with additional 2 second delay
+    // Simulate loading time with 2 second delay for consistent startup experience
     const timer = setTimeout(() => {
       onLoadComplete();
-    }, 3000);
+    }, 2000);
 
     return () => clearTimeout(timer);
   }, [onLoadComplete, fadeAnim]);

@@ -33,6 +33,7 @@ interface UserDetailsContextType {
   getDateOfBirthDisplay: () => string;
   formatDateForDisplay: (dateString: string) => string;
   refetchUserDetails: () => Promise<void>;
+  setSignedInUser: (id: string | null) => Promise<void>;
   isUserDetailsLoaded: boolean;
 }
 
@@ -239,7 +240,34 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
   }
 
   const refetchUserDetails = async () => {
-    await queryClient.invalidateQueries({ queryKey: ['user-details', userId] });
+    // 1) Ensure context has a userId (we only read storage on mount otherwise)
+    let id = userId;
+    if (!id) {
+      id = await getUserId().catch(() => null);
+      if (id) setUserIdState(id);
+    }
+
+    // 2) If still no id, just clear and bail — but DO NOT flip isLoaded false
+    if (!id) {
+      setUserDetails(null);
+      return;
+    }
+
+    // 3) Refetch the active query without changing isLoaded (avoid global gate flicker)
+    await queryClient.refetchQueries({ queryKey: ['user-details', id], exact: true });
+    // When this resolves, your useQuery's queryFn has already run and setUserDetails().
+  };
+
+  const setSignedInUser = async (id: string | null) => {
+    setUserIdState(id);
+    
+    if (!id) {
+      setUserDetails(null);
+      return;
+    }
+
+    await queryClient.refetchQueries({ queryKey: ['user-details', id], exact: true });
+    // When this resolves, your useQuery's queryFn has already run and setUserDetails().
   };
 
   const value = useMemo(
@@ -256,6 +284,7 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
       getDateOfBirthDisplay,
       formatDateForDisplay,
       refetchUserDetails,
+      setSignedInUser,
       isUserDetailsLoaded: isLoaded,
     }), [
       userDetails,
@@ -270,9 +299,26 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
       getDateOfBirthDisplay,
       formatDateForDisplay,
       refetchUserDetails,
+      setSignedInUser,
       isLoaded,
     ]
   );
+
+  // Reset function for account deletion
+  const resetContext = React.useCallback(() => {
+    setUserDetails(initialUserDetails);
+    setIsLoaded(false);
+    setUserIdState(null);
+    // Reset loading state to false so it can be properly set when new data loads
+  }, []);
+
+  // Expose reset function globally for account deletion
+  React.useEffect(() => {
+    (global as any).resetUserDetailsContext = resetContext;
+    return () => {
+      (global as any).resetUserDetailsContext = undefined;
+    };
+  }, [resetContext]);
 
   return (
     <UserDetailsContext.Provider value={value}>

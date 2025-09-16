@@ -253,26 +253,6 @@ export function SwipeableAccuracyCard({
         ))}
       </View>
 
-      {/* Test Lift Button - Only visible in development */}
-      {__DEV__ && (
-        <View style={styles.devButtonsContainer}>
-          <TouchableOpacity
-            style={styles.testLiftButton}
-            onPress={handleAddTestLift}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.testLiftButtonText}>Add 1000 Test Lifts</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={styles.pruneLiftsButton}
-            onPress={handlePruneLifts}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.pruneLiftsButtonText}>Prune Loading Lifts</Text>
-          </TouchableOpacity>
-        </View>
-      )}
     </View>
   );
 }
@@ -345,36 +325,5 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     borderWidth: 1,
     borderColor: '#000',
-  },
-  devButtonsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 20,
-    gap: 12,
-  },
-  testLiftButton: {
-    backgroundColor: '#007AFF',
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-  },
-  testLiftButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-    fontFamily: 'SF Pro Display',
-  },
-  pruneLiftsButton: {
-    backgroundColor: '#FF3B30',
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-  },
-  pruneLiftsButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-    fontFamily: 'SF Pro Display',
   },
 });
