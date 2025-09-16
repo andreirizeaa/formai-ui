@@ -1,3 +1,4 @@
+import { Alert } from 'react-native';
 import { supabase } from '../lib/supabase';
 import * as FileSystem from 'expo-file-system';
 import { Video as VideoCompressor } from 'react-native-compressor';
@@ -164,7 +165,7 @@ export async function listUserVideoPaths(userId: string): Promise<string[]> {
       });
 
     if (liftFoldersError) {
-      console.error('Error listing lift folders:', liftFoldersError);
+      Alert.alert('Error', 'Unable to access your videos. Please try again.');
       return [];
     }
 
@@ -186,7 +187,7 @@ export async function listUserVideoPaths(userId: string): Promise<string[]> {
             });
 
           if (videosError) {
-            console.error(`Error listing videos for lift ${liftFolder.name}:`, videosError);
+            Alert.alert('Error', 'Unable to access your videos. Please try again.');
             continue;
           }
 
@@ -198,7 +199,7 @@ export async function listUserVideoPaths(userId: string): Promise<string[]> {
 
           allAssetIds.push(...liftAssetIds);
         } catch (error) {
-          console.error(`Error processing lift folder ${liftFolder.name}:`, error);
+          Alert.alert('Error', 'Unable to process your videos. Please try again.');
           continue;
         }
       }
@@ -206,7 +207,7 @@ export async function listUserVideoPaths(userId: string): Promise<string[]> {
 
     return allAssetIds;
   } catch (error) {
-    console.error('Error listing user video paths:', error);
+    Alert.alert('Error', 'Unable to access your videos. Please try again.');
     return [];
   }
 }

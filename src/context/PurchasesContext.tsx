@@ -12,6 +12,7 @@ import { useOnboarding } from './OnboardingContext';
 interface PurchasesContextValue {
   isInitializing: boolean;
   isPurchasing: boolean;
+  isSyncing: boolean;
   initializeError: string | null;
   purchaseError: string | null;
 
@@ -27,6 +28,7 @@ interface PurchasesContextValue {
   hasHdVideos: boolean;
   refreshOfferings: () => Promise<void>;
   refreshCustomerInfo: () => Promise<void>;
+  syncPurchases: () => Promise<void>;
   purchasePackage: (pkg: PurchasesPackage) => Promise<CustomerInfo | null>;
   restorePurchases: () => Promise<CustomerInfo | null>;
 }
@@ -43,12 +45,12 @@ interface PurchasesProviderProps {
 export function PurchasesProvider({ children, onSubscriptionUpdate }: PurchasesProviderProps) {
   const [isInitializing, setIsInitializing] = useState(true);
   const [isPurchasing, setIsPurchasing] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [initializeError, setInitializeError] = useState<string | null>(null);
   const [purchaseError, setPurchaseError] = useState<string | null>(null);
 
   const [offerings, setOfferings] = useState<PurchasesOfferings | null>(null);
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo | null>(null);
-  const { onboardingData, updateOnboardingData } = useOnboarding();
 
   const packages = useMemo(() => {
     if (!offerings?.all) return [];
@@ -97,10 +99,10 @@ export function PurchasesProvider({ children, onSubscriptionUpdate }: PurchasesP
           Purchases.configure({ apiKey: 'appl_GUYEEZQfOpAHzaNTEHKrIuRLGuY'});
           
         }
-        // else if (Platform.OS === 'android') {3
+        // else if (Platform.OS === 'android') {
         //   Purchases.configure({ apiKey: 'your_android_api_key' });
         // }
-        await Promise.all([refreshOfferings(), refreshCustomerInfo()]);
+        await Promise.all([refreshOfferings(), refreshCustomerInfo(), syncPurchases()]);
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Unknown initialization error';
         setInitializeError(message);
@@ -142,6 +144,26 @@ export function PurchasesProvider({ children, onSubscriptionUpdate }: PurchasesP
     }
   }
 
+  async function syncPurchases() {
+    setIsSyncing(true);
+    try {
+      // Sync purchases with RevenueCat servers
+      await Purchases.syncPurchases();
+      
+      // Refresh customer info after sync to get the latest data
+      await refreshCustomerInfo();
+      
+      // Also refresh offerings to ensure we have the latest data
+      await refreshOfferings();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to sync purchases';
+      console.warn('Purchase sync failed:', message);
+      // Don't set this as an error since sync is not critical for app functionality
+    } finally {
+      setIsSyncing(false);
+    }
+  }
+
   async function purchasePackage(pkg: PurchasesPackage) {
     setIsPurchasing(true);
     setPurchaseError(null);
@@ -173,6 +195,7 @@ export function PurchasesProvider({ children, onSubscriptionUpdate }: PurchasesP
   const value: PurchasesContextValue = {
     isInitializing,
     isPurchasing,
+    isSyncing,
     initializeError,
     purchaseError,
     offerings,
@@ -186,6 +209,7 @@ export function PurchasesProvider({ children, onSubscriptionUpdate }: PurchasesP
     hasHdVideos,
     refreshOfferings,
     refreshCustomerInfo,
+    syncPurchases,
     purchasePackage,
     restorePurchases,
   };

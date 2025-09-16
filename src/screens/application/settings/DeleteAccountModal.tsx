@@ -14,14 +14,27 @@ export function DeleteAccountModal({ isVisible, onClose, onConfirm }: DeleteAcco
   const [isAcknowledgementStep, setIsAcknowledgementStep] = React.useState(false);
   const [hasAcknowledged, setHasAcknowledged] = React.useState(false);
   const [isDeleting, setIsDeleting] = React.useState(false);
+  const [isInitialDelay, setIsInitialDelay] = React.useState(false);
 
   React.useEffect(() => {
     if (!isVisible) {
       setIsAcknowledgementStep(false);
       setHasAcknowledged(false);
       setIsDeleting(false);
+      setIsInitialDelay(false);
     }
   }, [isVisible]);
+
+  // Handle initial 1-second delay when user acknowledges (before final delete button)
+  React.useEffect(() => {
+    if (hasAcknowledged) {
+      setIsInitialDelay(true);
+      const timer = setTimeout(() => {
+        setIsInitialDelay(false);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [hasAcknowledged]);
 
   const handleAcknowledge = () => {
     hapticFeedback.selection();
@@ -68,29 +81,32 @@ export function DeleteAccountModal({ isVisible, onClose, onConfirm }: DeleteAcco
             <X size={20} color="#000000" />
           </TouchableOpacity>
 
-          {/* Title */}
-          <Text style={styles.title}>{i18n.t('settings.deleteAccountTitle')}</Text>
+          <View style={styles.contentContainer}>
+            {/* Title */}
+            <Text style={styles.title}>{i18n.t('settings.deleteAccountTitle')}</Text>
 
-          {/* Message */}
-          {isAcknowledgementStep ? (
-            <Text style={styles.message}>
-              {i18n.t('settings.deleteAccountSubscriptionWarning')}
-            </Text>
-          ) : (
-            <Text style={styles.message}>{i18n.t('settings.deleteAccountMessage')}</Text>
-          )}
+            {/* Message */}
+            {isAcknowledgementStep ? (
+              <Text style={styles.message}>
+                {i18n.t('settings.deleteAccountSubscriptionWarning')}
+              </Text>
+            ) : (
+              <Text style={styles.message}>{i18n.t('settings.deleteAccountMessage')}</Text>
+            )}
+          </View>
 
-          {/* Action buttons */}
+          {/* Action buttons - stick to bottom */}
           {isAcknowledgementStep ? (
             <View style={styles.acknowledgeContainer}>
               <TouchableOpacity 
                 style={[
                   styles.acknowledgeButton,
-                  hasAcknowledged && styles.deleteButton
+                  hasAcknowledged && styles.deleteButton,
+                  hasAcknowledged && isInitialDelay && styles.disabledButton
                 ]}
                 onPress={hasAcknowledged ? handleDelete : handleAcknowledge}
                 activeOpacity={0.8}
-                disabled={isDeleting}
+                disabled={isDeleting || (hasAcknowledged && isInitialDelay)}
               >
                 {hasAcknowledged && isDeleting ? (
                   <ActivityIndicator size="small" color="#FFFFFF" />
@@ -142,6 +158,7 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     backgroundColor: '#FFFFFF',
+    height: 280,
     borderRadius: 18,
     padding: 24,
     width: '100%',
@@ -153,6 +170,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 12,
     elevation: 8,
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+  },
+  contentContainer: {
+    flex: 1,
+    justifyContent: 'flex-start',
   },
   closeButton: {
     position: 'absolute',
@@ -172,7 +195,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '800',
     color: '#000000',
-    marginBottom: 24,
+    marginBottom: 16,
     textAlign: 'left',
   },
   message: {
@@ -180,7 +203,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#000000',
     lineHeight: 22,
-    marginBottom: 24,
     textAlign: 'left',
   },
   buttonContainer: {
@@ -233,5 +255,8 @@ const styles = StyleSheet.create({
   },
   deleteButtonText: {
     color: '#FFFFFF',
+  },
+  disabledButton: {
+    opacity: 0.5,
   },
 }); 

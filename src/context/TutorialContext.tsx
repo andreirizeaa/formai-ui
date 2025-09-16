@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { Dimensions, UIManager, findNodeHandle, Platform, InteractionManager } from 'react-native';
+import { Dimensions, UIManager, findNodeHandle, Platform, InteractionManager, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useUserDetails } from './UserDetailsContext';
 import { hapticFeedback } from '../utils/haptic';
@@ -492,8 +492,10 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
         try {
           // Clear seeded lifts
           try { global.clearTemporaryLifts?.(); } catch {}
-          // Mark tutorial as finished in storage, then navigate home
-          await AsyncStorage.setItem('justFinishedTutorial', 'true');
+          // Show the all done modal immediately
+          if ((global as any).showTutorialAllDoneModal) {
+            (global as any).showTutorialAllDoneModal();
+          }
           // Persist walkthrough completion to backend
           try { await (global as any).completeTutorial?.(); } catch {}
           try { (global as any).navigateToHome?.(); } catch {}
@@ -705,7 +707,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       const isModalOpeningStep = step?.id === 'add_button' || step?.id === 'add_options_upload';
       const isFeedbackStep = step?.id === 'feedback_slideshow' || step?.id === 'feedback_issues' || step?.id === 'feedback_tips';
       const isNavigateHomeStep = step?.id === 'settings_support_email';
-      const delay = isModalOpeningStep ? 300 : isFeedbackStep ? 300 : isNavigateHomeStep ? 500 : 100;
+      const delay = isModalOpeningStep ? 300 : isFeedbackStep ? 300 : isNavigateHomeStep ? 100 : 100;
       
       timeoutRef.current = setTimeout(() => {
         const nextIndex = Math.min(currentStepIndex + 1, steps.length - 1);
@@ -897,7 +899,7 @@ export function useTutorialTarget(targetId?: string) {
 
     return { ref } as const;
   } catch (error) {
-    console.error('useTutorialTarget error:', error);
+    Alert.alert('Error', 'An error occurred with the tutorial. Please try again.');
     // Return a fallback ref if there's an error
     return { ref: React.useRef<any>(null) };
   }

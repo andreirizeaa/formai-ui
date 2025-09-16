@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import i18n from '../../../utils/i18n';
 import { hapticFeedback } from '../../../utils/haptic';
@@ -139,14 +139,13 @@ export function PersonalDetailsScreen({
   };
 
   const handleHdVideoPress = async () => {
-    console.log('handleHdVideoPress called');
     hapticFeedback.selection();
     try {
       await registerPlacement({
         placement: 'hd_video_trigger',
       });
     } catch (error) {
-      console.error('Error showing HD video paywall:', error);
+      Alert.alert('Error', 'Unable to access premium features. Please try again.');
     }
   };
 
@@ -203,7 +202,6 @@ export function PersonalDetailsScreen({
             title={i18n.t('personalDetails.videoQuality')}
             value={videoQuality}
             onPress={!hasHdVideos ? () => {
-              console.log('Video Quality onPress called, hasHdVideos:', hasHdVideos);
               handleHdVideoPress();
             } : undefined}
           />

@@ -30,9 +30,10 @@ function AppContent() {
   >('Welcome');
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [showAccountLoading, setShowAccountLoading] = useState(false);
+  const [passedInitialDataGate, setPassedInitialDataGate] = useState(false);
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const { customerInfo, isInitializing } = usePurchases();
-  const { isUserDetailsLoaded } = useUserDetails();
+  const { isUserDetailsLoaded, refetchUserDetails } = useUserDetails();
   const { isLiftDataLoaded } = useLiftData();
 
   useEffect(() => {
@@ -81,8 +82,12 @@ function AppContent() {
     return () => clearTimeout(t);
   }, []);
 
-  // Check if all required data is loaded before showing the app
-  const isAllDataLoaded = !isInitializing && isUserDetailsLoaded && isLiftDataLoaded;
+  // Set sticky data gate once per app session
+  useEffect(() => {
+    if (!passedInitialDataGate && !isInitializing && isUserDetailsLoaded && isLiftDataLoaded) {
+      setPassedInitialDataGate(true);
+    }
+  }, [passedInitialDataGate, isInitializing, isUserDetailsLoaded, isLiftDataLoaded]);
 
   const handleOnboardingComplete = () => {
     setIsTransitioning(true);
@@ -113,21 +118,6 @@ function AppContent() {
     setShowOnboarding(false);
     setUserNeedsOnboarding(false);
     setShowAccountLoading(true);
-    
-    // Show account loading screen for 2 seconds
-    setTimeout(() => {
-      setIsTransitioning(true);
-      setShowAccountLoading(false);
-      
-      // Start fade in animation for main app
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-      }).start(() => {
-        setIsTransitioning(false);
-      });
-    }, 4000);
   };
 
   const handlePaymentComplete = () => {
@@ -188,8 +178,8 @@ function AppContent() {
     }
   };
 
-  // Show loading screen until all data is loaded
-  if (isLoading || !isAllDataLoaded || !extraDelayDone) {
+  // Show loading screen until all data is loaded (sticky gate prevents mid-session reverts)
+  if (isLoading || !passedInitialDataGate || !extraDelayDone) {
     return (
       <SafeAreaProvider>
         <LoadingScreen onLoadComplete={() => {}} />
@@ -200,7 +190,23 @@ function AppContent() {
   if (showAccountLoading) {
     return (
       <SafeAreaProvider>
-        <AccountLoadingScreen onComplete={() => {}} />
+        <AccountLoadingScreen onComplete={async () => {
+          // Ensure context is populated, silently
+          await refetchUserDetails();
+          
+          // Transition to main app
+          setIsTransitioning(true);
+          setShowAccountLoading(false);
+          
+          // Start fade in animation for main app
+          Animated.timing(fadeAnim, {
+            toValue: 1,
+            duration: 300,
+            useNativeDriver: true,
+          }).start(() => {
+            setIsTransitioning(false);
+          });
+        }} />
       </SafeAreaProvider>
     );
   }

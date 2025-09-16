@@ -1,4 +1,5 @@
 import React, { createContext, useContext, ReactNode, useState, useEffect } from 'react';
+import { Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SELECTED_DATE_KEY = 'selected_calendar_date';
@@ -33,7 +34,7 @@ export function SelectedDateProvider({ children }: SelectedDateProviderProps) {
         }
       }
     } catch (error) {
-      console.error('Error loading selected date:', error);
+      Alert.alert('Error', 'Unable to load selected date. Please try again.');
     }
   };
 
@@ -42,7 +43,7 @@ export function SelectedDateProvider({ children }: SelectedDateProviderProps) {
       setSelectedDateState(date);
       await AsyncStorage.setItem(SELECTED_DATE_KEY, date.toISOString());
     } catch (error) {
-      console.error('Error saving selected date:', error);
+      Alert.alert('Error', 'Unable to save selected date. Please try again.');
     }
   };
 

@@ -1,5 +1,6 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
+import { Alert } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
 import { View, StyleSheet } from 'react-native';
@@ -404,7 +405,7 @@ function EditDateOfBirthScreenWrapper() {
     if (dateRegex.test(newValue)) {
       updateUserDetails('dateOfBirth', newValue);
     } else {
-      console.error('Invalid date format received:', newValue);
+      Alert.alert('Error', 'Invalid date format. Please try again.');
     }
     navigation.goBack();
   };

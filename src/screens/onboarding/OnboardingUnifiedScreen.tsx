@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Platform, TouchableOpacity, TextInput, FlatList, Animated } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Platform, TouchableOpacity, TextInput, FlatList, Animated, Alert } from 'react-native';
 import ReanimatedAnimated, { 
   useSharedValue, 
   useAnimatedStyle, 
@@ -599,20 +599,20 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       // Reset confetti state when entering the step
       setShowConfetti(false);
       
-      // Start confetti animation after 1ms delay
+      // Start confetti animation after 100ms delay (same as allDone)
       const timer = setTimeout(() => {
         setShowConfetti(true);
-      }, 1);
+      }, 100);
       
       return () => clearTimeout(timer);
     } else if (currentStep.type === 'allDone') {
       // Reset allDone confetti state when entering the step
       setShowAllDoneConfetti(false);
       
-      // Start confetti animation after 1ms delay
+      // Start confetti animation after 100ms delay
       const timer = setTimeout(() => {
         setShowAllDoneConfetti(true);
-      }, 1);
+      }, 100);
       
       return () => clearTimeout(timer);
     } else {
@@ -1860,7 +1860,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                       await Notifications.requestPermissionsAsync();
                       handleNext();
                     } catch (error) {
-                      console.error('Error requesting notification permission:', error);
+                      Alert.alert('Permission Error', 'Unable to request notification permissions. You can enable them later in settings.');
                       handleNext();
                     }
                   }}
@@ -2294,7 +2294,6 @@ const styles = StyleSheet.create({
     marginTop: -30,
     flex: 1,
     justifyContent: 'center',
-    paddingHorizontal: 10,
   },
   whiteBackgroundCard: {
     backgroundColor: '#FFFFFF',

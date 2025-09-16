@@ -341,6 +341,20 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
     };
   }, [clearAllLifts]);
 
+  // Reset function for account deletion
+  const resetContext = React.useCallback(() => {
+    setLiftData([]);
+    setIsLoaded(false);
+  }, []);
+
+  // Expose reset function globally for account deletion
+  React.useEffect(() => {
+    (global as any).resetLiftDataContext = resetContext;
+    return () => {
+      (global as any).resetLiftDataContext = undefined;
+    };
+  }, [resetContext]);
+
   return (
     <LiftDataContext.Provider value={value}>
       {children}

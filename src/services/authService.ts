@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { clearAllUserData } from './storageService';
 
 interface DeleteUserResponse {
   success: boolean;
@@ -14,51 +15,42 @@ export async function deleteUserAccount(userId: string): Promise<DeleteUserRespo
   const sessionUserId = sess?.session?.user?.id;
   if (sessionUserId && sessionUserId !== userId) throw new Error('User mismatch');
 
-  // Ensure user exists in users and is not soft-deleted
+  // Ensure user exists in users table
   const { data: existing, error: selErr } = await supabase
     .from('users')
-    .select('user_id, has_deleted')
+    .select('user_id')
     .eq('user_id', userId.trim())
-    .eq('has_deleted', false)
     .maybeSingle();
   if (selErr) throw new Error(selErr.message);
-  if (!existing) throw new Error('User not found or deleted');
+  if (!existing) throw new Error('User not found');
 
-  // Soft delete flags
-  const payload = {
-    has_deleted: true,
-    has_deleted_at: new Date().toISOString(),
-  } as const;
-
-  const { error: updErr } = await supabase
-    .from('user_info')
-    .update(payload)
-    .eq('user_id', userId.trim());
-  if (updErr) throw new Error(updErr.message);
-
-  // Soft delete flags on user_onboarding as well
-  const { error: updOnboardingErr } = await supabase
-    .from('user_onboarding')
-    .update(payload)
-    .eq('user_id', userId.trim());
-  if (updOnboardingErr) throw new Error(updOnboardingErr.message);
-
-  // Also mask PII in users table and set deletion flags there as well
-  const payloadUsers = {
-    full_name: 'DELETED',
-    email: 'DELETED',
-    has_deleted: true,
-    has_deleted_at: new Date().toISOString(),
-  } as const;
-  const { error: updUsersErr } = await supabase
+  // Delete user from users table
+  const { error: deleteUsersErr } = await supabase
     .from('users')
-    .update(payloadUsers)
+    .delete()
     .eq('user_id', userId.trim());
-  if (updUsersErr) throw new Error(updUsersErr.message);
+  if (deleteUsersErr) throw new Error(deleteUsersErr.message);
+
+  // Delete user from user_info table
+  const { error: deleteUserInfoErr } = await supabase
+    .from('user_info')
+    .delete()
+    .eq('user_id', userId.trim());
+  if (deleteUserInfoErr) throw new Error(deleteUserInfoErr.message);
+
+  // Delete user from user_onboarding table
+  const { error: deleteOnboardingErr } = await supabase
+    .from('user_onboarding')
+    .delete()
+    .eq('user_id', userId.trim());
+  if (deleteOnboardingErr) throw new Error(deleteOnboardingErr.message);
+
+  // Clear all user data from AsyncStorage and memory
+  await clearAllUserData();
 
   return {
     success: true,
-    message: 'User successfully marked as deleted',
+    message: 'User successfully deleted',
     user_id: userId,
   };
 }

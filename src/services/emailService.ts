@@ -1,5 +1,5 @@
 import * as MailComposer from 'expo-mail-composer';
-import { Platform } from 'react-native';
+import { Platform, Alert } from 'react-native';
 import { showAlert } from './alertService';
 import { getUserId } from './storageService';
 
@@ -20,16 +20,17 @@ export async function openEmailComposer(options: EmailOptions): Promise<void> {
 
     await MailComposer.composeAsync(options);
   } catch (error) {
-    console.error('Error opening email composer:', error);
+    Alert.alert('Error', 'Failed to open email composer. Please try again.');
     showAlert('Error', 'Failed to open email composer. Please try again.');
   }
 }
 
 export async function openSupportEmail(): Promise<void> {
   const userId = await getUserId();
+  const supportEmail = process.env.SUPPORT_EMAIL;
   
   const options: EmailOptions = {
-    recipients: ['support@formai.com'],
+    recipients: [supportEmail],
     subject: 'FormAI Support Request',
     body: `Hello FormAI Support Team,
 
@@ -50,9 +51,10 @@ export async function openSupportEmail(): Promise<void> {
 
 export async function openMetricsFeedbackEmail(): Promise<void> {
   const userId = await getUserId();
+  const supportEmail = process.env.SUPPORT_EMAIL;
   
   const options: EmailOptions = {
-    recipients: ['support@formai.com'],
+    recipients: [supportEmail],
     subject: 'Performance Metrics Feedback',
     body: `Hello FormAI Support Team,
 

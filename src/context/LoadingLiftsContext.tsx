@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback, ReactNode } from 'react';
-import { AppState } from 'react-native';
+import { AppState, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
 import { ILiftData } from './LiftDataContext';
@@ -775,14 +775,8 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
           } catch {}
         })()
 
-        // Refresh lifts data when coming back to foreground to catch any completed lifts
-        void (async () => {
-          try {
-            await refreshLifts();
-          } catch (error) {
-            console.warn('Failed to refresh lifts on foreground:', error);
-          }
-        })();
+        // Note: Removed refreshLifts() call as it was causing lifts to disappear when reopening home screen
+        // The LiftDataContext will handle data fetching naturally
 
         // One-shot direct Supabase sweep for any inflight items in case a push was missed
         void (async () => {
@@ -917,7 +911,7 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
     const liftId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
     if (!liftData.assetId) {
-      console.error('[addLoadingLift] missing assetId from caller');
+      Alert.alert('Error', 'An error occurred while processing your video. Please try again.');
       const now = Date.now();
       const startProg = 0.02;
       const errLift: LoadingLiftData = {
@@ -986,7 +980,7 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
         hasHdVideos,
       });
     } catch (error) {
-      console.error('Failed to upload or enqueue lift:', error);
+      Alert.alert('Upload Error', 'Failed to upload your video. Please check your connection and try again.');
       safeUpdateLift(liftId, l => ({ 
         ...l, 
         status: 'error', 
@@ -1202,6 +1196,31 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
       }
     };
   }, []);
+
+  // Reset function for account deletion
+  const resetContext = React.useCallback(() => {
+    setAllLoadingLifts([]);
+    setCompletedLifts([]);
+    setShowStreakModal(false);
+    setIsHomeActive(false);
+    setAutoDeletedLifts(new Set());
+    // Clear all refs
+    inflightRef.current.clear();
+    retryTimersRef.current.forEach(clearTimeout);
+    retryTimersRef.current.clear();
+    queuedRef.current.clear();
+    deletingRef.current.clear();
+    streakShownForRef.current.clear();
+    latestLiftsRef.current = [];
+  }, []);
+
+  // Expose reset function globally for account deletion
+  React.useEffect(() => {
+    (global as any).resetLoadingLiftsContext = resetContext;
+    return () => {
+      (global as any).resetLoadingLiftsContext = undefined;
+    };
+  }, [resetContext]);
 
   return (
     <LoadingLiftsContext.Provider

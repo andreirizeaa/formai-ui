@@ -1,3 +1,4 @@
+import { Alert } from 'react-native';
 import { supabase } from '../lib/supabase';
 
 export interface ReferralCodeValidationResult {
@@ -38,7 +39,7 @@ export class ReferralService {
         };
       }
     } catch (error) {
-      console.error('Error validating referral code:', error);
+      Alert.alert('Error', 'Unable to validate referral code. Please check your connection and try again.');
       return {
         isValid: false,
         error: 'Network error occurred while validating referral code'

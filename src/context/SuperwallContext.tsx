@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, ReactNode } from 'react';
+import { Alert } from 'react-native';
 import { CustomPurchaseControllerProvider, SuperwallProvider as ExpoSuperwallProvider, SuperwallLoaded, useUser } from 'expo-superwall';
 import Purchases from 'react-native-purchases';
 import { usePurchases } from './PurchasesContext';
@@ -47,7 +48,7 @@ function SubscriptionSync() {
           }))
         });
       } catch (error) {
-        console.error("Failed to sync initial subscription status:", error);
+        Alert.alert('Error', 'Unable to sync subscription status. Please check your connection.');
       }
     };
     
@@ -81,7 +82,6 @@ export function SuperwallProvider({ children }: SuperwallProviderProps) {
               }
               
               if (!packageToPurchase) {
-                console.log('Package not found for product:', params.productId);
                 throw new Error(`Package not found for product: ${params.productId}`);
               }
               

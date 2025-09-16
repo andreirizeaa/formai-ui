@@ -45,8 +45,6 @@ export async function registerAndSaveExpoPushToken(userId?: string): Promise<str
         {
           user_id: resolvedUserId,
           expo_push_notification: token,
-          has_deleted: false,
-          has_deleted_at: null,
           updated_at: new Date().toISOString(),
         },
         { onConflict: 'user_id' }

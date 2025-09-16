@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { Alert } from 'react-native';
 import { OnboardingContextType, OnboardingData } from '../types/onboarding';
 import { saveOnboardingProgress } from '../services/onboardingService';
 
@@ -87,7 +88,7 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
       };
       
     } catch (error) {
-      console.error("Error persisting onboarding data:", error);
+      Alert.alert('Error', 'An error occurred while saving your progress. Please try again.');
       throw error;
     }
   };
