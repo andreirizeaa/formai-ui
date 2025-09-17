@@ -319,10 +319,17 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
         <View style={styles.content}>
           {/* Video Player */}
           <View style={styles.videoContainer}>
-            <VideoPlayerComponent 
-              videoUri={resolvedPoseUrl!}
-              onReady={() => {}}
-            />
+            {resolvedPoseUrl ? (
+              <VideoPlayerComponent
+                key={String(resolvedPoseUrl)} // force remount when URL changes
+                videoUri={resolvedPoseUrl}
+                onReady={() => {}}
+              />
+            ) : (
+              <View style={styles.videoLoadingOverlay}>
+                <ActivityIndicator />
+              </View>
+            )}
           </View>
         </View>
       </SafeAreaView>

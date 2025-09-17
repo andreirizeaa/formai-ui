@@ -124,6 +124,11 @@ export interface LiftDataContextType {
   invalidateAndRefetch: () => Promise<void>;
   favouriteLiftAndRefresh: (id: string) => Promise<void>;
   isLiftDataLoaded: boolean;
+  isTutorialReplay: boolean;
+  saveLiftDataToStorage: () => Promise<void>;
+  restoreLiftDataFromStorage: () => Promise<void>;
+  clearLiftDataForTutorial: () => void;
+  restoreLiftDataAfterTutorial: () => Promise<void>;
 }
 
 export interface AnalyzeLiftPayload {

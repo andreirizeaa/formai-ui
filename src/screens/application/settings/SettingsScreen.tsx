@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, ScrollView, Animated, Alert } from 'react-native';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, ScrollView, Animated, Alert, ActivityIndicator } from 'react-native';
 import { Image, ImageBackground } from 'expo-image';
 import Constants from 'expo-constants';
 import * as StoreReview from 'expo-store-review';
@@ -22,6 +22,7 @@ import { FormAILogo } from '../../../components/FormAILogo';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLiftData } from '../../../context/LiftDataContext';
 import { useLoadingLifts } from '../../../context/LoadingLiftsContext';
+import * as Linking from 'expo-linking';
 
 interface SettingsScreenProps {
   onPersonalDetailsPress: () => void;
@@ -36,25 +37,37 @@ interface SettingsOptionProps {
   subtitle?: string;
   onPress?: () => void;
   ref?: any;
+  isLoading?: boolean;
 }
 
-function SettingsOption({ icon, title, subtitle, onPress, ref }: SettingsOptionProps) {
+function SettingsOption({ icon, title, subtitle, onPress, ref, isLoading }: SettingsOptionProps) {
   return (
     <TouchableOpacity 
       ref={ref}
       style={styles.optionRow} 
       onPress={() => {
-        hapticFeedback.selection();
-        onPress?.();
+        if (!isLoading) {
+          hapticFeedback.selection();
+          onPress?.();
+        }
       }} 
       activeOpacity={0.7}
+      disabled={isLoading}
     >
       <View style={styles.iconContainer}>
         {icon}
       </View>
       <View style={styles.textContainer}>
-        <Text style={styles.optionTitle}>{title}</Text>
-        {subtitle && <Text style={styles.optionSubtitle}>{subtitle}</Text>}
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="small" color="#000000" />
+          </View>
+        ) : (
+          <>
+            <Text style={styles.optionTitle}>{title}</Text>
+            {subtitle && <Text style={styles.optionSubtitle}>{subtitle}</Text>}
+          </>
+        )}
       </View>
     </TouchableOpacity>
   );
@@ -150,6 +163,7 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onSharePr
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const { hasHdVideos } = usePurchases();
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isReplayingTutorial, setIsReplayingTutorial] = useState(false);
   const iconSize = 26;
   const iconColor = '#000000';
   const queryClient = useQueryClient();
@@ -246,16 +260,89 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onSharePr
     await openSupportEmail();
   };
 
+  const handlePrivacyPolicyPress = async () => {
+    hapticFeedback.selection();
+    // Small delay to ensure haptic feedback is felt before opening browser
+    setTimeout(async () => {
+      try {
+        await Linking.openURL('https://useformai.com/legal/privacy');
+      } catch (error) {
+        showAlert('Error', 'Unable to open privacy policy. Please try again later.');
+      }
+    }, 100);
+  };
+
+  const handleTermsOfServicePress = async () => {
+    hapticFeedback.selection();
+    // Small delay to ensure haptic feedback is felt before opening browser
+    setTimeout(async () => {
+      try {
+        await Linking.openURL('https://useformai.com/legal/tos');
+      } catch (error) {
+        showAlert('Error', 'Unable to open terms of use. Please try again later.');
+      }
+    }, 100);
+  };
+
   const handleShowTutorialPress = async () => {
     hapticFeedback.selection();
-    // First navigate to home screen, then start tutorial
-    if ((global as any).navigateToHome) {
-      (global as any).navigateToHome();
+    setIsReplayingTutorial(true);
+
+    try {
+      // Immediately start the cleanup process in the background (WITHOUT navigation)
+      const cleanupPromise = (async () => {
+        try {
+          // Clear tutorial lifts if they exist
+          if (global.clearTemporaryLifts) {
+            global.clearTemporaryLifts();
+          }
+
+          // Save current lift data to storage and clear lift data for tutorial
+          if (global.saveLiftDataToStorage) {
+            await global.saveLiftDataToStorage();
+          }
+
+          if (global.clearLiftDataForTutorial) {
+            global.clearLiftDataForTutorial();
+          }
+        } catch (error) {
+          console.warn('Failed to perform tutorial cleanup:', error);
+        }
+      })();
+
+      // Wait for 2 seconds while cleanup happens in background
+      await Promise.all([
+        cleanupPromise,
+        new Promise(resolve => setTimeout(resolve, 1500))
+      ]);
+
+      hapticFeedback.success();
+
+      // After 2 seconds, navigate to home screen and start tutorial
+      try {
+        // Navigate to home screen
+        if ((global as any).navigateToHome) {
+          (global as any).navigateToHome();
+        }
+
+        // Small delay to ensure navigation completes before starting tutorial
+        setTimeout(async () => {
+          try {
+            await startTutorial();
+          } catch (error) {
+            console.warn('Failed to start tutorial:', error);
+          } finally {
+            setIsReplayingTutorial(false);
+          }
+        }, 300);
+      } catch (error) {
+        console.warn('Failed to navigate and start tutorial:', error);
+        setIsReplayingTutorial(false);
+      }
+    } catch (error) {
+      console.warn('Failed to start tutorial replay:', error);
+      setIsReplayingTutorial(false);
     }
-    // Small delay to ensure navigation completes before starting tutorial
-    setTimeout(async () => {
-      await startTutorial();
-    }, 300);
   };
 
   const handleLeaveRatingPress = async () => {
@@ -465,6 +552,7 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onSharePr
             icon={<TvMinimalPlay size={iconSize} color={iconColor} />}
             title={i18n.t('settings.replayTutorial')}
             onPress={handleShowTutorialPress}
+            isLoading={isReplayingTutorial}
           />
           <View style={styles.separator} />
           <SettingsOption
@@ -485,13 +573,13 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onSharePr
           <SettingsOption
             icon={<FileText size={iconSize} color={iconColor} />}
             title={i18n.t('settings.termsAndConditions')}
-            onPress={() => {}}
+            onPress={handleTermsOfServicePress}
           />
           <View style={styles.separator} />
           <SettingsOption
             icon={<ShieldCheck size={iconSize} color={iconColor} />}
             title={i18n.t('settings.privacyPolicy')}
-            onPress={() => {}}
+            onPress={handlePrivacyPolicyPress}
           />
         </View>
 
@@ -611,6 +699,11 @@ const styles = StyleSheet.create({
   },
   textContainer: {
     flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'flex-start',
+    justifyContent: 'center',
   },
   optionTitle: {
     fontSize: 17,

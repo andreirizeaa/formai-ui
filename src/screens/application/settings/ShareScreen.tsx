@@ -66,7 +66,7 @@ export function ShareScreen({ onBack }: ShareScreenProps) {
           <Image 
             source={require('../../../../assets/refer-friends-group.png')}
             style={styles.referImage}
-            resizeMode="cover"
+            contentFit="cover"
           />
         </View>
         <Text style={styles.contentTitle}>{i18n.t('share.empowerYourFriends')}</Text>

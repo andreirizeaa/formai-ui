@@ -25,7 +25,7 @@ const i18n = new I18n({
       currentBalance: 'Current Balance',
       shareNow: 'Share Now',
       sharePageTitle: 'Share FormAI',
-      termsAndConditions: 'Terms and Conditions',
+      termsAndConditions: 'Terms of Use',
       privacyPolicy: 'Privacy Policy',
       supportEmail: 'Support Email',
       replayTutorial: 'Replay Tutorial',
@@ -733,7 +733,7 @@ const i18n = new I18n({
       },
       feedbackTips: {
         title: 'Improvement tips',
-        description: 'Here are specific tips to help improve your form and technique. \n\nRemember you can open and close this feedback panel to review the exact point in your lift that this applies to. \n\nSwipe the overlay to see your video screenshot.',
+        description: 'Here are specific tips to help improve your form and technique. \n\nRemember you can open and close this feedback panel to see the screenshot of the issue.',
       },
       homeSeeAllLifts: {
         title: 'View all your lifts',

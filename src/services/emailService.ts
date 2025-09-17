@@ -9,6 +9,8 @@ export interface EmailOptions {
   body: string;
 }
 
+const supportEmail = 'info@useformai.com';
+
 export async function openEmailComposer(options: EmailOptions): Promise<void> {
   try {
     const isAvailable = await MailComposer.isAvailableAsync();
@@ -27,7 +29,6 @@ export async function openEmailComposer(options: EmailOptions): Promise<void> {
 
 export async function openSupportEmail(): Promise<void> {
   const userId = await getUserId();
-  const supportEmail = process.env.SUPPORT_EMAIL;
   
   const options: EmailOptions = {
     recipients: [supportEmail],
@@ -51,7 +52,6 @@ export async function openSupportEmail(): Promise<void> {
 
 export async function openMetricsFeedbackEmail(): Promise<void> {
   const userId = await getUserId();
-  const supportEmail = process.env.SUPPORT_EMAIL;
   
   const options: EmailOptions = {
     recipients: [supportEmail],

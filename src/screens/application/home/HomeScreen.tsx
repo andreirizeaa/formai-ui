@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, Dimensions, ImageSourcePropType, ImageBackground, Modal, Animated as RNAnimated } from 'react-native';
 import { Image } from 'expo-image';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FlashList } from '@shopify/flash-list';
 import { hapticFeedback } from '../../../utils/haptic';
 import { useLoadingLifts } from '../../../context/LoadingLiftsContext';
@@ -21,10 +20,10 @@ import { FormAILogo } from '../../../components/FormAILogo';
 import { useUserCheckIns } from '../../../context/UserCheckInsContext';
 import { useTutorialTarget } from '../../../context/TutorialContext';
 import { useSelectedDate } from '../../../context/SelectedDateContext';
-import { TutorialAllDoneModal } from '../settings/TutorialAllDoneModal';
 
 import i18n from '../../../utils/i18n';
 import { ChevronRight, FileVideoCamera } from 'lucide-react-native';
+import LottieView from 'lottie-react-native';
 
 interface HomeScreenProps {
   onShowFeedback: (liftData: ILiftData) => void;
@@ -46,7 +45,9 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
   
   // Accuracy card swipe state
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
-  const [showTutorialDone, setShowTutorialDone] = useState(false);
+
+  // Confetti animation state
+  const [showConfetti, setShowConfetti] = useState(false);
   
   // ScrollView ref for gesture handling
   const scrollViewRef = useRef<ScrollView>(null);
@@ -204,25 +205,26 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
   // Note: Removed refreshLifts() call as it was causing lifts to disappear when reopening home screen
   // The LiftDataContext will fetch data naturally when it mounts
 
-  // Show tutorial done modal if flag is set
-  useEffect(() => {
-    let isMounted = true;
-    (async () => {
-      try {
-        const flag = await AsyncStorage.getItem('justFinishedTutorial');
-        if (isMounted && flag === 'true') {
-          setShowTutorialDone(true);
-          await AsyncStorage.removeItem('justFinishedTutorial');
-        }
-      } catch {}
-    })();
-    return () => { isMounted = false; };
-  }, []);
 
   // Track Home screen focus to control streak modal triggering
   useFocusEffect(
     React.useCallback(() => {
       setHomeActive?.(true);
+
+      // Check if tutorial just completed and show confetti after home screen renders
+      if ((global as any).__tutorialJustCompleted) {
+        // Small delay to ensure home screen renders fully before showing confetti
+        setTimeout(() => {
+          setShowConfetti(true);
+          // Auto-hide confetti after 3 seconds
+          setTimeout(() => {
+            setShowConfetti(false);
+          }, 3000);
+        }, 100);
+        // Clear the flag immediately
+        (global as any).__tutorialJustCompleted = false;
+      }
+
       return () => setHomeActive?.(false);
     }, [setHomeActive])
   );
@@ -254,12 +256,19 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
       hapticFeedback.selection();
       onShowLibrary();
     };
-    // Expose setShowTutorialDone function globally for immediate modal display
-    (global as any).setShowTutorialDone = setShowTutorialDone;
+
+    // Expose function to trigger confetti animation when tutorial completes
+    (global as any).showTutorialCompletionConfetti = () => {
+      setShowConfetti(true);
+      // Auto-hide confetti after 3 seconds
+      setTimeout(() => {
+        setShowConfetti(false);
+      }, 3000);
+    };
 
     return () => {
       (global as any).navigateToLibrary = undefined;
-      (global as any).setShowTutorialDone = undefined;
+      (global as any).showTutorialCompletionConfetti = undefined;
     };
   }, [onShowLibrary]);
 
@@ -369,11 +378,19 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
         onClose={handleFirePopupClose}
       />
 
-      {/* Tutorial Completion Modal */}
-      <TutorialAllDoneModal
-        isVisible={showTutorialDone}
-        onComplete={() => setShowTutorialDone(false)}
-      />
+      {/* Tutorial Completion Confetti Animation */}
+      {showConfetti && (
+        <View style={styles.confettiContainer}>
+          <LottieView
+            source={require('../../../../assets/animations/confetti.json')}
+            autoPlay
+            loop={false}
+            speed={0.7}
+            style={styles.confettiAnimation}
+          />
+        </View>
+      )}
+
     </ScrollView>
   );
 }
@@ -488,8 +505,19 @@ const styles = StyleSheet.create({
   loadingLiftsContainer: {
     paddingHorizontal: 20,
   },
-
-
-
-
+  // Confetti animation styles
+  confettiContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: -10,
+  },
+  confettiAnimation: {
+    width: 900,
+    height: 900,
+  },
 }); 

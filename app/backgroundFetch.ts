@@ -1,5 +1,5 @@
 import * as TaskManager from 'expo-task-manager'
-import * as BackgroundFetch from 'expo-background-fetch'
+import * as BackgroundTask from 'expo-background-task'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { supabase } from '../src/lib/supabase'
 
@@ -11,7 +11,7 @@ TaskManager.defineTask(SWEEP_TASK, async () => {
   try {
     const inflight: string[] = JSON.parse((await AsyncStorage.getItem(INFLIGHT_KEY)) || '[]')
     if (!Array.isArray(inflight) || inflight.length === 0) {
-      return BackgroundFetch.BackgroundFetchResult.NoData
+      return BackgroundTask.BackgroundTaskResult.Success
     }
     for (const assetId of inflight) {
       const { data: lift } = await supabase
@@ -25,18 +25,16 @@ TaskManager.defineTask(SWEEP_TASK, async () => {
         await AsyncStorage.setItem(PENDING_KEY, JSON.stringify(pending))
       }
     }
-    return BackgroundFetch.BackgroundFetchResult.NewData
+    return BackgroundTask.BackgroundTaskResult.Success
   } catch {
-    return BackgroundFetch.BackgroundFetchResult.Failed
+    return BackgroundTask.BackgroundTaskResult.Failed
   }
 })
 
 export async function initBackgroundFetch() {
   try {
-    await BackgroundFetch.registerTaskAsync(SWEEP_TASK, {
-      minimumInterval: 15 * 60,
-      stopOnTerminate: false,
-      startOnBoot: true,
+    await BackgroundTask.registerTaskAsync(SWEEP_TASK, {
+      minimumInterval: 15 // 15 minutes
     })
   } catch (_) {
     // ignore

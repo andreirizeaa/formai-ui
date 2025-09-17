@@ -1,7 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Dimensions, UIManager, findNodeHandle, Platform, InteractionManager, Alert } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useUserDetails } from './UserDetailsContext';
+import { useSelectedDate } from './SelectedDateContext';
 import { hapticFeedback } from '../utils/haptic';
 import { editUserDetails } from '../services/userService';
 import i18n from '../utils/i18n';
@@ -36,11 +36,17 @@ declare global {
   var navigateToPersonalDetails: (() => void) | undefined;
   var completeTutorial: (() => void) | undefined;
   var completeTutorialAndGoHome: (() => void) | undefined;
+  var saveLiftDataToStorage: (() => Promise<void>) | undefined;
+  var clearLiftDataForTutorial: (() => void) | undefined;
+  var restoreLiftDataAfterTutorial: (() => Promise<void>) | undefined;
+  var startTutorialWithDataBackup: (() => Promise<void>) | undefined;
+  var finishTutorialAndRestoreData: (() => Promise<void>) | undefined;
   var clearTemporaryLifts: (() => void) | undefined;
   var navigateToHowItWorksStep: (() => void) | undefined;
   var navigateToFeedbackPage: (() => void) | undefined;
   var onFeedbackPageReady: (() => void) | undefined;
   var remeasureTutorialTarget: (() => void) | undefined;
+  var showTutorialCompletionConfetti: (() => void) | undefined;
 }
 
 interface TutorialRect {
@@ -94,6 +100,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [currentRect, setCurrentRect] = useState<TutorialRect | null>(null);
   const { updateUserDetails, refetchUserDetails } = useUserDetails();
+  const { setSelectedDate } = useSelectedDate();
 
   // Steps flow definition
   const steps: TutorialStep[] = useMemo(() => [
@@ -181,10 +188,12 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       description: i18n.t('tutorial.weightRepsComplete.description'),
       targetId: 'weight_reps_complete',
       tooltipPlacement: 'bottom',
-      onNext: () => {
+      onNext: async () => {
         try {
           if (global.tutorialUpload?.close) global.tutorialUpload.close();
           if (global.addDummyLift) global.addDummyLift();
+          // Small delay to ensure lifts are added and home screen refreshes
+          await new Promise(resolve => setTimeout(resolve, 200));
         } catch (error) {
           console.warn('Tutorial step error:', error);
         }
@@ -490,14 +499,8 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       tooltipPlacement: 'bottom',
       onNext: async () => {
         try {
-          // Clear seeded lifts
-          try { global.clearTemporaryLifts?.(); } catch {}
-          // Show the all done modal immediately
-          if ((global as any).showTutorialAllDoneModal) {
-            (global as any).showTutorialAllDoneModal();
-          }
-          // Persist walkthrough completion to backend
-          try { await (global as any).completeTutorial?.(); } catch {}
+          // Use the new finish and restore data function
+          try { await global.finishTutorialAndRestoreData?.(); } catch {}
           try { (global as any).navigateToHome?.(); } catch {}
         } catch (error) {
           console.warn('Tutorial step error:', error);
@@ -601,9 +604,9 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
         return;
       }
       
-      // Additional safeguard for home card step: ensure it's fully rendered
+      // Additional safeguard for home card step: ensure it's fully rendered and sorted
       if (step.id === 'home_first_lift_card') {
-        await new Promise(resolve => setTimeout(resolve, 300));
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
       
       // Longer delay for review feedback step to ensure it's fully rendered
@@ -663,8 +666,9 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
         timeoutRef.current = null;
       }
       
-      // Clear any previous tutorial completion flags
-      await AsyncStorage.removeItem('justFinishedTutorial');
+      
+      // Set the selected date to today when tutorial starts
+      setSelectedDate(new Date());
       
       setIsActive(true);
       setIsTransitioning(true); // Start with transition state
@@ -678,7 +682,28 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.warn('Failed to start tutorial:', error);
     }
-  }, []);
+  }, [setSelectedDate]);
+
+  // Public action to start tutorial with data backup/restore
+  const startWithDataBackup = useCallback(async () => {
+    try {
+      // Save current lift data to storage
+      if (global.saveLiftDataToStorage) {
+        await global.saveLiftDataToStorage();
+      }
+      
+      // Clear lift data for tutorial
+      if (global.clearLiftDataForTutorial) {
+        global.clearLiftDataForTutorial();
+      }
+      
+      // Start the tutorial
+      await start();
+    } catch (error) {
+      console.warn('Failed to start tutorial with data backup:', error);
+    }
+  }, [start]);
+
 
   const next = useCallback(async () => {
     try {
@@ -750,6 +775,26 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  // Public action to finish tutorial and restore data
+  const finishAndRestoreData = useCallback(async () => {
+    try {
+      // Clear tutorial lifts
+      if (global.clearTemporaryLifts) {
+        global.clearTemporaryLifts();
+      }
+
+      // Restore user's original lift data
+      if (global.restoreLiftDataAfterTutorial) {
+        await global.restoreLiftDataAfterTutorial();
+      }
+
+      // Finish the tutorial
+      await stop();
+    } catch (error) {
+      console.warn('Failed to finish tutorial and restore data:', error);
+    }
+  }, [stop]);
+
   const getStepNumber = useCallback((stepId: string) => {
     try {
       const idx = steps.findIndex(s => s.id === stepId);
@@ -768,6 +813,8 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     steps,
     currentRect,
     start,
+    startWithDataBackup,
+    finishAndRestoreData,
     next,
     stop,
     registerTarget,
@@ -776,15 +823,19 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     getStepNumber,
     setCurrentStepIndex,
     setCurrentRect,
-  }), [isActive, isTransitioning, isProcessingStep, currentStepIndex, steps, currentRect, start, next, stop, registerTarget, unregisterTarget, cleanupStaleRegistrations, getStepNumber, setCurrentStepIndex, setCurrentRect]);
+  }), [isActive, isTransitioning, isProcessingStep, currentStepIndex, steps, currentRect, start, startWithDataBackup, finishAndRestoreData, next, stop, registerTarget, unregisterTarget, cleanupStaleRegistrations, getStepNumber, setCurrentStepIndex, setCurrentRect]);
 
   // Expose stop method globally for tutorial completion
   React.useEffect(() => {
     global.completeTutorial = stop;
+    global.startTutorialWithDataBackup = startWithDataBackup;
+    global.finishTutorialAndRestoreData = finishAndRestoreData;
     return () => {
       global.completeTutorial = undefined;
+      global.startTutorialWithDataBackup = undefined;
+      global.finishTutorialAndRestoreData = undefined;
     };
-  }, [stop]);
+  }, [stop, startWithDataBackup, finishAndRestoreData]);
 
   // Expose a remeasure helper so screens can force recalculation after scrolls/transitions
   const remeasure = React.useCallback(async () => {

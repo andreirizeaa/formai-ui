@@ -1203,8 +1203,8 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                             styles.optionIconImage,
                             item.iconWidth ? { width: item.iconWidth } : undefined,
                             item.iconHeight ? { height: item.iconHeight } : undefined
-                          ]} 
-                          resizeMode="contain" 
+                          ] as any} 
+                          contentFit="contain" 
                         />
                       </View>
                     ) : null}
@@ -1280,8 +1280,8 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                             styles.optionIconImage,
                             option.iconWidth ? { width: option.iconWidth } : undefined,
                             option.iconHeight ? { height: option.iconHeight } : undefined
-                          ]} 
-                          resizeMode="contain" 
+                          ] as any} 
+                          contentFit="contain" 
                         />
                       </View>
                     ) : null}
@@ -1581,7 +1581,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
               <View style={styles.testimonialHeader}>
                 <Image 
                   source={{ uri: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face' }}
-                  style={styles.profileImage}
+                  style={styles.profileImage as any}
                 />
                 <View style={styles.userInfo}>
                   <View style={styles.nameStarsRow}>
@@ -1607,7 +1607,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
               <View style={styles.testimonialHeader}>
                 <Image 
                   source={{ uri: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face' }}
-                  style={styles.profileImage}
+                  style={styles.profileImage as any}
                 />
                 <View style={styles.userInfo}>
                   <View style={styles.nameStarsRow}>
@@ -1633,7 +1633,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
               <View style={styles.testimonialHeader}>
                 <Image 
                   source={{ uri: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face' }}
-                  style={styles.profileImage}
+                  style={styles.profileImage as any}
                 />
                 <View style={styles.userInfo}>
                   <View style={styles.nameStarsRow}>
@@ -2048,7 +2048,6 @@ const styles = StyleSheet.create({
     alignItems: 'center', // Center text content
   },
   optionIconImage: {
-    resizeMode: 'contain',
     // Custom dimensions can be overridden by passing specific width/height in the options
   },
   optionLabel: {
