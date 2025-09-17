@@ -5,6 +5,7 @@ import { getUserId } from '../services/storageService';
 import { favouriteLift as favouriteLiftApi } from '../services/liftService';
 import { subscribeLiftDeleted } from '../services/liftEvents';
 import { ILiftData, LiftDataContextType } from '../types/Lifts.d';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Re-export for backward compatibility
 export { ILiftData };
@@ -22,6 +23,7 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
   const [userId, setUserIdState] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
+  const [isTutorialReplay, setIsTutorialReplay] = useState<boolean>(false);
 
   useEffect(() => {
     getUserId().then(setUserIdState).catch(() => setUserIdState(null));
@@ -81,7 +83,24 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
 
   const getLiftsByDate = useCallback((date: Date): ILiftData[] => {
     const dateString = formatDateForLift(date);
-    return liftData.filter(lift => lift.liftDate === dateString);
+    const liftsForDate = liftData.filter(lift => lift.liftDate === dateString);
+    
+    // Sort by time (latest first) - parse time strings and sort
+    return liftsForDate.sort((a, b) => {
+      // Parse time strings like "11:59 PM" or "2:30 AM"
+      const parseTime = (timeStr: string): number => {
+        const [time, period] = timeStr.split(' ');
+        const [hours, minutes] = time.split(':').map(Number);
+        let hour24 = hours;
+        if (period === 'PM' && hours !== 12) hour24 += 12;
+        if (period === 'AM' && hours === 12) hour24 = 0;
+        return hour24 * 60 + minutes; // Convert to minutes for easy comparison
+      };
+      
+      const timeA = parseTime(a.liftTime);
+      const timeB = parseTime(b.liftTime);
+      return timeB - timeA; // Latest first (descending order)
+    });
   }, [liftData, formatDateForLift]);
 
   const getLiftsByDateString = useCallback((dateString: string): ILiftData[] => {
@@ -91,6 +110,48 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
   const clearAllLifts = useCallback(() => {
     setLiftData([]);
   }, []);
+
+  // Function to save current lift data to AsyncStorage
+  const saveLiftDataToStorage = useCallback(async (): Promise<void> => {
+    try {
+      const dataToSave = {
+        liftData,
+        timestamp: Date.now()
+      };
+      await AsyncStorage.setItem('tutorial_replay_backup', JSON.stringify(dataToSave));
+    } catch (error) {
+      console.warn('Failed to save lift data for tutorial replay:', error);
+    }
+  }, [liftData]);
+
+  // Function to restore lift data from AsyncStorage
+  const restoreLiftDataFromStorage = useCallback(async (): Promise<void> => {
+    try {
+      const savedData = await AsyncStorage.getItem('tutorial_replay_backup');
+      if (savedData) {
+        const parsedData = JSON.parse(savedData);
+        if (parsedData.liftData && Array.isArray(parsedData.liftData)) {
+          setLiftData(parsedData.liftData);
+        }
+        // Clean up the backup data
+        await AsyncStorage.removeItem('tutorial_replay_backup');
+      }
+    } catch (error) {
+      console.warn('Failed to restore lift data from tutorial replay:', error);
+    }
+  }, []);
+
+  // Function to clear lift data for tutorial replay
+  const clearLiftDataForTutorial = useCallback(() => {
+    setLiftData([]);
+    setIsTutorialReplay(true);
+  }, []);
+
+  // Function to restore lift data after tutorial
+  const restoreLiftDataAfterTutorial = useCallback(async () => {
+    await restoreLiftDataFromStorage();
+    setIsTutorialReplay(false);
+  }, [restoreLiftDataFromStorage]);
 
   // Fetch lifts on load and whenever userId changes
   useQuery({
@@ -314,6 +375,11 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
     invalidateAndRefetch,
     favouriteLiftAndRefresh,
     isLiftDataLoaded: isLoaded,
+    isTutorialReplay,
+    saveLiftDataToStorage,
+    restoreLiftDataFromStorage,
+    clearLiftDataForTutorial,
+    restoreLiftDataAfterTutorial,
   }), [
     liftData,
     addLift,
@@ -331,15 +397,31 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
     invalidateAndRefetch,
     favouriteLiftAndRefresh,
     isLoaded,
+    isTutorialReplay,
+    saveLiftDataToStorage,
+    restoreLiftDataFromStorage,
+    clearLiftDataForTutorial,
+    restoreLiftDataAfterTutorial,
   ]);
 
-  // Expose clearAllLifts globally for tutorial completion
+  // Function to clear only tutorial-seeded lifts (those with IDs starting with 'demo-')
+  const clearTutorialLifts = useCallback(() => {
+    setLiftData(prev => prev.filter(lift => !lift.id.startsWith('demo-')));
+  }, []);
+
+  // Expose clearTutorialLifts globally for tutorial completion
   React.useEffect(() => {
-    global.clearTemporaryLifts = clearAllLifts;
+    global.clearTemporaryLifts = clearTutorialLifts;
+    global.saveLiftDataToStorage = saveLiftDataToStorage;
+    global.clearLiftDataForTutorial = clearLiftDataForTutorial;
+    global.restoreLiftDataAfterTutorial = restoreLiftDataAfterTutorial;
     return () => {
       global.clearTemporaryLifts = undefined;
+      global.saveLiftDataToStorage = undefined;
+      global.clearLiftDataForTutorial = undefined;
+      global.restoreLiftDataAfterTutorial = undefined;
     };
-  }, [clearAllLifts]);
+  }, [clearTutorialLifts, saveLiftDataToStorage, clearLiftDataForTutorial, restoreLiftDataAfterTutorial]);
 
   // Reset function for account deletion
   const resetContext = React.useCallback(() => {
@@ -397,10 +479,8 @@ export function TutorialLiftSeeder() {
         // Random reps between 1-10
         const randomReps = Math.floor(Math.random() * 10) + 1;
         
-        // Random time between 6 AM and 10 PM
-        const randomHour = Math.floor(Math.random() * 16) + 6; // 6-21 (6 AM to 9 PM)
-        const randomMinute = Math.floor(Math.random() * 60);
-        const randomTime = `${randomHour > 12 ? randomHour - 12 : randomHour}:${randomMinute.toString().padStart(2, '0')} ${randomHour >= 12 ? 'PM' : 'AM'}`;
+        // Set all tutorial lifts to 23:59
+        const randomTime = '11:59 PM';
         
         // Generate line graph values based on accuracy
         const lineGraphValues = Array.from({ length: randomReps }, () => 

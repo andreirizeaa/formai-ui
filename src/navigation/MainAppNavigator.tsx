@@ -78,8 +78,6 @@ declare global {
   var pendingLiftId: string | undefined;
   var __navigateToHomeBase: (() => void) | undefined;
   var __lastHomeNavAt: number | undefined;
-  var showTutorialAllDoneModal: (() => void) | undefined;
-  var setShowTutorialDone: ((show: boolean) => void) | undefined;
 }
 
 // Wrapper components for screens that need navigation
@@ -555,7 +553,9 @@ function FeedbackSlideshowWrapper() {
         imageURL: item.imageURL,
         flaws: item.flaws,
         improvement: item.improvement
-      }))
+      })),
+      accuracy: route.params.liftData.analysis.accuracy,
+      accuracyScore: route.params.liftData.analysis.accuracy
     }
   } : undefined;
 
@@ -649,23 +649,22 @@ function MainTabsNavigator({ onLogout }: { onLogout?: () => void }) {
       // Navigate to personal details screen
       navigation.navigate('PersonalDetails');
     };
-    global.completeTutorialAndGoHome = () => {
-      // Complete tutorial, remove temporary lift data, and navigate to home
-      if (global.completeTutorial) {
-        global.completeTutorial();
-      }
-      // Clear temporary lift data if available
-      if (global.clearTemporaryLifts) {
-        global.clearTemporaryLifts();
+    global.completeTutorialAndGoHome = async () => {
+      // Complete tutorial, restore user data, and navigate to home
+      if (global.finishTutorialAndRestoreData) {
+        await global.finishTutorialAndRestoreData();
+      } else {
+        // Fallback to old method if new function not available
+        if (global.completeTutorial) {
+          global.completeTutorial();
+        }
+        // Clear temporary lift data if available
+        if (global.clearTemporaryLifts) {
+          global.clearTemporaryLifts();
+        }
       }
       // Navigate to home tab
       handleTabPress('home');
-    };
-    global.showTutorialAllDoneModal = () => {
-      // This will be set by HomeScreen to show the modal immediately
-      if (global.setShowTutorialDone) {
-        global.setShowTutorialDone(true);
-      }
     };
     global.openUploadModal = () => {
       global.uploadFromLibrarySearch = false;

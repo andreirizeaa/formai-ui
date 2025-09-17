@@ -21,6 +21,7 @@ export default function App() {
       try {
         // Preload all assets using static require statements
         const assetsToLoad = [
+          require('./assets/dumbel.svg'),
           require('./assets/recording-tip.jpg'),
           require('./assets/refer-friends.jpg'),
           require('./assets/refer-friends-group.png'),

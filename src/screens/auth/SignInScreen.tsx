@@ -186,7 +186,7 @@ export function SignInScreen({ onSignIn, onBack, onNavigateToOnboarding, onRequi
                       styles.appleIcon,
                       { tintColor: '#FFFFFF' }
                     ]}
-                    resizeMode="contain"
+                    contentFit="contain"
                   />
                   <Text style={[
                     styles.appleButtonText,

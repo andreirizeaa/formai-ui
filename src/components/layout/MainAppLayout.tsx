@@ -24,7 +24,7 @@ export function MainAppLayout({ children, onLogout }: MainAppLayoutProps) {
     // Trigger fade in animation on mount
     Animated.timing(fadeAnim, {
       toValue: 1,
-      duration: 300,
+      duration: 400,
       useNativeDriver: true,
     }).start();
   }, []);

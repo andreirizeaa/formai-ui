@@ -328,7 +328,7 @@ export async function searchLiftByAssetId(key: string, userId?: string): Promise
   try {
     const { data, error } = await supabase
       .from('lifts')
-      .select('id,user_id,is_favourite,lift_type,lift_date,lift_time,metric_weight,reps,thumbnail_url,analysis,asset_id')
+      .select('id,user_id,is_favourite,lift_type,lift_date,lift_time,metric_weight,reps,thumbnail_url,analysis,asset_id,pose_video_url,raw_video_url')
       .eq('user_id', userId)
       .eq('asset_id', key)
       .maybeSingle();
@@ -343,7 +343,7 @@ export async function lookupLift(key: string, userId: string): Promise<any | nul
   try {
     const { data, error } = await supabase
       .from('lifts')
-      .select('id,user_id,is_favourite,lift_type,lift_date,lift_time,metric_weight,reps,thumbnail_url,analysis,asset_id')
+      .select('id,user_id,is_favourite,lift_type,lift_date,lift_time,metric_weight,reps,thumbnail_url,analysis,asset_id,pose_video_url,raw_video_url')
       .eq('user_id', userId)
       .eq('asset_id', key)
       .maybeSingle();

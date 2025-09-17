@@ -46,6 +46,12 @@ export function SwipeableAccuracyCard({
     setLocalIndex(Math.max(0, Math.min(currentCardIndex, cardData.length - 1)));
   }, [currentCardIndex, cardData.length]);
 
+  // Compute a stable fingerprint for the values so FlashList knows to update
+  const dataVersion = React.useMemo(
+    () => cardData.map(c => `${c.label}:${c.percentage}`).join('|'),
+    [cardData]
+  );
+
   // Use local index for lazy mount window
   const shouldRenderIndex = useCallback(
     (index: number) => Math.abs(index - localIndex) <= 1,
@@ -197,7 +203,7 @@ export function SwipeableAccuracyCard({
           estimatedItemSize={ITEM_WIDTH}
           estimatedListSize={{ width: SCREEN_WIDTH, height: CARD_HEIGHT }}
 
-          keyExtractor={(item, i) => `${item.label}-${i}`}
+          keyExtractor={(item, i) => `${item.label}-${item.percentage}-${i}`}
           renderItem={({ item, index }) => (
             <View style={{ width: ITEM_WIDTH, height: CARD_HEIGHT, justifyContent: 'center', alignItems: 'center' }}>
               <View style={styles.accuracyCard} renderToHardwareTextureAndroid shouldRasterizeIOS>
@@ -235,8 +241,8 @@ export function SwipeableAccuracyCard({
           scrollEventThrottle={16}
           onMomentumScrollEnd={onMomentumScrollEnd}
 
-          // re-render items when these change (dots + lazy window)
-          extraData={{ localIndex, len: cardData.length }}
+          // re-render items when these change (dots + lazy window + data version)
+          extraData={{ localIndex, len: cardData.length, ver: dataVersion }}
         />
       </View>
 

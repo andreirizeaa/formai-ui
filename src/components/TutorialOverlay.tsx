@@ -138,14 +138,22 @@ export function TutorialOverlay() {
                          // For top placement, adjust position to ensure bottom edge of tooltip is above the highlight
              if (step.tooltipPlacement !== 'bottom' && step.tooltipPlacement !== 'inside-bottom' && currentRect) {
                const newTop = currentRect.y - tooltipHeight - 25; // 25px gap
-               
-               // If there's not enough space above, position below instead
-               if (newTop < 40) {
-                 // Position below the highlight
+
+               // Force feedback_tips to always stay at top, even with limited space
+               if (step.id === 'feedback_tips') {
+                 // Always position above for feedback_tips, even if space is limited
                  event.target.setNativeProps({
                    style: {
-                     top: undefined,
-                     bottom: currentRect.y + currentRect.height + 25,
+                     top: Math.max(10, newTop), // Minimum 10px from top of screen
+                     bottom: undefined,
+                   }
+                 });
+               } else if (newTop < 40) {
+                 // For other steps, position below if there's not enough space above
+                 event.target.setNativeProps({
+                   style: {
+                     top: currentRect.y + currentRect.height + 25,
+                     bottom: undefined,
                    }
                  });
                } else {
@@ -182,12 +190,13 @@ export function TutorialOverlay() {
                 onPress={async () => {
                   hapticFeedback.selection();
                   try {
-                    // Show the modal immediately first
-                    if ((global as any).showTutorialAllDoneModal) {
-                      (global as any).showTutorialAllDoneModal();
+                    // Use the new finish and restore data function to restore user's data
+                    if (global.finishTutorialAndRestoreData) {
+                      await global.finishTutorialAndRestoreData();
+                    } else {
+                      // Fallback to regular stop if new function not available
+                      await stop();
                     }
-                    // Then stop the tutorial
-                    await stop();
                   } catch (error) {
                     Alert.alert('Error', 'An error occurred while skipping the tutorial. Please try again.');
                   }

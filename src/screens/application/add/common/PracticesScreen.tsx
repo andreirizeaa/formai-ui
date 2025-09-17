@@ -49,7 +49,7 @@ export function PracticesScreen({
             <Image
               source={require('../../../../../assets/recording-tip.jpg')}
               style={styles.tipImage}
-              resizeMode="cover"
+              contentFit="cover"
             />
           </View>
         </View>

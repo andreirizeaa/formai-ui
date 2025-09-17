@@ -7,7 +7,6 @@ const LOADING_LIFTS_KEY = 'loadingLifts';
 const PENDING_LIFT_COMPLETIONS_KEY = 'pendingLiftCompletions';
 const PENDING_LIFT_FAILURES_KEY = 'pendingLiftFailures';
 const INFLIGHT_ASSET_IDS_KEY = 'inflightAssetIds';
-const TUTORIAL_COMPLETION_KEY = 'justFinishedTutorial';
 
 export async function setUserId(userId: string): Promise<void> {
 	const value = await AsyncStorage.getItem(USER_ID_KEY);
@@ -39,7 +38,6 @@ export async function clearAllUserData(): Promise<void> {
 			PENDING_LIFT_COMPLETIONS_KEY,
 			PENDING_LIFT_FAILURES_KEY,
 			INFLIGHT_ASSET_IDS_KEY,
-			TUTORIAL_COMPLETION_KEY,
 		];
 
 		await Promise.all(

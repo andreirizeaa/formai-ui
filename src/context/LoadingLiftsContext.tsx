@@ -132,6 +132,11 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
           : l
       )
     );
+    
+    // Invalidate LiftDataContext to fetch fresh data when lift completes
+    try {
+      invalidateAndRefetchLiftData();
+    } catch (_) {}
   };
 
   // Retry configuration
@@ -366,7 +371,7 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
         // Fetch the finished lift directly by id and map to final data
         const { data: row } = await supabase
           .from('lifts')
-          .select('id,user_id,is_favourite,lift_type,lift_date,lift_time,metric_weight,reps,thumbnail_url,analysis,asset_id')
+          .select('id,user_id,is_favourite,lift_type,lift_date,lift_time,metric_weight,reps,thumbnail_url,analysis,asset_id,pose_video_url,raw_video_url')
           .eq('id', liftId)
           .maybeSingle();
         if (!row) return;
@@ -404,6 +409,10 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
             try { optimisticAddToday({ userId: uid }); } catch (_) {}
             try { invalidateUserCheckIns({ userId: uid }); } catch (_) {}
           }
+        } catch (_) {}
+        // Invalidate LiftDataContext to ensure fresh data is fetched
+        try {
+          invalidateAndRefetchLiftData();
         } catch (_) {}
         try { await refreshLifts(); } catch (_) {}
       } catch (_) {}
@@ -658,6 +667,10 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
             } catch (_) {}
           }
         }
+        // Invalidate LiftDataContext to ensure fresh data is fetched after applying pending completions
+        try {
+          invalidateAndRefetchLiftData();
+        } catch (_) {}
         await AsyncStorage.removeItem(PENDING_KEY)
         // Ensure lifts are refreshed after applying pending completions
         try { await refreshLifts(); } catch (_) {}
@@ -755,6 +768,10 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
                   } catch (_) {}
                 }
               }
+              // Invalidate LiftDataContext to ensure fresh data is fetched after applying pending completions
+              try {
+                invalidateAndRefetchLiftData();
+              } catch (_) {}
               await AsyncStorage.removeItem(PENDING_KEY)
               // Ensure lifts are refreshed after applying pending completions
               try { await refreshLifts(); } catch (_) {}
@@ -797,6 +814,10 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
                 }
               })
             )
+            // Invalidate LiftDataContext after sweep to ensure fresh data is fetched
+            try {
+              invalidateAndRefetchLiftData();
+            } catch (_) {}
           } catch (_) {}
         })()
       }
@@ -854,6 +875,10 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
                   if (existing) updateLift(mapped.id, mapped); else addLift(mapped);
                 } catch (_) {}
                 markCompleted(local.id, mapped);
+                // Invalidate LiftDataContext to ensure fresh data is fetched
+                try {
+                  invalidateAndRefetchLiftData();
+                } catch (_) {}
               } catch (_) {}
             }
           )
@@ -1018,6 +1043,23 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
       // keep raw URL; don't fail the completion
     }
 
+    // NEW: video sources (raw + pose)
+    const rawVideo = data.raw_video_url ?? data.rawVideoURL;
+    const poseVideo = data.pose_video_url ?? data.poseVideoURL;
+
+    let rawVideoURL = rawVideo;
+    let poseVideoURL = poseVideo;
+
+    try {
+      const k = await extractObjectKeyFromUrl(typeof rawVideo === 'string' ? rawVideo : undefined);
+      if (k) rawVideoURL = (await signPath(k)) ?? rawVideo;
+    } catch {}
+
+    try {
+      const k = await extractObjectKeyFromUrl(typeof poseVideo === 'string' ? poseVideo : undefined);
+      if (k) poseVideoURL = (await signPath(k)) ?? poseVideo;
+    } catch {}
+
     const rawFeedback = Array.isArray(data.analysis?.feedback) ? data.analysis.feedback : [];
     const signedFeedback = await Promise.all(rawFeedback.map(async (f: any) => {
       try {
@@ -1060,8 +1102,8 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
       liftTime: data.lift_time ?? data.liftTime,
       metricWeight: Number(data.metric_weight ?? data.metricWeight),
       reps: Number(data.reps),
-      rawVideoURL: undefined,
-      poseVideoURL: undefined,
+      rawVideoURL,          // <-- now populated
+      poseVideoURL,         // <-- now populated
       thumbnailURL,
       analysis: {
         accuracy: Number(data.analysis?.accuracy ?? 0),

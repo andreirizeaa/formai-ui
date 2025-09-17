@@ -23,7 +23,6 @@
     "web": {
       "proxy": "https://formai-service.onrender.com"
     },
-    
     "plugins": [
       "expo-mail-composer",
       "expo-video",
@@ -51,13 +50,14 @@
         }
       ],
       "react-native-compressor",
-      "expo-notifications"
+      "expo-notifications",
     ],
     "ios": {
       "bundleIdentifier": "com.useformai.formai",
-      
       "infoPlist": {
-        "UIBackgroundModes": ["remote-notification"],
+        "UIBackgroundModes": [
+          "remote-notification"
+        ],
         "CFBundleURLTypes": [
           {
             "CFBundleURLName": "Google Sign-In",

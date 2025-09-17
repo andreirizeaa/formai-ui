@@ -59,7 +59,7 @@ export function WelcomeScreen({ onGetStarted, onSignIn }: WelcomeScreenProps) {
         <Image 
           source={require('../../../assets/app-overview-photo.png')}
           style={styles.photo}
-          resizeMode="contain"
+          contentFit="contain"
         />
       </View>
 
