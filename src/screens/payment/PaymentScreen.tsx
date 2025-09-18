@@ -4,6 +4,7 @@ import { View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { hapticFeedback } from '../../utils/haptic';
 import { usePurchases } from '../../context/PurchasesContext';
+import { AccountLoadingScreen } from '../onboarding/AccountLoadingScreen';
 
 interface PaymentScreenProps {
   onComplete: () => void;
@@ -13,7 +14,8 @@ export function PaymentScreen({ onComplete }: PaymentScreenProps) {
   const { registerPlacement } = usePlacement();
   const { dismiss } = useSuperwall();
   const { customerInfo, refreshCustomerInfo } = usePurchases();
-  const [ hasSeenDiscountPaywall, setHasSeenDiscountPaywall ] = useState(false)
+  const [ hasSeenDiscountPaywall, setHasSeenDiscountPaywall ] = useState(false);
+  const [ showAccountLoading, setShowAccountLoading ] = useState(false);
 
   // Listen for transactionAbandon events to show discount paywall
   useSuperwallEvents({
@@ -24,10 +26,10 @@ export function PaymentScreen({ onComplete }: PaymentScreenProps) {
     },
     onSuperwallEvent: async (eventInfo) => {
       if (String(eventInfo.event.event) === "transactionComplete") {
+        // Always show loading screen on transaction complete, regardless of customerInfo state
+        setShowAccountLoading(true);
+        // Refresh customer info in the background
         await refreshCustomerInfo();
-        if (customerInfo?.activeSubscriptions?.length !== 0) {
-          onComplete();
-        }
       }
       if (String(eventInfo.event.event) === "transactionAbandon" && String(eventInfo.params.abandoned_product_id) === "formai_yearly") {
         // Dismiss the current paywall first
@@ -81,7 +83,12 @@ export function PaymentScreen({ onComplete }: PaymentScreenProps) {
   }, []);
 
 
-  
+
+  // Show account loading screen after successful payment
+  if (showAccountLoading) {
+    return <AccountLoadingScreen onComplete={onComplete} />;
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content} />

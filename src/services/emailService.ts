@@ -9,7 +9,7 @@ export interface EmailOptions {
   body: string;
 }
 
-const supportEmail = 'info@useformai.com';
+const supportEmail = 'support@useformai.com';
 
 export async function openEmailComposer(options: EmailOptions): Promise<void> {
   try {
