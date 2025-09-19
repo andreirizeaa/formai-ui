@@ -306,7 +306,6 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onSharePr
             global.clearLiftDataForTutorial();
           }
         } catch (error) {
-          console.warn('Failed to perform tutorial cleanup:', error);
         }
       })();
 
@@ -330,17 +329,14 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onSharePr
           try {
             await startTutorial();
           } catch (error) {
-            console.warn('Failed to start tutorial:', error);
           } finally {
             setIsReplayingTutorial(false);
           }
         }, 300);
       } catch (error) {
-        console.warn('Failed to navigate and start tutorial:', error);
         setIsReplayingTutorial(false);
       }
     } catch (error) {
-      console.warn('Failed to start tutorial replay:', error);
       setIsReplayingTutorial(false);
     }
   };

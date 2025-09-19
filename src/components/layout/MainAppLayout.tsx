@@ -60,12 +60,10 @@ export function MainAppLayout({ children, onLogout }: MainAppLayoutProps) {
           try {
             await tutorial.start();
           } catch (error) {
-            console.warn('Failed to start tutorial:', error);
           }
         }, 300);
         return () => clearTimeout(t);
       } catch (error) {
-        console.warn('TutorialStarter error:', error);
       }
     }, [trigger]);
     return null;

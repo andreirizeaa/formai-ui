@@ -30,6 +30,11 @@ export function PaymentScreen({ onComplete }: PaymentScreenProps) {
         setShowAccountLoading(true);
         // Refresh customer info in the background
         await refreshCustomerInfo();
+        // After refreshing, wait 2 seconds then trigger completion
+        setTimeout(() => {
+          setShowAccountLoading(false);
+          onComplete();
+        }, 2000);
       }
       if (String(eventInfo.event.event) === "transactionAbandon" && String(eventInfo.params.abandoned_product_id) === "formai_yearly") {
         // Dismiss the current paywall first
@@ -86,7 +91,7 @@ export function PaymentScreen({ onComplete }: PaymentScreenProps) {
 
   // Show account loading screen after successful payment
   if (showAccountLoading) {
-    return <AccountLoadingScreen onComplete={onComplete} />;
+    return <AccountLoadingScreen onComplete={() => {}} />;
   }
 
   return (

@@ -25,24 +25,15 @@ Deno.serve(async (req: Request) => {
       return new Response("bad request", { status: 400 })
     }
 
-    console.log("Resend webhook event:", body)
-
     const type = body.type
     const email = body.data?.to ?? null
 
     if (type === "email.bounced" && email) {
-      console.log("Bounce detected for", email)
 
       const { error } = await supabase
         .from("users")
         .update({ email_valid: false })
         .eq("email", email)
-
-      if (error) {
-        console.error("Failed to mark email invalid:", error)
-      } else {
-        console.log("Marked email as invalid:", email)
-      }
     }
 
     return new Response("ok", { status: 200 })

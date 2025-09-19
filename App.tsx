@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import * as Notifications from 'expo-notifications';
+import * as StoreReview from 'expo-store-review';
 import './app/notificationsBackground';
 import { BACKGROUND_NOTIFICATION_TASK } from './app/notificationsBackground';
 import { initBackgroundFetch } from './app/backgroundFetch';
@@ -12,8 +13,8 @@ import { LanguageProvider } from './src/context/LanguageContext';
 import { OnboardingProvider } from './src/context/OnboardingContext';
 import { SuperwallProvider } from './src/context/SuperwallContext';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { removeUserId } from './src/services/storageService';
 import { eventBus, AppEvents } from './src/services/event-bus';
+import { openCancellationEmail } from './src/services/emailService';
 
 export default function App() {
   useEffect(() => {
@@ -49,7 +50,6 @@ export default function App() {
         
         await Asset.loadAsync(assetsToLoad);
       } catch (error) {
-        console.warn('Error preloading assets:', error);
       }
     }
     preloadAssets();
@@ -87,9 +87,31 @@ export default function App() {
       } catch {}
     });
     // Handle notification taps when app is in background/foreground
-    const sub = Notifications.addNotificationResponseReceivedListener((response) => {
+    const sub = Notifications.addNotificationResponseReceivedListener(async (response) => {
       try {
         const data = response.notification.request.content.data as any;
+
+        // Handle custom subscription notification actions
+        if (data?.action === 'open_store_review') {
+          try {
+            const isAvailable = await StoreReview.isAvailableAsync();
+            if (isAvailable) {
+              await StoreReview.requestReview();
+            }
+          } catch (error) {
+          }
+          return;
+        }
+
+        if (data?.action === 'open_cancellation_email') {
+          try {
+            await openCancellationEmail();
+          } catch (error) {
+          }
+          return;
+        }
+
+        // Handle existing lift notification types
         if (data?.type === 'lift_ready' && data?.liftId) {
           eventBus.emit(AppEvents.LiftReady, { liftId: String(data.liftId) });
           if ((global as any).openLiftById) (global as any).openLiftById(String(data.liftId));
@@ -110,6 +132,28 @@ export default function App() {
         const last = await Notifications.getLastNotificationResponseAsync();
         if (last) {
           const data = last.notification.request.content.data as any;
+
+          // Handle custom subscription notification actions
+          if (data?.action === 'open_store_review') {
+            try {
+              const isAvailable = await StoreReview.isAvailableAsync();
+              if (isAvailable) {
+                await StoreReview.requestReview();
+              }
+            } catch (error) {
+            }
+            return;
+          }
+
+          if (data?.action === 'open_cancellation_email') {
+            try {
+              await openCancellationEmail();
+            } catch (error) {
+            }
+            return;
+          }
+
+          // Handle existing lift notification types
           if (data?.type === 'lift_ready' && data?.liftId) {
             const id = String(data.liftId);
             eventBus.emit(AppEvents.LiftReady, { liftId: id });

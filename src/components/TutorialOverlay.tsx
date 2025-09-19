@@ -36,7 +36,6 @@ export function TutorialOverlay() {
 
   // Ensure we have a valid step index
   if (currentStepIndex < 0 || currentStepIndex >= steps.length) {
-    console.warn('Invalid step index in TutorialOverlay:', currentStepIndex);
     return null;
   }
 

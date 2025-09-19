@@ -36,7 +36,6 @@ async function sendExpoPush(
   })
 
   const txt = await res.text()
-  console.log("Expo response:", txt)
   return txt
 }
 
@@ -63,7 +62,6 @@ async function sendEmail(to: string, subject: string, text: string) {
   })
 
   const txt = await res.text()
-  console.log("Resend response:", txt)
   return txt
 }
 
@@ -138,7 +136,6 @@ The Form AI team.`,
 Deno.serve(async () => {
   try {
     const now = new Date().toISOString()
-    console.log("Checking for due notifications at", now)
 
     const { data: due, error } = await supabase
       .from("subscription_notifications_queue")
@@ -152,18 +149,11 @@ Deno.serve(async () => {
     }
 
     if (!due?.length) {
-      console.log("No due notifications")
       return new Response("no due notifications", { status: 200 })
     }
 
     for (const n of due) {
       try {
-        console.log(
-          "Sending push + email:",
-          "user_id=", n.user_id,
-          "type=", n.payload?.type,
-          "title=", n.payload?.title
-        )
 
         // Push notification
         await sendExpoPush(n.expo_push_token, n.payload.body, n.payload.title, n.payload)
@@ -174,10 +164,7 @@ Deno.serve(async () => {
           if (template) {
             await sendEmail(n.user.email, template.subject, template.body)
           } else {
-            console.log("No matching email template for type:", n.payload?.type)
           }
-        } else {
-          console.warn("No valid email for user", n.user_id)
         }
 
         // Mark as sent

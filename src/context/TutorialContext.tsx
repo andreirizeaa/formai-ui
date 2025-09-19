@@ -114,7 +114,6 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
         try {
           if ((global as any).triggerAddOptions) (global as any).triggerAddOptions();
         } catch (error) {
-          console.warn('Tutorial step error:', error);
         }
       },
     },
@@ -129,7 +128,6 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
           if ((global as any).openUploadModal) (global as any).openUploadModal();
           if ((global as any).closeAddOptions) (global as any).closeAddOptions();
         } catch (error) {
-          console.warn('Tutorial step error:', error);
         }
       },
       
@@ -147,7 +145,6 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
             global.tutorialUpload.skipToPreviewWithDemo();
           }
         } catch (error) {
-          console.warn('Tutorial step error:', error);
         }
       },
     },
@@ -161,7 +158,6 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
         try {
           if (global.tutorialUpload?.goToMovementSelection) global.tutorialUpload.goToMovementSelection();
         } catch (error) {
-          console.warn('Tutorial step error:', error);
         }
       },
       
@@ -177,7 +173,6 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
           if (global.tutorialUpload?.selectMovement) global.tutorialUpload.selectMovement('Squat');
           if (global.tutorialUpload?.goToWeightReps) global.tutorialUpload.goToWeightReps();
         } catch (error) {
-          console.warn('Tutorial step error:', error);
         }
       },
       
@@ -195,7 +190,6 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
           // Small delay to ensure lifts are added and home screen refreshes
           await new Promise(resolve => setTimeout(resolve, 200));
         } catch (error) {
-          console.warn('Tutorial step error:', error);
         }
       },
       
@@ -211,7 +205,6 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
           // Open the lift details page as if user clicked on it
           if (global.openLiftDetails) global.openLiftDetails();
         } catch (error) {
-          console.warn('Tutorial step error:', error);
         }
       },
     },
@@ -226,7 +219,6 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
           // Programmatically switch to depth graph (second card)
           try { global.setLiftDetailsGraphsIndex?.(1); } catch {}
         } catch (error) {
-          console.warn('Tutorial step error:', error);
         }
       },
       
@@ -241,7 +233,6 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
         try {
           // Continue to the next step (review feedback)
         } catch (error) {
-          console.warn('Tutorial step error:', error);
         }
       },
       
@@ -257,7 +248,6 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
           // Open the feedback slideshow as if user clicked on it
           if (global.openFeedbackSlideshow) global.openFeedbackSlideshow();
         } catch (error) {
-          console.warn('Tutorial step error:', error);
         }
       },
       
@@ -272,7 +262,6 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
         try {
           if (global.navigateToFeedbackPage) global.navigateToFeedbackPage();
         } catch (error) {
-          console.warn('Tutorial step error:', error);
         }
       },
       onPrev: () => {
@@ -280,7 +269,6 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
           // Go back to lift details - this will be handled by the component's navigation
           // The tutorial will go back to the previous step
         } catch (error) {
-          console.warn('Tutorial step error:', error);
         }
       },
     },
@@ -296,7 +284,6 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
           // This will move from image view to flaws/issues view
           if (global.navigateToIssues) global.navigateToIssues();
         } catch (error) {
-          console.warn('Tutorial step error:', error);
         }
       },
       onPrev: () => {
@@ -305,7 +292,6 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
           // This will be handled by the component's internal state
           if (global.navigateToHowItWorksStep) global.navigateToHowItWorksStep();
         } catch (error) {
-          console.warn('Tutorial step error:', error);
         }
       },
     },
@@ -321,7 +307,6 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
           // This will move from flaws/issues view to improvement/tips view
           if (global.navigateToTips) global.navigateToTips();
         } catch (error) {
-          console.warn('Tutorial step error:', error);
         }
       },
       onPrev: () => {
@@ -330,7 +315,6 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
           // This will move from flaws/issues view back to image view
           if (global.navigateToImage) global.navigateToImage();
         } catch (error) {
-          console.warn('Tutorial step error:', error);
         }
       },
     },
@@ -345,7 +329,6 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
           // Navigate back to home screen
           if (global.navigateToHome) global.navigateToHome();
         } catch (error) {
-          console.warn('Tutorial step error:', error);
         }
       },
       onPrev: () => {
@@ -354,7 +337,6 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
           // This will move from improvement/tips view back to flaws/issues view
           if (global.navigateToIssues) global.navigateToIssues();
         } catch (error) {
-          console.warn('Tutorial step error:', error);
         }
       },
     },
@@ -369,7 +351,6 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
           // Navigate to library screen
           if ((global as any).navigateToLibrary) (global as any).navigateToLibrary();
         } catch (error) {
-          console.warn('Tutorial step error:', error);
         }
       },
       onPrev: () => {
@@ -377,7 +358,6 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
           // Go back to feedback tips
           // This will be handled by the tutorial navigation
         } catch (error) {
-          console.warn('Tutorial step error:', error);
         }
       },
     },
@@ -392,7 +372,6 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
           // Navigate back to home screen
           if ((global as any).navigateToHome) (global as any).navigateToHome();
         } catch (error) {
-          console.warn('Tutorial step error:', error);
         }
       },
       onPrev: () => {
@@ -400,7 +379,6 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
           // Go back to home see all lifts step
           // This will be handled by the tutorial navigation
         } catch (error) {
-          console.warn('Tutorial step error:', error);
         }
       },
     },
@@ -415,7 +393,6 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
           // Navigate to performance screen
           if (global.navigateToPerformance) global.navigateToPerformance();
         } catch (error) {
-          console.warn('Tutorial step error:', error);
         }
       },
       onPrev: () => {
@@ -423,7 +400,6 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
           // Go back to feedback tips
           // This will be handled by the tutorial navigation
         } catch (error) {
-          console.warn('Tutorial step error:', error);
         }
       },
     },
@@ -438,7 +414,6 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
           // Just proceed to next tutorial step (no navigation needed)
           // The tutorial will automatically show the next step
         } catch (error) {
-          console.warn('Tutorial step error:', error);
         }
       },
       
@@ -454,7 +429,6 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
           // Scroll to the bottom so the next section is fully visible
           try { (global as any).scrollToPerformanceBottom?.(); } catch {}
         } catch (error) {
-          console.warn('Tutorial step error:', error);
         }
       },
       
@@ -470,7 +444,6 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
           // Navigate to settings screen
           if (global.navigateToSettings) global.navigateToSettings();
         } catch (error) {
-          console.warn('Tutorial step error:', error);
         }
       },
       
@@ -486,7 +459,6 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
           // Just proceed to next tutorial step (no navigation needed)
           // The tutorial will automatically show the next step
         } catch (error) {
-          console.warn('Tutorial step error:', error);
         }
       },
       
@@ -503,7 +475,6 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
           try { await global.finishTutorialAndRestoreData?.(); } catch {}
           try { (global as any).navigateToHome?.(); } catch {}
         } catch (error) {
-          console.warn('Tutorial step error:', error);
         }
       },
       
@@ -535,12 +506,10 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
             const rect = await measure();
             setCurrentRect(rect ?? null);
           } catch (err) {
-            console.warn('Immediate measure after register failed:', err);
           }
         })();
       }
     } catch (error) {
-      console.warn('Failed to register tutorial target:', error);
     }
   }, [isActive, currentStepIndex, steps]);
 
@@ -548,7 +517,6 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     try {
       registrationsRef.current.delete(id);
     } catch (error) {
-      console.warn('Failed to unregister tutorial target:', error);
     }
   }, [currentStepIndex, steps]);
 
@@ -569,7 +537,6 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
         }
       }
     } catch (error) {
-      console.warn('Failed to cleanup stale registrations:', error);
     }
   }, [currentStepIndex, steps]);
 
@@ -652,7 +619,6 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
         setIsTransitioning(false);
       }
     } catch (error) {
-      console.warn('Failed to measure tutorial target:', error);
       // Don't set currentRect to null on error - keep current step active
     }
   }, [steps, currentStepIndex]);
@@ -680,7 +646,6 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
         timeoutRef.current = null;
       }, 200);
     } catch (error) {
-      console.warn('Failed to start tutorial:', error);
     }
   }, [setSelectedDate]);
 
@@ -700,7 +665,6 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       // Start the tutorial
       await start();
     } catch (error) {
-      console.warn('Failed to start tutorial with data backup:', error);
     }
   }, [start]);
 
@@ -740,7 +704,6 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
         // Keep overlay hidden until measurement happens; no fade back-in here
       }, delay);
     } catch (error) {
-      console.warn('Failed to go to next tutorial step:', error);
       setIsTransitioning(false);
     }
   }, [currentStepIndex, steps]);
@@ -771,7 +734,6 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       await editUserDetails({ walkthrough_completed: true });
       await refetchUserDetails();
     } catch (error) {
-      console.warn('Failed to stop tutorial:', error);
     }
   }, []);
 
@@ -791,7 +753,6 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       // Finish the tutorial
       await stop();
     } catch (error) {
-      console.warn('Failed to finish tutorial and restore data:', error);
     }
   }, [stop]);
 
@@ -800,7 +761,6 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       const idx = steps.findIndex(s => s.id === stepId);
       return idx >= 0 ? idx + 1 : 0;
     } catch (error) {
-      console.warn('Failed to get step number:', error);
       return 0;
     }
   }, [steps]);
@@ -842,7 +802,6 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     try {
       await measureCurrentTarget(currentStepIndex);
     } catch (error) {
-      console.warn('Failed to remeasure tutorial target:', error);
     }
   }, [currentStepIndex, measureCurrentTarget]);
 
@@ -906,7 +865,6 @@ export function useTutorialTarget(targetId?: string) {
               });
             }
           } catch (error) {
-            console.warn('Tutorial target measurement failed:', error);
             resolve(null);
           }
         });
@@ -937,7 +895,6 @@ export function useTutorialTarget(targetId?: string) {
             registerTarget(targetId, measure);
           }
         } catch (error) {
-          console.warn('Failed to register tutorial target:', error);
         }
       }, delay);
       

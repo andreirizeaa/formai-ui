@@ -32,13 +32,18 @@ function AppContent() {
   const [showAccountLoading, setShowAccountLoading] = useState(false);
   const [passedInitialDataGate, setPassedInitialDataGate] = useState(false);
   const fadeAnim = useRef(new Animated.Value(1)).current;
-  const { customerInfo, isInitializing } = usePurchases();
+  const { customerInfo, hasSubscription, isInitializing } = usePurchases();
   const { isUserDetailsLoaded, refetchUserDetails } = useUserDetails();
   const { isLiftDataLoaded } = useLiftData();
 
   useEffect(() => {
     async function setActiveLayout() {
       try {
+        // Don't make routing decisions until RevenueCat is fully initialized
+        if (isInitializing === true || isInitializing === undefined) {
+          return;
+        }
+
         const storedUserId = await getUserId();
         if (!storedUserId) {
           setShowOnboarding(true);
@@ -58,14 +63,13 @@ function AppContent() {
           return;
         }
 
-        if (customerInfo?.activeSubscriptions.length === 0) {
+        if (!hasSubscription) {
           setShowOnboarding(true);
           setOnboardingInitialRoute('Payment');
           return;
         }
         setShowOnboarding(false);
       } catch (e) {
-        console.warn('Bootstrap error:', e);
         setShowOnboarding(true);
         setOnboardingInitialRoute('Welcome');
       } finally {
@@ -74,7 +78,7 @@ function AppContent() {
     }
 
     setActiveLayout();
-  }, [customerInfo]);
+  }, [customerInfo, hasSubscription, isInitializing]);
 
   // Add an artificial universal 2s boot delay
   useEffect(() => {
@@ -82,7 +86,7 @@ function AppContent() {
     return () => clearTimeout(t);
   }, []);
 
-  // Set sticky data gate once per app session
+  // Set sticky data gate once per app session - wait for RevenueCat to initialize
   useEffect(() => {
     if (!passedInitialDataGate && !isInitializing && isUserDetailsLoaded && isLiftDataLoaded) {
       setPassedInitialDataGate(true);

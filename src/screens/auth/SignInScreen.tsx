@@ -12,7 +12,6 @@ import { BackButton } from '../../components/ui/BackButton';
 import { LoadingOverlay } from '../../components/ui/LoadingOverlay';
 import { removeUserId, setUserId } from '../../services/storageService';
 import { fetchUserById, requiresOnboarding } from '../../services/userService';
-import Purchases from 'react-native-purchases';
 import { usePurchases } from '../../context/PurchasesContext';
 import { registerAndSaveExpoPushToken } from '../../services/push';
 
@@ -27,7 +26,7 @@ export function SignInScreen({ onSignIn, onBack, onNavigateToOnboarding, onRequi
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const [isSigningIn, setIsSigningIn] = React.useState(false);
-  const { customerInfo } = usePurchases();
+  const { customerInfo, logIn } = usePurchases();
   
   // Check if we're running in Expo Go
   const isExpoGo = Constants.appOwnership === 'expo';
@@ -56,7 +55,7 @@ export function SignInScreen({ onSignIn, onBack, onNavigateToOnboarding, onRequi
         else onSignIn();
         return;
       }
-      await Purchases.logIn(userId);
+      await logIn(userId);
       // Ensure push token is registered for signed-in users
       await registerAndSaveExpoPushToken(userId);
       if (requiresOnboarding(user)) {

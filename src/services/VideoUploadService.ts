@@ -103,7 +103,6 @@ export async function uploadLiftVideo(userId: string, liftId: string, fileUri: s
       const info = await FileSystem.getInfoAsync(uploadUri);
       if (!info.exists || !info.size || info.size === 0) {
         // Fallback to original
-        console.warn('Compressed video missing or empty; falling back to original file');
         uploadUri = fileUri;
       }
     } catch (_) {
