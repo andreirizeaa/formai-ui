@@ -24,7 +24,7 @@ export function WelcomeModal({ isVisible, onGetStarted }: WelcomeModalProps) {
         confettiRef.current?.reset?.();
         confettiRef.current?.play?.();
       } catch {}
-    }, 100);
+    }, 50);
     return () => clearTimeout(timer);
   }, [isVisible]);
 
@@ -54,7 +54,7 @@ export function WelcomeModal({ isVisible, onGetStarted }: WelcomeModalProps) {
             loop={false}
             contentFit="cover"
             ref={confettiRef}
-            style={{ width: screenWidth, height: screenHeight * 1.35 }}
+            style={{ width: 700, height: 700 }}
           />
         </View>
         <View style={[

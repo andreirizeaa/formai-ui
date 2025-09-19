@@ -14,7 +14,6 @@ export async function loadLoadingLifts(): Promise<LoadingLiftData[]> {
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? parsed : [];
   } catch (error) {
-    console.warn('Failed to load loading lifts from storage:', error);
     return [];
   }
 }
@@ -29,7 +28,6 @@ export async function saveLoadingLifts(lifts: LoadingLiftData[]): Promise<void> 
     const toStore = lifts.filter(lift => !(lift.isComplete && lift.status === 'completed'));
     await AsyncStorage.setItem(KEY, JSON.stringify(toStore));
   } catch (error) {
-    console.warn('Failed to save loading lifts to storage:', error);
     // Ignore write errors silently to avoid breaking the app
   }
 }
@@ -44,7 +42,6 @@ export async function removeLoadingLiftById(id: string): Promise<void> {
     const next = all.filter(lift => lift.id !== id);
     await AsyncStorage.setItem(KEY, JSON.stringify(next));
   } catch (error) {
-    console.warn('Failed to remove loading lift from storage:', error);
   }
 }
 
@@ -56,6 +53,5 @@ export async function clearAllLoadingLifts(): Promise<void> {
   try {
     await AsyncStorage.removeItem(KEY);
   } catch (error) {
-    console.warn('Failed to clear loading lifts from storage:', error);
   }
 }

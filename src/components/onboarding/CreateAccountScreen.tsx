@@ -11,7 +11,7 @@ import { LoadingOverlay } from '../ui/LoadingOverlay';
 import { setUserId } from '../../services/storageService';
 import i18n from '../../utils/i18n';
 import { usePlacement } from 'expo-superwall';
-import Purchases from 'react-native-purchases';
+import { usePurchases } from '../../context/PurchasesContext';
 import { registerAndSaveExpoPushToken } from '../../services/push';
 
 interface CreateAccountScreenProps {
@@ -24,6 +24,7 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const { onboardingData, updateOnboardingData } = useOnboarding();
+  const { logIn } = usePurchases();
   const [isSigningIn, setIsSigningIn] = React.useState(false);
   
   const isExpoGo = Constants.appOwnership === 'expo';
@@ -36,7 +37,6 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
           iosClientId: '338047674329-5dfpj06alfpfn0phi57c4bgdg6nihv87.apps.googleusercontent.com',
         });
       }).catch(error => {
-        console.warn('Google Sign-In not available in this environment:', error);
       });
     }
   }, [isExpoGo]);
@@ -144,7 +144,7 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
     updateOnboardingData('userId', data.user.id);
     
     if (data.user?.id) {
-      await Purchases.logIn(data.user.id);
+      await logIn(data.user.id);
       try {
         // Register Expo push token and persist it before onboarding persistence
         await registerAndSaveExpoPushToken(data.user.id);

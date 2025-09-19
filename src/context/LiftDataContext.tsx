@@ -120,7 +120,6 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
       };
       await AsyncStorage.setItem('tutorial_replay_backup', JSON.stringify(dataToSave));
     } catch (error) {
-      console.warn('Failed to save lift data for tutorial replay:', error);
     }
   }, [liftData]);
 
@@ -137,7 +136,6 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
         await AsyncStorage.removeItem('tutorial_replay_backup');
       }
     } catch (error) {
-      console.warn('Failed to restore lift data from tutorial replay:', error);
     }
   }, []);
 

@@ -22,10 +22,10 @@ interface PurchasesContextValue {
   upgradePackages: PurchasesPackage[];
   customerInfo: CustomerInfo | null;
 
-  hasActiveSubscription: boolean;
-  activeEntitlementIds: string[];
-  allEntitlementIds: string[];
+  hasSubscription: boolean;
   hasHdVideos: boolean;
+  logIn: (appUserId: string) => Promise<CustomerInfo | null>;
+  logOut: () => Promise<void>;
   refreshOfferings: () => Promise<void>;
   refreshCustomerInfo: () => Promise<void>;
   syncPurchases: () => Promise<void>;
@@ -72,22 +72,58 @@ export function PurchasesProvider({ children, onSubscriptionUpdate }: PurchasesP
     return offerings.all.upgrades.availablePackages;
   }, [offerings]);
 
-  const activeEntitlementIds = useMemo(() => {
-    if (!customerInfo) return [];
-    return Object.keys(customerInfo.entitlements.active ?? {});
+  // Check for any active subscription entitlements
+  const hasSubscription = useMemo(() => {
+    if (!customerInfo || !offerings) return false;
+
+    const defaultOffering = offerings?.all?.default;
+
+    if (defaultOffering) {
+      // Collect all product identifiers (monthly, annual, etc.)
+      const productIds = [];
+
+      if (defaultOffering.monthly?.product?.identifier) {
+        productIds.push(defaultOffering.monthly.product.identifier);
+      }
+
+      if (defaultOffering.annual?.product?.identifier) {
+        productIds.push(defaultOffering.annual.product.identifier);
+      }
+
+      if (Array.isArray(defaultOffering.availablePackages)) {
+        defaultOffering.availablePackages.forEach(pkg => {
+          if (pkg.product?.identifier) {
+            productIds.push(pkg.product.identifier);
+          }
+        });
+      }
+
+      // Create mapping from product ID to entitlement ID
+      const productEntitlementMap: Record<string, string> = {};
+      if (customerInfo.entitlements?.all) {
+        Object.entries(customerInfo.entitlements.all).forEach(([entitlementId, entitlement]) => {
+          if (entitlement.productIdentifier) {
+            productEntitlementMap[entitlement.productIdentifier] = entitlementId;
+          }
+        });
+      }
+
+      // Get entitlement IDs for products in default offering
+      const entitlementIds = productIds.map(productId => productEntitlementMap[productId]).filter(Boolean);
+
+      // Check if any of these entitlement IDs are active
+      const activeEntitlements = Object.keys(customerInfo.entitlements.active || {});
+      return entitlementIds.some(entitlementId => activeEntitlements.includes(entitlementId));
+    }
+
+    return false;
+  }, [customerInfo, offerings]);
+
+  // Check specifically for HD videos entitlement
+  const hasHdVideos = useMemo(() => {
+    if (!customerInfo) return false;
+    return 'hd_videos' in (customerInfo.entitlements.active || {});
   }, [customerInfo]);
-
-  const allEntitlementIds = useMemo(() => {
-    if (!customerInfo) return [];
-    const activeIds = Object.keys(customerInfo.entitlements.active ?? {});
-    const allIds = Object.keys(customerInfo.entitlements.all ?? {});
-    // Combine active and all entitlements, removing duplicates
-    return [...new Set([...activeIds, ...allIds])];
-  }, [customerInfo]);
-
-  const hasActiveSubscription = useMemo(() => activeEntitlementIds.length > 0, [activeEntitlementIds]);
-
-  const hasHdVideos = useMemo(() => allEntitlementIds.includes('hd_videos'), [allEntitlementIds]);
 
   useEffect(() => {
     async function initialize() {
@@ -97,7 +133,7 @@ export function PurchasesProvider({ children, onSubscriptionUpdate }: PurchasesP
         Purchases.setLogLevel(LOG_LEVEL.WARN);
         if (Platform.OS === 'ios') {
           Purchases.configure({ apiKey: 'appl_GUYEEZQfOpAHzaNTEHKrIuRLGuY'});
-          
+
         }
         // else if (Platform.OS === 'android') {
         //   Purchases.configure({ apiKey: 'your_android_api_key' });
@@ -110,7 +146,6 @@ export function PurchasesProvider({ children, onSubscriptionUpdate }: PurchasesP
         setIsInitializing(false);
       }
     }
-
     // Set up customer info update listener
     const customerInfoUpdateListener = (customerInfo: CustomerInfo) => {
       setCustomerInfo(customerInfo);
@@ -157,7 +192,6 @@ export function PurchasesProvider({ children, onSubscriptionUpdate }: PurchasesP
       await refreshOfferings();
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to sync purchases';
-      console.warn('Purchase sync failed:', message);
       // Don't set this as an error since sync is not critical for app functionality
     } finally {
       setIsSyncing(false);
@@ -192,6 +226,29 @@ export function PurchasesProvider({ children, onSubscriptionUpdate }: PurchasesP
     }
   }
 
+  async function logIn(appUserId: string) {
+    try {
+      const { customerInfo: ci } = await Purchases.logIn(appUserId);
+      // Critical for non-consumables on new accounts on the SAME device:
+      const restored = await Purchases.restorePurchases();
+      setCustomerInfo(restored ?? ci);
+      return restored ?? ci;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Login failed';
+      setPurchaseError(message);
+      return null;
+    }
+  }
+
+  async function logOut() {
+    try {
+      await Purchases.logOut();
+      await refreshCustomerInfo();
+    } catch (error) {
+      // Ignore logout errors
+    }
+  }
+
   const value: PurchasesContextValue = {
     isInitializing,
     isPurchasing,
@@ -203,10 +260,10 @@ export function PurchasesProvider({ children, onSubscriptionUpdate }: PurchasesP
     defaultPackages,
     upgradePackages,
     customerInfo,
-    hasActiveSubscription,
-    activeEntitlementIds,
-    allEntitlementIds,
+    hasSubscription,
     hasHdVideos,
+    logIn,
+    logOut,
     refreshOfferings,
     refreshCustomerInfo,
     syncPurchases,

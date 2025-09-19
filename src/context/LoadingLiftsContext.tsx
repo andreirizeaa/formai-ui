@@ -226,7 +226,6 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
 
       const key = l.assetId;
       if (!key) {
-        console.warn('[globalSweeper] missing assetId for lift', l.id);
         continue;
       }
 
@@ -635,7 +634,6 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
           await AsyncStorage.setItem(INFLIGHT_KEY, JSON.stringify(inflightAssetIds))
         }
       } catch (error) {
-        console.warn('Failed to hydrate loading lifts:', error);
       }
     })();
 
@@ -1126,7 +1124,6 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
     const l = allLoadingLifts.find(x => x.id === id);
     if (!l) return;
     if (!l.assetId) {
-      console.warn('[retryLift] missing assetId for', id);
       return;
     }
 
@@ -1204,7 +1201,6 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
         // Note: invalidateUserCheckIns() is now handled manually in StreakModal when user clicks continue
       }
     } catch (error) {
-      console.warn(`Failed to auto-delete lift ${liftId}:`, error);
     } finally {
       deletingRef.current.delete(liftId);
     }

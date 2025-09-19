@@ -30,7 +30,6 @@ Deno.serve(async (req: Request) => {
     if (RC_SECRET) {
       const auth = req.headers.get("authorization")
       if (auth !== `Bearer ${RC_SECRET}`) {
-        console.warn("Unauthorized webhook call")
         return new Response("unauthorized", { status: 401 })
       }
     }
@@ -59,8 +58,11 @@ Deno.serve(async (req: Request) => {
             expo_push_token: token,
             payload: {
               type: "trial_reminder",
-              title: "Form AI",
-              body: "Your free trial is ending tomorrow.",
+              title: "Your free trial is ending tomorrow.",
+              body: "We'd appreciate if you could give us a review!",
+              data: {
+                action: "open_store_review"
+              }
             },
             send_at: sendAt,
           })
@@ -73,7 +75,7 @@ Deno.serve(async (req: Request) => {
     if (type === "RENEWAL" && period_type === "NORMAL" && app_user_id && event_timestamp_ms) {
       const eventMs = Number(event_timestamp_ms)
       if (Number.isFinite(eventMs)) {
-        const sendAt = new Date(eventMs + 10 * 60 * 1000)
+        const sendAt = new Date(eventMs + 2 * 60 * 1000)
 
         const token = await getExpoPushTokenForUser(app_user_id)
         if (token) {
@@ -82,7 +84,7 @@ Deno.serve(async (req: Request) => {
             expo_push_token: token,
             payload: {
               type: "renewal",
-              title: "Form AI",
+              title: "You're renewed to Form AI! 🥳",
               body: "Thanks for subscribing! You now have full access.",
             },
             send_at: sendAt,
@@ -96,7 +98,7 @@ Deno.serve(async (req: Request) => {
     if (type === "CANCELLATION" && app_user_id && event_timestamp_ms) {
       const eventMs = Number(event_timestamp_ms)
       if (Number.isFinite(eventMs)) {
-        const sendAt = new Date(eventMs + 10 * 60 * 1000)
+        const sendAt = new Date(eventMs + 2 * 60 * 1000)
 
         const token = await getExpoPushTokenForUser(app_user_id)
         if (token) {
@@ -105,8 +107,11 @@ Deno.serve(async (req: Request) => {
             expo_push_token: token,
             payload: {
               type: "cancellation",
-              title: "We're sorry to see you go",
-              body: "Please let us know why you are cancelling.",
+              title: "We're sorry to see you go. 🙁",
+              body: "Please let us know why you are cancelling so we can improve!",
+              data: {
+                action: "open_cancellation_email"
+              },
               ...(cancel_reason ? { reason: cancel_reason } : {}),
             },
             send_at: sendAt,
@@ -129,8 +134,8 @@ Deno.serve(async (req: Request) => {
             expo_push_token: token,
             payload: {
               type: "non_renewing_purchase",
-              title: "Form AI",
-              body: "HD video analysis is active!",
+              title: "HD videos are actived! 🥳",
+              body: "Your videos will now remain the same high quality as in your library!",
               product_id: evt.product_id,
             },
             send_at: sendAt,
@@ -144,7 +149,7 @@ Deno.serve(async (req: Request) => {
     if (type === "INITIAL_PURCHASE" && period_type !== "TRIAL" && app_user_id && event_timestamp_ms) {
       const eventMs = Number(event_timestamp_ms)
       if (Number.isFinite(eventMs)) {
-        const sendAt = new Date(eventMs + 10 * 60 * 1000)
+        const sendAt = new Date(eventMs + 2 * 60 * 1000)
 
         const token = await getExpoPushTokenForUser(app_user_id)
         if (token) {
@@ -153,8 +158,8 @@ Deno.serve(async (req: Request) => {
             expo_push_token: token,
             payload: {
               type: "initial_purchase",
-              title: "Form AI",
-              body: "Welcome! Your subscription is now active.",
+              title: "Welcome to Form AI! 🥳",
+              body: "Your subscription is now active.",
             },
             send_at: sendAt,
           })

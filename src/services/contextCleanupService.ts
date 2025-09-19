@@ -70,7 +70,6 @@ export async function clearUserSpecificData(queryClient: QueryClient, userId: st
       (global as any).resetTutorialContext?.();
       (global as any).resetOnboardingContext?.();
     } catch (contextError) {
-      console.warn('Error resetting some contexts:', contextError);
     }
     
     // Clear loading lifts from storage
