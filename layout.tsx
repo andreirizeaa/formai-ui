@@ -18,6 +18,7 @@ import { fetchUserById, requiresOnboarding } from './src/services/userService';
 import { usePurchases } from './src/context/PurchasesContext';
 import { useUserDetails } from './src/context/UserDetailsContext';
 import { useLiftData } from './src/context/LiftDataContext';
+import { track } from './src/services/analytics';
 
 // Component that can access context providers to check loading states
 function AppContent() {
@@ -68,6 +69,7 @@ function AppContent() {
           setOnboardingInitialRoute('Payment');
           return;
         }
+        // User has subscription and completed onboarding - go straight to main app
         setShowOnboarding(false);
       } catch (e) {
         setShowOnboarding(true);

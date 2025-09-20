@@ -14,6 +14,7 @@ import { SignInScreen } from '../screens/auth/SignInScreen';
 import Purchases from 'react-native-purchases';
 import { usePurchases } from '../context/PurchasesContext';
 import { useUserDetails } from '../context/UserDetailsContext';
+import { track } from '../services/analytics';
 
 interface OnboardingNavigatorProps {
   onComplete: () => void;

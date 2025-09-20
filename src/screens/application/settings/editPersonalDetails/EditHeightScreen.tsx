@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, ActivityIndicator, Alert } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import i18n from '../../../../utils/i18n';
@@ -11,6 +11,7 @@ import {
 } from '../../../../utils/unitConversions';
 import { editUserDetails } from '../../../../services/userService';
 import { ChevronLeft } from 'lucide-react-native';
+import { track } from '../../../../services/analytics';
 
 interface EditHeightScreenProps {
   onBack: () => void;
@@ -26,6 +27,11 @@ export function EditHeightScreen({ onBack, currentValue, onSave }: EditHeightScr
   const [selectedFeet, setSelectedFeet] = useState(5); // Default 5 feet
   const [selectedInches, setSelectedInches] = useState(7); // Default 7 inches
   const [isSaving, setIsSaving] = useState(false);
+
+  // Track screen view on mount
+  useEffect(() => {
+    track('Screen viewed', { screen_name: 'Edit Height' });
+  }, []);
 
   // Parse current value to determine initial state
   React.useEffect(() => {
@@ -63,6 +69,8 @@ export function EditHeightScreen({ onBack, currentValue, onSave }: EditHeightScr
   const handleSave = async () => {
     if (isSaving) return;
     hapticFeedback.selection();
+    // Track library screen clicks for save
+    track('Library screen clicks', { event: 'Save new height' });
     setIsSaving(true);
     
     let heightCm: number;
@@ -85,10 +93,10 @@ export function EditHeightScreen({ onBack, currentValue, onSave }: EditHeightScr
     } catch (e) {
       hapticFeedback.error();
       updateValues();
-      Alert.alert(i18n.t('settings.editFailed.height'), i18n.t('settings.editFailed.message'), [{ text: 'Ok', onPress: () => {
+      showAlert(i18n.t('settings.editFailed.height'), i18n.t('settings.editFailed.message'), () => {
         hapticFeedback.selection();
         onBack();
-      } }]);
+      }, 'Height edit failed');
 
     }
     

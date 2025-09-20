@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, ActivityIndicator } from 'react-native';
 import { useUserDetails } from '../../../../context/UserDetailsContext';
 import { editUserDetails } from '../../../../services/userService';
@@ -7,6 +7,7 @@ import i18n from '../../../../utils/i18n';
 import { ChevronLeft } from 'lucide-react-native';
 import { AnimatedOptionButton } from '../../../../components/onboarding/AnimatedOptionButton';
 import { showAlert } from '../../../../services/alertService';
+import { track } from '../../../../services/analytics';
 
 interface EditGenderScreenProps {
   onBack: () => void;
@@ -19,9 +20,16 @@ export function EditGenderScreen({ onBack, currentValue, onSave }: EditGenderScr
   const [selectedGender, setSelectedGender] = useState(currentValue);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Track screen view on mount
+  useEffect(() => {
+    track('Screen viewed', { screen_name: 'Edit Gender' });
+  }, []);
+
   const handleNext = async () => {
     if (isSaving) return;
     hapticFeedback.selection();
+    // Track library screen clicks for save
+    track('Library screen clicks', { event: 'Save new gender' });
     setIsSaving(true);
     try {
       await editUserDetails({ gender: selectedGender });
@@ -34,7 +42,7 @@ export function EditGenderScreen({ onBack, currentValue, onSave }: EditGenderScr
       showAlert(i18n.t('settings.editFailed.gender'), i18n.t('settings.editFailed.message'), () => {
         hapticFeedback.selection();
         onBack();
-      });
+      }, 'Gender edit failed');
     }
     setIsSaving(false);
   };

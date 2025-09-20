@@ -8,7 +8,6 @@ import i18n from '../../../utils/i18n';
 import { hapticFeedback } from '../../../utils/haptic';
 import { DeleteAccountModal } from './DeleteAccountModal';
 import { LogoutModal } from './LogoutModal';
-import { LanguageModal } from './LanguageModal';
 import { removeUserId, getUserId } from '../../../services/storageService';
 import { deleteUserAccount } from '../../../services/authService';
 import { clearUserSpecificData } from '../../../services/contextCleanupService';
@@ -23,10 +22,12 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useLiftData } from '../../../context/LiftDataContext';
 import { useLoadingLifts } from '../../../context/LoadingLiftsContext';
 import * as Linking from 'expo-linking';
+import { track } from '../../../services/analytics';
 
 interface SettingsScreenProps {
   onPersonalDetailsPress: () => void;
   onUnitsPress: () => void;
+  onLanguagePress: () => void;
   onSharePress: () => void;
   onLogout?: () => void;
 }
@@ -157,10 +158,9 @@ function ReferFriendOption({ icon, title, subtitle, onPress, onSharePress }: Ref
   );
 }
 
-export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onSharePress, onLogout }: SettingsScreenProps) {
+export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguagePress, onSharePress, onLogout }: SettingsScreenProps) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const [showLanguageModal, setShowLanguageModal] = useState(false);
   const { hasHdVideos } = usePurchases();
   const [isDeleting, setIsDeleting] = useState(false);
   const [isReplayingTutorial, setIsReplayingTutorial] = useState(false);
@@ -169,6 +169,11 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onSharePr
   const queryClient = useQueryClient();
   const { addLift, formatDateForLift } = useLiftData();
   const { purgeAllLoadingLifts } = useLoadingLifts();
+  
+  // Track screen view on mount
+  useEffect(() => {
+    track('Screen viewed', { screen_name: 'Settings' });
+  }, []);
   
   // Tutorial target registration
   const { ref: settingsFirstCardRef } = useTutorialTarget('settings_first_card');
@@ -181,6 +186,8 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onSharePr
   const { registerPlacement } = usePlacement();
 
   const handleDeleteAccountPress = () => {
+    // Track settings screen clicks
+    track('Settings screen clicks', { event: 'Delete account' });
     setShowDeleteModal(true);
   };
 
@@ -226,6 +233,8 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onSharePr
   };
 
   const handleLogoutPress = () => {
+    // Track settings screen clicks
+    track('Settings screen clicks', { event: 'Log out' });
     setShowLogoutModal(true);
   };
 
@@ -240,28 +249,35 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onSharePr
     }
   };
 
-  const handleLanguagePress = () => {
-    setShowLanguageModal(true);
-  };
-
-  const handleCloseLanguageModal = () => {
-    setShowLanguageModal(false);
-  };
 
   const handleUnitsPress = () => {
+    // Track settings screen clicks
+    track('Settings screen clicks', { event: 'Units' });
     onUnitsPress();
   };
 
   const handlePersonalDetailsPress = () => {
+    // Track settings screen clicks
+    track('Settings screen clicks', { event: 'Personal details' });
     onPersonalDetailsPress();
   };
 
+  const handleLanguagePress = () => {
+    // Track settings screen clicks
+    track('Settings screen clicks', { event: 'Language' });
+    onLanguagePress();
+  };
+
   const handleSupportEmailPress = async () => {
+    // Track settings screen clicks
+    track('Settings screen clicks', { event: 'Support' });
     await openSupportEmail();
   };
 
   const handlePrivacyPolicyPress = async () => {
     hapticFeedback.selection();
+    // Track settings screen clicks
+    track('Settings screen clicks', { event: 'Privacy' });
     // Small delay to ensure haptic feedback is felt before opening browser
     setTimeout(async () => {
       try {
@@ -274,6 +290,8 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onSharePr
 
   const handleTermsOfServicePress = async () => {
     hapticFeedback.selection();
+    // Track settings screen clicks
+    track('Settings screen clicks', { event: 'Terms' });
     // Small delay to ensure haptic feedback is felt before opening browser
     setTimeout(async () => {
       try {
@@ -286,6 +304,10 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onSharePr
 
   const handleShowTutorialPress = async () => {
     hapticFeedback.selection();
+    // Track settings screen clicks
+    track('Settings screen clicks', { event: 'Replay tutorial' });
+    // Track tutorial replay
+    track('Tutorials', { data: 'replay' });
     setIsReplayingTutorial(true);
 
     try {
@@ -343,6 +365,8 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onSharePr
 
   const handleLeaveRatingPress = async () => {
     hapticFeedback.selection();
+    // Track settings screen clicks
+    track('Settings screen clicks', { event: 'Rating' });
     try {
       const isAvailable = await StoreReview.isAvailableAsync();
       if (isAvailable) {
@@ -364,9 +388,17 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onSharePr
 
   const handleHdVideoPress = async () => {
     try {
+      // Track settings screen clicks
+      track('Settings screen clicks', { event: 'Video quality' });
+      // Track paywall shown
+      track('Low quality paywall shown', { source: 'settings' });
+      
       await registerPlacement({
         placement: 'hd_video_trigger',
       });
+      
+      // Track paywall completion
+      track('Low quality paywall complete', { source: 'settings' });
     } catch (error) {
       Alert.alert('Error', 'Unable to access premium features. Please try again.');
     }
@@ -625,11 +657,6 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onSharePr
         onConfirm={handleConfirmLogout}
       />
 
-      {/* Language Modal */}
-      <LanguageModal
-        isVisible={showLanguageModal}
-        onClose={handleCloseLanguageModal}
-      />
 
       {/* Personal Details Screen */}
       {/* This component is now rendered by the parent based on the onPersonalDetailsPress prop */}

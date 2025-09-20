@@ -7,11 +7,13 @@ import { View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { track } from '../services/analytics';
 import { HomeScreen } from '../screens/application/home/HomeScreen';
 import { PerformanceScreen } from '../screens/application/performance/PerformanceScreen';
 import { SettingsScreen } from '../screens/application/settings/SettingsScreen';
 import { PersonalDetailsScreen } from '../screens/application/settings/PersonalDetailsScreen';
-import { UnitsDetailsScreen } from '../screens/application/settings/UnitsDetailsScreen';
+import { EditUnitsScreen } from '../screens/application/settings/EditUnitsScreen';
+import { EditLanguageScreen } from '../screens/application/settings/EditLanguageScreen';
 import { ShareScreen } from '../screens/application/settings/ShareScreen';
 import { EditCurrentWeightScreen } from '../screens/application/settings/editPersonalDetails/EditCurrentWeightScreen';
 import { EditHeightScreen } from '../screens/application/settings/editPersonalDetails/EditHeightScreen';
@@ -40,7 +42,8 @@ export type MainTabParamList = {
 export type MainStackParamList = {
   MainTabs: undefined;
   PersonalDetails: undefined;
-  UnitsDetails: undefined;
+  EditUnits: undefined;
+  EditLanguage: undefined;
   Share: undefined;
   EditCurrentWeight: { currentValue: string };
   EditHeight: { currentValue: string };
@@ -219,7 +222,11 @@ function SettingsScreenWrapper({ onLogout }: { onLogout?: () => void }) {
   };
 
   const handleUnitsPress = () => {
-    navigation.navigate('UnitsDetails');
+    navigation.navigate('EditUnits');
+  };
+
+  const handleLanguagePress = () => {
+    navigation.navigate('EditLanguage');
   };
 
   const handleSharePress = () => {
@@ -230,6 +237,7 @@ function SettingsScreenWrapper({ onLogout }: { onLogout?: () => void }) {
     <SettingsScreen 
       onPersonalDetailsPress={handlePersonalDetailsPress}
       onUnitsPress={handleUnitsPress}
+      onLanguagePress={handleLanguagePress}
       onSharePress={handleSharePress}
       onLogout={onLogout}
     />
@@ -287,7 +295,7 @@ function PersonalDetailsScreenWrapper() {
   );
 }
 
-function UnitsDetailsScreenWrapper() {
+function EditUnitsScreenWrapper() {
   const navigation = useNavigation<MainStackNavigationProp>();
   
   const handleBack = () => {
@@ -295,7 +303,21 @@ function UnitsDetailsScreenWrapper() {
   };
 
   return (
-    <UnitsDetailsScreen
+    <EditUnitsScreen
+      onBack={handleBack}
+    />
+  );
+}
+
+function EditLanguageScreenWrapper() {
+  const navigation = useNavigation<MainStackNavigationProp>();
+  
+  const handleBack = () => {
+    navigation.goBack();
+  };
+
+  return (
+    <EditLanguageScreen
       onBack={handleBack}
     />
   );
@@ -616,6 +638,8 @@ function MainTabsNavigator({ onLogout }: { onLogout?: () => void }) {
   };
 
   const handleAddPress = () => {
+    // Track add analysis clicks for add button
+    track('Add analysis', { event: 'Add' });
     setShowAddOptions(true);
   };
 
@@ -746,8 +770,15 @@ export function MainAppNavigator({ onLogout }: { onLogout?: () => void }) {
             }}
           />
           <Stack.Screen 
-            name="UnitsDetails" 
-            component={UnitsDetailsScreenWrapper}
+            name="EditUnits" 
+            component={EditUnitsScreenWrapper}
+            options={{
+              presentation: 'card',
+            }}
+          />
+          <Stack.Screen 
+            name="EditLanguage" 
+            component={EditLanguageScreenWrapper}
             options={{
               presentation: 'card',
             }}

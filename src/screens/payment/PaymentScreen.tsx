@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { hapticFeedback } from '../../utils/haptic';
 import { usePurchases } from '../../context/PurchasesContext';
 import { AccountLoadingScreen } from '../onboarding/AccountLoadingScreen';
+import { track } from '../../services/analytics';
 
 interface PaymentScreenProps {
   onComplete: () => void;
@@ -26,6 +27,13 @@ export function PaymentScreen({ onComplete }: PaymentScreenProps) {
     },
     onSuperwallEvent: async (eventInfo) => {
       if (String(eventInfo.event.event) === "transactionComplete") {
+        // Track purchase completion
+        track("Purchase Completed", {
+          product_id: eventInfo.params?.product_id,
+          price: eventInfo.params?.price,
+          currency: eventInfo.params?.currency,
+        });
+
         // Always show loading screen on transaction complete, regardless of customerInfo state
         setShowAccountLoading(true);
         // Refresh customer info in the background
@@ -37,6 +45,11 @@ export function PaymentScreen({ onComplete }: PaymentScreenProps) {
         }, 2000);
       }
       if (String(eventInfo.event.event) === "transactionAbandon" && String(eventInfo.params.abandoned_product_id) === "formai_yearly") {
+        // Track purchase abandonment
+        track("Purchase Abandoned", {
+          product_id: eventInfo.params.abandoned_product_id,
+        });
+
         // Dismiss the current paywall first
         dismiss();
         
@@ -77,6 +90,9 @@ export function PaymentScreen({ onComplete }: PaymentScreenProps) {
 
   React.useEffect(() => {
     const handleTriggerPlacement = async () => {
+      // Track paywall shown
+      track("Paywall Shown", { placement: "default_trigger" });
+
       // Add a small delay to ensure event listeners are properly set up
       setTimeout(async () => {
         await registerPlacement({

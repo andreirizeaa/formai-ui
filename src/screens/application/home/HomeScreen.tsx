@@ -7,6 +7,7 @@ import { useLoadingLifts } from '../../../context/LoadingLiftsContext';
 import { useFocusEffect } from '@react-navigation/native';
 import { useLiftData, ILiftData } from '../../../context/LiftDataContext';
 import { LoadingLiftData } from '../../../types/Lifts.d';
+import { track } from '../../../services/analytics';
 
 // Type guard for loading lifts
 function isLoadingLift(x: ILiftData | LoadingLiftData): x is LoadingLiftData {
@@ -161,6 +162,8 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
 
   const handleLiftPress = useCallback((liftId: string) => {
     hapticFeedback.selection();
+    // Track home screen clicks for lift card
+    track('Home screen clicks', { event: 'Lift card' });
     // First try from final lists
     const lift = liftsForSelectedDate.find(l => l.id === liftId) || liftData.find(l => l.id === liftId);
     if (lift) {
@@ -176,21 +179,29 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
 
   const handleLibraryPress = useCallback(() => {
     hapticFeedback.selection();
+    // Track home screen clicks for library
+    track('Home screen clicks', { event: 'Library' });
     onShowLibrary();
   }, [onShowLibrary]);
 
   const handleNoLiftsPress = useCallback(() => {
     hapticFeedback.selection();
+    // Track home screen clicks for no lifts
+    track('Home screen clicks', { event: 'No lifts' });
     onTriggerAddOptions();
   }, [onTriggerAddOptions]);
 
   const handleDateSelect = useCallback((date: Date) => {
     hapticFeedback.selection();
+    // Track home screen clicks for calendar day
+    track('Home screen clicks', { event: 'Calendar Day' });
     setSelectedDate(date);
   }, [setSelectedDate]);
 
   const handleFireCardPress = useCallback(() => {
     hapticFeedback.selection();
+    // Track home screen clicks for streaks
+    track('Home screen clicks', { event: 'Streaks' });
     // This will show the manual fire popup (different from streak-triggered popup)
     setIsFirePopupVisible(true);
   }, []);
@@ -198,6 +209,15 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
   const handleFirePopupClose = useCallback(() => {
     hapticFeedback.selection();
     setIsFirePopupVisible(false);
+  }, []);
+
+  const handleCalendarSwipe = useCallback(() => {
+    // Track home screen clicks for calendar swipe
+    track('Home screen clicks', { event: 'Calendar Swipe' });
+  }, []);
+
+  const handleAccuracyCardSwipe = useCallback((index: number) => {
+    setCurrentCardIndex(index);
   }, []);
 
 
@@ -210,6 +230,9 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
   useFocusEffect(
     React.useCallback(() => {
       setHomeActive?.(true);
+      
+      // Track screen view
+      track('Screen viewed', { screen_name: 'Home' });
 
       // Check if tutorial just completed and show confetti after home screen renders
       if ((global as any).__tutorialJustCompleted) {
@@ -311,14 +334,15 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
       
       {/* Swipeable Calendar */}
       <SwipeableCalendar 
-        onDateSelect={handleDateSelect} 
+        onDateSelect={handleDateSelect}
+        onSwipe={handleCalendarSwipe}
       />
       
       {/* Swipeable Accuracy Card */}
       <SwipeableAccuracyCard
         cardData={cardData}
         currentCardIndex={currentCardIndex}
-        onCardIndexChange={setCurrentCardIndex}
+        onCardIndexChange={handleAccuracyCardSwipe}
       />
       
       {/* Spacer to push content to bottom */}

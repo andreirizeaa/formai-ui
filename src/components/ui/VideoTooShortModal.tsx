@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Modal } from 'react-native';
 import i18n from '../../utils/i18n';
 import { hapticFeedback } from '../../utils/haptic';
 import { X } from 'lucide-react-native';
+import { track } from '../../services/analytics';
 
 interface VideoTooShortModalProps {
   isVisible: boolean;
@@ -15,6 +16,13 @@ export function VideoTooShortModal({
   onClose, 
   onSelectNewVideo 
 }: VideoTooShortModalProps) {
+
+  // Track when modal appears
+  React.useEffect(() => {
+    if (isVisible) {
+      track('Add analysis', { event: 'Video too short' });
+    }
+  }, [isVisible]);
 
   const handleSelectNewVideo = () => {
     hapticFeedback.selection();

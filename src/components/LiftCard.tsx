@@ -39,6 +39,7 @@ import { getUserId } from '../services/storageService';
 import i18n from '../utils/i18n';
 import { LoadingLiftData } from '../types/Lifts.d';
 import { useTutorialTarget } from '../context/TutorialContext';
+import { track } from '../services/analytics';
 
 // ---------- types / guards ----------
 type LiftLike = ILiftData | LoadingLiftData;
@@ -85,6 +86,7 @@ export const LiftCard = memo(function LiftCard({
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [resolvedThumb, setResolvedThumb] = useState<string | number | null>(null);
   const autoResetTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const trackedErrorsRef = useRef<Set<string>>(new Set());
 
   // Identify the row (one id regardless of phase)
   const displayId = lift ? (isLoadingLift(lift) ? lift.id : (lift as ILiftData)?.id) : null;
@@ -139,6 +141,9 @@ export const LiftCard = memo(function LiftCard({
       phaseRef.current = currentPhase;
       crossfade.value = 1;           // current fully visible, no fade
       loadingProgress.value = 0.02;  // progress reset
+
+      // Clear tracked errors for new lift
+      trackedErrorsRef.current.clear();
     }
   }, [displayId, currentPhase]);
 
@@ -169,7 +174,9 @@ export const LiftCard = memo(function LiftCard({
           const signed = key ? await signPath(key) : null;
           if (!cancelled) setResolvedThumb(signed ?? uploaded);
           return;
-        } catch (_) {
+        } catch (error) {
+          // Track thumbnail signing error
+          track('Errors', { type: 'THUMBNAIL_SIGNING_FAILED' });
           if (!cancelled) setResolvedThumb(uploaded);
           return;
         }
@@ -261,7 +268,7 @@ export const LiftCard = memo(function LiftCard({
         if (isLoadingLift(lift)) {
           // deleting a loading card (error/in-flight/completed)
           removeLoadingLift(lift.id);
-          
+
           // If it's an error card, also try to delete the job
           if (lift.status === 'error') {
             try {
@@ -296,17 +303,21 @@ export const LiftCard = memo(function LiftCard({
             }
           } catch (_) {}
         }
-        
+
         // Background refresh + ensure check-ins refetch
         refreshLifts();
         invalidateUserCheckIns();
-        
+
         hapticFeedback.success?.();
         translateX.value = withTiming(0, { duration: 200, easing: Easing.out(Easing.quad) });
       } else {
+        // Track deletion failure
+        track('Errors', { type: 'DELETION_FAILED' });
         translateX.value = withTiming(0, { duration: 200, easing: Easing.out(Easing.quad) });
       }
     } catch (error) {
+      // Track deletion error
+      track('Errors', { type: 'DELETION_ERROR' });
       translateX.value = withTiming(0, { duration: 200, easing: Easing.out(Easing.quad) });
     } finally {
       setDeleting(false);
@@ -391,17 +402,26 @@ export const LiftCard = memo(function LiftCard({
   // Reset progress values when lift ID changes (prevents cell reuse issues)
   useEffect(() => {
     if (!lift || !isLoadingLift(lift)) return;
-    
-    // Reset all animation values to initial state
-    targetProgress.value = 0.02;
-    progressRender.value = 0.02;
-    setProgressPercentage(2);
-    
-    if (lift.status !== 'error') {
-      pulseAnim.value = withRepeat(withTiming2(1, { duration: 1500 }), -1, true);
-      line1Anim.value = withRepeat(withSequence(withTiming2(1, { duration: 800 }), withTiming2(0.3, { duration: 800 })), -1, true);
-      line2Anim.value = withRepeat(withSequence(withTiming2(0.3, { duration: 400 }), withTiming2(1, { duration: 800 }), withTiming2(0.3, { duration: 400 })), -1, true);
-      line3Anim.value = withRepeat(withSequence(withTiming2(0.3, { duration: 800 }), withTiming2(1, { duration: 800 })), -1, true);
+
+    try {
+      // Reset all animation values to initial state
+      targetProgress.value = 0.02;
+      progressRender.value = 0.02;
+      setProgressPercentage(2);
+
+      if (lift.status !== 'error') {
+        pulseAnim.value = withRepeat(withTiming2(1, { duration: 1500 }), -1, true);
+        line1Anim.value = withRepeat(withSequence(withTiming2(1, { duration: 800 }), withTiming2(0.3, { duration: 800 })), -1, true);
+        line2Anim.value = withRepeat(withSequence(withTiming2(0.3, { duration: 400 }), withTiming2(1, { duration: 800 }), withTiming2(0.3, { duration: 400 })), -1, true);
+        line3Anim.value = withRepeat(withSequence(withTiming2(0.3, { duration: 800 }), withTiming2(1, { duration: 800 })), -1, true);
+      }
+    } catch (error) {
+      // Track animation setup errors
+      const errorKey = `${lift.id}-ANIMATION_ERROR`;
+      if (!trackedErrorsRef.current.has(errorKey)) {
+        trackedErrorsRef.current.add(errorKey);
+        track('Errors', { type: 'ANIMATION_ERROR' });
+      }
     }
   }, [lift && isLoadingLift(lift) ? lift.id : 'final']); // Depend on lift.id instead of status
 
@@ -422,22 +442,31 @@ export const LiftCard = memo(function LiftCard({
 
     if (lift.status === 'uploading' || lift.status === 'processing') {
       const loop = () => {
-        const now = Date.now();
-        const raw = (now - simStartAt) / simDurationMs;
-        const prog = Math.min(0.95, Math.max(base, raw));
-        
-        if (prog > progressRender.value) {
-          targetProgress.value = prog;
-          progressRender.value = prog;
-          const pct = Math.round(prog * 100);
-          setProgressPercentage(prev => (pct > prev ? pct : prev));
-          if (Math.abs((lift.uiProgress || 0) - prog) > 0.02) {
-            updateLiftProgress(lift.id, prog);
+        try {
+          const now = Date.now();
+          const raw = (now - simStartAt) / simDurationMs;
+          const prog = Math.min(0.95, Math.max(base, raw));
+
+          if (prog > progressRender.value) {
+            targetProgress.value = prog;
+            progressRender.value = prog;
+            const pct = Math.round(prog * 100);
+            setProgressPercentage(prev => (pct > prev ? pct : prev));
+            if (Math.abs((lift.uiProgress || 0) - prog) > 0.02) {
+              updateLiftProgress(lift.id, prog);
+            }
           }
-        }
-        
-        if (lift.status === 'uploading' || lift.status === 'processing') {
-          raf = requestAnimationFrame(loop);
+
+          if (lift.status === 'uploading' || lift.status === 'processing') {
+            raf = requestAnimationFrame(loop);
+          }
+        } catch (error) {
+          // Track progress update errors
+          const errorKey = `${lift.id}-PROGRESS_UPDATE_ERROR`;
+          if (!trackedErrorsRef.current.has(errorKey)) {
+            trackedErrorsRef.current.add(errorKey);
+            track('Errors', { type: 'PROGRESS_UPDATE_ERROR' });
+          }
         }
       };
       raf = requestAnimationFrame(loop);
@@ -476,7 +505,12 @@ export const LiftCard = memo(function LiftCard({
   const handleRetry = useCallback(async () => {
     if (!lift || !isLoadingLift(lift)) return;
     hapticFeedback.selection();
-    await retryLift(lift.id);
+    try {
+      await retryLift(lift.id);
+    } catch (error) {
+      // Track retry error
+      track('Errors', { type: 'RETRY_FAILED' });
+    }
   }, [lift, retryLift]);
 
   // ================== shared "card shell" ==================
@@ -550,6 +584,27 @@ export const LiftCard = memo(function LiftCard({
     }
 
     if (phase === 'error') {
+      // Track error display once per phase change
+      React.useEffect(() => {
+        if (lift && isLoadingLift(lift) && lift.errorMessage) {
+          let errorType = 'UNKNOWN_ERROR';
+          if (lift.errorMessage === 'No lift found') errorType = 'NO_LIFT_FOUND';
+          else if (lift.errorMessage === 'Lift mismatch') errorType = 'WRONG_MOVEMENT';
+          else if (lift.errorMessage.includes('Failed to upload')) errorType = 'UPLOAD_FAILED';
+          else if (lift.errorMessage.includes('Missing assetId')) errorType = 'MISSING_ASSET_ID';
+          else if (lift.errorMessage.includes('No userId')) errorType = 'NO_USER_ID';
+          else if (lift.errorMessage.includes('Temporary issue')) errorType = 'SOFT_FAIL';
+          else if (lift.errorMessage.includes('Error occurred')) errorType = 'ERROR_OCCURED';
+
+          // Only track if not already tracked for this lift
+          const errorKey = `${lift.id}-${errorType}`;
+          if (!trackedErrorsRef.current.has(errorKey)) {
+            trackedErrorsRef.current.add(errorKey);
+            track('Errors', { type: errorType });
+          }
+        }
+      }, [phase, lift]);
+
       return (
         <View style={styles.liftContent}>
           <View style={styles.topRow}>

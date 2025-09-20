@@ -5,6 +5,7 @@ import { hapticFeedback } from '../../../../utils/haptic';
 import { useUserDetails } from '../../../../context/UserDetailsContext';
 import { useTutorialTarget, useTutorial } from '../../../../context/TutorialContext';
 import { WeightUnit } from '../../../../types/Lifts';
+import { track } from '../../../../services/analytics';
 
 interface WeightRepsScreenProps {
   onBack: () => void;
@@ -89,6 +90,8 @@ export function WeightRepsScreen({
 
   const handleBack = () => {
     hapticFeedback.selection();
+    // Track add analysis clicks for back to movements
+    track('Add analysis', { event: 'Back to movements' });
     onBack();
   };
 
@@ -113,6 +116,8 @@ export function WeightRepsScreen({
   const handleRepsSubmit = () => {
     Keyboard.dismiss();
     setFocusedInput(null);
+    // Track add analysis clicks for complete add video
+    track('Add analysis', { event: 'Complete add video' });
     handleUpload();
   };
 
@@ -161,7 +166,13 @@ export function WeightRepsScreen({
                   ref={weightInputRef}
                   style={styles.input}
                   value={weight}
-                  onChangeText={setWeight}
+                  onChangeText={(text) => {
+                    // Track add analysis clicks for weight input
+                    if (text.length > 0 && weight.length === 0) {
+                      track('Add analysis', { event: 'Weight input' });
+                    }
+                    setWeight(text);
+                  }}
                   placeholder="1"
                   placeholderTextColor="#8E8E93"
                   keyboardType="numeric"
@@ -185,7 +196,13 @@ export function WeightRepsScreen({
                   ref={repsInputRef}
                   style={[styles.input, !isWeightValid && styles.inputDisabled]}
                   value={reps}
-                  onChangeText={setReps}
+                  onChangeText={(text) => {
+                    // Track add analysis clicks for reps input
+                    if (text.length > 0 && reps.length === 0) {
+                      track('Add analysis', { event: 'Reps input' });
+                    }
+                    setReps(text);
+                  }}
                   placeholder="1"
                   placeholderTextColor={isWeightValid ? "#8E8E93" : "#C7C7CC"}
                   keyboardType="numeric"

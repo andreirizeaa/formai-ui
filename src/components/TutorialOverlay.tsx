@@ -8,6 +8,7 @@ import { useUserDetails } from '../context/UserDetailsContext';
 import Svg, { Path, Rect } from 'react-native-svg';
 import { hapticFeedback } from '../utils/haptic';
 import i18n from '../utils/i18n';
+import { track } from '../services/analytics';
 
 export function TutorialOverlay() {
   const { isActive, isTransitioning, isProcessingStep, steps, currentStepIndex, currentRect, next, stop, setCurrentStepIndex, setCurrentRect } = useTutorial();
@@ -188,6 +189,8 @@ export function TutorialOverlay() {
                 style={styles.skipGuideButton}
                 onPress={async () => {
                   hapticFeedback.selection();
+                  // Track tutorial skip
+                  track('Tutorials', { data: 'skipped' });
                   try {
                     // Use the new finish and restore data function to restore user's data
                     if (global.finishTutorialAndRestoreData) {

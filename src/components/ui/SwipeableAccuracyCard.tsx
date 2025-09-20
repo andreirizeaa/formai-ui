@@ -6,6 +6,7 @@ import { CircularProgressChart } from '../icons/icons';
 import { useLiftData } from '../../context/LiftDataContext';
 import { useLoadingLifts } from '../../context/LoadingLiftsContext';
 import { useSelectedDate } from '../../context/SelectedDateContext';
+import { track } from '../../services/analytics';
 
 // Use integer dimensions for precise snapping
 const SCREEN_WIDTH = Math.round(Dimensions.get('window').width);
@@ -70,7 +71,11 @@ export function SwipeableAccuracyCard({
   const onMomentumScrollEnd = useCallback((e: any) => {
     const x = e?.nativeEvent?.contentOffset?.x || 0;
     const idx = Math.max(0, Math.min(Math.round(x / ITEM_WIDTH), (cardData.length || 1) - 1));
-    if (idx !== currentCardIndex) onCardIndexChange(idx);
+    if (idx !== currentCardIndex) {
+      // Track home screen clicks for accuracy card swipe
+      track('Home screen clicks', { event: 'Accuracy card swipe' });
+      onCardIndexChange(idx);
+    }
   }, [currentCardIndex, cardData.length, onCardIndexChange]);
 
   // Keep the list in sync if the parent changes currentCardIndex
