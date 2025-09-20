@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity, Text, Platform, ScrollView, Animated, PanResponder, useWindowDimensions } from 'react-native';
 import { Image as RNImage } from 'react-native';
 import { Image } from 'expo-image';
@@ -19,6 +19,7 @@ import ReanimatedAnimated, {
   withSpring, 
   withDelay 
 } from 'react-native-reanimated';
+import { track } from '../../../services/analytics';
 
 // Custom hook to get image aspect ratio from remote URL
 function useRemoteImageRatio(uri?: string) {
@@ -118,6 +119,11 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
   const [screenMode, setScreenMode] = useState<ScreenMode>('howItWorks');
   const { userDetails, updateHasRated } = useUserDetails();
   const { height: screenHeight } = useWindowDimensions();
+
+  // Track screen view on mount
+  useEffect(() => {
+    track('Screen viewed', { screen_name: 'Lift Feedback' });
+  }, []);
 
   // Track when user is interacting with the bottom ScrollView to avoid stealing gestures
   const interactingWithBottomScrollRef = React.useRef(false);

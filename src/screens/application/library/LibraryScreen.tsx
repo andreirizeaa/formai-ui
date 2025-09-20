@@ -15,6 +15,7 @@ import { useLoadingLifts } from '../../../context/LoadingLiftsContext';
 import { useTutorialTarget } from '../../../context/TutorialContext';
 import { searchLiftByAssetId } from '../../../services/liftService';
 import { LoadingOverlay } from '../../../components/ui/LoadingOverlay';
+import { track } from '../../../services/analytics';
 
 import i18n from '../../../utils/i18n';
 import { 
@@ -64,6 +65,11 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
   const [isDateRangeModalVisible, setIsDateRangeModalVisible] = useState(false);
   const [dateRange, setDateRange] = useState<DateRange>({ from: null, to: null });
   const [isSearching, setIsSearching] = useState(false);
+
+  // Track screen view on mount
+  useEffect(() => {
+    track('Screen viewed', { screen_name: 'Library' });
+  }, []);
 
   // Tutorial target ref for the tabs
   const { ref: libraryScreenRef } = useTutorialTarget('library_screen');
@@ -194,6 +200,8 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
 
   const handleEmptyCardPress = useCallback(() => {
     hapticFeedback.selection();
+    // Track library screen clicks for no lifts card
+    track('Library screen clicks', { event: 'No lifts card' });
     
     // If there are completed lifts but none match the current filters, open the filter modal
     const totalLifts = liftData.length;
@@ -210,11 +218,15 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
 
   const handleSortPress = useCallback(() => {
     hapticFeedback.selection();
+    // Track library screen clicks for sort icon
+    track('Library screen clicks', { event: 'Sort' });
     setSortOption(sortOption === 'newest' ? 'oldest' : 'newest');
   }, [sortOption]);
 
   const handleFilterPress = useCallback(() => {
     hapticFeedback.selection();
+    // Track library screen clicks for filter icon
+    track('Library screen clicks', { event: 'Open filters' });
     setShowPopupModal(true);
   }, []);
 
@@ -225,12 +237,16 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
 
   const handleDateRangePress = useCallback(() => {
     hapticFeedback.selection();
+    // Track library screen clicks for date range container
+    track('Library screen clicks', { event: 'Edit date range' });
     setShowPopupModal(false);
     setIsDateRangeModalVisible(true);
   }, []);
 
   const handleMovementFilterPress = useCallback(() => {
     hapticFeedback.selection();
+    // Track library screen clicks for lifts container
+    track('Library screen clicks', { event: 'Edit lifts' });
     setShowPopupModal(false);
     setShowFilterModal(true);
   }, []);
@@ -247,11 +263,15 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
 
   const handleTabPress = useCallback((tab: TabOption) => {
     hapticFeedback.selection();
+    // Track library screen clicks for tab selection
+    track('Library screen clicks', { event: tab === 'all' ? 'All tabs' : 'Favourites tab' });
     setActiveTab(tab);
   }, []);
 
   const handleLiftPress = useCallback((liftId: string) => {
     hapticFeedback.selection();
+    // Track library screen clicks for lift card
+    track('Library screen clicks', { event: 'Lift card' });
     const lift = filteredAndSortedLifts.find(l => l.id === liftId);
     if (lift) {
       // Navigate to lift details for completed lifts
@@ -268,6 +288,8 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
 
   const handleSearchPress = useCallback(async () => {
     hapticFeedback.selection();
+    // Track library screen clicks for search container
+    track('Library screen clicks', { event: 'Search' });
     setIsSearching(true);
     
     // Add a small delay to show the loading icon before opening image picker

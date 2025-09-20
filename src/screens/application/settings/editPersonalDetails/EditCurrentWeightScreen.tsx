@@ -11,6 +11,7 @@ import {
   convertImperialWeightToMetric 
 } from '../../../../utils/unitConversions';
 import { ChevronLeft } from 'lucide-react-native';
+import { track } from '../../../../services/analytics';
 
 interface EditCurrentWeightScreenProps {
   onBack: () => void;
@@ -25,6 +26,11 @@ export function EditCurrentWeightScreen({ onBack, currentValue, onSave }: EditCu
   const [selectedWeight, setSelectedWeight] = useState(60);
   const [isSaving, setIsSaving] = useState(false);
   const didMount = useRef(false);
+
+  // Track screen view on mount
+  useEffect(() => {
+    track('Screen viewed', { screen_name: 'Edit Current Weight' });
+  }, []);
 
   // Generate weight options similar to onboarding
   const weightOptions = useMemo(() => {
@@ -79,6 +85,8 @@ export function EditCurrentWeightScreen({ onBack, currentValue, onSave }: EditCu
   const handleSave = async () => {
     if (isSaving) return;
     hapticFeedback.selection();
+    // Track library screen clicks for save
+    track('Library screen clicks', { event: 'Save new weight' });
     setIsSaving(true);
 
     const weightKg = isMetric ? selectedWeight : convertImperialWeightToMetric(selectedWeight);
@@ -95,9 +103,9 @@ export function EditCurrentWeightScreen({ onBack, currentValue, onSave }: EditCu
       onSave(displayValue);
     } catch (e) {
       hapticFeedback.error();
-      Alert.alert(i18n.t('settings.editFailed.currentWeight'), i18n.t('settings.editFailed.message'), [
-        { text: 'Ok', onPress: () => hapticFeedback.selection() },
-      ]);
+      showAlert(i18n.t('settings.editFailed.currentWeight'), i18n.t('settings.editFailed.message'), () => {
+        hapticFeedback.selection();
+      }, 'Current weight edit failed');
     } finally {
       setIsSaving(false);
     }

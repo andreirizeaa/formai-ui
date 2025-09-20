@@ -5,6 +5,7 @@ import { VideoView, useVideoPlayer } from 'expo-video';
 import { Asset } from 'expo-asset';
 import { useTutorialTarget } from '../../../../context/TutorialContext';
 import { generateVideoThumbnailWithMetadata } from '../../../../utils/generateVideoThumbnail';
+import { track } from '../../../../services/analytics';
 
 interface VideoPreviewScreenProps {
   videoUri: string | number;
@@ -120,10 +121,24 @@ export function VideoPreviewScreen({
 
       <View style={styles.bottomControls}>
         <View style={styles.buttonStack}>
-          <TouchableOpacity style={styles.selectNewVideoButton} onPress={onSelectNewVideo}>
+          <TouchableOpacity 
+            style={styles.selectNewVideoButton} 
+            onPress={() => {
+              // Track add analysis clicks for new video
+              track('Add analysis', { event: 'New video' });
+              onSelectNewVideo();
+            }}
+          >
             <Text style={styles.selectNewVideoButtonText}>{selectNewVideoText}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.continueButton} onPress={onContinue}>
+          <TouchableOpacity 
+            style={styles.continueButton} 
+            onPress={() => {
+              // Track add analysis clicks for proceed with video
+              track('Add analysis', { event: 'Continue to movements' });
+              onContinue();
+            }}
+          >
             <Text style={styles.continueButtonText}>Continue</Text>
           </TouchableOpacity>
         </View>

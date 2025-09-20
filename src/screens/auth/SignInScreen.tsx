@@ -13,6 +13,7 @@ import { LoadingOverlay } from '../../components/ui/LoadingOverlay';
 import { removeUserId, setUserId } from '../../services/storageService';
 import { fetchUserById, requiresOnboarding } from '../../services/userService';
 import { usePurchases } from '../../context/PurchasesContext';
+import { identify, track } from '../../services/analytics';
 import { registerAndSaveExpoPushToken } from '../../services/push';
 
 interface SignInScreenProps {
@@ -56,6 +57,15 @@ export function SignInScreen({ onSignIn, onBack, onNavigateToOnboarding, onRequi
         return;
       }
       await logIn(userId);
+
+      // Link anonymous analytics events to the user
+      identify(userId);
+
+      // Track sign-in completion
+      track('Sign In Completed', {
+        user_id: userId,
+      });
+
       // Ensure push token is registered for signed-in users
       await registerAndSaveExpoPushToken(userId);
       if (requiresOnboarding(user)) {
@@ -233,6 +243,7 @@ export function SignInScreen({ onSignIn, onBack, onNavigateToOnboarding, onRequi
               </Text>
               <TouchableOpacity onPress={() => {
                 hapticFeedback.selection();
+                track('Sign In Screen Start Today Pressed');
                 onNavigateToOnboarding?.()
               }}>
                 <Text style={[

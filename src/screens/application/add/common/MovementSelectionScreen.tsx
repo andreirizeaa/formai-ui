@@ -5,6 +5,7 @@ import { useTutorialTarget } from '../../../../context/TutorialContext';
 import { Check, X } from 'lucide-react-native';
 import { hapticFeedback } from '../../../../utils/haptic';
 import { BodyPart } from '../../../../constants/gymMovements';
+import { track } from '../../../../services/analytics';
 
 interface MovementSelectionScreenProps {
   selectedMovement: string;
@@ -68,6 +69,8 @@ export function MovementSelectionScreen({
                     onPress={() => {
                       if (!active) {
                         hapticFeedback.selection();
+                        // Track add analysis clicks for body part segments
+                        track('Add analysis', { event: `Movement shortuct: ${segment.label}` });
                         onBodyPartChange(segment.value);
                       }
                     }}
@@ -89,7 +92,13 @@ export function MovementSelectionScreen({
               style={styles.searchInput}
               placeholder={i18n.t('add.searchMovements')}
               value={searchQuery}
-              onChangeText={onSearchChange}
+              onChangeText={(text) => {
+                // Track add analysis clicks for search lift name
+                if (text.length > 0 && searchQuery.length === 0) {
+                  track('Add analysis', { event: 'Search lift name' });
+                }
+                onSearchChange(text);
+              }}
               placeholderTextColor="#8E8E93"
             />
             {searchQuery.length > 0 && (
@@ -163,12 +172,23 @@ export function MovementSelectionScreen({
       {/* Bottom Buttons */}
       <View style={styles.bottomControls}>
         <View style={styles.buttonStack}>
-          <TouchableOpacity style={styles.backButton} onPress={onBack}>
+          <TouchableOpacity 
+            style={styles.backButton} 
+            onPress={() => {
+              // Track add analysis clicks for back to preview screen
+              track('Add analysis', { event: 'Back to preview screen' });
+              onBack();
+            }}
+          >
             <Text style={styles.backButtonText}>{i18n.t('add.back')}</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={[styles.uploadButton, !selectedMovement && styles.uploadButtonDisabled]} 
-            onPress={onUpload}
+            onPress={() => {
+              // Track add analysis clicks for continue to weights and reps
+              track('Add analysis', { event: 'Continue to Weights and Reps' });
+              onUpload();
+            }}
             disabled={!selectedMovement}
           >
             <Text style={[styles.uploadButtonText, !selectedMovement && styles.uploadButtonTextDisabled]}>

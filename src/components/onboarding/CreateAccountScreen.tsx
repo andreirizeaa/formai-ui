@@ -12,6 +12,7 @@ import { setUserId } from '../../services/storageService';
 import i18n from '../../utils/i18n';
 import { usePlacement } from 'expo-superwall';
 import { usePurchases } from '../../context/PurchasesContext';
+import { identify, track } from '../../services/analytics';
 import { registerAndSaveExpoPushToken } from '../../services/push';
 
 interface CreateAccountScreenProps {
@@ -145,6 +146,16 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
     
     if (data.user?.id) {
       await logIn(data.user.id);
+
+      // Link anonymous analytics events to the user
+      identify(data.user.id);
+
+      // Track signup completion
+      track('Signup Completed', {
+        signup_method: signInMethod,
+        user_id: data.user.id,
+      });
+
       try {
         // Register Expo push token and persist it before onboarding persistence
         await registerAndSaveExpoPushToken(data.user.id);
@@ -229,6 +240,7 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
             </Text>
             <TouchableOpacity onPress={() => {
               hapticFeedback.selection();
+              track('Create Account Screen Sign In Pressed');
               onSignIn();
             }}>
               <Text style={[

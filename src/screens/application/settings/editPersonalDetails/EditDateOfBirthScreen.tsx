@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, ActivityIndicator, Alert } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import i18n from '../../../../utils/i18n';
@@ -6,6 +6,7 @@ import { hapticFeedback } from '../../../../utils/haptic';
 import { useUserDetails } from '../../../../context/UserDetailsContext';
 import { editUserDetails } from '../../../../services/userService';
 import { ChevronLeft } from 'lucide-react-native';
+import { track } from '../../../../services/analytics';
 
 interface EditDateOfBirthScreenProps {
   onBack: () => void;
@@ -19,6 +20,11 @@ export function EditDateOfBirthScreen({ onBack, currentValue, onSave }: EditDate
   const [selectedMonth, setSelectedMonth] = useState(7); // Default July
   const [selectedDay, setSelectedDay] = useState(15); // Default 15th
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear() - 25); // Default 25 years ago
+
+  // Track screen view on mount
+  useEffect(() => {
+    track('Screen viewed', { screen_name: 'Edit Date of Birth' });
+  }, []);
 
   const currentYear = new Date().getFullYear();
 
@@ -132,6 +138,8 @@ export function EditDateOfBirthScreen({ onBack, currentValue, onSave }: EditDate
   const handleSave = async () => {
     if (isSaving) return;
     hapticFeedback.selection();
+    // Track library screen clicks for save
+    track('Library screen clicks', { event: 'Save new date of birth' });
     setIsSaving(true);
     // Return the date in DD-MM-YYYY format for UI
     const formattedDate = `${String(selectedDay).padStart(2, '0')}-${String(selectedMonth).padStart(2, '0')}-${selectedYear}`;
@@ -146,10 +154,10 @@ export function EditDateOfBirthScreen({ onBack, currentValue, onSave }: EditDate
     } catch (e) {
       hapticFeedback.error();
       updateValues();
-      Alert.alert(i18n.t('settings.editFailed.dateOfBirth'), i18n.t('settings.editFailed.message'), [{ text: 'Ok', onPress: () => {
+      showAlert(i18n.t('settings.editFailed.dateOfBirth'), i18n.t('settings.editFailed.message'), () => {
         hapticFeedback.selection();
         onBack();
-      } }]);
+      }, 'Date of birth edit failed');
 
     }
     setIsSaving(false);

@@ -4,6 +4,7 @@ import i18n from '../../../utils/i18n';
 import { hapticFeedback } from '../../../utils/haptic';
 import { useTutorialTarget } from '../../../context/TutorialContext';
 import { Upload, Video } from 'lucide-react-native';
+import { track } from '../../../services/analytics';
 
 interface AddOptionsProps {
   isVisible: boolean;
@@ -34,6 +35,8 @@ export function AddOptions({ isVisible, onUploadPress, onRecordPress, onClose }:
             style={styles.card} 
             onPress={() => {
               hapticFeedback.selection();
+              // Track add analysis clicks for upload
+              track('Add analysis', { event: 'Upload' });
               onUploadPress();
             }}
           >
@@ -48,6 +51,8 @@ export function AddOptions({ isVisible, onUploadPress, onRecordPress, onClose }:
             style={styles.card} 
             onPress={() => {
               hapticFeedback.selection();
+              // Track add analysis clicks for record
+              track('Add analysis', { event: 'Record' });
               onRecordPress();
             }}
           >
