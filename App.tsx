@@ -15,6 +15,8 @@ import { SuperwallProvider } from './src/context/SuperwallContext';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { eventBus, AppEvents } from './src/services/event-bus';
 import { openCancellationEmail } from './src/services/emailService';
+import { initAnalytics } from './src/services/analytics';
+import { removeUserId } from './src/services/storageService';
 
 export default function App() {
   useEffect(() => {
@@ -69,6 +71,9 @@ export default function App() {
 
     // Initialize BackgroundFetch safety net
     void initBackgroundFetch();
+
+    // Initialize analytics
+    void initAnalytics();
 
     // Emit event when a push is received while app is foregrounded
     const recv = Notifications.addNotificationReceivedListener((notification) => {

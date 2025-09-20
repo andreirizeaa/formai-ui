@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import i18n from '../../../utils/i18n';
@@ -7,6 +7,7 @@ import { useUserDetails } from '../../../context/UserDetailsContext';
 import { usePurchases } from '../../../context/PurchasesContext';
 import { usePlacement } from 'expo-superwall';
 import { Pencil, X } from 'lucide-react-native';
+import { track } from '../../../services/analytics';
 
 interface PersonalDetailsScreenProps {
   onBack: () => void;
@@ -120,6 +121,11 @@ export function PersonalDetailsScreen({
   const { hasHdVideos } = usePurchases();
   const { registerPlacement } = usePlacement();
   
+  // Track screen view on mount
+  useEffect(() => {
+    track('Screen viewed', { screen_name: 'Personal Details' });
+  }, []);
+  
   const videoQuality = hasHdVideos ? 'High Definition' : 'Low';
 
   const handleEditCurrentWeight = () => {
@@ -141,9 +147,15 @@ export function PersonalDetailsScreen({
   const handleHdVideoPress = async () => {
     hapticFeedback.selection();
     try {
+      // Track paywall shown
+      track('Low quality paywall shown', { source: 'personal_details' });
+      
       await registerPlacement({
         placement: 'hd_video_trigger',
       });
+      
+      // Track paywall completion
+      track('Low quality paywall complete', { source: 'personal_details' });
     } catch (error) {
       Alert.alert('Error', 'Unable to access premium features. Please try again.');
     }

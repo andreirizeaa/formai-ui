@@ -7,6 +7,7 @@ import { OrangeGradientButton } from '../../components/ui/OrangeGradientButton';
 import i18n from '../../utils/i18n';
 import { hapticFeedback } from '../../utils/haptic';
 import { getUserId } from '../../services/storageService';
+import { track } from '../../services/analytics';
 
 interface WelcomeScreenProps {
   onGetStarted: () => void;
@@ -29,6 +30,9 @@ export function WelcomeScreen({ onGetStarted, onSignIn }: WelcomeScreenProps) {
 
   // Fade in animation when component mounts
   useEffect(() => {
+    // Track home screen view
+    track('Welcome Screen shown');
+
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 300,
@@ -38,11 +42,13 @@ export function WelcomeScreen({ onGetStarted, onSignIn }: WelcomeScreenProps) {
 
   const handleGetStarted = () => {
     hapticFeedback.selection();
+    track('Welcome Screen CTA Clicked', { cta: 'get_started' });
     onGetStarted();
   };
 
   const handleSignIn = () => {
     hapticFeedback.selection();
+    track('Welcome Screen CTA Clicked', { cta: 'sign_in' });
     onSignIn();
   };
 

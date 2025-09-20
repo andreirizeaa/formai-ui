@@ -5,7 +5,7 @@ export const LANGUAGES: Language[] = [
     code: 'en',
     name: 'English',
     nativeName: 'English ',
-    flag: '🇺🇸',
+    flag: '🇬🇧',
   },
   {
     code: 'es',

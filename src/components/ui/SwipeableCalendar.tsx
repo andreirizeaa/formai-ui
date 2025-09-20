@@ -15,6 +15,7 @@ const WEEK_WIDTH = Math.round(SCREEN_WIDTH * 0.9);
 
 interface SwipeableCalendarProps {
   onDateSelect?: (date: Date) => void;
+  onSwipe?: () => void;
   initialSelectedDate?: Date;
   externalScrollGestureRef?: React.RefObject<any>;
 }
@@ -132,7 +133,7 @@ const WeekPage = React.memo(function WeekPage({
   )
 );
 
-export function SwipeableCalendar({ onDateSelect, initialSelectedDate }: SwipeableCalendarProps) {
+export function SwipeableCalendar({ onDateSelect, onSwipe, initialSelectedDate }: SwipeableCalendarProps) {
   // hooks (unchanged)
   const { selectedDate, setSelectedDate } = useSelectedDate();
   const { daysLogged } = useUserCheckIns();
@@ -274,9 +275,13 @@ export function SwipeableCalendar({ onDateSelect, initialSelectedDate }: Swipeab
   const onMomentumScrollEnd = useCallback((e: any) => {
     const x = e?.nativeEvent?.contentOffset?.x ?? 0;
     const idx = Math.max(0, Math.min(Math.round(x / ITEM_WIDTH), weeks.length - 1));
-    if (idx !== currentWeekIndex) setCurrentWeekIndex(idx);
+    if (idx !== currentWeekIndex) {
+      setCurrentWeekIndex(idx);
+      // Track calendar swipe
+      onSwipe?.();
+    }
     if (idx !== localIndex) setLocalIndex(idx);
-  }, [weeks.length, currentWeekIndex, localIndex]);
+  }, [weeks.length, currentWeekIndex, localIndex, onSwipe]);
 
   const renderItem = useCallback(
     ({ item, index }: { item: DayData[]; index: number }) => (

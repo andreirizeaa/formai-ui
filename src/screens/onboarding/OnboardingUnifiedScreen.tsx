@@ -27,6 +27,7 @@ import { BicepsFlexed, User, ShieldPlus, Bike, HeartPulse, CircleX, AudioWavefor
 import { LineChart } from 'react-native-chart-kit';
 import { SingleDotIcon, SixDotsIcon, ThreeDotsIcon } from '../../components/icons/icons';
 import { Line } from 'react-native-svg';
+import { track } from '../../services/analytics';
 
 interface OnboardingUnifiedScreenProps {}
 
@@ -449,6 +450,12 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const currentStep = steps[currentStepIndex];
 
+  // Generate unique session ID for analytics tracking
+  const [sessionId] = useState(() => `${Date.now()}-${Math.random().toString(36).slice(2)}`);
+
+  // Track the most recent selection for analytics (before it's saved to context)
+  const [currentStepSelection, setCurrentStepSelection] = useState<any>(null);
+
   // Local state for referral step
   const [referralCode, setReferralCode] = useState(onboardingData.referralCode || '');
   const [referralValidating, setReferralValidating] = useState(false);
@@ -622,6 +629,21 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
     }
   }, [currentStep.type]);
 
+  // Analytics tracking
+  useEffect(() => {
+    // Track onboarding start on component mount
+    track('Onboarding Started', {
+      session_id: sessionId,
+      total_steps: totalSteps
+    });
+  }, [sessionId, totalSteps]);
+
+  // Reset selection tracking when moving to a new step
+  useEffect(() => {
+    // Clear the selection when moving to a new step
+    setCurrentStepSelection(null);
+  }, [currentStepIndex]);
+
   const birthDateObj = parseBirthDate(onboardingData.birthDate);
   const effectiveBirthDate = birthDateObj.month && birthDateObj.day && birthDateObj.year
     ? birthDateObj
@@ -754,6 +776,21 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
     hapticFeedback.selection();
     const step = currentStep as OptionsStepConfig<keyof OnboardingData>;
     updateOnboardingData(step.preferenceKey as any, value);
+
+    // Store the current selection for analytics tracking
+    setCurrentStepSelection(value);
+
+    // Track option selection
+    track('Onboarding Option Selected', {
+      session_id: sessionId,
+      step_id: step.id,
+      step_type: step.type,
+      step_index: currentStepIndex,
+      preference_key: step.preferenceKey,
+      selected_value: value,
+      total_steps: totalSteps,
+    });
+
     if (step.preferenceKey === 'language' && typeof value === 'string') i18n.locale = value;
   }
 
@@ -776,6 +813,43 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
 
   function handleNext() {
     const isLast = currentStepIndex === totalSteps - 1;
+
+    // Get selected value for this step if applicable
+    const getSelectedValueForStep = () => {
+      if (currentStep.type === 'options') {
+        // Use the current selection if available, otherwise fall back to saved data
+        return currentStepSelection !== null ? currentStepSelection : onboardingData[(currentStep as OptionsStepConfig<keyof OnboardingData>).preferenceKey];
+      } else if (currentStep.type === 'measurements') {
+        if (currentStep.id === 'height') {
+          return onboardingData.metricHeight;
+        } else if (currentStep.id === 'weight') {
+          return onboardingData.metricWeight;
+        } else if (currentStep.id === 'birthdate') {
+          return onboardingData.birthDate;
+        }
+      } else if (currentStep.type === 'referral') {
+        return referralCode.trim() || null;
+      }
+      return null;
+    };
+
+    // Track step completion before moving to next step
+    const trackingData: any = {
+      session_id: sessionId,
+      step_id: currentStep.id,
+      step_type: currentStep.type,
+      step_index: currentStepIndex,
+      step_title: currentStep.title,
+      total_steps: totalSteps,
+      is_last_step: isLast,
+    };
+
+    const selectedValue = getSelectedValueForStep();
+    if (selectedValue !== null) {
+      trackingData.selected_value = selectedValue;
+    }
+
+    track('Onboarding Step Completed', trackingData);
    
     // Handle referral code validation
     if (currentStep.type === 'referral' && referralCode.trim().length > 0) {
@@ -798,6 +872,16 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
           if (result.isValid) {
             // Valid referral code found
             updateOnboardingData('referralCode', referralCode.trim().toUpperCase());
+
+            // Track successful referral code entry
+            track('Onboarding Referral Code Entered', {
+              session_id: sessionId,
+              step_id: currentStep.id,
+              step_index: currentStepIndex,
+              referral_code: referralCode.trim().toUpperCase(),
+              success: true,
+            });
+
             // Continue to next step
             setCurrentStepIndex(i => i + 1);
 
@@ -805,6 +889,15 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
             // Invalid referral code
             hapticFeedback.error();
             setReferralError(true);
+
+            // Track failed referral code entry
+            track('Onboarding Referral Code Entered', {
+              session_id: sessionId,
+              step_id: currentStep.id,
+              step_index: currentStepIndex,
+              referral_code: referralCode.trim().toUpperCase(),
+              success: false,
+            });
           }
         } catch (error) {
           hapticFeedback.error();
@@ -824,6 +917,13 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       return;
     }
     
+    // Track onboarding completion
+    track('Onboarding Completed', {
+      session_id: sessionId,
+      total_steps: totalSteps,
+      final_step_type: currentStep.type,
+    });
+
     // When finished, check if it's the save progress step
     if (currentStep.type === 'saveProgress') {
       // Navigate to payment screens

@@ -15,6 +15,7 @@ import { hapticFeedback } from '../utils/haptic';
 import { LoadingLiftData, LoadingLiftsContextType, PipelineStage, RetryStage } from '../types/Lifts.d';
 import { autoDeleteLiftErrorCardData, searchLiftByAssetId, lookupLift, findLiftFailure } from '../services/liftService';
 import { enqueueLiftAnalysis, getJobStatus, deleteJob } from '../services/liftApi';
+import { track } from '../services/analytics';
 
 const LoadingLiftsContext = createContext<LoadingLiftsContextType | undefined>(undefined);
 
@@ -35,6 +36,7 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
   const persistTimer = useRef<NodeJS.Timeout | null>(null);
   const appState = useRef(AppState.currentState);
   const streakShownForRef = useRef(new Set<string>());
+  const trackedErrorsRef = useRef(new Set<string>()); // Track which errors have been logged
   // keep latest snapshot in sync
   const latestLiftsRef = useRef<LoadingLiftData[]>([]);
   useEffect(() => { latestLiftsRef.current = allLoadingLifts; }, [allLoadingLifts]);
@@ -59,6 +61,30 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
   // Utility helpers
   const isLockedOrQueued = (id: string) =>
     inflightRef.current.has(id) || queuedRef.current.has(id);
+
+  // Helper to track errors only once per lift
+  const trackErrorOnce = (liftId: string, errorCode: string) => {
+    const errorKey = `${liftId}-${errorCode}`;
+    if (!trackedErrorsRef.current.has(errorKey)) {
+      trackedErrorsRef.current.add(errorKey);
+      track('Errors', { type: errorCode });
+    }
+  };
+
+  // Helper to track any error that creates an error card
+  const trackErrorCard = (liftId: string, errorMessage: string) => {
+    // Map common error messages to error codes
+    let errorCode = 'UNKNOWN_ERROR';
+    if (errorMessage.includes('Missing assetId')) errorCode = 'MISSING_ASSET_ID';
+    else if (errorMessage.includes('No userId available')) errorCode = 'NO_USER_ID';
+    else if (errorMessage.includes('Failed to upload video')) errorCode = 'UPLOAD_FAILED';
+    else if (errorMessage.includes('Temporary issue')) errorCode = 'SOFT_FAIL';
+    else if (errorMessage.includes('No lift found')) errorCode = 'NO_LIFT_FOUND';
+    else if (errorMessage.includes('Lift mismatch')) errorCode = 'WRONG_MOVEMENT';
+    else if (errorMessage.includes('Error occurred')) errorCode = 'ERROR_OCCURED';
+    
+    trackErrorOnce(liftId, errorCode);
+  };
 
   const tryLock = (id: string) => {
     if (inflightRef.current.has(id) || queuedRef.current.has(id)) return false;
@@ -109,7 +135,14 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
       prev.map(l => {
         if (l.id !== id) return l;
         if (l.status === 'completed') return l;     // lock
-        return updater(l);
+        const updated = updater(l);
+        
+        // Track error if status changed to error
+        if (updated.status === 'error' && l.status !== 'error' && updated.errorMessage) {
+          trackErrorCard(id, updated.errorMessage);
+        }
+        
+        return updated;
       })
     );
   };
@@ -159,6 +192,8 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
   const SOFT_FAIL_TTL_MS = ANALYZE_TTL_MS; // during this window, don't flip to hard error
 
   const softFail = (id: string, msg: string) => {
+    // Track error event for soft failures
+    trackErrorOnce(id, 'SOFT_FAIL');
     safeUpdateLift(id, l => ({
       ...l,
       status: 'processing',
@@ -236,6 +271,13 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
         const failure = await findLiftFailure({ userId, liftId: found.id as string, assetId: key });
         if (failure && failure.error) {
           const message = mapJobErrorToUiMessage(failure.error);
+          const errorCode = String(failure.error).toUpperCase();
+          
+          // Track error event
+          if (['NO_GYM_VIDEO_FOUND', 'NO_LIFT_FOUND', 'WRONG_MOVEMENT', 'ERROR_OCCURED'].includes(errorCode)) {
+            trackErrorOnce(l.id, errorCode);
+          }
+          
           // Flip to error card instead of completing
           safeUpdateLift(l.id, x => ({
             ...x,
@@ -251,7 +293,7 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
             await AsyncStorage.setItem(INFLIGHT_KEY, JSON.stringify(next));
           } catch {}
           // Optional auto-delete
-          if (['WRONG_MOVEMENT','NO_GYM_VIDEO_FOUND','NO_LIFT_FOUND','ERROR_OCCURED'].includes(String(failure.error).toUpperCase())) {
+          if (['WRONG_MOVEMENT','NO_GYM_VIDEO_FOUND','NO_LIFT_FOUND','ERROR_OCCURED'].includes(errorCode)) {
             void autoDeleteErrorLift(l.id);
           }
         } else {
@@ -301,6 +343,13 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
       const status = String(job?.status || '').toLowerCase();
       if (status === 'failed') {
         const message = mapJobErrorToUiMessage(job?.error);
+        const errorCode = String(job?.error || '').toUpperCase();
+        
+        // Track error event
+        if (['NO_GYM_VIDEO_FOUND', 'NO_LIFT_FOUND', 'WRONG_MOVEMENT', 'ERROR_OCCURED'].includes(errorCode)) {
+          trackErrorOnce(l.id, errorCode);
+        }
+        
         safeUpdateLift(l.id, x => ({ ...x, status: 'error', errorMessage: message, failureStage: (job?.stage as PipelineStage) || 'analyze' }));
         // Remove from inflight set in storage
         try {
@@ -309,7 +358,7 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
           await AsyncStorage.setItem(INFLIGHT_KEY, JSON.stringify(next));
         } catch {}
         // Optional: auto-delete for well-defined error cases
-        if (job?.error && ['WRONG_MOVEMENT','NO_GYM_VIDEO_FOUND','NO_LIFT_FOUND'].includes(String(job.error).toUpperCase())) {
+        if (job?.error && ['WRONG_MOVEMENT','NO_GYM_VIDEO_FOUND','NO_LIFT_FOUND'].includes(errorCode)) {
           void autoDeleteErrorLift(l.id);
         }
       } else if (status === 'running' || status === 'queued') {
@@ -324,6 +373,13 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
             const failure = await findLiftFailure({ userId: uid, assetId: key });
             if (failure && failure.error) {
               const message = mapJobErrorToUiMessage(failure.error);
+              const errorCode = String(failure.error).toUpperCase();
+              
+              // Track error event
+              if (['NO_GYM_VIDEO_FOUND', 'NO_LIFT_FOUND', 'WRONG_MOVEMENT', 'ERROR_OCCURED'].includes(errorCode)) {
+                trackErrorOnce(l.id, errorCode);
+              }
+              
               safeUpdateLift(l.id, x => ({ ...x, status: 'error', errorMessage: message, failureStage: 'analyze' }));
               // Remove inflight since we will not complete this card
               try {
@@ -332,7 +388,7 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
                 await AsyncStorage.setItem(INFLIGHT_KEY, JSON.stringify(next));
               } catch {}
               // Optional auto-delete
-              if (['WRONG_MOVEMENT','NO_GYM_VIDEO_FOUND','NO_LIFT_FOUND','ERROR_OCCURED'].includes(String(failure.error).toUpperCase())) {
+              if (['WRONG_MOVEMENT','NO_GYM_VIDEO_FOUND','NO_LIFT_FOUND','ERROR_OCCURED'].includes(errorCode)) {
                 void autoDeleteErrorLift(l.id);
               }
               // Skip the success path
@@ -380,6 +436,13 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
           if (uid) {
             const failure = await findLiftFailure({ userId: uid, liftId });
             if (failure && failure.error) {
+              const errorCode = String(failure.error).toUpperCase();
+              
+              // Track error event
+              if (['NO_GYM_VIDEO_FOUND', 'NO_LIFT_FOUND', 'WRONG_MOVEMENT', 'ERROR_OCCURED'].includes(errorCode)) {
+                trackErrorOnce(local?.id || 'unknown', errorCode);
+              }
+              
               const assetId: string | undefined = (row as any)?.asset_id;
               if (assetId) {
                 await applyFailureToLocalCard({ assetId, error: failure.error, stage: 'analyze' });
@@ -426,6 +489,7 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
         const uid = await getUserId();
         if (!uid) return;
         const code = p?.error ? String(p.error).toUpperCase() : undefined;
+        
         // Prefer assetId to match local loading card quickly
         let targetAssetId = p?.assetId;
         if (!targetAssetId && p?.liftId) {
@@ -444,6 +508,11 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
           ? latestLiftsRef.current.find(x => x.assetId === targetAssetId && x.status !== 'completed')
           : latestLiftsRef.current.find(x => x.status !== 'completed');
         if (!local) return;
+
+        // Track error event
+        if (code && ['NO_GYM_VIDEO_FOUND', 'NO_LIFT_FOUND', 'WRONG_MOVEMENT', 'ERROR_OCCURED'].includes(code)) {
+          trackErrorOnce(local.id, code);
+        }
 
         const message = mapJobErrorToUiMessage(code);
         safeUpdateLift(local.id, l => ({
@@ -681,6 +750,13 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
     const local = latestLiftsRef.current.find(x => x.assetId === f.assetId && x.status !== 'completed');
     if (!local) return false;
 
+    const errorCode = String(f.error || '').toUpperCase();
+    
+    // Track error event
+    if (['NO_GYM_VIDEO_FOUND', 'NO_LIFT_FOUND', 'WRONG_MOVEMENT', 'ERROR_OCCURED'].includes(errorCode)) {
+      trackErrorOnce(local.id, errorCode);
+    }
+
     const msg = mapJobErrorToUiMessage(f.error);
     safeUpdateLift(local.id, l => ({
       ...l,
@@ -905,6 +981,14 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
                 const assetId: string | undefined = row?.job_id ?? row?.asset_id ?? row?.assetId ?? row?.key;
                 if (!assetId) return;
                 if (status === 'failed') {
+                  const errorCode = String((row?.error ?? row?.error_code ?? row?.errorCode) || '').toUpperCase();
+                  const local = latestLiftsRef.current.find(x => x.assetId === assetId && x.status !== 'completed');
+                  
+                  // Track error event
+                  if (['NO_GYM_VIDEO_FOUND', 'NO_LIFT_FOUND', 'WRONG_MOVEMENT', 'ERROR_OCCURED'].includes(errorCode)) {
+                    trackErrorOnce(local?.id || 'unknown', errorCode);
+                  }
+                  
                   await applyFailureToLocalCard({ assetId, error: row?.error ?? row?.error_code ?? row?.errorCode, stage: row?.stage });
                 } else if (status === 'succeeded' || status === 'success' || status === 'completed') {
                   const local = latestLiftsRef.current.find(x => x.assetId === assetId && x.status !== 'completed');
@@ -949,6 +1033,10 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
         simDurationMs: (((liftData.videoDurationSec || 10) * 2) + 20) * 1000,
         errorMessage: 'Missing assetId',
       } as LoadingLiftData;
+      
+      // Track error event
+      trackErrorOnce(liftId, 'MISSING_ASSET_ID');
+      
       setAllLoadingLifts(prev => [errLift, ...prev]);
       return liftId;
     }
@@ -976,6 +1064,8 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
     try {
       const userId = await getUserId();
       if (!userId) {
+        // Track error event
+        trackErrorOnce(liftId, 'NO_USER_ID');
         safeUpdateLift(liftId, l => ({ ...l, status: 'error', errorMessage: 'No userId available' }));
         return liftId;
       }
@@ -1004,6 +1094,8 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
       });
     } catch (error) {
       Alert.alert('Upload Error', 'Failed to upload your video. Please check your connection and try again.');
+      // Track error event
+      trackErrorOnce(liftId, 'UPLOAD_FAILED');
       safeUpdateLift(liftId, l => ({ 
         ...l, 
         status: 'error', 
@@ -1150,6 +1242,14 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
   };
 
   const removeLift = (id: string) => {
+    // Clean up tracked errors for this lift
+    const lift = allLoadingLifts.find(l => l.id === id);
+    if (lift) {
+      ['NO_GYM_VIDEO_FOUND', 'NO_LIFT_FOUND', 'WRONG_MOVEMENT', 'ERROR_OCCURED'].forEach(errorCode => {
+        const errorKey = `${id}-${errorCode}`;
+        trackedErrorsRef.current.delete(errorKey);
+      });
+    }
     
     setAllLoadingLifts(prev => prev.filter(lift => lift.id !== id));
   };
@@ -1249,6 +1349,7 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
     queuedRef.current.clear();
     deletingRef.current.clear();
     streakShownForRef.current.clear();
+    trackedErrorsRef.current.clear();
     latestLiftsRef.current = [];
   }, []);
 

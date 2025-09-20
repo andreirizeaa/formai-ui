@@ -6,6 +6,7 @@ import { hapticFeedback } from '../../utils/haptic';
 import { formatWeightForDisplay } from '../../utils/unitConversions';
 import { CircleQuestionMark } from 'lucide-react-native';
 import i18n from '../../utils/i18n';
+import { track } from '../../services/analytics';
 
 // Use integers to avoid floating rounding drift
 const { width: RAW_W } = Dimensions.get('window');
@@ -181,11 +182,13 @@ const ChartPage = React.memo(function ChartPage({
   onInfoPress,
   shouldRender,
   cardWidth,
+  chartType,
 }: {
   item: ProcessedCardData;
   onInfoPress?: () => void;
   shouldRender: boolean;
   cardWidth: number;
+  chartType: 'accuracyPerWeight' | 'accuracyOverTime';
 }) {
   const isPlaceholder = item.title === 'Loading...';
   const dataLength = item.chartData?.datasets?.[0]?.data?.length || 0;
@@ -206,7 +209,12 @@ const ChartPage = React.memo(function ChartPage({
                 <Text style={styles.performanceCardLabel}>{item.title}</Text>
                 {!isPlaceholder && (
                   <TouchableOpacity
-                    onPress={() => onInfoPress?.()}
+                    onPress={() => {
+                      // Track progress screen clicks
+                      const eventName = chartType === 'accuracyPerWeight' ? 'AW info' : 'AT info';
+                      track('Progress screen clicks', { event: eventName });
+                      onInfoPress?.();
+                    }}
                     activeOpacity={0.7}
                     style={styles.titleIcon}
                   >
@@ -257,7 +265,8 @@ const ChartPage = React.memo(function ChartPage({
   a.shouldRender === b.shouldRender &&
   a.item.title === b.item.title &&
   a.item.subtitle === b.item.subtitle &&
-  a.item.chartData?.datasets?.[0]?.data === b.item.chartData?.datasets?.[0]?.data
+  a.item.chartData?.datasets?.[0]?.data === b.item.chartData?.datasets?.[0]?.data &&
+  a.chartType === b.chartType
 );
 
 // Memoized Pagination Component
@@ -287,9 +296,11 @@ const Pagination = React.memo(function Pagination({
 const SegmentedControl = React.memo(function SegmentedControl({
   timeRange,
   onTimeRangeChange,
+  chartType,
 }: {
   timeRange: TimeRange;
   onTimeRangeChange: (range: TimeRange) => void;
+  chartType: 'accuracyPerWeight' | 'accuracyOverTime';
 }) {
   const Segments = [
     { label: '90 Days', value: '90d' as TimeRange },
@@ -311,6 +322,12 @@ const SegmentedControl = React.memo(function SegmentedControl({
               onPress={() => {
                 if (!active) {
                   hapticFeedback.selection();
+                  // Track progress screen clicks for segment selection
+                  const segmentValue = seg.value === '90d' ? '90 days' : 
+                                     seg.value === '6m' ? '6 months' : 
+                                     seg.value === '1y' ? '1 year' : 'all time';
+                  const cardType = chartType === 'accuracyPerWeight' ? 'AW' : 'AT';
+                  track('Progress screen clicks', { event: `${cardType} ${segmentValue}` });
                   onTimeRangeChange(seg.value);
                 }
               }}
@@ -594,11 +611,12 @@ function SwipeableLineGraphCard({
             onInfoPress={onInfoPress}
             shouldRender={visible}
             cardWidth={CARD_WIDTH} // pass explicit width
+            chartType={chartType}
           />
         </View>
       );
     },
-    [onInfoPress, shouldRenderIndex]
+    [onInfoPress, shouldRenderIndex, chartType]
   );
 
   const onScroll = useCallback((e: any) => {
@@ -611,20 +629,30 @@ function SwipeableLineGraphCard({
         (processedCardData.length || 1) - 1
       )
     );
-    if (idx !== currentCardIndex) setCurrentCardIndex(idx);
-  }, [currentCardIndex, processedCardData.length]);
+    if (idx !== currentCardIndex) {
+      // Track progress screen clicks for card swipes
+      const cardType = chartType === 'accuracyPerWeight' ? 'AW' : 'AT';
+      track('Progress screen clicks', { event: `${cardType} card swiped` });
+      setCurrentCardIndex(idx);
+    }
+  }, [currentCardIndex, processedCardData.length, chartType]);
 
   const onMomentumScrollEnd = useCallback((e: any) => {
     const x = e?.nativeEvent?.contentOffset?.x || 0;
     const idx = Math.max(0, Math.min(Math.round(x / ITEM_WIDTH), (processedCardData.length || 1) - 1));
-    if (idx !== currentCardIndex) setCurrentCardIndex(idx);
-  }, [currentCardIndex, processedCardData.length]);
+    if (idx !== currentCardIndex) {
+      // Track progress screen clicks for card swipes (momentum scroll end)
+      const cardType = chartType === 'accuracyPerWeight' ? 'AW' : 'AT';
+      track('Progress screen clicks', { event: `${cardType} card swiped` });
+      setCurrentCardIndex(idx);
+    }
+  }, [currentCardIndex, processedCardData.length, chartType]);
 
 
   if (isEmpty) {
     return (
       <View style={styles.cardsContainer}>
-        <SegmentedControl timeRange={timeRange} onTimeRangeChange={setTimeRange} />
+        <SegmentedControl timeRange={timeRange} onTimeRangeChange={setTimeRange} chartType={chartType} />
         <View style={[styles.performanceCard, { width: CARD_WIDTH, height: CARD_HEIGHT }]}>
           <Text style={styles.performanceCardLabel}>{i18n.t('performance.chartTitles.noDataAvailable')}</Text>
         </View>
@@ -634,7 +662,7 @@ function SwipeableLineGraphCard({
 
   return (
     <View style={styles.cardsContainer} ref={_ref as any}>
-      <SegmentedControl timeRange={timeRange} onTimeRangeChange={setTimeRange} />
+      <SegmentedControl timeRange={timeRange} onTimeRangeChange={setTimeRange} chartType={chartType} />
 
       <View style={[styles.carouselContainer, { width: SCREEN_WIDTH, height: CARD_HEIGHT }]}>
         <FlashList
