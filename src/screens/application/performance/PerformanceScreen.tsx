@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useRef } from 'react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, Platform, TouchableOpacity, Modal, Dimensions, InteractionManager } from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
 import { Image } from 'expo-image';
@@ -13,6 +13,7 @@ import { useTutorialTarget } from '../../../context/TutorialContext';
 import { CircleQuestionMark, X, MailPlus } from 'lucide-react-native';
 import { CircularProgressChart } from '../../../components/icons/icons';
 import { openMetricsFeedbackEmail } from '../../../services/emailService';
+import { track } from '../../../services/analytics';
 
 interface PerformanceScreenProps {
   onTriggerAddOptions?: () => void;
@@ -26,6 +27,11 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
   const { currentStreak } = useUserCheckIns();
   const [infoModalVisible, setInfoModalVisible] = useState(false);
   const [infoModalContent, setInfoModalContent] = useState<{ title: string; message: string }>({ title: '', message: '' });
+  
+  // Track screen view on mount
+  useEffect(() => {
+    track('Screen viewed', { screen_name: 'Progress' });
+  }, []);
   
   // Tutorial target registration
   const { ref: performanceMetricsRef } = useTutorialTarget('performance_metrics');
@@ -148,6 +154,18 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
   // Info handlers
   const openInfoModal = (key: 'accuracyPerWeight' | 'accuracyOverTime' | 'accuracy' | 'improvement') => {
     hapticFeedback.selection();
+    
+    // Track progress screen clicks only for the metric cards (not the chart cards)
+    switch (key) {
+      case 'accuracy':
+        track('Progress screen clicks', { event: 'Accuracy info' });
+        break;
+      case 'improvement':
+        track('Progress screen clicks', { event: 'Improvement info' });
+        break;
+      // Note: accuracyPerWeight and accuracyOverTime are now tracked in SwipeableLineGraphCard
+    }
+    
     let title = '';
     let message = '';
     switch (key) {
@@ -178,6 +196,7 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
 
   const handleMetricsFeedbackPress = async () => {
     hapticFeedback.selection();
+    track('Progress screen clicks', { event: 'More features' });
     await openMetricsFeedbackEmail();
   };
 

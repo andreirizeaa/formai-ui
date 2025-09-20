@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Dimensions, Platform } from 'react-native';
 import { FlashList, ListRenderItemInfo } from '@shopify/flash-list';
 import { LineChart, BarChart } from 'react-native-chart-kit';
 import i18n from '../../utils/i18n';
+import { track } from '../../services/analytics';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 const SCREEN_WIDTH = Math.round(SCREEN_W);
@@ -117,13 +118,21 @@ export function SwipeableLiftDetailsGraphs({ data, formGraphRef, depthGraphRef }
   const onScroll = useCallback((e: any) => {
     const x = e?.nativeEvent?.contentOffset?.x || 0;
     const idx = Math.max(0, Math.min(Math.floor((x + ITEM_WIDTH / 2) / ITEM_WIDTH), (cards.length || 1) - 1));
-    if (idx !== currentIndex) setCurrentIndex(idx);
+    if (idx !== currentIndex) {
+      // Track lift details clicks for card swipe
+      track('Lift details clicks', { event: 'Card swipe' });
+      setCurrentIndex(idx);
+    }
   }, [currentIndex, cards.length]);
 
   const onMomentumScrollEnd = useCallback((e: any) => {
     const x = e?.nativeEvent?.contentOffset?.x || 0;
     const idx = Math.max(0, Math.min(Math.round(x / ITEM_WIDTH), (cards.length || 1) - 1));
-    if (idx !== currentIndex) setCurrentIndex(idx);
+    if (idx !== currentIndex) {
+      // Track lift details clicks for card swipe
+      track('Lift details clicks', { event: 'Card swipe' });
+      setCurrentIndex(idx);
+    }
   }, [currentIndex, cards.length]);
 
   const renderItem = useCallback(({ item, index }: ListRenderItemInfo<CardKind>) => {

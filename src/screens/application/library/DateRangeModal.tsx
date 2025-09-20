@@ -4,6 +4,7 @@ import { Picker } from '@react-native-picker/picker';
 import { hapticFeedback } from '../../../utils/haptic';
 import i18n from '../../../utils/i18n';
 import { X } from 'lucide-react-native';
+import { track } from '../../../services/analytics';
 
 interface DateRange {
   from: { month: number; day: number; year: number } | null;
@@ -81,11 +82,15 @@ export function DateRangeModal({
 
   const handleApply = () => {
     hapticFeedback.success();
+    // Track library screen clicks for apply button
+    track('Library screen clicks', { event: 'Date range apply' });
     onClose();
   };
 
   const handleReset = () => {
     hapticFeedback.success();
+    // Track library screen clicks for reset button
+    track('Library screen clicks', { event: 'Date range reset' });
     onReset();
     onClose();
   };

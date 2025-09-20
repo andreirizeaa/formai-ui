@@ -18,6 +18,7 @@ import { useUserDetails } from '../../../context/UserDetailsContext';
 import { useUserCheckIns } from '../../../context/UserCheckInsContext';
 import i18n from '../../../utils/i18n';
 import { VideoPlayerComponentProps, LiftDetailsProps } from '../../../types/Lifts';
+import { track } from '../../../services/analytics';
 
 function VideoPlayerComponent({ videoUri, onReady }: { videoUri: string | number; onReady: () => void }) {
   const player = useVideoPlayer(videoUri as any, (player) => {
@@ -55,6 +56,11 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
   const [isUpdatingWeight, setIsUpdatingWeight] = useState(false);
   const [editWeight, setEditWeight] = useState('');
   const editWeightInputRef = useRef<TextInput>(null);
+  
+  // Track screen view on mount
+  useEffect(() => {
+    track('Screen viewed', { screen_name: 'Lift Details' });
+  }, []);
   
   // Tutorial target for the review feedback button
   const { ref: reviewFeedbackRef } = useTutorialTarget('lift_details_review_feedback');
@@ -113,6 +119,8 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
 
   const handleReviewFeedback = () => {
     hapticFeedback.selection();
+    // Track lift details clicks for review feedback
+    track('Lift details clicks', { event: 'Review feedback' });
     // Navigate to HowItWorks screen instead of directly to FeedbackSlideshow
     // The navigation will be handled by the parent component
     onShowFeedbackSlideshow();
@@ -124,6 +132,8 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
   };
 
   const handleDeleteConfirm = async () => {
+    // Track lift details clicks for delete submit
+    track('Lift details clicks', { event: 'Delete submit' });
     setIsDeleting(true);
     try {
       const success = await deleteLift(currentLiftData.id, currentLiftData);
@@ -156,11 +166,15 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
 
   const handleDeleteCancel = () => {
     hapticFeedback.selection();
+    // Track lift details clicks for delete cancel
+    track('Lift details clicks', { event: 'Delete cancel' });
     setShowDeleteModal(false);
   };
 
   const handleStarPress = async () => {
     hapticFeedback.selection();
+    // Track lift details clicks for favourite
+    track('Lift details clicks', { event: 'Favourite' });
     
     // Immediately toggle the favourite state
     setIsFavourite(prev => !prev);
@@ -174,6 +188,8 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
 
   const handleActionSheet = () => {
     hapticFeedback.selection();
+    // Track lift details clicks for open menu
+    track('Lift details clicks', { event: 'Open menu' });
     setShowDropdown(!showDropdown);
   };
 
@@ -185,12 +201,16 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
 
   const handleDelete = () => {
     hapticFeedback.selection();
+    // Track lift details clicks for delete
+    track('Lift details clicks', { event: 'Delete' });
     setShowDropdown(false);
     handleDeleteLift();
   };
 
   const handleEditWeight = () => {
     hapticFeedback.selection();
+    // Track lift details clicks for edit weight
+    track('Lift details clicks', { event: 'Edit weight' });
     // Initialize edit weight with current weight value
     const currentWeight = userDetails?.unitSystem === 'imperial' 
       ? Math.round((currentLiftData.metricWeight || 0) * 2.20462).toString()
@@ -201,12 +221,16 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
 
   const handleEditWeightCancel = () => {
     hapticFeedback.selection();
+    // Track lift details clicks for edit weight reset
+    track('Lift details clicks', { event: 'Edit weight cancel' });
     setShowEditWeightModal(false);
     setEditWeight('');
   };
 
   const handleEditWeightApply = async () => {
     hapticFeedback.selection();
+    // Track lift details clicks for edit weight apply
+    track('Lift details clicks', { event: 'Edit weight apply' });
     const metricWeight = parseFloat(editWeight);
     if (metricWeight > 0 && !isUpdatingWeight) {
       setIsUpdatingWeight(true);
@@ -236,7 +260,9 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
           setEditWeight('');
           showAlert(
             i18n.t('feedback.updateFailed.weight'), 
-            i18n.t('feedback.updateFailed.message')
+            i18n.t('feedback.updateFailed.message'),
+            undefined,
+            'Weight edit failed'
           );
         }
       } catch (error) {
@@ -245,7 +271,9 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
         setEditWeight('');
         showAlert(
           i18n.t('feedback.updateFailed.weight'), 
-          i18n.t('feedback.updateFailed.message')
+          i18n.t('feedback.updateFailed.message'),
+          undefined,
+          'Weight edit failed'
         );
       } finally {
         setIsUpdatingWeight(false);

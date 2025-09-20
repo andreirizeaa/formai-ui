@@ -4,6 +4,7 @@ import { gymMovements } from '../../../constants/gymMovements';
 import { hapticFeedback } from '../../../utils/haptic';
 import i18n from '../../../utils/i18n';
 import { Check, X } from 'lucide-react-native';
+import { track } from '../../../services/analytics';
 
 interface FilterModalProps {
   isVisible: boolean;
@@ -48,6 +49,8 @@ export function FilterModal({
 
   const handleApply = () => {
     hapticFeedback.success();
+    // Track library screen clicks for apply button
+    track('Library screen clicks', { event: 'Filter apply' });
     onFilterSelect(selectedMovements);
     onClose();
   };
@@ -59,6 +62,8 @@ export function FilterModal({
 
   const handleReset = () => {
     hapticFeedback.success();
+    // Track library screen clicks for reset button
+    track('Library screen clicks', { event: 'Filter reset' });
     setSelectedMovements([]);
     onFilterSelect([]);
     onClose();
@@ -109,7 +114,13 @@ export function FilterModal({
                   style={styles.searchInput}
                   placeholder={i18n.t('library.searchMovements')}
                   value={searchQuery}
-                  onChangeText={setSearchQuery}
+                  onChangeText={(text) => {
+                    // Track library screen clicks for search box
+                    if (text.length > 0 && searchQuery.length === 0) {
+                      track('Library screen clicks', { event: 'Filter lifts search' });
+                    }
+                    setSearchQuery(text);
+                  }}
                   placeholderTextColor="#8E8E93"
                 />
                 {searchQuery.length > 0 && (

@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Modal, ActivityIndicator } fr
 import i18n from '../../utils/i18n';
 import { hapticFeedback } from '../../utils/haptic';
 import { X } from 'lucide-react-native';
+import { track } from '../../services/analytics';
 
 interface DuplicateVideoModalProps {
   isVisible: boolean;
@@ -19,8 +20,17 @@ export function DuplicateVideoModal({
 }: DuplicateVideoModalProps) {
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
 
+  // Track when modal appears
+  React.useEffect(() => {
+    if (isVisible) {
+      track('Add analysis', { event: 'Duplicate' });
+    }
+  }, [isVisible]);
+
   const handleViewAnalysis = async () => {
     hapticFeedback.selection();
+    // Track add analysis clicks for duplicate view existing
+    track('Add analysis', { event: 'Duplicate, view existing' });
     setIsLoadingAnalysis(true);
     try {
       await onViewAnalysis();
@@ -31,6 +41,8 @@ export function DuplicateVideoModal({
 
   const handleSelectNewVideo = () => {
     hapticFeedback.selection();
+    // Track add analysis clicks for duplicate select new
+    track('Add analysis', { event: 'Duplicate, select new' });
     onClose();
     setTimeout(() => {
       try { onSelectNewVideo(); } catch (_) {}

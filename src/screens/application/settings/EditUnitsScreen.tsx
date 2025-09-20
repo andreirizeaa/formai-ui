@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
@@ -8,18 +8,24 @@ import { useUserDetails } from '../../../context/UserDetailsContext';
 import { editUserDetails } from '../../../services/userService';
 import { ChevronLeft } from 'lucide-react-native';
 import { AnimatedOptionButton } from '../../../components/onboarding/AnimatedOptionButton';
+import { track } from '../../../services/analytics';
 
-interface UnitsDetailsScreenProps {
+interface EditUnitsScreenProps {
   onBack: () => void;
 }
 
-export function UnitsDetailsScreen({ onBack }: UnitsDetailsScreenProps) {
+export function EditUnitsScreen({ onBack }: EditUnitsScreenProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const { userDetails } = useUserDetails();
   const [selectedUnit, setSelectedUnit] = React.useState(userDetails?.unitSystem ?? 'metric');
   const [isSaving, setIsSaving] = React.useState(false);
   const { updateUnitSystem } = useUserDetails();
+
+  // Track screen view on mount
+  useEffect(() => {
+    track('Screen viewed', { screen_name: 'Edit Units' });
+  }, []);
 
   const handleUnitSelect = (unitSystem: 'metric' | 'imperial') => {
     hapticFeedback.selection();
@@ -29,6 +35,8 @@ export function UnitsDetailsScreen({ onBack }: UnitsDetailsScreenProps) {
   const handleSave = async () => {
     if (isSaving) return;
     hapticFeedback.selection();
+    // Track library screen clicks for save
+    track('Library screen clicks', { event: 'Save new units' });
     setIsSaving(true);
     try {
       const unit = (selectedUnit as 'metric' | 'imperial') ?? 'metric';
@@ -39,10 +47,10 @@ export function UnitsDetailsScreen({ onBack }: UnitsDetailsScreenProps) {
     } catch (e) {
       hapticFeedback.error();
       setSelectedUnit(userDetails?.unitSystem ?? 'metric');
-      Alert.alert(i18n.t('settings.editFailed.unitSystem'), i18n.t('settings.editFailed.message'), [{ text: 'Ok', onPress: () => {
+      showAlert(i18n.t('settings.editFailed.unitSystem'), i18n.t('settings.editFailed.message'), () => {
         hapticFeedback.selection();
         onBack();
-      } }]);
+      }, 'Units edit failed');
     }
     setIsSaving(false);
   };
@@ -243,5 +251,4 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
-}); 
-
+});

@@ -5,6 +5,7 @@ import { useSelectedDate } from './SelectedDateContext';
 import { hapticFeedback } from '../utils/haptic';
 import { editUserDetails } from '../services/userService';
 import i18n from '../utils/i18n';
+import { track } from '../services/analytics';
 
 // Global type declarations for tutorial functions
 declare global {
@@ -471,6 +472,8 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       tooltipPlacement: 'bottom',
       onNext: async () => {
         try {
+          // Track tutorial completion
+          track('Tutorials', { data: 'completed' });
           // Use the new finish and restore data function
           try { await global.finishTutorialAndRestoreData?.(); } catch {}
           try { (global as any).navigateToHome?.(); } catch {}
