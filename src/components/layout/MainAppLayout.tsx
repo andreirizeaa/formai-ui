@@ -8,6 +8,7 @@ import { TutorialLiftSeeder } from '../../context/LiftDataContext';
 import { TutorialOverlay } from '../TutorialOverlay';
 import { hapticFeedback } from '../../utils/haptic';
 import { LoadingScreen } from '../../screens/onboarding/LoadingScreen';
+import { getUserJustPaid, clearUserJustPaid } from '../../services/storageService';
 
 interface MainAppLayoutProps {
   children?: React.ReactNode;
@@ -30,16 +31,31 @@ export function MainAppLayout({ children, onLogout }: MainAppLayoutProps) {
   }, []);
 
   React.useEffect(() => {
-    // Only show welcome modal if walkthrough is explicitly not completed
-    // Add a delay to prevent showing during initial app load
-    if (userDetails && userDetails.walkthroughCompleted === false) {
-      const timer = setTimeout(() => {
-        setShowWelcome(true);
-        hapticFeedback.success();
-      }, 500); // Short delay after main loading is complete
-      
-      return () => clearTimeout(timer);
-    }
+    const checkWelcomeConditions = async () => {
+      if (!userDetails) return;
+
+      // Check if user just completed payment as a failsafe
+      const userJustPaid = await getUserJustPaid();
+
+      // Show welcome modal if:
+      // 1. Walkthrough is explicitly not completed, OR
+      // 2. User just completed payment (failsafe)
+      if (userDetails.walkthroughCompleted === false || userJustPaid) {
+        // Clear the payment flag since we're handling it
+        if (userJustPaid) {
+          await clearUserJustPaid();
+        }
+
+        const timer = setTimeout(() => {
+          setShowWelcome(true);
+          hapticFeedback.success();
+        }, 500); // Short delay after main loading is complete
+
+        return () => clearTimeout(timer);
+      }
+    };
+
+    checkWelcomeConditions();
   }, [userDetails]);
 
   const handleGetStarted = async () => {

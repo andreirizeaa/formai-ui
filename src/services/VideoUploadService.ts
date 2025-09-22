@@ -1,7 +1,7 @@
-import { Alert } from 'react-native';
 import { supabase } from '../lib/supabase';
 import * as FileSystem from 'expo-file-system';
 import { Video as VideoCompressor } from 'react-native-compressor';
+import { showAlert } from './alertService';
 
 function base64ToArrayBuffer(base64: string): ArrayBuffer {
   const base64Chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
@@ -164,7 +164,12 @@ export async function listUserVideoPaths(userId: string): Promise<string[]> {
       });
 
     if (liftFoldersError) {
-      Alert.alert('Error', 'Unable to access your videos. Please try again.');
+      showAlert(
+        'Error', 
+        'Unable to access your videos. Please try again.',
+        undefined,
+        'VIDEO_UPLOAD_SERVICE_LIFT_FOLDERS_ERROR'
+      );
       return [];
     }
 
@@ -186,7 +191,12 @@ export async function listUserVideoPaths(userId: string): Promise<string[]> {
             });
 
           if (videosError) {
-            Alert.alert('Error', 'Unable to access your videos. Please try again.');
+            showAlert(
+              'Error', 
+              'Unable to access your videos. Please try again.',
+              undefined,
+              'VIDEO_UPLOAD_SERVICE_VIDEOS_ERROR'
+            );
             continue;
           }
 
@@ -198,7 +208,13 @@ export async function listUserVideoPaths(userId: string): Promise<string[]> {
 
           allAssetIds.push(...liftAssetIds);
         } catch (error) {
-          Alert.alert('Error', 'Unable to process your videos. Please try again.');
+          showAlert(
+            'Error', 
+            'Unable to process your videos. Please try again.',
+            undefined,
+            'VIDEO_UPLOAD_SERVICE_PROCESS_ERROR',
+            error
+          );
           continue;
         }
       }
@@ -206,7 +222,13 @@ export async function listUserVideoPaths(userId: string): Promise<string[]> {
 
     return allAssetIds;
   } catch (error) {
-    Alert.alert('Error', 'Unable to access your videos. Please try again.');
+    showAlert(
+      'Error', 
+      'Unable to access your videos. Please try again.',
+      undefined,
+      'VIDEO_UPLOAD_SERVICE_GENERAL_ERROR',
+      error
+    );
     return [];
   }
 }

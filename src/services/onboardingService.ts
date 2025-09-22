@@ -29,6 +29,7 @@ function buildOnboardingPayload(input: OnboardingData): { info: Record<string, a
     birthDate: 'birth_date',
     hasRated: 'has_rated',
     walkthroughCompleted: 'walkthrough_completed',
+    referralCode: 'referral_code',
   };
   const onboardingMapping: Record<string, string> = {
     workoutsPerWeek: 'workouts_per_week',

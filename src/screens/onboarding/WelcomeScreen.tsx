@@ -70,24 +70,26 @@ export function WelcomeScreen({ onGetStarted, onSignIn }: WelcomeScreenProps) {
       </View>
 
       {/* Content area with text and buttons */}
-      <View style={styles.content}>
-        <Text style={styles.subtitle}>
-          {i18n.t('welcome.subtitle')}.
-        </Text>
-      </View>
-
-      <View style={styles.actions}>
-        <OrangeGradientButton
-          title={`${i18n.t('getStarted')}!`}
-          onPress={handleGetStarted}
-          style={styles.getStartedButton}
-        />
-
-        <TouchableOpacity onPress={handleSignIn} activeOpacity={0.7}>
-          <Text style={styles.signInText}>
-            {i18n.t('signIn')}
+      <View style={styles.contentContainer}>
+        <View style={styles.content}>
+          <Text style={styles.subtitle}>
+            {i18n.t('welcome.subtitle')}.
           </Text>
-        </TouchableOpacity>
+        </View>
+
+        <View style={styles.actions}>
+          <OrangeGradientButton
+            title={`${i18n.t('getStarted')}!`}
+            onPress={handleGetStarted}
+            style={styles.getStartedButton}
+          />
+
+          <TouchableOpacity onPress={handleSignIn} activeOpacity={0.7}>
+            <Text style={styles.signInText}>
+              {i18n.t('signIn')}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
       </SafeAreaView>
     </Animated.View>
@@ -103,10 +105,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingTop: 20,
+    marginBottom: -100,
   },
   photo: {
     width: '100%',
     height: '90%',
+  },
+  contentContainer: {
+    paddingTop: 20,
+    backgroundColor: '#FFFFFF',
+    zIndex: 10,
   },
   content: {
     paddingBottom: 20,

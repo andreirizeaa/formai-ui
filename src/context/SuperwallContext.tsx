@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useEffect, ReactNode } from 'react';
-import { Alert } from 'react-native';
 import { CustomPurchaseControllerProvider, SuperwallProvider as ExpoSuperwallProvider, SuperwallLoaded, useUser } from 'expo-superwall';
 import Purchases from 'react-native-purchases';
 import { usePurchases } from './PurchasesContext';
+import { showAlert } from '../services/alertService';
 
 interface SuperwallContextValue {
   // Add any Superwall-specific state or methods here if needed
@@ -48,7 +48,13 @@ function SubscriptionSync() {
           }))
         });
       } catch (error) {
-        Alert.alert('Error', 'Unable to sync subscription status. Please check your connection.');
+        showAlert(
+          'Error', 
+          'Unable to sync subscription status. Please check your connection.',
+          undefined,
+          'SUPERWALL_CONTEXT_SYNC_ERROR',
+          error
+        );
       }
     };
     

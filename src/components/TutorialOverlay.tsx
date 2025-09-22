@@ -1,10 +1,11 @@
 import React from 'react';
-import { Modal, View, Text, TouchableOpacity, StyleSheet, Platform, Dimensions, ActivityIndicator, Alert } from 'react-native';
+import { Modal, View, Text, TouchableOpacity, StyleSheet, Platform, Dimensions, ActivityIndicator } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LottieView from 'lottie-react-native';
 import { OrangeGradientButton } from './ui/OrangeGradientButton';
 import { useTutorial } from '../context/TutorialContext';
 import { useUserDetails } from '../context/UserDetailsContext';
+import { showAlert } from '../services/alertService';
 import Svg, { Path, Rect } from 'react-native-svg';
 import { hapticFeedback } from '../utils/haptic';
 import i18n from '../utils/i18n';
@@ -200,7 +201,13 @@ export function TutorialOverlay() {
                       await stop();
                     }
                   } catch (error) {
-                    Alert.alert('Error', 'An error occurred while skipping the tutorial. Please try again.');
+                    showAlert(
+                      'Error', 
+                      'An error occurred while skipping the tutorial. Please try again.',
+                      undefined,
+                      'TUTORIAL_OVERLAY_SKIP_ERROR',
+                      error
+                    );
                   }
                 }}
                 activeOpacity={0.8}

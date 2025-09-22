@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, Alert, Keyboard, Linking, Animated } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Keyboard, Linking, Animated } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -23,6 +23,7 @@ import type { MainStackParamList } from '../../../../navigation/MainAppNavigator
 import { DuplicateVideoModal } from '../../../../components/ui/DuplicateVideoModal';
 import { VideoTooLongModal } from '../../../../components/ui/VideoTooLongModal';
 import { VideoTooShortModal } from '../../../../components/ui/VideoTooShortModal';
+import { showAlert } from '../../../../services/alertService';
 
 interface UploadModalProps {
   isVisible: boolean;
@@ -316,20 +317,18 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     
     if (permissionResult.status !== 'granted') {
-      Alert.alert(
+      showAlert(
         i18n.t('upload.permissionRequired'),
         i18n.t('upload.permissionMessage'),
-        [
-          { text: i18n.t('upload.cancel'), style: 'cancel' },
-          { text: i18n.t('upload.settings'), onPress: () => {
-            // Open app settings
-            if (Platform.OS === 'ios') {
-              Linking.openURL('app-settings:');
-            } else {
-              Linking.openSettings();
-            }
-          }}
-        ]
+        () => {
+          // Open app settings
+          if (Platform.OS === 'ios') {
+            Linking.openURL('app-settings:');
+          } else {
+            Linking.openSettings();
+          }
+        },
+        'UPLOAD_PERMISSION_REQUIRED'
       );
       return;
     }
@@ -359,13 +358,21 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
     } catch (error) {
       // Handle permission errors specifically
       if (error instanceof Error && error.message.includes('permission')) {
-        Alert.alert(
+        showAlert(
           i18n.t('upload.permissionRequired'),
           i18n.t('upload.permissionMessage'),
-          [{ text: i18n.t('upload.ok') }]
+          undefined,
+          'UPLOAD_PERMISSION_ERROR',
+          error
         );
       } else {
-        Alert.alert(i18n.t('upload.error'), i18n.t('upload.failedToSelectVideo'));
+        showAlert(
+          i18n.t('upload.error'), 
+          i18n.t('upload.failedToSelectVideo'),
+          undefined,
+          'UPLOAD_FAILED_TO_SELECT_VIDEO',
+          error
+        );
       }
     }
   };
@@ -382,20 +389,18 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     
     if (permissionResult.status !== 'granted') {
-      Alert.alert(
+      showAlert(
         i18n.t('upload.permissionRequired'),
         i18n.t('upload.permissionMessage'),
-        [
-          { text: i18n.t('upload.cancel'), style: 'cancel' },
-          { text: i18n.t('upload.settings'), onPress: () => {
-            // Open app settings
-            if (Platform.OS === 'ios') {
-              Linking.openURL('app-settings:');
-            } else {
-              Linking.openSettings();
-            }
-          }}
-        ]
+        () => {
+          // Open app settings
+          if (Platform.OS === 'ios') {
+            Linking.openURL('app-settings:');
+          } else {
+            Linking.openSettings();
+          }
+        },
+        'UPLOAD_SELECT_NEW_VIDEO_PERMISSION_REQUIRED'
       );
       return;
     }
@@ -424,13 +429,21 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
     } catch (error) {
       // Handle permission errors specifically
       if (error instanceof Error && error.message.includes('permission')) {
-        Alert.alert(
+        showAlert(
           i18n.t('upload.permissionRequired'),
           i18n.t('upload.permissionMessage'),
-          [{ text: i18n.t('upload.ok') }]
+          undefined,
+          'UPLOAD_SELECT_NEW_VIDEO_PERMISSION_ERROR',
+          error
         );
       } else {
-        Alert.alert(i18n.t('upload.error'), i18n.t('upload.failedToSelectVideo'));
+        showAlert(
+          i18n.t('upload.error'), 
+          i18n.t('upload.failedToSelectVideo'),
+          undefined,
+          'UPLOAD_SELECT_NEW_VIDEO_FAILED',
+          error
+        );
       }
     }
   };
@@ -573,7 +586,13 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
       
       hapticFeedback.success();
     } catch (error) {
-      Alert.alert(i18n.t('upload.error'), i18n.t('upload.failedToGenerateThumbnail'));
+      showAlert(
+        i18n.t('upload.error'), 
+        i18n.t('upload.failedToGenerateThumbnail'),
+        undefined,
+        'UPLOAD_FAILED_TO_GENERATE_THUMBNAIL',
+        error
+      );
     }
   };
 

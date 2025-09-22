@@ -1,7 +1,7 @@
-import { Alert } from 'react-native';
 import { QueryClient } from '@tanstack/react-query';
 import { clearAllLoadingLifts } from './loadingLiftsStorage';
 import { clearAllUserData } from './storageService';
+import { showAlert } from './alertService';
 
 // Global context reset functions - these will be set by the contexts themselves
 let resetLiftDataContext: (() => void) | null = null;
@@ -79,7 +79,13 @@ export async function clearUserSpecificData(queryClient: QueryClient, userId: st
     await clearAllUserData();
     
   } catch (error) {
-    Alert.alert('Error', 'An error occurred while clearing your data. Please try again.');
+    showAlert(
+      'Error', 
+      'An error occurred while clearing your data. Please try again.',
+      undefined,
+      'CONTEXT_CLEANUP_SERVICE_ERROR',
+      error
+    );
     throw error;
   }
 }

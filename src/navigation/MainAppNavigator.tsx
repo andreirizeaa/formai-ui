@@ -1,11 +1,15 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import { Alert } from 'react-native';
+import { navigationRef } from '../services/navigationService';
+import { eventBus, AppEvents } from '../services/event-bus';
+import { openLiftById, navigateToFailedLiftDate } from '../services/navigationService';
+import { handleColdStartNotificationIfAny } from '../services/notificationNavigation';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
 import { View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { showAlert } from '../services/alertService';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { track } from '../services/analytics';
 import { HomeScreen } from '../screens/application/home/HomeScreen';
@@ -31,6 +35,7 @@ import { useLiftData } from '../context/LiftDataContext';
 import { supabase } from '../lib/supabase';
 import { extractObjectKeyFromUrl, signPath } from '../context/LiftDataContext';
 import { useUserDetails } from '../context/UserDetailsContext';
+import { getUserJustPaid, clearUserJustPaid } from '../services/storageService';
 
 // Types for navigation
 export type MainTabParamList = {
@@ -123,84 +128,7 @@ function HomeScreenWrapper() {
     }
   };
 
-  React.useEffect(() => {
-    (global as any).openLiftById = async (liftId: string) => {
-      try {
-        const lift = getLiftById(liftId);
-        if (lift) {
-          navigation.navigate('LiftDetails', { liftData: lift });
-          return;
-        }
-
-        // Fallback: fetch the lift by id and navigate
-        const { data, error } = await supabase
-          .from('lifts')
-          .select('id, is_favourite, lift_type, lift_date, lift_time, metric_weight, reps, raw_video_url, pose_video_url, thumbnail_url, analysis')
-          .eq('id', liftId)
-          .maybeSingle();
-        if (error || !data) {
-          (global as any).pendingLiftId = liftId;
-          // Optionally bring user to home tab
-          try { (global as any).navigateToHome?.(); } catch {}
-          return;
-        }
-
-        const thumbKey = await extractObjectKeyFromUrl(data.thumbnail_url);
-        const rawKey = await extractObjectKeyFromUrl(data.raw_video_url);
-        const poseKey = await extractObjectKeyFromUrl(data.pose_video_url);
-        const [thumbnailURL, rawVideoURL, poseVideoURL] = await Promise.all([
-          signPath(thumbKey),
-          signPath(rawKey),
-          signPath(poseKey),
-        ]);
-        const mapped = {
-          id: data.id,
-          isFavourite: !!data.is_favourite,
-          liftType: data.lift_type,
-          liftDate: new Date(data.lift_date).toLocaleDateString('en-GB').replace(/\//g, '-'),
-          liftTime: data.lift_time,
-          metricWeight: Number(data.metric_weight),
-          reps: Number(data.reps),
-          rawVideoURL,
-          poseVideoURL,
-          thumbnailURL,
-          analysis: {
-            accuracy: Number(data.analysis?.accuracy ?? 0),
-            lineGraphValues: Array.isArray(data.analysis?.lineGraphValues) ? data.analysis.lineGraphValues : [],
-            barChartValues: Array.isArray(data.analysis?.barChartValues) ? data.analysis.barChartValues : [],
-            feedback: Array.isArray(data.analysis?.feedback) ? data.analysis.feedback : [],
-          },
-        } as ILiftData;
-        navigation.navigate('LiftDetails', { liftData: mapped });
-      } catch {
-        (global as any).pendingLiftId = liftId;
-        try { (global as any).navigateToHome?.(); } catch {}
-      }
-    };
-    // If app launched from notification before navigator mounted, process pending lift id now
-    if ((global as any).pendingLiftId) {
-      const id = (global as any).pendingLiftId as string;
-      try { delete (global as any).pendingLiftId; } catch {}
-      try { (global as any).openLiftById?.(id); } catch {}
-    }
-    return () => {
-      try {
-        delete (global as any).openLiftById;
-      } catch {}
-    };
-  }, [getLiftById, navigation]);
-
-  // If lifts finished loading and we have a pending lift id, try to open now
-  React.useEffect(() => {
-    if (isLiftDataLoaded && (global as any).pendingLiftId) {
-      const id = (global as any).pendingLiftId as string;
-      try { delete (global as any).pendingLiftId; } catch {}
-      const lift = getLiftById(id);
-      if (lift) {
-        navigation.navigate('LiftDetails', { liftData: lift });
-      }
-    }
-  }, [isLiftDataLoaded, getLiftById, navigation]);
+  // Navigation is now handled by the centralized navigation service
 
   return (
     <HomeScreen 
@@ -425,7 +353,12 @@ function EditDateOfBirthScreenWrapper() {
     if (dateRegex.test(newValue)) {
       updateUserDetails('dateOfBirth', newValue);
     } else {
-      Alert.alert('Error', 'Invalid date format. Please try again.');
+      showAlert(
+        'Error', 
+        'Invalid date format. Please try again.',
+        undefined,
+        'MAIN_APP_NAVIGATOR_INVALID_DATE_FORMAT'
+      );
     }
     navigation.goBack();
   };
@@ -659,6 +592,17 @@ function MainTabsNavigator({ onLogout }: { onLogout?: () => void }) {
     navigation.navigate('RecordModal');
   };
 
+  // Check for payment failsafe on mount
+  React.useEffect(() => {
+    const checkPaymentFailsafe = async () => {
+      const userJustPaid = await getUserJustPaid();
+      if (userJustPaid) {
+        // The MainAppLayout should handle showing the welcome modal
+      }
+    };
+    checkPaymentFailsafe();
+  }, []);
+
   // Expose the add press function globally
   React.useEffect(() => {
     global.triggerAddOptions = handleAddPress;
@@ -687,6 +631,8 @@ function MainTabsNavigator({ onLogout }: { onLogout?: () => void }) {
           global.clearTemporaryLifts();
         }
       }
+      // Clear the userJustPaid flag when tutorial completes
+      await clearUserJustPaid();
       // Navigate to home tab
       handleTabPress('home');
     };
@@ -752,7 +698,36 @@ function MainTabsNavigator({ onLogout }: { onLogout?: () => void }) {
 // Main stack navigator
 export function MainAppNavigator({ onLogout }: { onLogout?: () => void }) {
   return (
-    <NavigationContainer>
+    <NavigationContainer
+      ref={navigationRef}
+      onReady={async () => {
+        // Signal that navigation is ready
+        eventBus.emit(AppEvents.NavReady);
+
+        // Wait a bit for contexts to be fully loaded before handling pending navigation
+        await new Promise(resolve => setTimeout(resolve, 200));
+
+        // Handle any pending navigation from notifications
+        if ((global as any).pendingLiftId) {
+          const liftId = (global as any).pendingLiftId;
+          (global as any).pendingLiftId = undefined;
+
+          // Add a delay to ensure all contexts are fully initialized
+          setTimeout(() => {
+            openLiftById(liftId);
+          }, 500);
+        }
+
+        if ((global as any).pendingFailedLiftNavigation) {
+          const { assetId, liftId } = (global as any).pendingFailedLiftNavigation;
+          (global as any).pendingFailedLiftNavigation = undefined;
+          navigateToFailedLiftDate(assetId, liftId);
+        }
+
+        // Handle cold start notification if any
+        await handleColdStartNotificationIfAny();
+      }}
+    >
         <Stack.Navigator
           initialRouteName="MainTabs"
           screenOptions={{

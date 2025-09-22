@@ -225,7 +225,7 @@ export const LiftCard = memo(function LiftCard({
       'worklet';
       const swipe = Math.abs(translateX.value);
       if (swipe > swipeWidth.value * 0.2) {
-        translateX.value = withTiming(-swipeWidth.value * 0.3, {
+        translateX.value = withTiming(-swipeWidth.value * 0.25, {
           duration: 200,
           easing: Easing.out(Easing.quad),
         });
@@ -333,6 +333,27 @@ export const LiftCard = memo(function LiftCard({
     setPrevPhase(null);
     crossfade.value = 1;
   }, [currentPhase]);
+
+  // Track error display when phase changes to error
+  useEffect(() => {
+    if (currentPhase === 'error' && lift && isLoadingLift(lift) && lift.errorMessage) {
+      let errorType = 'UNKNOWN_ERROR';
+      if (lift.errorMessage === 'No lift found') errorType = 'NO_LIFT_FOUND';
+      else if (lift.errorMessage === 'Lift mismatch') errorType = 'WRONG_MOVEMENT';
+      else if (lift.errorMessage.includes('Failed to upload')) errorType = 'UPLOAD_FAILED';
+      else if (lift.errorMessage.includes('Missing assetId')) errorType = 'MISSING_ASSET_ID';
+      else if (lift.errorMessage.includes('No userId')) errorType = 'NO_USER_ID';
+      else if (lift.errorMessage.includes('Temporary issue')) errorType = 'SOFT_FAIL';
+      else if (lift.errorMessage.includes('Error occurred')) errorType = 'ERROR_OCCURED';
+
+      // Only track if not already tracked for this lift
+      const errorKey = `${lift.id}-${errorType}`;
+      if (!trackedErrorsRef.current.has(errorKey)) {
+        trackedErrorsRef.current.add(errorKey);
+        track('Errors', { type: errorType });
+      }
+    }
+  }, [currentPhase, lift]);
 
   // prev fades OUT (slower power curve)
   const SLOW_OUT_GAMMA = 6; // bigger = slower fade-out at the start
@@ -505,13 +526,44 @@ export const LiftCard = memo(function LiftCard({
   const handleRetry = useCallback(async () => {
     if (!lift || !isLoadingLift(lift)) return;
     hapticFeedback.selection();
+
+    // Reset progress based on failure stage before retrying
+    const getRetryStartProgress = (failureStage?: string, errorMessage?: string) => {
+      if (!failureStage) {
+        // Determine stage from error message if failureStage is not available
+        if (errorMessage?.includes('Failed to upload')) return 0.02; // Start from beginning for upload errors
+        if (errorMessage?.includes('Missing assetId') || errorMessage?.includes('No userId')) return 0.02;
+        return 0.4; // Default to analysis stage for unknown errors
+      }
+
+      switch (failureStage) {
+        case 'upload_video':
+        case 'upload_thumbnail':
+          return 0.02; // Start from 2% for upload failures
+        case 'analyze':
+          return 0.4; // Start from 40% for analysis failures (after upload/pose estimation)
+        default:
+          return 0.02;
+      }
+    };
+
+    const retryProgress = getRetryStartProgress(lift.failureStage, lift.errorMessage);
+
+    // Reset progress values immediately for visual feedback
+    targetProgress.value = retryProgress;
+    progressRender.value = retryProgress;
+    setProgressPercentage(Math.round(retryProgress * 100));
+
+    // Update the lift progress in context to match the visual state and reset simulation timing
+    updateLiftProgress(lift.id, retryProgress);
+
     try {
       await retryLift(lift.id);
     } catch (error) {
       // Track retry error
       track('Errors', { type: 'RETRY_FAILED' });
     }
-  }, [lift, retryLift]);
+  }, [lift, retryLift, targetProgress, progressRender, updateLiftProgress]);
 
   // ================== shared "card shell" ==================
   // common geometry used by both states
@@ -584,27 +636,6 @@ export const LiftCard = memo(function LiftCard({
     }
 
     if (phase === 'error') {
-      // Track error display once per phase change
-      React.useEffect(() => {
-        if (lift && isLoadingLift(lift) && lift.errorMessage) {
-          let errorType = 'UNKNOWN_ERROR';
-          if (lift.errorMessage === 'No lift found') errorType = 'NO_LIFT_FOUND';
-          else if (lift.errorMessage === 'Lift mismatch') errorType = 'WRONG_MOVEMENT';
-          else if (lift.errorMessage.includes('Failed to upload')) errorType = 'UPLOAD_FAILED';
-          else if (lift.errorMessage.includes('Missing assetId')) errorType = 'MISSING_ASSET_ID';
-          else if (lift.errorMessage.includes('No userId')) errorType = 'NO_USER_ID';
-          else if (lift.errorMessage.includes('Temporary issue')) errorType = 'SOFT_FAIL';
-          else if (lift.errorMessage.includes('Error occurred')) errorType = 'ERROR_OCCURED';
-
-          // Only track if not already tracked for this lift
-          const errorKey = `${lift.id}-${errorType}`;
-          if (!trackedErrorsRef.current.has(errorKey)) {
-            trackedErrorsRef.current.add(errorKey);
-            track('Errors', { type: errorType });
-          }
-        }
-      }, [phase, lift]);
-
       return (
         <View style={styles.liftContent}>
           <View style={styles.topRow}>

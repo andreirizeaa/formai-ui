@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, ScrollView, Animated, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, ScrollView, Animated, ActivityIndicator } from 'react-native';
 import { Image, ImageBackground } from 'expo-image';
 import Constants from 'expo-constants';
 import * as StoreReview from 'expo-store-review';
@@ -376,12 +376,24 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
         await StoreReview.requestReview();
       }
     } catch (error) {
-      Alert.alert('Error', 'Unable to open the app store. Please try again later.');
+      showAlert(
+        'Error', 
+        'Unable to open the app store. Please try again later.',
+        undefined,
+        'SETTINGS_APP_STORE_ERROR',
+        error
+      );
       // Still try to open the store as fallback
       try {
         await StoreReview.requestReview();
       } catch (fallbackError) {
-        Alert.alert('Error', 'Unable to open the app store. Please try again later.');
+        showAlert(
+          'Error', 
+          'Unable to open the app store. Please try again later.',
+          undefined,
+          'SETTINGS_APP_STORE_FALLBACK_ERROR',
+          fallbackError
+        );
       }
     }
   };
@@ -400,7 +412,13 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
       // Track paywall completion
       track('Low quality paywall complete', { source: 'settings' });
     } catch (error) {
-      Alert.alert('Error', 'Unable to access premium features. Please try again.');
+      showAlert(
+        'Error', 
+        'Unable to access premium features. Please try again.',
+        undefined,
+        'SETTINGS_PREMIUM_FEATURES_ERROR',
+        error
+      );
     }
   };
 
@@ -514,6 +532,84 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
     purgeAllLoadingLifts();
   };
 
+  const handleAddTodayTestLifts = () => {
+    hapticFeedback.selection();
+    
+    const today = new Date();
+    const currentTime = new Date();
+    const timeString = `${currentTime.getHours() > 12 ? currentTime.getHours() - 12 : currentTime.getHours()}:${currentTime.getMinutes().toString().padStart(2, '0')} ${currentTime.getHours() >= 12 ? 'PM' : 'AM'}`;
+    
+    // Add Barbell Front Squat
+    const frontSquatId = `demo-front-squat-${today.getTime()}-${Math.random().toString(36).substr(2, 9)}`;
+    addLift({
+      id: frontSquatId,
+      isFavourite: false,
+      liftType: 'Barbell Front Squat',
+      liftDate: formatDateForLift(today),
+      liftTime: timeString,
+      metricWeight: 65,
+      reps: 5,
+      rawVideoURL: require('../../../../assets/tutorial/formai-example-video.mp4'),
+      poseVideoURL: require('../../../../assets/tutorial/formai-example-pose.mp4'),
+      thumbnailURL: require('../../../../assets/tutorial/formai-example-video-thumbnail.jpg'),
+      analysis: {
+        accuracy: 72,
+        lineGraphValues: [70, 72, 74, 71, 73],
+        barChartValues: [70, 72, 74, 71, 73],
+        feedback: [
+          {
+            imageURL: require('../../../../assets/tutorial/formai-example-feedback.png'),
+            flaws: [
+              "Slight forward lean in the bottom position",
+              "Knees tracking slightly inward on descent"
+            ],
+            improvement: [
+              "Focus on keeping chest up and core braced",
+              "Push knees out and track over toes",
+              "Work on ankle mobility to improve depth",
+              "Practice front rack position with lighter weights",
+              "Strengthen upper back to maintain upright torso",
+              "Use tempo squats to improve control and positioning"
+            ],
+          },
+        ],
+      },
+    });
+
+    // Add Barbell Back Squat
+    const backSquatId = `demo-back-squat-${today.getTime()}-${Math.random().toString(36).substr(2, 9)}`;
+    addLift({
+      id: backSquatId,
+      isFavourite: false,
+      liftType: 'Barbell Back Squat',
+      liftDate: formatDateForLift(today),
+      liftTime: timeString,
+      metricWeight: 40,
+      reps: 8,
+      rawVideoURL: require('../../../../assets/tutorial/formai-example-video.mp4'),
+      poseVideoURL: require('../../../../assets/tutorial/formai-example-pose.mp4'),
+      thumbnailURL: require('../../../../assets/tutorial/thumbnail.jpeg'),
+      analysis: {
+        accuracy: 82,
+        lineGraphValues: [80, 82, 84, 81, 83, 80, 82, 84],
+        barChartValues: [80, 82, 84, 81, 83, 80, 82, 84],
+        feedback: [
+          {
+            imageURL: require('../../../../assets/tutorial/formai-example-feedback.png'),
+            flaws: [
+              "Hip drive could be more explosive",
+              "Depth slightly inconsistent across reps"
+            ],
+            improvement: [
+              "Focus on driving hips up and forward out of the hole",
+              "Aim for consistent depth on each rep"
+            ],
+          },
+        ],
+      },
+    });
+  };
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
       <View style={styles.content}>
@@ -621,7 +717,7 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
         </View>
 
         {/* Development Test Buttons - Only visible in development */}
-        {__DEV__ && (
+        {/* {__DEV__ && (
           <View style={styles.card}>
             <Text style={styles.devSectionTitle}>Development Tools</Text>
             <TouchableOpacity
@@ -639,8 +735,16 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
             >
               <Text style={[styles.devButtonText, styles.devButtonTextSecondary]}>Prune Loading Lifts</Text>
             </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={[styles.devButton, styles.devButtonTertiary]}
+              onPress={handleAddTodayTestLifts}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.devButtonText, styles.devButtonTextTertiary]}>Add Today's Test Lifts</Text>
+            </TouchableOpacity>
           </View>
-        )}
+        )} */}
       </View>
 
       {/* Delete Account Modal */}
@@ -811,7 +915,6 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
   },
   footerCard: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 18,
     padding: 16,
     marginHorizontal: 20,
@@ -870,6 +973,9 @@ const styles = StyleSheet.create({
   devButtonSecondary: {
     backgroundColor: '#FF3B30',
   },
+  devButtonTertiary: {
+    backgroundColor: '#34C759',
+  },
   devButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
@@ -877,6 +983,9 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
   },
   devButtonTextSecondary: {
+    color: '#FFFFFF',
+  },
+  devButtonTextTertiary: {
     color: '#FFFFFF',
   },
 }); 

@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { getUserId } from '../services/storageService';
 import { favouriteLift as favouriteLiftApi } from '../services/liftService';
 import { subscribeLiftDeleted } from '../services/liftEvents';
+import { eventBus, AppEvents } from '../services/event-bus';
 import { ILiftData, LiftDataContextType } from '../types/Lifts.d';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -275,6 +276,21 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
     return () => { try { unsubscribe(); } catch (_) {} };
   }, [queryClient, refreshLifts]);
 
+  // Subscribe to lift ready events to refresh data
+  useEffect(() => {
+    const handleLiftReady = (data: { liftId: string }) => {
+      // Refresh lift data to ensure we have the latest data for notification navigation
+      setTimeout(() => {
+        void refreshLifts();
+      }, 1000); // Small delay to allow backend processing to complete
+    };
+
+    eventBus.on(AppEvents.LiftReady, handleLiftReady);
+    return () => {
+      eventBus.off(AppEvents.LiftReady, handleLiftReady);
+    };
+  }, [refreshLifts]);
+
   const favouriteLiftAndRefresh = useCallback(async (id: string) => {
     try {
       await favouriteLiftApi(id);
@@ -413,13 +429,21 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
     global.saveLiftDataToStorage = saveLiftDataToStorage;
     global.clearLiftDataForTutorial = clearLiftDataForTutorial;
     global.restoreLiftDataAfterTutorial = restoreLiftDataAfterTutorial;
+
+    // Expose getLiftById function for notification navigation
+    (global as any).getLiftFromContext = (id: string) => {
+      const lift = getLiftById(id);
+      return lift;
+    };
+
     return () => {
       global.clearTemporaryLifts = undefined;
       global.saveLiftDataToStorage = undefined;
       global.clearLiftDataForTutorial = undefined;
       global.restoreLiftDataAfterTutorial = undefined;
+      (global as any).getLiftFromContext = undefined;
     };
-  }, [clearTutorialLifts, saveLiftDataToStorage, clearLiftDataForTutorial, restoreLiftDataAfterTutorial]);
+  }, [clearTutorialLifts, saveLiftDataToStorage, clearLiftDataForTutorial, restoreLiftDataAfterTutorial, getLiftById]);
 
   // Reset function for account deletion
   const resetContext = React.useCallback(() => {

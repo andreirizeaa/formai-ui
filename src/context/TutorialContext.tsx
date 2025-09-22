@@ -1,11 +1,12 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { Dimensions, UIManager, findNodeHandle, Platform, InteractionManager, Alert } from 'react-native';
+import { Dimensions, UIManager, findNodeHandle, Platform, InteractionManager } from 'react-native';
 import { useUserDetails } from './UserDetailsContext';
 import { useSelectedDate } from './SelectedDateContext';
 import { hapticFeedback } from '../utils/haptic';
 import { editUserDetails } from '../services/userService';
 import i18n from '../utils/i18n';
 import { track } from '../services/analytics';
+import { showAlert } from '../services/alertService';
 
 // Global type declarations for tutorial functions
 declare global {
@@ -910,7 +911,13 @@ export function useTutorialTarget(targetId?: string) {
 
     return { ref } as const;
   } catch (error) {
-    Alert.alert('Error', 'An error occurred with the tutorial. Please try again.');
+    showAlert(
+      'Error', 
+      'An error occurred with the tutorial. Please try again.',
+      undefined,
+      'TUTORIAL_CONTEXT_ERROR',
+      error
+    );
     // Return a fallback ref if there's an error
     return { ref: React.useRef<any>(null) };
   }
