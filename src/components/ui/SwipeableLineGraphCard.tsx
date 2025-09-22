@@ -303,10 +303,10 @@ const SegmentedControl = React.memo(function SegmentedControl({
   chartType: 'accuracyPerWeight' | 'accuracyOverTime';
 }) {
   const Segments = [
-    { label: '90 Days', value: '90d' as TimeRange },
-    { label: '6 Months', value: '6m' as TimeRange },
-    { label: '1 Year', value: '1y' as TimeRange },
-    { label: 'All time', value: 'all' as TimeRange },
+    { label: i18n.t('performance.timeRanges.ninetyDays'), value: '90d' as TimeRange },
+    { label: i18n.t('performance.timeRanges.sixMonths'), value: '6m' as TimeRange },
+    { label: i18n.t('performance.timeRanges.oneYear'), value: '1y' as TimeRange },
+    { label: i18n.t('performance.timeRanges.allTime'), value: 'all' as TimeRange },
   ];
 
   return (

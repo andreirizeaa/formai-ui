@@ -239,7 +239,7 @@ export function SignInScreen({ onSignIn, onBack, onNavigateToOnboarding, onRequi
                 styles.noAccountText,
                 { color: '#ffffff' }
               ]}>
-                Don't have an account?{' '}
+                {i18n.t('dontHaveAccount')}{' '}
               </Text>
               <TouchableOpacity onPress={() => {
                 hapticFeedback.selection();
@@ -250,7 +250,7 @@ export function SignInScreen({ onSignIn, onBack, onNavigateToOnboarding, onRequi
                   styles.startTodayLink,
                   { color: '#007AFF' }
                 ]}>
-                  Start today
+                  {i18n.t('startToday')}
                 </Text>
               </TouchableOpacity>
             </View>

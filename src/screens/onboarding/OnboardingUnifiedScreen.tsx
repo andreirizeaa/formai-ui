@@ -2717,6 +2717,7 @@ const styles = StyleSheet.create({
   textArea: {
     padding: 24,
     paddingBottom: 20,
+    height: 100,
   },
   dialogText: {
     fontSize: 17,

@@ -73,20 +73,20 @@ export function WelcomeScreen({ onGetStarted, onSignIn }: WelcomeScreenProps) {
       <View style={styles.contentContainer}>
         <View style={styles.content}>
           <Text style={styles.subtitle}>
-            {i18n.t('welcome.subtitle')}.
+            {i18n.t('perfectFormAlways')}
           </Text>
         </View>
 
         <View style={styles.actions}>
           <OrangeGradientButton
-            title={`${i18n.t('getStarted')}!`}
+            title={i18n.t('getStartedButton')}
             onPress={handleGetStarted}
             style={styles.getStartedButton}
           />
 
           <TouchableOpacity onPress={handleSignIn} activeOpacity={0.7}>
             <Text style={styles.signInText}>
-              {i18n.t('signIn')}
+              {i18n.t('signInButton')}
             </Text>
           </TouchableOpacity>
         </View>

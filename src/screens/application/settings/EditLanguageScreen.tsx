@@ -21,9 +21,24 @@ export function EditLanguageScreen({ onBack }: EditLanguageScreenProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const { currentLanguage, setLanguage } = useLanguage();
-  const { refetchUserDetails } = useUserDetails();
+  const { userDetails, isUserDetailsLoaded, refetchUserDetails } = useUserDetails();
   const [selectedLanguage, setSelectedLanguage] = useState(currentLanguage);
+
   const [isSaving, setIsSaving] = useState(false);
+
+  // Update selectedLanguage when language data changes (but not during save)
+  useEffect(() => {
+    // Don't update selected language while saving to prevent UI flickering
+    if (isSaving) return;
+
+    // Priority: userDetails.language > currentLanguage from context
+    if (userDetails?.language) {
+      setSelectedLanguage(userDetails.language);
+    } else if (isUserDetailsLoaded) {
+      // If user details are loaded but no language is set, use current language
+      setSelectedLanguage(currentLanguage);
+    }
+  }, [userDetails?.language, currentLanguage, isUserDetailsLoaded, isSaving]);
 
   // Track screen view on mount
   useEffect(() => {
@@ -41,21 +56,23 @@ export function EditLanguageScreen({ onBack }: EditLanguageScreenProps) {
     // Track library screen clicks for save
     track('Library screen clicks', { event: 'Save new language' });
     setIsSaving(true);
-    
+
     try {
       // Store the previous language to restore on error
       const previousLanguage = currentLanguage;
-      
+      const previousSelectedLanguage = selectedLanguage;
+
       // Immediately update UI to show new selection
       setLanguage(selectedLanguage);
-      
+
       await editUserDetails({ language: selectedLanguage });
       await refetchUserDetails();
       hapticFeedback.success();
       onBack();
     } catch (e) {
-      // Restore previous language on error
+      // Restore previous language and selected language on error
       setLanguage(currentLanguage);
+      setSelectedLanguage(currentLanguage);
       hapticFeedback.error();
       showAlert(i18n.t('settings.editFailed.language'), i18n.t('settings.editFailed.message'), () => {
         hapticFeedback.selection();

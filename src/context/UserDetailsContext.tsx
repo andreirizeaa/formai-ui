@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { getUserId } from '../services/storageService';
+import { getUserId, setSelectedLanguage, getSelectedLanguage } from '../services/storageService';
 import { fetchUserDetailsById, editUserDetails } from '../services/userService';
+import { setLanguage } from '../utils/i18n';
 import { 
   formatWeightForDisplay, 
   formatHeightForDisplay 
@@ -28,6 +29,7 @@ interface UserDetailsContextType {
   updateHeight: (heightCm: number) => void;
   updateHasRated: (rated: boolean) => void;
   updateWalkthroughCompleted: (completed: boolean) => void;
+  updateLanguage: (language: string) => void;
   getWeightDisplay: () => string;
   getHeightDisplay: () => string;
   getDateOfBirthDisplay: () => string;
@@ -62,6 +64,21 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
       setIsLoaded(true);
     }
   }, [userId]);
+
+  // Sync language from context with i18n when userDetails changes
+  useEffect(() => {
+    if (userDetails?.language) {
+      setLanguage(userDetails.language);
+      
+      // Also sync with LanguageContext if it exists
+      try {
+        const { setSelectedLanguage } = require('../services/storageService');
+        setSelectedLanguage(userDetails.language);
+      } catch (error) {
+        console.warn('Error syncing language to AsyncStorage:', error);
+      }
+    }
+  }, [userDetails?.language]);
 
   useQuery({
     queryKey: ['user-details', userId],
@@ -195,6 +212,30 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
     });
   };
 
+  const updateLanguage = async (language: string) => {
+    // Update i18n immediately
+    setLanguage(language);
+    
+    // Save to AsyncStorage
+    await setSelectedLanguage(language);
+    
+    // Update context
+    setUserDetails(prev => {
+      const base: UserDetails = prev ?? {
+        unitSystem: null,
+        currentWeightKG: null,
+        heightCM: null,
+        dateOfBirth: null,
+        gender: null,
+        language: null,
+        currentStreak: null,
+        walkthroughCompleted: null,
+        hasRated: null,
+      };
+      return { ...base, language };
+    });
+  };
+
   const getWeightDisplay = (): string => {
     if (!userDetails || userDetails.currentWeightKG == null || !userDetails.unitSystem) return '';
     return formatWeightForDisplay(userDetails.currentWeightKG, userDetails.unitSystem);
@@ -279,6 +320,7 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
       updateHeight,
       updateWalkthroughCompleted,
       updateHasRated,
+      updateLanguage,
       getWeightDisplay,
       getHeightDisplay,
       getDateOfBirthDisplay,
@@ -294,6 +336,7 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
       updateHeight,
       updateWalkthroughCompleted,
       updateHasRated,
+      updateLanguage,
       getWeightDisplay,
       getHeightDisplay,
       getDateOfBirthDisplay,
