@@ -1,5 +1,5 @@
 import * as MailComposer from 'expo-mail-composer';
-import { Platform, Alert } from 'react-native';
+import { Platform } from 'react-native';
 import { showAlert } from './alertService';
 import { getUserId } from './storageService';
 
@@ -22,8 +22,13 @@ export async function openEmailComposer(options: EmailOptions): Promise<void> {
 
     await MailComposer.composeAsync(options);
   } catch (error) {
-    Alert.alert('Error', 'Failed to open email composer. Please try again.');
-    showAlert('Error', 'Failed to open email composer. Please try again.');
+    showAlert(
+      'Error', 
+      'Failed to open email composer. Please try again.',
+      undefined,
+      'EMAIL_SERVICE_FAILED_TO_OPEN_COMPOSER',
+      error
+    );
   }
 }
 

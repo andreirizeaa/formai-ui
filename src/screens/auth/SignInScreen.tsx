@@ -222,7 +222,7 @@ export function SignInScreen({ onSignIn, onBack, onNavigateToOnboarding, onRequi
                 <Image 
                   source={require('../../../assets/icons/google.png')}
                   style={styles.googleIcon}
-                  resizeMode="contain"
+                  contentFit="contain"
                 />
                 <Text style={[
                   styles.googleButtonText,

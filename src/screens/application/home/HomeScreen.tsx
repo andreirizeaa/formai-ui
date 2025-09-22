@@ -230,7 +230,7 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
   useFocusEffect(
     React.useCallback(() => {
       setHomeActive?.(true);
-      
+
       // Track screen view
       track('Screen viewed', { screen_name: 'Home' });
 
@@ -248,8 +248,15 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
         (global as any).__tutorialJustCompleted = false;
       }
 
+      // Check for pending navigation date from notifications
+      if ((global as any).pendingNavigationDate) {
+        const date = (global as any).pendingNavigationDate;
+        delete (global as any).pendingNavigationDate;
+        setSelectedDate(date);
+      }
+
       return () => setHomeActive?.(false);
-    }, [setHomeActive])
+    }, [setHomeActive, setSelectedDate])
   );
 
   // Expose showFirstLiftDetails function globally for tutorial
@@ -289,11 +296,17 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
       }, 3000);
     };
 
+    // Expose function to navigate to specific date from push notifications
+    (global as any).setHomeDateFromNotification = (date: Date) => {
+      setSelectedDate(date);
+    };
+
     return () => {
       (global as any).navigateToLibrary = undefined;
       (global as any).showTutorialCompletionConfetti = undefined;
+      (global as any).setHomeDateFromNotification = undefined;
     };
-  }, [onShowLibrary]);
+  }, [onShowLibrary, setSelectedDate]);
 
   // Render function for unified FlashList
   const renderLiftItem = useCallback(({ item }: { item: any }) => (

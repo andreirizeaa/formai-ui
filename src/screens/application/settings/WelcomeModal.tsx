@@ -52,7 +52,7 @@ export function WelcomeModal({ isVisible, onGetStarted }: WelcomeModalProps) {
             source={require('../../../../assets/animations/confetti.json')}
             autoPlay={false}
             loop={false}
-            contentFit="cover"
+            resizeMode="cover"
             ref={confettiRef}
             style={{ width: 700, height: 700 }}
           />

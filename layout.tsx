@@ -19,6 +19,7 @@ import { usePurchases } from './src/context/PurchasesContext';
 import { useUserDetails } from './src/context/UserDetailsContext';
 import { useLiftData } from './src/context/LiftDataContext';
 import { track } from './src/services/analytics';
+import { showAlert } from './src/services/alertService';
 
 // Component that can access context providers to check loading states
 function AppContent() {
@@ -181,6 +182,13 @@ function AppContent() {
       });
     } catch (error) {
       console.error('Error during logout:', error);
+      showAlert(
+        'Logout Error',
+        'An error occurred during logout. Please try again.',
+        undefined,
+        'LAYOUT_LOGOUT_ERROR',
+        error
+      );
     }
   };
 

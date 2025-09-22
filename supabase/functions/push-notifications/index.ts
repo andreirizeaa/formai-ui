@@ -15,6 +15,7 @@ interface WebhookPayload<T> {
 interface LiftsRecord {
   id: string
   user_id: string
+  asset_id?: string
 }
 
 interface JobsRecord {
@@ -158,13 +159,17 @@ Deno.serve(async (req: Request) => {
       if (token) {
         const { movementName, accuracy } = await getLiftMeta(record.id)
         const title = movementName
-          ? `Your ${capitalize(movementName)} analysis is ready`
-          : 'Your lift analysis is ready'
+          ? `Your ${capitalize(movementName)} analysis is ready! 🥳`
+          : 'Your lift analysis is ready! 🥳'
         const score = typeof accuracy === 'number' ? Math.round(accuracy) : undefined
         const body = score !== undefined
           ? `It\'s time to view your feedback. You achieved an accuracy score of ${score}%.`
           : `It\'s time to view your feedback.`
-        const result = await sendExpoPush(token, body, title, { type: 'lift_ready', liftId: record.id })
+        const result = await sendExpoPush(token, body, title, {
+          type: 'lift_ready',
+          liftId: record.id,
+          ...(record.asset_id && { assetId: record.asset_id })
+        })
         return new Response(JSON.stringify(result), { headers: { 'Content-Type': 'application/json' } })
       }
       return new Response(JSON.stringify({ ok: true, reason: 'no token' }), { headers: { 'Content-Type': 'application/json' } })
@@ -194,6 +199,7 @@ Deno.serve(async (req: Request) => {
           liftId: record.lift_id,
           failureId: record.id,
           error: record.error,
+          assetId: record.asset_id,
         })
         return new Response(JSON.stringify(result), { headers: { 'Content-Type': 'application/json' } })
       }

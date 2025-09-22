@@ -24,6 +24,14 @@ class SimpleEventBus {
       try { fn(payload); } catch {}
     });
   }
+
+  once(event: string, handler: EventHandler) {
+    const off = this.on(event, (payload) => {
+      off();
+      handler(payload);
+    });
+    return off;
+  }
 }
 
 export const eventBus = new SimpleEventBus();
@@ -31,6 +39,7 @@ export const eventBus = new SimpleEventBus();
 export const AppEvents = {
   LiftReady: 'lift_ready',
   LiftFailed: 'lift_failed',
+  NavReady: 'nav_ready',
 } as const;
 
 export interface LiftReadyPayload {

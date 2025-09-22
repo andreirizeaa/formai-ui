@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, Alert } from 'react-native';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import i18n from '../../../utils/i18n';
 import { hapticFeedback } from '../../../utils/haptic';
@@ -8,6 +8,7 @@ import { usePurchases } from '../../../context/PurchasesContext';
 import { usePlacement } from 'expo-superwall';
 import { Pencil, X } from 'lucide-react-native';
 import { track } from '../../../services/analytics';
+import { showAlert } from '../../../services/alertService';
 
 interface PersonalDetailsScreenProps {
   onBack: () => void;
@@ -157,7 +158,13 @@ export function PersonalDetailsScreen({
       // Track paywall completion
       track('Low quality paywall complete', { source: 'personal_details' });
     } catch (error) {
-      Alert.alert('Error', 'Unable to access premium features. Please try again.');
+      showAlert(
+        'Error', 
+        'Unable to access premium features. Please try again.',
+        undefined,
+        'PERSONAL_DETAILS_PREMIUM_FEATURES_ERROR',
+        error
+      );
     }
   };
 

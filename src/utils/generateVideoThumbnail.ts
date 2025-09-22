@@ -1,5 +1,5 @@
-import { Alert } from 'react-native';
 import * as VideoThumbnails from 'expo-video-thumbnails';
+import { showAlert } from '../services/alertService';
 
 interface VideoThumbnailOptions {
   time?: number;
@@ -59,7 +59,13 @@ export async function generateVideoThumbnailWithMetadata(
       height: result.height,
     };
   } catch (error) {
-    Alert.alert('Error', 'Unable to generate video thumbnail. Please try again.');
+    showAlert(
+      'Error', 
+      'Unable to generate video thumbnail. Please try again.',
+      undefined,
+      'GENERATE_VIDEO_THUMBNAIL_ERROR',
+      error
+    );
     throw new Error(`Failed to generate thumbnail for video: ${videoUri}`);
   }
 } 

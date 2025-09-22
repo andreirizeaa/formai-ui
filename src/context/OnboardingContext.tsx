@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { Alert } from 'react-native';
 import { OnboardingContextType, OnboardingData } from '../types/onboarding';
 import { saveOnboardingProgress } from '../services/onboardingService';
+import { showAlert } from '../services/alertService';
 
 const OnboardingContext = createContext<OnboardingContextType | undefined>(undefined);
 
@@ -74,25 +74,6 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
     return Math.round((completedFields.length / fields.length) * 100);
   };
 
-  // Function to persist onboarding data to API/database
-  const persistOnboardingData = async (authToken?: string): Promise<any> => {
-    try {
-      // Submit the data to the API
-      const response = await saveOnboardingProgress(onboardingData, authToken);
-      
-      // Return the API response
-      return {
-        success: response.success,
-        message: response.message,
-        user_id: response.user_id,
-      };
-      
-    } catch (error) {
-      Alert.alert('Error', 'An error occurred while saving your progress. Please try again.');
-      throw error;
-    }
-  };
-
   return (
     <OnboardingContext.Provider
       value={{
@@ -103,7 +84,6 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
         getOnboardingDataForAPI,
         resetOnboarding,
         getOnboardingProgress,
-        persistOnboardingData,
       }}
     >
       {children}

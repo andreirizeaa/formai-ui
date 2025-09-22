@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback, ReactNode } from 'react';
-import { AppState, Alert } from 'react-native';
+import { AppState } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
 import { ILiftData } from './LiftDataContext';
@@ -8,6 +8,7 @@ import { uploadLiftVideo, uploadLiftThumbnail } from '../services/VideoUploadSer
 import { useLiftData, extractObjectKeyFromUrl, signPath } from './LiftDataContext';
 import { useSelectedDate } from './SelectedDateContext';
 import { useUserCheckIns } from './UserCheckInsContext';
+import { showAlert } from '../services/alertService';
 import { usePurchases } from './PurchasesContext';
 import { loadLoadingLifts, saveLoadingLifts } from '../services/loadingLiftsStorage';
 import { eventBus, AppEvents, LiftReadyPayload, LiftFailedPayload } from '../services/event-bus';
@@ -1018,7 +1019,12 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
     const liftId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
     if (!liftData.assetId) {
-      Alert.alert('Error', 'An error occurred while processing your video. Please try again.');
+      showAlert(
+        'Error', 
+        'An error occurred while processing your video. Please try again.',
+        undefined,
+        'LOADING_LIFTS_PROCESSING_ERROR'
+      );
       const now = Date.now();
       const startProg = 0.02;
       const errLift: LoadingLiftData = {
@@ -1093,7 +1099,13 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
         hasHdVideos,
       });
     } catch (error) {
-      Alert.alert('Upload Error', 'Failed to upload your video. Please check your connection and try again.');
+      showAlert(
+        'Upload Error', 
+        'Failed to upload your video. Please check your connection and try again.',
+        undefined,
+        'LOADING_LIFTS_UPLOAD_ERROR',
+        error
+      );
       // Track error event
       trackErrorOnce(liftId, 'UPLOAD_FAILED');
       safeUpdateLift(liftId, l => ({ 
@@ -1219,7 +1231,13 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
       return;
     }
 
-    safeUpdateLift(id, x => ({ ...x, status: 'processing', errorMessage: undefined }));
+    safeUpdateLift(id, x => ({
+      ...x,
+      status: 'processing',
+      errorMessage: undefined,
+      failureStage: undefined,
+      simStartAt: Date.now(), // Reset simulation start time for fresh progress calculation
+    }));
 
     const userId = await getUserId();
     if (!userId) return;
@@ -1353,13 +1371,26 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
     latestLiftsRef.current = [];
   }, []);
 
+  // Helper function to get loading lift date by assetId
+  const getLoadingLiftDate = React.useCallback((assetId: string): Date | null => {
+    const lift = allLoadingLifts.find(l => l.assetId === assetId);
+    if (lift && lift.dateToday) {
+      // Parse DD-MM-YYYY format to Date
+      const [day, month, year] = lift.dateToday.split('-').map(Number);
+      return new Date(year, month - 1, day);
+    }
+    return null;
+  }, [allLoadingLifts]);
+
   // Expose reset function globally for account deletion
   React.useEffect(() => {
     (global as any).resetLoadingLiftsContext = resetContext;
+    (global as any).getLoadingLiftDate = getLoadingLiftDate;
     return () => {
       (global as any).resetLoadingLiftsContext = undefined;
+      (global as any).getLoadingLiftDate = undefined;
     };
-  }, [resetContext]);
+  }, [resetContext, getLoadingLiftDate]);
 
   return (
     <LoadingLiftsContext.Provider

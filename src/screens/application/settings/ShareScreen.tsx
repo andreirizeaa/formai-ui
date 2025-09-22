@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Share, Platform, Alert } from 'react-native';
-import showAlert from '../../../services/alertService';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Share, Platform } from 'react-native';
+import { showAlert } from '../../../services/alertService';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
 import { hapticFeedback } from '../../../utils/haptic';
@@ -23,8 +23,13 @@ export function ShareScreen({ onBack }: ShareScreenProps) {
       setIsCopied(true);
       setTimeout(() => setIsCopied(false), 2000); // Reset copied state after 2 seconds
     } catch (error) {
-      Alert.alert('Error', 'Failed to copy to clipboard. Please try again.');
-      showAlert(i18n.t('share.error'), i18n.t('share.failedToCopy'));
+      showAlert(
+        'Error', 
+        'Failed to copy to clipboard. Please try again.',
+        undefined,
+        'SHARE_FAILED_TO_COPY_CLIPBOARD',
+        error
+      );
     }
   };
 
@@ -38,8 +43,13 @@ export function ShareScreen({ onBack }: ShareScreenProps) {
         title: i18n.t('share.shareTitle'),
       });
     } catch (error) {
-      Alert.alert('Error', 'Failed to share. Please try again.');
-      showAlert(i18n.t('share.error'), i18n.t('share.failedToShare'));
+      showAlert(
+        'Error', 
+        'Failed to share. Please try again.',
+        undefined,
+        'SHARE_FAILED_TO_SHARE',
+        error
+      );
     }
   };
 
@@ -66,7 +76,6 @@ export function ShareScreen({ onBack }: ShareScreenProps) {
           <Image 
             source={require('../../../../assets/refer-friends-group.png')}
             style={styles.referImage}
-            contentFit="cover"
           />
         </View>
         <Text style={styles.contentTitle}>{i18n.t('share.empowerYourFriends')}</Text>

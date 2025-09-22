@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, Platform, TouchableOpacity } from 'react-native';
 import { Image } from 'expo-image';
 import { useColorScheme } from 'react-native';
 import * as AppleAuthentication from 'expo-apple-authentication';
@@ -8,6 +8,7 @@ import { hapticFeedback } from '../../utils/haptic';
 import { supabase } from '../../lib/supabase';
 import { useOnboarding } from '../../context/OnboardingContext';
 import { LoadingOverlay } from '../ui/LoadingOverlay';
+import { showAlert } from '../../services/alertService';
 import { setUserId } from '../../services/storageService';
 import i18n from '../../utils/i18n';
 import { usePlacement } from 'expo-superwall';
@@ -59,7 +60,12 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
           token: userInfo.idToken,
         });
         if (error) {
-          Alert.alert('Sign In Error', 'Unable to sign in with Google. Please try again.');
+          showAlert(
+            'Sign In Error', 
+            'Unable to sign in with Google. Please try again.',
+            undefined,
+            'CREATE_ACCOUNT_GOOGLE_SIGN_IN_ERROR'
+          );
           setIsSigningIn(false);
         } else {
           updateOnboardingData('signInMethod', 'google');
@@ -72,7 +78,13 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
               await setUserId(data.user.id);
               handleNewAccount(data);
             } catch (persistError) {
-              Alert.alert('Error', 'An error occurred while setting up your account. Please try again.');
+              showAlert(
+                'Error', 
+                'An error occurred while setting up your account. Please try again.',
+                undefined,
+                'CREATE_ACCOUNT_GOOGLE_SETUP_ERROR',
+                persistError
+              );
               setIsSigningIn(false);
             }
           }
@@ -103,7 +115,12 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
         });
         
         if (error) {
-          Alert.alert('Sign In Error', 'Unable to sign in with Apple. Please try again.');
+          showAlert(
+            'Sign In Error', 
+            'Unable to sign in with Apple. Please try again.',
+            undefined,
+            'CREATE_ACCOUNT_APPLE_SIGN_IN_ERROR'
+          );
           setIsSigningIn(false);
         } else {
           updateOnboardingData('signInMethod', 'apple');
@@ -115,7 +132,13 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
               await setUserId(data.user.id);
               handleNewAccount(data);
             } catch (persistError) {
-              Alert.alert('Error', 'An error occurred while setting up your account. Please try again.');
+              showAlert(
+                'Error', 
+                'An error occurred while setting up your account. Please try again.',
+                undefined,
+                'CREATE_ACCOUNT_APPLE_SETUP_ERROR',
+                persistError
+              );
               setIsSigningIn(false);
             }
           }
@@ -164,7 +187,13 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
         setIsSigningIn(false);
         onNext();
       } catch (persistError) {
-        Alert.alert('Error', 'An error occurred while setting up your account. Please try again.');
+        showAlert(
+          'Error', 
+          'An error occurred while setting up your account. Please try again.',
+          undefined,
+          'CREATE_ACCOUNT_GENERAL_SETUP_ERROR',
+          persistError
+        );
         setIsSigningIn(false);
       }
     } else {

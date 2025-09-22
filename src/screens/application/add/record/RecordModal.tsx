@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, Alert, Keyboard, useColorScheme, Linking, Modal, Animated } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Keyboard, useColorScheme, Linking, Modal, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Camera, useCameraDevice, type VideoFile, useCameraFormat } from 'react-native-vision-camera';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -17,6 +17,7 @@ import { useCameraPermissions } from 'expo-camera';
 import { ChevronLeft, CircleQuestionMark, X, Timer, TimerOff } from 'lucide-react-native';
 import * as MediaLibrary from 'expo-media-library';
 import { checkDuplicateAssetId } from '../../../../services/liftService';
+import { showAlert } from '../../../../services/alertService';
 
 interface RecordModalProps {
   isVisible: boolean;
@@ -229,13 +230,25 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
           }
         },
         onRecordingError: error => {
-          Alert.alert(i18n.t('upload.error'), i18n.t('upload.recordingFailed'));
+          showAlert(
+            i18n.t('upload.error'), 
+            i18n.t('upload.recordingFailed'),
+            undefined,
+            'RECORD_RECORDING_FAILED',
+            error
+          );
           setIsRecording(false);
         },
       });
     } catch (error) {
       setIsRecording(false);
-      Alert.alert(i18n.t('upload.error'), i18n.t('upload.failedToStartRecording'));
+      showAlert(
+        i18n.t('upload.error'), 
+        i18n.t('upload.failedToStartRecording'),
+        undefined,
+        'RECORD_FAILED_TO_START_RECORDING',
+        error
+      );
     }
   };
 
@@ -285,7 +298,13 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
       cameraRef.current.stopRecording();
       hapticFeedback.success();
     } catch (e) {
-      Alert.alert(i18n.t('upload.error'), i18n.t('upload.failedToFinishRecording'));
+      showAlert(
+        i18n.t('upload.error'), 
+        i18n.t('upload.failedToFinishRecording'),
+        undefined,
+        'RECORD_FAILED_TO_FINISH_RECORDING',
+        e
+      );
     } finally {
       setIsRecording(false);
       setRecordingTime(0);
@@ -334,18 +353,14 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
       
       if (isDuplicate) {
         hapticFeedback.error();
-        Alert.alert(
+        showAlert(
           i18n.t('upload.duplicateVideo'),
           i18n.t('upload.duplicateVideoMessage'),
-          [
-            { 
-              text: i18n.t('upload.selectDifferentVideo'), 
-              onPress: () => {
-                // Go back to camera to record new video
-                handleSelectNewVideo();
-              }
-            },
-          ]
+          () => {
+            // Go back to camera to record new video
+            handleSelectNewVideo();
+          },
+          'RECORD_DUPLICATE_VIDEO'
         );
         return;
       }
@@ -429,7 +444,13 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
       });
       hapticFeedback.success();
     } catch (error) {
-      Alert.alert(i18n.t('upload.error'), i18n.t('upload.failedToGenerateThumbnail'));
+      showAlert(
+        i18n.t('upload.error'), 
+        i18n.t('upload.failedToGenerateThumbnail'),
+        undefined,
+        'RECORD_FAILED_TO_GENERATE_THUMBNAIL',
+        error
+      );
     }
   };
 
@@ -470,19 +491,17 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
   const handleClose = () => {
     hapticFeedback.selection();
     if (isRecording) {
-      Alert.alert(
+      showAlert(
         i18n.t('upload.stopRecording'),
         i18n.t('upload.stopRecordingMessage'),
-        [
-          { text: i18n.t('upload.cancel'), style: 'cancel' },
-          { text: i18n.t('upload.stop'), style: 'destructive', onPress: () => {
-            handleStopRecording();
-            setIsRecording(false);
-            setShowPractices(true);
-            setShowCamera(false);
-            onClose();
-          }},
-        ]
+        () => {
+          handleStopRecording();
+          setIsRecording(false);
+          setShowPractices(true);
+          setShowCamera(false);
+          onClose();
+        },
+        'RECORD_STOP_RECORDING_CONFIRMATION'
       );
     } else {
       setIsRecording(false);

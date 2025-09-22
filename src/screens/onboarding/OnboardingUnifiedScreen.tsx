@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Platform, TouchableOpacity, TextInput, FlatList, Animated, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Platform, TouchableOpacity, TextInput, FlatList, Animated, Alert, ActivityIndicator } from 'react-native';
 import ReanimatedAnimated, { 
   useSharedValue, 
   useAnimatedStyle, 
@@ -8,12 +8,13 @@ import ReanimatedAnimated, {
 } from 'react-native-reanimated';
 import { Image } from 'expo-image';
 import { useColorScheme } from 'react-native';
+import { showAlert } from '../../services/alertService';
 import { useNavigation } from '@react-navigation/native';
 import { Picker } from '@react-native-picker/picker';
 import * as StoreReview from 'expo-store-review';
 import * as Notifications from 'expo-notifications';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ReferralService } from '../../services/referralService';
+import { validateReferralCode } from '../../services/referralService';
 import { OnboardingLayout } from '../../components/onboarding/OnboardingLayout';
 import { AnimatedOptionButton } from '../../components/onboarding/AnimatedOptionButton';
 import { useOnboarding } from '../../context/OnboardingContext';
@@ -23,7 +24,7 @@ import { hapticFeedback } from '../../utils/haptic';
 import { LANGUAGES } from '../../constants/languages';
 import { CreateAccountScreen } from '../../components/onboarding/CreateAccountScreen';
 import LottieView from 'lottie-react-native';
-import { BicepsFlexed, User, ShieldPlus, Bike, HeartPulse, CircleX, AudioWaveform, ChartNoAxesColumnDecreasing, BookCopy, ShieldOff, BatteryLow, Ellipsis, Sprout, Shrub, TreePine, ChartNoAxesCombined, Hospital, Dumbbell, ShieldCheck, ChartNoAxesColumnIncreasing, ClockArrowUp, BatteryWarning, BatteryMedium, BatteryFull, PartyPopper, Weight, Scale, TrendingUp, ThumbsUp, ThumbsDown, Users, CircleCheck, Trophy } from 'lucide-react-native';
+import { BicepsFlexed, User, ShieldPlus, Bike, HeartPulse, CircleX, AudioWaveform, ChartNoAxesColumnDecreasing, BookCopy, ShieldOff, BatteryLow, Ellipsis, Sprout, Shrub, TreePine, ChartNoAxesCombined, Hospital, Dumbbell, ShieldCheck, ChartNoAxesColumnIncreasing, ClockArrowUp, BatteryWarning, BatteryMedium, BatteryFull, PartyPopper, Weight, Scale, TrendingUp, ThumbsUp, ThumbsDown, Users, CircleCheck, Trophy, X } from 'lucide-react-native';
 import { LineChart } from 'react-native-chart-kit';
 import { SingleDotIcon, SixDotsIcon, ThreeDotsIcon } from '../../components/icons/icons';
 import { Line } from 'react-native-svg';
@@ -426,12 +427,12 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
     //   title: i18n.t('onboarding.rating.title'),
     //   subtitle: i18n.t('onboarding.rating.subtitle'),
     // },
-    // {
-    //   type: 'referral',
-    //   id: 'referralCode',
-    //   title: i18n.t('onboarding.referralCode.title'),
-    //   subtitle: i18n.t('onboarding.referralCode.subtitle'),
-    // },
+    {
+      type: 'referral',
+      id: 'referralCode',
+      title: i18n.t('onboarding.referralCode.title'),
+      subtitle: i18n.t('onboarding.referralCode.subtitle'),
+    },
     {
       type: 'allDone',
       id: 'allDone',
@@ -460,6 +461,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
   const [referralCode, setReferralCode] = useState(onboardingData.referralCode || '');
   const [referralValidating, setReferralValidating] = useState(false);
   const [referralError, setReferralError] = useState(false);
+  const [applyButtonLoading, setApplyButtonLoading] = useState(false);
 
   // Animation values for info step
   const percentageBoxHeight = useMemo(() => new Animated.Value(0), []);
@@ -713,61 +715,37 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
         return {
           headline: i18n.t('onboarding.gymChallengeInfo.noResults.headline'),
           message: i18n.t('onboarding.gymChallengeInfo.noResults.message'),
-          howWeGetYouThere: [
-            'Form analysis to ensure every rep counts',
-            'Video feedback to spot what\'s holding you back',
-            'Accuracy tracking to measure real progress over time'
-          ],
+          howWeGetYouThere: i18n.t('onboarding.gymChallengeInfo.noResults.howWeGetYouThere') as string[],
         };
       case 'unsure_form':
         return {
           headline: i18n.t('onboarding.gymChallengeInfo.unsureForm.headline'),
           message: i18n.t('onboarding.gymChallengeInfo.unsureForm.message'),
-          howWeGetYouThere: [
-            'Instant form breakdown from your workout videos',
-            'Actionable tips to fix mistakes quickly',
-            'Accuracy scoring to track your improvement'
-          ],
+          howWeGetYouThere: i18n.t('onboarding.gymChallengeInfo.unsureForm.howWeGetYouThere') as string[],
         };
       case 'worried_injury':
         return {
           headline: i18n.t('onboarding.gymChallengeInfo.worriedInjury.headline'),
           message: i18n.t('onboarding.gymChallengeInfo.worriedInjury.message'),
-          howWeGetYouThere: [
-            'Video feedback to highlight unsafe positions',
-            'Safer technique recommendations tailored to you',
-            'Accuracy tracking to ensure long-term consistency'
-          ],
+          howWeGetYouThere: i18n.t('onboarding.gymChallengeInfo.worriedInjury.howWeGetYouThere') as string[],
         };
       case 'struggling_motivation':
         return {
           headline: i18n.t('onboarding.gymChallengeInfo.strugglingMotivation.headline'),
           message: i18n.t('onboarding.gymChallengeInfo.strugglingMotivation.message'),
-          howWeGetYouThere: [
-            'Easy-to-read accuracy scores after every workout',
-            'Visible improvements with tracked progress trends',
-            'Encouraging tips that help you stay consistent'
-          ],
+          howWeGetYouThere: i18n.t('onboarding.gymChallengeInfo.strugglingMotivation.howWeGetYouThere') as string[],
         };
       case 'other':
         return {
           headline: i18n.t('onboarding.gymChallengeInfo.other.headline'),
           message: i18n.t('onboarding.gymChallengeInfo.other.message'),
-          howWeGetYouThere: [
-            'Personalized feedback on your movement videos',
-            'Accuracy tracking across different exercise types',
-            'Continuous tips and insights to support your goals'
-          ],
+          howWeGetYouThere: i18n.t('onboarding.gymChallengeInfo.other.howWeGetYouThere') as string[],
         };
       default:
         return {
           headline: i18n.t('onboarding.gymChallengeInfo.other.headline'),
           message: i18n.t('onboarding.gymChallengeInfo.other.message'),
-          howWeGetYouThere: [
-            'Personalized feedback on your movement videos',
-            'Accuracy tracking across different exercise types',
-            'Continuous tips and insights to support your goals'
-          ],
+          howWeGetYouThere: i18n.t('onboarding.gymChallengeInfo.other.howWeGetYouThere') as string[],
         };
     }
   }
@@ -811,6 +789,47 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
     }
   }
 
+  async function handleApplyReferralCode() {
+    if (!referralCode.trim()) return;
+    
+    setApplyButtonLoading(true);
+    setReferralError(false);
+    
+    try {
+        const result = await validateReferralCode(referralCode.trim().toUpperCase());
+      
+      if (result.isValid && result.referralCode) {
+        // Valid referral code found - update context and navigate to next step
+        hapticFeedback.success();
+        updateOnboardingData('referralCode', referralCode.trim().toUpperCase());
+        
+        // Track successful referral code entry
+        track('Onboarding Referral Code Entered', {
+          session_id: sessionId,
+          step_id: currentStep.id,
+          step_index: currentStepIndex,
+          referral_code: referralCode.trim().toUpperCase(),
+          success: true,
+        });
+        
+        // Navigate to next step
+        setCurrentStepIndex(i => i + 1);
+      } else {
+        // Invalid referral code - show alert and reset state
+        hapticFeedback.error();
+        Alert.alert('Invalid Referral Code', 'The referral code you entered is not valid. Please check and try again.');
+        setReferralError(true);
+      }
+    } catch (error) {
+      console.error('Error validating referral code:', error);
+      hapticFeedback.error();
+      Alert.alert('Error', 'Failed to validate referral code. Please try again.');
+      setReferralError(true);
+    } finally {
+      setApplyButtonLoading(false);
+    }
+  }
+
   function handleNext() {
     const isLast = currentStepIndex === totalSteps - 1;
 
@@ -828,7 +847,8 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
           return onboardingData.birthDate;
         }
       } else if (currentStep.type === 'referral') {
-        return referralCode.trim() || null;
+        // Only return referral code if it was successfully applied (stored in context)
+        return onboardingData.referralCode;
       }
       return null;
     };
@@ -851,64 +871,15 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
 
     track('Onboarding Step Completed', trackingData);
    
-    // Handle referral code validation
-    if (currentStep.type === 'referral' && referralCode.trim().length > 0) {
-      setReferralValidating(true);
-      setReferralError(false);
-      
-      // Query Supabase referral_codes table to validate the code
-      const validateReferralCode = async () => {
-        try {
-          const result = await ReferralService.validateReferralCode(referralCode.trim().toUpperCase());
-
-          if (result.error) {
-            hapticFeedback.error();
-            setReferralError(true);
-            setReferralValidating(false);
-            return;
-          }
-
-          // Check if code exists by checking if data is returned
-          if (result.isValid) {
-            // Valid referral code found
-            updateOnboardingData('referralCode', referralCode.trim().toUpperCase());
-
-            // Track successful referral code entry
-            track('Onboarding Referral Code Entered', {
-              session_id: sessionId,
-              step_id: currentStep.id,
-              step_index: currentStepIndex,
-              referral_code: referralCode.trim().toUpperCase(),
-              success: true,
-            });
-
-            // Continue to next step
-            setCurrentStepIndex(i => i + 1);
-
-          } else {
-            // Invalid referral code
-            hapticFeedback.error();
-            setReferralError(true);
-
-            // Track failed referral code entry
-            track('Onboarding Referral Code Entered', {
-              session_id: sessionId,
-              step_id: currentStep.id,
-              step_index: currentStepIndex,
-              referral_code: referralCode.trim().toUpperCase(),
-              success: false,
-            });
-          }
-        } catch (error) {
-          hapticFeedback.error();
-          setReferralError(true);
-        } finally {
-          setReferralValidating(false);
-        }
-      };
-
-      validateReferralCode();
-      return;
+    // Track referral step skipped (no code applied)
+    if (currentStep.type === 'referral' && !onboardingData.referralCode) {
+      track('Onboarding Referral Code Skipped', {
+        session_id: sessionId,
+        step_id: currentStep.id,
+        step_index: currentStepIndex,
+        referral_code: null,
+        success: true,
+      });
     }
     
     if (!isLast) {
@@ -965,7 +936,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
   } else if (currentStep.type === 'notificationPermission') {
     nextDisabled = false; // always enabled for notification permission step
   } else if (currentStep.type === 'referral') {
-    nextLoading = referralValidating; // show loading while validating
+    nextLoading = referralValidating || applyButtonLoading; // show loading while validating or applying
   } else if (currentStep.type === 'allDone') {
     nextDisabled = false; // always enabled for allDone step
   }
@@ -1754,54 +1725,54 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
 
       {currentStep.type === 'referral' && (
         <View style={styles.referralContainer}>
-          <View style={[
-              styles.inputWrapper,
-              {
-                borderColor: isDark ? '#FFF' : '#000',
-              }
-            ]}>
+          <View style={styles.searchInputContainer}>
+            <View style={styles.inputBackground}>
               <TextInput
-                style={[
-                  styles.input,
-                  {
-                    color: isDark ? '#FFFFFF' : '#000000',
-                  },
-                ]}
+                style={styles.searchInput}
                 placeholder={i18n.t('onboarding.referralCode.placeholder')}
-                placeholderTextColor={isDark ? '#8E8E93' : '#8E8E93'}
+                placeholderTextColor="#8E8E93"
                 value={referralCode}
-                onChangeText={setReferralCode}
+                onChangeText={(text) => setReferralCode(text.toUpperCase())}
                 autoCapitalize="characters"
                 autoCorrect={false}
-                maxLength={20}
+                keyboardType="ascii-capable"
+                maxLength={16}
                 editable={!referralValidating}
               />
               {referralCode.length > 0 && (
-                <TouchableOpacity
-                  style={styles.clearButton}
-                  onPress={() => {
-                    hapticFeedback.selection();
-                    setReferralCode('');
-                    setReferralError(false);
-                  }}
-                  disabled={referralValidating}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.clearIconContainer}>
-                    <CircleX size={24} color={isDark ? '#FFFFFF' : '#8E8E93'} />
-                  </View>
-                </TouchableOpacity>
+                <View style={styles.inputButtonsContainer}>
+                  <TouchableOpacity
+                    style={styles.clearButton}
+                    onPress={() => {
+                      hapticFeedback.selection();
+                      setReferralCode('');
+                      setReferralError(false);
+                    }}
+                    disabled={referralValidating}
+                    activeOpacity={0.7}
+                  >
+                    <X width={20} height={20} color="#8E8E93" />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.applyButton, applyButtonLoading && styles.applyButtonLoading]}
+                    onPress={() => {
+                      hapticFeedback.selection();
+                      handleApplyReferralCode();
+                    }}
+                    disabled={applyButtonLoading || referralValidating}
+                    activeOpacity={0.8}
+                  >
+                    {applyButtonLoading ? (
+                      <ActivityIndicator size="small" color="#FFFFFF" />
+                    ) : (
+                      <Text style={styles.applyButtonText}>Apply</Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
               )}
             </View>
-            {referralError && (
-              <Text style={[
-                styles.errorText,
-                { color: '#FF3B30' }
-              ]}>
-                {i18n.t('onboarding.referralCode.error') || 'Invalid referral code'}
-              </Text>
-            )}
           </View>
+        </View>
       )}
 
       {currentStep.type === 'allDone' && (
@@ -1960,7 +1931,13 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                       await Notifications.requestPermissionsAsync();
                       handleNext();
                     } catch (error) {
-                      Alert.alert('Permission Error', 'Unable to request notification permissions. You can enable them later in settings.');
+                      showAlert(
+                        'Permission Error', 
+                        'Unable to request notification permissions. You can enable them later in settings.',
+                        undefined,
+                        'ONBOARDING_NOTIFICATION_PERMISSION_ERROR',
+                        error
+                      );
                       handleNext();
                     }
                   }}
@@ -2232,39 +2209,62 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
   },
-  inputContainer: {
+  searchInputContainer: {
+    position: 'relative',
     width: '100%',
-    marginBottom: 24,
+    marginBottom: 60,
   },
-  inputWrapper: {
+  inputBackground: {
+    width: '100%',
+    height: 70,
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    backgroundColor: '#f3f4f6',
+    position: 'relative',
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 18,
-    borderWidth: 1.5,
     paddingHorizontal: 15,
-    paddingVertical: 5,
   },
-  input: {
+  searchInput: {
     flex: 1,
-    height: 44,
-    fontSize: 17,
-    paddingLeft: 10,
+    height: '100%',
+    backgroundColor: 'transparent',
+    fontSize: 18,
+    fontWeight: '500',
+    color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
-    textAlign: 'left',
+    textAlignVertical: 'center',
+    paddingVertical: 0,
+  },
+  inputButtonsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  applyButton: {
+    backgroundColor: '#000000',
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 80, // Fixed width to prevent shrinking
+    height: 40, // Fixed height for consistency
+  },
+  applyButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
+  applyButtonLoading: {
+    opacity: 0.7,
   },
   clearButton: {
-    paddingHorizontal: 10,
-    paddingVertical: 10,
-  },
-  clearIconContainer: {
-    width: 24,
-    height: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  clearButtonText: {
-    fontSize: 18,
-    fontWeight: '600',
+    padding: 5,
   },
   errorText: {
     fontSize: 12,

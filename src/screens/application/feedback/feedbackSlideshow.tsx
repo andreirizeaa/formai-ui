@@ -316,7 +316,7 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
   const handleViewFeedback = () => {
     hapticFeedback.selection();
     // Check if accuracy score is 100% - if so, skip feedback and go directly to accuracy score
-    const accuracyScore = liftData?.analysis?.accuracyScore || liftData?.analysis?.accuracy || 0;
+    const accuracyScore = Math.round(liftData?.analysis?.accuracyScore || liftData?.analysis?.accuracy || 0);
     if (accuracyScore >= 100) {
       setScreenMode('accuracyScore');
     } else {
@@ -702,7 +702,7 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
 
   // Render Accuracy Score screen
   if (screenMode === 'accuracyScore') {
-    const accuracyScore = liftData?.analysis?.accuracyScore || liftData?.analysis?.accuracy || 85; // Default to 85 if not provided
+    const accuracyScore = Math.round(liftData?.analysis?.accuracyScore || liftData?.analysis?.accuracy || 85); // Round to 0dp, default to 85 if not provided
     
     return (
       <View style={styles.container}>
