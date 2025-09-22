@@ -8,6 +8,7 @@ const PENDING_LIFT_COMPLETIONS_KEY = 'pendingLiftCompletions';
 const PENDING_LIFT_FAILURES_KEY = 'pendingLiftFailures';
 const INFLIGHT_ASSET_IDS_KEY = 'inflightAssetIds';
 const USER_JUST_PAID_KEY = 'userJustPaid';
+const SELECTED_LANGUAGE_KEY = 'selectedLanguage';
 
 export async function setUserId(userId: string): Promise<void> {
 	const value = await AsyncStorage.getItem(USER_ID_KEY);
@@ -40,6 +41,7 @@ export async function clearAllUserData(): Promise<void> {
 			PENDING_LIFT_FAILURES_KEY,
 			INFLIGHT_ASSET_IDS_KEY,
 			USER_JUST_PAID_KEY,
+			SELECTED_LANGUAGE_KEY,
 		];
 
 		await Promise.all(
@@ -91,5 +93,40 @@ export async function clearUserJustPaid(): Promise<void> {
 		await AsyncStorage.removeItem(USER_JUST_PAID_KEY);
 	} catch (error) {
 		console.warn('Error clearing userJustPaid flag:', error);
+	}
+}
+
+/**
+ * Sets the selected language in AsyncStorage
+ */
+export async function setSelectedLanguage(language: string): Promise<void> {
+	try {
+		await AsyncStorage.setItem(SELECTED_LANGUAGE_KEY, language);
+	} catch (error) {
+		console.warn('Error setting selected language:', error);
+	}
+}
+
+/**
+ * Gets the selected language from AsyncStorage
+ */
+export async function getSelectedLanguage(): Promise<string | null> {
+	try {
+		const value = await AsyncStorage.getItem(SELECTED_LANGUAGE_KEY);
+		return value;
+	} catch (error) {
+		console.warn('Error getting selected language:', error);
+		return null;
+	}
+}
+
+/**
+ * Clears the selected language from AsyncStorage
+ */
+export async function clearSelectedLanguage(): Promise<void> {
+	try {
+		await AsyncStorage.removeItem(SELECTED_LANGUAGE_KEY);
+	} catch (error) {
+		console.warn('Error clearing selected language:', error);
 	}
 }

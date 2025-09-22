@@ -485,8 +485,8 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
       <View style={styles.controlsContainer} ref={libraryScreenRef}>
         <View style={styles.leftControlsContainer}>
           <View style={styles.liftCountContainer}>
-            <Text style={styles.liftCountText}>
-              {liftCount === 0 ? i18n.t('library.noLifts') : `${liftCount} ${liftCount === 1 ? i18n.t('library.lift') : i18n.t('library.lifts')}`}
+            <Text style={styles.liftCountText} numberOfLines={1}>
+              {liftCount === 0 ? i18n.t('library.noLifts') : liftCount.toString()}
             </Text>
           </View>
         </View>
@@ -500,7 +500,7 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
             onPress={handleSearchPress}
           >
             <Search size={17} color="#000000" />
-            <Text style={styles.searchPillText}>Search</Text>
+            <Text style={styles.searchPillText}>{i18n.t('library.search')}</Text>
           </Pressable>
           <Pressable 
             style={({ pressed }) => [
@@ -741,6 +741,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
     alignItems: 'center',
+    flex: 1,
+    maxWidth: '60%',
   },
   searchPill: {
     flexDirection: 'row',

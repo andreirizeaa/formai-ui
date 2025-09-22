@@ -227,7 +227,7 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
                 styles.appleButtonText,
                 { color: isDark ? '#000000' : '#FFFFFF' }
               ]}>
-                Sign up with Apple
+                {i18n.t('onboarding.createAccount.signInWithApple')}
               </Text>
             </View>
           </TouchableOpacity>
@@ -265,7 +265,7 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
               styles.haveAccountText,
               { color: '#ffffff' }
             ]}>
-              Already have an account?{' '}
+              {i18n.t('alreadyHaveAccount')}{' '}
             </Text>
             <TouchableOpacity onPress={() => {
               hapticFeedback.selection();
@@ -276,7 +276,7 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
                 styles.signInLink,
                 { color: isDark ? '#007AFF' : '#007AFF' }
               ]}>
-                Sign in
+                {i18n.t('signIn')}
               </Text>
             </TouchableOpacity>
           </View>

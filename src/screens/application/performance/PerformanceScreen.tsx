@@ -221,7 +221,7 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
             {/* Accuracy Card */}
             <View style={styles.metricCard}>
               <View style={styles.metricHeaderRow}>
-                <Text style={styles.metricTitle}>Accuracy</Text>
+                <Text style={styles.metricTitle}>{i18n.t('performance.accuracy')}</Text>
                 <TouchableOpacity onPress={() => openInfoModal('accuracy')} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Show accuracy information" style={styles.metricTitleIcon}>
                   <CircleQuestionMark width={20} height={20} color="#000000" />
                 </TouchableOpacity>
@@ -246,7 +246,7 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
             {/* Improvement Card */}
             <View style={styles.metricCard}>
               <View style={styles.metricHeaderRow}>
-                <Text style={styles.metricTitle}>Trend</Text>
+                <Text style={styles.metricTitle}>{i18n.t('performance.trend')}</Text>
                 <TouchableOpacity onPress={() => openInfoModal('improvement')} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Show improvement information" style={styles.metricTitleIcon}>
                   <CircleQuestionMark width={20} height={20} color="#000000" />
                 </TouchableOpacity>
