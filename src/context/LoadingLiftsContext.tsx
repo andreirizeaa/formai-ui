@@ -213,7 +213,7 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
 
   // Utility function to compute simulation duration
   const computeSimDurationMs = (videoDurationSec?: number) =>
-    (((videoDurationSec || 10) * 4) + 30) * 1000; // same formula as before
+    (((videoDurationSec || 10) * 4) + 90) * 1000; // same formula as before
 
   // Wall-clock progress calculation
   const tickProgressFromClock = () => {

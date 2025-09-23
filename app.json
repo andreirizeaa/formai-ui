@@ -7,13 +7,11 @@
     "icon": "./assets/formai-ios-icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
-
     "splash": {
       "image": "./assets/formai-ios-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#000000"
     },
-
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/formai-ios-icon.png",
@@ -22,18 +20,16 @@
       "package": "com.useformai.formai",
       "useNextNotificationsApi": true
     },
-
     "web": {
       "proxy": "https://formai-service.onrender.com"
     },
-
     "plugins": [
       "expo-mail-composer",
       "expo-video",
       "expo-apple-authentication",
       "expo-notifications",
+      "expo-task-manager",
       "react-native-vision-camera",
-      "expo-background-fetch",
       [
         "expo-media-library",
         {
@@ -54,15 +50,18 @@
           "photosPermission": "The app accesses your photo library to allow you to select videos to upload for analysis."
         }
       ],
-      "react-native-compressor"
+      "react-native-compressor",
+      "expo-background-task"
     ],
-
     "ios": {
       "bundleIdentifier": "com.useformai.formai",
-      "buildNumber": "1", 
+      "buildNumber": "1",
       "supportsTablet": true,
       "infoPlist": {
-        "UIBackgroundModes": ["remote-notification", "background-fetch"],
+        "UIBackgroundModes": [
+          "remote-notification",
+          "background-processing"
+        ],
         "CFBundleURLTypes": [
           {
             "CFBundleURLName": "Google Sign-In",
@@ -78,9 +77,7 @@
         "ITSAppUsesNonExemptEncryption": false
       }
     },
-
-    "scheme": "formai", 
-
+    "scheme": "formai",
     "extra": {
       "eas": {
         "projectId": "cbbfb6a7-e285-419f-af75-79337f5c77f9"

@@ -18,6 +18,7 @@ import { validateReferralCode } from '../../services/referralService';
 import { OnboardingLayout } from '../../components/onboarding/OnboardingLayout';
 import { AnimatedOptionButton } from '../../components/onboarding/AnimatedOptionButton';
 import { useOnboarding } from '../../context/OnboardingContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { OnboardingData } from '../../types/onboarding';
 import i18n from '../../utils/i18n';
 import { hapticFeedback } from '../../utils/haptic';
@@ -209,6 +210,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const { onboardingData, updateOnboardingData } = useOnboarding();
+  const { setLanguage, currentLanguage } = useLanguage();
 
   // Global icon configuration
   const iconSize = 24;
@@ -473,6 +475,13 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
   // State for confetti animation delay
   const [showConfetti, setShowConfetti] = useState(false);
   const [showAllDoneConfetti, setShowAllDoneConfetti] = useState(false);
+
+  // Sync onboarding language with current language from AsyncStorage
+  useEffect(() => {
+    if (currentLanguage && onboardingData.language !== currentLanguage) {
+      updateOnboardingData('language', currentLanguage);
+    }
+  }, [currentLanguage, onboardingData.language, updateOnboardingData]);
 
   // Helpers for measurements
   const isMetric = onboardingData.unitSystem === 'metric';
@@ -769,7 +778,9 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       total_steps: totalSteps,
     });
 
-    if (step.preferenceKey === 'language' && typeof value === 'string') i18n.locale = value;
+    if (step.preferenceKey === 'language' && typeof value === 'string') {
+      setLanguage(value);
+    }
   }
 
   async function handleRateFormAI() {

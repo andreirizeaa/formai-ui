@@ -2,9 +2,9 @@ import React, { useEffect } from 'react';
 import * as Notifications from 'expo-notifications';
 import './app/notificationsBackground';
 import { BACKGROUND_NOTIFICATION_TASK } from './app/notificationsBackground';
-import { initBackgroundFetch } from './app/backgroundFetch';
 import { supabase } from './src/lib/supabase';
 import { Asset } from 'expo-asset';
+import { initBackgroundFetch } from './app/backgroundFetch';
 import { Layout } from './layout';
 import { PurchasesProvider } from './src/context/PurchasesContext';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -67,7 +67,7 @@ export default function App() {
     // Ensure background task is registered
     Notifications.registerTaskAsync(BACKGROUND_NOTIFICATION_TASK).catch(() => {});
 
-    // Initialize BackgroundFetch safety net
+    // Initialize background fetch
     void initBackgroundFetch();
 
     // Initialize analytics

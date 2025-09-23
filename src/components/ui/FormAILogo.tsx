@@ -15,8 +15,8 @@ export function FormAILogo({
 }: FormAILogoProps) {
   return (
     <View style={[styles.container, containerStyle]}>
-      <Image 
-        source={require('../../assets/dumbel.svg')}
+      <Image
+        source={require('../../../assets/dumbel.svg')}
         style={{ width: iconSize, height: iconSize }}
         contentFit="contain"
       />
