@@ -124,9 +124,11 @@ export function EditLanguageScreen({ onBack }: EditLanguageScreenProps) {
                 isDark={isDark}
                 delay={index * 50}
                 onPress={() => handleLanguageSelect(language.code)}
+                disabled={isSaving}
                 style={[
                   styles.languageButton,
-                  isSelected ? styles.selectedLanguageButton : styles.unselectedLanguageButton
+                  isSelected ? styles.selectedLanguageButton : styles.unselectedLanguageButton,
+                  isSaving && styles.disabledLanguageButton
                 ]}
               >
                 <View style={styles.languageContent}>
@@ -218,6 +220,9 @@ const styles = StyleSheet.create({
   },
   unselectedLanguageButton: {
     backgroundColor: '#f3f4f6',
+  },
+  disabledLanguageButton: {
+    opacity: 0.5,
   },
   languageContent: {
     flexDirection: 'row',

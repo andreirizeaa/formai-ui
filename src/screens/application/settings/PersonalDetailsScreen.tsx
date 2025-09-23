@@ -127,7 +127,7 @@ export function PersonalDetailsScreen({
     track('Screen viewed', { screen_name: 'Personal Details' });
   }, []);
   
-  const videoQuality = hasHdVideos ? 'High Definition' : 'Low';
+  const videoQuality = hasHdVideos ? i18n.t('personalDetails.highDefinition') : i18n.t('personalDetails.low');
 
   const handleEditCurrentWeight = () => {
     onEditCurrentWeight(getWeightDisplay());

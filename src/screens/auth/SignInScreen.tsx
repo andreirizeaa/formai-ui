@@ -224,6 +224,7 @@ export function SignInScreen({ onSignIn, onBack, onNavigateToOnboarding, onRequi
                   style={styles.googleIcon}
                   contentFit="contain"
                 />
+
                 <Text style={[
                   styles.googleButtonText,
                   { color: '#000000' }
@@ -300,15 +301,15 @@ const styles = StyleSheet.create({
   },
   appleButton: {
     width: '80%',
-    height: 60,
-    borderRadius: 28,
+    height: 65,
+    borderRadius: 36,
     alignItems: 'center',
     justifyContent: 'center',
   },
   googleButton: {
     width: '80%',
-    height: 60,
-    borderRadius: 28,
+    height: 65,
+    borderRadius: 36,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,

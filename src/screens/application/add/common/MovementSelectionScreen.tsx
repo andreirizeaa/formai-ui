@@ -182,11 +182,13 @@ export function MovementSelectionScreen({
           >
             <Text style={styles.backButtonText}>{i18n.t('add.back')}</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
-            style={[styles.uploadButton, !selectedMovement && styles.uploadButtonDisabled]} 
+          <TouchableOpacity
+            style={[styles.uploadButton, !selectedMovement && styles.uploadButtonDisabled]}
             onPress={() => {
               // Track add analysis clicks for continue to weights and reps
               track('Add analysis', { event: 'Continue to Weights and Reps' });
+              // Track movement selected event with the selected movement name
+              track('Movement Selected', { name: selectedMovement });
               onUpload();
             }}
             disabled={!selectedMovement}

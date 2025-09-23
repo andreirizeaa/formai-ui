@@ -5,7 +5,7 @@ import { hapticFeedback } from '../../utils/haptic';
 import i18n from '../../utils/i18n';
 import { StreakCalendar } from './StreakCalendar';
 import { OrangeGradientButton } from './OrangeGradientButton';
-import { FormAILogo } from '../FormAILogo';
+import { FormAILogo } from './FormAILogo';
 
 interface StreakModalProps {
   visible: boolean;

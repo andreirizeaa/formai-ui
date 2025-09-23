@@ -301,7 +301,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: '100%',
   },
-  accuracyCardLeftSection: { alignItems: 'flex-start', paddingLeft: 8 },
+  accuracyCardLeftSection: { alignItems: 'flex-start', paddingLeft: 8, width: 120 },
   accuracyCardNumber: {
     fontSize: 48,
     fontWeight: '800',
@@ -313,6 +313,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#000000',
     fontFamily: 'SF Pro Text',
+    width: 160,
+    flexWrap: 'wrap',
   },
   accuracyCardRightSection: { alignItems: 'center' },
 

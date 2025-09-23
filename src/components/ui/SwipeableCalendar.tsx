@@ -6,6 +6,7 @@ import { useUserCheckIns } from '../../context/UserCheckInsContext';
 import { useSelectedDate } from '../../context/SelectedDateContext';
 import { useLiftData } from '../../context/LiftDataContext';
 import { BASE_WEEKS, INITIAL_INDEX } from '../../utils/calendarData';
+import i18n from '../../utils/i18n';
 
 const { width: RAW_W } = Dimensions.get('window');
 const SCREEN_WIDTH = Math.round(RAW_W);
@@ -186,7 +187,15 @@ export function SwipeableCalendar({ onDateSelect, onSwipe, initialSelectedDate }
   const generateWeekData = useCallback(
     (weekDates: Date[]): DayData[] => {
       const today = new Date();
-      const dayNames = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+      const dayNames = [
+        i18n.t('days.sunday'),
+        i18n.t('days.monday'),
+        i18n.t('days.tuesday'),
+        i18n.t('days.wednesday'),
+        i18n.t('days.thursday'),
+        i18n.t('days.friday'),
+        i18n.t('days.saturday'),
+      ];
 
       return weekDates.map((date, i) => {
         const isToday = date.toDateString() === today.toDateString();

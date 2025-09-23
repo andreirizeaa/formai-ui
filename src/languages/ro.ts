@@ -1,0 +1,850 @@
+const ro = {
+    "loading": "Se încarcă...",
+    "getStarted": "Începe",
+    "signIn": "Autentificare",
+    "dontHaveAccount": "Nu ai un cont?",
+    "startToday": "Începe astăzi",
+    "alreadyHaveAccount": "Ai deja un cont?",
+    "next": "Continuă",
+    "back": "Înapoi",
+    "close": "Închide",
+    "tabs": {
+      "home": "Acasă",
+      "progress": "Progres",
+      "settings": "Setări"
+    },
+    "settings": {
+      "personalDetails": "Date personale",
+      "language": "Limbă",
+      "selectLanguage": "Selectează limba",
+      "units": "Schimbă unitățile",
+      "appTheme": "Temă aplicație",
+      "whyLowQualityVideos": "De ce au videoclipurile o calitate scăzută?",
+      "referFriends": "Recomandă prietenilor",
+      "growStrongerTogether": "Deveniți mai puternici împreună!",
+      "currentBalance": "Sold curent",
+      "shareNow": "Distribuie acum",
+      "sharePageTitle": "Distribuie FormAI",
+      "termsAndConditions": "Termeni de utilizare",
+      "privacyPolicy": "Politica de confidențialitate",
+      "supportEmail": "E-mail suport",
+      "replayTutorial": "Redă din nou tutorialul",
+      "leaveRating": "Lasă o recenzie",
+      "deleteAccount": "Șterge contul",
+      "logout": "Deconectare",
+      "save": "Salvează",
+      "deleteAccountTitle": "Ștergi contul?",
+      "deleteAccountMessage": "Ești sigur că vrei să ștergi definitiv contul? Această acțiune nu poate fi anulată și toate datele vor fi șterse.",
+      "deleteAccountSubscriptionWarning": "Ștergerea contului Form AI din aplicație nu anulează abonamentul. Nu uita să-l anulezi separat din setările de abonamente ale dispozitivului pentru a evita costuri ulterioare.",
+      "iAcknowledge": "Confirm",
+      "deleteAccountButton": "Șterge contul",
+      "logoutTitle": "Te deconectezi?",
+      "logoutMessage": "Sigur vrei să te deconectezi? Va trebui să te autentifici din nou pentru a accesa contul.",
+      "no": "Nu",
+      "yes": "Da",
+      "editFailed": {
+        "gender": "Modificarea genului a eșuat",
+        "height": "Modificarea înălțimii a eșuat",
+        "dateOfBirth": "Modificarea datei nașterii a eșuat",
+        "currentWeight": "Modificarea greutății a eșuat",
+        "unitSystem": "Actualizarea sistemului de unități a eșuat",
+        "language": "Actualizarea limbii a eșuat",
+        "message": "Te rugăm să încerci mai târziu"
+      }
+    },
+    "share": {
+      "referYourFriends": "Recomandă prietenilor",
+      "empowerYourFriends": "Inspiră-ți prietenii",
+      "yourPersonalPromoCode": "Codul tău promo personal",
+      "share": "Distribuie",
+      "howItWorks": "Cum funcționează",
+      "step1": "Distribuie codul prietenilor",
+      "step2": "Câștigă 5 $ pentru fiecare prieten care se abonează anual cu codul tău",
+      "copied": "Copiat!",
+      "promoCodeCopied": "Codul promo a fost copiat în clipboard",
+      "error": "Eroare",
+      "failedToCopy": "Copierea codului promo a eșuat",
+      "failedToShare": "Deschiderea ferestrei de partajare a eșuat",
+      "shareMessage": "Hei! Descarcă aplicația și folosește acest cod promo:",
+      "shareTitle": "Descarcă FormAI!"
+    },
+    "personalDetails": {
+      "currentWeight": "Greutate actuală",
+      "weight": "Greutate",
+      "height": "Înălțime",
+      "dateOfBirth": "Data nașterii",
+      "gender": "Gen",
+      "videoQuality": "Calitate video",
+      "highDefinition": "Definiție Mare",
+      "low": "Scăzută",
+      "editCurrentWeight": "Editează greutatea actuală",
+      "editHeight": "Editează înălțimea",
+      "editDateOfBirth": "Editează data nașterii",
+      "editGender": "Editează genul",
+      "male": "Masculin",
+      "female": "Feminin"
+    },
+    "add": {
+      "uploadVideo": "Încarcă video",
+      "recordVideo": "Înregistrează video",
+      "uploadVideoDescription": "Selectează un video din galerie pentru a-ți analiza forma.",
+      "recordVideoDescription": "Înregistrează un video nou pentru a-ți analiza tehnica exercițiului.",
+      "whatExercise": "Ce exercițiu executai?",
+      "back": "Înapoi",
+      "noVideoAvailable": "Niciun video disponibil",
+      "selectNewVideo": "Video nou",
+      "continue": "Continuă",
+      "generalTips": "Sfaturi generale",
+      "searchMovements": "Caută mișcări...",
+      "useCustomMovement": "Folosește",
+      "bestRecordingPractices": "Cele mai bune practici de filmare",
+      "bodyParts": {
+        "all": "Toate",
+        "chest": "Piept",
+        "back": "Spate",
+        "shoulders": "Umeri",
+        "arms": "Brațe",
+        "legs": "Picioare"
+      },
+      "movements": {
+        "Flat Barbell Bench Press": "Împins la piept cu haltera (plan drept)",
+        "Incline Barbell Bench Press": "Împins la piept înclinat cu haltera",
+        "Decline Barbell Bench Press": "Împins la piept declinat cu haltera",
+        "Flat Dumbbell Chest Press": "Împins la piept cu gantere (plan drept)",
+        "Incline Dumbbell Chest Press": "Împins la piept înclinat cu gantere",
+        "Decline Dumbbell Chest Press": "Împins la piept declinat cu gantere",
+        "Dumbbell Chest Fly (Incline)": "Fluturări gantere piept (înclinat)",
+        "Dumbbell Chest Fly (Flat)": "Fluturări gantere piept (drept)",
+        "Dumbbell Chest Fly (Decline)": "Fluturări gantere piept (declinat)",
+        "Deadlift": "Îndreptări",
+        "Barbell Row": "Ramat cu haltera",
+        "Pendlay Row": "Ramat Pendlay",
+        "T-Bar Row": "Ramat la T-Bar",
+        "Dumbbell Row": "Ramat cu gantera",
+        "Single Arm Dumbbell Row": "Ramat cu o mână cu gantera",
+        "Overhead Barbell Press": "Împins deasupra capului cu haltera",
+        "Seated Dumbbell Shoulder Press": "Împins umeri la șezut cu gantere",
+        "Arnold Press": "Presa Arnold",
+        "Lateral Raise (Dumbbell)": "Ridicări laterale (gantere)",
+        "Front Raise (Dumbbell)": "Ridicări frontale (gantere)",
+        "Upright Row": "Ramat vertical",
+        "Barbell Curl": "Flexii cu haltera",
+        "EZ-Bar Curl": "Flexii cu bara EZ",
+        "Dumbbell Curl": "Flexii cu gantere",
+        "Hammer Curl": "Flexii ciocan",
+        "Incline Dumbbell Curl": "Flexii înclinat cu gantere",
+        "Cable Curl": "Flexii la scripete",
+        "Preacher Curl": "Flexii la banca Scott",
+        "Skullcrusher (Barbell or EZ-Bar)": "Extensii triceps la frunte (bară/EZ)",
+        "Dumbbell Overhead Triceps Extension": "Extensii triceps deasupra capului (ganteră)",
+        "Barbell Back Squat": "Genuflexiuni cu haltera la spate",
+        "Barbell Front Squat": "Genuflexiuni frontale cu haltera",
+        "Goblet Squat": "Genuflexiuni Goblet",
+        "Dumbbell Back Squat": "Genuflexiuni cu gantere",
+        "Romanian Deadlift (Barbell or Dumbbell)": "Îndreptări românești (haltera/gantere)",
+        "Stiff-Leg Deadlift": "Îndreptări cu picioare întinse",
+        "Good Morning": "Good Morning",
+        "Push Ups": "Flotări"
+      },
+      "recordingTips": [
+        "Asigură iluminare bună și cameră stabilă",
+        "Încearcă să te filmezi din lateral"
+      ],
+      "countdown": {
+        "title": "Numărătoare inversă",
+        "off": "Oprit",
+        "fiveSeconds": "5 s",
+        "tenSeconds": "10 s"
+      }
+    },
+    "welcome": {
+      "title": "FormAI",
+      "subtitle": "Formă perfectă, mereu",
+      "modal": {
+        "title": "Bun venit",
+        "message": "Îți mulțumim pentru încrederea acordată Form AI. Suntem încântați să te ajutăm să-ți atingi obiectivele.",
+        "ctaButton": "Hai să-ți arătăm aplicația"
+      }
+    },
+    "onboarding": {
+      "language": {
+        "title": "Limbă",
+        "subtitle": "Poți schimba oricând mai târziu",
+        "selectLanguage": "Selectează o limbă"
+      },
+      "units": {
+        "title": "Unități",
+        "subtitle": "Poți schimba oricând mai târziu",
+        "metric": "Metric",
+        "imperial": "Imperial",
+        "metricDescription": "Kilograme și centimetri",
+        "imperialDescription": "Livre, picioare, inci"
+      },
+      "gender": {
+        "title": "Gen biologic",
+        "subtitle": "Ne ajută să găsim biomecanica optimă pentru tine",
+        "male": "Masculin",
+        "female": "Feminin",
+        "other": "Altul"
+      },
+      "goal": {
+        "title": "Care este obiectivul tău?",
+        "subtitle": "Ne ajută să generăm un plan de calorii.",
+        "loseWeight": "Slăbire",
+        "maintain": "Menținere",
+        "gainWeight": "Creștere în greutate"
+      },
+      "workouts": {
+        "title": "Câte antrenamente faci pe săptămână?",
+        "subtitle": "Frecvența îți modelează progresul.",
+        "zeroToTwo": "0–2",
+        "zeroToTwoDescription": "Antrenamente ocazionale",
+        "threeToFive": "3–5",
+        "threeToFiveDescription": "De câteva ori pe săptămână",
+        "SixPlus": "6+",
+        "SixPlusDescription": "Sportiv disciplinat"
+      },
+      "discovery": {
+        "title": "De unde ai aflat de noi?",
+        "subtitle": "Ajută-ne să înțelegem cum ai descoperit FormAI",
+        "instagram": "Instagram",
+        "tiktok": "TikTok",
+        "facebook": "Facebook",
+        "google": "Google",
+        "appStore": "App Store",
+        "playStore": "Play Store",
+        "twitter": "X (Twitter)",
+        "youtube": "YouTube",
+        "friends": "Prieteni & familie",
+        "other": "Altceva"
+      },
+      "personalTrainer": {
+        "title": "Ai antrenor personal?",
+        "subtitle": "Ne ajută să îți personalizăm experiența",
+        "yes": "Da",
+        "no": "Nu"
+      },
+      "trainingReason": {
+        "title": "Care este motivul #1 pentru care te antrenezi?",
+        "subtitle": "Vom adapta analiza formei la obiectivul tău.",
+        "buildStrength": "Dezvoltare forță",
+        "improvePhysique": "Îmbunătățirea fizicului",
+        "preventInjury": "Prevenirea accidentărilor",
+        "trainForSport": "Antrenament pentru sport",
+        "stayActiveHealthy": "Activ și sănătos"
+      },
+      "gymChallenge": {
+        "title": "Care este cea mai mare provocare la sală?",
+        "subtitle": "Hai să ne concentrăm pe ce contează pentru tine.",
+        "unsureForm": "Nu sunt sigur de corectitudinea formei",
+        "noResults": "Nu văd rezultate",
+        "worriedInjury": "Îmi este teamă de accidentări",
+        "strugglingMotivation": "Mă lupt cu motivația",
+        "other": "Altceva"
+      },
+      "lifterType": {
+        "title": "Cum te vezi ca lifter?",
+        "subtitle": "Nivelul tău de experiență ne ghidează recomandările.",
+        "beginner": "Începător – învăț bazele",
+        "intermediate": "Intermediar – îmi perfecționez tehnica",
+        "advanced": "Avansat – urmăresc performanța de elită",
+        "returningAfterBreak": "Revenire după pauză",
+        "injuryRehab": "Recuperare după accidentare"
+      },
+      "perfectFormGoal": {
+        "title": "Dacă forma ta ar fi mereu perfectă, ce ai atinge mai repede?",
+        "subtitle": "Vizualizează progresul fără piedici.",
+        "liftHeavierSafely": "Ridicare mai grea în siguranță",
+        "buildMuscleEfficiently": "Construire eficientă de masă musculară",
+        "avoidInjuries": "Evitarea accidentărilor",
+        "boostConfidence": "Sporirea încrederii",
+        "trainLongerWithoutSetbacks": "Antrenamente mai lungi fără recul"
+      },
+      "formConfidence": {
+        "title": "Cât de încrezător ești în forma ta acum?",
+        "subtitle": "Fii sincer – te aducem la 100%.",
+        "zeroToTwentyFive": "0% - 25%",
+        "twentyFiveToFifty": "25% - 50%",
+        "fiftyToSeventyFive": "50% - 75%",
+        "seventyFiveToHundred": "75% - 100%"
+      },
+      "threeMonthGoal": {
+        "title": "În 3 luni, unde vrei să fii?",
+        "subtitle": "Călătoria începe cu verificarea formei de azi.",
+        "liftingHeavier": "Să ridic mai greu",
+        "lookingLeaner": "Să arăt mai definit",
+        "feelingStrongerInjuryFree": "Să mă simt mai puternic și fără accidentări",
+        "moreConsistent": "Să fiu mai consecvent",
+        "moreConfident": "Să fiu mai încrezător"
+      },
+      "measurements": {
+        "title": "Înălțime & Greutate",
+        "subtitle": "Ne ajută să oferim recomandări personalizate",
+        "height": "Înălțime",
+        "weight": "Greutate",
+        "metric": "Metric",
+        "imperial": "Imperial",
+        "cm": "cm",
+        "ft": "ft",
+        "in": "inci",
+        "kg": "kg",
+        "lbs": "lbs"
+      },
+      "birthDate": {
+        "title": "Când te-ai născut?",
+        "subtitle": "Pentru recomandări adecvate vârstei",
+        "month": "Luna",
+        "day": "Ziua",
+        "year": "Anul"
+      },
+      "rating": {
+        "title": "Oferă-ne o evaluare",
+        "subtitle": "Ajută-ne să îmbunătățim experiența",
+        "skip": "Sari peste",
+        "middleText": "FormAI este creat pentru pasionații de sală ca tine!"
+      },
+      "referralCode": {
+        "title": "Introdu codul de recomandare (opțional)",
+        "subtitle": "Poți sări peste acest pas.",
+        "placeholder": "Cod de recomandare",
+        "skip": "Sari peste",
+        "submit": "Trimite",
+        "success": "Codul de recomandare a fost aplicat",
+        "error": "Cod invalid. Încearcă din nou."
+      },
+      "allDone": {
+        "title": "Gata!",
+        "allDone": "Gata!",
+        "thankYou": "Mulțumim pentru încredere",
+        "privacy": "Promitem să-ți păstrăm mereu datele private și în siguranță."
+      },
+      "trainSafer": {
+        "title": "Antrenează-te cu de 3 ori mai puține șanse de accidentare cu Form AI față de pe cont propriu",
+        "withoutFormAI": "Fără Form AI",
+        "withFormAI": "Cu Form AI",
+        "description": "FormAI te ajută să-ți perfecționezi forma și te menține consecvent."
+      },
+      "notificationPermission": {
+        "title": "Atinge-ți obiectivele cu notificări",
+        "dialogText": "FormAI dorește să îți trimită notificări",
+        "allow": "Permite",
+        "dontAllow": "Nu permite"
+      },
+      "setupLoading": {
+        "title": "",
+        "mainTitle": "Configurăm totul pentru tine",
+        "step1": "Îți configurăm profilul...",
+        "step2": "Aproape gata..."
+      },
+      "freeTrial": {
+        "title": "Vrem să încerci FormAI gratuit.",
+        "noPaymentDue": "Nicio plată acum",
+        "tryForFree": "Încearcă pentru 0,00 $",
+        "pricing": "Doar 39,99 $ pe an (3,33 $/lună)"
+      },
+      "notificationReminder": {
+        "title": "Îți vom trimite\nun reminder înainte să se\ntermine perioada de probă",
+        "noPaymentDue": "Nicio plată acum",
+        "continueForFree": "Continuă GRATUIT",
+        "pricing": "Doar 39,99 $ pe an (3,33 $/lună)"
+      },
+      "subscriptionSelection": {
+        "title": "Începe perioada de probă GRATUITĂ de 3 zile pentru a continua.",
+        "titleMonthly": "Deblochează FormAI pentru a-ți atinge mai repede obiectivele",
+        "today": "Astăzi",
+        "todayDescription": "Deblochează toate funcțiile aplicației, precum analiza AI a formei.",
+        "reminder": "Peste 2 zile - Reminder",
+        "reminderDescription": "Îți vom aminti că perioada de probă se apropie de final.",
+        "billing": "Peste 3 zile - Începe facturarea",
+        "billingDescription": "Vei fi taxat la {{billingDate}} dacă nu anulezi înainte.",
+        "monthly": "Lunar",
+        "monthlyPrice": "9,99 $/lună",
+        "yearly": "Anual",
+        "yearlyPrice": "3,33 $/lună",
+        "freeTag": "3 ZILE GRATUIT",
+        "noPaymentDue": "Nicio plată acum",
+        "cancelAnytime": "Anulezi oricând - Fără angajament",
+        "startTrial": "Pornește perioada mea de probă de 3 zile",
+        "startToday": "Începe azi",
+        "yearlyPricing": "3 zile gratuit, apoi 39,99 $/an (3,33 $/lună)",
+        "monthlyPricing": "Doar 9,99 $/lună (120 $/an)",
+        "monthlyFeature1": "Analiză simplă a formei",
+        "monthlyFeature1Description": "Analizează orice mișcare doar cu un video",
+        "monthlyFeature2": "Atinge-ți obiectivele",
+        "monthlyFeature2Description": "Să intri în formă n-a fost niciodată mai ușor",
+        "monthlyFeature3": "Urmărește-ți progresul",
+        "monthlyFeature3Description": "Rămâi pe drumul cel bun cu analize și mementouri"
+      },
+      "createAccount": {
+        "title": "Creează un cont",
+        "signInWithApple": "Autentificare cu Apple",
+        "signInWithGoogle": "Autentificare cu Google"
+      },
+      "cameraPermission": {
+        "title": "Permite accesul la cameră",
+        "subtitle": "Accesul la cameră este necesar pentru FormAI.",
+        "dialogText": "FormAI dorește acces la cameră.",
+        "allow": "Permite",
+        "dontAllow": "Nu permite"
+      },
+      "perfectFormGoalMessage": {
+        "highlighted": {
+          "liftHeavierSafely": "Să ridici mai greu în siguranță",
+          "buildMuscleEfficiently": "Să construiești masă musculară",
+          "avoidInjuries": "Să eviți accidentările",
+          "boostConfidence": "Încrederea ta va exploda",
+          "trainLongerWithoutSetbacks": "Antrenamente fără poticneli",
+          "default": "Obiectivele tale"
+        },
+        "rest": " este un obiectiv garantat. Nu e deloc greu!",
+        "restRealistic": " este un obiectiv realist. Nu e deloc greu!",
+        "restFantastic": " este un obiectiv grozav. Nu e deloc greu!",
+        "restAfter": " apoi. Nu e deloc greu!",
+        "restNormal": " va deveni normal. Nu e deloc greu!",
+        "restAchievable": " sunt realizabile cu Form AI. Nu e deloc greu!",
+        "subtitle": "95% dintre utilizatori spun că schimbarea este vizibilă după utilizarea Form AI."
+      },
+      "potentialGraph": {
+        "title": "Ai un potențial uimitor să-ți atingi obiectivul",
+        "chartTitle": "Tranziția preciziei tale",
+        "subtitle": "Bazat pe datele istorice Form AI, îmbunătățirea este întârziată la început, dar după 14 zile devii foarte constant!"
+      },
+      "costComparison": {
+        "title": "Formă perfectă la o fracțiune din costul antrenorilor",
+        "personalTrainer": "Antrenor personal",
+        "withFormAI": "Cu Form AI",
+        "costLess": "Cu 99% mai ieftin",
+        "description": "Tehnica sigură și corectă nu ar trebui să coste o avere."
+      },
+      "gymChallengeInfo": {
+        "noResults": {
+          "headline": "Rezultatele cer timp, dar ești mai aproape decât crezi.",
+          "message": "Te ghidăm cu feedbackul potrivit ca munca ta să dea roade.",
+          "howWeGetYouThere": [
+            "Analiza formei pentru ca fiecare repetare să conteze",
+            "Feedback video pentru a evidenția ce te trage înapoi",
+            "Urmărirea preciziei pentru a măsura progresul real"
+          ]
+        },
+        "unsureForm": {
+          "headline": "Forma pe primul loc.",
+          "message": "Îți oferim feedback clar ca să te antrenezi sigur și eficient, de fiecare dată.",
+          "howWeGetYouThere": [
+            "Analiză instantă a formelor din clipurile tale",
+            "Sfaturi aplicabile pentru corecții rapide",
+            "Scoruri de precizie pentru a urmări îmbunătățirea"
+          ]
+        },
+        "worriedInjury": {
+          "headline": "Antrenează-te în siguranță. Antrenează-te puternic.",
+          "message": "Prindem mișcările riscante înainte să devină accidentări.",
+          "howWeGetYouThere": [
+            "Feedback video pe poziții nesigure",
+            "Recomandări de tehnică mai sigure, personalizate",
+            "Urmărirea preciziei pentru consecvență pe termen lung"
+          ]
+        },
+        "strugglingMotivation": {
+          "headline": "Motivația e mai ușoară când nu ești singur.",
+          "message": "Te menținem implicat arătându-ți progresul și sărbătorind fiecare pas.",
+          "howWeGetYouThere": [
+            "Scoruri ușor de citit după fiecare antrenament",
+            "Îmbunătățiri vizibile cu tendințe de progres",
+            "Sfaturi încurajatoare pentru a rămâne consecvent"
+          ]
+        },
+        "other": {
+          "headline": "Suntem aici pentru drumul tău.",
+          "message": "Indiferent de provocare, îți oferim ghidare și suport.",
+          "howWeGetYouThere": [
+            "Feedback personalizat pe videoclipurile tale de mișcare",
+            "Urmărirea preciziei pe tipuri diferite de exerciții",
+            "Sfaturi și insighturi continue pentru obiectivele tale"
+          ]
+        },
+        "howWeGetYouThereTitle": "Iată cum te vom duce acolo"
+      },
+      "saveProgress": {
+        "title": "Creează un cont"
+      }
+    },
+    "months": {
+      "january": "Ianuarie",
+      "february": "Februarie",
+      "march": "Martie",
+      "april": "Aprilie",
+      "may": "Mai",
+      "june": "Iunie",
+      "july": "Iulie",
+      "august": "August",
+      "september": "Septembrie",
+      "october": "Octombrie",
+      "november": "Noiembrie",
+      "december": "Decembrie",
+      "array": ["Ianuarie", "Februarie", "Martie", "Aprilie", "Mai", "Iunie", "Iulie", "August", "Septembrie", "Octombrie", "Noiembrie", "Decembrie"]
+    },
+    "progress": {
+      "title": "Călătoria ta începe aici",
+      "subtitle": "Vezi cum utilizatorii își îmbunătățesc forma și performanța cu FormAI",
+      "chartTitle": "Îmbunătățirea scorului de formă în timp",
+      "week": "Săptămâna",
+      "score": "Scor formă",
+      "formImprovement": "Îmbunătățirea formei",
+      "weeksToExcellence": "Săptămâni până la excelență"
+    },
+    "liftingGoal": {
+      "title": "Care este obiectivul tău?",
+      "subtitle": "Vom adapta AI-ul la stilul tău de ridicare.",
+      "muscleBuilding": "Construire masă musculară",
+      "powerlifting": "Powerlifting",
+      "toning": "Tonifiere",
+      "strength": "Forță",
+      "weightLoss": "Scădere în greutate"
+    },
+    "formBarrier": {
+      "title": "Ce te împiedică să-ți perfecționezi forma?",
+      "subtitle": "Ajută-ne să înțelegem provocările tale",
+      "expensiveTrainers": "Antrenorii personali sunt prea scumpi",
+      "gymAdviceScary": "Mi-e incomod să cer sfaturi",
+      "noTime": "Nu am timp să-mi perfecționez forma",
+      "other": "Altceva"
+    },
+    "home": {
+      "addTestLift": "Adaugă un lift de test",
+      "dailyAccuracyLevel": "Precizia zilnică",
+      "noLiftsToday": "Niciun lift astăzi",
+      "allTimeAccuracy": "Precizie totală",
+      "earnByReferring": "Câștigă prin recomandări!",
+      "yourVideoLibrary": "Biblioteca ta video",
+      "lifts": "Lifturi recente",
+      "seeAll": "Vezi tot",
+      "noRecordedLifts": "Nu există lifturi înregistrate pentru această dată",
+      "startAnalyzingWorkout": "Începe analiza antrenamentului cu un video scurt",
+      "dateFormat": {
+        "lifts": "lifturi",
+        "months": {
+          "jan": "Ian",
+          "feb": "Feb",
+          "mar": "Mar",
+          "apr": "Apr",
+          "may": "Mai",
+          "jun": "Iun",
+          "jul": "Iul",
+          "aug": "Aug",
+          "sep": "Sep",
+          "oct": "Oct",
+          "nov": "Nov",
+          "dec": "Dec"
+        }
+      },
+      "dayStreak": "Seria de {{count}} zile",
+      "onFireMessage": "Ești în formă maximă! Continuă seria zilnică.",
+      "zeroDayStreak": "Serie de 0 zile",
+      "noStreakMessage": "Încă nu ai serie. Înregistrează în zile consecutive pentru a începe.",
+      "continue": "Continuă"
+    },
+    "days": {
+      "monday": "L",
+      "tuesday": "M",
+      "wednesday": "M",
+      "thursday": "J",
+      "friday": "V",
+      "saturday": "S",
+      "sunday": "D",
+    },
+    "performance": {
+      "title": "Progres",
+      "editDateRange": "Editează intervalul",
+      "from": "De la",
+      "to": "Până la",
+      "reset": "Resetează",
+      "accuracy": "Precizie",
+      "trend": "Tendință",
+      "apply": "Aplică",
+      "filterLifts": "Filtrează lifturile",
+      "timeRanges": {
+        "ninetyDays": "90 Zile",
+        "sixMonths": "6 Luni",
+        "oneYear": "1 An",
+        "allTime": "Tot timpul",
+      },
+      "chartTitles": {
+        "accuracyPerWeight": "Precizie per greutate",
+        "accuracyOverTime": "Precizie în timp",
+        "loading": "Se încarcă...",
+        "noDataAvailable": "Nu există date"
+      },
+      "info": {
+        "accuracyPerWeight": {
+          "title": "Precizie per greutate",
+          "message": "Arată precizia medie a formei pentru fiecare greutate ridicată la o mișcare. Greutățile mari pot pune forma la încercare. Calcul: media scorurilor pentru fiecare greutate."
+        },
+        "accuracyOverTime": {
+          "title": "Precizie în timp",
+          "message": "Arată cum se schimbă precizia formei în timp pentru o mișcare. Media zilnică este reprezentată pe parcursul datelor."
+        },
+        "accuracy": {
+          "title": "Precizie",
+          "message": "Precizia medie în intervalul selectat. Media scorurilor tuturor lifturilor."
+        },
+        "improvement": {
+          "title": "Îmbunătățire",
+          "message": "Schimbarea formei pe interval: comparăm prima treime a lifturilor cu ultima treime și afișăm diferența medie."
+        }
+      },
+      "metricsFeedback": {
+        "title": "Vrei și alte metrici? Spune-ne!",
+        "subtitle": "Ajută-ne să-ți îmbunătățim experiența"
+      }
+    },
+    "library": {
+      "title": "Bibliotecă",
+      "editDateRange": "Editează intervalul",
+      "from": "De la",
+      "to": "Până la",
+      "reset": "Resetează",
+      "apply": "Aplică",
+      "all": "Toate",
+      "favourites": "Favorite",
+      "noLiftsAnalysed": "Niciun lift analizat",
+      "noFavouriteLifts": "Niciun lift favorit",
+      "noLiftsFound": "Nu s-au găsit lifturi",
+      "startAnalysingWorkout": "Începe analiza antrenamentului de azi cu un video scurt",
+      "markLiftsAsFavourites": "Marchează lifturile ca favorite pentru a apărea aici",
+      "tryAdjustingFilters": "Încearcă să ajustezi filtrele",
+      "lifts": "lifturi",
+      "lift": "lift",
+      "noLifts": "0",
+      "selectDateRange": "Selectează intervalul",
+      "allLifts": "Toate lifturile",
+      "oneLift": "1",
+      "search": "Caută",
+      "liftsCount": "{{count}} lifturi",
+      "filterByMovement": "Filtrează după mișcare",
+      "searchMovements": "Caută mișcări...",
+      "allMovements": "Toate mișcările",
+      "searchAnalysis": {
+        "analysisFound": "Analiză găsită",
+        "analysisFoundNotFavourited": "S-a găsit o analiză dar nu e la favorite.",
+        "continueToLift": "Continuă la lift",
+        "noAnalysisFound": "Nu s-a găsit analiză",
+        "noAnalysisFoundMessage": "Nu există analiză pentru acest video. Asigură-te că a fost analizat.",
+        "analyse": "Analizează",
+        "permissionRequired": "Permisiune necesară",
+        "permissionMessage": "Permite accesul la biblioteca foto pentru a căuta videoclipuri.",
+        "error": "Eroare",
+        "errorMessage": "Selectarea videoclipului a eșuat. Încearcă din nou."
+      }
+    },
+    "liftCard": {
+      "accuracy": "Precizie"
+    },
+    "loadingLift": {
+      "uploadingVideo": "Se încarcă videoclipul...",
+      "checkingVideo": "Se verifică videoclipul...",
+      "estimatingPose": "Se estimează postura...",
+      "analyzingVideo": "Se analizează videoclipul...",
+      "analyzingForm": "Se analizează forma...",
+      "analysisFailed": "Analiza a eșuat",
+      "processing": "Procesare...",
+      "errorOccurred": "A apărut o eroare",
+      "pleaseTryAgain": "Te rugăm să încerci din nou",
+      "tapToRetry": "Atinge pentru a reîncerca",
+      "notifyWhenDone": "Te vom anunța când este gata!",
+      "noLiftFound": {
+        "title": "Nu s-a găsit niciun lift",
+        "subtitle": "Nu putem detecta o ridicare"
+      },
+      "liftMismatch": {
+        "title": "Nepotrivire lift",
+        "subtitle": "Mișcarea selectată nu corespunde videoclipului",
+        "detectedMovement": "Nu te putem detecta executând: {{movement}}"
+      }
+    },
+    "feedback": {
+      "liftDetails": "Detalii lift",
+      "rangeOfMotionAcrossReps": "Amplitudinea mișcării pe repetări",
+      "benchPress": "Împins la piept",
+      "formAccuracyAcrossReps": "Precizia formei pe repetări",
+      "weight": "Greutate",
+      "reps": "Repetări",
+      "reviewFeedback": "Vezi feedbackul",
+      "favourite": "Favorit",
+      "manualDeleteLiftCardData": "Șterge liftul",
+      "deleteLiftTitle": "Ștergi liftul",
+      "deleteLiftMessage": "Ești sigur că vrei să ștergi acest lift? Acțiune ireversibilă.",
+      "cancel": "Anulează",
+      "delete": "Șterge",
+      "howItWorks": "Cum funcționează",
+      "viewFeedback": "Vezi feedbackul",
+      "step1": "AI-ul nostru observă momente specifice în timpul liftului în care forma poate fi îmbunătățită.",
+      "step2": "Apoi explică ce nu a fost optim.",
+      "step3": "Primești sfaturi de siguranță și îmbunătățire!",
+      "step4": "Apoi ține de tine să îmbunătățești forma și să revii într-o săptămână.",
+      "accuracy": "Precizie",
+      "accuracyScore": "Scor precizie",
+      "improvements": "Îmbunătățiri",
+      "noVideoAvailable": "Niciun video disponibil",
+      "deleteLiftConfirmation": "Sigur ștergi acest lift? Acțiune ireversibilă.",
+      "lbs": "lbs",
+      "kg": "kg",
+      "updateFailed": {
+        "weight": "Actualizarea greutății a eșuat",
+        "message": "Te rugăm să încerci mai târziu"
+      }
+    },
+    "common": {
+      "accuracy": "Precizie",
+      "averageAccuracy": "Precizie medie",
+      "averageFormImprovement": "Îmbunătățire medie a formei",
+      "noData": "Fără date",
+      "selectDateRange": "Selectează intervalul",
+      "allLifts": "Toate lifturile",
+      "oneLift": "1 lift",
+      "lifts": "Lifturi",
+      "noLiftsFound": "Nu s-au găsit lifturi"
+    },
+    "tutorial": {
+      "buttons": {
+        "previous": "Înapoi",
+        "next": "Continuă",
+        "complete": "Finalizează",
+        "skipGuide": "Sari peste tutorial",
+        "close": "Închide"
+      },
+      "addButton": {
+        "title": "Adaugă un lift",
+        "description": "Folosește butonul Adaugă pentru a începe o nouă analiză."
+      },
+      "addOptionsUpload": {
+        "title": "Încarcă & Înregistrează un video",
+        "description": "Aici poți încărca un video sau înregistra unul nou în aplicație, care va fi salvat și în galeria foto.\n\nPentru acest tur vom încărca un video demo."
+      },
+      "uploadPracticesCta": {
+        "title": "Sfaturi & încărcare",
+        "description": "Găsești aici recomandări privind calitatea video și cum obții cele mai bune rezultate.\n\nPasul următor ar deschide galeria, dar îl omitem în demo."
+      },
+      "videoPreviewContinue": {
+        "title": "Previzualizare video",
+        "description": "Dacă video-ul arată bine, continuă și alege tipul mișcării."
+      },
+      "movementSelectionContinue": {
+        "title": "Alege tipul mișcării",
+        "description": "Selectează o mișcare exactă pentru a ne ajuta să analizăm corect forma.\n\nDacă nu o găsești, scrie echipei de suport și vom încerca să o adăugăm."
+      },
+      "weightRepsComplete": {
+        "title": "Greutate & repetări",
+        "description": "Le folosim pentru a-ți urmări progresul și îmbunătățirea în timp."
+      },
+      "homeFirstLiftCard": {
+        "title": "Atinge aici pentru analiza ta",
+        "description": "Liftul tău apare aici cu analiza aferentă. Atinge pentru detalii sau glisează pentru a șterge."
+      },
+      "liftDetailsFormGraph": {
+        "title": "Precizia formei pe repetări",
+        "description": "Graficul arată cum variază precizia pentru fiecare repetare."
+      },
+      "liftDetailsDepthGraph": {
+        "title": "Amplitudinea pe repetări",
+        "description": "Acest grafic bară arată profunzimea liftului pe repetări."
+      },
+      "liftDetailsReviewFeedback": {
+        "title": "Revizuiește feedbackul",
+        "description": "Apasă „Vezi feedbackul” pentru analiză detaliată și sfaturi."
+      },
+      "howItWorksModal": {
+        "title": "Cum funcționează",
+        "description": "Aici vezi cum funcționează analiza AI și cum te ajută să progresezi."
+      },
+      "feedbackSlideshow": {
+        "title": "Feedbackul tău",
+        "description": "Sistemul evidențiază momente ce necesită îmbunătățire, cu problemele și sfaturile aferente.\n\nGlisează la dreapta pentru următorul punct."
+      },
+      "feedbackIssues": {
+        "title": "Probleme de adresat",
+        "description": "Revizuiește problemele identificate în forma ta.\n\nGlisează overlay-ul pentru a vedea captura video."
+      },
+      "feedbackTips": {
+        "title": "Sfaturi de îmbunătățire",
+        "description": "Sfaturi concrete pentru a-ți îmbunătăți tehnica.\n\nPoți deschide/închide panoul pentru a vedea captura."
+      },
+      "homeSeeAllLifts": {
+        "title": "Vezi toate lifturile",
+        "description": "Deschide biblioteca pentru a filtra, sorta și revizui istoricul."
+      },
+      "libraryScreen": {
+        "title": "Ecran Bibliotecă",
+        "description": "Aici vezi toate lifturile. Comută între Toate și Favorite. Sortează, filtrează și caută!\n\nAtinge un lift pentru detalii, glisează pentru a șterge."
+      },
+      "homePerformanceIcon": {
+        "title": "Performanța ta",
+        "description": "Atinge fila Progres pentru statistici în timp."
+      },
+      "performanceMetrics": {
+        "title": "Precizie & Îmbunătățire",
+        "description": "Urmărește indicatorii ca să-ți măsori progresul."
+      },
+      "performanceChartsOverWeight": {
+        "title": "Precizie per greutate",
+        "description": "Afișează la ce greutăți performezi cel mai bine."
+      },
+      "performanceChartsOverTime": {
+        "title": "Precizie în timp",
+        "description": "Vizualizează progresul – de obicei pozitiv după 14 zile!"
+      },
+      "settingsFirstCard": {
+        "title": "Date personale",
+        "description": "Dacă se schimbă ceva, editează datele, limba și unitățile preferate."
+      },
+      "settingsSupportEmail": {
+        "title": "Obține suport",
+        "description": "Ai nevoie de ajutor? Atinge aici pentru a contacta suportul prin e-mail."
+      },
+      "completionModal": {
+        "title": "Totul este gata",
+        "message": "Ești pregătit să folosești FormAI. Revino zilnic pentru a-ți menține seria și consecvența.\n\nPoți reda oricând acest tutorial din setări."
+      }
+    },
+    "upload": {
+      "permissionRequired": "Permisiune necesară",
+      "permissionMessage": "Te rugăm să acorzi acces la biblioteca foto.",
+      "mediaPermissionTitle": "Permite accesul la biblioteca media",
+      "mediaPermissionDialogText": "FormAI dorește acces la biblioteca media.",
+      "allow": "Permite",
+      "dontAllow": "Nu permite",
+      "videoTooLong": "Video prea lung",
+      "videoTooLongMessage": "Selectează un video sub 90 de secunde.",
+      "videoTooShort": "Video prea scurt",
+      "videoTooShortMessage": "Selectează un video de cel puțin 3 secunde.",
+      "error": "Eroare",
+      "failedToSelectVideo": "Selectarea videoclipului a eșuat. Încearcă din nou.",
+      "failedToGenerateThumbnail": "Generarea miniaturii a eșuat. Încearcă din nou.",
+      "uploadVideo": "Încarcă video",
+      "selectNewVideo": "Video nou",
+      "duplicateVideo": "Video duplicat",
+      "duplicateVideoMessage": "Acest video a fost deja analizat. Te rugăm să alegi altul.",
+      "selectDifferentVideo": "Alege alt video",
+      "viewAnalysis": "Vezi analiza",
+      "tips": {
+        "goodLighting": "Asigură iluminare bună",
+        "stableVideo": "Asigură o filmare stabilă",
+        "sideView": "Filmează din profil (lateral)"
+      },
+      "ok": "OK",
+      "recordingFailed": "Înregistrarea a eșuat. Încearcă din nou.",
+      "failedToStartRecording": "Nu s-a putut porni înregistrarea. Încearcă din nou.",
+      "failedToFinishRecording": "Nu s-a putut finaliza înregistrarea. Încearcă din nou.",
+      "stopRecording": "Oprești înregistrarea?",
+      "stopRecordingMessage": "Sigur vrei să oprești înregistrarea?",
+      "cancel": "Anulează",
+      "stop": "Oprește",
+      "accessibility": {
+        "flipCamera": "Comută camera",
+        "toggleTorch": "Pornește/Oprește lanterna",
+        "toggleMic": "Pornește/Oprește microfonul",
+        "countdown": "Numărătoare inversă"
+      }
+    }
+  }
+
+export { ro };

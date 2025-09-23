@@ -2,6 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import { Dimensions, UIManager, findNodeHandle, Platform, InteractionManager } from 'react-native';
 import { useUserDetails } from './UserDetailsContext';
 import { useSelectedDate } from './SelectedDateContext';
+import { useLanguage } from './LanguageContext';
 import { hapticFeedback } from '../utils/haptic';
 import { editUserDetails } from '../services/userService';
 import i18n from '../utils/i18n';
@@ -103,6 +104,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
   const [currentRect, setCurrentRect] = useState<TutorialRect | null>(null);
   const { updateUserDetails, refetchUserDetails } = useUserDetails();
   const { setSelectedDate } = useSelectedDate();
+  const { currentLanguage } = useLanguage();
 
   // Steps flow definition
   const steps: TutorialStep[] = useMemo(() => [
@@ -483,7 +485,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       },
       
     },
-  ], []);
+  ], [currentLanguage]);
 
   // Helpers
   const registerTarget = useCallback((id: string, measure: () => Promise<TutorialRect | null>) => {

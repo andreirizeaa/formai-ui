@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Platform } from '
 import { Check } from 'lucide-react-native';
 import { useUserCheckIns } from '../../context/UserCheckInsContext';
 import { BASE_WEEKS } from '../../utils/calendarData';
+import i18n from '../../utils/i18n';
 
 const { width: RAW_W } = Dimensions.get('window');
 const SCREEN_WIDTH = Math.round(RAW_W);
@@ -98,7 +99,17 @@ export function StreakCalendar({ onDateSelect, circleRadius = 16, iconSize = 14 
     today.setHours(0, 0, 0, 0);
     
     return BASE_WEEKS[BASE_WEEKS.length - 1].map(date => {
-      const dayName = date.toLocaleDateString('en-US', { weekday: 'short' }).charAt(0);
+      const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, etc.
+      const dayNames = [
+        i18n.t('days.sunday'),
+        i18n.t('days.monday'),
+        i18n.t('days.tuesday'),
+        i18n.t('days.wednesday'),
+        i18n.t('days.thursday'),
+        i18n.t('days.friday'),
+        i18n.t('days.saturday'),
+      ];
+      const dayName = dayNames[dayOfWeek];
       const dayNumber = date.getDate().toString();
       const isActive = false;
       const hasStreak = streakDaysSet.has(date.toDateString());
