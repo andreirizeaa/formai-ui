@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform, Animated, Modal, Pressable, ScrollView } from 'react-native';
 import { Image } from 'expo-image';
+import { VideoView, useVideoPlayer } from 'expo-video';
 import { useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { OrangeGradientButton } from '../../components/ui/OrangeGradientButton';
@@ -26,6 +27,18 @@ export function WelcomeScreen({ onGetStarted, onSignIn }: WelcomeScreenProps) {
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
   const { currentLanguage, setLanguage } = useLanguage();
 
+  // Animation values for video container
+  const videoTranslateY = React.useRef(new Animated.Value(500)).current; // Start below screen
+  const videoTranslateX = React.useRef(new Animated.Value(400)).current; // Start way far right (like x=40)
+  const videoRotation = React.useRef(new Animated.Value(30)).current; // Start rotated 30° right
+  
+  // Create video player
+  const player = useVideoPlayer(require('../../../assets/formai-homescreen.mp4'), player => {
+    player.loop = true;
+    player.muted = true;
+    player.play();
+  });
+
   useEffect(() => {
     const fetchUserId = async () => {
       const userId = await getUserId();
@@ -45,6 +58,77 @@ export function WelcomeScreen({ onGetStarted, onSignIn }: WelcomeScreenProps) {
       useNativeDriver: true,
     }).start();
   }, [fadeAnim]);
+
+  // Video animation sequence - N shape movement with manual video control
+  useEffect(() => {
+    const startAnimation = () => {
+      // Restart video from beginning
+      player.currentTime = 0;
+      player.play();
+
+      // Phase 1: Enter from bottom right, rotate to portrait (1 second)
+      const enterAnimation = Animated.parallel([
+        Animated.timing(videoTranslateY, {
+          toValue: 0,
+          duration: 1300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(videoTranslateX, {
+          toValue: 0,
+          duration: 1300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(videoRotation, {
+          toValue: 0,
+          duration: 1300,
+          useNativeDriver: true,
+        }),
+      ]);
+
+      // Phase 2: Stay in center for 13.5 seconds (after 1s entry = 14.5s total display)
+      const stayAnimation = Animated.delay(13500);
+
+      // Phase 3: Exit to bottom left, rotate -30° (1 second)
+      const exitAnimation = Animated.parallel([
+        Animated.timing(videoTranslateY, {
+          toValue: 500,
+          duration: 1300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(videoTranslateX, {
+          toValue: -400, // Exit way far left (like x=-40)
+          duration: 1300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(videoRotation, {
+          toValue: -30,
+          duration: 1300,
+          useNativeDriver: true,
+        }),
+      ]);
+
+      // Chain the animations and loop
+      Animated.sequence([
+        enterAnimation,
+        stayAnimation,
+      ]).start(() => {
+        // Pause video at start of exit animation
+        player.pause();
+
+        // Start exit animation with all transforms together
+        exitAnimation.start(() => {
+          // Reset and restart immediately
+          videoTranslateY.setValue(500);
+          videoTranslateX.setValue(400);
+          videoRotation.setValue(30);
+          startAnimation();
+        });
+      });
+    };
+
+    // Start animation immediately when component mounts
+    startAnimation();
+  }, [videoTranslateY, videoTranslateX, videoRotation, player]);
 
   const handleGetStarted = () => {
     hapticFeedback.selection();
@@ -99,13 +183,34 @@ export function WelcomeScreen({ onGetStarted, onSignIn }: WelcomeScreenProps) {
         <Text style={styles.languageCode}>{currentLangInfo.code.toUpperCase()}</Text>
       </Pressable>
 
-      {/* App overview photo */}
+      {/* App overview video */}
       <View style={styles.photoContainer}>
-        <Image 
-          source={require('../../../assets/app-overview-photo.png')}
-          style={styles.photo}
-          contentFit="contain"
-        />
+        <Animated.View
+          style={[
+            styles.videoContainer,
+            {
+              transform: [
+                { translateY: videoTranslateY },
+                { translateX: videoTranslateX },
+                {
+                  rotate: videoRotation.interpolate({
+                    inputRange: [-30, 0, 30],
+                    outputRange: ['-30deg', '0deg', '30deg'],
+                  })
+                },
+              ],
+            },
+          ]}
+        >
+          <VideoView
+            player={player}
+            style={styles.photo}
+            allowsFullscreen={false}
+            allowsPictureInPicture={false}
+            contentFit="contain"
+            nativeControls={false}
+          />
+        </Animated.View>
       </View>
 
       {/* Content area with text and buttons */}
@@ -237,6 +342,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingTop: 30,
+    overflow: 'hidden', // Hide video when it's outside bounds
+  },
+  videoContainer: {
+    width: '100%',
+    height: '100%',
   },
   photo: {
     width: '100%',
