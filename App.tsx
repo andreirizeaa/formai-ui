@@ -23,6 +23,7 @@ export default function App() {
         // Preload all assets using static require statements
         const assetsToLoad = [
           require('./assets/dumbel.svg'),
+          require('./assets/formai-homescreen.mp4'),
           require('./assets/recording-tip.jpg'),
           require('./assets/refer-friends.jpg'),
           require('./assets/refer-friends-group.png'),
