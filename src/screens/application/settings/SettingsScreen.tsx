@@ -17,7 +17,7 @@ import { usePlacement } from 'expo-superwall';
 import { supabase } from '../../../lib/supabase';
 import { openSupportEmail } from '../../../services/emailService';
 import { showAlert } from '../../../services/alertService';
-import { FormAILogo } from '../../../components/FormAILogo';
+import { FormAILogo } from '../../../components/ui/FormAILogo';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLiftData } from '../../../context/LiftDataContext';
 import { useLoadingLifts } from '../../../context/LoadingLiftsContext';

@@ -2,18 +2,20 @@ import React from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet, Platform, Dimensions, ActivityIndicator } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LottieView from 'lottie-react-native';
-import { OrangeGradientButton } from './ui/OrangeGradientButton';
-import { useTutorial } from '../context/TutorialContext';
-import { useUserDetails } from '../context/UserDetailsContext';
-import { showAlert } from '../services/alertService';
+import { OrangeGradientButton } from './OrangeGradientButton';
+import { useTutorial } from '../../context/TutorialContext';
+import { useUserDetails } from '../../context/UserDetailsContext';
+import { useLanguage } from '../../context/LanguageContext';
+import { showAlert } from '../../services/alertService';
 import Svg, { Path, Rect } from 'react-native-svg';
-import { hapticFeedback } from '../utils/haptic';
-import i18n from '../utils/i18n';
-import { track } from '../services/analytics';
+import { hapticFeedback } from '../../utils/haptic';
+import i18n from '../../utils/i18n';
+import { track } from '../../services/analytics';
 
 export function TutorialOverlay() {
   const { isActive, isTransitioning, isProcessingStep, steps, currentStepIndex, currentRect, next, stop, setCurrentStepIndex, setCurrentRect } = useTutorial();
   const { updateUserDetails, refetchUserDetails } = useUserDetails();
+  const { currentLanguage } = useLanguage();
   
   // Add a small delay before rendering to prevent flickering during transitions
   const [shouldRender, setShouldRender] = React.useState(false);

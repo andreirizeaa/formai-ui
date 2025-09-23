@@ -13,11 +13,11 @@ import { track } from '../../../services/analytics';
 function isLoadingLift(x: ILiftData | LoadingLiftData): x is LoadingLiftData {
   return 'status' in x;
 }
-import { LiftCard } from '../../../components/LiftCard';
+import { LiftCard } from '../../../components/ui/LiftCard';
 import { SwipeableCalendar } from '../../../components/ui/SwipeableCalendar';
 import { SwipeableAccuracyCard } from '../../../components/ui/SwipeableAccuracyCard';
 import { StreakModal } from '../../../components/ui/StreakModal';
-import { FormAILogo } from '../../../components/FormAILogo';
+import { FormAILogo } from '../../../components/ui/FormAILogo';
 import { useUserCheckIns } from '../../../context/UserCheckInsContext';
 import { useTutorialTarget } from '../../../context/TutorialContext';
 import { useSelectedDate } from '../../../context/SelectedDateContext';
@@ -97,19 +97,33 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
       : 0;
   }, [liftData]);
 
-  // Format selected date with ordinal suffix
+  // Format selected date with i18n support
   const formatSelectedDate = useCallback(() => {
     const day = selectedDate.getDate();
-    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const month = monthNames[selectedDate.getMonth()];
+    const monthIndex = selectedDate.getMonth();
     
-    // Add ordinal suffix to day
-    let suffix = 'th';
-    if (day === 1 || day === 21 || day === 31) suffix = 'st';
-    else if (day === 2 || day === 22) suffix = 'nd';
-    else if (day === 3 || day === 23) suffix = 'rd';
+    // Get month names from i18n
+    const monthKeys = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+    const month = i18n.t(`home.dateFormat.months.${monthKeys[monthIndex]}`);
     
-    return `${day}${suffix} ${month} lifts`;
+    // Get "lifts" text from i18n
+    const liftsText = i18n.t('home.dateFormat.lifts');
+    
+    // For languages that don't use ordinal suffixes, just use the day number
+    // For English, we'll keep the ordinal suffixes for now, but this can be made more flexible
+    const currentLanguage = i18n.locale;
+    
+    if (currentLanguage === 'en') {
+      // English ordinal suffixes
+      let suffix = 'th';
+      if (day === 1 || day === 21 || day === 31) suffix = 'st';
+      else if (day === 2 || day === 22) suffix = 'nd';
+      else if (day === 3 || day === 23) suffix = 'rd';
+      return `${day}${suffix} ${month} ${liftsText}`;
+    } else {
+      // For other languages, just use day number
+      return `${day} ${month} ${liftsText}`;
+    }
   }, [selectedDate]);
   
   // Different data for each card

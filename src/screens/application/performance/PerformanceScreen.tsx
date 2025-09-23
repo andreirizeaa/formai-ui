@@ -352,7 +352,7 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
               onPress={closeInfoModal}
               activeOpacity={0.8}
             >
-              <Text style={styles.closeButtonText}>Close</Text>
+              <Text style={styles.closeButtonText}>{i18n.t('close')}</Text>
             </TouchableOpacity>
           </TouchableOpacity>
         </TouchableOpacity>

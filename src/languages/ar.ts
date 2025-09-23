@@ -1,0 +1,850 @@
+const ar = {
+    "loading": "جارٍ التحميل...",
+    "getStarted": "ابدأ",
+    "signIn": "تسجيل الدخول",
+    "dontHaveAccount": "ليس لديك حساب؟",
+    "startToday": "ابدأ اليوم",
+    "alreadyHaveAccount": "لديك حساب بالفعل؟",
+    "next": "متابعة",
+    "back": "رجوع",
+    "close": "إغلاق",
+    "tabs": {
+      "home": "الرئيسية",
+      "progress": "التقدم",
+      "settings": "الإعدادات"
+    },
+    "settings": {
+      "personalDetails": "البيانات الشخصية",
+      "language": "اللغة",
+      "selectLanguage": "اختر اللغة",
+      "units": "تغيير الوحدات",
+      "appTheme": "سمة التطبيق",
+      "whyLowQualityVideos": "لماذا جودة الفيديو منخفضة؟",
+      "referFriends": "دعوة الأصدقاء",
+      "growStrongerTogether": "لنصبح أقوى معًا!",
+      "currentBalance": "الرصيد الحالي",
+      "shareNow": "شارك الآن",
+      "sharePageTitle": "شارك FormAI",
+      "termsAndConditions": "شروط الاستخدام",
+      "privacyPolicy": "سياسة الخصوصية",
+      "supportEmail": "البريد الداعم",
+      "replayTutorial": "إعادة تشغيل الدليل",
+      "leaveRating": "اترك تقييماً",
+      "deleteAccount": "حذف الحساب",
+      "logout": "تسجيل الخروج",
+      "save": "حفظ",
+      "deleteAccountTitle": "حذف الحساب؟",
+      "deleteAccountMessage": "هل أنت متأكد أنك تريد حذف حسابك نهائيًا؟ لا يمكن التراجع عن هذا الإجراء وسيتم حذف جميع البيانات.",
+      "deleteAccountSubscriptionWarning": "حذف حساب Form AI من خلال التطبيق لا يلغي اشتراكك. يرجى تذكر إلغاء الاشتراك من إعدادات اشتراكات جهازك حتى لا تُحاسب مرة أخرى.",
+      "iAcknowledge": "أقر بذلك",
+      "deleteAccountButton": "احذف الحساب",
+      "logoutTitle": "تسجيل الخروج؟",
+      "logoutMessage": "هل أنت متأكد أنك تريد تسجيل الخروج؟ ستحتاج لتسجيل الدخول مجددًا للوصول إلى حسابك.",
+      "no": "لا",
+      "yes": "نعم",
+      "editFailed": {
+        "gender": "فشل تعديل الجنس",
+        "height": "فشل تعديل الطول",
+        "dateOfBirth": "فشل تعديل تاريخ الميلاد",
+        "currentWeight": "فشل تعديل الوزن",
+        "unitSystem": "فشل تحديث نظام الوحدات",
+        "language": "فشل تحديث اللغة",
+        "message": "يرجى المحاولة لاحقًا"
+      }
+    },
+    "share": {
+      "referYourFriends": "ادعُ أصدقاءك",
+      "empowerYourFriends": "مكّن أصدقاءك",
+      "yourPersonalPromoCode": "رمزك الترويجي الشخصي",
+      "share": "مشاركة",
+      "howItWorks": "كيف تعمل",
+      "step1": "شارك الرمز مع الأصدقاء",
+      "step2": "اربح 5$ عن كل صديق يشترك في الخطة السنوية باستخدام رمزك",
+      "copied": "تم النسخ!",
+      "promoCodeCopied": "تم نسخ الرمز الترويجي إلى الحافظة",
+      "error": "خطأ",
+      "failedToCopy": "فشل نسخ الرمز الترويجي",
+      "failedToShare": "فشل فتح نافذة المشاركة",
+      "shareMessage": "مرحبًا! حمّل هذا التطبيق واستخدم هذا الرمز:",
+      "shareTitle": "حمّل FormAI!"
+    },
+    "personalDetails": {
+      "currentWeight": "الوزن الحالي",
+      "weight": "الوزن",
+      "height": "الطول",
+      "dateOfBirth": "تاريخ الميلاد",
+      "gender": "الجنس",
+      "videoQuality": "جودة الفيديو",
+      "highDefinition": "عالي الدقة",
+      "low": "منخفض",
+      "editCurrentWeight": "تعديل الوزن الحالي",
+      "editHeight": "تعديل الطول",
+      "editDateOfBirth": "تعديل تاريخ الميلاد",
+      "editGender": "تعديل الجنس",
+      "male": "ذكر",
+      "female": "أنثى"
+    },
+    "add": {
+      "uploadVideo": "رفع فيديو",
+      "recordVideo": "تسجيل فيديو",
+      "uploadVideoDescription": "اختر فيديو من معرضك لتحليل أدائك.",
+      "recordVideoDescription": "سجل فيديو جديد لتحليل أدائك في التمرين.",
+      "whatExercise": "ما التمرين الذي قمت به؟",
+      "back": "رجوع",
+      "noVideoAvailable": "لا يوجد فيديو",
+      "selectNewVideo": "فيديو جديد",
+      "continue": "متابعة",
+      "generalTips": "نصائح عامة",
+      "searchMovements": "ابحث عن الحركات...",
+      "useCustomMovement": "استخدام",
+      "bestRecordingPractices": "أفضل ممارسات التصوير",
+      "bodyParts": {
+        "all": "الكل",
+        "chest": "الصدر",
+        "back": "الظهر",
+        "shoulders": "الكتفان",
+        "arms": "الذراعان",
+        "legs": "الساقان"
+      },
+      "movements": {
+        "Flat Barbell Bench Press": "بنش برس مستقيم بالبار",
+        "Incline Barbell Bench Press": "بنش برس مائل لأعلى بالبار",
+        "Decline Barbell Bench Press": "بنش برس مائل لأسفل بالبار",
+        "Flat Dumbbell Chest Press": "ضغط صدر مستقيم بالدَمبل",
+        "Incline Dumbbell Chest Press": "ضغط صدر مائل لأعلى بالدَمبل",
+        "Decline Dumbbell Chest Press": "ضغط صدر مائل لأسفل بالدَمبل",
+        "Dumbbell Chest Fly (Incline)": "تفتيح صدر بالدَمبل (مائل لأعلى)",
+        "Dumbbell Chest Fly (Flat)": "تفتيح صدر بالدَمبل (مستقيم)",
+        "Dumbbell Chest Fly (Decline)": "تفتيح صدر بالدَمبل (مائل لأسفل)",
+        "Deadlift": "ديدلفت",
+        "Barbell Row": "سحب بار منحني",
+        "Pendlay Row": "سحب بندلاي",
+        "T-Bar Row": "سحب تي-بار",
+        "Dumbbell Row": "سحب دَمبل",
+        "Single Arm Dumbbell Row": "سحب دَمبل بذراع واحدة",
+        "Overhead Barbell Press": "ضغط كتف فوق الرأس بالبار",
+        "Seated Dumbbell Shoulder Press": "ضغط كتف جالس بالدَمبل",
+        "Arnold Press": "ضغط أرنولد",
+        "Lateral Raise (Dumbbell)": "رفع جانبي (دَمبل)",
+        "Front Raise (Dumbbell)": "رفع أمامي (دَمبل)",
+        "Upright Row": "سحب علوي ضيق",
+        "Barbell Curl": "تفليكس بار",
+        "EZ-Bar Curl": "تفليكس إي-زد بار",
+        "Dumbbell Curl": "تفليكس دَمبل",
+        "Hammer Curl": "تفليكس مطرقة",
+        "Incline Dumbbell Curl": "تفليكس دَمبل على بنش مائل",
+        "Cable Curl": "تفليكس حبل/كابل",
+        "Preacher Curl": "تفليكس بريتشر",
+        "Skullcrusher (Barbell or EZ-Bar)": "سكول كراشر (بار أو إي-زد)",
+        "Dumbbell Overhead Triceps Extension": "تمديد ترايسبس فوق الرأس بالدَمبل",
+        "Barbell Back Squat": "سكوات خلفي بالبار",
+        "Barbell Front Squat": "سكوات أمامي بالبار",
+        "Goblet Squat": "جوبلت سكوات",
+        "Dumbbell Back Squat": "سكوات خلفي بالدَمبل",
+        "Romanian Deadlift (Barbell or Dumbbell)": "ديدلفت روماني (بار أو دَمبل)",
+        "Stiff-Leg Deadlift": "ديدلفت بساقين مستقيمتين",
+        "Good Morning": "جود مورنينغ",
+        "Push Ups": "ضغط"
+      },
+      "recordingTips": [
+        "تأكد من إضاءة جيدة وثبات الكاميرا",
+        "حاول تصوير نفسك من الجانب"
+      ],
+      "countdown": {
+        "title": "العد التنازلي",
+        "off": "إيقاف",
+        "fiveSeconds": "5 ث",
+        "tenSeconds": "10 ث"
+      }
+    },
+    "welcome": {
+      "title": "FormAI",
+      "subtitle": "أداء مثالي دائمًا",
+      "modal": {
+        "title": "مرحبًا",
+        "message": "شكرًا لثقتك بـ Form AI. متحمسون لمساعدتك على تحقيق أهدافك.",
+        "ctaButton": "دعنا نريك جولة"
+      }
+    },
+    "onboarding": {
+      "language": {
+        "title": "اللغة",
+        "subtitle": "يمكنك تغييرها لاحقًا",
+        "selectLanguage": "اختر لغة"
+      },
+      "units": {
+        "title": "الوحدات",
+        "subtitle": "يمكنك تغييرها لاحقًا",
+        "metric": "متري",
+        "imperial": "إنجليزي",
+        "metricDescription": "كيلوغرام وسنتيمتر",
+        "imperialDescription": "رطل، قدم، بوصة"
+      },
+      "gender": {
+        "title": "الجنس البيولوجي",
+        "subtitle": "سنستخدمه لمساعدة أنظمتنا على إيجاد الشكل الحيوي الأمثل لك",
+        "male": "ذكر",
+        "female": "أنثى",
+        "other": "آخر"
+      },
+      "goal": {
+        "title": "ما هدفك؟",
+        "subtitle": "يساعدنا هذا في توليد خطة للسعرات.",
+        "loseWeight": "خسارة الوزن",
+        "maintain": "المحافظة",
+        "gainWeight": "زيادة الوزن"
+      },
+      "workouts": {
+        "title": "كم تمرينًا تقوم به أسبوعيًا؟",
+        "subtitle": "تكرار تدريبك يشكل تقدمك.",
+        "zeroToTwo": "0–2",
+        "zeroToTwoDescription": "تمارين متفرقة",
+        "threeToFive": "3–5",
+        "threeToFiveDescription": "عدة مرات أسبوعيًا",
+        "SixPlus": "6+",
+        "SixPlusDescription": "رياضي منضبط"
+      },
+      "discovery": {
+        "title": "كيف سمعت عنا؟",
+        "subtitle": "ساعدنا على فهم كيفية عثورك على FormAI",
+        "instagram": "إنستغرام",
+        "tiktok": "تيك توك",
+        "facebook": "فيسبوك",
+        "google": "جوجل",
+        "appStore": "متجر التطبيقات",
+        "playStore": "متجر جوجل بلاي",
+        "twitter": "إكس (تويتر)",
+        "youtube": "يوتيوب",
+        "friends": "الأصدقاء والعائلة",
+        "other": "أخرى"
+      },
+      "personalTrainer": {
+        "title": "هل لديك مدرب شخصي؟",
+        "subtitle": "يساعدنا هذا في تخصيص تجربتك",
+        "yes": "نعم",
+        "no": "لا"
+      },
+      "trainingReason": {
+        "title": "ما السبب الأول لتدريبك؟",
+        "subtitle": "سنخصص تحليل الأداء لهدفك.",
+        "buildStrength": "بناء القوة",
+        "improvePhysique": "تحسين القوام",
+        "preventInjury": "الوقاية من الإصابة",
+        "trainForSport": "التدريب لرياضة",
+        "stayActiveHealthy": "البقاء نشيطًا وبصحة"
+      },
+      "gymChallenge": {
+        "title": "ما أكبر تحدٍ تواجهه في الجيم؟",
+        "subtitle": "لنركّز على ما يهمك أكثر.",
+        "unsureForm": "غير متأكد من صحة أدائي",
+        "noResults": "لا أرى نتائج",
+        "worriedInjury": "أخشى الإصابة",
+        "strugglingMotivation": "أعاني من التحفيز",
+        "other": "أخرى"
+      },
+      "lifterType": {
+        "title": "كيف ترى نفسك كرافِع؟",
+        "subtitle": "مستوى خبرتك يشكل إرشاداتنا.",
+        "beginner": "مبتدئ، يتعلم الأساسيات",
+        "intermediate": "متوسط، يصقل التقنية",
+        "advanced": "متقدم، يسعى للأداء النخبوي",
+        "returningAfterBreak": "عائد بعد انقطاع",
+        "injuryRehab": "تأهيل إصابة"
+      },
+      "perfectFormGoal": {
+        "title": "إذا كان أداؤك دائمًا مثاليًا، ماذا ستحقق أسرع؟",
+        "subtitle": "تخيل تقدمك دون عوائق.",
+        "liftHeavierSafely": "رفع أوزان أثقل بأمان",
+        "buildMuscleEfficiently": "بناء العضلات بكفاءة",
+        "avoidInjuries": "تجنب الإصابات",
+        "boostConfidence": "تعزيز الثقة",
+        "trainLongerWithoutSetbacks": "التدريب أطول دون انتكاسات"
+      },
+      "formConfidence": {
+        "title": "ما مدى ثقتك بأدائك الآن؟",
+        "subtitle": "كن صادقًا، سنوصلك لـ 100٪.",
+        "zeroToTwentyFive": "0% - 25%",
+        "twentyFiveToFifty": "25% - 50%",
+        "fiftyToSeventyFive": "50% - 75%",
+        "seventyFiveToHundred": "75% - 100%"
+      },
+      "threeMonthGoal": {
+        "title": "بعد 3 أشهر، أين تريد أن تكون؟",
+        "subtitle": "رحلتك تبدأ بفحص الأداء اليوم.",
+        "liftingHeavier": "رفع أوزان أثقل",
+        "lookingLeaner": "مظهر أنحف",
+        "feelingStrongerInjuryFree": "أقوى وبدون إصابات",
+        "moreConsistent": "أكثر التزامًا",
+        "moreConfident": "أكثر ثقة"
+      },
+      "measurements": {
+        "title": "الطول والوزن",
+        "subtitle": "يساعدنا هذا على تقديم توصيات مخصصة",
+        "height": "الطول",
+        "weight": "الوزن",
+        "metric": "متري",
+        "imperial": "إنجليزي",
+        "cm": "سم",
+        "ft": "قدم",
+        "in": "بوصة",
+        "kg": "كغ",
+        "lbs": "رطل"
+      },
+      "birthDate": {
+        "title": "متى وُلدت؟",
+        "subtitle": "يساعدنا هذا على تقديم توصيات مناسبة للعمر",
+        "month": "الشهر",
+        "day": "اليوم",
+        "year": "السنة"
+      },
+      "rating": {
+        "title": "امنحنا تقييمًا",
+        "subtitle": "ساعدنا على التحسن بمشاركة تجربتك",
+        "skip": "تخطي",
+        "middleText": "تم إنشاء FormAI لعشّاق الجيم مثلك!"
+      },
+      "referralCode": {
+        "title": "أدخل رمز الإحالة (اختياري)",
+        "subtitle": "يمكنك تخطي هذه الخطوة.",
+        "placeholder": "رمز الإحالة",
+        "skip": "تخطي",
+        "submit": "إرسال",
+        "success": "تم تطبيق رمز الإحالة بنجاح",
+        "error": "رمز الإحالة غير صالح. حاول مرة أخرى."
+      },
+      "allDone": {
+        "title": "تم كل شيء!",
+        "allDone": "تم كل شيء!",
+        "thankYou": "شكرًا لثقتك بنا",
+        "privacy": "نعدك بالحفاظ على خصوصية معلوماتك وأمانها دائمًا."
+      },
+      "trainSafer": {
+        "title": "درّب مع احتمال إصابة أقل بثلاث مرات مع Form AI مقارنة بالتدريب بمفردك",
+        "withoutFormAI": "بدون Form AI",
+        "withFormAI": "مع Form AI",
+        "description": "يجعل FormAI تحسين الأداء سهلًا ويبقيك ملتزمًا."
+      },
+      "notificationPermission": {
+        "title": "بلّغ أهدافك مع الإشعارات",
+        "dialogText": "يريد FormAI إرسال إشعارات.",
+        "allow": "سماح",
+        "dontAllow": "عدم السماح"
+      },
+      "setupLoading": {
+        "title": "",
+        "mainTitle": "نُعد كل شيء لك",
+        "step1": "جارٍ إعداد ملفك...",
+        "step2": "اقتربنا من الانتهاء..."
+      },
+      "freeTrial": {
+        "title": "نريدك أن تجرب FormAI مجانًا.",
+        "noPaymentDue": "لا يوجد دفع الآن",
+        "tryForFree": "جرّب بـ 0.00$",
+        "pricing": "فقط 39.99$ سنويًا (3.33$/شهريًا)"
+      },
+      "notificationReminder": {
+        "title": "سنُرسل لك\nتذكيرًا قبل\nانتهاء الفترة التجريبية",
+        "noPaymentDue": "لا يوجد دفع الآن",
+        "continueForFree": "تابع مجانًا",
+        "pricing": "فقط 39.99$ سنويًا (3.33$/شهريًا)"
+      },
+      "subscriptionSelection": {
+        "title": "ابدأ تجربتك المجانية لمدة 3 أيام للمتابعة.",
+        "titleMonthly": "افتح FormAI لتصل لأهدافك أسرع",
+        "today": "اليوم",
+        "todayDescription": "افتح جميع ميزات التطبيق مثل تحليل الأداء بالذكاء الاصطناعي والمزيد.",
+        "reminder": "بعد يومين - تذكير",
+        "reminderDescription": "سنرسل لك تذكيرًا بقرب انتهاء الفترة التجريبية.",
+        "billing": "بعد 3 أيام - يبدأ الفوترة",
+        "billingDescription": "سيتم الخصم في {{billingDate}} ما لم تُلغِ قبل ذلك.",
+        "monthly": "شهري",
+        "monthlyPrice": "9.99$ /شهر",
+        "yearly": "سنوي",
+        "yearlyPrice": "3.33$ /شهر",
+        "freeTag": "3 أيام مجانًا",
+        "noPaymentDue": "لا يوجد دفع الآن",
+        "cancelAnytime": "إلغاء في أي وقت - بدون التزام",
+        "startTrial": "ابدأ تجربتي المجانية 3 أيام",
+        "startToday": "ابدأ اليوم",
+        "yearlyPricing": "3 أيام مجانًا، ثم 39.99$ سنويًا (3.33$/شهر)",
+        "monthlyPricing": "فقط 9.99$/شهر (120$/سنة)",
+        "monthlyFeature1": "تحليل أداء بسيط",
+        "monthlyFeature1Description": "حلّل أداءك لأي حركة بواسطة فيديو فقط",
+        "monthlyFeature2": "حقق أهدافك في الجيم",
+        "monthlyFeature2Description": "لم يكن الوصول للياقة أسهل من قبل",
+        "monthlyFeature3": "تتبّع تقدمك",
+        "monthlyFeature3Description": "ابقَ على المسار الصحيح بالتحليلات والتذكيرات"
+      },
+      "createAccount": {
+        "title": "إنشاء حساب",
+        "signInWithApple": "تسجيل الدخول عبر Apple",
+        "signInWithGoogle": "تسجيل الدخول عبر Google"
+      },
+      "cameraPermission": {
+        "title": "السماح بالوصول للكاميرا",
+        "subtitle": "الوصول للكاميرا مطلوب لـ FormAI.",
+        "dialogText": "يريد FormAI الوصول إلى الكاميرا.",
+        "allow": "سماح",
+        "dontAllow": "عدم السماح"
+      },
+      "perfectFormGoalMessage": {
+        "highlighted": {
+          "liftHeavierSafely": "رفع أثقل بأمان",
+          "buildMuscleEfficiently": "بناء العضلات",
+          "avoidInjuries": "تجنب الإصابات",
+          "boostConfidence": "ثقتك ستحلّق",
+          "trainLongerWithoutSetbacks": "التدريب بلا انتكاسات",
+          "default": "أهدافك"
+        },
+        "rest": " هدف مضمون. ليس صعبًا إطلاقًا!",
+        "restRealistic": " هدف واقعي. ليس صعبًا إطلاقًا!",
+        "restFantastic": " هدف رائع. ليس صعبًا إطلاقًا!",
+        "restAfter": " بعد ذلك. ليس صعبًا إطلاقًا!",
+        "restNormal": " سيكون أمرًا عاديًا. ليس صعبًا إطلاقًا!",
+        "restAchievable": " قابلة للتحقق مع Form AI. ليس صعبًا إطلاقًا!",
+        "subtitle": "95% من المستخدمين يقولون إن التغيير واضح بعد استخدام Form AI."
+      },
+      "potentialGraph": {
+        "title": "لديك إمكانات مذهلة لسحق هدفك",
+        "chartTitle": "تحوّل دقة أدائك",
+        "subtitle": "استنادًا إلى بيانات Form AI التاريخية، يتحسن الأداء ببطء أولًا، لكن بعد 14 يومًا ستصبح شديد الثبات!"
+      },
+      "costComparison": {
+        "title": "أداء مثالي بجزء بسيط من تكلفة المدربين",
+        "personalTrainer": "مدرب شخصي",
+        "withFormAI": "مع Form AI",
+        "costLess": "أقل 99%",
+        "description": "لا ينبغي أن يكلفك الأداء الآمن والمثالي ثروة."
+      },
+      "gymChallengeInfo": {
+        "noResults": {
+          "headline": "النتائج تحتاج وقتًا، لكنك أقرب مما تظن.",
+          "message": "سنرشدك بالتغذية الراجعة المناسبة ليؤتي جهدك ثماره.",
+          "howWeGetYouThere": [
+            "تحليل الأداء لضمان أن كل عدة تُحتسب",
+            "ملاحظات بالفيديو لتحديد ما يعيق تقدمك",
+            "تتبّع الدقة لقياس التقدم الحقيقي بمرور الوقت"
+          ]
+        },
+        "unsureForm": {
+          "headline": "الأداء أولًا.",
+          "message": "سنقدم ملاحظات واضحة لتتدرب بأمان وفعالية كل مرة.",
+          "howWeGetYouThere": [
+            "تفكيك فوري للأداء من مقاطعك",
+            "نصائح قابلة للتنفيذ لإصلاح الأخطاء بسرعة",
+            "تسجيل درجات الدقة لتتبّع التحسن"
+          ]
+        },
+        "worriedInjury": {
+          "headline": "تدرّب بأمان. تدرّب بقوة.",
+          "message": "سنساعدك على الرفع بثقة عبر رصد الحركات الخطرة قبل أن تصبح إصابة.",
+          "howWeGetYouThere": [
+            "ملاحظات بالفيديو لتسليط الضوء على الوضعيات غير الآمنة",
+            "توصيات تقنية أكثر أمانًا مخصصة لك",
+            "تتبّع الدقة لضمان الثبات طويل الأمد"
+          ]
+        },
+        "strugglingMotivation": {
+          "headline": "التحفيز أسهل عندما لا تكون وحدك.",
+          "message": "نبقيك منخرطًا عبر إظهار تقدمك والاحتفال بكل تحسن.",
+          "howWeGetYouThere": [
+            "درجات دقة سهلة القراءة بعد كل تمرين",
+            "تحسينات مرئية مع اتجاهات التقدم",
+            "نصائح مشجعة تساعدك على الاستمرارية"
+          ]
+        },
+        "other": {
+          "headline": "نحن هنا من أجل رحلتك.",
+          "message": "أيًا كان تحديك، سنقدم الإرشاد والدعم لتتغلب عليه.",
+          "howWeGetYouThere": [
+            "ملاحظات مخصصة على فيديوهات حركتك",
+            "تتبّع الدقة عبر أنواع التمارين",
+            "نصائح ورؤى مستمرة لدعم أهدافك"
+          ]
+        },
+        "howWeGetYouThereTitle": "هكذا سنوصلك لهدفك"
+      },
+      "saveProgress": {
+        "title": "إنشاء حساب"
+      }
+    },
+    "months": {
+      "january": "يناير",
+      "february": "فبراير",
+      "march": "مارس",
+      "april": "أبريل",
+      "may": "مايو",
+      "june": "يونيو",
+      "july": "يوليو",
+      "august": "أغسطس",
+      "september": "سبتمبر",
+      "october": "أكتوبر",
+      "november": "نوفمبر",
+      "december": "ديسمبر",
+      "array": ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"]
+    },
+    "progress": {
+      "title": "رحلتك تبدأ هنا",
+      "subtitle": "شاهد كيف يحسن المستخدمون أداءهم مع FormAI",
+      "chartTitle": "تحسن درجة الأداء بمرور الوقت",
+      "week": "الأسبوع",
+      "score": "درجة الأداء",
+      "formImprovement": "تحسن الأداء",
+      "weeksToExcellence": "أسابيع لإتقان الأداء"
+    },
+    "liftingGoal": {
+      "title": "ما هو هدفك؟",
+      "subtitle": "سنضبط الذكاء الاصطناعي لفهم أسلوبك في الرفع.",
+      "muscleBuilding": "بناء العضلات",
+      "powerlifting": "رفع أثقال قوى",
+      "toning": "تنسيق الجسم",
+      "strength": "القوة",
+      "weightLoss": "إنقاص الوزن"
+    },
+    "formBarrier": {
+      "title": "ما الذي يمنعك من إتقان أدائك؟",
+      "subtitle": "ساعدنا على فهم تحدياتك",
+      "expensiveTrainers": "المدربون الشخصيون باهظون",
+      "gymAdviceScary": "أخشى طلب النصيحة",
+      "noTime": "لا وقت لدي لإتقان الأداء",
+      "other": "أخرى"
+    },
+    "home": {
+      "addTestLift": "أضف رفعًا تجريبيًا",
+      "dailyAccuracyLevel": "مستوى الدقة اليومي",
+      "noLiftsToday": "لا رفعات اليوم",
+      "allTimeAccuracy": "الدقة طوال الوقت",
+      "earnByReferring": "اكسب بدعوة الأصدقاء!",
+      "yourVideoLibrary": "مكتبة الفيديو الخاصة بك",
+      "lifts": "الرفعات الأخيرة",
+      "seeAll": "عرض الكل",
+      "noRecordedLifts": "لا توجد رفعات مسجلة لهذا التاريخ",
+      "startAnalyzingWorkout": "ابدأ تحليل تمرينك بتصوير سريع",
+      "dateFormat": {
+        "lifts": "رفعات",
+        "months": {
+          "jan": "يناير",
+          "feb": "فبراير",
+          "mar": "مارس",
+          "apr": "أبريل",
+          "may": "مايو",
+          "jun": "يونيو",
+          "jul": "يوليو",
+          "aug": "أغسطس",
+          "sep": "سبتمبر",
+          "oct": "أكتوبر",
+          "nov": "نوفمبر",
+          "dec": "ديسمبر"
+        }
+      },
+      "dayStreak": "سلسلة {{count}} أيام",
+      "onFireMessage": "أنت رائع! واصل عملك الممتاز مع سلسلة أيامك.",
+      "zeroDayStreak": "سلسلة 0 يوم",
+      "noStreakMessage": "لا توجد سلسلة بعد. صوّر في أيام متتالية لبدء السلسلة.",
+      "continue": "متابعة"
+    },
+    "days": {
+      "monday": "ا",
+      "tuesday": "ث",
+      "wednesday": "أ",
+      "thursday": "خ",
+      "friday": "ج",
+      "saturday": "س",
+      "sunday": "ح",
+    },
+    "performance": {
+      "title": "التقدم",
+      "editDateRange": "تعديل النطاق الزمني",
+      "from": "من",
+      "to": "إلى",
+      "reset": "إعادة ضبط",
+      "accuracy": "الدقة",
+      "trend": "الاتجاه",
+      "apply": "تطبيق",
+      "filterLifts": "تصفية الرفعات",
+      "timeRanges": {
+        "ninetyDays": "90 يوم",
+        "sixMonths": "6 أشهر",
+        "oneYear": "سنة واحدة",
+        "allTime": "كل الوقت",
+      },
+      "chartTitles": {
+        "accuracyPerWeight": "الدقة حسب الوزن",
+        "accuracyOverTime": "الدقة بمرور الوقت",
+        "loading": "جارٍ التحميل...",
+        "noDataAvailable": "لا توجد بيانات"
+      },
+      "info": {
+        "accuracyPerWeight": {
+          "title": "الدقة حسب الوزن",
+          "message": "تُظهر متوسط دقة الأداء لكل وزن رفعته لحركة معينة. قد تتحدّى الأوزان العالية الأداء. تُحسب بمتوسط درجات الدقة لجميع الرفعات عند كل وزن."
+        },
+        "accuracyOverTime": {
+          "title": "الدقة بمرور الوقت",
+          "message": "تُظهر كيف تتغير دقة الأداء بمرور الوقت لحركة ما. نحسب متوسط الدقة لكل يوم ونرسمها عبر التواريخ."
+        },
+        "accuracy": {
+          "title": "الدقة",
+          "message": "متوسط دقة أدائك ضمن النطاق الزمني المحدد. تُحسب كمتوسط درجات الدقة لجميع الرفعات."
+        },
+        "improvement": {
+          "title": "التحسن",
+          "message": "كيف تغير أداؤك خلال النطاق المحدد. نقارن الثلث الأول من رفعاتك بالثلث الأخير ونُظهر الفرق في متوسط الدقة."
+        }
+      },
+      "metricsFeedback": {
+        "title": "تريد مقاييس أخرى؟ أخبرنا!",
+        "subtitle": "ساعدنا على تحسين تجربتك"
+      }
+    },
+    "library": {
+      "title": "المكتبة",
+      "editDateRange": "تعديل النطاق الزمني",
+      "from": "من",
+      "to": "إلى",
+      "reset": "إعادة ضبط",
+      "apply": "تطبيق",
+      "all": "الكل",
+      "favourites": "المفضلة",
+      "noLiftsAnalysed": "لا توجد رفعات محلّلة",
+      "noFavouriteLifts": "لا رفعات مفضلة",
+      "noLiftsFound": "لا توجد رفعات",
+      "startAnalysingWorkout": "ابدأ تحليل تمرين اليوم بتصوير سريع",
+      "markLiftsAsFavourites": "علّم الرفعات كمفضلة لتظهر هنا",
+      "tryAdjustingFilters": "جرّب تعديل المرشحات",
+      "lifts": "رفعات",
+      "lift": "رفعة",
+      "noLifts": "0",
+      "selectDateRange": "اختر نطاقًا زمنيًا",
+      "allLifts": "كل الرفعات",
+      "oneLift": "1",
+      "search": "بحث",
+      "liftsCount": "{{count}} رفعات",
+      "filterByMovement": "تصفية حسب الحركة",
+      "searchMovements": "ابحث عن الحركات...",
+      "allMovements": "كل الحركات",
+      "searchAnalysis": {
+        "analysisFound": "تم العثور على تحليل",
+        "analysisFoundNotFavourited": "تم العثور على تحليل لكن لم يُضاف للمفضلة.",
+        "continueToLift": "المتابعة إلى الرفعة",
+        "noAnalysisFound": "لم يُعثر على تحليل",
+        "noAnalysisFoundMessage": "لا يوجد تحليل لهذا الفيديو. يرجى التأكد من أنه تم تحليله مسبقًا.",
+        "analyse": "حلّل",
+        "permissionRequired": "الإذن مطلوب",
+        "permissionMessage": "يرجى السماح بالوصول إلى مكتبة الصور للبحث عن الفيديوهات.",
+        "error": "خطأ",
+        "errorMessage": "فشل اختيار الفيديو. حاول مرة أخرى."
+      }
+    },
+    "liftCard": {
+      "accuracy": "الدقة"
+    },
+    "loadingLift": {
+      "uploadingVideo": "جارٍ رفع الفيديو...",
+      "checkingVideo": "جارٍ فحص الفيديو...",
+      "estimatingPose": "جارٍ تقدير الوضعية...",
+      "analyzingVideo": "جارٍ تحليل الفيديو...",
+      "analyzingForm": "جارٍ تحليل الأداء...",
+      "analysisFailed": "فشل التحليل",
+      "processing": "جارٍ المعالجة...",
+      "errorOccurred": "حدث خطأ",
+      "pleaseTryAgain": "يرجى المحاولة مجددًا",
+      "tapToRetry": "اضغط لإعادة المحاولة",
+      "notifyWhenDone": "سنخطرك عند الانتهاء!",
+      "noLiftFound": {
+        "title": "لم يتم العثور على رفعة",
+        "subtitle": "لا يمكننا اكتشاف رفعة"
+      },
+      "liftMismatch": {
+        "title": "عدم تطابق الرفعة",
+        "subtitle": "الحركة المحددة لا تطابق الفيديو",
+        "detectedMovement": "لا يمكننا اكتشاف أدائك لـ: {{movement}}"
+      }
+    },
+    "feedback": {
+      "liftDetails": "تفاصيل الرفعة",
+      "rangeOfMotionAcrossReps": "مدى الحركة عبر العدّات",
+      "benchPress": "بنش برس",
+      "formAccuracyAcrossReps": "دقة الأداء عبر العدّات",
+      "weight": "الوزن",
+      "reps": "العدّات",
+      "reviewFeedback": "مراجعة الملاحظات",
+      "favourite": "مفضلة",
+      "manualDeleteLiftCardData": "حذف الرفعة",
+      "deleteLiftTitle": "حذف الرفعة",
+      "deleteLiftMessage": "هل أنت متأكد من حذف هذه الرفعة؟ لا يمكن التراجع.",
+      "cancel": "إلغاء",
+      "delete": "حذف",
+      "howItWorks": "كيف تعمل",
+      "viewFeedback": "عرض الملاحظات",
+      "step1": "يحدد الذكاء الاصطناعي لحظات محددة أثناء رفعتك يمكن تحسين الأداء فيها.",
+      "step2": "ثم يشرح ما لم يكن أمثل.",
+      "step3": "ستُعرض نصائح للسلامة والتحسين!",
+      "step4": "ثم يعود الأمر لك لتحسين الأداء والمراجعة بعد أسبوع.",
+      "accuracy": "الدقة",
+      "accuracyScore": "درجة الدقة",
+      "improvements": "التحسينات",
+      "noVideoAvailable": "لا يوجد فيديو",
+      "deleteLiftConfirmation": "هل أنت متأكد من حذف هذه الرفعة؟ لا يمكن التراجع.",
+      "lbs": "رطل",
+      "kg": "كغ",
+      "updateFailed": {
+        "weight": "فشل تحديث الوزن",
+        "message": "يرجى المحاولة لاحقًا"
+      }
+    },
+    "common": {
+      "accuracy": "الدقة",
+      "averageAccuracy": "متوسط الدقة",
+      "averageFormImprovement": "متوسط تحسّن الأداء",
+      "noData": "لا توجد بيانات",
+      "selectDateRange": "اختر نطاقًا زمنيًا",
+      "allLifts": "كل الرفعات",
+      "oneLift": "رفعة واحدة",
+      "lifts": "رفعات",
+      "noLiftsFound": "لم يتم العثور على رفعات"
+    },
+    "tutorial": {
+      "buttons": {
+        "previous": "السابق",
+        "next": "متابعة",
+        "complete": "إنهاء",
+        "skipGuide": "تخطي الدليل",
+        "close": "إغلاق"
+      },
+      "addButton": {
+        "title": "أضف رفعة",
+        "description": "استخدم زر الإضافة لبدء تحليل رفعة جديدة."
+      },
+      "addOptionsUpload": {
+        "title": "رفع وتسجيل فيديو",
+        "description": "هنا يمكنك رفع فيديو أو تسجيل واحد جديد عبر التطبيق وسيُحفظ أيضًا في مكتبة الصور.\n\nلهذه الجولة الإرشادية سنرفع فيديو تجريبي."
+      },
+      "uploadPracticesCta": {
+        "title": "نصائح ورفع",
+        "description": "ستجد هنا إرشادات عامة حول جودة الفيديو وكيفية الحصول على أفضل النتائج.\n\nالخطوة التالية ستفتح مكتبة الصور لكن سنتخطى ذلك في العرض التجريبي."
+      },
+      "videoPreviewContinue": {
+        "title": "معاينة الفيديو",
+        "description": "إذا بدا الفيديو جيدًا، تابع لاختيار نوع الرفعة."
+      },
+      "movementSelectionContinue": {
+        "title": "اختر نوع الرفعة",
+        "description": "يرجى اختيار نوع رفعة دقيق ليساعدنا في تحليل أدائك.\n\nإذا لم تجد الرفعة، راسل دعمنا وسنعمل على إضافتها."
+      },
+      "weightRepsComplete": {
+        "title": "الوزن والعدّات",
+        "description": "سنستخدمهما لتتبّع تقدمك ومعرفة تحسنك بمرور الوقت."
+      },
+      "homeFirstLiftCard": {
+        "title": "اضغط هنا لتجد تحليلك",
+        "description": "تظهر رفعتك هنا مع التحليل. اضغط لرؤية ملاحظات مفصلة أو اسحب للحذف."
+      },
+      "liftDetailsFormGraph": {
+        "title": "دقة الأداء عبر العدّات",
+        "description": "يعرض هذا المخطط كيف تتغير دقة أدائك عبر كل عدة."
+      },
+      "liftDetailsDepthGraph": {
+        "title": "مدى الحركة عبر العدّات",
+        "description": "يوضح هذا المخطط الشريطي عمق رفعتك عبر العدّات."
+      },
+      "liftDetailsReviewFeedback": {
+        "title": "راجع ملاحظاتك",
+        "description": "اضغط زر \"مراجعة الملاحظات\" لرؤية تحليل مفصل ونصائح لتحسين الأداء."
+      },
+      "howItWorksModal": {
+        "title": "كيف تعمل",
+        "description": "يوضح هذا كيف يعمل تحليل الذكاء الاصطناعي وكيف يساعدك على تحسين أدائك."
+      },
+      "feedbackSlideshow": {
+        "title": "ملاحظاتك",
+        "description": "تُظهر أنظمتنا نقاطًا محددة أثناء رفعتك تحتاج لتحسين وستظهر القضايا والنصائح لتلك اللحظة بالضبط.\n\nاضغط السهم الأيمن لرؤية النقطة التالية."
+      },
+      "feedbackIssues": {
+        "title": "مشكلات需 المعالجة",
+        "description": "راجع المشكلات المحددة في أدائك التي تحتاج انتباهًا.\n\nاسحب التراكب لرؤية لقطة الفيديو."
+      },
+      "feedbackTips": {
+        "title": "نصائح للتحسين",
+        "description": "هنا نصائح محددة لمساعدتك على تحسين أدائك وتقنيتك.\n\nتذكر أنه يمكنك فتح/إغلاق لوحة الملاحظات لرؤية لقطة المشكلة."
+      },
+      "homeSeeAllLifts": {
+        "title": "عرض جميع رفعاتك",
+        "description": "اضغط هنا لرؤية كل رفعاتك في المكتبة حيث يمكنك التصفية والفرز والمراجعة."
+      },
+      "libraryScreen": {
+        "title": "شاشة المكتبة",
+        "description": "هذه مكتبتك حيث يمكنك رؤية كل الرفعات. استخدم التبويبات للتبديل بين الكل والمفضلة. صفّ، رشّح وابحث أيضًا!\n\nاضغط على رفعة للتفاصيل واسحب للحذف."
+      },
+      "homePerformanceIcon": {
+        "title": "أداؤك",
+        "description": "اضغط تبويب \"التقدم\" لعرض تقدمك وإحصاءاتك بمرور الوقت."
+      },
+      "performanceMetrics": {
+        "title": "الدقة والتحسن",
+        "description": "اعرض مقاييس الدقة والتحسن لتتبّع تقدمك بمرور الوقت."
+      },
+      "performanceChartsOverWeight": {
+        "title": "الدقة حسب الوزن",
+        "description": "يعرض هذا المخطط دقتك حسب الوزن لمساعدتك على فهم تقدمك والوزن الذي تؤدي عنده بأفضل شكل."
+      },
+      "performanceChartsOverTime": {
+        "title": "الدقة بمرور الوقت",
+        "description": "يعرض هذا المخطط دقتك بمرور الوقت لمساعدتك على فهم تقدمك. نتوقع معدل تحسّن إيجابي خلال 14 يومًا!"
+      },
+      "settingsFirstCard": {
+        "title": "البيانات الشخصية",
+        "description": "إذا تغير شيء، عدّل بياناتك الشخصية واللغة والوحدات المفضلة."
+      },
+      "settingsSupportEmail": {
+        "title": "الحصول على الدعم",
+        "description": "هل تحتاج مساعدة؟ اضغط هنا في أي وقت لمراسلة فريق الدعم عبر البريد."
+      },
+      "completionModal": {
+        "title": "تم كل شيء",
+        "message": "أنت جاهز لاستخدام FormAI. تحقق يوميًا لتحافظ على سلسلة أيامك وتظل ملتزمًا.\n\nتذكر أنه يمكنك دائمًا إعادة تشغيل هذا الدليل من قائمة الإعدادات."
+      }
+    },
+    "upload": {
+      "permissionRequired": "الإذن مطلوب",
+      "permissionMessage": "يرجى منح الإذن للوصول إلى مكتبة الصور.",
+      "mediaPermissionTitle": "السماح بالوصول لمكتبة الوسائط",
+      "mediaPermissionDialogText": "يريد FormAI الوصول إلى مكتبة الوسائط.",
+      "allow": "سماح",
+      "dontAllow": "عدم السماح",
+      "videoTooLong": "الفيديو طويل جدًا",
+      "videoTooLongMessage": "يرجى اختيار فيديو أقل من 90 ثانية.",
+      "videoTooShort": "الفيديو قصير جدًا",
+      "videoTooShortMessage": "يرجى اختيار فيديو لا يقل عن 3 ثوانٍ.",
+      "error": "خطأ",
+      "failedToSelectVideo": "فشل اختيار الفيديو. حاول مرة أخرى.",
+      "failedToGenerateThumbnail": "فشل إنشاء صورة مصغرة للفيديو. حاول مرة أخرى.",
+      "uploadVideo": "رفع فيديو",
+      "selectNewVideo": "فيديو جديد",
+      "duplicateVideo": "فيديو مكرر",
+      "duplicateVideoMessage": "تم تحليل هذا الفيديو مسبقًا. يرجى اختيار فيديو مختلف.",
+      "selectDifferentVideo": "اختر فيديو مختلف",
+      "viewAnalysis": "عرض التحليل",
+      "tips": {
+        "goodLighting": "تأكد من إضاءة جيدة",
+        "stableVideo": "تأكد من ثبات الفيديو",
+        "sideView": "التقط الفيديو من الجانب"
+      },
+      "ok": "حسنًا",
+      "recordingFailed": "فشل التسجيل. حاول مرة أخرى.",
+      "failedToStartRecording": "فشل بدء التسجيل. حاول مرة أخرى.",
+      "failedToFinishRecording": "فشل إنهاء التسجيل. حاول مرة أخرى.",
+      "stopRecording": "إيقاف التسجيل؟",
+      "stopRecordingMessage": "هل أنت متأكد من رغبتك في إيقاف التسجيل؟",
+      "cancel": "إلغاء",
+      "stop": "إيقاف",
+      "accessibility": {
+        "flipCamera": "تبديل الكاميرا",
+        "toggleTorch": "تشغيل/إطفاء المصباح",
+        "toggleMic": "تشغيل/إيقاف الميكروفون",
+        "countdown": "عد تنازلي"
+      }
+    }
+  }
+
+export { ar };

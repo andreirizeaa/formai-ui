@@ -23,7 +23,7 @@ import { showAlert } from './src/services/alertService';
 
 // Component that can access context providers to check loading states
 function AppContent() {
-  const [showOnboarding, setShowOnboarding] = useState(true);
+  const [showOnboarding, setShowOnboarding] = useState(false); // Start as false to prevent flickering
   const [isLoading, setIsLoading] = useState(true);
   const [extraDelayDone, setExtraDelayDone] = useState(false);
   const [userNeedsOnboarding, setUserNeedsOnboarding] = useState(false);
@@ -33,6 +33,7 @@ function AppContent() {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [showAccountLoading, setShowAccountLoading] = useState(false);
   const [passedInitialDataGate, setPassedInitialDataGate] = useState(false);
+  const [appReady, setAppReady] = useState(false); // New state to control when app is ready
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const { customerInfo, hasSubscription, isInitializing } = usePurchases();
   const { isUserDetailsLoaded, refetchUserDetails } = useUserDetails();
@@ -43,6 +44,11 @@ function AppContent() {
       try {
         // Don't make routing decisions until RevenueCat is fully initialized
         if (isInitializing === true || isInitializing === undefined) {
+          return;
+        }
+
+        // Skip if we're currently transitioning (e.g., during logout)
+        if (isTransitioning) {
           return;
         }
 
@@ -80,14 +86,20 @@ function AppContent() {
       }
     }
 
-    setActiveLayout();
-  }, [customerInfo, hasSubscription, isInitializing]);
+    // Only run if we're in a valid state to make routing decisions
+    if (!isTransitioning) {
+      setActiveLayout();
+    }
+  }, [customerInfo, hasSubscription, isInitializing, isTransitioning]);
 
   // Add an artificial universal 2s boot delay
   useEffect(() => {
-    const t = setTimeout(() => setExtraDelayDone(true), 2500);
-    return () => clearTimeout(t);
-  }, []);
+    // Only start delay if not already done and not transitioning
+    if (!extraDelayDone && !isTransitioning) {
+      const t = setTimeout(() => setExtraDelayDone(true), 2500);
+      return () => clearTimeout(t);
+    }
+  }, [extraDelayDone, isTransitioning]);
 
   // Set sticky data gate once per app session - wait for RevenueCat to initialize
   useEffect(() => {
@@ -95,6 +107,13 @@ function AppContent() {
       setPassedInitialDataGate(true);
     }
   }, [passedInitialDataGate, isInitializing, isUserDetailsLoaded, isLiftDataLoaded]);
+
+  // Set app ready when all conditions are met
+  useEffect(() => {
+    if (!isLoading && passedInitialDataGate && extraDelayDone && !isTransitioning) {
+      setAppReady(true);
+    }
+  }, [isLoading, passedInitialDataGate, extraDelayDone, isTransitioning]);
 
   const handleOnboardingComplete = () => {
     setIsTransitioning(true);
@@ -132,56 +151,38 @@ function AppContent() {
   };
 
   const handleUserNeedsOnboarding = () => {
-    setIsTransitioning(true);
-    
-    // Start fade out animation
-    Animated.timing(fadeAnim, {
-      toValue: 0,
-      duration: 300,
-      useNativeDriver: true,
-    }).start(() => {
-      // After fade out completes, switch to onboarding
-      setUserNeedsOnboarding(true);
-      
-      // Start fade in animation for onboarding
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-      }).start(() => {
-        setIsTransitioning(false);
-      });
-    });
+    // Instant transition without fade animation to prevent flash
+    setUserNeedsOnboarding(true);
   };
 
   const handleLogout = async () => {
     try {
+      // Reset context state that might have global listeners
+      if ((global as any).resetUserDetailsContext) {
+        (global as any).resetUserDetailsContext();
+      }
+
       await supabase.auth.signOut();
       await removeUserId();
-      
+
+      // Simple state reset without complex animations during logout
       setIsTransitioning(true);
-      
-      // Start fade out animation
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: true,
-      }).start(() => {
-        // After fade out completes, switch to onboarding
-        setShowOnboarding(true);
-        setOnboardingInitialRoute('Welcome');
-        
-        // Start fade in animation for onboarding
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: true,
-        }).start(() => {
-          setIsTransitioning(false);
-        });
-      });
+      setAppReady(false);
+      setIsLoading(true);
+      setShowOnboarding(false); // Start with false to show loading first
+      setOnboardingInitialRoute('Welcome');
+      setPassedInitialDataGate(false);
+      setExtraDelayDone(false);
+
+      // Restart app flow with a delay
+      setTimeout(() => {
+        setIsTransitioning(false);
+        // This will trigger the loading process to restart
+      }, 500);
+
     } catch (error) {
       console.error('Error during logout:', error);
+      setIsTransitioning(false); // Reset transitioning state on error
       showAlert(
         'Logout Error',
         'An error occurred during logout. Please try again.',
@@ -192,8 +193,8 @@ function AppContent() {
     }
   };
 
-  // Show loading screen until all data is loaded (sticky gate prevents mid-session reverts)
-  if (isLoading || !passedInitialDataGate || !extraDelayDone) {
+  // Show loading screen until app is completely ready
+  if (!appReady) {
     return (
       <SafeAreaProvider>
         <LoadingScreen onLoadComplete={() => {}} />

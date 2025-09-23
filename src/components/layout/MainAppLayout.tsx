@@ -5,7 +5,7 @@ import { useUserDetails } from '../../context/UserDetailsContext';
 import { WelcomeModal } from '../../screens/application/settings/WelcomeModal';
 import { TutorialProvider, useTutorial } from '../../context/TutorialContext';
 import { TutorialLiftSeeder } from '../../context/LiftDataContext';
-import { TutorialOverlay } from '../TutorialOverlay';
+import { TutorialOverlay } from '../ui/TutorialOverlay';
 import { hapticFeedback } from '../../utils/haptic';
 import { LoadingScreen } from '../../screens/onboarding/LoadingScreen';
 import { getUserJustPaid, clearUserJustPaid } from '../../services/storageService';

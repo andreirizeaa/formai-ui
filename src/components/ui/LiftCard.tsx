@@ -26,20 +26,20 @@ import AnimatedReanimated, {
 const AnimatedCircle = AnimatedReanimated.createAnimatedComponent(Circle);
 
 import { Trash2, Target, Weight, ChartNoAxesCombined } from 'lucide-react-native';
-import { hapticFeedback } from '../utils/haptic';
+import { hapticFeedback } from '../../utils/haptic';
 
-import { useLiftData, ILiftData } from '../context/LiftDataContext';
-import { useLoadingLifts } from '../context/LoadingLiftsContext';
-import { useUserDetails } from '../context/UserDetailsContext';
-import { useUserCheckIns } from '../context/UserCheckInsContext';
-import { extractObjectKeyFromUrl, signPath } from '../context/LiftDataContext';
-import { deleteLift } from '../services/liftDeletionService';
-import { deleteJob } from '../services/liftApi';
-import { getUserId } from '../services/storageService';
-import i18n from '../utils/i18n';
-import { LoadingLiftData } from '../types/Lifts.d';
-import { useTutorialTarget } from '../context/TutorialContext';
-import { track } from '../services/analytics';
+import { useLiftData, ILiftData } from '../../context/LiftDataContext';
+import { useLoadingLifts } from '../../context/LoadingLiftsContext';
+import { useUserDetails } from '../../context/UserDetailsContext';
+import { useUserCheckIns } from '../../context/UserCheckInsContext';
+import { extractObjectKeyFromUrl, signPath } from '../../context/LiftDataContext';
+import { deleteLift } from '../../services/liftDeletionService';
+import { deleteJob } from '../../services/liftApi';
+import { getUserId } from '../../services/storageService';
+import i18n from '../../utils/i18n';
+import { LoadingLiftData } from '../../types/Lifts';
+import { useTutorialTarget } from '../../context/TutorialContext';
+import { track } from '../../services/analytics';
 
 // ---------- types / guards ----------
 type LiftLike = ILiftData | LoadingLiftData;
@@ -959,6 +959,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#000000',
     marginBottom: 8,
+    textAlign: 'center',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
   },
   noLiftsSubtitle: {

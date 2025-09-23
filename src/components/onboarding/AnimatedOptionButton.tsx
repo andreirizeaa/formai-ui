@@ -18,6 +18,7 @@ interface AnimatedOptionButtonProps {
   style?: any;
   activeOpacity?: number;
   hasIcon?: boolean; // New prop to indicate if the button has an icon
+  disabled?: boolean; // New prop to disable the button
 }
 
 export function AnimatedOptionButton({
@@ -28,7 +29,8 @@ export function AnimatedOptionButton({
   delay,
   style,
   activeOpacity = 0.7,
-  hasIcon = false // Default to false
+  hasIcon = false, // Default to false
+  disabled = false // Default to false
 }: AnimatedOptionButtonProps) {
   const translateY = useSharedValue(delay === 0 ? 0 : 30);
   const opacity = useSharedValue(delay === 0 ? 1 : 0);
@@ -68,6 +70,9 @@ export function AnimatedOptionButton({
   });
 
   const handlePress = () => {
+    // Don't handle press if disabled
+    if (disabled) return;
+    
     // Call the original onPress function immediately to update selection state
     onPress();
     
@@ -100,7 +105,8 @@ export function AnimatedOptionButton({
           style
         ]}
         onPress={handlePress}
-        activeOpacity={activeOpacity}
+        activeOpacity={disabled ? 1 : activeOpacity}
+        disabled={disabled}
       >
         {children}
       </TouchableOpacity>

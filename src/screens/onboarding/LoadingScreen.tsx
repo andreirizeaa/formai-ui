@@ -3,7 +3,7 @@ import { View, StyleSheet, Animated } from 'react-native';
 import { Image } from 'expo-image';
 import { useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { FormAILogo } from '../../components/FormAILogo';
+import { FormAILogo } from '../../components/ui/FormAILogo';
 
 interface LoadingScreenProps {
   onLoadComplete: () => void;
