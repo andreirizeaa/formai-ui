@@ -164,7 +164,10 @@ export function SignInScreen({ onSignIn, onBack, onNavigateToOnboarding, onRequi
     >
       {/* Header with back button and title */}
       <View style={styles.header}>
-        <BackButton onPress={onBack} />
+        <BackButton onPress={() => {
+          hapticFeedback.selection();
+          onBack();
+        }} />
         <Text style={[
           styles.mainTitle,
           { color: '#FFFFFF' }

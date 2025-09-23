@@ -1,5 +1,5 @@
 import * as TaskManager from 'expo-task-manager'
-import * as BackgroundFetch from 'expo-background-fetch'
+import * as BackgroundTask from 'expo-background-task'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { supabase } from '../src/lib/supabase'
 
@@ -12,7 +12,7 @@ TaskManager.defineTask(BACKGROUND_FETCH_TASK, async () => {
   try {
     const inflight: string[] = JSON.parse((await AsyncStorage.getItem(INFLIGHT_KEY)) || '[]')
     if (!Array.isArray(inflight) || inflight.length === 0) {
-      return BackgroundFetch.BackgroundFetchResult.NoData
+      return BackgroundTask.BackgroundTaskResult.Success
     }
 
     let hasNewData = false
@@ -31,36 +31,29 @@ TaskManager.defineTask(BACKGROUND_FETCH_TASK, async () => {
       }
     }
 
-    return hasNewData
-      ? BackgroundFetch.BackgroundFetchResult.NewData
-      : BackgroundFetch.BackgroundFetchResult.NoData
+    return BackgroundTask.BackgroundTaskResult.Success
   } catch (error) {
-    return BackgroundFetch.BackgroundFetchResult.Failed
+    return BackgroundTask.BackgroundTaskResult.Failed
   }
 })
 
 export async function initBackgroundFetch() {
   try {
     // Register the background fetch task
-    await BackgroundFetch.registerTaskAsync(BACKGROUND_FETCH_TASK, {
+    await BackgroundTask.registerTaskAsync(BACKGROUND_FETCH_TASK, {
       minimumInterval: 15 * 60, // 15 minutes in seconds
-      stopOnTerminate: false, // Continue running when app is terminated
-      startOnBoot: true, // Start when device boots
     })
   } catch (error) {
     // Silently fail - background fetch is optional
   }
 }
 
-// Function to check if background fetch is available and set up
-export async function getBackgroundFetchStatus() {
+// Function to check if background task is available and set up
+export async function getBackgroundTaskStatus() {
   try {
-    const status = await BackgroundFetch.getStatusAsync()
+    const status = await BackgroundTask.getStatusAsync()
     return status
   } catch (error) {
-    return BackgroundFetch.BackgroundFetchStatus.Denied
+    return BackgroundTask.BackgroundTaskStatus.Restricted
   }
 }
-
-
-
