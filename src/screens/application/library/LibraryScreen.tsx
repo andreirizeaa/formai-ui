@@ -177,12 +177,10 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
     }
 
     const formatDate = (date: { month: number; day: number; year: number }) => {
-      const dateObj = new Date(date.year, date.month - 1, date.day);
-      return dateObj.toLocaleDateString('en-US', { 
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric'
-      });
+      const monthNames = i18n.t('months.array');
+      const monthName = monthNames[date.month - 1];
+      const shortMonthName = monthName.substring(0, 3);
+      return `${shortMonthName} ${date.day}, ${date.year}`;
     };
 
     return `${formatDate(dateRange.from)} - ${formatDate(dateRange.to)}`;

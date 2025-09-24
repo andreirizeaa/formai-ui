@@ -48,7 +48,7 @@ const zh = {
       editFailed: {
         gender: '性别编辑失败',
         height: '身高编辑失败',
-        dateOfBirth: '出生日期编辑失败',
+        age: '年龄编辑失败',
         currentWeight: '体重编辑失败',
         unitSystem: '单位系统更新失败',
         language: '语言更新失败',
@@ -75,7 +75,7 @@ const zh = {
       currentWeight: '当前体重',
       weight: '体重',
       height: '身高',
-      dateOfBirth: '出生日期',
+      age: '年龄',
       gender: '性别',
       videoQuality: '视频质量',
       highDefinition: '高清',
@@ -293,12 +293,20 @@ const zh = {
         kg: '千克',
         lbs: '磅',
       },
-      birthDate: {
-        title: '您什么时候出生？',
+      ageRange: {
+        title: '您多大了？',
         subtitle: '这有助于我们提供适合年龄的建议',
         month: '月',
         day: '日',
         year: '年',
+        ageRanges: {
+          '18-24': '18-24',
+          '25-34': '25-34',
+          '35-44': '35-44',
+          '45-54': '45-54',
+          '55-64': '55-64',
+          '65+': '65+',
+        },
       },
       rating: {
         title: '给我们评分',
@@ -588,11 +596,11 @@ const zh = {
         },
         accuracy: {
           title: '准确性',
-          message: '您在选定日期范围和筛选器中的平均动作准确性。计算为所有举重准确性分数的平均值。'
+          message: '您在所有时间内的平均动作准确性。计算为所有举重准确性分数的平均值。'
         },
         improvement: {
           title: '改善',
-          message: '您的动作在选定范围内如何变化。我们比较您举重的前三分之一和后三分之一，并显示平均准确性的差异。'
+          message: '您的动作在所有时间内如何变化。我们比较您举重的前三分之一和后三分之一，并显示平均准确性的差异。'
         }
       },
       metricsFeedback: {

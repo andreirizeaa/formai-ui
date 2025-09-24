@@ -48,7 +48,7 @@ const pt = {
       editFailed: {
         gender: 'Falha ao editar gênero',
         height: 'Falha ao editar altura',
-        dateOfBirth: 'Falha ao editar data de nascimento',
+        age: 'Falha ao editar idade',
         currentWeight: 'Falha ao editar peso',
         unitSystem: 'Falha ao atualizar sistema de unidades',
         language: 'Falha ao atualizar idioma',
@@ -75,7 +75,7 @@ const pt = {
       currentWeight: 'Peso atual',
       weight: 'Peso',
       height: 'Altura',
-      dateOfBirth: 'Data de nascimento',
+      age: 'Idade',
       gender: 'Gênero',
       videoQuality: 'Qualidade de Vídeo',
       highDefinition: 'Alta Definição',
@@ -293,12 +293,20 @@ const pt = {
         kg: 'kg',
         lbs: 'lbs',
       },
-      birthDate: {
-        title: 'Quando você nasceu?',
+      ageRange: {
+        title: 'Qual é a sua idade?',
         subtitle: 'Isso nos ajuda a fornecer recomendações apropriadas para a idade',
         month: 'Mês',
         day: 'Dia',
         year: 'Ano',
+        ageRanges: {
+          '18-24': '18-24',
+          '25-34': '25-34',
+          '35-44': '35-44',
+          '45-54': '45-54',
+          '55-64': '55-64',
+          '65+': '65+',
+        },
       },
       rating: {
         title: 'Nos dê uma avaliação',
@@ -588,11 +596,11 @@ const pt = {
         },
         accuracy: {
           title: 'Precisão',
-          message: 'Sua precisão média de forma através do intervalo de datas e filtros selecionados. Calculado como a média das pontuações de precisão para todos os levantamentos.'
+          message: 'Sua precisão média de forma através de todo o tempo. Calculado como a média das pontuações de precisão para todos os levantamentos.'
         },
         improvement: {
           title: 'Melhoria',
-          message: 'Como sua forma mudou ao longo do intervalo selecionado. Comparamos o primeiro terço dos seus levantamentos com o último terço e mostramos a diferença na precisão média.'
+          message: 'Como sua forma mudou ao longo de todo o tempo. Comparamos o primeiro terço dos seus levantamentos com o último terço e mostramos a diferença na precisão média.'
         }
       },
       metricsFeedback: {

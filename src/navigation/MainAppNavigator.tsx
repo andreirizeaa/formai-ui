@@ -21,7 +21,7 @@ import { EditLanguageScreen } from '../screens/application/settings/EditLanguage
 import { ShareScreen } from '../screens/application/settings/ShareScreen';
 import { EditCurrentWeightScreen } from '../screens/application/settings/editPersonalDetails/EditCurrentWeightScreen';
 import { EditHeightScreen } from '../screens/application/settings/editPersonalDetails/EditHeightScreen';
-import { EditDateOfBirthScreen } from '../screens/application/settings/editPersonalDetails/EditDateOfBirthScreen';
+import { EditAgeScreen } from '../screens/application/settings/editPersonalDetails/EditAgeScreen';
 import { EditGenderScreen } from '../screens/application/settings/editPersonalDetails/EditGenderScreen';
 import { AddOptions } from '../screens/application/add/AddOptions';
 import { RecordModal } from '../screens/application/add/record/RecordModal';
@@ -52,7 +52,7 @@ export type MainStackParamList = {
   Share: undefined;
   EditCurrentWeight: { currentValue: string };
   EditHeight: { currentValue: string };
-  EditDateOfBirth: { currentValue: string };
+  EditAge: { currentValue: string };
   EditGender: { currentValue: string };
   RecordModal: undefined;
   UploadModal: undefined;
@@ -190,7 +190,7 @@ function PerformanceScreenWrapper() {
 
 function PersonalDetailsScreenWrapper() {
   const navigation = useNavigation<MainStackNavigationProp>();
-  const { userDetails, getWeightDisplay, getHeightDisplay, getDateOfBirthDisplay } = useUserDetails();
+  const { userDetails, getWeightDisplay, getHeightDisplay, getAgeRangeDisplay } = useUserDetails();
   
   const handleBack = () => {
     navigation.goBack();
@@ -204,8 +204,8 @@ function PersonalDetailsScreenWrapper() {
     navigation.navigate('EditHeight', { currentValue });
   };
 
-  const handleEditDateOfBirth = (currentValue: string) => {
-    navigation.navigate('EditDateOfBirth', { currentValue });
+  const handleEditAgeRange = (currentValue: string) => {
+    navigation.navigate('EditAge', { currentValue });
   };
 
   const handleEditGender = (currentValue: string) => {
@@ -217,7 +217,7 @@ function PersonalDetailsScreenWrapper() {
       onBack={handleBack}
       onEditCurrentWeight={handleEditCurrentWeight}
       onEditHeight={handleEditHeight}
-      onEditDateOfBirth={handleEditDateOfBirth}
+      onEditAgeRange={handleEditAgeRange}
       onEditGender={handleEditGender}
     />
   );
@@ -337,9 +337,9 @@ function EditHeightScreenWrapper() {
   );
 }
 
-function EditDateOfBirthScreenWrapper() {
+function EditAgeScreenWrapper() {
   const navigation = useNavigation<MainStackNavigationProp>();
-  const route = useRoute<RouteProp<MainStackParamList, 'EditDateOfBirth'>>();
+  const route = useRoute<RouteProp<MainStackParamList, 'EditAge'>>();
   const { updateUserDetails } = useUserDetails();
   
   const handleBack = () => {
@@ -347,24 +347,13 @@ function EditDateOfBirthScreenWrapper() {
   };
 
   const handleSave = (newValue: string) => {
-    // The newValue is already in DD-MM-YYYY format from EditDateOfBirthScreen
-    // Just validate it's in the correct format before saving
-    const dateRegex = /^\d{2}-\d{2}-\d{4}$/;
-    if (dateRegex.test(newValue)) {
-      updateUserDetails('dateOfBirth', newValue);
-    } else {
-      showAlert(
-        'Error', 
-        'Invalid date format. Please try again.',
-        undefined,
-        'MAIN_APP_NAVIGATOR_INVALID_DATE_FORMAT'
-      );
-    }
+    // The newValue is an age range (e.g., "18-24") from EditAgeScreen
+    updateUserDetails('ageRange', newValue);
     navigation.goBack();
   };
 
   return (
-    <EditDateOfBirthScreen 
+    <EditAgeScreen 
       onBack={handleBack}
       currentValue={route.params.currentValue}
       onSave={handleSave}
@@ -780,8 +769,8 @@ export function MainAppNavigator({ onLogout }: { onLogout?: () => void }) {
             }}
           />
           <Stack.Screen 
-            name="EditDateOfBirth" 
-            component={EditDateOfBirthScreenWrapper}
+            name="EditAge" 
+            component={EditAgeScreenWrapper}
             options={{
               presentation: 'card',
             }}

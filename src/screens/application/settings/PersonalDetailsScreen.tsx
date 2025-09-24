@@ -14,7 +14,7 @@ interface PersonalDetailsScreenProps {
   onBack: () => void;
   onEditCurrentWeight: (currentValue: string) => void;
   onEditHeight: (currentValue: string) => void;
-  onEditDateOfBirth: (currentValue: string) => void;
+  onEditAgeRange: (currentValue: string) => void;
   onEditGender: (currentValue: string) => void;
 }
 
@@ -75,28 +75,9 @@ function translatePersonalDataValue(key: string, value: string): string {
       }
       return value;
       
-    case 'dateOfBirth':
-      // Translate month names in date to abbreviated format
-      const months = {
-        'January': i18n.t('months.january').substring(0, 3),
-        'February': i18n.t('months.february').substring(0, 3),
-        'March': i18n.t('months.march').substring(0, 3),
-        'April': i18n.t('months.april').substring(0, 3),
-        'May': i18n.t('months.may').substring(0, 3),
-        'June': i18n.t('months.june').substring(0, 3),
-        'July': i18n.t('months.july').substring(0, 3),
-        'August': i18n.t('months.august').substring(0, 3),
-        'September': i18n.t('months.september').substring(0, 3),
-        'October': i18n.t('months.october').substring(0, 3),
-        'November': i18n.t('months.november').substring(0, 3),
-        'December': i18n.t('months.december').substring(0, 3),
-      };
-      
-      let translatedDate = value;
-      Object.entries(months).forEach(([english, translated]) => {
-        translatedDate = translatedDate.replace(english, translated);
-      });
-      return translatedDate;
+    case 'ageRange':
+      // Age range is already in the correct format (e.g., "18-24")
+      return value;
       
     case 'gender':
       // Translate gender values
@@ -115,10 +96,10 @@ export function PersonalDetailsScreen({
   onBack, 
   onEditCurrentWeight, 
   onEditHeight, 
-  onEditDateOfBirth, 
+  onEditAgeRange, 
   onEditGender
 }: PersonalDetailsScreenProps) {
-  const { userDetails, getWeightDisplay, getHeightDisplay, getDateOfBirthDisplay } = useUserDetails();
+  const { userDetails, getWeightDisplay, getHeightDisplay, getAgeRangeDisplay } = useUserDetails();
   const { hasHdVideos } = usePurchases();
   const { registerPlacement } = usePlacement();
   
@@ -137,8 +118,8 @@ export function PersonalDetailsScreen({
     onEditHeight(getHeightDisplay());
   };
 
-  const handleEditDateOfBirth = () => {
-    onEditDateOfBirth(getDateOfBirthDisplay());
+  const handleEditAgeRange = () => {
+    onEditAgeRange(getAgeRangeDisplay());
   };
 
   const handleEditGender = () => {
@@ -203,9 +184,9 @@ export function PersonalDetailsScreen({
           />
           <View style={styles.separator} />
           <PersonalDetailOption
-            title={i18n.t('personalDetails.dateOfBirth')}
-            value={translatePersonalDataValue('dateOfBirth', getDateOfBirthDisplay())}
-            onPress={handleEditDateOfBirth}
+            title={i18n.t('personalDetails.age')}
+            value={translatePersonalDataValue('ageRange', getAgeRangeDisplay())}
+            onPress={handleEditAgeRange}
           />
           <View style={styles.separator} />
           <PersonalDetailOption

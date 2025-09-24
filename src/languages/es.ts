@@ -48,7 +48,7 @@ const es = {
       editFailed: {
         gender: 'Error al editar el género',
         height: 'Error al editar la altura',
-        dateOfBirth: 'Error al editar la fecha de nacimiento',
+        age: 'Error al editar la edad',
         currentWeight: 'Error al editar el peso',
         unitSystem: 'Error al actualizar el sistema de unidades',
         language: 'Error al actualizar el idioma',
@@ -75,7 +75,7 @@ const es = {
       currentWeight: 'Peso actual',
       weight: 'Peso',
       height: 'Altura',
-      dateOfBirth: 'Fecha de nacimiento',
+      age: 'Edad',
       gender: 'Género',
       videoQuality: 'Calidad de Video',
       highDefinition: 'Alta Definición',
@@ -293,12 +293,20 @@ const es = {
         kg: 'kg',
         lbs: 'lbs',
       },
-      birthDate: {
-        title: '¿Cuándo naciste?',
+      ageRange: {
+        title: '¿Cuál es tu edad?',
         subtitle: 'Esto nos ayuda a proporcionar recomendaciones apropiadas para tu edad',
         month: 'Mes',
         day: 'Día',
         year: 'Año',
+        ageRanges: {
+          '18-24': '18-24',
+          '25-34': '25-34',
+          '35-44': '35-44',
+          '45-54': '45-54',
+          '55-64': '55-64',
+          '65+': '65+',
+        },
       },
       rating: {
         title: 'Danos una calificación',
@@ -588,11 +596,11 @@ const es = {
         },
         accuracy: {
           title: 'Precisión',
-          message: 'Tu precisión promedio de forma a través del rango de fechas y filtros seleccionados. Calculado como la media de las puntuaciones de precisión para todos los levantamientos.'
+          message: 'Tu precisión promedio de forma a través de todo el tiempo. Calculado como la media de las puntuaciones de precisión para todos los levantamientos.'
         },
         improvement: {
           title: 'Mejora',
-          message: 'Cómo tu forma cambió durante el rango seleccionado. Comparamos el primer tercio de tus levantamientos con el último tercio y mostramos la diferencia en precisión promedio.'
+          message: 'Cómo tu forma cambió a lo largo de todo el tiempo. Comparamos el primer tercio de tus levantamientos con el último tercio y mostramos la diferencia en precisión promedio.'
         }
       },
       metricsFeedback: {

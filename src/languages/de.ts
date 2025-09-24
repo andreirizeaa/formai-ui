@@ -45,7 +45,7 @@ const de = {
       "editFailed": {
         "gender": "Änderung des Geschlechts fehlgeschlagen",
         "height": "Änderung der Größe fehlgeschlagen",
-        "dateOfBirth": "Änderung des Geburtsdatums fehlgeschlagen",
+        "age": "Änderung des Alters fehlgeschlagen",
         "currentWeight": "Änderung des Gewichts fehlgeschlagen",
         "unitSystem": "Aktualisierung des Einheitensystems fehlgeschlagen",
         "language": "Aktualisierung der Sprache fehlgeschlagen",
@@ -72,7 +72,7 @@ const de = {
       "currentWeight": "Aktuelles Gewicht",
       "weight": "Gewicht",
       "height": "Größe",
-      "dateOfBirth": "Geburtsdatum",
+      "age": "Alter",
       "gender": "Geschlecht",
       "videoQuality": "Videoqualität",
       "highDefinition": "Hochauflösend",
@@ -290,12 +290,20 @@ const de = {
         "kg": "kg",
         "lbs": "lbs"
       },
-      "birthDate": {
-        "title": "Wann bist du geboren?",
+      "ageRange": {
+        "title": "Wie alt bist du?",
         "subtitle": "Für altersgerechte Empfehlungen",
         "month": "Monat",
         "day": "Tag",
-        "year": "Jahr"
+        "year": "Jahr",
+        "ageRanges": {
+          "18-24": "18-24",
+          "25-34": "25-34",
+          "35-44": "35-44",
+          "45-54": "45-54",
+          "55-64": "55-64",
+          "65+": "65+"
+        }
       },
       "rating": {
         "title": "Gib uns eine Bewertung",
@@ -585,11 +593,11 @@ const de = {
         },
         "accuracy": {
           "title": "Präzision",
-          "message": "Deine durchschnittliche Präzision im gewählten Zeitraum. Mittelwert aller Präzisionswerte."
+          "message": "Deine durchschnittliche Präzision über die gesamte Zeit. Mittelwert aller Präzisionswerte."
         },
         "improvement": {
           "title": "Verbesserung",
-          "message": "Veränderung deiner Form im Zeitraum: Vergleich des ersten Drittels deiner Lifts mit dem letzten Drittel."
+          "message": "Veränderung deiner Form über die gesamte Zeit: Vergleich des ersten Drittels deiner Lifts mit dem letzten Drittel."
         }
       },
       "metricsFeedback": {

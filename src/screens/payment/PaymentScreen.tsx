@@ -141,7 +141,6 @@ export function PaymentScreen({ onComplete }: PaymentScreenProps) {
 
         setIsReferralCodeProcessed(true);
       } catch (error) {
-        console.error('Error processing referral code:', error);
         setIsReferralCodeProcessed(true);
       }
     };

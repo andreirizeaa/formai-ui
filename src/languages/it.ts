@@ -48,7 +48,7 @@ const it = {
       editFailed: {
         gender: 'Modifica genere fallita',
         height: 'Modifica altezza fallita',
-        dateOfBirth: 'Modifica data di nascita fallita',
+        age: 'Modifica età fallita',
         currentWeight: 'Modifica peso fallita',
         unitSystem: 'Aggiornamento sistema unità fallito',
         language: 'Aggiornamento lingua fallito',
@@ -75,7 +75,7 @@ const it = {
       currentWeight: 'Peso attuale',
       weight: 'Peso',
       height: 'Altezza',
-      dateOfBirth: 'Data di nascita',
+      age: 'Età',
       gender: 'Genere',
       videoQuality: 'Qualità Video',
       highDefinition: 'Alta Definizione',
@@ -293,12 +293,20 @@ const it = {
         kg: 'kg',
         lbs: 'lbs',
       },
-      birthDate: {
-        title: 'Quando sei nato?',
+      ageRange: {
+        title: 'Quanti anni hai?',
         subtitle: 'Questo ci aiuta a fornire raccomandazioni appropriate per l\'età',
         month: 'Mese',
         day: 'Giorno',
         year: 'Anno',
+        ageRanges: {
+          '18-24': '18-24',
+          '25-34': '25-34',
+          '35-44': '35-44',
+          '45-54': '45-54',
+          '55-64': '55-64',
+          '65+': '65+',
+        },
       },
       rating: {
         title: 'Dacci una valutazione',
@@ -588,11 +596,11 @@ const it = {
         },
         accuracy: {
           title: 'Accuratezza',
-          message: 'La tua accuratezza media della forma attraverso l\'intervallo di date e i filtri selezionati. Calcolato come la media dei punteggi di accuratezza per tutti i sollevamenti.'
+          message: 'La tua accuratezza media della forma attraverso tutto il tempo. Calcolato come la media dei punteggi di accuratezza per tutti i sollevamenti.'
         },
         improvement: {
           title: 'Miglioramento',
-          message: 'Come la tua forma è cambiata nell\'intervallo selezionato. Confrontiamo il primo terzo dei tuoi sollevamenti con l\'ultimo terzo e mostriamo la differenza nell\'accuratezza media.'
+          message: 'Come la tua forma è cambiata attraverso tutto il tempo. Confrontiamo il primo terzo dei tuoi sollevamenti con l\'ultimo terzo e mostriamo la differenza nell\'accuratezza media.'
         }
       },
       metricsFeedback: {

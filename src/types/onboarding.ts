@@ -22,7 +22,7 @@ export interface OnboardingData {
   referralCode: string | null;
   metricHeight: number | null;
   metricWeight: number | null;
-  birthDate: string | null;
+  ageRange: string | null;
   hasRated: boolean | null;
   onboardingCompleted: boolean;
   walkthroughCompleted: boolean;

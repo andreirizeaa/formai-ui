@@ -28,11 +28,8 @@ export function DateRangeModal({
   onReset,
   title = i18n.t('performance.editDateRange')
 }: DateRangeModalProps) {
-  // Date picker helper functions
-  const months = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
-  ];
+  // Date picker helper functions - use translated month names
+  const months = i18n.t('months.array');
 
   const getDaysInMonth = (month: number, year: number) => {
     return new Date(year, month, 0).getDate();

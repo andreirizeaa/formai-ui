@@ -181,7 +181,6 @@ function AppContent() {
       }, 500);
 
     } catch (error) {
-      console.error('Error during logout:', error);
       setIsTransitioning(false); // Reset transitioning state on error
       showAlert(
         'Logout Error',

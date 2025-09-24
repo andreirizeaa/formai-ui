@@ -26,7 +26,7 @@ function buildOnboardingPayload(input: OnboardingData): { info: Record<string, a
     unitSystem: 'unit_system',
     metricHeight: 'metric_height',
     metricWeight: 'metric_weight',
-    birthDate: 'birth_date',
+    ageRange: 'age_range',
     hasRated: 'has_rated',
     walkthroughCompleted: 'walkthrough_completed',
     referralCode: 'referral_code',
@@ -48,13 +48,7 @@ function buildOnboardingPayload(input: OnboardingData): { info: Record<string, a
   for (const [frontendKey, dbKey] of Object.entries(infoMapping)) {
     const val = raw[frontendKey];
     if (val === undefined || val === null) continue;
-    if (dbKey === 'birth_date') {
-      const normalized = isoDateOrNull(String(val));
-      if (!normalized) continue;
-      info[dbKey] = normalized;
-    } else {
-      info[dbKey] = val;
-    }
+    info[dbKey] = val;
   }
 
   for (const [frontendKey, dbKey] of Object.entries(onboardingMapping)) {
@@ -75,6 +69,7 @@ async function upsertWithRetry(
   let lastError: string | null = null;
   for (let i = 1; i <= attempts; i++) {
     const { error } = await supabase.from(table).upsert(payload, { onConflict: 'user_id' });
+    console.log('error', error)
     if (!error) return;
     lastError = error.message;
     if (i < attempts) await new Promise(r => setTimeout(r, delayMs));

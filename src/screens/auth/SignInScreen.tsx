@@ -252,7 +252,7 @@ export function SignInScreen({ onSignIn, onBack, onNavigateToOnboarding, onRequi
               }}>
                 <Text style={[
                   styles.startTodayLink,
-                  { color: '#007AFF' }
+                  { color: '#FFFFFF' }
                 ]}>
                   {i18n.t('startToday')}
                 </Text>
@@ -352,7 +352,7 @@ const styles = StyleSheet.create({
   },
   startTodayLink: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '800',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
     textDecorationLine: 'underline',
   },

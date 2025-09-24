@@ -5,6 +5,7 @@ import { OnboardingLayout } from '../../components/onboarding/OnboardingLayout';
 import i18n from '../../utils/i18n';
 import { hapticFeedback } from '../../utils/haptic';
 import * as Notifications from 'expo-notifications';
+import { track } from '../../services/analytics';
 
 interface NotificationPermissionScreenProps {
   onNext: () => void;
@@ -18,9 +19,23 @@ export function NotificationPermissionScreen({ onNext, onBack }: NotificationPer
   const handleAllowNotifications = async () => {
     hapticFeedback.selection();
     try {
-      await Notifications.requestPermissionsAsync();
+      const result = await Notifications.requestPermissionsAsync();
+      const granted = result.granted;
+      track('Permissions', {
+        permission_type: 'notifications',
+        granted: granted,
+        step_id: 'notificationPermission',
+        step_index: 15,
+      });
       onNext();
     } catch (error) {
+      track('Permissions', {
+        permission_type: 'notifications',
+        granted: false,
+        step_id: 'notificationPermission',
+        step_index: 15,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
       onNext();
     }
   };
@@ -28,9 +43,23 @@ export function NotificationPermissionScreen({ onNext, onBack }: NotificationPer
   const handleDontAllow = async () => {
     hapticFeedback.selection();
     try {
-      await Notifications.requestPermissionsAsync();
+      const result = await Notifications.requestPermissionsAsync();
+      const granted = result.granted;
+      track('Permissions', {
+        permission_type: 'notifications',
+        granted: granted,
+        step_id: 'notificationPermission',
+        step_index: 15,
+      });
       onNext();
     } catch (error) {
+      track('Permissions', {
+        permission_type: 'notifications',
+        granted: false,
+        step_id: 'notificationPermission',
+        step_index: 15,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
       onNext();
     }
   };
