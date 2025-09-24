@@ -122,10 +122,15 @@ export function EditAgeScreen({ onBack, currentValue, onSave }: EditAgeScreenPro
       Alert.alert(
         i18n.t('settings.editFailed.age'), 
         i18n.t('settings.editFailed.message'), 
-        () => {
-          hapticFeedback.selection();
-          onBack();
-        }
+        [
+          {
+            text: i18n.t('close'),
+            onPress: () => {
+              hapticFeedback.selection();
+              onBack();
+            }
+          }
+        ]
       );
     }
     setIsSaving(false);
@@ -146,7 +151,7 @@ export function EditAgeScreen({ onBack, currentValue, onSave }: EditAgeScreenPro
         >
           <ChevronLeft width={24} height={24} color="#000000" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{i18n.t('onboarding.ageRange.title')}</Text>
+        <Text style={styles.headerTitle}>{i18n.t('personalDetails.editAgeTitle')}</Text>
         <View style={styles.placeholder} />
       </View>
 

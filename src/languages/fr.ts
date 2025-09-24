@@ -83,6 +83,7 @@ const fr = {
       "editCurrentWeight": "Modifier le poids actuel",
       "editHeight": "Modifier la taille",
       "editDateOfBirth": "Modifier la date de naissance",
+      "editAgeTitle": "Modifier l'âge",
       "editGender": "Modifier le genre",
       "male": "Homme",
       "female": "Femme"

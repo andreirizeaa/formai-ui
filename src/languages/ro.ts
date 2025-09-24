@@ -83,6 +83,7 @@ const ro = {
       "editCurrentWeight": "Editează greutatea actuală",
       "editHeight": "Editează înălțimea",
       "editDateOfBirth": "Editează data nașterii",
+      "editAgeTitle": "Editează vârsta",
       "editGender": "Editează genul",
       "male": "Masculin",
       "female": "Feminin"
