@@ -48,7 +48,7 @@ const fr = {
       "editFailed": {
         "gender": "Échec de modification du genre",
         "height": "Échec de modification de la taille",
-        "dateOfBirth": "Échec de modification de la date de naissance",
+        "age": "Échec de modification de l'âge",
         "currentWeight": "Échec de modification du poids",
         "unitSystem": "Échec de mise à jour des unités",
         "language": "Échec de mise à jour de la langue",
@@ -75,7 +75,7 @@ const fr = {
       "currentWeight": "Poids actuel",
       "weight": "Poids",
       "height": "Taille",
-      "dateOfBirth": "Date de naissance",
+      "age": "Âge",
       "gender": "Genre",
       "videoQuality": "Qualité vidéo",
       "highDefinition": "Haute Définition",
@@ -293,12 +293,20 @@ const fr = {
         "kg": "kg",
         "lbs": "lb"
       },
-      "birthDate": {
-        "title": "Quand êtes-vous né(e) ?",
-        "subtitle": "Pour des recommandations adaptées à l’âge",
+      "ageRange": {
+        "title": "Quel est votre âge ?",
+        "subtitle": "Pour des recommandations adaptées à l'âge",
         "month": "Mois",
         "day": "Jour",
-        "year": "Année"
+        "year": "Année",
+        "ageRanges": {
+          "18-24": "18-24",
+          "25-34": "25-34",
+          "35-44": "35-44",
+          "45-54": "45-54",
+          "55-64": "55-64",
+          "65+": "65+"
+        }
       },
       "rating": {
         "title": "Donnez-nous une note",
@@ -588,11 +596,11 @@ const fr = {
         },
         "accuracy": {
           "title": "Précision",
-          "message": "Votre précision moyenne sur la période sélectionnée. Moyenne des scores de toutes les levées."
+          "message": "Votre précision moyenne sur toute la période. Moyenne des scores de toutes les levées."
         },
         "improvement": {
           "title": "Amélioration",
-          "message": "Évolution de votre technique sur la période : comparaison du premier tiers de levées avec le dernier tiers."
+          "message": "Évolution de votre technique sur toute la période : comparaison du premier tiers de levées avec le dernier tiers."
         }
       },
       "metricsFeedback": {

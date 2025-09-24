@@ -53,7 +53,6 @@ export async function validateReferralCode(code: string): Promise<ReferralValida
     };
 
   } catch (error) {
-    console.error('Error validating referral code:', error);
     return {
       isValid: false,
       error: 'Failed to validate referral code'
@@ -72,7 +71,6 @@ export async function getReferralCodeType(code: string): Promise<{ type?: 'DISCO
     if (error && error.code === 'PGRST116') { // No rows found
       return { error: 'Referral code not found' };
     } else if (error) {
-      console.error('Supabase error fetching referral code type:', error);
       return { error: error.message };
     }
 
@@ -82,7 +80,6 @@ export async function getReferralCodeType(code: string): Promise<{ type?: 'DISCO
       return { error: 'Invalid referral code type' };
     }
   } catch (e) {
-    console.error('Unexpected error fetching referral code type:', e);
     return { error: 'An unexpected error occurred' };
   }
 }
@@ -96,7 +93,6 @@ export async function getUserReferralCode(userId: string): Promise<{ referralCod
       .single();
 
     if (error) {
-      console.error('Supabase error fetching user referral code:', error);
       return { error: error.message };
     }
 
@@ -106,7 +102,6 @@ export async function getUserReferralCode(userId: string): Promise<{ referralCod
       return { referralCode: undefined };
     }
   } catch (e) {
-    console.error('Unexpected error fetching user referral code:', e);
     return { error: 'An unexpected error occurred' };
   }
 }

@@ -12,7 +12,7 @@ interface UserDetails {
   unitSystem: 'metric' | 'imperial' | null;
   currentWeightKG: number | null; 
   heightCM: number | null; 
-  dateOfBirth: string | null; 
+  ageRange: string | null; 
   gender: string | null;
   language: string | null;
   currentStreak: number | null;
@@ -32,8 +32,7 @@ interface UserDetailsContextType {
   updateLanguage: (language: string) => void;
   getWeightDisplay: () => string;
   getHeightDisplay: () => string;
-  getDateOfBirthDisplay: () => string;
-  formatDateForDisplay: (dateString: string) => string;
+  getAgeRangeDisplay: () => string;
   refetchUserDetails: () => Promise<void>;
   setSignedInUser: (id: string | null) => Promise<void>;
   isUserDetailsLoaded: boolean;
@@ -93,7 +92,7 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
           unitSystem: row.unit_system ?? null,
           currentWeightKG: row.metric_weight ?? null,
           heightCM: row.metric_height ?? null,
-          dateOfBirth: row.birth_date ? formatDateFromIso(row.birth_date) : null,
+          ageRange: row.age_range ?? null,
           gender: row.gender ?? null,
           language: row.language ?? null,
           currentStreak: row.current_streak ?? null,
@@ -116,7 +115,7 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
         unitSystem: null,
         currentWeightKG: null,
         heightCM: null,
-        dateOfBirth: null,
+        ageRange: null,
         gender: null,
         language: null,
         currentStreak: null,
@@ -133,7 +132,7 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
         unitSystem: null,
         currentWeightKG: null,
         heightCM: null,
-        dateOfBirth: null,
+        ageRange: null,
         gender: null,
         language: null,
         currentStreak: null,
@@ -150,7 +149,7 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
         unitSystem: null,
         currentWeightKG: null,
         heightCM: null,
-        dateOfBirth: null,
+        ageRange: null,
         gender: null,
         language: null,
         currentStreak: null,
@@ -167,7 +166,7 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
         unitSystem: null,
         currentWeightKG: null,
         heightCM: null,
-        dateOfBirth: null,
+        ageRange: null,
         gender: null,
         language: null,
         currentStreak: null,
@@ -184,7 +183,7 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
         unitSystem: null,
         currentWeightKG: null,
         heightCM: null,
-        dateOfBirth: null,
+        ageRange: null,
         gender: null,
         language: null,
         currentStreak: null,
@@ -201,7 +200,7 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
         unitSystem: null,
         currentWeightKG: null,
         heightCM: null,
-        dateOfBirth: null,
+        ageRange: null,
         gender: null,
         language: null,
         currentStreak: null,
@@ -225,7 +224,7 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
         unitSystem: null,
         currentWeightKG: null,
         heightCM: null,
-        dateOfBirth: null,
+        ageRange: null,
         gender: null,
         language: null,
         currentStreak: null,
@@ -246,39 +245,10 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
     return formatHeightForDisplay(userDetails.heightCM, userDetails.unitSystem);
   };
 
-  const formatDateForDisplay = (dateString: string): string => {
-    try {
-      // Parse DD-MM-YYYY format
-      const [day, month, year] = dateString.split('-');
-      const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-      
-      if (isNaN(date.getTime())) {
-        return 'Invalid date';
-      }
-      
-      const options: Intl.DateTimeFormatOptions = {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      };
-      
-      return date.toLocaleDateString('en-US', options);
-    } catch (error) {
-      return 'Invalid date';
-    }
+  const getAgeRangeDisplay = (): string => {
+    if (!userDetails || !userDetails.ageRange) return '';
+    return userDetails.ageRange;
   };
-
-  const getDateOfBirthDisplay = (): string => {
-    if (!userDetails || !userDetails.dateOfBirth) return '';
-    return formatDateForDisplay(userDetails.dateOfBirth);
-  };
-
-  function formatDateFromIso(iso: string): string {
-    // iso: YYYY-MM-DD -> DD-MM-YYYY
-    const [y, m, d] = iso.split('-');
-    if (!y || !m || !d) return userDetails?.dateOfBirth ?? '01-01-2000';
-    return `${d}-${m}-${y}`;
-  }
 
   const refetchUserDetails = async () => {
     // 1) Ensure context has a userId (we only read storage on mount otherwise)
@@ -323,8 +293,7 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
       updateLanguage,
       getWeightDisplay,
       getHeightDisplay,
-      getDateOfBirthDisplay,
-      formatDateForDisplay,
+      getAgeRangeDisplay,
       refetchUserDetails,
       setSignedInUser,
       isUserDetailsLoaded: isLoaded,
@@ -339,8 +308,7 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
       updateLanguage,
       getWeightDisplay,
       getHeightDisplay,
-      getDateOfBirthDisplay,
-      formatDateForDisplay,
+      getAgeRangeDisplay,
       refetchUserDetails,
       setSignedInUser,
       isLoaded,

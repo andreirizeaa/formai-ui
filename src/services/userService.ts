@@ -11,7 +11,7 @@ export interface UserDetailsRow {
   unit_system: 'metric' | 'imperial' | null;
   metric_height: number | null;
   metric_weight: number | null;
-  birth_date: string | null;
+  age_range: string | null;
   gender: string | null;
   language: string | null;
   current_streak: number | null;
@@ -49,7 +49,7 @@ export function requiresOnboarding(user: UserRow | null): boolean {
 export interface EditUserDetailsPayload {
   height?: number; // in cm
   weight?: number; // in kg
-  birth_date?: string; // YYYY-MM-DD
+  age_range?: string; // age range like "18-24"
   gender?: string;
   language?: string; // e.g., 'en'
   unit_system?: 'metric' | 'imperial';
@@ -78,10 +78,7 @@ export async function editUserDetails(
     const payload: Record<string, any> = {};
     if (req.height != null) payload.metric_height = req.height;
     if (req.weight != null) payload.metric_weight = req.weight;
-    if (req.birth_date != null) {
-      const normalized = isoDateOrNull(req.birth_date);
-      if (normalized) payload.birth_date = normalized;
-    }
+    if (req.age_range != null) payload.age_range = req.age_range;
     if (req.gender != null) payload.gender = req.gender;
     if (req.language != null) payload.language = req.language;
     if (req.unit_system != null) payload.unit_system = req.unit_system;
@@ -114,7 +111,7 @@ export async function editUserDetails(
   // Then fetch the updated row explicitly (more reliable across PostgREST modes)
   const { data: updated, error: selErr } = await supabase
     .from('user_info')
-    .select('user_id, metric_height, metric_weight, birth_date, gender, language, unit_system, walkthrough_completed')
+    .select('user_id, metric_height, metric_weight, age_range, gender, language, unit_system, walkthrough_completed')
     .eq('user_id', userId)
     .maybeSingle();
   if (selErr) throw new Error(selErr.message);
@@ -124,7 +121,7 @@ export async function editUserDetails(
   for (const field of Object.keys(updatePayload)) {
     if (field === 'metric_height') updatedFields.height = (updated as any).metric_height;
     else if (field === 'metric_weight') updatedFields.weight = (updated as any).metric_weight;
-    else if (field === 'birth_date') updatedFields.birth_date = (updated as any).birth_date;
+    else if (field === 'age_range') updatedFields.age_range = (updated as any).age_range;
     else if (field === 'gender') updatedFields.gender = (updated as any).gender;
     else if (field === 'language') updatedFields.language = (updated as any).language;
     else if (field === 'unit_system') updatedFields.unit_system = (updated as any).unit_system;
@@ -141,7 +138,7 @@ export async function editUserDetails(
 export async function fetchUserDetailsById(userId: string): Promise<UserDetailsRow | null> {
   const { data, error } = await supabase
     .from('user_info')
-    .select('user_id, unit_system, metric_height, metric_weight, birth_date, gender, language, walkthrough_completed, has_rated')
+    .select('user_id, unit_system, metric_height, metric_weight, age_range, gender, language, walkthrough_completed, has_rated')
     .eq('user_id', userId)
     .maybeSingle();
   if (error) throw new Error(error.message);
@@ -151,7 +148,7 @@ export async function fetchUserDetailsById(userId: string): Promise<UserDetailsR
     unit_system: (data as any).unit_system,
     metric_height: (data as any).metric_height,
     metric_weight: (data as any).metric_weight,
-    birth_date: (data as any).birth_date,
+    age_range: (data as any).age_range,
     gender: (data as any).gender,
     language: (data as any).language,
     current_streak: null,

@@ -60,7 +60,8 @@
       "infoPlist": {
         "UIBackgroundModes": [
           "remote-notification",
-          "background-processing"
+          "fetch",
+          "processing"
         ],
         "CFBundleURLTypes": [
           {
@@ -74,6 +75,7 @@
         "NSMicrophoneUsageDescription": "This app uses the microphone while recording workout videos.",
         "NSPhotoLibraryUsageDescription": "This app saves workout videos to your photo library for easy access.",
         "NSPhotoLibraryAddUsageDescription": "This app saves workout videos to your photo library for easy access.",
+        "NSUserTrackingUsageDescription": "This identifier will be used to deliver personalized ads to you.",
         "ITSAppUsesNonExemptEncryption": false
       }
     },

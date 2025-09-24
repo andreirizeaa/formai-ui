@@ -48,7 +48,7 @@ const en = {
       editFailed: {
         gender: 'Gender edit failed',
         height: 'Height edit failed',
-        dateOfBirth: 'Birth date edit failed',
+        age: 'Age edit failed',
         currentWeight: 'Weight edit failed',
         unitSystem: 'Unit system update failed',
         language: 'Language update failed',
@@ -75,14 +75,14 @@ const en = {
       currentWeight: 'Current weight',
       weight: 'Weight',
       height: 'Height',
-      dateOfBirth: 'Date of birth',
+      age: 'Age',
       gender: 'Gender',
       videoQuality: 'Video Quality',
       highDefinition: 'High Definition',
       low: 'Low',
       editCurrentWeight: 'Edit Current Weight',
       editHeight: 'Edit Height',
-      editDateOfBirth: 'Edit Date of Birth',
+      editAge: 'Edit Age',
       editGender: 'Edit Gender',
       male: 'Male',
       female: 'Female',
@@ -293,12 +293,20 @@ const en = {
         kg: 'kg',
         lbs: 'lbs',
       },
-      birthDate: {
-        title: 'When were you born?',
+      ageRange: {
+        title: 'What is your age?',
         subtitle: 'This helps us provide age-appropriate recommendations',
         month: 'Month',
         day: 'Day',
         year: 'Year',
+        ageRanges: {
+          '18-24': '18-24',
+          '25-34': '25-34',
+          '35-44': '35-44',
+          '45-54': '45-54',
+          '55-64': '55-64',
+          '65+': '65+',
+        },
       },
       rating: {
         title: 'Give us a rating',
@@ -591,11 +599,11 @@ const en = {
         },
         accuracy: {
           title: 'Accuracy',
-          message: 'Your average form accuracy across the selected date range and filters. Calculated as the mean of accuracy scores for all lifts.'
+          message: 'Your average form accuracy across all time. Calculated as the mean of accuracy scores for all lifts.'
         },
         improvement: {
           title: 'Improvement',
-          message: 'How your form changed over the selected range. We compare the first third of your lifts to the last third and show the difference in average accuracy.'
+          message: 'How your form changed over all time. We compare the first third of your lifts to the last third and show the difference in average accuracy.'
         }
       },
       metricsFeedback: {

@@ -22,7 +22,7 @@ const initialOnboardingData: OnboardingData = {
   referralCode: null,
   metricHeight: 170,
   metricWeight: 60,
-  birthDate: null,
+  ageRange: null,
   hasRated: null,
   signInMethod: null,
   onboardingCompleted: false,

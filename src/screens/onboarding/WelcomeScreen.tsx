@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform, Animated, Modal, Pressable, ScrollView } from 'react-native';
-import { Image } from 'expo-image';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -32,11 +31,13 @@ export function WelcomeScreen({ onGetStarted, onSignIn }: WelcomeScreenProps) {
   const videoTranslateX = React.useRef(new Animated.Value(400)).current; // Start way far right (like x=40)
   const videoRotation = React.useRef(new Animated.Value(30)).current; // Start rotated 30° right
   
-  // Create video player
+  // Create video player with stable reference
+  const playerRef = React.useRef<any>(null);
+  const [videoReady, setVideoReady] = useState(false);
   const player = useVideoPlayer(require('../../../assets/formai-homescreen.mp4'), player => {
     player.loop = true;
     player.muted = true;
-    player.play();
+    playerRef.current = player;
   });
 
   useEffect(() => {
@@ -61,26 +62,36 @@ export function WelcomeScreen({ onGetStarted, onSignIn }: WelcomeScreenProps) {
 
   // Video animation sequence - N shape movement with manual video control
   useEffect(() => {
+    if (!videoReady) return;
+
+    let cancelled = false;
+
     const startAnimation = () => {
-      // Restart video from beginning
-      player.currentTime = 0;
-      player.play();
+      // Restart video from beginning - use safe reference
+      if (playerRef.current && !cancelled) {
+        try {
+          playerRef.current.currentTime = 0;
+          playerRef.current.play();
+        } catch (error) {
+          console.warn('Video restart failed:', error);
+        }
+      }
 
       // Phase 1: Enter from bottom right, rotate to portrait (1 second)
       const enterAnimation = Animated.parallel([
         Animated.timing(videoTranslateY, {
           toValue: 0,
-          duration: 1300,
+          duration: 1600,
           useNativeDriver: true,
         }),
         Animated.timing(videoTranslateX, {
           toValue: 0,
-          duration: 1300,
+          duration: 1600,
           useNativeDriver: true,
         }),
         Animated.timing(videoRotation, {
           toValue: 0,
-          duration: 1300,
+          duration: 1600,
           useNativeDriver: true,
         }),
       ]);
@@ -92,17 +103,17 @@ export function WelcomeScreen({ onGetStarted, onSignIn }: WelcomeScreenProps) {
       const exitAnimation = Animated.parallel([
         Animated.timing(videoTranslateY, {
           toValue: 500,
-          duration: 1300,
+          duration: 1200,
           useNativeDriver: true,
         }),
         Animated.timing(videoTranslateX, {
           toValue: -400, // Exit way far left (like x=-40)
-          duration: 1300,
+          duration: 1200,
           useNativeDriver: true,
         }),
         Animated.timing(videoRotation, {
           toValue: -30,
-          duration: 1300,
+          duration: 1200,
           useNativeDriver: true,
         }),
       ]);
@@ -112,11 +123,12 @@ export function WelcomeScreen({ onGetStarted, onSignIn }: WelcomeScreenProps) {
         enterAnimation,
         stayAnimation,
       ]).start(() => {
-        // Pause video at start of exit animation
-        player.pause();
+        // Video continues playing during exit animation
+        // (removed pause call to keep video playing)
 
         // Start exit animation with all transforms together
         exitAnimation.start(() => {
+          if (cancelled) return;
           // Reset and restart immediately
           videoTranslateY.setValue(500);
           videoTranslateX.setValue(400);
@@ -128,7 +140,12 @@ export function WelcomeScreen({ onGetStarted, onSignIn }: WelcomeScreenProps) {
 
     // Start animation immediately when component mounts
     startAnimation();
-  }, [videoTranslateY, videoTranslateX, videoRotation, player]);
+
+    // Cleanup function to prevent memory leaks
+    return () => {
+      cancelled = true;
+    };
+  }, [videoReady, videoTranslateY, videoTranslateX, videoRotation]);
 
   const handleGetStarted = () => {
     hapticFeedback.selection();
@@ -209,6 +226,7 @@ export function WelcomeScreen({ onGetStarted, onSignIn }: WelcomeScreenProps) {
             allowsPictureInPicture={false}
             contentFit="contain"
             nativeControls={false}
+            onFirstFrameRender={() => setVideoReady(true)}
           />
         </Animated.View>
       </View>

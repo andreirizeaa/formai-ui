@@ -48,7 +48,7 @@ const ro = {
       "editFailed": {
         "gender": "Modificarea genului a eșuat",
         "height": "Modificarea înălțimii a eșuat",
-        "dateOfBirth": "Modificarea datei nașterii a eșuat",
+        "age": "Modificarea vârstei a eșuat",
         "currentWeight": "Modificarea greutății a eșuat",
         "unitSystem": "Actualizarea sistemului de unități a eșuat",
         "language": "Actualizarea limbii a eșuat",
@@ -75,7 +75,7 @@ const ro = {
       "currentWeight": "Greutate actuală",
       "weight": "Greutate",
       "height": "Înălțime",
-      "dateOfBirth": "Data nașterii",
+      "age": "Vârsta",
       "gender": "Gen",
       "videoQuality": "Calitate video",
       "highDefinition": "Definiție Mare",
@@ -293,12 +293,20 @@ const ro = {
         "kg": "kg",
         "lbs": "lbs"
       },
-      "birthDate": {
-        "title": "Când te-ai născut?",
+      "ageRange": {
+        "title": "Câți ani ai?",
         "subtitle": "Pentru recomandări adecvate vârstei",
         "month": "Luna",
         "day": "Ziua",
-        "year": "Anul"
+        "year": "Anul",
+        "ageRanges": {
+          "18-24": "18-24",
+          "25-34": "25-34",
+          "35-44": "35-44",
+          "45-54": "45-54",
+          "55-64": "55-64",
+          "65+": "65+"
+        }
       },
       "rating": {
         "title": "Oferă-ne o evaluare",
@@ -588,11 +596,11 @@ const ro = {
         },
         "accuracy": {
           "title": "Precizie",
-          "message": "Precizia medie în intervalul selectat. Media scorurilor tuturor lifturilor."
+          "message": "Precizia medie pe toată perioada. Media scorurilor tuturor lifturilor."
         },
         "improvement": {
           "title": "Îmbunătățire",
-          "message": "Schimbarea formei pe interval: comparăm prima treime a lifturilor cu ultima treime și afișăm diferența medie."
+          "message": "Schimbarea formei pe toată perioada: comparăm prima treime a lifturilor cu ultima treime și afișăm diferența medie."
         }
       },
       "metricsFeedback": {

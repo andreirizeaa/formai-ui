@@ -13,6 +13,10 @@ import { useNavigation } from '@react-navigation/native';
 import { Picker } from '@react-native-picker/picker';
 import * as StoreReview from 'expo-store-review';
 import * as Notifications from 'expo-notifications';
+import { 
+  getTrackingPermissionsAsync, 
+  requestTrackingPermissionsAsync
+} from 'expo-tracking-transparency';
 import { LinearGradient } from 'expo-linear-gradient';
 import { validateReferralCode } from '../../services/referralService';
 import { OnboardingLayout } from '../../components/onboarding/OnboardingLayout';
@@ -105,12 +109,6 @@ interface MeasurementsStepConfig {
   subtitle?: string;
 }
 
-interface BirthDateStepConfig {
-  type: 'birthdate';
-  id: string;
-  title: string;
-  subtitle?: string;
-}
 
 interface RatingStepConfig {
   type: 'rating';
@@ -192,7 +190,6 @@ interface CameraPermissionStepConfig {
 type StepConfig =
   | OptionsStepConfig<keyof OnboardingData>
   | MeasurementsStepConfig
-  | BirthDateStepConfig
   | RatingStepConfig
   | ReferralStepConfig
   | CreateAccountStepConfig
@@ -394,10 +391,19 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       subtitle: i18n.t('onboarding.measurements.subtitle'),
     },
     {
-      type: 'birthdate',
-      id: 'birthDate',
-      title: i18n.t('onboarding.birthDate.title'),
-      subtitle: i18n.t('onboarding.birthDate.subtitle'),
+      type: 'options',
+      id: 'ageRange',
+      title: i18n.t('onboarding.ageRange.title'),
+      subtitle: i18n.t('onboarding.ageRange.subtitle'),
+      preferenceKey: 'ageRange',
+      options: [
+        { value: '18-24', label: i18n.t('onboarding.ageRange.ageRanges.18-24') },
+        { value: '25-34', label: i18n.t('onboarding.ageRange.ageRanges.25-34') },
+        { value: '35-44', label: i18n.t('onboarding.ageRange.ageRanges.35-44') },
+        { value: '45-54', label: i18n.t('onboarding.ageRange.ageRanges.45-54') },
+        { value: '55-64', label: i18n.t('onboarding.ageRange.ageRanges.55-64') },
+        { value: '65+', label: i18n.t('onboarding.ageRange.ageRanges.65+') },
+      ],
     },
     {
       type: 'options',
@@ -535,26 +541,6 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
     updateOnboardingData('metricWeight', isMetric ? weight : weight * 0.453592);
   }
 
-  // Birthdate helpers
-  const currentYear = new Date().getFullYear();
-
-  function parseBirthDate(birthDateString: string | null) {
-    if (!birthDateString) return { month: null as number | null, day: null as number | null, year: null as number | null };
-    const [year, month, day] = birthDateString.split('-').map(Number);
-    return { month, day, year };
-  }
-
-  function formatBirthDateString(month: number | null, day: number | null, year: number | null) {
-    if (!month || !day || !year) return null;
-    return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-  }
-
-  useEffect(() => {
-    if (currentStep.type === 'birthdate' && !onboardingData.birthDate) {
-      const defaultDate = formatBirthDateString(7, 15, currentYear - 25);
-      updateOnboardingData('birthDate', defaultDate);
-    }
-  }, [currentStep.type, onboardingData.birthDate, currentYear, updateOnboardingData]);
 
   useEffect(() => {
     if (currentStep.id === 'trainSafer' || currentStep.id === 'costComparison') {
@@ -651,35 +637,17 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
 
   // Reset selection tracking when moving to a new step
   useEffect(() => {
-    // Clear the selection when moving to a new step
-    setCurrentStepSelection(null);
-  }, [currentStepIndex]);
+  // Clear the selection when moving to a new step
+  setCurrentStepSelection(null);
+}, [currentStepIndex]);
 
-  const birthDateObj = parseBirthDate(onboardingData.birthDate);
-  const effectiveBirthDate = birthDateObj.month && birthDateObj.day && birthDateObj.year
-    ? birthDateObj
-    : { month: 7, day: 15, year: currentYear - 25 };
-
-  const months = [
-    'January','February','March','April','May','June','July','August','September','October','November','December'
-  ];
-
-  function getDaysInMonth(month: number, year: number) {
-    return new Date(year, month, 0).getDate();
+// Request tracking permission when language step is displayed
+useEffect(() => {
+  if (currentStep.id === 'language') {
+    requestTrackingPermissionSafe();
   }
+}, [currentStepIndex]);
 
-  function updateBirthDate(field: 'month' | 'day' | 'year', value: number | null) {
-    hapticFeedback.selection();
-    const updatedObj: any = { ...effectiveBirthDate, [field]: value };
-    if (field === 'month' || field === 'year') {
-      if (updatedObj.month && updatedObj.year && updatedObj.day) {
-        const maxDays = getDaysInMonth(updatedObj.month, updatedObj.year);
-        if (updatedObj.day > maxDays) updatedObj.day = maxDays;
-      }
-    }
-    const dateString = formatBirthDateString(updatedObj.month, updatedObj.day, updatedObj.year);
-    updateOnboardingData('birthDate', dateString);
-  }
 
   function getPerfectFormGoalMessage() {
     const goal = onboardingData.perfectFormGoal;
@@ -783,6 +751,50 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
     }
   }
 
+  function trackPermission(type: string, granted: boolean, stepId: string, error?: string) {
+    track('Permissions', {
+      session_id: sessionId,
+      step_id: stepId,
+      step_index: currentStepIndex,
+      permission_type: type,
+      granted: granted,
+      error: error || null,
+    });
+  }
+
+  async function requestTrackingPermissionSafe() {
+    if (Platform.OS !== 'ios') {
+      // track/skip gracefully on non-iOS platforms
+      console.log('Tracking transparency not available on this platform');
+      trackPermission('tracking_transparency', false, 'language');
+      return { status: 'unavailable' };
+    }
+
+    try {
+      // Check existing status first
+      const { status: existing } = await getTrackingPermissionsAsync();
+      if (existing === 'granted' || existing === 'denied') {
+        console.log('Tracking permission already determined:', existing);
+        const granted = existing === 'granted';
+        trackPermission('tracking_transparency', granted, 'language');
+        return { status: existing };
+      }
+
+      // Only prompt if still 'not-determined'
+      console.log('Requesting tracking permission...');
+      const result = await requestTrackingPermissionsAsync();
+      const granted = result.status === 'granted';
+      console.log(`Tracking permission ${granted ? 'granted' : 'denied'}`);
+      trackPermission('tracking_transparency', granted, 'language');
+      return result;
+    } catch (error) {
+      // Never crash the UI
+      console.warn('ATT request failed:', error);
+      trackPermission('tracking_transparency', false, 'language', error instanceof Error ? error.message : 'Unknown error');
+      return { status: 'unavailable' };
+    }
+  }
+
   async function handleRateFormAI() {
     hapticFeedback.selection();
     try {
@@ -832,7 +844,6 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
         setReferralError(true);
       }
     } catch (error) {
-      console.error('Error validating referral code:', error);
       hapticFeedback.error();
       Alert.alert('Error', 'Failed to validate referral code. Please try again.');
       setReferralError(true);
@@ -854,8 +865,6 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
           return onboardingData.metricHeight;
         } else if (currentStep.id === 'weight') {
           return onboardingData.metricWeight;
-        } else if (currentStep.id === 'birthdate') {
-          return onboardingData.birthDate;
         }
       } else if (currentStep.type === 'referral') {
         // Only return referral code if it was successfully applied (stored in context)
@@ -934,8 +943,6 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
     nextDisabled = selectedValue === null || selectedValue === undefined || selectedValue === '';
   } else if (currentStep.type === 'measurements') {
     nextDisabled = !onboardingData.metricHeight || !onboardingData.metricWeight;
-  } else if (currentStep.type === 'birthdate') {
-    nextDisabled = !onboardingData.birthDate;
   } else if (currentStep.type === 'rating') {
     nextDisabled = false; // enable default next for rating step
   } else if (currentStep.type === 'info') {
@@ -1264,7 +1271,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                   delay={0}
                   hasIcon={!!(item.icon || item.iconImage)}
                 >
-                  <View style={currentStep.id === 'language' || currentStep.id === 'units' || currentStep.id === 'gender' ? styles.optionContentRowCentered : styles.optionContentRow}>
+                  <View style={currentStep.id === 'language' || currentStep.id === 'units' || currentStep.id === 'gender' || currentStep.id === 'ageRange' ? styles.optionContentRowCentered : styles.optionContentRow}>
                     {item.icon ? (
                       <View style={[
                         styles.optionIconContainer,
@@ -1290,7 +1297,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                         />
                       </View>
                     ) : null}
-                    <View style={currentStep.id === 'language' || currentStep.id === 'units' || currentStep.id === 'gender' ? styles.optionTextContainerCentered : styles.optionTextContainer}>
+                    <View style={currentStep.id === 'language' || currentStep.id === 'units' || currentStep.id === 'gender' || currentStep.id === 'ageRange' ? styles.optionTextContainerCentered : styles.optionTextContainer}>
                       <Text
                         style={[
                           styles.optionLabel,
@@ -1341,7 +1348,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                   style={option.description ? styles.optionWithDescription : undefined}
                   hasIcon={!!(option.icon || option.iconImage)}
                 >
-                  <View style={currentStep.id === 'language' || currentStep.id === 'units' || currentStep.id === 'gender' ? styles.optionContentRowCentered : styles.optionContentRow}>
+                  <View style={currentStep.id === 'language' || currentStep.id === 'units' || currentStep.id === 'gender' || currentStep.id === 'ageRange' ? styles.optionContentRowCentered : styles.optionContentRow}>
                     {option.icon ? (
                       <View style={[
                         styles.optionIconContainer,
@@ -1367,7 +1374,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                         />
                       </View>
                     ) : null}
-                    <View style={currentStep.id === 'language' || currentStep.id === 'units' || currentStep.id === 'gender' ? styles.optionTextContainerCentered : styles.optionTextContainer}>
+                    <View style={currentStep.id === 'language' || currentStep.id === 'units' || currentStep.id === 'gender' || currentStep.id === 'ageRange' ? styles.optionTextContainerCentered : styles.optionTextContainer}>
                       <Text
                         style={[
                           styles.optionLabel,
@@ -1531,104 +1538,6 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
         </ScrollView>
       )}
 
-      {currentStep.type === 'birthdate' && (
-        <ScrollView 
-          style={styles.scrollView}
-          contentContainerStyle={styles.birthdateContentContainer}
-          showsVerticalScrollIndicator={false}
-          bounces
-          alwaysBounceVertical={false}
-        >
-          <View style={styles.birthdateRow}>
-            <View style={[styles.birthdatePickerSection, { flex: 1.4 }]}> 
-              <View style={styles.pickerWrapper}>
-                <Picker
-                  selectedValue={
-                    (() => {
-                      const month = effectiveBirthDate.month || 1;
-                      return middleRepeatIndex * 12 + (month - 1);
-                    })()
-                  }
-                  onValueChange={value => updateBirthDate('month', (Number(value) % 12) + 1)}
-                  style={[styles.picker, { color: isDark ? '#FFFFFF' : '#000000' }]}
-                  itemStyle={Platform.OS === 'ios' ? { color: isDark ? '#FFFFFF' : '#000000', fontSize: 14 } : undefined}
-                  dropdownIconColor={isDark ? '#FFFFFF' : '#000000'}
-                >
-                  {Array.from({ length: repeats * 12 }, (_, i) => months[i % 12]).map((month, index) => (
-                    <Picker.Item key={`m-${index}`} label={month} value={index} color={'#ffffff'} />
-                  ))}
-                </Picker>
-              </View>
-            </View>
-            <View style={styles.birthdatePickerSection}>
-              <View style={styles.pickerWrapper}>
-                <Picker
-                  selectedValue={
-                    (() => {
-                      const year = effectiveBirthDate.year || currentYear - 25;
-                      const month = effectiveBirthDate.month || 1;
-                      const day = effectiveBirthDate.day || 1;
-                      const maxDays = new Date(year, month, 0).getDate();
-                      return middleRepeatIndex * maxDays + (Math.min(day, maxDays) - 1);
-                    })()
-                  }
-                  onValueChange={value => {
-                    const year = effectiveBirthDate.year || currentYear - 25;
-                    const month = effectiveBirthDate.month || 1;
-                    const maxDays = new Date(year, month, 0).getDate();
-                    const selectedDay = (Number(value) % maxDays) + 1;
-                    updateBirthDate('day', selectedDay);
-                  }}
-                  style={[styles.picker, { color: isDark ? '#FFFFFF' : '#000000' }]}
-                  itemStyle={Platform.OS === 'ios' ? { color: isDark ? '#FFFFFF' : '#000000', fontSize: 14 } : undefined}
-                  dropdownIconColor={isDark ? '#FFFFFF' : '#000000'}
-                >
-                  {(() => {
-                    const year = effectiveBirthDate.year || currentYear - 25;
-                    const month = effectiveBirthDate.month || 1;
-                    const maxDays = new Date(year, month, 0).getDate();
-                    return Array.from({ length: repeats * maxDays }, (_, i) => (i % maxDays) + 1).map((d, index) => (
-                      <Picker.Item key={`d-${index}`} label={String(d)} value={index} color={'#ffffff'} />
-                    ));
-                  })()}
-                </Picker>
-              </View>
-            </View>
-            <View style={styles.birthdatePickerSection}>
-              <View style={styles.pickerWrapper}>
-                <Picker
-                  selectedValue={
-                    (() => {
-                      const selectedYear = effectiveBirthDate.year || currentYear - 25;
-                      const baseYear = 1950;
-                      const yearCount = currentYear - baseYear + 1;
-                      const idx = Math.max(0, Math.min(yearCount - 1, selectedYear - baseYear));
-                      return middleRepeatIndex * yearCount + idx;
-                    })()
-                  }
-                  onValueChange={value => {
-                    const baseYear = 1950;
-                    const yearCount = currentYear - baseYear + 1;
-                    const selectedYear = baseYear + (Number(value) % yearCount);
-                    updateBirthDate('year', selectedYear);
-                  }}
-                  style={[styles.picker, { color: isDark ? '#FFFFFF' : '#000000' }]}
-                  itemStyle={Platform.OS === 'ios' ? { color: isDark ? '#FFFFFF' : '#000000', fontSize: 14 } : undefined}
-                  dropdownIconColor={isDark ? '#FFFFFF' : '#000000'}
-                >
-                  {(() => {
-                    const baseYear = 1950;
-                    const yearCount = currentYear - baseYear + 1;
-                    return Array.from({ length: repeats * yearCount }, (_, i) => baseYear + (i % yearCount)).map((yearVal, index) => (
-                      <Picker.Item key={`y-${index}`} label={String(yearVal)} value={index} color={'#ffffff'} />
-                    ));
-                  })()}
-                </Picker>
-              </View>
-            </View>
-          </View>
-        </ScrollView>
-      )}
 
       {currentStep.type === 'rating' && (
         <View style={styles.ratingContainer}> 
@@ -1939,9 +1848,12 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                   onPress={async () => {
                     hapticFeedback.selection();
                     try {
-                      await Notifications.requestPermissionsAsync();
+                      const result = await Notifications.requestPermissionsAsync();
+                      const granted = result.granted;
+                      trackPermission('notifications', granted, 'notificationPermission');
                       handleNext();
                     } catch (error) {
+                      trackPermission('notifications', false, 'notificationPermission', error instanceof Error ? error.message : 'Unknown error');
                       showAlert(
                         'Permission Error', 
                         'Unable to request notification permissions. You can enable them later in settings.',
@@ -2068,8 +1980,14 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                     try {
                       const { Camera } = await import('expo-camera');
                       const result = await Camera.requestCameraPermissionsAsync();
-                      result.granted && handleNext();
-                    } catch (error) {}
+                      const granted = result.granted;
+                      trackPermission('camera', granted, 'cameraPermission');
+                      if (granted) {
+                        handleNext();
+                      }
+                    } catch (error) {
+                      trackPermission('camera', false, 'cameraPermission', error instanceof Error ? error.message : 'Unknown error');
+                    }
                   }}
                   activeOpacity={0.8}
                 >
@@ -2191,20 +2109,6 @@ const styles = StyleSheet.create({
     height: Platform.OS === 'ios' ? 280 : 80,
     width: 90,
     minWidth: 80,
-  },
-  // Birthdate styles
-  birthdateContentContainer: {
-    flexGrow: 1,
-    justifyContent: 'center',
-  },
-  birthdateRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-  },
-  birthdatePickerSection: {
-    flex: 1,
-    alignItems: 'center',
   },
   // Rating styles
   ratingContainer: {
