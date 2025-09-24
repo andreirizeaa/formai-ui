@@ -83,6 +83,7 @@ const zh = {
       editCurrentWeight: '编辑当前体重',
       editHeight: '编辑身高',
       editDateOfBirth: '编辑出生日期',
+      editAgeTitle: '编辑年龄',
       editGender: '编辑性别',
       male: '男性',
       female: '女性',

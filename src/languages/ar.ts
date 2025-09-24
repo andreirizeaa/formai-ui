@@ -83,6 +83,7 @@ const ar = {
       "editCurrentWeight": "تعديل الوزن الحالي",
       "editHeight": "تعديل الطول",
       "editDateOfBirth": "تعديل تاريخ الميلاد",
+      "editAgeTitle": "تعديل العمر",
       "editGender": "تعديل الجنس",
       "male": "ذكر",
       "female": "أنثى"

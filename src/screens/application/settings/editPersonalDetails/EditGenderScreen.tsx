@@ -192,11 +192,11 @@ const styles = StyleSheet.create({
   },
   selectedOptionText: {
     color: '#FFFFFF',
-    fontWeight: '600',
+    fontWeight: '800',
   },
   unselectedOptionText: {
     color: '#000000',
-    fontWeight: '500',
+    fontWeight: '800',
   },
   genderButton: {
     // Base styles for gender buttons

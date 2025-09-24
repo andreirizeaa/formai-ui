@@ -83,6 +83,7 @@ const en = {
       editCurrentWeight: 'Edit Current Weight',
       editHeight: 'Edit Height',
       editAge: 'Edit Age',
+      editAgeTitle: 'Edit age',
       editGender: 'Edit Gender',
       male: 'Male',
       female: 'Female',

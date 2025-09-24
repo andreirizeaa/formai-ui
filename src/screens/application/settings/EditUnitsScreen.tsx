@@ -9,6 +9,7 @@ import { editUserDetails } from '../../../services/userService';
 import { ChevronLeft } from 'lucide-react-native';
 import { AnimatedOptionButton } from '../../../components/onboarding/AnimatedOptionButton';
 import { track } from '../../../services/analytics';
+import { showAlert } from '../../../services/alertService';
 
 interface EditUnitsScreenProps {
   onBack: () => void;
@@ -211,7 +212,7 @@ const styles = StyleSheet.create({
   },
   unitName: {
     fontSize: 20,
-    fontWeight: '600',
+    fontWeight: '800',
     marginBottom: 4,
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },

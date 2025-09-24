@@ -80,6 +80,7 @@ const de = {
       "editCurrentWeight": "Aktuelles Gewicht bearbeiten",
       "editHeight": "Größe bearbeiten",
       "editDateOfBirth": "Geburtsdatum bearbeiten",
+      "editAgeTitle": "Alter bearbeiten",
       "editGender": "Geschlecht bearbeiten",
       "male": "Männlich",
       "female": "Weiblich"

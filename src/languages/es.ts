@@ -83,6 +83,7 @@ const es = {
       editCurrentWeight: 'Editar Peso Actual',
       editHeight: 'Editar Altura',
       editDateOfBirth: 'Editar Fecha de Nacimiento',
+      editAgeTitle: 'Editar edad',
       editGender: 'Editar Género',
       male: 'Masculino',
       female: 'Femenino',
