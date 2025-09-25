@@ -255,6 +255,10 @@ const ar = {
         "returningAfterBreak": "عائد بعد انقطاع",
         "injuryRehab": "تأهيل إصابة"
       },
+      "progressTracking": {
+        "title": "سنبقيك على المسار الصحيح",
+        "subtitle": "نبقيك مسؤولاً مع تحليلات التقدم"
+      },
       "perfectFormGoal": {
         "title": "إذا كان أداؤك دائمًا مثاليًا، ماذا ستحقق أسرع؟",
         "subtitle": "تخيل تقدمك دون عوائق.",
@@ -331,7 +335,7 @@ const ar = {
         "privacy": "نعدك بالحفاظ على خصوصية معلوماتك وأمانها دائمًا."
       },
       "trainSafer": {
-        "title": "درّب مع احتمال إصابة أقل بثلاث مرات مع Form AI مقارنة بالتدريب بمفردك",
+        "title": "احتمال إصابتك أقل بثلاث مرات مع Form AI",
         "withoutFormAI": "بدون Form AI",
         "withFormAI": "مع Form AI",
         "description": "يجعل FormAI تحسين الأداء سهلًا ويبقيك ملتزمًا."
@@ -399,6 +403,18 @@ const ar = {
         "allow": "سماح",
         "dontAllow": "عدم السماح"
       },
+      "mediaLibraryPermission": {
+        "title": "السماح بالوصول لمكتبة الصور",
+        "dialogText": "يريد FormAI الوصول إلى مكتبة الصور.",
+        "allow": "سماح",
+        "dontAllow": "عدم السماح",
+        "permissionRequired": "إذن مطلوب",
+        "permissionRequiredMessage": "الوصول لمكتبة الصور مطلوب لرفع الفيديوهات من معرض الكاميرا.",
+        "openSettings": "فتح الإعدادات",
+        "tryAgain": "حاول مرة أخرى",
+        "error": "خطأ في الإذن",
+        "errorMessage": "لا يمكن طلب إذن مكتبة الصور. يمكنك تفعيله لاحقًا في الإعدادات."
+      },
       "perfectFormGoalMessage": {
         "highlighted": {
           "liftHeavierSafely": "رفع أثقل بأمان",
@@ -419,7 +435,12 @@ const ar = {
       "potentialGraph": {
         "title": "لديك إمكانات مذهلة لسحق هدفك",
         "chartTitle": "تحوّل دقة أدائك",
-        "subtitle": "استنادًا إلى بيانات Form AI التاريخية، يتحسن الأداء ببطء أولًا، لكن بعد 14 يومًا ستصبح شديد الثبات!"
+        "subtitle": "استنادًا إلى بيانات Form AI التاريخية، يتحسن الأداء ببطء أولًا، لكن بعد 14 يومًا ستصبح شديد الثبات!",
+        "dayLabels": {
+          "day3": "3 أيام",
+          "day14": "14 يوم",
+          "day30": "30 يوم"
+        }
       },
       "costComparison": {
         "title": "أداء مثالي بجزء بسيط من تكلفة المدربين",

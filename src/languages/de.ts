@@ -5,6 +5,8 @@ const de = {
     "dontHaveAccount": "Hast du kein Konto?",
     "startToday": "Heute beginnen",
     "alreadyHaveAccount": "Hast du bereits ein Konto?",
+    "perfectFormAlways": "Perfekte Form, immer!",
+    "getStartedButton": "Los geht's!",
     "next": "Weiter",
     "back": "Zurück",
     "close": "Schließen",
@@ -252,6 +254,10 @@ const de = {
         "returningAfterBreak": "Wiedereinstieg nach Pause",
         "injuryRehab": "Reha nach Verletzung"
       },
+      "progressTracking": {
+        "title": "Wir halten dich auf Kurs",
+        "subtitle": "Halten dich mit Fortschrittsanalysen verantwortlich"
+      },
       "perfectFormGoal": {
         "title": "Wenn deine Form immer perfekt wäre – was würdest du schneller erreichen?",
         "subtitle": "Stell dir Fortschritt ohne Rückschläge vor.",
@@ -328,7 +334,7 @@ const de = {
         "privacy": "Wir halten deine Daten stets privat und sicher."
       },
       "trainSafer": {
-        "title": "Mit Form AI dreimal geringeres Verletzungsrisiko als allein",
+        "title": "Du hast mit Form AI dreimal weniger Verletzungsrisiko",
         "withoutFormAI": "Ohne Form AI",
         "withFormAI": "Mit Form AI",
         "description": "FormAI macht perfekte Form einfach und hält dich konsequent."
@@ -396,6 +402,18 @@ const de = {
         "allow": "Zulassen",
         "dontAllow": "Nicht zulassen"
       },
+      "mediaLibraryPermission": {
+        "title": "Fotobibliothek-Zugriff erlauben",
+        "dialogText": "FormAI möchte auf deine Fotobibliothek zugreifen.",
+        "allow": "Zulassen",
+        "dontAllow": "Nicht zulassen",
+        "permissionRequired": "Berechtigung erforderlich",
+        "permissionRequiredMessage": "Fotobibliothek-Zugriff ist erforderlich, um Videos aus deinem Kamera-Roll hochzuladen.",
+        "openSettings": "Einstellungen öffnen",
+        "tryAgain": "Erneut versuchen",
+        "error": "Berechtigungsfehler",
+        "errorMessage": "Fotobibliothek-Berechtigungen konnten nicht angefordert werden. Du kannst sie später in den Einstellungen aktivieren."
+      },
       "perfectFormGoalMessage": {
         "highlighted": {
           "liftHeavierSafely": "Sicher schwerer heben",
@@ -416,7 +434,12 @@ const de = {
       "potentialGraph": {
         "title": "Du hast enormes Potenzial, dein Ziel zu erreichen",
         "chartTitle": "Dein Präzisionsverlauf",
-        "subtitle": "Basierend auf historischen Daten verbessert sich die Präzision anfangs langsamer – nach 14 Tagen wirst du sehr konstant!"
+        "subtitle": "Basierend auf historischen Daten verbessert sich die Präzision anfangs langsamer – nach 14 Tagen wirst du sehr konstant!",
+        "dayLabels": {
+          "day3": "3 Tage",
+          "day14": "14 Tage",
+          "day30": "30 Tage"
+        }
       },
       "costComparison": {
         "title": "Perfekte Form zu einem Bruchteil der Kosten eines Trainers",

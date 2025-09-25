@@ -274,7 +274,7 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
             }}>
               <Text style={[
                 styles.signInLink,
-                { color: isDark ? '#007AFF' : '#007AFF' }
+                { color: '#ffffff' }
               ]}>
                 {i18n.t('signIn')}
               </Text>
@@ -356,7 +356,7 @@ const styles = StyleSheet.create({
   },
   signInLink: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '800',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
     textDecorationLine: 'underline',
   },

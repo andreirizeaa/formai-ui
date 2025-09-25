@@ -659,7 +659,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
       <SafeAreaView 
         style={[
           styles.container,
-          { backgroundColor: '#000000' }
+          { backgroundColor: '#1d293d' }
         ]}
       >
         {/* Close Button */}

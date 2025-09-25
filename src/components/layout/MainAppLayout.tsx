@@ -7,7 +7,6 @@ import { TutorialProvider, useTutorial } from '../../context/TutorialContext';
 import { TutorialLiftSeeder } from '../../context/LiftDataContext';
 import { TutorialOverlay } from '../ui/TutorialOverlay';
 import { hapticFeedback } from '../../utils/haptic';
-import { LoadingScreen } from '../../screens/onboarding/LoadingScreen';
 import { getUserJustPaid, clearUserJustPaid } from '../../services/storageService';
 
 interface MainAppLayoutProps {
@@ -46,10 +45,11 @@ export function MainAppLayout({ children, onLogout }: MainAppLayoutProps) {
           await clearUserJustPaid();
         }
 
+        // Reduced delay since AccountLoadingScreen already handled the loading time
         const timer = setTimeout(() => {
           setShowWelcome(true);
           hapticFeedback.success();
-        }, 500); // Short delay after main loading is complete
+        }, 200);
 
         return () => clearTimeout(timer);
       }

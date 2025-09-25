@@ -1,6 +1,8 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { Animated } from 'react-native';
+import React, { useEffect, useState, useRef, useReducer, useCallback } from 'react';
+import { View, InteractionManager } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import * as SplashScreen from 'expo-splash-screen';
+import { Asset } from 'expo-asset';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { LoadingLiftsProvider } from './src/context/LoadingLiftsContext';
 import { LiftDataProvider } from './src/context/LiftDataContext';
@@ -12,7 +14,6 @@ import { WalletCreditProvider } from './src/context/WalletCreditContext';
 import { SelectedDateProvider } from './src/context/SelectedDateContext';
 import { supabase } from './src/lib/supabase';
 import { getUserId, removeUserId } from './src/services/storageService';
-import { LoadingScreen } from './src/screens/onboarding/LoadingScreen';
 import { AccountLoadingScreen } from './src/screens/onboarding/AccountLoadingScreen';
 import { fetchUserById, requiresOnboarding } from './src/services/userService';
 import { usePurchases } from './src/context/PurchasesContext';
@@ -21,85 +22,185 @@ import { useLiftData } from './src/context/LiftDataContext';
 import { track } from './src/services/analytics';
 import { showAlert } from './src/services/alertService';
 
+type AppRoute = 'SPLASH' | 'ONBOARDING_WELCOME' | 'ONBOARDING_PAYMENT' | 'ACCOUNT_LOADING' | 'MAIN';
+type AppPhase = 'BOOT' | 'READY_TO_DECIDE' | 'DECIDED';
+
+type AppState = {
+  route: AppRoute;
+  phase: AppPhase;
+  isTransitioning: boolean;
+};
+
+type AppAction =
+  | { type: 'SET_ROUTE'; route: AppRoute }
+  | { type: 'SET_PHASE'; phase: AppPhase }
+  | { type: 'START_TRANSITION' }
+  | { type: 'END_TRANSITION' };
+
+function appReducer(state: AppState, action: AppAction): AppState {
+  switch (action.type) {
+    case 'SET_ROUTE':
+      return { ...state, route: action.route, phase: 'DECIDED' };
+    case 'SET_PHASE':
+      return { ...state, phase: action.phase };
+    case 'START_TRANSITION':
+      return { ...state, isTransitioning: true };
+    case 'END_TRANSITION':
+      return { ...state, isTransitioning: false };
+    default:
+      return state;
+  }
+}
+
 // Component that can access context providers to check loading states
 function AppContent() {
-  const [showOnboarding, setShowOnboarding] = useState(false); // Start as false to prevent flickering
+  const [state, dispatch] = useReducer(appReducer, {
+    route: 'SPLASH',
+    phase: 'BOOT',
+    isTransitioning: false
+  });
+  const [assetsLoaded, setAssetsLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [extraDelayDone, setExtraDelayDone] = useState(false);
+  const [appReady, setAppReady] = useState(false);
+  const [contentReady, setContentReady] = useState(false);
+  const [routingDecided, setRoutingDecided] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const [userNeedsOnboarding, setUserNeedsOnboarding] = useState(false);
-  const [onboardingInitialRoute, setOnboardingInitialRoute] = useState<
-    'Welcome' | 'Payment'
-  >('Welcome');
-  const [isTransitioning, setIsTransitioning] = useState(false);
   const [showAccountLoading, setShowAccountLoading] = useState(false);
+  const [onboardingInitialRoute, setOnboardingInitialRoute] = useState('Welcome');
   const [passedInitialDataGate, setPassedInitialDataGate] = useState(false);
-  const [appReady, setAppReady] = useState(false); // New state to control when app is ready
-  const fadeAnim = useRef(new Animated.Value(1)).current;
+  const [extraDelayDone, setExtraDelayDone] = useState(false);
+  const isMountedRef = useRef(true);
+  const hasHiddenSplash = useRef(false);
   const { customerInfo, hasSubscription, isInitializing } = usePurchases();
   const { isUserDetailsLoaded, refetchUserDetails } = useUserDetails();
   const { isLiftDataLoaded } = useLiftData();
 
+  // Extract isTransitioning from state
+  const { isTransitioning } = state;
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  // Hide splash screen when first screen is laid out
+  const onLayout = useCallback(() => {
+    if (hasHiddenSplash.current) return;
+    hasHiddenSplash.current = true;
+    // Let the first frame commit, then hide
+    requestAnimationFrame(() => {
+      SplashScreen.hideAsync().catch(() => {});
+    });
+  }, []);
+
+  // Asset preloading effect - defer heavy assets until after first paint
+  useEffect(() => {
+    const task = InteractionManager.runAfterInteractions(async () => {
+      try {
+        // Preload all assets using static require statements (excluding SVG)
+        const assetsToLoad = [
+          require('./assets/formai-homescreen.mp4'),
+          require('./assets/recording-tip.jpg'),
+          require('./assets/refer-friends.jpg'),
+          require('./assets/refer-friends-group.png'),
+          require('./assets/formai-ios-icon.png'),
+          require('./assets/app-overview-photo.png'),
+          require('./assets/homescreen-refer-image.png'),
+          require('./assets/icons/instagram.png'),
+          require('./assets/icons/tiktok.png'),
+          require('./assets/icons/fasebook.png'),
+          require('./assets/icons/google.png'),
+          require('./assets/icons/apple.png'),
+          require('./assets/icons/fire.png'),
+          require('./assets/icons/appstore.png'),
+          require('./assets/icons/playstore.png'),
+          require('./assets/icons/x.png'),
+          require('./assets/animations/confetti.json'),
+          require('./assets/animations/star-rating.json'),
+          require('./assets/animations/bell.json'),
+          require('./assets/animations/loading.json'),
+          require('./assets/tutorial/formai-example-feedback.png'),
+          require('./assets/tutorial/formai-example-pose.mp4'),
+          require('./assets/tutorial/formai-example-video-thumbnail.jpg'),
+          require('./assets/tutorial/formai-example-video.mp4'),
+          require('./assets/onboarding/progress_tracking.png'),
+        ];
+
+        await Asset.loadAsync(assetsToLoad);
+        if (isMountedRef.current) {
+          setAssetsLoaded(true);
+        }
+      } catch (error) {
+        console.warn('Asset preloading failed:', error);
+        if (isMountedRef.current) {
+          setAssetsLoaded(true); // Continue even if preloading fails
+        }
+      }
+    });
+
+    return () => task.cancel();
+  }, []);
+
+
+  // Set routing decided when route is determined
+  useEffect(() => {
+    if (state.route !== 'SPLASH' && state.phase === 'DECIDED') {
+      setRoutingDecided(true);
+    }
+  }, [state.route, state.phase]);
+
   useEffect(() => {
     async function setActiveLayout() {
       try {
-        // Don't make routing decisions until RevenueCat is fully initialized
-        if (isInitializing === true || isInitializing === undefined) {
-          return;
-        }
-
-        // Skip if we're currently transitioning (e.g., during logout)
-        if (isTransitioning) {
-          return;
-        }
+        if (isInitializing === true || isInitializing === undefined) return;
+        if (state.isTransitioning) return;
 
         const storedUserId = await getUserId();
         if (!storedUserId) {
-          setShowOnboarding(true);
-          setOnboardingInitialRoute('Welcome');
+          dispatch({ type: 'SET_ROUTE', route: 'ONBOARDING_WELCOME' });
           return;
         }
 
         const { user } = await fetchUserById(storedUserId);
         if (!user) {
-          setShowOnboarding(true);
-          setOnboardingInitialRoute('Welcome');
+          dispatch({ type: 'SET_ROUTE', route: 'ONBOARDING_WELCOME' });
           return;
         }
 
         if (requiresOnboarding(user)) {
-          setShowOnboarding(true);
+          dispatch({ type: 'SET_ROUTE', route: 'ONBOARDING_WELCOME' });
           return;
         }
 
         if (!hasSubscription) {
-          setShowOnboarding(true);
-          setOnboardingInitialRoute('Payment');
+          dispatch({ type: 'SET_ROUTE', route: 'ONBOARDING_PAYMENT' });
           return;
         }
-        // User has subscription and completed onboarding - go straight to main app
-        setShowOnboarding(false);
+
+        dispatch({ type: 'SET_ROUTE', route: 'MAIN' });
       } catch (e) {
-        setShowOnboarding(true);
-        setOnboardingInitialRoute('Welcome');
+        dispatch({ type: 'SET_ROUTE', route: 'ONBOARDING_WELCOME' });
       } finally {
         setIsLoading(false);
       }
     }
 
-    // Only run if we're in a valid state to make routing decisions
-    if (!isTransitioning) {
+    if (!state.isTransitioning) {
       setActiveLayout();
     }
-  }, [customerInfo, hasSubscription, isInitializing, isTransitioning]);
+  }, [customerInfo, hasSubscription, isInitializing, state.isTransitioning]);
 
   // Add an artificial universal 2s boot delay
   useEffect(() => {
     // Only start delay if not already done and not transitioning
-    if (!extraDelayDone && !isTransitioning) {
+    if (!extraDelayDone && !state.isTransitioning) {
       const t = setTimeout(() => setExtraDelayDone(true), 2500);
       return () => clearTimeout(t);
     }
-  }, [extraDelayDone, isTransitioning]);
+  }, [extraDelayDone, state.isTransitioning]);
 
   // Set sticky data gate once per app session - wait for RevenueCat to initialize
   useEffect(() => {
@@ -108,80 +209,66 @@ function AppContent() {
     }
   }, [passedInitialDataGate, isInitializing, isUserDetailsLoaded, isLiftDataLoaded]);
 
-  // Set app ready when all conditions are met
+  // Set app ready when all conditions are met (don't wait for assets)
   useEffect(() => {
-    if (!isLoading && passedInitialDataGate && extraDelayDone && !isTransitioning) {
+    if (!isLoading && passedInitialDataGate && extraDelayDone && !state.isTransitioning) {
       setAppReady(true);
     }
-  }, [isLoading, passedInitialDataGate, extraDelayDone, isTransitioning]);
+  }, [isLoading, passedInitialDataGate, extraDelayDone, state.isTransitioning]);
+
+  // Set content ready when app is ready, routing is decided, and not transitioning
+  useEffect(() => {
+    if (appReady && routingDecided && !state.isTransitioning) {
+      // Add a small delay to ensure everything is settled
+      const timer = setTimeout(() => {
+        setContentReady(true);
+      }, 150);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [appReady, routingDecided, state.isTransitioning]);
 
   const handleOnboardingComplete = () => {
-    setIsTransitioning(true);
-    
-    // Start fade out animation
-    Animated.timing(fadeAnim, {
-      toValue: 0,
-      duration: 300,
-      useNativeDriver: true,
-    }).start(() => {
-      // After fade out completes, switch to main app
-      setShowOnboarding(false);
-      setUserNeedsOnboarding(false);
-      
-      // Start fade in animation for main app
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-      }).start(() => {
-        setIsTransitioning(false);
-      });
-    });
+    dispatch({ type: 'SET_ROUTE', route: 'MAIN' });
   };
 
   const handleSignIn = () => {
-    // Instantly transition to account loading screen (no fade out)
-    setShowOnboarding(false);
-    setUserNeedsOnboarding(false);
-    setShowAccountLoading(true);
+    dispatch({ type: 'SET_ROUTE', route: 'ACCOUNT_LOADING' });
   };
 
   const handlePaymentComplete = () => {
     handleOnboardingComplete();
   };
 
+  const handleAccountLoadingComplete = async () => {
+    await refetchUserDetails();
+    dispatch({ type: 'SET_ROUTE', route: 'MAIN' });
+  };
+
   const handleUserNeedsOnboarding = () => {
-    // Instant transition without fade animation to prevent flash
-    setUserNeedsOnboarding(true);
+    dispatch({ type: 'SET_ROUTE', route: 'ONBOARDING_WELCOME' });
   };
 
   const handleLogout = async () => {
     try {
-      // Reset context state that might have global listeners
       if ((global as any).resetUserDetailsContext) {
         (global as any).resetUserDetailsContext();
       }
 
       await supabase.auth.signOut();
       await removeUserId();
-
-      // Simple state reset without complex animations during logout
-      setIsTransitioning(true);
-      setAppReady(false);
+      
+      // Reset loading states and go to onboarding
       setIsLoading(true);
-      setShowOnboarding(false); // Start with false to show loading first
-      setOnboardingInitialRoute('Welcome');
+      setAppReady(false);
+      setContentReady(false);
+      setRoutingDecided(false);
       setPassedInitialDataGate(false);
       setExtraDelayDone(false);
-
-      // Restart app flow with a delay
-      setTimeout(() => {
-        setIsTransitioning(false);
-        // This will trigger the loading process to restart
-      }, 500);
+      
+      dispatch({ type: 'SET_ROUTE', route: 'ONBOARDING_WELCOME' });
 
     } catch (error) {
-      setIsTransitioning(false); // Reset transitioning state on error
       showAlert(
         'Logout Error',
         'An error occurred during logout. Please try again.',
@@ -192,72 +279,69 @@ function AppContent() {
     }
   };
 
-  // Show loading screen until app is completely ready
-  if (!appReady) {
-    return (
-      <SafeAreaProvider>
-        <LoadingScreen onLoadComplete={() => {}} />
-      </SafeAreaProvider>
-    );
-  }
 
-  if (showAccountLoading) {
-    return (
-      <SafeAreaProvider>
-        <AccountLoadingScreen onComplete={async () => {
-          // Ensure context is populated, silently
-          await refetchUserDetails();
-          
-          // Transition to main app
-          setIsTransitioning(true);
-          setShowAccountLoading(false);
-          
-          // Start fade in animation for main app
-          Animated.timing(fadeAnim, {
-            toValue: 1,
-            duration: 300,
-            useNativeDriver: true,
-          }).start(() => {
-            setIsTransitioning(false);
-          });
-        }} />
-      </SafeAreaProvider>
-    );
-  }
+  // Single switch statement for rendering based on route
+  const renderContent = () => {
+    switch (state.route) {
+      case 'SPLASH':
+        return null; // Let splash screen handle this
 
-  const mainAppContent = <MainAppLayout onLogout={handleLogout} />;
+      case 'ONBOARDING_WELCOME':
+        return (
+          <OnboardingNavigator
+            onComplete={handlePaymentComplete}
+            onSignIn={handleSignIn}
+            onUserNeedsOnboarding={handleUserNeedsOnboarding}
+            initialRouteName="Welcome"
+          />
+        );
 
-  const onboardingContent = (
-    <OnboardingNavigator
-      onComplete={handlePaymentComplete}
-      onSignIn={handleSignIn}
-      onUserNeedsOnboarding={handleUserNeedsOnboarding}
-      initialRouteName={onboardingInitialRoute}
-    />
-  );
+      case 'ONBOARDING_PAYMENT':
+        return (
+          <OnboardingNavigator
+            onComplete={handlePaymentComplete}
+            onSignIn={handleSignIn}
+            onUserNeedsOnboarding={handleUserNeedsOnboarding}
+            initialRouteName="Payment"
+          />
+        );
 
-  if (showOnboarding || userNeedsOnboarding) {
-    return (
-      <Animated.View style={{ 
-        flex: 1, 
-        opacity: fadeAnim,
-        backgroundColor: isTransitioning ? '#1d293d' : 'transparent'
-      }}>
-        {onboardingContent}
-      </Animated.View>
-    );
-  }
+      case 'ACCOUNT_LOADING':
+        return (
+          <SafeAreaProvider>
+            <AccountLoadingScreen onComplete={handleAccountLoadingComplete} />
+          </SafeAreaProvider>
+        );
+
+      case 'MAIN':
+        return <MainAppLayout onLogout={handleLogout} />;
+
+      default:
+        return null;
+    }
+  };
+
 
   return (
-    <Animated.View style={{ 
-      flex: 1, 
-      opacity: fadeAnim,
-      backgroundColor: isTransitioning ? '#1d293d' : 'transparent'
-    }}>
-      {mainAppContent}
-    </Animated.View>
+    <View
+      onLayout={onLayout}
+      style={{
+        flex: 1,
+        backgroundColor: '#ffffff', // Match splash screen background
+      }}
+    >
+      <View style={{
+        flex: 1,
+        backgroundColor: state.isTransitioning ? '#1d293d' : 'transparent'
+      }}>
+        {renderContent()}
+      </View>
+    </View>
   );
 }
+
+// Keep splash screen visible until we explicitly hide it
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export function Layout() {
   const queryClientRef = React.useRef<QueryClient | null>(null);
