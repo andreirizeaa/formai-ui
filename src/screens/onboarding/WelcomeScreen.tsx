@@ -81,17 +81,17 @@ export function WelcomeScreen({ onGetStarted, onSignIn }: WelcomeScreenProps) {
       const enterAnimation = Animated.parallel([
         Animated.timing(videoTranslateY, {
           toValue: 0,
-          duration: 1600,
+          duration: 1300,
           useNativeDriver: true,
         }),
         Animated.timing(videoTranslateX, {
           toValue: 0,
-          duration: 1600,
+          duration: 1300,
           useNativeDriver: true,
         }),
         Animated.timing(videoRotation, {
           toValue: 0,
-          duration: 1600,
+          duration: 1300,
           useNativeDriver: true,
         }),
       ]);

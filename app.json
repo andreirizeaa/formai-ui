@@ -1,5 +1,6 @@
 {
   "expo": {
+    "backgroundColor": "#ffffff",
     "name": "Form AI",
     "slug": "formai",
     "version": "1.0.0",
@@ -8,9 +9,8 @@
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/formai-ios-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#000000"
+      "image": "./assets/formai-splash.png",
+      "backgroundColor": "#ffffff"
     },
     "android": {
       "adaptiveIcon": {
@@ -30,6 +30,14 @@
       "expo-notifications",
       "expo-task-manager",
       "react-native-vision-camera",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#ffffff",
+          "image": "./assets/formai-splash.png",
+          "imageWidth": 250
+        }
+      ],
       [
         "expo-media-library",
         {

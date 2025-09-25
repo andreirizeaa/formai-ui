@@ -4,7 +4,6 @@ import { createNativeStackNavigator, NativeStackNavigationProp } from '@react-na
 import { useNavigation } from '@react-navigation/native';
 
 // Import screens
-import { LoadingScreen } from '../screens/onboarding/LoadingScreen';
 import { WelcomeScreen } from '../screens/onboarding/WelcomeScreen';
 import { OnboardingUnifiedScreen } from '../screens/onboarding/OnboardingUnifiedScreen';
 import { NotificationPermissionScreen } from '../screens/onboarding/NotificationPermissionScreen';
@@ -24,7 +23,6 @@ interface OnboardingNavigatorProps {
 }
 
 export type OnboardingStackParamList = {
-  Loading: undefined;
   Welcome: undefined;
   Onboarding: undefined;
   NotificationPermission: undefined;
@@ -39,15 +37,6 @@ export type OnboardingNavigationProp = NativeStackNavigationProp<OnboardingStack
 const Stack = createNativeStackNavigator<OnboardingStackParamList>();
 
 // Wrapper components that handle navigation
-function LoadingScreenWrapper({ onComplete }: { onComplete: () => void }) {
-  const navigation = useNavigation<OnboardingNavigationProp>();
-  
-  const handleLoadComplete = () => {
-    navigation.navigate('Onboarding');
-  };
-
-  return <LoadingScreen onLoadComplete={handleLoadComplete} />;
-}
 
 function WelcomeScreenWrapper({ onSignIn }: { onSignIn: () => void }) {
   const navigation = useNavigation<OnboardingNavigationProp>();
@@ -143,10 +132,6 @@ export function OnboardingNavigator({ onComplete, onSignIn, onUserNeedsOnboardin
           headerShown: false,
         }}
       >
-        <Stack.Screen name="Loading">
-          {() => <LoadingScreenWrapper onComplete={onComplete} />}
-        </Stack.Screen>
-
         <Stack.Screen name="Welcome">
           {() => <WelcomeScreenWrapper onSignIn={onSignIn} />}
         </Stack.Screen>

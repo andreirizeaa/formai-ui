@@ -3,7 +3,6 @@ import * as Notifications from 'expo-notifications';
 import './app/notificationsBackground';
 import { BACKGROUND_NOTIFICATION_TASK } from './app/notificationsBackground';
 import { supabase } from './src/lib/supabase';
-import { Asset } from 'expo-asset';
 import { initBackgroundFetch } from './app/backgroundFetch';
 import { Layout } from './layout';
 import { PurchasesProvider } from './src/context/PurchasesContext';
@@ -18,42 +17,6 @@ import { removeUserId } from './src/services/storageService';
 
 export default function App() {
   useEffect(() => {
-    async function preloadAssets() {
-      try {
-        // Preload all assets using static require statements
-        const assetsToLoad = [
-          require('./assets/dumbel.svg'),
-          require('./assets/formai-homescreen.mp4'),
-          require('./assets/recording-tip.jpg'),
-          require('./assets/refer-friends.jpg'),
-          require('./assets/refer-friends-group.png'),
-          require('./assets/formai-ios-icon.png'),
-          require('./assets/app-overview-photo.png'),
-          require('./assets/homescreen-refer-image.png'),
-          require('./assets/icons/instagram.png'),
-          require('./assets/icons/tiktok.png'),
-          require('./assets/icons/fasebook.png'),
-          require('./assets/icons/google.png'),
-          require('./assets/icons/apple.png'),
-          require('./assets/icons/fire.png'),
-          require('./assets/icons/appstore.png'),
-          require('./assets/icons/playstore.png'),
-          require('./assets/icons/x.png'),
-          require('./assets/animations/confetti.json'),
-          require('./assets/animations/star-rating.json'),
-          require('./assets/animations/bell.json'),
-          require('./assets/animations/loading.json'),
-          require('./assets/tutorial/formai-example-feedback.png'),
-          require('./assets/tutorial/formai-example-pose.mp4'),
-          require('./assets/tutorial/formai-example-video-thumbnail.jpg'),
-          require('./assets/tutorial/formai-example-video.mp4'),
-        ];
-        
-        await Asset.loadAsync(assetsToLoad);
-      } catch (error) {
-      }
-    }
-    preloadAssets();
 
     // Configure notifications handler (show foreground notifications)
     Notifications.setNotificationHandler({

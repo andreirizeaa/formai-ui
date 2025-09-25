@@ -249,11 +249,15 @@ const fr = {
       "lifterType": {
         "title": "Comment vous voyez-vous en tant que pratiquant ?",
         "subtitle": "Votre niveau guide nos conseils.",
-        "beginner": "Débutant, j’apprends les bases",
+        "beginner": "Débutant, j'apprends les bases",
         "intermediate": "Intermédiaire, je peaufine la technique",
         "advanced": "Avancé, je vise la performance",
         "returningAfterBreak": "Reprise après une pause",
         "injuryRehab": "Rééducation"
+      },
+      "progressTracking": {
+        "title": "Nous vous garderons sur la bonne voie",
+        "subtitle": "Vous tenir responsable avec des analyses de progrès"
       },
       "perfectFormGoal": {
         "title": "Avec une technique parfaite, que réaliseriez-vous plus vite ?",
@@ -331,7 +335,7 @@ const fr = {
         "privacy": "Nous garderons toujours vos informations privées et sécurisées."
       },
       "trainSafer": {
-        "title": "3 fois moins de risque de blessure avec Form AI que seul",
+        "title": "Vous avez 3 fois moins de risque de vous blesser avec Form AI",
         "withoutFormAI": "Sans Form AI",
         "withFormAI": "Avec Form AI",
         "description": "FormAI facilite une technique parfaite et votre assiduité."
@@ -393,11 +397,23 @@ const fr = {
         "signInWithGoogle": "Se connecter avec Google"
       },
       "cameraPermission": {
-        "title": "Autoriser l’accès à la caméra",
-        "subtitle": "L’accès caméra est requis pour FormAI.",
+        "title": "Autoriser l'accès à la caméra",
+        "subtitle": "L'accès caméra est requis pour FormAI.",
         "dialogText": "FormAI souhaite accéder à votre caméra.",
         "allow": "Autoriser",
         "dontAllow": "Ne pas autoriser"
+      },
+      "mediaLibraryPermission": {
+        "title": "Autoriser l'accès à la photothèque",
+        "dialogText": "FormAI souhaite accéder à votre photothèque.",
+        "allow": "Autoriser",
+        "dontAllow": "Ne pas autoriser",
+        "permissionRequired": "Autorisation requise",
+        "permissionRequiredMessage": "L'accès à la photothèque est requis pour télécharger des vidéos depuis votre pellicule.",
+        "openSettings": "Ouvrir les paramètres",
+        "tryAgain": "Réessayer",
+        "error": "Erreur d'autorisation",
+        "errorMessage": "Impossible de demander les autorisations de photothèque. Vous pouvez les activer plus tard dans les paramètres."
       },
       "perfectFormGoalMessage": {
         "highlighted": {
@@ -419,7 +435,12 @@ const fr = {
       "potentialGraph": {
         "title": "Vous avez un potentiel incroyable pour atteindre votre objectif",
         "chartTitle": "Transition de votre précision",
-        "subtitle": "D’après les données historiques de Form AI, l’amélioration est lente au début, puis après 14 jours vous devenez très régulier !"
+        "subtitle": "D'après les données historiques de Form AI, l'amélioration est lente au début, puis après 14 jours vous devenez très régulier !",
+        "dayLabels": {
+          "day3": "3 Jours",
+          "day14": "14 Jours",
+          "day30": "30 Jours"
+        }
       },
       "costComparison": {
         "title": "Une technique parfaite pour une fraction du coût d’un coach",

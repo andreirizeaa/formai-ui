@@ -255,6 +255,10 @@ const zh = {
         returningAfterBreak: '休息后重返',
         injuryRehab: '伤病康复',
       },
+      progressTracking: {
+        title: '我们将让您保持正轨',
+        subtitle: '通过进度分析让您保持责任感',
+      },
       perfectFormGoal: {
         title: '如果您的动作总是完美的，您会更快实现什么？',
         subtitle: '想象没有挫折的进步。',
@@ -331,7 +335,7 @@ const zh = {
         privacy: '我们承诺始终保持您的个人信息私密和安全。',
       },
       trainSafer: {
-        title: '使用 Form AI 训练比独自训练受伤几率降低三倍',
+        title: '使用 Form AI 训练，你受伤的几率降低三倍',
         withoutFormAI: '没有 Form AI',
         withFormAI: '使用 Form AI',
         description: 'FormAI 让完善您的动作变得容易，并让您保持负责任。',
@@ -399,6 +403,18 @@ const zh = {
         allow: '允许',
         dontAllow: '不允许',
       },
+      mediaLibraryPermission: {
+        title: '允许照片库访问',
+        dialogText: 'FormAI 想要访问您的照片库。',
+        allow: '允许',
+        dontAllow: '不允许',
+        permissionRequired: '需要权限',
+        permissionRequiredMessage: '需要照片库访问权限才能从相机胶卷上传视频。',
+        openSettings: '打开设置',
+        tryAgain: '重试',
+        error: '权限错误',
+        errorMessage: '无法请求照片库权限。您可以稍后在设置中启用它们。',
+      },
       perfectFormGoalMessage: {
         highlighted: {
           liftHeavierSafely: '安全地举起更重的重量',
@@ -420,6 +436,11 @@ const zh = {
         title: '您有惊人的潜力来击败您的目标',
         chartTitle: '您的准确性转变',
         subtitle: '基于 Form AI 的历史数据，准确性改善起初会延迟，但14天后，您将变得非常一致！',
+        dayLabels: {
+          day3: '3天',
+          day14: '14天',
+          day30: '30天',
+        },
       },
       costComparison: {
         title: '使用 Form AI 与教练相比，以极少的成本获得完美动作',

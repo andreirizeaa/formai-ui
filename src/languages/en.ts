@@ -255,6 +255,10 @@ const en = {
         returningAfterBreak: 'Returning after a break',
         injuryRehab: 'Injury rehab',
       },
+      progressTracking: {
+        title: 'We will keep you on track',
+        subtitle: 'Keeping you accountable with progress analytics',
+      },
       perfectFormGoal: {
         title: 'If your form was always perfect, what would you achieve faster?',
         subtitle: 'Visualize your progress without setbacks.',
@@ -331,7 +335,7 @@ const en = {
         privacy: 'We promise to always keep your personal information private and secure.',
       },
       trainSafer: {
-        title: 'Train with three times less of a chance of injury with Form AI vs on your own',
+        title: 'You\'re three times less likely to get injured with Form AI',
         withoutFormAI: 'Without Form AI',
         withFormAI: 'With Form AI',
         description: 'FormAI makes it easy to perfect your form and keep you accountable.',
@@ -399,6 +403,18 @@ const en = {
         allow: 'Allow',
         dontAllow: "Don't Allow",
       },
+      mediaLibraryPermission: {
+        title: 'Allow photo library access',
+        dialogText: 'FormAI would like to access your Photo Library.',
+        allow: 'Allow',
+        dontAllow: "Don't Allow",
+        permissionRequired: 'Permission Required',
+        permissionRequiredMessage: 'Photo library access is required to upload videos from your camera roll.',
+        openSettings: 'Open Settings',
+        tryAgain: 'Try Again',
+        error: 'Permission Error',
+        errorMessage: 'Unable to request photo library permissions. You can enable them later in settings.',
+      },
       // New translations for hardcoded text
       perfectFormGoalMessage: {
         highlighted: {
@@ -421,6 +437,11 @@ const en = {
         title: 'You have amazing potential to crush your goal',
         chartTitle: 'Your accuracy transition',
         subtitle: 'Based on Form AI\'s historical data, accuracy improvement is delayed at first, but after 14 days, you will become crazy consistent!',
+        dayLabels: {
+          day3: '3 Days',
+          day14: '14 Days',
+          day30: '30 Days',
+        },
       },
       costComparison: {
         title: 'Perfect form at a fraction of the cost using Form AI vs trainers',

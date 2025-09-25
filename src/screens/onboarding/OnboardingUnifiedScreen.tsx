@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Platform, TouchableOpacity, TextInput, FlatList, Animated, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Platform, TouchableOpacity, TextInput, FlatList, Animated, Alert, ActivityIndicator, Keyboard, Linking } from 'react-native';
 import ReanimatedAnimated, { 
   useSharedValue, 
   useAnimatedStyle, 
@@ -13,8 +13,9 @@ import { useNavigation } from '@react-navigation/native';
 import { Picker } from '@react-native-picker/picker';
 import * as StoreReview from 'expo-store-review';
 import * as Notifications from 'expo-notifications';
-import { 
-  getTrackingPermissionsAsync, 
+import * as ImagePicker from 'expo-image-picker';
+import {
+  getTrackingPermissionsAsync,
   requestTrackingPermissionsAsync
 } from 'expo-tracking-transparency';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -187,6 +188,20 @@ interface CameraPermissionStepConfig {
   subtitle?: string;
 }
 
+interface ProgressTrackingStepConfig {
+  type: 'progressTracking';
+  id: string;
+  title: string;
+  subtitle?: string;
+}
+
+interface MediaLibraryPermissionStepConfig {
+  type: 'mediaLibraryPermission';
+  id: string;
+  title: string;
+  subtitle?: string;
+}
+
 type StepConfig =
   | OptionsStepConfig<keyof OnboardingData>
   | MeasurementsStepConfig
@@ -200,7 +215,9 @@ type StepConfig =
   | GraphStepConfig
   | GymChallengeInfoStepConfig
   | NotificationPermissionStepConfig
-  | CameraPermissionStepConfig;
+  | CameraPermissionStepConfig
+  | ProgressTrackingStepConfig
+  | MediaLibraryPermissionStepConfig;
 
 export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
   const navigation = useNavigation();
@@ -264,6 +281,12 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       title: i18n.t('onboarding.trainSafer.title'),
     },
     {
+      type: 'mediaLibraryPermission',
+      id: 'mediaLibraryPermission',
+      title: i18n.t('onboarding.mediaLibraryPermission.title'),
+      subtitle: '',
+    },
+    {
       type: 'options',
       id: 'gymChallenge',
       title: i18n.t('onboarding.gymChallenge.title'),
@@ -314,6 +337,12 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
         { value: 'returning_after_break', label: i18n.t('onboarding.lifterType.returningAfterBreak'), icon: <ChartNoAxesCombined size={iconSize} color={iconColor} /> },
         { value: 'injury_rehab', label: i18n.t('onboarding.lifterType.injuryRehab'), icon: <Hospital size={iconSize} color={iconColor} /> },
       ],
+    },
+    {
+      type: 'progressTracking',
+      id: 'progressTracking',
+      title: i18n.t('onboarding.progressTracking.title'),
+      subtitle: i18n.t('onboarding.progressTracking.subtitle'),
     },
     {
       type: 'options',
@@ -566,7 +595,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
 
   // Finger animation effect
   useEffect(() => {
-    if (currentStep.type === 'notificationPermission' || currentStep.type === 'cameraPermission') {
+    if (currentStep.type === 'notificationPermission' || currentStep.type === 'cameraPermission' || currentStep.type === 'mediaLibraryPermission') {
       const startFingerAnimation = () => {
         Animated.loop(
           Animated.sequence([
@@ -603,12 +632,8 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       // Reset confetti state when entering the step
       setShowConfetti(false);
       
-      // Start confetti animation after 100ms delay (same as allDone)
-      const timer = setTimeout(() => {
-        setShowConfetti(true);
-      }, 100);
-      
-      return () => clearTimeout(timer);
+      // Start confetti animation instantly when screen shows
+      setShowConfetti(true);
     } else if (currentStep.type === 'allDone') {
       // Reset allDone confetti state when entering the step
       setShowAllDoneConfetti(false);
@@ -953,6 +978,10 @@ useEffect(() => {
     nextDisabled = false; // always enabled for camera permission step
   } else if (currentStep.type === 'notificationPermission') {
     nextDisabled = false; // always enabled for notification permission step
+  } else if (currentStep.type === 'progressTracking') {
+    nextDisabled = false; // always enabled for progress tracking step
+  } else if (currentStep.type === 'mediaLibraryPermission') {
+    nextDisabled = false; // always enabled for media library permission step
   } else if (currentStep.type === 'referral') {
     nextLoading = referralValidating || applyButtonLoading; // show loading while validating or applying
   } else if (currentStep.type === 'allDone') {
@@ -973,8 +1002,8 @@ useEffect(() => {
       nextTitle={nextLabel}
       nextDisabled={nextDisabled}
       nextLoading={nextLoading}
-      hideNextButton={currentStep.type === 'saveProgress' || currentStep.type === 'notificationPermission' || currentStep.type === 'cameraPermission'}
-      hideTitle={currentStep.type === 'notificationPermission' || currentStep.type === 'cameraPermission'}
+      hideNextButton={currentStep.type === 'saveProgress' || currentStep.type === 'notificationPermission' || currentStep.type === 'cameraPermission' || currentStep.type === 'mediaLibraryPermission'}
+      hideTitle={currentStep.type === 'notificationPermission' || currentStep.type === 'cameraPermission' || currentStep.type === 'mediaLibraryPermission'}
       
     >
       {currentStep.id === 'trainSafer' && (
@@ -1073,12 +1102,12 @@ useEffect(() => {
         <View style={styles.perfectFormGoalMessageContainer}>
           {/* Confetti animation positioned behind content */}
           {showConfetti && (
-            <View style={styles.animationContainer}>
+            <View style={[styles.animationContainer, { marginTop: -60 }]}>
               <LottieView
                 source={require('../../../assets/animations/confetti.json')}
-                speed={0.7}
-                loop={false}
                 autoPlay
+                loop={false}
+                speed={0.7}
                 style={styles.confettiAnimation}
               />
             </View>
@@ -1157,7 +1186,13 @@ useEffect(() => {
             </View>
             <LineChart
                 data={{
-                    labels: ['3 Days', '', '14 Days', '', '30 Days'],
+                    labels: [
+                      i18n.t('onboarding.potentialGraph.dayLabels.day3'), 
+                      '', 
+                      i18n.t('onboarding.potentialGraph.dayLabels.day14'), 
+                      '', 
+                      i18n.t('onboarding.potentialGraph.dayLabels.day30')
+                    ],
                     datasets: [
                       {
                         key: 'main-dataset',
@@ -1667,6 +1702,7 @@ useEffect(() => {
                       hapticFeedback.selection();
                       setReferralCode('');
                       setReferralError(false);
+                      Keyboard.dismiss();
                     }}
                     disabled={referralValidating}
                     activeOpacity={0.7}
@@ -1741,6 +1777,16 @@ useEffect(() => {
               {i18n.t('onboarding.allDone.privacy')}
             </Text>
           </View>
+        </View>
+      )}
+
+      {currentStep.type === 'progressTracking' && (
+        <View style={styles.progressTrackingContainer}>
+          <Image
+            source={require('../../../assets/onboarding/progress_tracking.png')}
+            style={styles.progressTrackingImage}
+            contentFit="contain"
+          />
         </View>
       )}
 
@@ -1904,7 +1950,7 @@ useEffect(() => {
             </Text>
             {/* iOS-style Camera Permission Dialog */}
             <View style={[
-              styles.dialog,
+              styles.cameraDialog,
               {
                 backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF',
                 shadowColor: isDark ? '#000000' : '#000000',
@@ -1982,8 +2028,15 @@ useEffect(() => {
                       const result = await Camera.requestCameraPermissionsAsync();
                       const granted = result.granted;
                       trackPermission('camera', granted, 'cameraPermission');
+
                       if (granted) {
                         handleNext();
+                      } else {
+                        // If we can't ask again, open settings directly
+                        if (result.canAskAgain === false) {
+                          Linking.openSettings();
+                        }
+                        // If permission denied but we can ask again, do nothing (user can tap again)
                       }
                     } catch (error) {
                       trackPermission('camera', false, 'cameraPermission', error instanceof Error ? error.message : 'Unknown error');
@@ -2004,6 +2057,144 @@ useEffect(() => {
               </View>
             </View>
             
+            {/* Animated upwards pointing finger emoji */}
+            <Animated.View style={[
+              styles.animatedFingerContainer,
+              {
+                transform: [{ translateY: fingerTranslateY }]
+              }
+            ]}>
+              <Text style={styles.pointingEmoji}>👆</Text>
+            </Animated.View>
+          </View>
+        </View>
+      )}
+
+      {currentStep.type === 'mediaLibraryPermission' && (
+        <View style={styles.mediaLibraryPermissionContainer}>
+          {/* Dialog container with flex to center dialog */}
+          <View style={styles.dialogWrapper}>
+            {/* Title above the dialog */}
+            <Text style={[
+              styles.permissionTitle,
+            ]}>
+              {i18n.t('onboarding.mediaLibraryPermission.title')}
+            </Text>
+            {/* iOS-style Media Library Permission Dialog */}
+            <View style={[
+              styles.dialog,
+              {
+                backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF',
+                shadowColor: isDark ? '#000000' : '#000000',
+              }
+            ]}>
+              {/* Text Area */}
+              <View style={[
+                styles.textArea,
+                {
+                  backgroundColor: isDark ? '#2C2C2E' : '#f3f4f6',
+                }
+              ]}>
+                <Text style={[
+                  styles.dialogText,
+                  {
+                    color: isDark ? '#FFFFFF' : '#000000',
+                    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
+                  }
+                ]}>
+                  {i18n.t('onboarding.mediaLibraryPermission.dialogText')}
+                </Text>
+              </View>
+
+              {/* Buttons Container */}
+              <View style={[
+                styles.buttonContainer,
+                {
+                  borderTopColor: isDark ? '#2C2C2E' : '#E5E5EA',
+                  borderTopWidth: 1,
+                }
+              ]}>
+                <View
+                  style={[
+                    styles.button,
+                    styles.dontAllowButton,
+                    {
+                      backgroundColor: isDark ? '#2C2C2E' : '#f3f4f6',
+                      paddingVertical: 0,
+                      marginVertical: 0,
+                    }
+                  ]}
+                >
+                  <Text style={[
+                    styles.buttonText,
+                    {
+                      color: isDark ? '#FFFFFF' : '#000000',
+                      fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
+                    }
+                  ]}>
+                    {i18n.t('onboarding.mediaLibraryPermission.dontAllow')}
+                  </Text>
+                </View>
+
+                <View style={[
+                  styles.buttonDivider,
+                  {
+                    backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF',
+                  }
+                ]} />
+
+                <TouchableOpacity
+                  style={[
+                    styles.button,
+                    styles.allowButton,
+                    {
+                      backgroundColor: isDark ? '#FFFFFF' : '#364153',
+                      paddingVertical: 0,
+                      marginVertical: 0,
+                    }
+                  ]}
+                  onPress={async () => {
+                    hapticFeedback.selection();
+                    try {
+                      const result = await ImagePicker.requestMediaLibraryPermissionsAsync();
+                      const granted = result.granted;
+                      trackPermission('media_library', granted, 'mediaLibraryPermission');
+
+                      if (granted) {
+                        handleNext();
+                      } else {
+                        // If we can't ask again, open settings directly
+                        if (result.canAskAgain === false) {
+                          Linking.openSettings();
+                        }
+                        // If permission denied but we can ask again, do nothing (user can tap again)
+                      }
+                    } catch (error) {
+                      trackPermission('media_library', false, 'mediaLibraryPermission', error instanceof Error ? error.message : 'Unknown error');
+                      showAlert(
+                        i18n.t('onboarding.mediaLibraryPermission.error'),
+                        i18n.t('onboarding.mediaLibraryPermission.errorMessage'),
+                        undefined,
+                        'ONBOARDING_MEDIA_LIBRARY_PERMISSION_ERROR',
+                        error
+                      );
+                    }
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[
+                    styles.buttonText,
+                    {
+                      color: isDark ? '#000000' : '#FFFFFF',
+                      fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
+                    }
+                  ]}>
+                    {i18n.t('onboarding.mediaLibraryPermission.allow')}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
             {/* Animated upwards pointing finger emoji */}
             <Animated.View style={[
               styles.animatedFingerContainer,
@@ -2163,15 +2354,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#000000',
     paddingHorizontal: 12,
     paddingVertical: 12,
-    borderRadius: 999,
+    borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
     width: 80, // Fixed width to prevent shrinking
-    height: 40, // Fixed height for consistency
+    height: 45, // Fixed height for consistency
   },
   applyButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
@@ -2594,6 +2785,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  // Media library permission styles
+  mediaLibraryPermissionContainer: {
+    flex: 1,
+    paddingHorizontal: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   permissionTitle: {
     fontSize: 32,
     fontWeight: '800',
@@ -2619,6 +2817,20 @@ const styles = StyleSheet.create({
   dialog: {
     width: '100%',
     maxWidth: 320,
+    borderRadius: 16,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 8,
+    overflow: 'hidden',
+  },
+  cameraDialog: {
+    width: '100%',
+    maxWidth: 320,
+    minWidth: 325,
     borderRadius: 16,
     shadowOffset: {
       width: 0,
@@ -2669,5 +2881,17 @@ const styles = StyleSheet.create({
   animatedFingerContainer: {
     marginTop: 20,
     marginLeft: '55%',
+  },
+  // Progress tracking styles
+  progressTrackingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  progressTrackingImage: {
+    width: '100%',
+    height: 450,
+    maxWidth: 500,
   },
 }); 

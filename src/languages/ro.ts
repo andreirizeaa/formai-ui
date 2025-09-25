@@ -255,6 +255,10 @@ const ro = {
         "returningAfterBreak": "Revenire după pauză",
         "injuryRehab": "Recuperare după accidentare"
       },
+      "progressTracking": {
+        "title": "Te vom ține pe drumul cel bun",
+        "subtitle": "Te ținem responsabil cu analize de progres"
+      },
       "perfectFormGoal": {
         "title": "Dacă forma ta ar fi mereu perfectă, ce ai atinge mai repede?",
         "subtitle": "Vizualizează progresul fără piedici.",
@@ -331,7 +335,7 @@ const ro = {
         "privacy": "Promitem să-ți păstrăm mereu datele private și în siguranță."
       },
       "trainSafer": {
-        "title": "Antrenează-te cu de 3 ori mai puține șanse de accidentare cu Form AI față de pe cont propriu",
+        "title": "Ai de 3 ori mai puține șanse de accidentare cu Form AI",
         "withoutFormAI": "Fără Form AI",
         "withFormAI": "Cu Form AI",
         "description": "FormAI te ajută să-ți perfecționezi forma și te menține consecvent."
@@ -399,6 +403,18 @@ const ro = {
         "allow": "Permite",
         "dontAllow": "Nu permite"
       },
+      "mediaLibraryPermission": {
+        "title": "Permite accesul la biblioteca de fotos",
+        "dialogText": "FormAI dorește acces la biblioteca de fotos.",
+        "allow": "Permite",
+        "dontAllow": "Nu permite",
+        "permissionRequired": "Permisiune Necesară",
+        "permissionRequiredMessage": "Accesul la biblioteca de fotos este necesar pentru a încărca videoclipuri din galeria camerei.",
+        "openSettings": "Deschide Setările",
+        "tryAgain": "Încearcă Din Nou",
+        "error": "Eroare de Permisiune",
+        "errorMessage": "Nu s-a putut solicita permisiunea pentru biblioteca de fotos. O poți activa mai târziu în setări."
+      },
       "perfectFormGoalMessage": {
         "highlighted": {
           "liftHeavierSafely": "Să ridici mai greu în siguranță",
@@ -419,13 +435,18 @@ const ro = {
       "potentialGraph": {
         "title": "Ai un potențial uimitor să-ți atingi obiectivul",
         "chartTitle": "Tranziția preciziei tale",
-        "subtitle": "Bazat pe datele istorice Form AI, îmbunătățirea este întârziată la început, dar după 14 zile devii foarte constant!"
+        "subtitle": "Bazat pe datele istorice Form AI, îmbunătățirea este întârziată la început, dar după 14 zile devii foarte constant!",
+        "dayLabels": {
+          "day3": "3 Zile",
+          "day14": "14 Zile",
+          "day30": "30 Zile"
+        }
       },
       "costComparison": {
         "title": "Formă perfectă la o fracțiune din costul antrenorilor",
         "personalTrainer": "Antrenor personal",
         "withFormAI": "Cu Form AI",
-        "costLess": "Cu 99% mai ieftin",
+        "costLess": "99% mai ieftin",
         "description": "Tehnica sigură și corectă nu ar trebui să coste o avere."
       },
       "gymChallengeInfo": {

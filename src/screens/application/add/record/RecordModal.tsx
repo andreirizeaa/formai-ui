@@ -527,7 +527,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
       <SafeAreaView 
         style={[
           styles.container,
-          { backgroundColor: isDark ? '#000000' : '#FFFFFF' }
+          { backgroundColor: isDark ? '#1d293d' : '#FFFFFF' }
         ]}
       >
         {/* Close Button */}

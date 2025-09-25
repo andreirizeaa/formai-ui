@@ -2,20 +2,25 @@ import React, { useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import LottieView from 'lottie-react-native';
+import { useUserDetails } from '../../context/UserDetailsContext';
 
 interface AccountLoadingScreenProps {
   onComplete: () => void | Promise<void>;
 }
 
 export function AccountLoadingScreen({ onComplete }: AccountLoadingScreenProps) {
+  const { isUserDetailsLoaded } = useUserDetails();
+
   useEffect(() => {
-    // Show loading animation for 2 seconds for consistent experience
+    if (!isUserDetailsLoaded) return;
+
+    // Once user details are loaded, show animation for at least 1 second for UX
     const timer = setTimeout(async () => {
       await onComplete();
-    }, 2000);
+    }, 1000);
 
     return () => clearTimeout(timer);
-  }, [onComplete]);
+  }, [onComplete, isUserDetailsLoaded]);
 
   return (
     <SafeAreaView style={styles.container}>

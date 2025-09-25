@@ -255,6 +255,10 @@ const es = {
         returningAfterBreak: 'Regresando después de un descanso',
         injuryRehab: 'Rehabilitación de lesiones',
       },
+      progressTracking: {
+        title: 'Te mantendremos en el camino',
+        subtitle: 'Manteniéndote responsable con análisis de progreso',
+      },
       perfectFormGoal: {
         title: 'Si tu forma fuera siempre perfecta, ¿qué lograrías más rápido?',
         subtitle: 'Visualiza tu progreso sin contratiempos.',
@@ -331,7 +335,7 @@ const es = {
         privacy: 'Prometemos mantener siempre tu información personal privada y segura.',
       },
       trainSafer: {
-        title: 'Entrena con tres veces menos probabilidad de lesionarte con Form AI vs por tu cuenta',
+        title: 'Tienes tres veces menos probabilidad de lesionarte con Form AI',
         withoutFormAI: 'Sin Form AI',
         withFormAI: 'Con Form AI',
         description: 'FormAI hace fácil perfeccionar tu forma y mantenerte responsable.',
@@ -399,6 +403,18 @@ const es = {
         allow: 'Permitir',
         dontAllow: 'No Permitir',
       },
+      mediaLibraryPermission: {
+        title: 'Permitir acceso a la biblioteca de fotos',
+        dialogText: 'FormAI quisiera acceder a tu Biblioteca de Fotos.',
+        allow: 'Permitir',
+        dontAllow: 'No Permitir',
+        permissionRequired: 'Permiso Requerido',
+        permissionRequiredMessage: 'Se requiere acceso a la biblioteca de fotos para subir videos desde tu rollo de cámara.',
+        openSettings: 'Abrir Configuración',
+        tryAgain: 'Intentar de Nuevo',
+        error: 'Error de Permiso',
+        errorMessage: 'No se pudo solicitar permisos de biblioteca de fotos. Puedes habilitarlos más tarde en configuración.',
+      },
       perfectFormGoalMessage: {
         highlighted: {
           liftHeavierSafely: 'Levantar más peso de forma segura',
@@ -420,6 +436,11 @@ const es = {
         title: 'Tienes un potencial increíble para aplastar tu objetivo',
         chartTitle: 'Tu transición de precisión',
         subtitle: 'Basado en los datos históricos de Form AI, la mejora de precisión se retrasa al principio, pero después de 14 días, ¡te volverás increíblemente consistente!',
+        dayLabels: {
+          day3: '3 Días',
+          day14: '14 Días',
+          day30: '30 Días',
+        },
       },
       costComparison: {
         title: 'Forma perfecta a una fracción del costo usando Form AI vs entrenadores',
