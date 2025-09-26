@@ -69,7 +69,6 @@ async function upsertWithRetry(
   let lastError: string | null = null;
   for (let i = 1; i <= attempts; i++) {
     const { error } = await supabase.from(table).upsert(payload, { onConflict: 'user_id' });
-    console.log('error', error)
     if (!error) return;
     lastError = error.message;
     if (i < attempts) await new Promise(r => setTimeout(r, delayMs));

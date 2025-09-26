@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useMemo, useState, ReactNode } from 'react';
-import { Platform, View } from 'react-native';
+import { Platform, View, AppState, AppStateStatus } from 'react-native';
 import Purchases, {
   CustomerInfo,
   LOG_LEVEL,
@@ -126,14 +126,23 @@ export function PurchasesProvider({ children, onSubscriptionUpdate }: PurchasesP
   }, [customerInfo]);
 
   useEffect(() => {
-    async function initialize() {
-      setIsInitializing(true);
-      setInitializeError(null);
+    setIsInitializing(true);
+    setInitializeError(null);
+
+    const customerInfoUpdateListener = (customerInfo: CustomerInfo) => {
+      setCustomerInfo(customerInfo);
+      onSubscriptionUpdate?.(customerInfo);
+      // Keep packages/offerings in sync with entitlement changes
+      refreshOfferings().catch(() => {});
+    };
+
+    Purchases.addCustomerInfoUpdateListener(customerInfoUpdateListener);
+
+    const init = async () => {
       try {
         Purchases.setLogLevel(LOG_LEVEL.WARN);
         if (Platform.OS === 'ios') {
           Purchases.configure({ apiKey: 'appl_GUYEEZQfOpAHzaNTEHKrIuRLGuY'});
-
         }
         // else if (Platform.OS === 'android') {
         //   Purchases.configure({ apiKey: 'your_android_api_key' });
@@ -145,19 +154,26 @@ export function PurchasesProvider({ children, onSubscriptionUpdate }: PurchasesP
       } finally {
         setIsInitializing(false);
       }
-    }
-    // Set up customer info update listener
-    const customerInfoUpdateListener = (customerInfo: CustomerInfo) => {
-      setCustomerInfo(customerInfo);
-      if (onSubscriptionUpdate) {
-        onSubscriptionUpdate(customerInfo);
-      }
     };
 
-    Purchases.addCustomerInfoUpdateListener(customerInfoUpdateListener);
+    // Refresh when app returns to foreground (catch outside purchases)
+    const onAppStateChange = (state: AppStateStatus) => {
+      if (state === 'active') {
+        refreshCustomerInfo().catch(() => {});
+        // Offerings rarely change, but cheap to refresh
+        refreshOfferings().catch(() => {});
+      }
+    };
+    const appStateSub = AppState.addEventListener('change', onAppStateChange);
 
-    initialize();
-  }, []);
+    init();
+
+    return () => {
+      // Note: RevenueCat listeners are automatically cleaned up when the app is destroyed
+      // We only need to clean up the AppState listener
+      appStateSub?.remove();
+    };
+  }, [onSubscriptionUpdate]);
 
   async function refreshOfferings() {
     try {
@@ -204,6 +220,8 @@ export function PurchasesProvider({ children, onSubscriptionUpdate }: PurchasesP
     try {
       const { customerInfo } = await Purchases.purchasePackage(pkg);
       setCustomerInfo(customerInfo);
+      // Keep packages fresh post-purchase
+      await refreshOfferings();
       return customerInfo;
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Purchase failed';
@@ -218,6 +236,8 @@ export function PurchasesProvider({ children, onSubscriptionUpdate }: PurchasesP
     try {
       const restoredInfo = await Purchases.restorePurchases();
       setCustomerInfo(restoredInfo);
+      // Keep packages fresh post-restore
+      await refreshOfferings();
       return restoredInfo;
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Restore failed';

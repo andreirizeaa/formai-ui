@@ -550,7 +550,7 @@ function LibraryScreenWrapperWithProps() {
 }
 
 // Main tabs navigator with custom bottom navigation
-function MainTabsNavigator({ onLogout }: { onLogout?: () => void }) {
+function MainTabsNavigator({ onLogout, onAddPress }: { onLogout?: () => void; onAddPress?: () => void }) {
   const [activeTab, setActiveTab] = React.useState<'home' | 'progress' | 'settings'>('home');
   const [showAddOptions, setShowAddOptions] = React.useState(false);
   const navigation = useNavigation<MainStackNavigationProp>();
@@ -560,7 +560,16 @@ function MainTabsNavigator({ onLogout }: { onLogout?: () => void }) {
   };
 
   const handleAddPress = () => {
-    // Track add analysis clicks for add button
+    // Check if there's a custom onAddPress handler (for subscription checks)
+    if (onAddPress) {
+      const wasHandled = onAddPress();
+      // If the handler handled the press (e.g., shows payment screen), don't continue
+      if (wasHandled) {
+        return;
+      }
+    }
+
+    // Default behavior: track and show add options
     track('Add analysis', { event: 'Add' });
     setShowAddOptions(true);
   };
@@ -685,7 +694,7 @@ function MainTabsNavigator({ onLogout }: { onLogout?: () => void }) {
 }
 
 // Main stack navigator
-export function MainAppNavigator({ onLogout }: { onLogout?: () => void }) {
+export function MainAppNavigator({ onLogout, onAddPress }: { onLogout?: () => void; onAddPress?: () => void }) {
   return (
     <NavigationContainer
       ref={navigationRef}
@@ -724,7 +733,7 @@ export function MainAppNavigator({ onLogout }: { onLogout?: () => void }) {
           }}
         >
           <Stack.Screen name="MainTabs">
-            {() => <MainTabsNavigator onLogout={onLogout} />}
+            {() => <MainTabsNavigator onLogout={onLogout} onAddPress={onAddPress} />}
           </Stack.Screen>
           <Stack.Screen 
             name="PersonalDetails" 

@@ -20,6 +20,7 @@ interface OnboardingNavigatorProps {
   onSignIn: () => void;
   onUserNeedsOnboarding: () => void;
   initialRouteName?: 'Welcome' | 'Payment';
+  isAppVisible?: boolean;
 }
 
 export type OnboardingStackParamList = {
@@ -38,7 +39,7 @@ const Stack = createNativeStackNavigator<OnboardingStackParamList>();
 
 // Wrapper components that handle navigation
 
-function WelcomeScreenWrapper({ onSignIn }: { onSignIn: () => void }) {
+function WelcomeScreenWrapper({ onSignIn, isAppVisible }: { onSignIn: () => void; isAppVisible?: boolean }) {
   const navigation = useNavigation<OnboardingNavigationProp>();
   
   const handleGetStarted = () => {
@@ -49,7 +50,7 @@ function WelcomeScreenWrapper({ onSignIn }: { onSignIn: () => void }) {
     navigation.navigate('SignIn');
   };
 
-  return <WelcomeScreen onGetStarted={handleGetStarted} onSignIn={handleSignIn} />;
+  return <WelcomeScreen onGetStarted={handleGetStarted} onSignIn={handleSignIn} isAppVisible={isAppVisible} />;
 }
 
 function UnifiedOnboardingScreenWrapper() {
@@ -123,7 +124,7 @@ function AccountLoadingScreenWrapper({ onComplete }: { onComplete: () => void })
   return <AccountLoadingScreen onComplete={handleNext} />;
 }
 
-export function OnboardingNavigator({ onComplete, onSignIn, onUserNeedsOnboarding, initialRouteName = 'Welcome' }: OnboardingNavigatorProps) {
+export function OnboardingNavigator({ onComplete, onSignIn, onUserNeedsOnboarding, initialRouteName = 'Welcome', isAppVisible = false }: OnboardingNavigatorProps) {
   return (
     <NavigationContainer>
       <Stack.Navigator
@@ -133,7 +134,7 @@ export function OnboardingNavigator({ onComplete, onSignIn, onUserNeedsOnboardin
         }}
       >
         <Stack.Screen name="Welcome">
-          {() => <WelcomeScreenWrapper onSignIn={onSignIn} />}
+          {() => <WelcomeScreenWrapper onSignIn={onSignIn} isAppVisible={isAppVisible} />}
         </Stack.Screen>
 
         <Stack.Screen name="Onboarding">
