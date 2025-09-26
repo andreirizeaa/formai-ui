@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Dimensions, UIManager, findNodeHandle, Platform, InteractionManager } from 'react-native';
 import { useUserDetails } from './UserDetailsContext';
 import { useSelectedDate } from './SelectedDateContext';
@@ -8,6 +8,7 @@ import { editUserDetails } from '../services/userService';
 import i18n from '../utils/i18n';
 import { track } from '../services/analytics';
 import { showAlert } from '../services/alertService';
+import { setItem } from '../services/storageService';
 
 // Global type declarations for tutorial functions
 declare global {
@@ -105,6 +106,10 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
   const { updateUserDetails, refetchUserDetails } = useUserDetails();
   const { setSelectedDate } = useSelectedDate();
   const { currentLanguage } = useLanguage();
+
+  // Track isActive synchronously to prevent step transitions after stop
+  const isActiveRef = useRef(isActive);
+  useLayoutEffect(() => { isActiveRef.current = isActive; }, [isActive]);
 
   // Steps flow definition
   const steps: TutorialStep[] = useMemo(() => [
@@ -481,6 +486,13 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
           try { await global.finishTutorialAndRestoreData?.(); } catch {}
           try { (global as any).navigateToHome?.(); } catch {}
         } catch (error) {
+        } finally {
+          // Even if globals fail, the provider's next() fallback will finish.
+          // Optionally set flags here too:
+          try {
+            await setItem('TUTORIAL_COMPLETED', 'true');
+            await setItem('SHOULD_SHOW_TUTORIAL', 'false');
+          } catch {}
         }
       },
       
@@ -674,6 +686,39 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     }
   }, [start]);
 
+  // Declare finishAndRestoreData as a regular function first
+  const finishAndRestoreData = async () => {
+    try {
+      // Best-effort cleanup; don't let errors prevent finishing
+      try { 
+        if (global.clearTemporaryLifts) {
+          global.clearTemporaryLifts();
+        }
+      } catch (e) {
+        console.warn('clearTemporaryLifts failed', e);
+      }
+      
+      try {
+        if (global.restoreLiftDataAfterTutorial) {
+          await global.restoreLiftDataAfterTutorial();
+        }
+      } catch (e) {
+        console.warn('restoreLiftDataAfterTutorial failed', e);
+      }
+    } finally {
+      try {
+        // Always end the tutorial, even if restore failed
+        await stop();
+      } catch (e) {
+        console.warn('stop() failed', e);
+      }
+      // Mark completion (optional but recommended)
+      try {
+        await setItem('TUTORIAL_COMPLETED', 'true');
+        await setItem('SHOULD_SHOW_TUTORIAL', 'false');
+      } catch {}
+    }
+  };
 
   const next = useCallback(async () => {
     try {
@@ -690,6 +735,17 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
           setIsProcessingStep(false);
         }
       }
+
+      // If tutorial was stopped inside onNext (e.g., final step), bail out
+      if (!isActiveRef.current) {
+        return;
+      }
+
+      // Failsafe: if we are on the last step and still active, finish now
+      if (currentStepIndex === steps.length - 1) {
+        await finishAndRestoreData(); // <- guarantees stop() in finally
+        return;
+      }
       
       // Instantly hide overlay during step change (no fade)
       setIsTransitioning(false);
@@ -705,6 +761,9 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       const delay = isModalOpeningStep ? 300 : isFeedbackStep ? 300 : isNavigateHomeStep ? 100 : 100;
       
       timeoutRef.current = setTimeout(() => {
+        // If we were stopped during the delay, don't advance
+        if (!isActiveRef.current) return;
+
         const nextIndex = Math.min(currentStepIndex + 1, steps.length - 1);
         setCurrentStepIndex(nextIndex);
         // Keep overlay hidden until measurement happens; no fade back-in here
@@ -712,7 +771,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       setIsTransitioning(false);
     }
-  }, [currentStepIndex, steps]);
+  }, [currentStepIndex, steps, finishAndRestoreData]);
 
 
 
@@ -742,25 +801,6 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
     }
   }, []);
-
-  // Public action to finish tutorial and restore data
-  const finishAndRestoreData = useCallback(async () => {
-    try {
-      // Clear tutorial lifts
-      if (global.clearTemporaryLifts) {
-        global.clearTemporaryLifts();
-      }
-
-      // Restore user's original lift data
-      if (global.restoreLiftDataAfterTutorial) {
-        await global.restoreLiftDataAfterTutorial();
-      }
-
-      // Finish the tutorial
-      await stop();
-    } catch (error) {
-    }
-  }, [stop]);
 
   const getStepNumber = useCallback((stepId: string) => {
     try {
@@ -882,7 +922,7 @@ export function useTutorialTarget(targetId?: string) {
                    targetId === 'feedback_slideshow' ? 300 :
                    targetId === 'home_see_all_lifts' ? 500 :
                    targetId === 'home_performance_icon' ? 500 : 
-                   targetId === 'upload_practices_cta' ? 500 :
+                   targetId === 'upload_practices_cta' ? 300 :
                    targetId === 'home_first_lift_card' ? 500 :
                    targetId === 'library_screen' ? 500 :
                    targetId === 'lift_details_depth_graph' ? 300 :

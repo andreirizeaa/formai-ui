@@ -16,9 +16,10 @@ import { X } from 'lucide-react-native';
 interface WelcomeScreenProps {
   onGetStarted: () => void;
   onSignIn: () => void;
+  isAppVisible?: boolean;
 }
 
-export function WelcomeScreen({ onGetStarted, onSignIn }: WelcomeScreenProps) {
+export function WelcomeScreen({ onGetStarted, onSignIn, isAppVisible = false }: WelcomeScreenProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const [userId, setUserId] = useState<string | null>(null);
@@ -62,7 +63,7 @@ export function WelcomeScreen({ onGetStarted, onSignIn }: WelcomeScreenProps) {
 
   // Video animation sequence - N shape movement with manual video control
   useEffect(() => {
-    if (!videoReady) return;
+    if (!videoReady || !isAppVisible) return;
 
     let cancelled = false;
 
@@ -144,8 +145,10 @@ export function WelcomeScreen({ onGetStarted, onSignIn }: WelcomeScreenProps) {
     // Cleanup function to prevent memory leaks
     return () => {
       cancelled = true;
+      // Optional: pause when unmounting or becoming invisible again
+      try { playerRef.current?.pause?.(); } catch {}
     };
-  }, [videoReady, videoTranslateY, videoTranslateX, videoRotation]);
+  }, [videoReady, isAppVisible, videoTranslateY, videoTranslateX, videoRotation]);
 
   const handleGetStarted = () => {
     hapticFeedback.selection();

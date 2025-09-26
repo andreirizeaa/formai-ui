@@ -84,6 +84,50 @@ function AnimatedInfoCard({ children, delay }: AnimatedInfoCardProps) {
   );
 }
 
+function AnimatedProgressTrackingImage() {
+  const scale = useSharedValue(0.3);
+  const opacity = useSharedValue(0);
+
+  useEffect(() => {
+    // Animate in with a nice scale and fade effect
+    scale.value = withDelay(
+      100,
+      withSpring(1, {
+        damping: 15,
+        stiffness: 150,
+        mass: 0.8,
+      })
+    );
+    
+    opacity.value = withDelay(
+      100,
+      withSpring(1, {
+        damping: 20,
+        stiffness: 200,
+      })
+    );
+  }, []);
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: scale.value }],
+      opacity: opacity.value,
+    };
+  });
+
+  return (
+    <View style={styles.progressTrackingContainer}>
+      <ReanimatedAnimated.View style={[styles.progressTrackingImage, animatedStyle]}>
+        <Image
+          source={require('../../../assets/onboarding/progress_tracking.png')}
+          style={{ width: '100%', height: '100%' }}
+          contentFit="contain"
+        />
+      </ReanimatedAnimated.View>
+    </View>
+  );
+}
+
 interface StepOption<V> {
   value: V;
   label: string;
@@ -281,12 +325,6 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       title: i18n.t('onboarding.trainSafer.title'),
     },
     {
-      type: 'mediaLibraryPermission',
-      id: 'mediaLibraryPermission',
-      title: i18n.t('onboarding.mediaLibraryPermission.title'),
-      subtitle: '',
-    },
-    {
       type: 'options',
       id: 'gymChallenge',
       title: i18n.t('onboarding.gymChallenge.title'),
@@ -304,12 +342,6 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       type: 'gymChallengeInfo',
       id: 'gymChallengeInfo',
       title: '',
-      subtitle: '',
-    },
-    {
-      type: 'cameraPermission',
-      id: 'cameraPermission',
-      title: i18n.t('onboarding.cameraPermission.title'),
       subtitle: '',
     },
     {
@@ -365,6 +397,12 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       subtitle: '',
     },
     {
+      type: 'cameraPermission',
+      id: 'cameraPermission',
+      title: i18n.t('onboarding.cameraPermission.title'),
+      subtitle: '',
+    },
+    {
       type: 'options',
       id: 'formConfidence',
       title: i18n.t('onboarding.formConfidence.title'),
@@ -412,6 +450,12 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       type: 'injuryChanceInfo',
       id: 'costComparison',
       title: i18n.t('onboarding.costComparison.title'),
+    },
+    {
+      type: 'mediaLibraryPermission',
+      id: 'mediaLibraryPermission',
+      title: i18n.t('onboarding.mediaLibraryPermission.title'),
+      subtitle: '',
     },
     {
       type: 'measurements',
@@ -790,7 +834,6 @@ useEffect(() => {
   async function requestTrackingPermissionSafe() {
     if (Platform.OS !== 'ios') {
       // track/skip gracefully on non-iOS platforms
-      console.log('Tracking transparency not available on this platform');
       trackPermission('tracking_transparency', false, 'language');
       return { status: 'unavailable' };
     }
@@ -799,17 +842,14 @@ useEffect(() => {
       // Check existing status first
       const { status: existing } = await getTrackingPermissionsAsync();
       if (existing === 'granted' || existing === 'denied') {
-        console.log('Tracking permission already determined:', existing);
         const granted = existing === 'granted';
         trackPermission('tracking_transparency', granted, 'language');
         return { status: existing };
       }
 
       // Only prompt if still 'not-determined'
-      console.log('Requesting tracking permission...');
       const result = await requestTrackingPermissionsAsync();
       const granted = result.status === 'granted';
-      console.log(`Tracking permission ${granted ? 'granted' : 'denied'}`);
       trackPermission('tracking_transparency', granted, 'language');
       return result;
     } catch (error) {
@@ -1781,13 +1821,7 @@ useEffect(() => {
       )}
 
       {currentStep.type === 'progressTracking' && (
-        <View style={styles.progressTrackingContainer}>
-          <Image
-            source={require('../../../assets/onboarding/progress_tracking.png')}
-            style={styles.progressTrackingImage}
-            contentFit="contain"
-          />
-        </View>
+        <AnimatedProgressTrackingImage />
       )}
 
       {currentStep.type === 'saveProgress' && (
@@ -1950,7 +1984,7 @@ useEffect(() => {
             </Text>
             {/* iOS-style Camera Permission Dialog */}
             <View style={[
-              styles.cameraDialog,
+              styles.dialog,
               {
                 backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF',
                 shadowColor: isDark ? '#000000' : '#000000',
@@ -2817,20 +2851,6 @@ const styles = StyleSheet.create({
   dialog: {
     width: '100%',
     maxWidth: 320,
-    borderRadius: 16,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 8,
-    overflow: 'hidden',
-  },
-  cameraDialog: {
-    width: '100%',
-    maxWidth: 320,
-    minWidth: 325,
     borderRadius: 16,
     shadowOffset: {
       width: 0,

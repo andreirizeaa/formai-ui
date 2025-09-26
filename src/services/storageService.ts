@@ -130,3 +130,26 @@ export async function clearSelectedLanguage(): Promise<void> {
 		console.warn('Error clearing selected language:', error);
 	}
 }
+
+/**
+ * Generic function to get an item from AsyncStorage
+ */
+export async function getItem(key: string): Promise<string | null> {
+	try {
+		return await AsyncStorage.getItem(key);
+	} catch (error) {
+		console.warn(`Error getting item ${key}:`, error);
+		return null;
+	}
+}
+
+/**
+ * Generic function to set an item in AsyncStorage
+ */
+export async function setItem(key: string, value: string): Promise<void> {
+	try {
+		await AsyncStorage.setItem(key, value);
+	} catch (error) {
+		console.warn(`Error setting item ${key}:`, error);
+	}
+}

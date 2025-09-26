@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, View, Text, TouchableOpacity, StyleSheet, Platform, Dimensions, ActivityIndicator } from 'react-native';
+import { Modal, View, Text, TouchableOpacity, StyleSheet, Platform, Dimensions, ActivityIndicator, Animated } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LottieView from 'lottie-react-native';
 import { OrangeGradientButton } from './OrangeGradientButton';
@@ -17,37 +17,58 @@ export function TutorialOverlay() {
   const { updateUserDetails, refetchUserDetails } = useUserDetails();
   const { currentLanguage } = useLanguage();
   
-  // Add a small delay before rendering to prevent flickering during transitions
+  // existing debounce (keep as-is if you like)
   const [shouldRender, setShouldRender] = React.useState(false);
-  
   React.useEffect(() => {
-    const timer = setTimeout(() => {
-      setShouldRender(true);
-    }, 100);
-    
-    return () => {
-      clearTimeout(timer);
-      setShouldRender(false);
-    };
+    const t = setTimeout(() => setShouldRender(true), 100);
+    return () => { clearTimeout(t); setShouldRender(false); };
   }, [currentStepIndex, currentRect]);
-  
-  // Get current step
-  const step = isActive && steps[currentStepIndex] ? steps[currentStepIndex] : undefined;
 
+  // NEW: 100ms "position ready" gate
+  const [positionReady, setPositionReady] = React.useState(false);
+  React.useEffect(() => {
+    // when a new rect is available and we're not transitioning, wait 50ms before positioning
+    if (isActive && !isTransitioning && currentRect) {
+      setPositionReady(false);
+      const t = setTimeout(() => setPositionReady(true), 100);
+      return () => clearTimeout(t);
+    } else {
+      setPositionReady(false);
+    }
+  }, [isActive, isTransitioning, currentRect, currentStepIndex]);
 
-  // Don't render anything if tutorial is not active, is transitioning, or has no current rect
-  if (!isActive || isTransitioning || !currentRect) return null;
+  // Fade-in only
+  const overlayOpacity = React.useRef(new Animated.Value(0)).current;
+  React.useEffect(() => {
+    if (isActive && !isTransitioning && currentRect && shouldRender && positionReady) {
+      overlayOpacity.stopAnimation();
+      overlayOpacity.setValue(0);
+      requestAnimationFrame(() => {
+        Animated.timing(overlayOpacity, {
+          toValue: 1,
+          duration: 220,
+          useNativeDriver: true,
+        }).start();
+      });
+    } else {
+      overlayOpacity.stopAnimation();
+      overlayOpacity.setValue(0);
+    }
+  }, [isActive, isTransitioning, currentRect, shouldRender, positionReady, currentStepIndex, overlayOpacity]);
+
+  // guard now also requires positionReady
+  if (!isActive || isTransitioning || !currentRect || !positionReady) return null;
 
   // Ensure we have a valid step index
   if (currentStepIndex < 0 || currentStepIndex >= steps.length) {
     return null;
   }
 
+  // Get current step
+  const step = isActive && steps[currentStepIndex] ? steps[currentStepIndex] : undefined;
   if (!step) return null; // Safety check
   
-  const hasNext = currentStepIndex < steps.length - 1; // Changed to prevent going beyond last step
-  
-  // Check if this is the add_button tutorial step
+  const hasNext = currentStepIndex < steps.length - 1;
   const isAddButtonStep = step.id === 'add_button';
 
   const { width: screenW, height: screenH } = Dimensions.get('window');
@@ -69,8 +90,11 @@ export function TutorialOverlay() {
   if (!shouldRender && !shouldForceRender) return null;
 
   return (
-    <Modal visible transparent animationType="fade">
+    // IMPORTANT: no native fade; we animate only the inner content
+    <Modal visible transparent animationType="none">
       <View style={styles.overlay} pointerEvents="box-none">
+        {/* Fade ONLY this inner layer so layout tree/positions stay identical */}
+        <Animated.View style={[StyleSheet.absoluteFill, { opacity: overlayOpacity }]} pointerEvents="box-none">
         {/* Dim with cut-out around the target (skip for final modal) */}
         {highlight && !isLibraryScreenStep && (
           <Svg style={styles.mask} pointerEvents="none">
@@ -100,75 +124,45 @@ export function TutorialOverlay() {
           </View>
         )}
 
-        {/* Tooltip container (acts as modal for final step) */}
-        <View 
-          pointerEvents="box-none" 
+        {/* Tooltip (unchanged positioning logic) */}
+        <View
+          pointerEvents="box-none"
           style={[
             styles.tooltipContainer,
-            {
-              // Position based on tooltipPlacement parameter
-              ...(isLibraryScreenStep ? {
-                // Center the tooltip on screen for library and final modal
-                top: '50%',
-                bottom: undefined,
-                left: 16,
-                right: 16,
-                transform: [{ translateY: -100 }],
-              } : step.tooltipPlacement === 'inside-bottom' ? {
-                // For inside-bottom placement: position tooltip inside the bottom portion of the highlight
-                top: currentRect ? currentRect.y + currentRect.height - 200 : undefined,
-                bottom: undefined,
-              } : step.tooltipPlacement === 'bottom' ? {
-                // For bottom placement: top edge of tooltip on bottom edge of highlight + gap
-                top: currentRect ? currentRect.y + currentRect.height + 20 : 40,
-                bottom: undefined,
-              } : {
-                // For top placement (default): position tooltip above the highlight with proper spacing
-                bottom: undefined,
-                top: currentRect ? currentRect.y - 25 : 40, // Start with 25px gap
-              }),
-              // Add subtle transform for smooth appearance (only if not library screen step)
-              ...(isLibraryScreenStep ? {} : { transform: [{ scale: 1 }] }),
-            }
+            isLibraryScreenStep
+              ? {
+                  top: '50%',
+                  left: 16,
+                  right: 16,
+                  transform: [{ translateY: -100 }],
+                }
+              : step.tooltipPlacement === 'inside-bottom'
+              ? { top: currentRect ? currentRect.y + currentRect.height - 200 : undefined }
+              : step.tooltipPlacement === 'bottom'
+              ? { top: currentRect ? currentRect.y + currentRect.height + 20 : 40 }
+              : { top: currentRect ? currentRect.y - 25 : 40 },
           ]}
           onLayout={(event) => {
-            // Skip positioning logic for library screen step
             if (isLibraryScreenStep) return;
-            
-            // Get the actual height of the tooltip
             const tooltipHeight = event.nativeEvent.layout.height;
-            
-                         // For top placement, adjust position to ensure bottom edge of tooltip is above the highlight
-             if (step.tooltipPlacement !== 'bottom' && step.tooltipPlacement !== 'inside-bottom' && currentRect) {
-               const newTop = currentRect.y - tooltipHeight - 25; // 25px gap
+            if (step.tooltipPlacement !== 'bottom' && step.tooltipPlacement !== 'inside-bottom' && currentRect) {
+              const newTop = currentRect.y - tooltipHeight - 25;
 
-               // Force feedback_tips to always stay at top, even with limited space
-               if (step.id === 'feedback_tips') {
-                 // Always position above for feedback_tips, even if space is limited
-                 event.target.setNativeProps({
-                   style: {
-                     top: Math.max(10, newTop), // Minimum 10px from top of screen
-                     bottom: undefined,
-                   }
-                 });
-               } else if (newTop < 40) {
-                 // For other steps, position below if there's not enough space above
-                 event.target.setNativeProps({
-                   style: {
-                     top: currentRect.y + currentRect.height + 25,
-                     bottom: undefined,
-                   }
-                 });
-               } else {
-                 // Position above the highlight with proper spacing
-                 event.target.setNativeProps({
-                   style: {
-                     top: newTop,
-                     bottom: undefined,
-                   }
-                 });
-               }
-             }
+              // Preserve your special-casing
+              if (step.id === 'feedback_tips') {
+                event.target.setNativeProps?.({
+                  style: { top: Math.max(10, newTop), bottom: undefined },
+                });
+              } else if (newTop < 40) {
+                event.target.setNativeProps?.({
+                  style: { top: currentRect.y + currentRect.height + 25, bottom: undefined },
+                });
+              } else {
+                event.target.setNativeProps?.({
+                  style: { top: newTop, bottom: undefined },
+                });
+              }
+            }
           }}
         >
           <Text style={styles.title}>{step.title}</Text>
@@ -240,8 +234,9 @@ export function TutorialOverlay() {
                 textStyle={styles.navButtonPrimaryText}
               />
             )
-          )}
+            )}
         </View>
+        </Animated.View>
       </View>
     </Modal>
   );
