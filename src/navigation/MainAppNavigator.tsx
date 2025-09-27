@@ -550,7 +550,7 @@ function LibraryScreenWrapperWithProps() {
 }
 
 // Main tabs navigator with custom bottom navigation
-function MainTabsNavigator({ onLogout, onAddPress }: { onLogout?: () => void; onAddPress?: () => void }) {
+function MainTabsNavigator({ onLogout, onAddPress }: { onLogout?: () => void; onAddPress?: () => boolean | void }) {
   const [activeTab, setActiveTab] = React.useState<'home' | 'progress' | 'settings'>('home');
   const [showAddOptions, setShowAddOptions] = React.useState(false);
   const navigation = useNavigation<MainStackNavigationProp>();
@@ -564,7 +564,7 @@ function MainTabsNavigator({ onLogout, onAddPress }: { onLogout?: () => void; on
     if (onAddPress) {
       const wasHandled = onAddPress();
       // If the handler handled the press (e.g., shows payment screen), don't continue
-      if (wasHandled) {
+      if (wasHandled === true) {
         return;
       }
     }
@@ -694,7 +694,7 @@ function MainTabsNavigator({ onLogout, onAddPress }: { onLogout?: () => void; on
 }
 
 // Main stack navigator
-export function MainAppNavigator({ onLogout, onAddPress }: { onLogout?: () => void; onAddPress?: () => void }) {
+export function MainAppNavigator({ onLogout, onAddPress }: { onLogout?: () => void; onAddPress?: () => boolean | void }) {
   return (
     <NavigationContainer
       ref={navigationRef}
