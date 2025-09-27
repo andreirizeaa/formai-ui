@@ -62,17 +62,11 @@ export function PaymentScreen({ onComplete }: PaymentScreenProps) {
           if (customerInfo?.activeSubscriptions?.length === 0 && !hasSeenDiscountPaywall) {
             await registerPlacement({
               placement: "discount_trigger",
-              feature: () => {
-                onComplete();
-              }
             });
             setHasSeenDiscountPaywall(true)
           } else if (customerInfo?.activeSubscriptions?.length === 0 && hasSeenDiscountPaywall) {
             await registerPlacement({
               placement: "default_trigger",
-              feature: () => {
-                onComplete();
-              }
             });
           }
         }, 500);
@@ -83,9 +77,6 @@ export function PaymentScreen({ onComplete }: PaymentScreenProps) {
       if (referralCodeType === 'DISCOUNT' && String(info.closeReason) === "manualClose") {
         await registerPlacement({
           placement: "referral_trigger",
-          feature: () => {
-            onComplete();
-          }
         });
         return;
       }
@@ -94,25 +85,16 @@ export function PaymentScreen({ onComplete }: PaymentScreenProps) {
       if (String(info.identifier) === "discount-offer-template-a792-2025-08-26" && String(info.closeReason) === "manualClose") {
         await registerPlacement({
           placement: "default_trigger",
-          feature: () => {
-            onComplete();
-          }
         });
       } else {
         if (customerInfo?.activeSubscriptions?.length === 0 && !hasSeenDiscountPaywall) {
           await registerPlacement({
             placement: "discount_trigger",
-            feature: () => {
-              onComplete();
-            }
           });
           setHasSeenDiscountPaywall(true)
         } else if (customerInfo?.activeSubscriptions?.length === 0 && hasSeenDiscountPaywall) {
           await registerPlacement({
             placement: "default_trigger",
-            feature: () => {
-              onComplete();
-            }
           });
         }
       }

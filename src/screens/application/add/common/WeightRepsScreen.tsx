@@ -8,22 +8,27 @@ import { WeightUnit } from '../../../../types/Lifts';
 import { track } from '../../../../services/analytics';
 
 interface WeightRepsScreenProps {
+  weightReps: { weight: number; unit: WeightUnit; reps: number } | null;
+  onChange: (data: { weight: number; unit: WeightUnit; reps: number }) => void;
   onBack: () => void;
   onUpload: (data: { weight: number; unit: WeightUnit; reps: number }) => void;
-  initialUnit?: WeightUnit;
 }
 
 export function WeightRepsScreen({ 
+  weightReps,
+  onChange,
   onBack, 
   onUpload,
 }: WeightRepsScreenProps) {
   const { ref: completeButtonRef } = useTutorialTarget('weight_reps_complete');
   const { isActive: isTutorialActive } = useTutorial();
-  const [weight, setWeight] = useState('');
-  const [reps, setReps] = useState('');
   const [focusedInput, setFocusedInput] = useState<'weight' | 'reps' | null>(null);
   const { userDetails } = useUserDetails();
   const unit: WeightUnit = userDetails?.unitSystem === 'imperial' ? 'lbs' : 'kg';
+  
+  // Use props for weight and reps, with fallback to empty strings
+  const weight = weightReps?.weight?.toString() || '';
+  const reps = weightReps?.reps?.toString() || '';
   
   const weightInputRef = useRef<TextInput>(null);
   const repsInputRef = useRef<TextInput>(null);
@@ -97,8 +102,8 @@ export function WeightRepsScreen({
 
   const handleUpload = () => {
     hapticFeedback.selection();
-    const metricWeight = parseFloat(weight) || 0;
-    const repsValue = parseInt(reps) || 0;
+    const metricWeight = weightReps?.weight || 0;
+    const repsValue = weightReps?.reps || 0;
     
     if (metricWeight > 0 && repsValue > 0) {
       onUpload({
@@ -134,14 +139,14 @@ export function WeightRepsScreen({
     setFocusedInput(inputType);
   };
 
-  const isWeightValid = weight && parseFloat(weight) > 0;
-  const isUploadDisabled = !isWeightValid || !reps || parseInt(reps) <= 0;
+  const isWeightValid = weightReps?.weight && weightReps.weight > 0;
+  const isUploadDisabled = !isWeightValid || !weightReps?.reps || weightReps.reps <= 0;
   
   const isKeyboardButtonDisabled = () => {
     if (focusedInput === 'weight') {
-      return !weight || parseFloat(weight) <= 0;
+      return !weightReps?.weight || weightReps.weight <= 0;
     } else if (focusedInput === 'reps') {
-      return !reps || parseInt(reps) <= 0;
+      return !weightReps?.reps || weightReps.reps <= 0;
     }
     return true;
   };
@@ -171,7 +176,12 @@ export function WeightRepsScreen({
                     if (text.length > 0 && weight.length === 0) {
                       track('Add analysis', { event: 'Weight input' });
                     }
-                    setWeight(text);
+                    const weightValue = parseFloat(text) || 0;
+                    onChange({
+                      weight: weightValue,
+                      unit,
+                      reps: weightReps?.reps || 0
+                    });
                   }}
                   placeholder="1"
                   placeholderTextColor="#8E8E93"
@@ -201,7 +211,12 @@ export function WeightRepsScreen({
                     if (text.length > 0 && reps.length === 0) {
                       track('Add analysis', { event: 'Reps input' });
                     }
-                    setReps(text);
+                    const repsValue = parseInt(text) || 0;
+                    onChange({
+                      weight: weightReps?.weight || 0,
+                      unit,
+                      reps: repsValue
+                    });
                   }}
                   placeholder="1"
                   placeholderTextColor={isWeightValid ? "#8E8E93" : "#C7C7CC"}

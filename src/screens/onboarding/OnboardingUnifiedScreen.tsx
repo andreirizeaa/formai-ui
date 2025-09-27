@@ -29,6 +29,7 @@ import i18n from '../../utils/i18n';
 import { hapticFeedback } from '../../utils/haptic';
 import { LANGUAGES } from '../../constants/languages';
 import { CreateAccountScreen } from '../../components/onboarding/CreateAccountScreen';
+import { PermissionContainer } from '../../components/ui/PermissionContainer';
 import LottieView from 'lottie-react-native';
 import { BicepsFlexed, User, ShieldPlus, Bike, HeartPulse, CircleX, AudioWaveform, ChartNoAxesColumnDecreasing, BookCopy, ShieldOff, BatteryLow, Ellipsis, Sprout, Shrub, TreePine, ChartNoAxesCombined, Hospital, Dumbbell, ShieldCheck, ChartNoAxesColumnIncreasing, ClockArrowUp, BatteryWarning, BatteryMedium, BatteryFull, PartyPopper, Weight, Scale, TrendingUp, ThumbsUp, ThumbsDown, Users, CircleCheck, Trophy, X } from 'lucide-react-native';
 import { LineChart } from 'react-native-chart-kit';
@@ -1842,404 +1843,106 @@ useEffect(() => {
       )}
 
       {currentStep.type === 'notificationPermission' && (
-        <View style={styles.notificationPermissionContainer}>
-          {/* Dialog container with flex to center dialog */}
-          <View style={styles.dialogWrapper}>
-            {/* Title above the dialog */}
-            <Text style={[
-              styles.permissionTitle
-            ]}>
-              {i18n.t('onboarding.notificationPermission.title')}
-            </Text>
-            {/* iOS-style Notification Permission Dialog */}
-            <View style={[
-              styles.dialog,
-              {
-                backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF',
-                shadowColor: isDark ? '#000000' : '#000000',
-              }
-            ]}>
-              {/* Text Area */}
-              <View style={[
-                styles.textArea,
-                {
-                  backgroundColor: isDark ? '#2C2C2E' : '#f3f4f6',
-                }
-              ]}>
-                <Text style={[
-                  styles.dialogText,
-                  {
-                    color: isDark ? '#FFFFFF' : '#000000',
-                    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
-                  }
-                ]}>
-                  {i18n.t('onboarding.notificationPermission.dialogText')}
-                </Text>
-              </View>
-              
-              {/* Buttons Container */}
-              <View style={[
-                styles.buttonContainer,
-                {
-                  borderTopColor: isDark ? '#2C2C2E' : '#E5E5EA',
-                  borderTopWidth: 1,
-                }
-              ]}>
-                <TouchableOpacity
-                  style={[
-                    styles.button,
-                    styles.dontAllowButton,
-                    {
-                      backgroundColor: isDark ? '#2C2C2E' : '#f3f4f6',
-                    }
-                  ]}
-                  onPress={() => {
-                    hapticFeedback.selection();
-                    handleNext();
-                  }}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[
-                    styles.buttonText,
-                    {
-                      color: isDark ? '#FFFFFF' : '#000000',
-                      fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
-                    }
-                  ]}>
-                    {i18n.t('onboarding.notificationPermission.dontAllow')}
-                  </Text>
-                </TouchableOpacity>
-                
-                <View style={[
-                  styles.buttonDivider,
-                  {
-                    backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF',
-                  }
-                ]} />
-                
-                <TouchableOpacity
-                  style={[
-                    styles.button,
-                    styles.allowButton,
-                    {
-                      backgroundColor: isDark ? '#FFFFFF' : '#364153',
-                    }
-                  ]}
-                  onPress={async () => {
-                    hapticFeedback.selection();
-                    try {
-                      const result = await Notifications.requestPermissionsAsync();
-                      const granted = result.granted;
-                      trackPermission('notifications', granted, 'notificationPermission');
-                      handleNext();
-                    } catch (error) {
-                      trackPermission('notifications', false, 'notificationPermission', error instanceof Error ? error.message : 'Unknown error');
-                      showAlert(
-                        'Permission Error', 
-                        'Unable to request notification permissions. You can enable them later in settings.',
-                        undefined,
-                        'ONBOARDING_NOTIFICATION_PERMISSION_ERROR',
-                        error
-                      );
-                      handleNext();
-                    }
-                  }}
-                  activeOpacity={0.8}
-                >
-                  <Text style={[
-                    styles.buttonText,
-                    {
-                      color: isDark ? '#000000' : '#FFFFFF',
-                      fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
-                    }
-                  ]}>
-                    {i18n.t('onboarding.notificationPermission.allow')}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-            
-            {/* Animated upwards pointing finger emoji */}
-            <Animated.View style={[
-              styles.animatedFingerContainer,
-              {
-                transform: [{ translateY: fingerTranslateY }]
-              }
-            ]}>
-              <Text style={styles.pointingEmoji}>👆</Text>
-            </Animated.View>
-          </View>
-        </View>
+        <PermissionContainer
+          title={i18n.t('onboarding.notificationPermission.title')}
+          dialogText={i18n.t('onboarding.notificationPermission.dialogText')}
+          fingerTranslateY={fingerTranslateY}
+          allowButtonText={i18n.t('onboarding.notificationPermission.allow')}
+          dontAllowButtonText={i18n.t('onboarding.notificationPermission.dontAllow')}
+          onDontAllow={() => {
+            handleNext();
+          }}
+          onAllow={async () => {
+            try {
+              const result = await Notifications.requestPermissionsAsync();
+              const granted = result.granted;
+              trackPermission('notifications', granted, 'notificationPermission');
+              handleNext();
+            } catch (error) {
+              trackPermission('notifications', false, 'notificationPermission', error instanceof Error ? error.message : 'Unknown error');
+              showAlert(
+                'Permission Error',
+                'Unable to request notification permissions. You can enable them later in settings.',
+                undefined,
+                'ONBOARDING_NOTIFICATION_PERMISSION_ERROR',
+                error
+              );
+              handleNext();
+            }
+          }}
+        />
       )}
 
       {currentStep.type === 'cameraPermission' && (
-        <View style={styles.cameraPermissionContainer}>
-          {/* Dialog container with flex to center dialog */}
-          <View style={styles.dialogWrapper}>
-            {/* Title above the dialog */}
-            <Text style={[
-              styles.permissionTitle,
-            ]}>
-              {i18n.t('onboarding.cameraPermission.title')}
-            </Text>
-            {/* iOS-style Camera Permission Dialog */}
-            <View style={[
-              styles.dialog,
-              {
-                backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF',
-                shadowColor: isDark ? '#000000' : '#000000',
-              }
-            ]}>
-              {/* Text Area */}
-              <View style={[
-                styles.textArea,
-                {
-                  backgroundColor: isDark ? '#2C2C2E' : '#f3f4f6',
-                }
-              ]}>
-                <Text style={[
-                  styles.dialogText,
-                  {
-                    color: isDark ? '#FFFFFF' : '#000000',
-                    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
-                  }
-                ]}>
-                  {i18n.t('onboarding.cameraPermission.dialogText')}
-                </Text>
-              </View>
-              
-              {/* Buttons Container */}
-              <View style={[
-                styles.buttonContainer,
-                {
-                  borderTopColor: isDark ? '#2C2C2E' : '#E5E5EA',
-                  borderTopWidth: 1,
-                }
-              ]}>
-                <View
-                  style={[
-                    styles.button,
-                    styles.dontAllowButton,
-                    {
-                      backgroundColor: isDark ? '#2C2C2E' : '#f3f4f6',
-                      paddingVertical: 0,
-                      marginVertical: 0,
-                    }
-                  ]}
-                >
-                  <Text style={[
-                    styles.buttonText,
-                    {
-                      color: isDark ? '#FFFFFF' : '#000000',
-                      fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
-                    }
-                  ]}>
-                    {i18n.t('onboarding.cameraPermission.dontAllow')}
-                  </Text>
-                </View>
-                
-                <View style={[
-                  styles.buttonDivider,
-                  {
-                    backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF',
-                  }
-                ]} />
-                
-                <TouchableOpacity
-                  style={[
-                    styles.button,
-                    styles.allowButton,
-                    {
-                      backgroundColor: isDark ? '#FFFFFF' : '#364153',
-                      paddingVertical: 0,
-                      marginVertical: 0,
-                    }
-                  ]}
-                  onPress={async () => {
-                    hapticFeedback.selection();
-                    try {
-                      const { Camera } = await import('expo-camera');
-                      const result = await Camera.requestCameraPermissionsAsync();
-                      const granted = result.granted;
-                      trackPermission('camera', granted, 'cameraPermission');
+        <PermissionContainer
+          title={i18n.t('onboarding.cameraPermission.title')}
+          dialogText={i18n.t('onboarding.cameraPermission.dialogText')}
+          fingerTranslateY={fingerTranslateY}
+          allowButtonText={i18n.t('onboarding.cameraPermission.allow')}
+          dontAllowButtonText={i18n.t('onboarding.cameraPermission.dontAllow')}
+          onDontAllow={() => {
+            handleNext();
+          }}
+          onAllow={async () => {
+            try {
+              const { Camera } = await import('expo-camera');
+              const result = await Camera.requestCameraPermissionsAsync();
+              const granted = result.granted;
+              trackPermission('camera', granted, 'cameraPermission');
 
-                      if (granted) {
-                        handleNext();
-                      } else {
-                        // If we can't ask again, open settings directly
-                        if (result.canAskAgain === false) {
-                          Linking.openSettings();
-                        }
-                        // If permission denied but we can ask again, do nothing (user can tap again)
-                      }
-                    } catch (error) {
-                      trackPermission('camera', false, 'cameraPermission', error instanceof Error ? error.message : 'Unknown error');
-                    }
-                  }}
-                  activeOpacity={0.8}
-                >
-                  <Text style={[
-                    styles.buttonText,
-                    {
-                      color: isDark ? '#000000' : '#FFFFFF',
-                      fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
-                    }
-                  ]}>
-                    {i18n.t('onboarding.cameraPermission.allow')}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-            
-            {/* Animated upwards pointing finger emoji */}
-            <Animated.View style={[
-              styles.animatedFingerContainer,
-              {
-                transform: [{ translateY: fingerTranslateY }]
+              if (granted) {
+                handleNext();
+              } else {
+                // If we can't ask again, open settings directly
+                if (result.canAskAgain === false) {
+                  Linking.openSettings();
+                }
+                // If permission denied but we can ask again, do nothing (user can tap again)
               }
-            ]}>
-              <Text style={styles.pointingEmoji}>👆</Text>
-            </Animated.View>
-          </View>
-        </View>
+            } catch (error) {
+              trackPermission('camera', false, 'cameraPermission', error instanceof Error ? error.message : 'Unknown error');
+            }
+          }}
+        />
       )}
 
       {currentStep.type === 'mediaLibraryPermission' && (
-        <View style={styles.mediaLibraryPermissionContainer}>
-          {/* Dialog container with flex to center dialog */}
-          <View style={styles.dialogWrapper}>
-            {/* Title above the dialog */}
-            <Text style={[
-              styles.permissionTitle,
-            ]}>
-              {i18n.t('onboarding.mediaLibraryPermission.title')}
-            </Text>
-            {/* iOS-style Media Library Permission Dialog */}
-            <View style={[
-              styles.dialog,
-              {
-                backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF',
-                shadowColor: isDark ? '#000000' : '#000000',
-              }
-            ]}>
-              {/* Text Area */}
-              <View style={[
-                styles.textArea,
-                {
-                  backgroundColor: isDark ? '#2C2C2E' : '#f3f4f6',
+        <PermissionContainer
+          title={i18n.t('onboarding.mediaLibraryPermission.title')}
+          dialogText={i18n.t('onboarding.mediaLibraryPermission.dialogText')}
+          fingerTranslateY={fingerTranslateY}
+          allowButtonText={i18n.t('onboarding.mediaLibraryPermission.allow')}
+          dontAllowButtonText={i18n.t('onboarding.mediaLibraryPermission.dontAllow')}
+          onDontAllow={() => {
+            handleNext();
+          }}
+          onAllow={async () => {
+            try {
+              const result = await ImagePicker.requestMediaLibraryPermissionsAsync();
+              const granted = result.granted;
+              trackPermission('media_library', granted, 'mediaLibraryPermission');
+
+              if (granted) {
+                handleNext();
+              } else {
+                // If we can't ask again, open settings directly
+                if (result.canAskAgain === false) {
+                  Linking.openSettings();
                 }
-              ]}>
-                <Text style={[
-                  styles.dialogText,
-                  {
-                    color: isDark ? '#FFFFFF' : '#000000',
-                    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
-                  }
-                ]}>
-                  {i18n.t('onboarding.mediaLibraryPermission.dialogText')}
-                </Text>
-              </View>
-
-              {/* Buttons Container */}
-              <View style={[
-                styles.buttonContainer,
-                {
-                  borderTopColor: isDark ? '#2C2C2E' : '#E5E5EA',
-                  borderTopWidth: 1,
-                }
-              ]}>
-                <View
-                  style={[
-                    styles.button,
-                    styles.dontAllowButton,
-                    {
-                      backgroundColor: isDark ? '#2C2C2E' : '#f3f4f6',
-                      paddingVertical: 0,
-                      marginVertical: 0,
-                    }
-                  ]}
-                >
-                  <Text style={[
-                    styles.buttonText,
-                    {
-                      color: isDark ? '#FFFFFF' : '#000000',
-                      fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
-                    }
-                  ]}>
-                    {i18n.t('onboarding.mediaLibraryPermission.dontAllow')}
-                  </Text>
-                </View>
-
-                <View style={[
-                  styles.buttonDivider,
-                  {
-                    backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF',
-                  }
-                ]} />
-
-                <TouchableOpacity
-                  style={[
-                    styles.button,
-                    styles.allowButton,
-                    {
-                      backgroundColor: isDark ? '#FFFFFF' : '#364153',
-                      paddingVertical: 0,
-                      marginVertical: 0,
-                    }
-                  ]}
-                  onPress={async () => {
-                    hapticFeedback.selection();
-                    try {
-                      const result = await ImagePicker.requestMediaLibraryPermissionsAsync();
-                      const granted = result.granted;
-                      trackPermission('media_library', granted, 'mediaLibraryPermission');
-
-                      if (granted) {
-                        handleNext();
-                      } else {
-                        // If we can't ask again, open settings directly
-                        if (result.canAskAgain === false) {
-                          Linking.openSettings();
-                        }
-                        // If permission denied but we can ask again, do nothing (user can tap again)
-                      }
-                    } catch (error) {
-                      trackPermission('media_library', false, 'mediaLibraryPermission', error instanceof Error ? error.message : 'Unknown error');
-                      showAlert(
-                        i18n.t('onboarding.mediaLibraryPermission.error'),
-                        i18n.t('onboarding.mediaLibraryPermission.errorMessage'),
-                        undefined,
-                        'ONBOARDING_MEDIA_LIBRARY_PERMISSION_ERROR',
-                        error
-                      );
-                    }
-                  }}
-                  activeOpacity={0.8}
-                >
-                  <Text style={[
-                    styles.buttonText,
-                    {
-                      color: isDark ? '#000000' : '#FFFFFF',
-                      fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
-                    }
-                  ]}>
-                    {i18n.t('onboarding.mediaLibraryPermission.allow')}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            {/* Animated upwards pointing finger emoji */}
-            <Animated.View style={[
-              styles.animatedFingerContainer,
-              {
-                transform: [{ translateY: fingerTranslateY }]
+                // If permission denied but we can ask again, do nothing (user can tap again)
               }
-            ]}>
-              <Text style={styles.pointingEmoji}>👆</Text>
-            </Animated.View>
-          </View>
-        </View>
+            } catch (error) {
+              trackPermission('media_library', false, 'mediaLibraryPermission', error instanceof Error ? error.message : 'Unknown error');
+              showAlert(
+                i18n.t('onboarding.mediaLibraryPermission.error'),
+                i18n.t('onboarding.mediaLibraryPermission.errorMessage'),
+                undefined,
+                'ONBOARDING_MEDIA_LIBRARY_PERMISSION_ERROR',
+                error
+              );
+            }
+          }}
+        />
       )}
     </OnboardingLayout>
   );
@@ -2804,103 +2507,6 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
     flex: 1,
-  },
-  // Notification permission styles
-  notificationPermissionContainer: {
-    flex: 1,
-    paddingHorizontal: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  // Camera permission styles
-  cameraPermissionContainer: {
-    flex: 1,
-    paddingHorizontal: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  // Media library permission styles
-  mediaLibraryPermissionContainer: {
-    flex: 1,
-    paddingHorizontal: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  permissionTitle: {
-    fontSize: 32,
-    fontWeight: '800',
-    textAlign: 'center',
-    color: '#ffffff',
-    lineHeight: 38,
-    marginBottom: 30,
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
-  },
-  notificationPermissionTitle: {
-    fontSize: 32,
-    marginTop: 60,
-    fontWeight: '700',
-    textAlign: 'center',
-    lineHeight: 38,
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
-  },
-  dialogWrapper: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  dialog: {
-    width: '100%',
-    maxWidth: 320,
-    borderRadius: 16,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 8,
-    overflow: 'hidden',
-  },
-  textArea: {
-    padding: 24,
-    paddingBottom: 20,
-    height: 100,
-  },
-  dialogText: {
-    fontSize: 17,
-    fontWeight: '600',
-    textAlign: 'center',
-    lineHeight: 22,
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    height: 44,
-  },
-  button: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  dontAllowButton: {
-    // Styled above
-  },
-  allowButton: {
-    // Styled above
-  },
-  buttonText: {
-    fontSize: 17,
-    fontWeight: '600',
-  },
-  buttonDivider: {
-    width: 1,
-    height: '100%',
-  },
-  pointingEmoji: {
-    fontSize: 40,
-  },
-  animatedFingerContainer: {
-    marginTop: 20,
-    marginLeft: '55%',
   },
   // Progress tracking styles
   progressTrackingContainer: {

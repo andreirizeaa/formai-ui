@@ -511,11 +511,6 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
         } catch (error) {
         } finally {
           // Even if globals fail, the provider's next() fallback will finish.
-          // Optionally set flags here too:
-          try {
-            await setItem('TUTORIAL_COMPLETED', 'true');
-            await setItem('SHOULD_SHOW_TUTORIAL', 'false');
-          } catch {}
         }
       },
       
@@ -735,11 +730,6 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       } catch (e) {
         console.warn('stop() failed', e);
       }
-      // Mark completion (optional but recommended)
-      try {
-        await setItem('TUTORIAL_COMPLETED', 'true');
-        await setItem('SHOULD_SHOW_TUTORIAL', 'false');
-      } catch {}
     }
   };
 

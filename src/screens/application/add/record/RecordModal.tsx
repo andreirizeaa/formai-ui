@@ -17,6 +17,7 @@ import { useCameraPermissions } from 'expo-camera';
 import { ChevronLeft, CircleQuestionMark, X, Timer, TimerOff } from 'lucide-react-native';
 import * as MediaLibrary from 'expo-media-library';
 import { checkDuplicateAssetId } from '../../../../services/liftService';
+import { PermissionContainer } from '../../../../components/ui/PermissionContainer';
 import { showAlert } from '../../../../services/alertService';
 
 interface RecordModalProps {
@@ -40,6 +41,9 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedBodyPart, setSelectedBodyPart] = useState<BodyPart>('all');
   const [filteredMovements, setFilteredMovements] = useState<string[]>(gymMovements.map(m => m.name));
+  
+  // Weight and reps state
+  const [weightReps, setWeightReps] = useState<{ weight: number; unit: 'kg' | 'lbs'; reps: number } | null>(null);
   const [isCameraReady, setIsCameraReady] = useState(false);
   const [showCamera, setShowCamera] = useState(true);
   const [cameraKey, setCameraKey] = useState(0);
@@ -85,7 +89,9 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
       setRecordedVideoUri(null);
       setSelectedMovement('');
       setSearchQuery('');
+      setSelectedBodyPart('all');
       setFilteredMovements(gymMovements.map(m => m.name));
+      setWeightReps(null);
       setIsCameraReady(false);
       setShowCamera(true);
       setShowCountdownModal(false);
@@ -107,7 +113,9 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
       setRecordedVideoUri(null);
       setSelectedMovement('');
       setSearchQuery('');
+      setSelectedBodyPart('all');
       setFilteredMovements(gymMovements.map(m => m.name));
+      setWeightReps(null);
       setShowCountdownModal(false);
       if (preCountdownIntervalRef.current) {
         clearInterval(preCountdownIntervalRef.current);
@@ -328,6 +336,12 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
     // Reset all recording-related state
     setShowVideoPreview(false);
     setRecordedVideoUri(null);
+    setShowMovementSelection(false);
+    setShowWeightReps(false);
+    setSelectedMovement('');
+    setSearchQuery('');
+    setSelectedBodyPart('all');
+    setWeightReps(null);
   
     // 1) unmount camera
     setShowCamera(false);
@@ -429,6 +443,10 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
 
     try {
       const thumbnailUri = await generateVideoThumbnail(videoUri);
+      
+      // Use weightReps state if available, otherwise fall back to data parameter
+      const finalWeightReps = weightReps || data;
+      
       // Enqueue the loading lift without awaiting
       void addLoadingLift({
         videoLink: videoUri,
@@ -436,8 +454,8 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
         dateToday: date,
         timeToday: time,
         movementType: selectedMovement,
-        metricWeight: data.weight,
-        reps: data.reps,
+        metricWeight: finalWeightReps.weight,
+        reps: finalWeightReps.reps,
         assetId: recordedAssetId,
         videoDurationSec: recordingTime,
         pipelineStage: 'upload_video',
@@ -522,12 +540,12 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
     if (!isVisible) {
       return null;
     }
-    
+
     return (
-      <SafeAreaView 
+      <SafeAreaView
         style={[
           styles.container,
-          { backgroundColor: isDark ? '#1d293d' : '#FFFFFF' }
+          { backgroundColor: '#1d293d' }
         ]}
       >
         {/* Close Button */}
@@ -540,115 +558,17 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
           </TouchableOpacity>
         </View>
 
-        <View style={styles.cameraPermissionContainer}>
-          {/* Dialog container with flex to center dialog */}
-          <View style={styles.dialogWrapper}>
-            {/* Title above the dialog */}
-            <Text style={[
-              styles.permissionTitle,
-            ]}>
-              {i18n.t('onboarding.cameraPermission.title')}
-            </Text>
-            {/* iOS-style Camera Permission Dialog */}
-            <View style={[
-              styles.dialog,
-              {
-                backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF',
-                shadowColor: isDark ? '#000000' : '#000000',
-              }
-            ]}>
-              {/* Text Area */}
-              <View style={[
-                styles.textArea,
-                {
-                  backgroundColor: isDark ? '#2C2C2E' : '#f3f4f6',
-                }
-              ]}>
-                <Text style={[
-                  styles.dialogText,
-                  {
-                    color: isDark ? '#FFFFFF' : '#000000',
-                    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
-                  }
-                ]}>
-                  {i18n.t('onboarding.cameraPermission.dialogText')}
-                </Text>
-              </View>
-              
-              {/* Buttons Container */}
-              <View style={[
-                styles.buttonContainer,
-                {
-                  borderTopColor: isDark ? '#2C2C2E' : '#E5E5EA',
-                  borderTopWidth: 1,
-                }
-              ]}>
-                <View
-                  style={[
-                    styles.button,
-                    styles.dontAllowButton,
-                    {
-                      backgroundColor: isDark ? '#2C2C2E' : '#f3f4f6',
-                      paddingVertical: 0,
-                      marginVertical: 0,
-                    }
-                  ]}
-                >
-                  <Text style={[
-                    styles.buttonText,
-                    {
-                      color: isDark ? '#FFFFFF' : '#000000',
-                      fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
-                    }
-                  ]}>
-                    {i18n.t('onboarding.cameraPermission.dontAllow')}
-                  </Text>
-                </View>
-                
-                <View style={[
-                  styles.buttonDivider,
-                  {
-                    backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF',
-                  }
-                ]} />
-                
-                <TouchableOpacity
-                  style={[
-                    styles.button,
-                    styles.allowButton,
-                    {
-                      backgroundColor: isDark ? '#FFFFFF' : '#364153',
-                      paddingVertical: 0,
-                      marginVertical: 0,
-                    }
-                  ]}
-                  onPress={requestCameraPermissionFromUser}
-                  activeOpacity={0.8}
-                >
-                  <Text style={[
-                    styles.buttonText,
-                    {
-                      color: isDark ? '#000000' : '#FFFFFF',
-                      fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
-                    }
-                  ]}>
-                    {i18n.t('onboarding.cameraPermission.allow')}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-            
-            {/* Animated upwards pointing finger emoji */}
-            <Animated.View style={[
-              styles.animatedFingerContainer,
-              {
-                transform: [{ translateY: fingerTranslateY }]
-              }
-            ]}>
-              <Text style={styles.pointingEmoji}>👆</Text>
-            </Animated.View>
-          </View>
-        </View>
+        <PermissionContainer
+          title={i18n.t('onboarding.cameraPermission.title')}
+          dialogText={i18n.t('onboarding.cameraPermission.dialogText')}
+          fingerTranslateY={fingerTranslateY}
+          allowButtonText={i18n.t('onboarding.cameraPermission.allow')}
+          dontAllowButtonText={i18n.t('onboarding.cameraPermission.dontAllow')}
+          onDontAllow={() => {
+            // Don't allow just stays in this state
+          }}
+          onAllow={requestCameraPermissionFromUser}
+        />
       </SafeAreaView>
     );
   }
@@ -757,6 +677,8 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
           {/* Content */}
           <View style={styles.contentWithBottomPadding}>
             <WeightRepsScreen
+              weightReps={weightReps}
+              onChange={setWeightReps}
               onBack={handleWeightRepsBack}
               onUpload={handleFinalCompleteClicked}
             />
@@ -1211,184 +1133,12 @@ const styles = StyleSheet.create({
     color: '#000000',
     marginBottom: 4,
   },
-  permissionContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-    width: '100%',
-  },
-  permissionContentWrapper: {
-    flex: 1,
-    paddingHorizontal: 20,
-  },
-  permissionMainTitle: {
-    fontSize: 32,
-    marginTop: 60,
-    fontWeight: '700',
-    textAlign: 'center',
-    lineHeight: 38,
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
-  },
-  permissionSubtitle: {
-    fontSize: 17,
-    marginTop: 8,
-    textAlign: 'center',
-    lineHeight: 22,
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
-  },
-  permissionDialogWrapper: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  permissionDialog: {
-    width: '100%',
-    maxWidth: 320,
-    borderRadius: 16,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 8,
-    overflow: 'hidden',
-  },
-  permissionTextArea: {
-    padding: 24,
-    paddingBottom: 20,
-  },
-  permissionDialogText: {
-    fontSize: 17,
-    fontWeight: '600',
-    textAlign: 'center',
-    lineHeight: 22,
-  },
-  permissionButtonContainer: {
-    flexDirection: 'row',
-    height: 44,
-  },
-  permissionButtonCommon: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  permissionDontAllowButton: {},
-  permissionAllowButton: {},
-  permissionButtonText: {
-    fontSize: 17,
-    fontWeight: '600',
-  },
-  permissionButtonDivider: {
-    width: 1,
-    height: '100%',
-  },
-  permissionPointingEmoji: {
-    fontSize: 40,
-    marginTop: 20,
-    marginLeft: '55%',
-  },
-  permissionTitle: {
-    fontSize: 32,
-    fontWeight: '800',
-    textAlign: 'center',
-    color: '#000000',
-    lineHeight: 38,
-    marginBottom: 30,
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
-  },
-  permissionDescription: {
-    fontSize: 26,
-    fontWeight: '600',
-    color: '#000000',
-    textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 32,
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
-  },
-  permissionButton: {
-    backgroundColor: '#FF3B30',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '100%',
-  },
-  permissionButtonTextAlt: {
-    color: 'white',
-    fontSize: 17,
-    fontWeight: '600',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
-  },
+  // Keep only permissionTopControls as it's still used for positioning the close button
   permissionTopControls: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
     paddingHorizontal: 20,
     paddingTop: 10,
-  },
-  dialogWrapper: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  dialog: {
-    width: '100%',
-    maxWidth: 320,
-    borderRadius: 16,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 8,
-    overflow: 'hidden',
-  },
-  textArea: {
-    padding: 24,
-    paddingBottom: 20,
-  },
-  dialogText: {
-    fontSize: 17,
-    fontWeight: '600',
-    textAlign: 'center',
-    lineHeight: 22,
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    height: 44,
-  },
-  button: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  dontAllowButton: {
-    // Styled above
-  },
-  allowButton: {
-    // Styled above
-  },
-  buttonText: {
-    fontSize: 17,
-    fontWeight: '600',
-  },
-  buttonDivider: {
-    width: 1,
-    height: '100%',
-  },
-  pointingEmoji: {
-    fontSize: 40,
-    marginRight: 24
-  },
-  animatedFingerContainer: {
-    marginTop: 20,
-    marginLeft: '55%',
-  },
-  cameraPermissionContainer: {
-    flex: 1,
-    paddingHorizontal: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
 
   cameraSafeArea: {

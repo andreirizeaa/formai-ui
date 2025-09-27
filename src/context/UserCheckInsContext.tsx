@@ -16,6 +16,7 @@ interface UserCheckInsContextType {
   data: CheckInsResponse | undefined;
   optimisticAddToday: (opts?: { userId?: string; date?: string }) => void;
   optimisticRemoveToday: (opts?: { userId?: string; date?: string }) => void;
+  setSignedInUser: (id: string | null) => void;
 }
 
 const UserCheckInsContext = createContext<UserCheckInsContextType | undefined>(undefined);
@@ -85,6 +86,11 @@ export function UserCheckInsProvider({ children }: UserCheckInsProviderProps) {
     queryClient.invalidateQueries({ queryKey: ['userCheckIns', uid] });
     if (uid === userId) refetch();
   }, [userId, queryClient, refetch]);
+
+  // Function to set signed in user immediately
+  const setSignedInUser = React.useCallback((id: string | null) => {
+    setUserId(id);
+  }, []);
 
   // Realtime subscription: update cache immediately on INSERT/DELETE
   React.useEffect(() => {
@@ -175,6 +181,7 @@ export function UserCheckInsProvider({ children }: UserCheckInsProviderProps) {
     refetch: () => refetch(),
     invalidateAndRefetch,
     data,
+    setSignedInUser,
     optimisticAddToday: React.useCallback((opts?: { userId?: string; date?: string }) => {
       const uid = opts?.userId ?? userId;
       if (!uid) return;

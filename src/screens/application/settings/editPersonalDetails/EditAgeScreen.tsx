@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, ActivityIndicator } from 'react-native';
 import i18n from '../../../../utils/i18n';
 import { hapticFeedback } from '../../../../utils/haptic';
 import { useUserDetails } from '../../../../context/UserDetailsContext';
@@ -7,6 +7,7 @@ import { editUserDetails } from '../../../../services/userService';
 import { ChevronLeft } from 'lucide-react-native';
 import { track } from '../../../../services/analytics';
 import { AnimatedOptionButton } from '../../../../components/onboarding/AnimatedOptionButton';
+import { showAlert } from '../../../../services/alertService';
 
 interface EditAgeScreenProps {
   onBack: () => void;
@@ -119,19 +120,15 @@ export function EditAgeScreen({ onBack, currentValue, onSave }: EditAgeScreenPro
       onSave(selectedAgeRange);
     } catch (e) {
       hapticFeedback.error();
-      Alert.alert(
-        i18n.t('settings.editFailed.age'), 
-        i18n.t('settings.editFailed.message'), 
-        [
-          {
-            text: i18n.t('close'),
-            onPress: () => {
-              hapticFeedback.selection();
-              onBack();
-            }
-          }
-        ]
-      );
+        showAlert(
+          i18n.t('settings.editFailed.age'), 
+          i18n.t('settings.editFailed.message'), 
+          () => {
+            hapticFeedback.selection();
+            onBack();
+          },
+          'EDIT_AGE_FAILED'
+        );
     }
     setIsSaving(false);
   };
