@@ -121,6 +121,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       tooltipPlacement: 'top',
       onNext: () => {
         try {
+          track('Tutorial', { step_index: 0, target_id: 'add_button' });
           if ((global as any).triggerAddOptions) (global as any).triggerAddOptions();
         } catch (error) {
         }
@@ -134,6 +135,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       tooltipPlacement: 'top',
       onNext: () => {
         try {
+          track('Tutorial', { step_index: 1, target_id: 'add_options_upload' });
           if ((global as any).openUploadModal) (global as any).openUploadModal();
           if ((global as any).closeAddOptions) (global as any).closeAddOptions();
         } catch (error) {
@@ -149,6 +151,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       tooltipPlacement: 'top',
       onNext: () => {
         try {
+          track('Tutorial', { step_index: 2, target_id: 'upload_practices_cta' });
           // Skip directly to demo video for tutorial
           if (global.tutorialUpload?.skipToPreviewWithDemo) {
             global.tutorialUpload.skipToPreviewWithDemo();
@@ -165,6 +168,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       tooltipPlacement: 'bottom',
       onNext: () => {
         try {
+          track('Tutorial', { step_index: 3, target_id: 'video_preview_continue' });
           if (global.tutorialUpload?.goToMovementSelection) global.tutorialUpload.goToMovementSelection();
         } catch (error) {
         }
@@ -179,6 +183,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       tooltipPlacement: 'bottom',
       onNext: () => {
         try {
+          track('Tutorial', { step_index: 4, target_id: 'movement_selection_continue' });
           if (global.tutorialUpload?.selectMovement) global.tutorialUpload.selectMovement('Squat');
           if (global.tutorialUpload?.goToWeightReps) global.tutorialUpload.goToWeightReps();
         } catch (error) {
@@ -194,6 +199,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       tooltipPlacement: 'bottom',
       onNext: async () => {
         try {
+          track('Tutorial', { step_index: 5, target_id: 'weight_reps_complete' });
           if (global.tutorialUpload?.close) global.tutorialUpload.close();
           if (global.addDummyLift) global.addDummyLift();
           // Small delay to ensure lifts are added and home screen refreshes
@@ -211,6 +217,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       tooltipPlacement: 'top',
       onNext: () => {
         try {
+          track('Tutorial', { step_index: 6, target_id: 'home_first_lift_card' });
           // Open the lift details page as if user clicked on it
           if (global.openLiftDetails) global.openLiftDetails();
         } catch (error) {
@@ -225,6 +232,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       tooltipPlacement: 'top',
       onNext: () => {
         try {
+          track('Tutorial', { step_index: 7, target_id: 'lift_details_form_graph' });
           // Programmatically switch to depth graph (second card)
           try { global.setLiftDetailsGraphsIndex?.(1); } catch {}
         } catch (error) {
@@ -240,6 +248,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       tooltipPlacement: 'top',
       onNext: () => {
         try {
+          track('Tutorial', { step_index: 8, target_id: 'lift_details_depth_graph' });
           // Continue to the next step (review feedback)
         } catch (error) {
         }
@@ -254,6 +263,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       tooltipPlacement: 'top',
       onNext: () => {
         try {
+          track('Tutorial', { step_index: 9, target_id: 'lift_details_review_feedback' });
           // Open the feedback slideshow as if user clicked on it
           if (global.openFeedbackSlideshow) global.openFeedbackSlideshow();
         } catch (error) {
@@ -269,6 +279,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       tooltipPlacement: 'bottom',
       onNext: () => {
         try {
+          track('Tutorial', { step_index: 10, target_id: 'how_it_works_modal' });
           if (global.navigateToFeedbackPage) global.navigateToFeedbackPage();
         } catch (error) {
         }
@@ -289,6 +300,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       tooltipPlacement: 'bottom',
       onNext: () => {
         try {
+          track('Tutorial', { step_index: 11, target_id: 'feedback_slideshow' });
           // Navigate to issues page by triggering the right chevron
           // This will move from image view to flaws/issues view
           if (global.navigateToIssues) global.navigateToIssues();
@@ -312,6 +324,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       tooltipPlacement: 'top',
       onNext: () => {
         try {
+          track('Tutorial', { step_index: 12, target_id: 'feedback_issues' });
           // Navigate to tips page by triggering the right chevron
           // This will move from flaws/issues view to improvement/tips view
           if (global.navigateToTips) global.navigateToTips();
@@ -335,6 +348,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       tooltipPlacement: 'top',
       onNext: () => {
         try {
+          track('Tutorial', { step_index: 13, target_id: 'feedback_tips' });
           // Navigate back to home screen
           if (global.navigateToHome) global.navigateToHome();
         } catch (error) {
@@ -357,6 +371,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       tooltipPlacement: 'top',
       onNext: () => {
         try {
+          track('Tutorial', { step_index: 14, target_id: 'home_see_all_lifts' });
           // Navigate to library screen
           if ((global as any).navigateToLibrary) (global as any).navigateToLibrary();
         } catch (error) {
@@ -378,6 +393,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       tooltipPlacement: 'bottom',
       onNext: () => {
         try {
+          track('Tutorial', { step_index: 15, target_id: 'library_screen' });
           // Navigate back to home screen
           if ((global as any).navigateToHome) (global as any).navigateToHome();
         } catch (error) {
@@ -399,6 +415,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       tooltipPlacement: 'top',
       onNext: () => {
         try {
+          track('Tutorial', { step_index: 16, target_id: 'home_performance_icon' });
           // Navigate to performance screen
           if (global.navigateToPerformance) global.navigateToPerformance();
         } catch (error) {
@@ -420,6 +437,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       tooltipPlacement: 'bottom',
       onNext: () => {
         try {
+          track('Tutorial', { step_index: 17, target_id: 'performance_metrics' });
           // Just proceed to next tutorial step (no navigation needed)
           // The tutorial will automatically show the next step
         } catch (error) {
@@ -435,6 +453,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       tooltipPlacement: 'top',
       onNext: () => {
         try {
+          track('Tutorial', { step_index: 18, target_id: 'performance_over_weight' });
           // Scroll to the bottom so the next section is fully visible
           try { (global as any).scrollToPerformanceBottom?.(); } catch {}
         } catch (error) {
@@ -450,6 +469,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       tooltipPlacement: 'top',
       onNext: () => {
         try {
+          track('Tutorial', { step_index: 19, target_id: 'performance_charts_over_time' });
           // Navigate to settings screen
           if (global.navigateToSettings) global.navigateToSettings();
         } catch (error) {
@@ -465,6 +485,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       tooltipPlacement: 'bottom',
       onNext: () => {
         try {
+          track('Tutorial', { step_index: 20, target_id: 'settings_first_card' });
           // Just proceed to next tutorial step (no navigation needed)
           // The tutorial will automatically show the next step
         } catch (error) {
@@ -480,8 +501,10 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       tooltipPlacement: 'bottom',
       onNext: async () => {
         try {
+          track('Tutorial', { step_index: 21, target_id: 'settings_support_email' });
+          track('Tutorials', { data: 'complete' });
+
           // Track tutorial completion
-          track('Tutorials', { data: 'completed' });
           // Use the new finish and restore data function
           try { await global.finishTutorialAndRestoreData?.(); } catch {}
           try { (global as any).navigateToHome?.(); } catch {}

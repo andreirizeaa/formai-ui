@@ -5,6 +5,7 @@ import LottieView from 'lottie-react-native';
 import { OrangeGradientButton } from '../../../components/ui/OrangeGradientButton';
 import i18n from '../../../utils/i18n';
 import { hapticFeedback } from '../../../utils/haptic';
+import { track } from '../../../services/analytics';
 
 interface WelcomeModalProps {
   isVisible: boolean;
@@ -29,6 +30,8 @@ export function WelcomeModal({ isVisible, onGetStarted }: WelcomeModalProps) {
   }, [isVisible]);
 
   const handleGetStarted = () => {
+    track('Tutorials', { data: 'welcome' });
+
     hapticFeedback.success();
     onGetStarted();
   };
