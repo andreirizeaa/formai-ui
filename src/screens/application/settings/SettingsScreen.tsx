@@ -164,6 +164,7 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
   const { hasHdVideos } = usePurchases();
   const [isDeleting, setIsDeleting] = useState(false);
   const [isReplayingTutorial, setIsReplayingTutorial] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const iconSize = 26;
   const iconColor = '#000000';
   const queryClient = useQueryClient();
@@ -173,6 +174,22 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
   // Track screen view on mount
   useEffect(() => {
     track('Screen viewed', { screen_name: 'Settings' });
+  }, []);
+
+  // Reset loading states on mount to prevent lingering indicators
+  useEffect(() => {
+    setIsLoggingOut(false);
+    setIsDeleting(false);
+    setIsReplayingTutorial(false);
+  }, []);
+
+  // Reset modal states when component unmounts or navigation occurs
+  useEffect(() => {
+    return () => {
+      setShowLogoutModal(false);
+      setShowDeleteModal(false);
+      setIsLoggingOut(false); // Also reset logout loading state
+    };
   }, []);
   
   // Tutorial target registration
@@ -242,11 +259,11 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
     setShowLogoutModal(false);
   };
 
-  const handleConfirmLogout = async () => {
+  const handleConfirmLogout = () => {
+    // Close modal immediately and trigger logout right away
     setShowLogoutModal(false);
-    if (onLogout) {
-      onLogout();
-    }
+    setIsLoggingOut(false);
+    onLogout?.();
   };
 
 
@@ -713,6 +730,7 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
             icon={<LogOut size={iconSize} color={iconColor} />}
             title={i18n.t('settings.logout')}
             onPress={handleLogoutPress}
+            isLoading={isLoggingOut}
           />
         </View>
 

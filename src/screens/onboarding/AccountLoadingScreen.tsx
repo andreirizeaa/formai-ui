@@ -12,14 +12,32 @@ export function AccountLoadingScreen({ onComplete }: AccountLoadingScreenProps) 
   const { isUserDetailsLoaded } = useUserDetails();
 
   useEffect(() => {
-    if (!isUserDetailsLoaded) return;
+    let hasCompleted = false;
 
-    // Once user details are loaded, show animation for at least 1 second for UX
-    const timer = setTimeout(async () => {
-      await onComplete();
-    }, 1000);
+    // Timer to ensure we don't wait forever - complete after 2 seconds regardless
+    const maxTimer = setTimeout(async () => {
+      if (!hasCompleted) {
+        hasCompleted = true;
+        await onComplete();
+      }
+    }, 2000);
 
-    return () => clearTimeout(timer);
+    // If user details load before 2 seconds, still wait for the full 2 seconds for UX
+    if (isUserDetailsLoaded) {
+      const uiTimer = setTimeout(async () => {
+        if (!hasCompleted) {
+          hasCompleted = true;
+          await onComplete();
+        }
+      }, 2000);
+
+      return () => {
+        clearTimeout(maxTimer);
+        clearTimeout(uiTimer);
+      };
+    }
+
+    return () => clearTimeout(maxTimer);
   }, [onComplete, isUserDetailsLoaded]);
 
   return (

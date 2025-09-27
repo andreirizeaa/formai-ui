@@ -23,6 +23,7 @@ import type { MainStackParamList } from '../../../../navigation/MainAppNavigator
 import { DuplicateVideoModal } from '../../../../components/ui/DuplicateVideoModal';
 import { VideoTooLongModal } from '../../../../components/ui/VideoTooLongModal';
 import { VideoTooShortModal } from '../../../../components/ui/VideoTooShortModal';
+import { PermissionContainer } from '../../../../components/ui/PermissionContainer';
 import { showAlert } from '../../../../services/alertService';
 
 interface UploadModalProps {
@@ -235,6 +236,9 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedBodyPart, setSelectedBodyPart] = useState<BodyPart>('all');
   const [filteredMovements, setFilteredMovements] = useState(gymMovements.map(m => m.name));
+  
+  // Weight and reps state
+  const [weightReps, setWeightReps] = useState<{ weight: number; unit: 'kg' | 'lbs'; reps: number } | null>(null);
 
 
   // Reset states when modal becomes invisible
@@ -245,7 +249,9 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
       setShowWeightReps(false);
       setSelectedMovement('');
       setSearchQuery('');
+      setSelectedBodyPart('all');
       setFilteredMovements(gymMovements.map(m => m.name));
+      setWeightReps(null);
       setShowDuplicateModal(false);
       setShowVideoTooLongModal(false);
       setShowVideoTooShortModal(false);
@@ -422,8 +428,11 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
         // Reset state and set new video
         setSelectedVideo(null);
         setShowMovementSelection(false);
+        setShowWeightReps(false);
         setSelectedMovement('');
         setSearchQuery('');
+        setSelectedBodyPart('all');
+        setWeightReps(null);
         setSelectedVideo(asset);
       }
     } catch (error) {
@@ -570,6 +579,9 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
         }
       }
 
+      // Use weightReps state if available, otherwise fall back to data parameter
+      const finalWeightReps = weightReps || data;
+
       // Enqueue the loading lift without awaiting
       void addLoadingLift({
         videoLink: videoUri,
@@ -577,8 +589,8 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
         dateToday: date,
         timeToday: time,
         movementType: selectedMovement,
-        metricWeight: data.weight,
-        reps: data.reps,
+        metricWeight: finalWeightReps.weight,
+        reps: finalWeightReps.reps,
         assetId: baseAssetId,
         videoDurationSec: videoDurationSec,
         pipelineStage: 'upload_video',
@@ -638,6 +650,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
     setSearchQuery('');
     setSelectedBodyPart('all');
     setFilteredMovements(gymMovements.map(m => m.name));
+    setWeightReps(null);
     setShowDuplicateModal(false);
     setShowVideoTooLongModal(false);
     setDuplicateAssetId('');
@@ -656,7 +669,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
   // Show permission screen if no media library permission
   if (hasMediaPermission === false && isVisible) {
     return (
-      <SafeAreaView 
+      <SafeAreaView
         style={[
           styles.container,
           { backgroundColor: '#1d293d' }
@@ -672,115 +685,17 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
           </TouchableOpacity>
         </View>
 
-        <View style={styles.mediaPermissionContainer}>
-          {/* Dialog container with flex to center dialog */}
-          <View style={styles.dialogWrapper}>
-            {/* Title above the dialog */}
-            <Text style={[
-              styles.permissionTitle,
-            ]}>
-              {i18n.t('upload.mediaPermissionTitle')}
-            </Text>
-            {/* iOS-style Media Permission Dialog */}
-            <View style={[
-              styles.dialog,
-              {
-                backgroundColor: '#1C1C1E',
-                shadowColor: '#000000',
-              }
-            ]}>
-              {/* Text Area */}
-              <View style={[
-                styles.textArea,
-                {
-                  backgroundColor: '#2C2C2E',
-                }
-              ]}>
-                <Text style={[
-                  styles.dialogText,
-                  {
-                    color: '#FFFFFF',
-                    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
-                  }
-                ]}>
-                  {i18n.t('upload.mediaPermissionDialogText')}
-                </Text>
-              </View>
-              
-              {/* Buttons Container */}
-              <View style={[
-                styles.buttonContainer,
-                {
-                  borderTopColor: '#2C2C2E',
-                  borderTopWidth: 1,
-                }
-              ]}>
-                <View
-                  style={[
-                    styles.button,
-                    styles.dontAllowButton,
-                    {
-                      backgroundColor: '#2C2C2E',
-                      paddingVertical: 0,
-                      marginVertical: 0,
-                    }
-                  ]}
-                >
-                  <Text style={[
-                    styles.buttonText,
-                    {
-                      color: '#FFFFFF',
-                      fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
-                    }
-                  ]}>
-                    {i18n.t('upload.dontAllow')}
-                  </Text>
-                </View>
-                
-                <View style={[
-                  styles.buttonDivider,
-                  {
-                    backgroundColor: '#1C1C1E',
-                  }
-                ]} />
-                
-                <TouchableOpacity
-                  style={[
-                    styles.button,
-                    styles.allowButton,
-                    {
-                      backgroundColor: '#FFFFFF',
-                      paddingVertical: 0,
-                      marginVertical: 0,
-                    }
-                  ]}
-                  onPress={requestMediaPermissionFromUser}
-                  activeOpacity={0.8}
-                >
-                  <Text style={[
-                    styles.buttonText,
-                    {
-                      color: '#000000',
-                      fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
-                    }
-                  ]}>
-                    {i18n.t('upload.allow')}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-            
-            {/* Animated upwards pointing finger emoji */}
-            <Animated.View style={[
-              styles.animatedFingerContainer,
-              {
-                transform: [{ translateY: fingerTranslateY }]
-              }
-            ]}>
-              <Text style={styles.pointingEmoji}>👆</Text>
-            </Animated.View>
-          </View>
-        </View>
+        <PermissionContainer
+          title={i18n.t('upload.mediaPermissionTitle')}
+          dialogText={i18n.t('upload.mediaPermissionDialogText')}
+          fingerTranslateY={fingerTranslateY}
+          allowButtonText={i18n.t('upload.allow')}
+          dontAllowButtonText={i18n.t('upload.dontAllow')}
+          onDontAllow={() => {
+            // Don't allow just stays in this state
+          }}
+          onAllow={requestMediaPermissionFromUser}
+        />
       </SafeAreaView>
     );
   }
@@ -834,6 +749,8 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
         ) : showWeightReps ? (
           // Weight and Reps - shown after movement selection
           <WeightRepsScreen
+            weightReps={weightReps}
+            onChange={setWeightReps}
             onBack={handleWeightRepsBack}
             onUpload={handleFinalCompleteClicked}
           />
@@ -969,85 +886,11 @@ const styles = StyleSheet.create({
   uploadButtonTextDisabled: {
     color: '#C7C7CC',
   },
-  // Media permission styles (copied from RecordModal)
+  // Keep only permissionTopControls as it's still used for positioning the close button
   permissionTopControls: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
     paddingHorizontal: 20,
     paddingTop: 10,
-  },
-  mediaPermissionContainer: {
-    flex: 1,
-    paddingHorizontal: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  dialogWrapper: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  dialog: {
-    width: '100%',
-    maxWidth: 320,
-    borderRadius: 16,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 8,
-    overflow: 'hidden',
-  },
-  textArea: {
-    padding: 24,
-    paddingBottom: 20,
-  },
-  dialogText: {
-    fontSize: 17,
-    fontWeight: '600',
-    textAlign: 'center',
-    lineHeight: 22,
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    height: 44,
-  },
-  button: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  dontAllowButton: {
-    // Styled above
-  },
-  allowButton: {
-    // Styled above
-  },
-  buttonText: {
-    fontSize: 17,
-    fontWeight: '600',
-  },
-  buttonDivider: {
-    width: 1,
-    height: '100%',
-  },
-  pointingEmoji: {
-    fontSize: 40,
-    marginRight: 24
-  },
-  animatedFingerContainer: {
-    marginTop: 20,
-    marginLeft: '55%',
-  },
-  permissionTitle: {
-    fontSize: 32,
-    fontWeight: '800',
-    textAlign: 'center',
-    color: '#ffffff',
-    lineHeight: 38,
-    marginBottom: 30,
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
   },
 }); 

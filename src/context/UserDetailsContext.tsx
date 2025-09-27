@@ -53,14 +53,19 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
 
   useEffect(() => {
-    getUserId().then(setUserIdState).catch(() => setUserIdState(null));
+    getUserId()
+      .then((id) => setUserIdState(id ?? null)) // normalize undefined → null
+      .catch(() => setUserIdState(null));
     setIsLoaded(false);
   }, []);
 
   // Set loaded to true if there's no userId (onboarding case)
+  // Set loaded to false when userId is set (signed in case)
   useEffect(() => {
-    if (userId === null) {
+    if (userId == null) { // matches null or undefined
       setIsLoaded(true);
+    } else {
+      setIsLoaded(false); // Reset loading state when user signs in
     }
   }, [userId]);
 

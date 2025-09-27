@@ -8,13 +8,11 @@ import { uploadLiftVideo, uploadLiftThumbnail } from '../services/VideoUploadSer
 import { useLiftData, extractObjectKeyFromUrl, signPath } from './LiftDataContext';
 import { useSelectedDate } from './SelectedDateContext';
 import { useUserCheckIns } from './UserCheckInsContext';
-import { showAlert } from '../services/alertService';
 import { usePurchases } from './PurchasesContext';
 import { loadLoadingLifts, saveLoadingLifts } from '../services/loadingLiftsStorage';
 import { eventBus, AppEvents, LiftReadyPayload, LiftFailedPayload } from '../services/event-bus';
-import { hapticFeedback } from '../utils/haptic';
 import { LoadingLiftData, LoadingLiftsContextType, PipelineStage, RetryStage } from '../types/Lifts.d';
-import { autoDeleteLiftErrorCardData, searchLiftByAssetId, lookupLift, findLiftFailure } from '../services/liftService';
+import { autoDeleteLiftErrorCardData, lookupLift, findLiftFailure } from '../services/liftService';
 import { enqueueLiftAnalysis, getJobStatus, deleteJob } from '../services/liftApi';
 import { track } from '../services/analytics';
 
@@ -28,7 +26,6 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
   const [allLoadingLifts, setAllLoadingLifts] = useState<LoadingLiftData[]>([]);
   const [completedLifts, setCompletedLifts] = useState<ILiftData[]>([]);
   const [showStreakModal, setShowStreakModal] = useState<boolean>(false);
-  const [isHomeActive, setIsHomeActive] = useState<boolean>(false);
   const [autoDeletedLifts, setAutoDeletedLifts] = useState<Set<string>>(new Set());
   const { liftData, refreshLifts, formatDateForLift, getLiftById, addLift, updateLift, invalidateAndRefetch: invalidateAndRefetchLiftData } = useLiftData();
   const { selectedDate } = useSelectedDate();
@@ -133,17 +130,22 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
   // never downgrade a completed card
   const safeUpdateLift = (id: string, updater: (l: LoadingLiftData) => LoadingLiftData) => {
     setAllLoadingLifts(prev =>
-      prev.map(l => {
-        if (l.id !== id) return l;
-        if (l.status === 'completed') return l;     // lock
+      prev.flatMap(l => {
+        if (l.id !== id) return [l];
+        if (l.status === 'completed') return [l];     // lock
         const updated = updater(l);
-        
+
         // Track error if status changed to error
         if (updated.status === 'error' && l.status !== 'error' && updated.errorMessage) {
           trackErrorCard(id, updated.errorMessage);
         }
-        
-        return updated;
+
+        // Remove errored lifts immediately instead of keeping them
+        if (updated.status === 'error') {
+          return [];
+        }
+
+        return [updated];
       })
     );
   };
@@ -799,11 +801,13 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
   // Auto-persist loading lifts whenever state changes (with debouncing)
   useEffect(() => {
     if (persistTimer.current) clearTimeout(persistTimer.current);
-    
+
     persistTimer.current = setTimeout(() => {
-      void saveLoadingLifts(allLoadingLifts);
+      // Filter out errored lifts before saving to prevent rehydration
+      const withoutErrors = allLoadingLifts.filter(l => l.status !== 'error');
+      void saveLoadingLifts(withoutErrors);
     }, 200); // Small debounce to avoid chatty writes
-    
+
     return () => {
       if (persistTimer.current) clearTimeout(persistTimer.current);
     };
@@ -1019,12 +1023,6 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
     const liftId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
     if (!liftData.assetId) {
-      showAlert(
-        'Error', 
-        'An error occurred while processing your video. Please try again.',
-        undefined,
-        'LOADING_LIFTS_PROCESSING_ERROR'
-      );
       const now = Date.now();
       const startProg = 0.02;
       const errLift: LoadingLiftData = {
@@ -1099,13 +1097,6 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
         hasHdVideos,
       });
     } catch (error) {
-      showAlert(
-        'Upload Error', 
-        'Failed to upload your video. Please check your connection and try again.',
-        undefined,
-        'LOADING_LIFTS_UPLOAD_ERROR',
-        error
-      );
       // Track error event
       trackErrorOnce(liftId, 'UPLOAD_FAILED');
       safeUpdateLift(liftId, l => ({ 
@@ -1358,7 +1349,6 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
     setAllLoadingLifts([]);
     setCompletedLifts([]);
     setShowStreakModal(false);
-    setIsHomeActive(false);
     setAutoDeletedLifts(new Set());
     // Clear all refs
     inflightRef.current.clear();
@@ -1410,7 +1400,6 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
         isLiftAutoDeleted,
         removeLoadingLiftByFinalId,
         purgeAllLoadingLifts,
-        setHomeActive: setIsHomeActive,
       }}
     >
       {children}

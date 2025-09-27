@@ -11,24 +11,12 @@ interface LogoutModalProps {
 }
 
 export function LogoutModal({ isVisible, onClose, onConfirm }: LogoutModalProps) {
-  const [isLoggingOut, setIsLoggingOut] = React.useState(false);
-
-  React.useEffect(() => {
-    if (!isVisible) {
-      setIsLoggingOut(false);
-    }
-  }, [isVisible]);
 
   const handleLogout = async () => {
     hapticFeedback.success();
-    setIsLoggingOut(true);
-    try {
-      await onConfirm();
-      // Modal will be closed by parent component after successful logout
-    } catch (error) {
-      // If logout fails, reset the loading state
-      setIsLoggingOut(false);
-    }
+    // Close modal immediately and let parent handle the logout process
+    onClose();
+    onConfirm();
   };
 
   return (
@@ -66,26 +54,20 @@ export function LogoutModal({ isVisible, onClose, onConfirm }: LogoutModalProps)
 
           {/* Action buttons */}
           <View style={styles.buttonContainer}>
-            <TouchableOpacity 
-              style={[styles.button, styles.buttonOutlined]} 
+            <TouchableOpacity
+              style={[styles.button, styles.buttonOutlined]}
               onPress={() => {
                 hapticFeedback.selection();
                 onClose();
               }}
-              disabled={isLoggingOut}
             >
               <Text style={styles.buttonOutlinedText}>{i18n.t('settings.no')}</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
-              style={[styles.button, styles.buttonPrimary]} 
+            <TouchableOpacity
+              style={[styles.button, styles.buttonPrimary]}
               onPress={handleLogout}
-              disabled={isLoggingOut}
             >
-              {isLoggingOut ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
-              ) : (
-                <Text style={styles.buttonPrimaryText}>{i18n.t('settings.yes')}</Text>
-              )}
+              <Text style={styles.buttonPrimaryText}>{i18n.t('settings.yes')}</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>

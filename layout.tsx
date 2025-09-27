@@ -19,6 +19,7 @@ import { fetchUserById, requiresOnboarding } from './src/services/userService';
 import { usePurchases } from './src/context/PurchasesContext';
 import { useUserDetails } from './src/context/UserDetailsContext';
 import { useLiftData } from './src/context/LiftDataContext';
+import { useUserCheckIns } from './src/context/UserCheckInsContext';
 import { showAlert } from './src/services/alertService';
 
 type AppRoute = 'SPLASH' | 'ONBOARDING_WELCOME' | 'ONBOARDING_PAYMENT' | 'ACCOUNT_LOADING' | 'MAIN';
@@ -36,11 +37,25 @@ function AppContent() {
   const [passedInitialDataGate, setPassedInitialDataGate] = useState(false);
   const [extraDelayDone, setExtraDelayDone] = useState(false);
   const [splashHidden, setSplashHidden] = useState(false);
-  const [isNewUserSession, setIsNewUserSession] = useState(false);
 
   const { hasSubscription, isInitializing } = usePurchases();
-  const { isUserDetailsLoaded, refetchUserDetails } = useUserDetails();
-  const { isLiftDataLoaded } = useLiftData();
+  const { isUserDetailsLoaded, refetchUserDetails, userDetails, setSignedInUser: setUserDetailsSignedInUser } = useUserDetails();
+  const { isLiftDataLoaded, liftData } = useLiftData();
+  const { 
+    isLoading: isUserCheckInsLoading, 
+    data: checkIns, 
+    refetch: refetchUserCheckIns,
+    setSignedInUser: setCheckInsSignedInUser
+  } = useUserCheckIns();
+
+  // Centralized data gate check - single source of truth
+  const contextsReady =
+    isUserDetailsLoaded &&
+    isLiftDataLoaded &&
+    !isUserCheckInsLoading &&
+    userDetails != null &&
+    liftData != null &&
+    checkIns != null;
 
   // Hide splash screen when content is ready
   useEffect(() => {
@@ -127,7 +142,7 @@ function AppContent() {
           return;
         }
 
-        setRoute('MAIN');
+        goToMainGated();
       } catch {
         setRoute('ONBOARDING_WELCOME');
       } finally {
@@ -147,50 +162,91 @@ function AppContent() {
 
   // Set sticky data gate once per app session - wait for RevenueCat + initial data
   useEffect(() => {
-    if (!passedInitialDataGate && !isInitializing && isUserDetailsLoaded && isLiftDataLoaded) {
+    if (!passedInitialDataGate && !isInitializing && contextsReady) {
       setPassedInitialDataGate(true);
     }
-  }, [passedInitialDataGate, isInitializing, isUserDetailsLoaded, isLiftDataLoaded]);
+  }, [passedInitialDataGate, isInitializing, contextsReady]);
 
   // Set app ready when all conditions are met (don't wait for assets)
+  // For onboarding routes, only wait for extra delay. For MAIN, wait for data gate.
   useEffect(() => {
-    if (!isLoading && passedInitialDataGate && extraDelayDone) {
-      setAppReady(true);
+    const isOnboardingRoute =
+      route === 'ONBOARDING_WELCOME' ||
+      route === 'ONBOARDING_PAYMENT' ||
+      route === 'ACCOUNT_LOADING';
+
+    if (isOnboardingRoute) {
+      setAppReady(extraDelayDone); // true after delay
+      return;
     }
-  }, [isLoading, passedInitialDataGate, extraDelayDone]);
+
+    // MAIN requires data gate *every time* we land on MAIN
+    setAppReady(!isLoading && extraDelayDone && contextsReady);
+  }, [route, isLoading, extraDelayDone, contextsReady]);
 
   // Set content ready when app is ready and routing is decided
+  // For onboarding routes, use routingDecided. For MAIN, use appReady.
   useEffect(() => {
-    if (appReady && routingDecided) {
+    const needsDataGate = route === 'MAIN';
+    const canShow = needsDataGate ? appReady : routingDecided;
+    if (canShow) {
       const timer = setTimeout(() => setContentReady(true), 150);
       return () => clearTimeout(timer);
+    } else {
+      // Important when bouncing back to MAIN to re-apply gate
+      setContentReady(false);
     }
-  }, [appReady, routingDecided]);
+  }, [route, appReady, routingDecided]);
+
+  // Ensure splash can hide quickly for non-MAIN routes
+  useEffect(() => {
+    if (route !== 'MAIN' && routingDecided) {
+      setAppReady(true); // harmless if already true
+    }
+  }, [route, routingDecided]);
+
+  // Force re-gate on every MAIN transition
+  const goToMainGated = () => {
+    setAppReady(false);
+    setContentReady(false);
+    setRoute('MAIN');
+  };
 
   const handleOnboardingComplete = () => {
-    setIsNewUserSession(true); // Mark as new user since they just completed onboarding
-    setRoute('MAIN');
+    goToMainGated();
   };
   const handleSignIn = () => setRoute('ACCOUNT_LOADING');
   const handlePaymentComplete = () => handleOnboardingComplete();
 
   const handleAccountLoadingComplete = async () => {
-    await refetchUserDetails();
-    setIsNewUserSession(true); // Mark as new user session since they just completed account setup
-    setRoute('MAIN');
+    // Make sure providers *know* the userId immediately
+    const id = await getUserId().catch(() => null);
+    if (id) {
+      // Set the user ID in both contexts immediately
+      try { 
+        setUserDetailsSignedInUser?.(id); 
+      } catch {}
+      try { 
+        setCheckInsSignedInUser?.(id); 
+      } catch {}
+    }
+    
+    // Now refetch both contexts
+    await Promise.all([
+      refetchUserDetails(),
+      refetchUserCheckIns ? refetchUserCheckIns() : Promise.resolve(),
+    ]);
+    goToMainGated();            // land on MAIN but still wait for contextsReady
   };
 
   const handleUserNeedsOnboarding = () => setRoute('ONBOARDING_WELCOME');
 
   const handleLogout = async () => {
     try {
-      if ((global as any).resetUserDetailsContext) {
-        (global as any).resetUserDetailsContext();
-      }
-      await supabase.auth.signOut();
-      await removeUserId();
+      // Set route to onboarding immediately to prevent AccountLoadingScreen from showing
+      setRoute('ONBOARDING_WELCOME');
 
-      // Reset loading states and go to onboarding
+      // Reset loading states immediately
       setIsLoading(true);
       setAppReady(false);
       setContentReady(false);
@@ -198,7 +254,11 @@ function AppContent() {
       setPassedInitialDataGate(false);
       setExtraDelayDone(false);
 
-      setRoute('ONBOARDING_WELCOME');
+      if ((global as any).resetUserDetailsContext) {
+        (global as any).resetUserDetailsContext();
+      }
+      await supabase.auth.signOut();
+      await removeUserId();
     } catch (error) {
       showAlert(
         'Logout Error',
@@ -241,8 +301,17 @@ function AppContent() {
             <AccountLoadingScreen onComplete={handleAccountLoadingComplete} />
           </SafeAreaProvider>
         );
-      case 'MAIN':
-        return <MainAppLayout onLogout={handleLogout} isNewUser={isNewUserSession} isAppVisible={splashHidden} />;
+      case 'MAIN': {
+        if (!contextsReady) {
+          return (
+            <SafeAreaProvider>
+              <AccountLoadingScreen onComplete={handleAccountLoadingComplete} />
+            </SafeAreaProvider>
+          );
+        }
+
+        return <MainAppLayout onLogout={handleLogout} isAppVisible={splashHidden} />;
+      }
       default:
         return null;
     }
