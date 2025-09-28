@@ -490,7 +490,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#000000', // Black for selected
   },
   unselectedLanguageButton: {
-    backgroundColor: '#f3f4f6', // Gray for unselected
+    backgroundColor: '#F0F0F0', // Gray for unselected
   },
   languageOptionContent: {
     flexDirection: 'row',

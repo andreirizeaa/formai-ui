@@ -7,6 +7,8 @@ import * as ImagePicker from 'expo-image-picker';
 import i18n from '../../../../utils/i18n';
 import { hapticFeedback } from '../../../../utils/haptic';
 import { generateVideoThumbnail } from '../../../../utils/generateVideoThumbnail';
+import { getStableAssetId } from '../../../../utils/getStableAssetId';
+import { openAppSettings } from '../../../../utils/openAppSettings';
 import { VideoPreviewScreen } from '../common/VideoPreviewScreen';
 import { MovementSelectionScreen } from '../common/MovementSelectionScreen';
 import { PracticesScreen } from '../common/PracticesScreen';
@@ -65,7 +67,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
     try {
       const result = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!result.granted && result.canAskAgain === false) {
-        Linking.openSettings();
+        openAppSettings();
         setHasMediaPermission(false);
         return;
       }
@@ -283,9 +285,11 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
           }
         }
 
-        // Check for duplicate video
-        const fullAssetId = selectedVideo.assetId || '';
-        const baseAssetId = fullAssetId.split('/')[0]; // Remove /L0/001 suffix if present
+        // Check for duplicate video using stable asset ID
+        const baseAssetId = await getStableAssetId({ 
+          assetId: selectedVideo.assetId || undefined, 
+          uri: selectedVideo.uri 
+        });
         const isDuplicate = await checkDuplicateAssetId(baseAssetId);
         
         // Too long (> 60s)
@@ -327,14 +331,26 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
         i18n.t('upload.permissionRequired'),
         i18n.t('upload.permissionMessage'),
         () => {
-          // Open app settings
-          if (Platform.OS === 'ios') {
-            Linking.openURL('app-settings:');
-          } else {
-            Linking.openSettings();
-          }
+          // Open app settings with fallback
+          openAppSettings();
         },
         'UPLOAD_PERMISSION_REQUIRED'
+      );
+      return;
+    }
+
+    // Check if user has limited access and show upgrade prompt
+    if (permissionResult.accessPrivileges === 'limited') {
+      showAlert(
+        i18n.t('upload.fullAccessRequired'),
+        i18n.t('upload.fullAccessMessage'),
+        () => {
+          // Open app settings with fallback
+          openAppSettings();
+        },
+        'UPLOAD_LIMITED_ACCESS_UPGRADE',
+        undefined,
+        i18n.t('upload.grant')
       );
       return;
     }
@@ -399,12 +415,8 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
         i18n.t('upload.permissionRequired'),
         i18n.t('upload.permissionMessage'),
         () => {
-          // Open app settings
-          if (Platform.OS === 'ios') {
-            Linking.openURL('app-settings:');
-          } else {
-            Linking.openSettings();
-          }
+          // Open app settings with fallback
+          openAppSettings();
         },
         'UPLOAD_SELECT_NEW_VIDEO_PERMISSION_REQUIRED'
       );
@@ -478,9 +490,11 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
       }
     }
 
-    // Check for duplicate video
-    const fullAssetId = selectedVideo.assetId || '';
-    const baseAssetId = fullAssetId.split('/')[0]; // Remove /L0/001 suffix if present
+    // Check for duplicate video using stable asset ID
+    const baseAssetId = await getStableAssetId({ 
+      assetId: selectedVideo.assetId || undefined, 
+      uri: selectedVideo.uri 
+    });
     const isDuplicate = await checkDuplicateAssetId(baseAssetId);
     
     // Too long (> 60s)
@@ -559,15 +573,17 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
 
   const handleFinalCompleteClicked = async (data: { weight: number; unit: 'kg' | 'lbs'; reps: number }) => {
     const videoUri = selectedVideo?.uri || '';
-    const fullAssetId = selectedVideo?.assetId || '';
-    // Extract the base asset ID (remove /L0/001 suffix if present)
-    const baseAssetId = fullAssetId.split('/')[0];
     const { date, time } = getDateAndTime();
 
     // Close the modal immediately
     onClose();
 
     try {
+      // Generate stable asset ID using the selected video
+      const baseAssetId = await getStableAssetId({ 
+        assetId: selectedVideo!.assetId || undefined, 
+        uri: selectedVideo!.uri 
+      });
       const thumbnailUri = await generateVideoThumbnail(videoUri);
       
       // Get video duration
@@ -841,7 +857,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#F0F0F0',
     alignItems: 'center',
     justifyContent: 'center',
   },

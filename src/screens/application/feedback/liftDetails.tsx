@@ -456,7 +456,9 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
               activeOpacity={0.7}
             >
               <Text style={styles.dropdownOptionText}>{i18n.t('feedback.favourite')}</Text>
-              <Heart size={20} color="#FF3B30" fill={isFavourite ? "#FF3B30" : "none"} />
+              <View style={styles.dropdownIconContainer}>
+                <Heart size={20} color="#FF3B30" fill={isFavourite ? "#FF3B30" : "none"} />
+              </View>
             </TouchableOpacity>
             <View style={styles.dropdownDivider} />
             <TouchableOpacity 
@@ -465,7 +467,9 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
               activeOpacity={0.7}
             >
               <Text style={styles.dropdownOptionTextDestructive}>{i18n.t('feedback.manualDeleteLiftCardData')}</Text>
-              <Trash2 size={20} color="#FF3B30" />
+              <View style={styles.dropdownIconContainer}>
+                <Trash2 size={20} color="#FF3B30" />
+              </View>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
@@ -543,7 +547,7 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
             </TouchableOpacity>
 
             {/* Title */}
-            <Text style={styles.modalTitle}>Edit Weight</Text>
+            <Text style={styles.modalTitle}>{i18n.t('feedback.editWeight')}</Text>
 
             {/* Weight Input Section */}
             <View style={styles.editWeightSection}>
@@ -572,7 +576,7 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
                 style={[styles.modalButton, styles.modalButtonOutlined]} 
                 onPress={handleEditWeightCancel}
               >
-                <Text style={styles.modalButtonOutlinedText}>Cancel</Text>
+                <Text style={styles.modalButtonOutlinedText}>{i18n.t('feedback.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity 
                 style={[styles.modalButton, styles.modalButtonPrimary, (!isEditWeightValid() || isUpdatingWeight) && styles.modalButtonDisabled]} 
@@ -582,7 +586,7 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
                 {isUpdatingWeight ? (
                   <ActivityIndicator size="small" color="#FFFFFF" />
                 ) : (
-                  <Text style={[styles.modalButtonPrimaryText, (!isEditWeightValid() || isUpdatingWeight) && styles.modalButtonTextDisabled]}>Apply</Text>
+                  <Text style={[styles.modalButtonPrimaryText, (!isEditWeightValid() || isUpdatingWeight) && styles.modalButtonTextDisabled]}>{i18n.t('feedback.apply')}</Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -816,6 +820,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,
+    maxWidth: 180, // Ensure container doesn't expand
   },
   dropdownOption: {
     flexDirection: 'row',
@@ -824,23 +829,41 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 8,
+    minHeight: 44, // Ensure consistent height
+    width: '100%', // Take full width of container
+    maxWidth: 164, // Account for container padding (180 - 16)
   },
   dropdownOptionText: {
     fontSize: 14,
     fontWeight: '600',
     color: '#FFFFFF',
     fontFamily: 'SF Pro Display',
+    flex: 1,
+    flexWrap: 'wrap',
+    marginRight: 8,
+    maxWidth: 120, // Constrain text width to prevent pushing icon
   },
   dropdownOptionTextDestructive: {
     fontSize: 14,
     fontWeight: '600',
     color: '#FF6B6B',
     fontFamily: 'SF Pro Display',
+    flex: 1,
+    flexWrap: 'wrap',
+    marginRight: 8,
+    maxWidth: 120, // Constrain text width to prevent pushing icon
   },
   dropdownDivider: {
     height: 1,
     backgroundColor: '#333333',
     marginVertical: 8,
+  },
+  dropdownIconContainer: {
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
   },
   modalOverlay: {
     position: 'absolute',
@@ -991,8 +1014,9 @@ const styles = StyleSheet.create({
   },
   feedbackButtonCard: {
     backgroundColor: '#f1f5f9',
-    padding: 20,
-    marginTop: 20,
+    paddingHorizontal: 20,
+    paddingTop: 14,
+    paddingBottom: 10,
     position: 'absolute',
     bottom: 0,
     left: 0,
@@ -1040,7 +1064,7 @@ const styles = StyleSheet.create({
   },
   // Weight card styles
   weightCard: {
-    flex: 1.5, // Make weight card moderately wider
+    width: "auto",
     marginRight: 8,
   },
   weightCardTitleRow: {
@@ -1050,7 +1074,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   repsCard: {
-    width: 80,
+    width: "auto",
     flex: 0, // Override flex to use fixed width
   },
   editWeightButton: {
@@ -1064,7 +1088,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   accuracyCard: {
-    width: 110,
+    width: "auto",
     flex: 0, // Override flex to use fixed width
   },
   // Edit weight modal styles
@@ -1082,12 +1106,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#F0F0F0',
     borderRadius: 16,
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingVertical: 24,
     marginTop: 40,
-    marginBottom: 10,
   },
   editWeightInput: {
     flex: 1,

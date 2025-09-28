@@ -695,7 +695,7 @@ const pt = {
       },
     },
     feedback: {
-      liftDetails: 'Detalhes do Levantamento',
+      liftDetails: 'Detalhes',
       rangeOfMotionAcrossReps: 'Amplitude de movimento através das suas repetições',
       benchPress: 'Supino',
       formAccuracyAcrossReps: 'Precisão de forma através das suas repetições',
@@ -725,6 +725,8 @@ const pt = {
         weight: 'Falha ao atualizar peso',
         message: 'Tente novamente mais tarde',
       },
+      editWeight: 'Editar Peso',
+      apply: 'Aplicar',
     },
     common: {
       accuracy: 'Precisão',
@@ -852,6 +854,10 @@ const pt = {
       error: 'Erro',
       failedToSelectVideo: 'Falha ao selecionar vídeo. Tente novamente.',
       failedToGenerateThumbnail: 'Falha ao gerar miniatura do vídeo. Tente novamente.',
+      failedToCheckPermissions: 'Falha ao verificar permissões. Tente novamente.',
+      fullAccessRequired: 'Acesso Completo à Biblioteca de Fotos',
+      fullAccessMessage: 'Precisamos de acesso completo à sua biblioteca de fotos para fornecer todos os recursos do nosso aplicativo para gerenciamento de vídeos. Isso inclui detecção de duplicatas, organização adequada de vídeos e seleção perfeita de vídeos em toda a sua biblioteca.',
+      grant: 'Conceder',
       uploadVideo: 'Enviar Vídeo',
       selectNewVideo: 'Novo Vídeo',
       duplicateVideo: 'Vídeo Duplicado',
@@ -861,7 +867,7 @@ const pt = {
       tips: {
         goodLighting: 'Certifique-se de ter boa iluminação',
         stableVideo: 'Certifique-se de que o vídeo esteja estável',
-        sideView: 'Filme-se de lado',
+        sideView: 'Filme-se a 45 graus',
       },
       ok: 'OK',
       recordingFailed: 'Gravação falhou. Tente novamente.',

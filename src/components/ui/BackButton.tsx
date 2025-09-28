@@ -20,7 +20,7 @@ export function BackButton({ onPress }: BackButtonProps) {
 
   return (
     <TouchableOpacity 
-      style={[styles.container, { backgroundColor: isDark ? '#2C2C2E' : '#F4F4F8' }]} 
+      style={[styles.container, { backgroundColor: isDark ? '#2C2C2E' : '#F0F0F0' }]} 
       onPress={handlePress}
       activeOpacity={0.8}
     >

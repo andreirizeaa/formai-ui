@@ -723,7 +723,9 @@ const de = {
       "updateFailed": {
         "weight": "Gewicht konnte nicht aktualisiert werden",
         "message": "Bitte später erneut versuchen"
-      }
+      },
+      "editWeight": "Gewicht bearbeiten",
+      "apply": "Anwenden"
     },
     "common": {
       "accuracy": "Präzision",
@@ -851,6 +853,10 @@ const de = {
       "error": "Fehler",
       "failedToSelectVideo": "Videoauswahl fehlgeschlagen. Bitte erneut versuchen.",
       "failedToGenerateThumbnail": "Miniaturbild konnte nicht erstellt werden. Bitte erneut versuchen.",
+      "failedToCheckPermissions": "Berechtigungsprüfung fehlgeschlagen. Bitte erneut versuchen.",
+      "fullAccessRequired": "Vollzugriff auf Fotobibliothek",
+      "fullAccessMessage": "Wir benötigen vollen Zugriff auf Ihre Fotobibliothek, um Ihnen alle Funktionen unserer App für die Videoverwaltung zu bieten. Dazu gehören Duplikaterkennung, ordnungsgemäße Videoorganisation und nahtlose Videowahl in Ihrer gesamten Bibliothek.",
+      "grant": "Gewähren",
       "uploadVideo": "Video hochladen",
       "selectNewVideo": "Neues Video",
       "duplicateVideo": "Doppeltes Video",
@@ -860,7 +866,7 @@ const de = {
       "tips": {
         "goodLighting": "Sorge für gute Beleuchtung",
         "stableVideo": "Stabile Aufnahme sicherstellen",
-        "sideView": "Seitliche Perspektive wählen"
+        "sideView": "Filme dich in 45-Grad-Winkel"
       },
       "ok": "OK",
       "recordingFailed": "Aufnahme fehlgeschlagen. Bitte erneut versuchen.",

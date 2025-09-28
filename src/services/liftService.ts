@@ -306,6 +306,8 @@ export async function checkDuplicateAssetId(assetId: string): Promise<boolean> {
   if (!userId) return false;
   
   try {
+    // The function now supports both native asset IDs and hash-based IDs
+    // Both are stored in the same asset_id column, so the query remains the same
     const { data, error } = await supabase
       .from('lifts')
       .select('asset_id')

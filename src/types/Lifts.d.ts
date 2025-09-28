@@ -119,6 +119,7 @@ export interface LiftDataContextType {
   getLiftsByDate: (date: Date) => ILiftData[];
   getLiftsByDateString: (dateString: string) => ILiftData[];
   clearAllLifts: () => void;
+  upsertLift: (lift: ILiftData) => void;
   formatDateForLift: (date: Date) => string;
   refreshLifts: () => Promise<void>;
   invalidateAndRefetch: () => Promise<void>;

@@ -112,6 +112,33 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
     setLiftData([]);
   }, []);
 
+  const upsertLift = useCallback((lift: ILiftData) => {
+    // 1) Update local context state
+    setLiftData(prev => {
+      const idx = prev.findIndex(l => l.id === lift.id);
+      if (idx === -1) return [...prev, lift];
+      const next = [...prev];
+      next[idx] = { ...next[idx], ...lift };
+      return next;
+    });
+
+    // 2) Seed per-lift cache
+    queryClient.setQueryData(['lift', lift.id], lift);
+
+    // 3) Optimistically merge into the list cache so a refetch can't "remove" it
+    queryClient.setQueryData<ILiftData[] | undefined>(
+      ['lifts-by-user', userId],
+      (old) => {
+        const list = old ?? [];
+        const i = list.findIndex(l => l.id === lift.id);
+        if (i === -1) return [...list, lift];
+        const next = [...list];
+        next[i] = { ...next[i], ...lift };
+        return next;
+      }
+    );
+  }, [queryClient, userId]);
+
   // Function to save current lift data to AsyncStorage
   const saveLiftDataToStorage = useCallback(async (): Promise<void> => {
     try {
@@ -384,6 +411,7 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
     getLiftsByDate,
     getLiftsByDateString,
     clearAllLifts,
+    upsertLift,
     formatDateForLift,
     refreshLifts,
     invalidateAndRefetch,
@@ -406,6 +434,7 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
     getLiftsByDate,
     getLiftsByDateString,
     clearAllLifts,
+    upsertLift,
     formatDateForLift,
     refreshLifts,
     invalidateAndRefetch,

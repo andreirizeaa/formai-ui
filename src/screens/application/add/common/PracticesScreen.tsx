@@ -47,9 +47,9 @@ export function PracticesScreen({
           </View>
           <View style={styles.tipImageContainer}>
             <Image
-              source={require('../../../../../assets/recording-tip.jpg')}
+              source={require('../../../../../assets/recording-tip.png')}
               style={styles.tipImage}
-              contentFit="cover"
+              contentFit="contain"
             />
           </View>
         </View>
@@ -104,11 +104,10 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   tipImageContainer: {
-    width: '60%',
+    width: '70%',
     height: 330,
     borderRadius: 12,
     overflow: 'hidden',
-    backgroundColor: '#F0F0F0',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -128,7 +127,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 3,
   },
@@ -171,8 +170,8 @@ const styles = StyleSheet.create({
   bottomControls: {
     justifyContent: 'flex-end',
     width: '100%',
-    paddingBottom: 40,
     paddingHorizontal: 20,
+    paddingBottom: 20,
   },
   buttonStack: {
     width: '100%',

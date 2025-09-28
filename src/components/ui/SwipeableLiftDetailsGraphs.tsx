@@ -284,6 +284,8 @@ const styles = StyleSheet.create({
     color: '#000000',
     fontFamily: 'SF Pro Display',
     marginBottom: 12,
+    flexWrap: 'wrap',
+    maxWidth: CARD_WIDTH - 32, // Account for padding (16 * 2)
   },
   chartContainer: {
     backgroundColor: 'transparent',
@@ -291,7 +293,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     alignItems: 'center',
     width: '100%',
-    marginLeft: -24,
+    marginLeft: -15,
   },
   chart: {
     borderRadius: 16,

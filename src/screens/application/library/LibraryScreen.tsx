@@ -632,7 +632,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#F0F0F0',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -697,7 +697,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 7,
     borderRadius: 16,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#F0F0F0',
     gap: 4,
     shadowColor: '#000000',
     shadowOffset: {
@@ -714,7 +714,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 7,
     borderRadius: 16,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#F0F0F0',
     gap: 4,
     shadowColor: '#000000',
     shadowOffset: {
@@ -748,7 +748,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 7,
     borderRadius: 16,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#F0F0F0',
     gap: 4,
     shadowColor: '#000000',
     shadowOffset: {

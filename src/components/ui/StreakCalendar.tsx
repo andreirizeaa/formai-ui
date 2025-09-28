@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#ed694a', // Orange color for streak days
   },
   noStreakCircle: {
-    backgroundColor: '#F4F4F8', // Light gray color for no streak days
+    backgroundColor: '#F0F0F0', // Light gray color for no streak days
   },
   dayName: {
     fontSize: 16,

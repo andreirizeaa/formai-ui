@@ -48,7 +48,7 @@ export function PermissionContainer({
           <View style={[
             styles.textArea,
             {
-              backgroundColor: isDark ? '#2C2C2E' : '#f3f4f6',
+              backgroundColor: isDark ? '#2C2C2E' : '#F0F0F0',
             }
           ]}>
             <Text style={[
@@ -75,7 +75,7 @@ export function PermissionContainer({
                 styles.button,
                 styles.dontAllowButton,
                 {
-                  backgroundColor: isDark ? '#2C2C2E' : '#f3f4f6',
+                  backgroundColor: isDark ? '#2C2C2E' : '#F0F0F0',
                 }
               ]}
               onPress={() => {
