@@ -724,7 +724,9 @@ const ro = {
       "updateFailed": {
         "weight": "Actualizarea greutății a eșuat",
         "message": "Te rugăm să încerci mai târziu"
-      }
+      },
+      "editWeight": "Editează Greutatea",
+      "apply": "Aplică"
     },
     "common": {
       "accuracy": "Precizie",
@@ -852,6 +854,10 @@ const ro = {
       "error": "Eroare",
       "failedToSelectVideo": "Selectarea videoclipului a eșuat. Încearcă din nou.",
       "failedToGenerateThumbnail": "Generarea miniaturii a eșuat. Încearcă din nou.",
+      "failedToCheckPermissions": "Verificarea permisiunilor a eșuat. Încearcă din nou.",
+      "fullAccessRequired": "Acces Complet la Biblioteca de Fotografii",
+      "fullAccessMessage": "Avem nevoie de acces complet la biblioteca ta de fotografii pentru a-ți oferi toate funcționalitățile aplicației noastre pentru gestionarea videoclipurilor. Aceasta include detectarea duplicatelor, organizarea corespunzătoare a videoclipurilor și selecția fără probleme a videoclipurilor din întreaga ta bibliotecă.",
+      "grant": "Acordă",
       "uploadVideo": "Încarcă video",
       "selectNewVideo": "Video nou",
       "duplicateVideo": "Video duplicat",
@@ -861,7 +867,7 @@ const ro = {
       "tips": {
         "goodLighting": "Asigură iluminare bună",
         "stableVideo": "Asigură o filmare stabilă",
-        "sideView": "Filmează din profil (lateral)"
+        "sideView": "Filmează-te la 45 de grade"
       },
       "ok": "OK",
       "recordingFailed": "Înregistrarea a eșuat. Încearcă din nou.",

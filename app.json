@@ -65,6 +65,7 @@
       "bundleIdentifier": "com.useformai.formai",
       "buildNumber": "1",
       "supportsTablet": true,
+      "deploymentTarget": "17.0",
       "infoPlist": {
         "UIBackgroundModes": [
           "remote-notification",

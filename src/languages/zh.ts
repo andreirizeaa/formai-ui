@@ -725,6 +725,8 @@ const zh = {
         weight: '重量更新失败',
         message: '请稍后重试',
       },
+      editWeight: '编辑重量',
+      apply: '应用',
     },
     common: {
       accuracy: '准确性',
@@ -852,6 +854,10 @@ const zh = {
       error: '错误',
       failedToSelectVideo: '选择视频失败。请重试。',
       failedToGenerateThumbnail: '生成视频缩略图失败。请重试。',
+      failedToCheckPermissions: '检查权限失败。请重试。',
+      fullAccessRequired: '需要完全访问照片库',
+      fullAccessMessage: '我们需要完全访问您的照片库，以便为您提供我们应用程序中所有视频管理功能。这包括重复检测、适当的视频组织以及在整个库中无缝选择视频。',
+      grant: '授权',
       uploadVideo: '上传视频',
       selectNewVideo: '新视频',
       duplicateVideo: '重复视频',
@@ -861,7 +867,7 @@ const zh = {
       tips: {
         goodLighting: '确保良好的照明',
         stableVideo: '确保视频稳定',
-        sideView: '从侧面拍摄自己的视频',
+        sideView: '以45度角拍摄自己的视频',
       },
       ok: 'OK',
       recordingFailed: '录制失败。请重试。',

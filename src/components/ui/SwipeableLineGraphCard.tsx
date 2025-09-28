@@ -207,30 +207,32 @@ const ChartPage = React.memo(function ChartPage({
             <View style={styles.headerLeft}>
               <View style={styles.titleRow}>
                 <Text style={styles.performanceCardLabel}>{item.title}</Text>
-                {!isPlaceholder && (
-                  <TouchableOpacity
-                    onPress={() => {
-                      // Track progress screen clicks
-                      const eventName = chartType === 'accuracyPerWeight' ? 'AW info' : 'AT info';
-                      track('Progress screen clicks', { event: eventName });
-                      onInfoPress?.();
-                    }}
-                    activeOpacity={0.7}
-                    style={styles.titleIcon}
-                  >
-                    <CircleQuestionMark width={20} height={20} color="#000" />
-                  </TouchableOpacity>
-                )}
               </View>
               <Text style={styles.performanceCardSubtitle}>{item.subtitle}</Text>
             </View>
-            {item.liftCount > 0 && (
-              <View style={styles.liftCountPill}>
-                <Text style={styles.liftCountText}>
-                  {`${item.liftCount} lift${item.liftCount === 1 ? '' : 's'}`}
-                </Text>
-              </View>
-            )}
+            <View style={styles.rightSection}>
+              {!isPlaceholder && (
+                <TouchableOpacity
+                  onPress={() => {
+                    // Track progress screen clicks
+                    const eventName = chartType === 'accuracyPerWeight' ? 'AW info' : 'AT info';
+                    track('Progress screen clicks', { event: eventName });
+                    onInfoPress?.();
+                  }}
+                  activeOpacity={0.7}
+                  style={styles.titleIcon}
+                >
+                  <CircleQuestionMark width={20} height={20} color="#000" />
+                </TouchableOpacity>
+              )}
+              {item.liftCount > 0 && (
+                <View style={styles.liftCountPill}>
+                  <Text style={styles.liftCountText}>
+                    {`${item.liftCount} lift${item.liftCount === 1 ? '' : 's'}`}
+                  </Text>
+                </View>
+              )}
+            </View>
           </View>
 
           <View style={styles.chartContainer}>
@@ -720,7 +722,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#F0F0F0',
     borderRadius: 12,
     padding: 4,
     // Platform-specific shadow optimization
@@ -732,11 +734,13 @@ const styles = StyleSheet.create({
     }),
   },
   segment: {
-    flex: 1,
+    flexGrow: 1,
+    flexShrink: 0,
     paddingVertical: 10,
-    paddingHorizontal: 12,
+    paddingHorizontal: 8,
     borderRadius: 8,
     alignItems: 'center',
+    marginHorizontal: 1, // Small margin between segments
   },
   segmentInactive: {},
   segmentActive: {
@@ -803,11 +807,15 @@ const styles = StyleSheet.create({
   },
   titleRow: {
     flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  rightSection: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 2,
   },
   titleIcon: {
-    marginLeft: 4,
-    marginBottom: 6,
+    padding: 4,
   },
   performanceCardLabel: {
     fontSize: 22,
@@ -853,7 +861,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   liftCountPill: {
-    backgroundColor: '#f4f4f8',
+    backgroundColor: '#F0F0F0',
     width: 'auto',
     paddingHorizontal: 12,
     paddingVertical: 6,

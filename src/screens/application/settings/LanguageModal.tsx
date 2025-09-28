@@ -102,7 +102,7 @@ export function LanguageModal({ isVisible, onClose }: LanguageModalProps) {
                   style={[
                     styles.languageButton,
                     {
-                      backgroundColor: isSelected ? '#000000' : '#F4F4F8',
+                      backgroundColor: isSelected ? '#000000' : '#F0F0F0',
                     }
                   ]}
                   onPress={() => handleLanguageSelect(language.code)}

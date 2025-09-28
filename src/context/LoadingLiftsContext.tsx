@@ -15,6 +15,7 @@ import { LoadingLiftData, LoadingLiftsContextType, PipelineStage, RetryStage } f
 import { autoDeleteLiftErrorCardData, lookupLift, findLiftFailure } from '../services/liftService';
 import { enqueueLiftAnalysis, getJobStatus, deleteJob } from '../services/liftApi';
 import { track } from '../services/analytics';
+import { getStableAssetId } from '../utils/getStableAssetId';
 
 const LoadingLiftsContext = createContext<LoadingLiftsContextType | undefined>(undefined);
 
@@ -27,7 +28,7 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
   const [completedLifts, setCompletedLifts] = useState<ILiftData[]>([]);
   const [showStreakModal, setShowStreakModal] = useState<boolean>(false);
   const [autoDeletedLifts, setAutoDeletedLifts] = useState<Set<string>>(new Set());
-  const { liftData, refreshLifts, formatDateForLift, getLiftById, addLift, updateLift, invalidateAndRefetch: invalidateAndRefetchLiftData } = useLiftData();
+  const { liftData, refreshLifts, formatDateForLift, getLiftById, addLift, updateLift, upsertLift, invalidateAndRefetch: invalidateAndRefetchLiftData } = useLiftData();
   const { selectedDate } = useSelectedDate();
   const { optimisticAddToday, invalidateAndRefetch: invalidateUserCheckIns } = useUserCheckIns();
   const { hasHdVideos } = usePurchases();
@@ -150,6 +151,94 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
     );
   };
 
+  async function mapApiDataToFinalData(data: any): Promise<ILiftData> {
+    const rawThumb = data.thumbnail_url ?? data.thumbnailURL;
+    let thumbnailURL = rawThumb;
+    try {
+      const key = await extractObjectKeyFromUrl(rawThumb);
+      if (key) thumbnailURL = await signPath(key) ?? rawThumb;
+    } catch (_) {
+      // keep raw URL; don't fail the completion
+    }
+
+    // NEW: video sources (raw + pose)
+    const rawVideo = data.raw_video_url ?? data.rawVideoURL;
+    const poseVideo = data.pose_video_url ?? data.poseVideoURL;
+
+    let rawVideoURL = rawVideo;
+    let poseVideoURL = poseVideo;
+
+    try {
+      const k = await extractObjectKeyFromUrl(typeof rawVideo === 'string' ? rawVideo : undefined);
+      if (k) rawVideoURL = (await signPath(k)) ?? rawVideo;
+    } catch {}
+
+    try {
+      const k = await extractObjectKeyFromUrl(typeof poseVideo === 'string' ? poseVideo : undefined);
+      if (k) poseVideoURL = (await signPath(k)) ?? poseVideo;
+    } catch {}
+
+    const rawFeedback = Array.isArray(data.analysis?.feedback) ? data.analysis.feedback : [];
+    const signedFeedback = await Promise.all(rawFeedback.map(async (f: any) => {
+      try {
+        const k = await extractObjectKeyFromUrl(typeof f.imageURL === 'string' ? f.imageURL : undefined);
+        const u = k ? await signPath(k) : undefined;
+        return { ...f, imageURL: u ?? f.imageURL };
+      } catch {
+        return f; // don't block completion
+      }
+    }));
+
+    // Normalize/format date to DD-MM-YYYY using LiftDataContext's helper
+    const rawDate: any = (data.lift_date ?? data.liftDate) as any;
+    let formattedLiftDate: string | null = null;
+    try {
+      if (typeof rawDate === 'string') {
+        if (/^\d{4}-\d{2}-\d{2}/.test(rawDate)) {
+          // ISO-like string: safe to parse
+          formattedLiftDate = formatDateForLift(new Date(rawDate));
+        } else if (/^\d{2}-\d{2}-\d{4}$/.test(rawDate)) {
+          // Already in DD-MM-YYYY
+          formattedLiftDate = rawDate;
+        } else {
+          // Fallback attempt
+          const d = new Date(rawDate);
+          formattedLiftDate = isNaN(d.getTime()) ? null : formatDateForLift(d);
+        }
+      } else if (rawDate instanceof Date) {
+        formattedLiftDate = formatDateForLift(rawDate);
+      }
+    } catch (_) {
+      formattedLiftDate = null;
+    }
+
+    return {
+      id: data.id,
+      isFavourite: !!(data.is_favourite ?? data.isFavourite),
+      liftType: data.lift_type ?? data.liftType,
+      liftDate: formattedLiftDate || formatDateForLift(new Date()),
+      liftTime: data.lift_time ?? data.liftTime,
+      metricWeight: Number(data.metric_weight ?? data.metricWeight),
+      reps: Number(data.reps),
+      rawVideoURL,          // <-- now populated
+      poseVideoURL,         // <-- now populated
+      thumbnailURL,
+      analysis: {
+        accuracy: Number(data.analysis?.accuracy ?? 0),
+        lineGraphValues: Array.isArray(data.analysis?.lineGraphValues) ? data.analysis.lineGraphValues : [],
+        barChartValues: Array.isArray(data.analysis?.barChartValues) ? data.analysis.barChartValues : [],
+        feedback: signedFeedback,
+      },
+    };
+  }
+
+  // Helper function to write through completion to both contexts
+  const writeThroughCompletion = useCallback(async (tempId: string, serverRow: any) => {
+    const mapped = await mapApiDataToFinalData(serverRow);
+    upsertLift(mapped);
+    markCompleted(tempId, mapped);
+  }, [upsertLift]);
+
   // one place to mark completion
   const markCompleted = (id: string, mapped: ILiftData) => {
     setAllLoadingLifts(prev =>
@@ -215,7 +304,7 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
 
   // Utility function to compute simulation duration
   const computeSimDurationMs = (videoDurationSec?: number) =>
-    (((videoDurationSec || 10) * 4) + 90) * 1000; // same formula as before
+    (((videoDurationSec || 10) * 4) + 30) * 1000; // same formula as before
 
   // Wall-clock progress calculation
   const tickProgressFromClock = () => {
@@ -224,7 +313,7 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
       const updated = prev.map(l => {
         if (!(l.status === 'uploading' || l.status === 'processing')) return l;
         const start = l.simStartAt ?? now;
-        const dur = l.simDurationMs ?? computeSimDurationMs(l.videoDurationSec);
+        const dur = computeSimDurationMs(l.videoDurationSec);
         const base = l.simStartProgress ?? 0.02;
         const frac = Math.min(0.95, Math.max(base, (now - start) / dur));
         if (typeof l.uiProgress === 'number' && frac <= l.uiProgress) return l;
@@ -300,21 +389,15 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
             void autoDeleteErrorLift(l.id);
           }
         } else {
-          const mapped = await mapApiDataToFinalData(found);
-          // Immediately seed LiftDataContext with the completed server lift to avoid waiting on refetch
-          try {
-            const existing = getLiftById(mapped.id);
-            if (existing) {
-              updateLift(mapped.id, mapped);
-            } else {
-              addLift(mapped);
-            }
-          } catch (_) {}
-          markCompleted(l.id, mapped); // sets status=completed, uiProgress=1
+          // Use writeThroughCompletion to ensure immediate update to LiftDataContext
+          await writeThroughCompletion(l.id, found);
           // Streak write may have occurred; show instant optimistic bump
           try {
             const uid = await getUserId();
-            if (uid) try { optimisticAddToday?.({ userId: uid }); } catch (_) {}
+            if (uid) {
+              try { optimisticAddToday?.({ userId: uid }); } catch (_) {}
+              try { invalidateUserCheckIns({ userId: uid }); } catch (_) {}
+            }
           } catch (_) {}
           // If jobs API marks streak, invalidate check-ins to fetch latest streak value
           try {
@@ -322,7 +405,10 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
             if (job?.is_streak && !streakShownForRef.current.has(key)) {
               try {
                 const uid2 = await getUserId();
-                if (uid2) try { optimisticAddToday?.({ userId: uid2 }); } catch (_) {}
+                if (uid2) {
+                  try { optimisticAddToday?.({ userId: uid2 }); } catch (_) {}
+                  try { invalidateUserCheckIns({ userId: uid2 }); } catch (_) {}
+                }
               } catch (_) {}
               streakShownForRef.current.add(key);
             }
@@ -332,7 +418,10 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
           try { await invalidateAndRefetchLiftData(); } catch (_) {}
           // Wait for the final lift to be visible in LiftDataContext before pruning
           let isPresent = false;
-          try { isPresent = await waitForLiftInContext(mapped.id); } catch (_) { isPresent = false; }
+          try { 
+            const mapped = await mapApiDataToFinalData(found);
+            isPresent = await waitForLiftInContext(mapped.id); 
+          } catch (_) { isPresent = false; }
           // PRUNE only when we can see the final card in LiftDataContext
           if (isPresent) {
             setAllLoadingLifts(prev => prev.filter(x => x.id !== l.id));
@@ -401,7 +490,10 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
               if (job?.is_streak && !streakShownForRef.current.has(key)) {
                 try {
                   const uid3 = await getUserId();
-                  if (uid3) try { optimisticAddToday?.({ userId: uid3 }); } catch (_) {}
+                  if (uid3) {
+                    try { optimisticAddToday?.({ userId: uid3 }); } catch (_) {}
+                    try { invalidateUserCheckIns({ userId: uid3 }); } catch (_) {}
+                  }
                 } catch (_) {}
                 streakShownForRef.current.add(key);
               }
@@ -458,11 +550,8 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
           }
         } catch (_) {}
         const mapped = await mapApiDataToFinalData(row);
-        // Seed LiftDataContext so the details screen works instantly
-        try {
-          const existing = getLiftById(mapped.id);
-          if (existing) updateLift(mapped.id, mapped); else addLift(mapped);
-        } catch (_) {}
+        // Use upsertLift to ensure immediate update to LiftDataContext
+        upsertLift(mapped);
         // If there's a matching local loading lift by final id, complete it; otherwise just ensure list refresh
         if (local) {
           markCompleted(local.id, mapped);
@@ -669,7 +758,7 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
               return {
                 ...l,
                 simStartAt: Date.now(),
-                simDurationMs: l.simDurationMs || computeSimDurationMs(l.videoDurationSec),
+                simDurationMs: computeSimDurationMs(l.videoDurationSec),
                 simStartProgress: typeof l.uiProgress === 'number' ? Math.max(0.02, l.uiProgress) : 0.02,
               };
             }
@@ -722,8 +811,7 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
         for (const p of pending) {
           const local = latestLiftsRef.current.find(x => x.assetId === p.assetId && x.status !== 'completed')
           if (local) {
-            const mapped = await mapApiDataToFinalData(p.lift)
-            markCompleted(local.id, mapped)
+            await writeThroughCompletion(local.id, p.lift)
             // Realtime will handle streak updates; no explicit invalidation needed
             // Try to trigger streak if the job marks it
             try {
@@ -733,6 +821,7 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
                 if (job?.is_streak && !streakShownForRef.current.has(p.assetId)) {
                   streakShownForRef.current.add(p.assetId)
                 }
+                try { invalidateUserCheckIns({ userId }); } catch (_) {}
               }
             } catch (_) {}
           }
@@ -832,8 +921,7 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
               for (const p of pending) {
                 const local = latestLiftsRef.current.find(x => x.assetId === p.assetId && x.status !== 'completed')
                 if (local) {
-                  const mapped = await mapApiDataToFinalData(p.lift)
-                  markCompleted(local.id, mapped)
+                  await writeThroughCompletion(local.id, p.lift)
                   // Realtime will handle streak updates after foreground
                   // Try to trigger streak if the job marks it
                   try {
@@ -843,6 +931,7 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
                       if (job?.is_streak && !streakShownForRef.current.has(p.assetId)) {
                         streakShownForRef.current.add(p.assetId)
                       }
+                      try { invalidateUserCheckIns({ userId }); } catch (_) {}
                     }
                   } catch (_) {}
                 }
@@ -887,9 +976,14 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
                   .eq('asset_id', key)
                   .maybeSingle()
                 if (lift) {
-                  const mapped = await mapApiDataToFinalData(lift)
-                  markCompleted(l.id, mapped)
+                  await writeThroughCompletion(l.id, lift)
                   // Realtime will deliver streak updates; no explicit invalidation needed
+                  try {
+                    const userId = await getUserId();
+                    if (userId) {
+                      try { invalidateUserCheckIns({ userId }); } catch (_) {}
+                    }
+                  } catch (_) {}
                 }
               })
             )
@@ -948,15 +1042,19 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
                 const local = latestLiftsRef.current.find(x => x.assetId === assetId && x.status !== 'completed');
                 if (!local) return;
                 const mapped = await mapApiDataToFinalData(row);
-                // Seed LiftDataContext as well
-                try {
-                  const existing = getLiftById(mapped.id);
-                  if (existing) updateLift(mapped.id, mapped); else addLift(mapped);
-                } catch (_) {}
+                // Use upsertLift to ensure immediate update to LiftDataContext
+                upsertLift(mapped);
                 markCompleted(local.id, mapped);
                 // Invalidate LiftDataContext to ensure fresh data is fetched
                 try {
                   invalidateAndRefetchLiftData();
+                } catch (_) {}
+                // Invalidate user check-ins to refresh streak data
+                try {
+                  const userId = await getUserId();
+                  if (userId) {
+                    try { invalidateUserCheckIns({ userId }); } catch (_) {}
+                  }
                 } catch (_) {}
               } catch (_) {}
             }
@@ -1022,7 +1120,17 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
   const addLoadingLift = async (liftData: Omit<LoadingLiftData, 'id' | 'isComplete' | 'status' | 'pipelineStage'>): Promise<string> => {
     const liftId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
-    if (!liftData.assetId) {
+    // Try to derive assetId if missing
+    let assetId = liftData.assetId;
+    if (!assetId && liftData.videoLink) {
+      try {
+        assetId = await getStableAssetId({ uri: liftData.videoLink });
+      } catch (error) {
+        console.warn('Failed to generate stable asset ID:', error);
+      }
+    }
+
+    if (!assetId) {
       const now = Date.now();
       const startProg = 0.02;
       const errLift: LoadingLiftData = {
@@ -1052,7 +1160,7 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
     const newLift: LoadingLiftData = {
       ...liftData,
       id: liftId,
-      assetId: liftData.assetId,
+      assetId: assetId,
       status: 'processing',
       isComplete: false,
       pipelineStage: 'analyze',
@@ -1076,7 +1184,7 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
 
       // Upload video
       if (!liftData.videoLink) throw new Error('No video link provided');
-      const { publicUrl: videoUrl } = await uploadLiftVideo(userId, liftId, liftData.videoLink, liftData.assetId, hasHdVideos);
+      const { publicUrl: videoUrl } = await uploadLiftVideo(userId, liftId, liftData.videoLink, assetId, hasHdVideos);
       setAllLoadingLifts(prev => prev.map(l => l.id === liftId ? { ...l, uploadedVideoUrl: videoUrl } : l));
 
       // Upload thumbnail
@@ -1092,7 +1200,7 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
           ...liftData,
           videoLink: videoUrl,       // uploaded raw URL
           thumbnailUri: thumbUrl, // uploaded thumb URL
-          assetId: liftData.assetId,
+          assetId: assetId,
         },
         hasHdVideos,
       });
@@ -1126,86 +1234,6 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
     };
   }
 
-  async function mapApiDataToFinalData(data: any): Promise<ILiftData> {
-    const rawThumb = data.thumbnail_url ?? data.thumbnailURL;
-    let thumbnailURL = rawThumb;
-    try {
-      const key = await extractObjectKeyFromUrl(rawThumb);
-      if (key) thumbnailURL = await signPath(key) ?? rawThumb;
-    } catch (_) {
-      // keep raw URL; don't fail the completion
-    }
-
-    // NEW: video sources (raw + pose)
-    const rawVideo = data.raw_video_url ?? data.rawVideoURL;
-    const poseVideo = data.pose_video_url ?? data.poseVideoURL;
-
-    let rawVideoURL = rawVideo;
-    let poseVideoURL = poseVideo;
-
-    try {
-      const k = await extractObjectKeyFromUrl(typeof rawVideo === 'string' ? rawVideo : undefined);
-      if (k) rawVideoURL = (await signPath(k)) ?? rawVideo;
-    } catch {}
-
-    try {
-      const k = await extractObjectKeyFromUrl(typeof poseVideo === 'string' ? poseVideo : undefined);
-      if (k) poseVideoURL = (await signPath(k)) ?? poseVideo;
-    } catch {}
-
-    const rawFeedback = Array.isArray(data.analysis?.feedback) ? data.analysis.feedback : [];
-    const signedFeedback = await Promise.all(rawFeedback.map(async (f: any) => {
-      try {
-        const k = await extractObjectKeyFromUrl(typeof f.imageURL === 'string' ? f.imageURL : undefined);
-        const u = k ? await signPath(k) : undefined;
-        return { ...f, imageURL: u ?? f.imageURL };
-      } catch {
-        return f; // don't block completion
-      }
-    }));
-
-    // Normalize/format date to DD-MM-YYYY using LiftDataContext's helper
-    const rawDate: any = (data.lift_date ?? data.liftDate) as any;
-    let formattedLiftDate: string | null = null;
-    try {
-      if (typeof rawDate === 'string') {
-        if (/^\d{4}-\d{2}-\d{2}/.test(rawDate)) {
-          // ISO-like string: safe to parse
-          formattedLiftDate = formatDateForLift(new Date(rawDate));
-        } else if (/^\d{2}-\d{2}-\d{4}$/.test(rawDate)) {
-          // Already in DD-MM-YYYY
-          formattedLiftDate = rawDate;
-        } else {
-          // Fallback attempt
-          const d = new Date(rawDate);
-          formattedLiftDate = isNaN(d.getTime()) ? null : formatDateForLift(d);
-        }
-      } else if (rawDate instanceof Date) {
-        formattedLiftDate = formatDateForLift(rawDate);
-      }
-    } catch (_) {
-      formattedLiftDate = null;
-    }
-
-    return {
-      id: data.id,
-      isFavourite: !!(data.is_favourite ?? data.isFavourite),
-      liftType: data.lift_type ?? data.liftType,
-      liftDate: formattedLiftDate || formatDateForLift(new Date()),
-      liftTime: data.lift_time ?? data.liftTime,
-      metricWeight: Number(data.metric_weight ?? data.metricWeight),
-      reps: Number(data.reps),
-      rawVideoURL,          // <-- now populated
-      poseVideoURL,         // <-- now populated
-      thumbnailURL,
-      analysis: {
-        accuracy: Number(data.analysis?.accuracy ?? 0),
-        lineGraphValues: Array.isArray(data.analysis?.lineGraphValues) ? data.analysis.lineGraphValues : [],
-        barChartValues: Array.isArray(data.analysis?.barChartValues) ? data.analysis.barChartValues : [],
-        feedback: signedFeedback,
-      },
-    };
-  }
 
   const completeLift = (id: string, analysisData?: any) => {
     // No-op: streak modal is no longer triggered manually

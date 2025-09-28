@@ -278,7 +278,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#F0F0F0',
     paddingHorizontal: 15,
     paddingRight: 50, // Make room for the clear button
     paddingVertical: 0,
@@ -309,11 +309,11 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    borderBottomColor: '#F0F0F0',
     minHeight: 44,
   },
   movementItemSelected: {
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#F0F0F0',
   },
   movementItemText: {
     fontSize: 16,

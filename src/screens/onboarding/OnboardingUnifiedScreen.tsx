@@ -9,6 +9,7 @@ import ReanimatedAnimated, {
 import { Image } from 'expo-image';
 import { useColorScheme } from 'react-native';
 import { showAlert } from '../../services/alertService';
+import { openAppSettings } from '../../utils/openAppSettings';
 import { useNavigation } from '@react-navigation/native';
 import { Picker } from '@react-native-picker/picker';
 import * as StoreReview from 'expo-store-review';
@@ -1895,7 +1896,7 @@ useEffect(() => {
               } else {
                 // If we can't ask again, open settings directly
                 if (result.canAskAgain === false) {
-                  Linking.openSettings();
+                  openAppSettings();
                 }
                 // If permission denied but we can ask again, do nothing (user can tap again)
               }
@@ -1927,7 +1928,7 @@ useEffect(() => {
               } else {
                 // If we can't ask again, open settings directly
                 if (result.canAskAgain === false) {
-                  Linking.openSettings();
+                  openAppSettings();
                 }
                 // If permission denied but we can ask again, do nothing (user can tap again)
               }
@@ -2065,7 +2066,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#F0F0F0',
     position: 'relative',
     flexDirection: 'row',
     alignItems: 'center',

@@ -724,7 +724,9 @@ const fr = {
       "updateFailed": {
         "weight": "Échec de mise à jour du poids",
         "message": "Veuillez réessayer plus tard"
-      }
+      },
+      "editWeight": "Modifier le Poids",
+      "apply": "Appliquer"
     },
     "common": {
       "accuracy": "Précision",
@@ -852,6 +854,10 @@ const fr = {
       "error": "Erreur",
       "failedToSelectVideo": "Échec de la sélection. Réessayez.",
       "failedToGenerateThumbnail": "Échec de la miniature. Réessayez.",
+      "failedToCheckPermissions": "Échec de la vérification des permissions. Réessayez.",
+      "fullAccessRequired": "Accès Complet à la Bibliothèque Photos",
+      "fullAccessMessage": "Nous avons besoin d'un accès complet à votre bibliothèque photos pour vous offrir toutes les fonctionnalités de notre application pour la gestion vidéo. Cela inclut la détection de doublons, l'organisation appropriée des vidéos et la sélection fluide de vidéos dans toute votre bibliothèque.",
+      "grant": "Accorder",
       "uploadVideo": "Importer une vidéo",
       "selectNewVideo": "Nouvelle vidéo",
       "duplicateVideo": "Vidéo dupliquée",
@@ -861,7 +867,7 @@ const fr = {
       "tips": {
         "goodLighting": "Assurez un bon éclairage",
         "stableVideo": "Stabilisez la vidéo",
-        "sideView": "Filmez-vous de profil"
+        "sideView": "Filmez-vous à 45 degrés"
       },
       "ok": "OK",
       "recordingFailed": "Échec de l’enregistrement. Réessayez.",

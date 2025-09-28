@@ -6,6 +6,8 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import i18n from '../../../../utils/i18n';
 import { hapticFeedback } from '../../../../utils/haptic';
 import { generateVideoThumbnail } from '../../../../utils/generateVideoThumbnail';
+import { getStableAssetId } from '../../../../utils/getStableAssetId';
+import { openAppSettings } from '../../../../utils/openAppSettings';
 import { VideoPreviewScreen } from '../common/VideoPreviewScreen';
 import { MovementSelectionScreen } from '../common/MovementSelectionScreen';
 import { PracticesScreen } from '../common/PracticesScreen';
@@ -16,6 +18,7 @@ import { gymMovements, BodyPart } from '../../../../constants/gymMovements';
 import { useCameraPermissions } from 'expo-camera';
 import { ChevronLeft, CircleQuestionMark, X, Timer, TimerOff } from 'lucide-react-native';
 import * as MediaLibrary from 'expo-media-library';
+import * as ImagePicker from 'expo-image-picker';
 import { checkDuplicateAssetId } from '../../../../services/liftService';
 import { PermissionContainer } from '../../../../components/ui/PermissionContainer';
 import { showAlert } from '../../../../services/alertService';
@@ -182,8 +185,60 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
     return `${currentTime} / ${maxTime}`;
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     hapticFeedback.selection();
+    
+    // Check media library permission for limited access
+    try {
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (permissionResult.status !== 'granted') {
+        showAlert(
+          i18n.t('upload.permissionRequired'),
+          i18n.t('upload.permissionMessage'),
+          () => {
+            openAppSettings();
+          },
+          'UPLOAD_PERMISSION_REQUIRED'
+        );
+        return;
+      }
+
+      if (permissionResult.accessPrivileges === 'limited') {
+        showAlert(
+          i18n.t('upload.fullAccessRequired'),
+          i18n.t('upload.fullAccessMessage'),
+          () => {
+            openAppSettings();
+          },
+          'UPLOAD_LIMITED_ACCESS_UPGRADE',
+          undefined,
+          i18n.t('upload.grant')
+        );
+        return;
+      }
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('permission')) {
+        showAlert(
+          i18n.t('upload.permissionRequired'),
+          i18n.t('upload.permissionMessage'),
+          undefined,
+          'UPLOAD_PERMISSION_ERROR',
+          error
+        );
+        return;
+      } else {
+        showAlert(
+          i18n.t('upload.error'), 
+          i18n.t('upload.failedToCheckPermissions'),
+          undefined,
+          'UPLOAD_FAILED_TO_CHECK_PERMISSIONS',
+          error
+        );
+        return;
+      }
+    }
+    
     setShowPractices(false);
     setShowCamera(true);
   };
@@ -201,7 +256,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
     try {
       const result = await requestPermission();
       if (!result.granted && result.canAskAgain === false) {
-        Linking.openSettings();
+        openAppSettings();
         setHasPermission(false);
         return;
       }
@@ -358,11 +413,8 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
     
     // Check for duplicate video before proceeding
     if (recordedVideoUri) {
-      const uriParts = recordedVideoUri.split('/');
-      const fileName = uriParts[uriParts.length - 1];
-      const fullAssetId = fileName.split('.')[0];
-      const baseAssetId = fullAssetId.split('/')[0]; // Remove /L0/001 suffix if present
-      
+      // Generate stable asset ID for the recorded video
+      const baseAssetId = await getStableAssetId({ uri: recordedVideoUri });
       const isDuplicate = await checkDuplicateAssetId(baseAssetId);
       
       if (isDuplicate) {
@@ -432,16 +484,12 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
     const videoUri = recordedVideoUri || '';
     const { date, time } = getDateAndTime();
 
-    // Extract assetId from the recorded video URI
-    // The assetId is the filename without extension (after the last /)
-    const uriParts = videoUri.split('/');
-    const fileName = uriParts[uriParts.length - 1]; // Get the last part (filename)
-    const recordedAssetId = fileName.split('.')[0]; // Remove file extension
-
     // Close the modal immediately
     onClose();
 
     try {
+      // Generate stable asset ID for the recorded video
+      const recordedAssetId = await getStableAssetId({ uri: videoUri });
       const thumbnailUri = await generateVideoThumbnail(videoUri);
       
       // Use weightReps state if available, otherwise fall back to data parameter
@@ -948,7 +996,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#F0F0F0',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 10,

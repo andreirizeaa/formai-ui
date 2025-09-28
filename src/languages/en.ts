@@ -729,6 +729,8 @@ const en = {
         weight: 'Weight update failed',
         message: 'Please try again later',
       },
+      editWeight: 'Edit Weight',
+      apply: 'Apply',
     },
     common: {
       accuracy: 'Accuracy',
@@ -856,6 +858,10 @@ const en = {
       error: 'Error',
       failedToSelectVideo: 'Failed to select video. Please try again.',
       failedToGenerateThumbnail: 'Failed to generate video thumbnail. Please try again.',
+      failedToCheckPermissions: 'Failed to check permissions. Please try again.',
+      fullAccessRequired: 'Full Access to Photo Library',
+      fullAccessMessage: 'We require full access to your photo library to provide you with all the features in our app for video management. This includes duplicate detection, proper video organization, and seamless video selection across your entire library.',
+      grant: 'Grant',
       uploadVideo: 'Upload Video',
       selectNewVideo: 'New Video',
       duplicateVideo: 'Duplicate Video',
@@ -865,7 +871,7 @@ const en = {
       tips: {
         goodLighting: 'Ensure good lighting',
         stableVideo: 'Ensure a stable video',
-        sideView: 'Have the video of yourself from the side',
+        sideView: 'Have the video of you at 45 degrees',
       },
       ok: 'OK',
       recordingFailed: 'Recording failed. Please try again.',

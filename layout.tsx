@@ -77,7 +77,7 @@ function AppContent() {
       try {
         const assetsToLoad = [
           require('./assets/formai-homescreen.mp4'),
-          require('./assets/recording-tip.jpg'),
+          require('./assets/recording-tip.png'),
           require('./assets/refer-friends.jpg'),
           require('./assets/refer-friends-group.png'),
           require('./assets/formai-ios-icon.png'),

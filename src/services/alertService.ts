@@ -7,7 +7,8 @@ export function showAlert(
   message?: string,
   onPress?: () => void,
   errorId?: string,
-  errorDetails?: any
+  errorDetails?: any,
+  buttonText?: string
 ): void {
   // Track error if errorId is provided
   if (errorId) {
@@ -17,6 +18,6 @@ export function showAlert(
     });
   }
   hapticFeedback.error();
-  Alert.alert(title, message, [{ text: 'OK', onPress }]);
+  Alert.alert(title, message, [{ text: buttonText || 'OK', onPress }]);
 }
 

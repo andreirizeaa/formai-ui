@@ -695,7 +695,7 @@ const es = {
       },
     },
     feedback: {
-      liftDetails: 'Detalles del Levantamiento',
+      liftDetails: 'Detalles',
       rangeOfMotionAcrossReps: 'Rango de movimiento a través de tus repeticiones',
       benchPress: 'Press de Banca',
       formAccuracyAcrossReps: 'Precisión de forma a través de tus repeticiones',
@@ -725,6 +725,8 @@ const es = {
         weight: 'Error al actualizar el peso',
         message: 'Por favor inténtalo de nuevo más tarde',
       },
+      editWeight: 'Editar Peso',
+      apply: 'Aplicar',
     },
     common: {
       accuracy: 'Precisión',
@@ -852,6 +854,10 @@ const es = {
       error: 'Error',
       failedToSelectVideo: 'Error al seleccionar video. Por favor inténtalo de nuevo.',
       failedToGenerateThumbnail: 'Error al generar miniatura del video. Por favor inténtalo de nuevo.',
+      failedToCheckPermissions: 'Error al verificar permisos. Por favor inténtalo de nuevo.',
+      fullAccessRequired: 'Acceso Completo a la Biblioteca de Fotos',
+      fullAccessMessage: 'Necesitamos acceso completo a tu biblioteca de fotos para brindarte todas las funciones de nuestra aplicación para la gestión de videos. Esto incluye detección de duplicados, organización adecuada de videos y selección fluida de videos en toda tu biblioteca.',
+      grant: 'Conceder',
       uploadVideo: 'Subir Video',
       selectNewVideo: 'Nuevo Video',
       duplicateVideo: 'Video Duplicado',
@@ -861,7 +867,7 @@ const es = {
       tips: {
         goodLighting: 'Asegúrate de tener buena iluminación',
         stableVideo: 'Asegúrate de que el video sea estable',
-        sideView: 'Ten el video de ti mismo desde el lado',
+        sideView: 'Ten el video de ti a 45 grados',
       },
       ok: 'OK',
       recordingFailed: 'Error al grabar. Por favor inténtalo de nuevo.',

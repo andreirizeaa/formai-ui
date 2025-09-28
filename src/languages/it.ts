@@ -695,7 +695,7 @@ const it = {
       },
     },
     feedback: {
-      liftDetails: 'Dettagli del Sollevamento',
+      liftDetails: 'Dettagli',
       rangeOfMotionAcrossReps: 'Ampiezza di movimento attraverso le tue ripetizioni',
       benchPress: 'Panca Piana',
       formAccuracyAcrossReps: 'Accuratezza della forma attraverso le tue ripetizioni',
@@ -725,6 +725,8 @@ const it = {
         weight: 'Aggiornamento peso fallito',
         message: 'Riprova più tardi',
       },
+      editWeight: 'Modifica Peso',
+      apply: 'Applica',
     },
     common: {
       accuracy: 'Accuratezza',
@@ -852,6 +854,10 @@ const it = {
       error: 'Errore',
       failedToSelectVideo: 'Impossibile selezionare il video. Riprova.',
       failedToGenerateThumbnail: 'Impossibile generare la miniatura del video. Riprova.',
+      failedToCheckPermissions: 'Verifica dei permessi fallita. Riprova.',
+      fullAccessRequired: 'Accesso Completo alla Libreria Foto',
+      fullAccessMessage: 'Abbiamo bisogno dell\'accesso completo alla tua libreria foto per fornirti tutte le funzionalità della nostra app per la gestione video. Questo include rilevamento duplicati, organizzazione appropriata dei video e selezione fluida dei video in tutta la tua libreria.',
+      grant: 'Concedi',
       uploadVideo: 'Carica Video',
       selectNewVideo: 'Nuovo Video',
       duplicateVideo: 'Video Duplicato',
@@ -861,7 +867,7 @@ const it = {
       tips: {
         goodLighting: 'Assicurati di avere una buona illuminazione',
         stableVideo: 'Assicurati che il video sia stabile',
-        sideView: 'Fai il video di te stesso dal lato',
+        sideView: 'Fai il video di te stesso a 45 gradi',
       },
       ok: 'OK',
       recordingFailed: 'Registrazione fallita. Riprova.',
