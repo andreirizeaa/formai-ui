@@ -38,8 +38,8 @@ type FilterOption = string[];
 type TabOption = 'all' | 'favourites';
 
 interface DateRange {
-  from: { month: number; day: number; year: number } | null;
-  to: { month: number; day: number; year: number } | null;
+  from: { month: number; year: number } | null;
+  to: { month: number; year: number } | null;
 }
 
 type MainStackParamList = {
@@ -79,17 +79,15 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
   React.useEffect(() => {
     // Default to today's date a year ago to today
     const today = new Date();
-    const oneYearAgo = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate());
+    const oneYearAgo = new Date(today.getFullYear() - 1, today.getMonth(), 1);
     
     setDateRange({
       from: {
         month: oneYearAgo.getMonth() + 1,
-        day: oneYearAgo.getDate(),
         year: oneYearAgo.getFullYear()
       },
       to: {
         month: today.getMonth() + 1,
-        day: today.getDate(),
         year: today.getFullYear()
       }
     });
@@ -130,8 +128,8 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
       return liftData;
     }
 
-    const fromDate = new Date(dateRange.from.year, dateRange.from.month - 1, dateRange.from.day);
-    const toDate = new Date(dateRange.to.year, dateRange.to.month - 1, dateRange.to.day);
+    const fromDate = new Date(dateRange.from.year, dateRange.from.month - 1, 1);
+    const toDate = new Date(dateRange.to.year, dateRange.to.month, 0); // Last day of the month
 
     return liftData.filter(lift => {
       const [day, month, year] = lift.liftDate.split('-').map(Number);
@@ -176,11 +174,11 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
       return i18n.t('library.selectDateRange');
     }
 
-    const formatDate = (date: { month: number; day: number; year: number }) => {
+    const formatDate = (date: { month: number; year: number }) => {
       const monthNames = i18n.t('months.array');
       const monthName = monthNames[date.month - 1];
       const shortMonthName = monthName.substring(0, 3);
-      return `${shortMonthName} ${date.day}, ${date.year}`;
+      return `${shortMonthName} ${date.year}`;
     };
 
     return `${formatDate(dateRange.from)} - ${formatDate(dateRange.to)}`;
@@ -395,17 +393,15 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
   const handleResetDateRange = useCallback(() => {
     hapticFeedback.success();
     const today = new Date();
-    const oneYearAgo = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate());
+    const oneYearAgo = new Date(today.getFullYear() - 1, today.getMonth(), 1);
     
     setDateRange({
       from: {
         month: oneYearAgo.getMonth() + 1,
-        day: oneYearAgo.getDate(),
         year: oneYearAgo.getFullYear()
       },
       to: {
         month: today.getMonth() + 1,
-        day: today.getDate(),
         year: today.getFullYear()
       }
     });

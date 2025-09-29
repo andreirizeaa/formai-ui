@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, TextInput, Keyboard, KeyboardAvoidingView, TouchableWithoutFeedback, Animated, Easing } from 'react-native';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, TextInput, Keyboard, KeyboardAvoidingView, TouchableWithoutFeedback, Animated, Easing, ActivityIndicator } from 'react-native';
+import { LoadingOverlay } from '../../../../components/ui/LoadingOverlay';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { hapticFeedback } from '../../../../utils/haptic';
 import { useUserDetails } from '../../../../context/UserDetailsContext';
@@ -12,13 +13,17 @@ interface WeightRepsScreenProps {
   onChange: (data: { weight: number; unit: WeightUnit; reps: number }) => void;
   onBack: () => void;
   onUpload: (data: { weight: number; unit: WeightUnit; reps: number }) => void;
+  isLoading?: boolean;
+  onDisabledStateChange?: (disabled: boolean) => void;
 }
 
-export function WeightRepsScreen({ 
+export function WeightRepsScreen({
   weightReps,
   onChange,
-  onBack, 
+  onBack,
   onUpload,
+  isLoading = false,
+  onDisabledStateChange,
 }: WeightRepsScreenProps) {
   const { ref: completeButtonRef } = useTutorialTarget('weight_reps_complete');
   const { isActive: isTutorialActive } = useTutorial();
@@ -28,7 +33,7 @@ export function WeightRepsScreen({
   
   // Use props for weight and reps, with fallback to empty strings
   const weight = weightReps?.weight?.toString() || '';
-  const reps = weightReps?.reps?.toString() || '';
+  const reps = weightReps?.reps && weightReps.reps > 0 ? weightReps.reps.toString() : '';
   
   const weightInputRef = useRef<TextInput>(null);
   const repsInputRef = useRef<TextInput>(null);
@@ -119,19 +124,23 @@ export function WeightRepsScreen({
   };
 
   const handleRepsSubmit = () => {
-    Keyboard.dismiss();
-    setFocusedInput(null);
+    // Never dismiss keyboard - let the upload process handle it
     // Track add analysis clicks for complete add video
     track('Add analysis', { event: 'Complete add video' });
     handleUpload();
   };
 
   const handleKeyboardButtonPress = () => {
+    if (isLoading) return; // Don't process any keyboard actions when loading
     hapticFeedback.selection();
     if (focusedInput === 'weight') {
       handleWeightSubmit();
     } else if (focusedInput === 'reps') {
-      handleRepsSubmit();
+      // For Complete button, dismiss keyboard and trigger upload
+      setFocusedInput(null);
+      Keyboard.dismiss();
+      track('Add analysis', { event: 'Complete add video' });
+      handleUpload();
     }
   };
 
@@ -140,9 +149,16 @@ export function WeightRepsScreen({
   };
 
   const isWeightValid = weightReps?.weight && weightReps.weight > 0;
-  const isUploadDisabled = !isWeightValid || !weightReps?.reps || weightReps.reps <= 0;
+  const isUploadDisabled = !isWeightValid || !weightReps?.reps || weightReps.reps <= 0 || isLoading;
+
+  // Notify parent about disabled state changes
+  useEffect(() => {
+    onDisabledStateChange?.(isLoading);
+  }, [isLoading, onDisabledStateChange]);
+
   
   const isKeyboardButtonDisabled = () => {
+    if (isLoading) return true;
     if (focusedInput === 'weight') {
       return !weightReps?.weight || weightReps.weight <= 0;
     } else if (focusedInput === 'reps') {
@@ -192,7 +208,11 @@ export function WeightRepsScreen({
                   autoComplete="off"
                   autoCorrect={false}
                   onFocus={() => handleInputFocus('weight')}
-                  onBlur={() => setFocusedInput(null)}
+                  onBlur={() => {
+                    if (!isLoading) setFocusedInput(null);
+                  }}
+                  editable={!isLoading}
+                  pointerEvents={isLoading ? 'none' : 'auto'}
                 />
                 <Text style={styles.unitText}>{unit}</Text>
               </View>
@@ -221,12 +241,20 @@ export function WeightRepsScreen({
                   placeholder="1"
                   placeholderTextColor={isWeightValid ? "#8E8E93" : "#C7C7CC"}
                   keyboardType="numeric"
-                  onSubmitEditing={handleRepsSubmit}
-                  blurOnSubmit={true}
-                  onFocus={() => handleInputFocus('reps')}
-                  onBlur={() => setFocusedInput(null)}
-                  editable={!!isWeightValid}
-                  pointerEvents={isWeightValid ? 'auto' : 'none'}
+                  onSubmitEditing={isLoading ? () => {} : handleRepsSubmit}
+                  blurOnSubmit={false}
+                  onFocus={() => {
+                    handleInputFocus('reps');
+                    if (isLoading) {
+                      // Ensure reps stays focused during loading
+                      setFocusedInput('reps');
+                    }
+                  }}
+                  onBlur={() => {
+                    if (!isLoading) setFocusedInput(null);
+                  }}
+                  editable={!!isWeightValid && !isLoading}
+                  pointerEvents={isLoading ? 'none' : (isWeightValid ? 'auto' : 'none')}
                 />
               </View>
             </View>
@@ -238,26 +266,34 @@ export function WeightRepsScreen({
       {focusedInput && !isTutorialActive && (
         <Animated.View style={[styles.keyboardAccessoryView, { bottom: accessoryBottom }]}> 
           <View style={styles.keyboardRow}>
-            <TouchableOpacity 
-              style={styles.keyboardBackButton}
+            <TouchableOpacity
+              style={[styles.keyboardBackButton, isLoading && styles.keyboardBackButtonDisabled]}
               onPress={handleBack}
               activeOpacity={0.7}
+              disabled={isLoading}
             >
               <Text style={styles.keyboardBackButtonText}>Back</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.keyboardPrimaryButton, isKeyboardButtonDisabled() && styles.keyboardPrimaryButtonDisabled]}
-              onPress={handleKeyboardButtonPress}
+              onPress={isLoading ? undefined : handleKeyboardButtonPress}
               disabled={isKeyboardButtonDisabled()}
-              activeOpacity={0.7}
+              activeOpacity={isLoading ? 1 : 0.7}
             >
-              <Text style={[styles.keyboardPrimaryButtonText, isKeyboardButtonDisabled() && styles.keyboardPrimaryButtonTextDisabled]}>
-                {focusedInput === 'weight' ? 'Next' : 'Complete'}
-              </Text>
+              {isLoading ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <Text style={[styles.keyboardPrimaryButtonText, isKeyboardButtonDisabled() && styles.keyboardPrimaryButtonTextDisabled]}>
+                  {focusedInput === 'weight' ? 'Next' : 'Complete'}
+                </Text>
+              )}
             </TouchableOpacity>
           </View>
         </Animated.View>
       )}
+
+      {/* Loading overlay during upload */}
+      <LoadingOverlay visible={isLoading} />
     </SafeAreaView>
   );
 }
@@ -345,6 +381,9 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '800',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
+  keyboardBackButtonDisabled: {
+    opacity: 0.5,
   },
   keyboardPrimaryButton: {
     flex: 1,

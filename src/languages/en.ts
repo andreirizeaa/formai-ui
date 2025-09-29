@@ -696,6 +696,10 @@ const en = {
         subtitle: 'The selected movement does not match the video',
         detectedMovement: 'We cannot detect you performing: {{movement}}',
       },
+      waiting: {
+        title: 'Waiting',
+        subtitle: 'Waiting for previous lift analysis to complete',
+      },
     },
     feedback: {
       liftDetails: 'Lift Details',
@@ -731,6 +735,14 @@ const en = {
       },
       editWeight: 'Edit Weight',
       apply: 'Apply',
+      download: 'Download',
+      permissionRequired: 'Permission Required',
+      photoLibraryPermissionMessage: 'Photo library access is required to save videos to your camera roll.',
+      downloadSuccess: 'Download Successful',
+      videoSavedToPhotos: 'Video has been saved to your Photos app in the FormAI album.',
+      downloadFailed: 'Download Failed',
+      videoNotAvailable: 'Video is not available for download.',
+      downloadErrorMessage: 'Failed to download video. Please try again later.',
     },
     common: {
       accuracy: 'Accuracy',

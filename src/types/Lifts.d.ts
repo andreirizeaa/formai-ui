@@ -3,7 +3,7 @@
 // Base type aliases
 export type PipelineStage = 'upload_video' | 'upload_thumbnail' | 'analyze';
 export type RetryStage = 'VIDEO_VALIDATION' | 'POST_ESTIMATION' | 'AI_ANALYSIS' | 'force';
-export type LiftStatus = 'uploading' | 'processing' | 'completed' | 'error';
+export type LiftStatus = 'uploading' | 'processing' | 'completed' | 'error' | 'waiting';
 export type WeightUnit = 'kg' | 'lbs';
 export type JobStatus = 'queued' | 'running' | 'succeeded' | 'failed';
 
@@ -56,7 +56,7 @@ export interface LoadingLiftData {
   dateToday: string;
   timeToday: string;
 
-  status: 'uploading' | 'processing' | 'completed' | 'error';
+  status: 'uploading' | 'processing' | 'completed' | 'error' | 'waiting';
   pipelineStage: 'upload_video' | 'upload_thumbnail' | 'analyze';
   isComplete: boolean;
   uiProgress?: number;
@@ -67,6 +67,17 @@ export interface LoadingLiftData {
   errorMessage?: string;
   failureStage?: 'upload_video' | 'upload_thumbnail' | 'analyze';
   finalData?: ILiftData;
+  
+  // Queue management
+  queueId?: string | null;   // ID of the queue entry for reliable removal
+  enqueuedAt?: number;       // Timestamp when added to queue for FIFO ordering
+  
+  // Rich error metadata for retry/deletion support
+  errorCode?: string | null;
+  firstFailedAt?: number;   // Date.now() when first error occurred
+  lastTriedAt?: number;     // Date.now() whenever (re)enqueue attempted
+  retryCount?: number;      // increment on each retry attempt
+  errorTracked?: boolean;   // prevent duplicate analytics tracking
   
   // Legacy fields for backward compatibility
   sourceVideoUri?: string;
@@ -101,7 +112,6 @@ export interface LoadingLiftsContextType {
   openStreakModal: () => void;
   closeStreakModal: () => void;
   handleStreakModalContinue: () => void;
-  isLiftAutoDeleted: (liftId: string) => boolean;
   removeLoadingLiftByFinalId: (finalId: string) => void;
   purgeAllLoadingLifts: () => void;
   setHomeActive?: (isActive: boolean) => void;
@@ -130,6 +140,7 @@ export interface LiftDataContextType {
   restoreLiftDataFromStorage: () => Promise<void>;
   clearLiftDataForTutorial: () => void;
   restoreLiftDataAfterTutorial: () => Promise<void>;
+  setSignedInUser: (id: string | null) => Promise<void>;
 }
 
 export interface AnalyzeLiftPayload {

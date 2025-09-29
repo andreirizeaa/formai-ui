@@ -1,4 +1,4 @@
-import { manualDeleteLiftCardData, autoDeleteLiftErrorCardData } from './liftService';
+import { deleteLiftCardData } from './liftService';
 import { hapticFeedback } from '../utils/haptic';
 
 /**
@@ -11,30 +11,14 @@ export async function deleteLift(
 ): Promise<boolean> {
   hapticFeedback.selection();
   try {
-    // Check if it's a loading lift
-    const isLoadingLift = (lift: any) => lift && typeof lift.status !== 'undefined';
-    
-    if (isLoadingLift(lift)) {
-      // Handle loading lift deletion
-      const ok = await autoDeleteLiftErrorCardData(liftId);
-      if (ok) {
-        hapticFeedback.success();
-        return true;
-      } else {
-        hapticFeedback.error();
-        return false;
-      }
-    } else {
-      // Handle final lift deletion
-      const ok = await manualDeleteLiftCardData(liftId);
-      if (ok) {
-        hapticFeedback.success();
-        return true;
-      } else {
-        hapticFeedback.error();
-        return false;
-      }
+    const assetId = typeof lift?.assetId === 'string' ? lift.assetId : undefined;
+    const ok = await deleteLiftCardData(liftId, { assetId });
+    if (ok) {
+      hapticFeedback.success();
+      return true;
     }
+    hapticFeedback.error();
+    return false;
   } catch (error) {
     hapticFeedback.error();
     return false;

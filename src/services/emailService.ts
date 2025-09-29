@@ -22,6 +22,7 @@ export async function openEmailComposer(options: EmailOptions): Promise<void> {
 
     await MailComposer.composeAsync(options);
   } catch (error) {
+    console.error('Error opening email composer:', error);
     showAlert(
       'Error', 
       'Failed to open email composer. Please try again.',
@@ -98,6 +99,34 @@ I recently cancelled my subscription and wanted to provide feedback:
               - Device Version: ${Platform.Version}
               - User ID: ${userId}
           `,
+  };
+
+  await openEmailComposer(options);
+}
+
+export async function openDeletionFeedbackEmail(): Promise<void> {
+  const userId = await getUserId();
+
+  const metadata = userId ? `
+
+              Meta data (Please do not remove this as it will help us identify your account)
+
+              - Platform: ${Platform.OS}
+              - Device Version: ${Platform.Version}
+              - User ID: ${userId}
+          ` : '';
+
+  const options: EmailOptions = {
+    recipients: [supportEmail],
+    subject: 'Form AI App Deletion Feedback',
+    body: `Hey Form AI,
+
+I'm considering deleting the app and wanted to share my feedback:
+
+
+
+
+${metadata}`,
   };
 
   await openEmailComposer(options);

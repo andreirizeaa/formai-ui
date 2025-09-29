@@ -12,10 +12,11 @@ import { usePurchases } from './PurchasesContext';
 import { loadLoadingLifts, saveLoadingLifts } from '../services/loadingLiftsStorage';
 import { eventBus, AppEvents, LiftReadyPayload, LiftFailedPayload } from '../services/event-bus';
 import { LoadingLiftData, LoadingLiftsContextType, PipelineStage, RetryStage } from '../types/Lifts.d';
-import { autoDeleteLiftErrorCardData, lookupLift, findLiftFailure } from '../services/liftService';
+import { lookupLift, findLiftFailure } from '../services/liftService';
 import { enqueueLiftAnalysis, getJobStatus, deleteJob } from '../services/liftApi';
 import { track } from '../services/analytics';
 import { getStableAssetId } from '../utils/getStableAssetId';
+import { queueService, QueueItem } from '../services/queueService';
 
 const LoadingLiftsContext = createContext<LoadingLiftsContextType | undefined>(undefined);
 
@@ -27,7 +28,7 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
   const [allLoadingLifts, setAllLoadingLifts] = useState<LoadingLiftData[]>([]);
   const [completedLifts, setCompletedLifts] = useState<ILiftData[]>([]);
   const [showStreakModal, setShowStreakModal] = useState<boolean>(false);
-  const [autoDeletedLifts, setAutoDeletedLifts] = useState<Set<string>>(new Set());
+  const [queueState, setQueueState] = useState(queueService.getQueueState());
   const { liftData, refreshLifts, formatDateForLift, getLiftById, addLift, updateLift, upsertLift, invalidateAndRefetch: invalidateAndRefetchLiftData } = useLiftData();
   const { selectedDate } = useSelectedDate();
   const { optimisticAddToday, invalidateAndRefetch: invalidateUserCheckIns } = useUserCheckIns();
@@ -39,6 +40,107 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
   // keep latest snapshot in sync
   const latestLiftsRef = useRef<LoadingLiftData[]>([]);
   useEffect(() => { latestLiftsRef.current = allLoadingLifts; }, [allLoadingLifts]);
+
+  // Process queue when lifts complete or error
+  const processQueue = useCallback(async () => {
+    // Check if any card is in-flight to prevent double starts
+    const anyInFlight = latestLiftsRef.current.some(
+      l => l.status === 'uploading' || l.status === 'processing'
+    );
+    if (anyInFlight) {
+      return;
+    }
+
+    // Try queue first
+    const nextItem = await queueService.getNextInQueue();
+
+    const refFromQueue =
+      (nextItem as any)?.ref ??
+      (nextItem as any)?.payload?.ref ??
+      null;
+
+    // Try to find a waiting lift that matches the queue ref
+    let waitingLift =
+      refFromQueue
+        ? latestLiftsRef.current.find(l => l.id === refFromQueue && l.status === 'waiting')
+        : undefined;
+
+    // 👉 Fallback: if queue is empty or ref didn't match, use the oldest waiting card (FIFO)
+    if (!waitingLift) {
+      const waiting = latestLiftsRef.current
+        .filter(l => l.status === 'waiting')
+        .sort((a, b) => (a.enqueuedAt ?? 0) - (b.enqueuedAt ?? 0)); // oldest first
+      waitingLift = waiting[0];
+    }
+
+    if (!waitingLift) {
+      const waitingCount = latestLiftsRef.current.filter(l => l.status === 'waiting').length;
+      return;
+    }
+
+    // Handle lock and removal separately
+    const nextId = (nextItem as any)?.id ?? null;
+    const waitingQueueId = waitingLift.queueId ?? null;
+
+    try {
+      // Remove the item we are actually processing from the queue list
+      if (waitingQueueId) {
+        await queueService.removeFromQueue(waitingQueueId);
+      }
+
+      // Independently clear the processing lock set by getNextInQueue()
+      if (nextId) {
+        await queueService.markProcessingComplete(nextId);
+      }
+    } catch (error) {
+      console.warn('Failed to reconcile queue (continuing anyway):', error);
+    }
+
+    const now = Date.now();
+    const startProg = 0.02;
+
+    // Update the existing waiting lift to processing
+    setAllLoadingLifts(prev => prev.map(lift => 
+      lift.id === waitingLift.id 
+        ? {
+            ...lift,
+            status: 'processing',
+            isComplete: false,
+            pipelineStage: 'upload_video',
+            uiProgress: startProg,
+            simStartAt: now,
+            simStartProgress: startProg,
+            simDurationMs: (((lift.videoDurationSec || 10) * 4) + 90) * 1000,
+          }
+        : lift
+    ));
+
+    // Process the lift uploads using the waiting lift's data
+    setTimeout(() => {
+      // Ensure the waiting lift has the required properties for processLiftUploads
+      const liftDataForProcessing = {
+        videoLink: waitingLift.videoLink || waitingLift.sourceVideoUri,
+        thumbnailUri: waitingLift.thumbnailUri || waitingLift.sourceThumbnailUri,
+        movementType: waitingLift.movementType,
+        reps: waitingLift.reps,
+        metricWeight: waitingLift.metricWeight,
+        dateToday: waitingLift.dateToday,
+        timeToday: waitingLift.timeToday,
+        videoDurationSec: waitingLift.videoDurationSec,
+      };
+      processLiftUploads(waitingLift.id, liftDataForProcessing, waitingLift.assetId);
+    }, 0);
+  }, []);
+
+  // Subscribe to queue changes
+  useEffect(() => {
+    const unsubscribe = queueService.subscribe(() => {
+      setQueueState(queueService.getQueueState());
+    });
+    return () => {
+      unsubscribe();
+    };
+  }, []);
 
   const PENDING_KEY = 'pendingLiftCompletions';
   const PENDING_FAIL_KEY = 'pendingLiftFailures';
@@ -53,7 +155,6 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
   const inflightRef = useRef(new Set<string>());
   const retryTimersRef = useRef(new Map<string, NodeJS.Timeout>());
   const queuedRef = useRef(new Set<string>()); // ids with a scheduled retry
-  const deletingRef = useRef(new Set<string>()); // guard: auto-delete once per lift
   
 
 
@@ -67,21 +168,29 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
     if (!trackedErrorsRef.current.has(errorKey)) {
       trackedErrorsRef.current.add(errorKey);
       track('Errors', { type: errorCode });
+      
+      // Mark the card as error tracked to prevent duplicate tracking across sessions
+      setAllLoadingLifts(prev => prev.map(l => 
+        l.id === liftId ? { ...l, errorTracked: true } : l
+      ));
     }
+  };
+
+  // Helper to map error messages to standardized error codes
+  const mapErrorMessageToCode = (errorMessage: string): string => {
+    if (errorMessage.includes('Missing assetId')) return 'MISSING_ASSET_ID';
+    if (errorMessage.includes('No userId available')) return 'NO_USER_ID';
+    if (errorMessage.includes('Failed to upload video')) return 'UPLOAD_FAILED';
+    if (errorMessage.includes('Temporary issue')) return 'SOFT_FAIL';
+    if (errorMessage.includes('No lift found')) return 'NO_LIFT_FOUND';
+    if (errorMessage.includes('Lift mismatch')) return 'WRONG_MOVEMENT';
+    if (errorMessage.includes('Error occurred')) return 'ERROR_OCCURED';
+    return 'UNKNOWN_ERROR';
   };
 
   // Helper to track any error that creates an error card
   const trackErrorCard = (liftId: string, errorMessage: string) => {
-    // Map common error messages to error codes
-    let errorCode = 'UNKNOWN_ERROR';
-    if (errorMessage.includes('Missing assetId')) errorCode = 'MISSING_ASSET_ID';
-    else if (errorMessage.includes('No userId available')) errorCode = 'NO_USER_ID';
-    else if (errorMessage.includes('Failed to upload video')) errorCode = 'UPLOAD_FAILED';
-    else if (errorMessage.includes('Temporary issue')) errorCode = 'SOFT_FAIL';
-    else if (errorMessage.includes('No lift found')) errorCode = 'NO_LIFT_FOUND';
-    else if (errorMessage.includes('Lift mismatch')) errorCode = 'WRONG_MOVEMENT';
-    else if (errorMessage.includes('Error occurred')) errorCode = 'ERROR_OCCURED';
-    
+    const errorCode = mapErrorMessageToCode(errorMessage);
     trackErrorOnce(liftId, errorCode);
   };
 
@@ -131,22 +240,31 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
   // never downgrade a completed card
   const safeUpdateLift = (id: string, updater: (l: LoadingLiftData) => LoadingLiftData) => {
     setAllLoadingLifts(prev =>
-      prev.flatMap(l => {
-        if (l.id !== id) return [l];
-        if (l.status === 'completed') return [l];     // lock
+      prev.map(l => {
+        if (l.id !== id) return l;
+        if (l.status === 'completed') return l;     // lock
         const updated = updater(l);
 
-        // Track error if status changed to error
+        // Track error if status changed to error and populate error metadata
         if (updated.status === 'error' && l.status !== 'error' && updated.errorMessage) {
           trackErrorCard(id, updated.errorMessage);
+          
+          // Process next item in queue (no need to mark processing error with lift id)
+          processQueue();
+          
+          // Populate rich error metadata for retry/deletion support
+          const now = Date.now();
+          return {
+            ...updated,
+            errorCode: mapErrorMessageToCode(updated.errorMessage),
+            firstFailedAt: l.firstFailedAt || now,
+            lastTriedAt: now,
+            retryCount: l.retryCount || 0,
+            errorTracked: l.errorTracked || false,
+          };
         }
 
-        // Remove errored lifts immediately instead of keeping them
-        if (updated.status === 'error') {
-          return [];
-        }
-
-        return [updated];
+        return updated;
       })
     );
   };
@@ -241,22 +359,30 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
 
   // one place to mark completion
   const markCompleted = (id: string, mapped: ILiftData) => {
-    setAllLoadingLifts(prev =>
-      prev.map(l =>
+    setAllLoadingLifts(prev => {
+      const next = prev.map(l =>
         l.id === id
           ? {
               ...l,
               finalData: mapped,
-              status: 'completed',
+              status: 'completed' as const,
               isComplete: true,             // <-- critical
               uiProgress: 1,
-              pipelineStage: 'analyze',
+              pipelineStage: 'analyze' as const,
               errorMessage: undefined,
               failureStage: undefined,
             }
           : l
-      )
-    );
+      );
+      // Keep the ref in lockstep with the state we'll commit
+      latestLiftsRef.current = next;
+      return next;
+    });
+    
+    // Kick the queue on the next macrotask so React has time to commit
+    setTimeout(() => {
+      processQueue();
+    }, 0);
     
     // Invalidate LiftDataContext to fetch fresh data when lift completes
     try {
@@ -304,7 +430,7 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
 
   // Utility function to compute simulation duration
   const computeSimDurationMs = (videoDurationSec?: number) =>
-    (((videoDurationSec || 10) * 4) + 30) * 1000; // same formula as before
+    (((videoDurationSec || 10) * 4) + 90) * 1000; // same formula as before
 
   // Wall-clock progress calculation
   const tickProgressFromClock = () => {
@@ -384,10 +510,6 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
             const next = arr.filter(k => k !== key);
             await AsyncStorage.setItem(INFLIGHT_KEY, JSON.stringify(next));
           } catch {}
-          // Optional auto-delete
-          if (['WRONG_MOVEMENT','NO_GYM_VIDEO_FOUND','NO_LIFT_FOUND','ERROR_OCCURED'].includes(errorCode)) {
-            void autoDeleteErrorLift(l.id);
-          }
         } else {
           // Use writeThroughCompletion to ensure immediate update to LiftDataContext
           await writeThroughCompletion(l.id, found);
@@ -449,10 +571,6 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
           const next = arr.filter(k => k !== key);
           await AsyncStorage.setItem(INFLIGHT_KEY, JSON.stringify(next));
         } catch {}
-        // Optional: auto-delete for well-defined error cases
-        if (job?.error && ['WRONG_MOVEMENT','NO_GYM_VIDEO_FOUND','NO_LIFT_FOUND'].includes(errorCode)) {
-          void autoDeleteErrorLift(l.id);
-        }
       } else if (status === 'running' || status === 'queued') {
         const pct = typeof job.progress === 'number' ? job.progress / 100 : (l.uiProgress ?? 0.02);
         const capped = Math.min(PROGRESS_MAX_BEFORE_DONE, Math.max(l.uiProgress ?? 0.02, pct));
@@ -479,10 +597,6 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
                 const next = arr.filter(k => k !== key);
                 await AsyncStorage.setItem(INFLIGHT_KEY, JSON.stringify(next));
               } catch {}
-              // Optional auto-delete
-              if (['WRONG_MOVEMENT','NO_GYM_VIDEO_FOUND','NO_LIFT_FOUND','ERROR_OCCURED'].includes(errorCode)) {
-                void autoDeleteErrorLift(l.id);
-              }
               // Skip the success path
             } else {
               // Advance UI to 100% and let the next lookup cycle finish completion mapping
@@ -621,11 +735,6 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
           const next = targetAssetId ? arr.filter(k => k !== targetAssetId) : arr;
           await AsyncStorage.setItem(INFLIGHT_KEY, JSON.stringify(next));
         } catch {}
-
-        // Optional: auto-delete for well-defined cases
-        if (code && ['WRONG_MOVEMENT','NO_GYM_VIDEO_FOUND','NO_LIFT_FOUND'].includes(code)) {
-          try { await autoDeleteErrorLift(local.id); } catch {}
-        }
       } catch (_) {}
     });
     return () => { try { off(); } catch {} };
@@ -749,6 +858,14 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
           // Put stored lifts into state so the UI shows cards immediately
           setAllLoadingLifts(stored);
 
+          // Pre-populate tracked errors for cards that were already error tracked
+          stored.forEach(lift => {
+            if (lift.status === 'error' && lift.errorTracked && lift.errorCode) {
+              const errorKey = `${lift.id}-${lift.errorCode}`;
+              trackedErrorsRef.current.add(errorKey);
+            }
+          });
+
           // Drop any completed items from storage so only server lifts remain
           setAllLoadingLifts(prev => prev.filter(l => !(l.status === 'completed' || (l.finalData && l.status !== 'error'))));
 
@@ -762,22 +879,25 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
                 simStartProgress: typeof l.uiProgress === 'number' ? Math.max(0.02, l.uiProgress) : 0.02,
               };
             }
+            // Ensure enqueuedAt exists for waiting lifts (fallback for old items)
+            if (l.status === 'waiting' && !l.enqueuedAt) {
+              return {
+                ...l,
+                enqueuedAt: Date.now(),
+              };
+            }
             return l;
           }));
 
-          // Resume processing for any lifts that were in-flight
+          // Resume processing for any lifts that were in-flight (but keep error cards as errors and waiting cards as waiting)
           stored.forEach(lift => {
             if (lift.status === 'completed') return; // Skip completed lifts
             if (lift.status === 'error') {
-              const isPermanent =
-                lift.failureStage === 'analyze' &&
-                (lift.errorMessage === 'No lift found' || lift.errorMessage === 'Lift mismatch');
-
-              if (!isPermanent) {
-                safeUpdateLift(lift.id, l => ({ ...l, status: 'processing', errorMessage: undefined, failureStage: undefined }));
-                // For the new enqueue pattern, we just need to re-enqueue failed lifts
-                // The retryLift function will handle this
-              }
+              // Keep error cards as errors - no auto-recovery
+              return;
+            }
+            if (lift.status === 'waiting') {
+              // Keep waiting cards as waiting - they should stay in queue
               return;
             }
             
@@ -793,6 +913,11 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
             .filter(l => l.status !== 'completed' && !!l.assetId)
             .map(l => l.assetId as string)
           await AsyncStorage.setItem(INFLIGHT_KEY, JSON.stringify(inflightAssetIds))
+          
+          // Process queue after a delay to avoid blocking app startup
+          setTimeout(() => {
+            processQueue();
+          }, 3000);
         }
       } catch (error) {
       }
@@ -858,17 +983,12 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
       uiProgress: l.uiProgress ?? 0.02,
     }));
 
-    // Remove from inflight set in storage so BackgroundFetch won’t keep sweeping it
+    // Remove from inflight set in storage so BackgroundFetch won't keep sweeping it
     try {
       const arr: string[] = JSON.parse((await AsyncStorage.getItem(INFLIGHT_KEY)) || '[]');
       const next = arr.filter(k => k !== f.assetId);
       await AsyncStorage.setItem(INFLIGHT_KEY, JSON.stringify(next));
     } catch {}
-
-    // Optional: auto-delete for well-defined cases
-    if (f?.error && ['WRONG_MOVEMENT', 'NO_GYM_VIDEO_FOUND', 'NO_LIFT_FOUND'].includes(String(f.error).toUpperCase())) {
-      try { await autoDeleteErrorLift(local.id); } catch {}
-    }
     return true;
   }, []);
 
@@ -892,9 +1012,8 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
     if (persistTimer.current) clearTimeout(persistTimer.current);
 
     persistTimer.current = setTimeout(() => {
-      // Filter out errored lifts before saving to prevent rehydration
-      const withoutErrors = allLoadingLifts.filter(l => l.status !== 'error');
-      void saveLoadingLifts(withoutErrors);
+      // Save all loading lifts including error cards for persistence
+      void saveLoadingLifts(allLoadingLifts);
     }, 200); // Small debounce to avoid chatty writes
 
     return () => {
@@ -1114,85 +1233,89 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
     void AsyncStorage.setItem(INFLIGHT_KEY, JSON.stringify(inflight))
   }, [allLoadingLifts])
 
+  // Auto-kicker: start next waiting card when no in-flight card exists
+  useEffect(() => {
+    const anyInFlight = allLoadingLifts.some(l => l.status === 'uploading' || l.status === 'processing');
+    const hasWaiting = allLoadingLifts.some(l => l.status === 'waiting');
 
-
-
-  const addLoadingLift = async (liftData: Omit<LoadingLiftData, 'id' | 'isComplete' | 'status' | 'pipelineStage'>): Promise<string> => {
-    const liftId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-
-    // Try to derive assetId if missing
-    let assetId = liftData.assetId;
-    if (!assetId && liftData.videoLink) {
-      try {
-        assetId = await getStableAssetId({ uri: liftData.videoLink });
-      } catch (error) {
-        console.warn('Failed to generate stable asset ID:', error);
-      }
+    if (!anyInFlight && hasWaiting) {
+      // Kick on next tick to avoid racing the state commit
+      setTimeout(() => processQueue(), 0);
     }
+  }, [allLoadingLifts, processQueue]);
 
-    if (!assetId) {
-      const now = Date.now();
-      const startProg = 0.02;
-      const errLift: LoadingLiftData = {
-        ...liftData,
-        id: liftId,
-        status: 'error',
-        isComplete: false,
-        pipelineStage: 'analyze',
-        uiProgress: startProg,
-        simStartAt: now,
-        simStartProgress: startProg,
-        simDurationMs: (((liftData.videoDurationSec || 10) * 2) + 20) * 1000,
-        errorMessage: 'Missing assetId',
-      } as LoadingLiftData;
-      
-      // Track error event
-      trackErrorOnce(liftId, 'MISSING_ASSET_ID');
-      
-      setAllLoadingLifts(prev => [errLift, ...prev]);
-      return liftId;
-    }
 
-    // 1) Show local card immediately
-    const now = Date.now();
-    const startProg = 0.02;
 
-    const newLift: LoadingLiftData = {
-      ...liftData,
-      id: liftId,
-      assetId: assetId,
-      status: 'processing',
-      isComplete: false,
-      pipelineStage: 'analyze',
-      uiProgress: startProg,
-      simStartAt: now,
-      simStartProgress: startProg,
-      simDurationMs: (((liftData.videoDurationSec || 10) * 2) + 20) * 1000,
-    };
 
-    setAllLoadingLifts(prev => [newLift, ...prev]);
-
-    // 2) Upload raw video + thumbnail first
+  // Helper function to process uploads after UI card is shown
+  const processLiftUploads = async (liftId: string, liftData: any, assetId?: string) => {
     try {
+      // Generate assetId if not provided (moved from main thread)
+      let finalAssetId = assetId;
+      if (!finalAssetId && liftData.videoLink) {
+        try {
+          finalAssetId = await getStableAssetId({ uri: liftData.videoLink });
+        } catch (error) {
+          console.warn('Failed to generate stable asset ID:', error);
+        }
+      }
+
+      if (!finalAssetId) {
+        trackErrorOnce(liftId, 'MISSING_ASSET_ID');
+        safeUpdateLift(liftId, l => ({ ...l, status: 'error', errorMessage: 'Missing assetId' }));
+        return;
+      }
+
+      // Update the assetId in the lift data
+      safeUpdateLift(liftId, l => ({ ...l, assetId: finalAssetId }));
+
       const userId = await getUserId();
       if (!userId) {
         // Track error event
         trackErrorOnce(liftId, 'NO_USER_ID');
         safeUpdateLift(liftId, l => ({ ...l, status: 'error', errorMessage: 'No userId available' }));
-        return liftId;
+        return;
       }
+
+      // Check if uploads are already done (when using VideoUploadService from modals)
+      if (liftData.uploadedVideoUrl && liftData.uploadedThumbnailUrl) {
+        // Skip upload process, go directly to analysis
+        safeUpdateLift(liftId, l => ({
+          ...l,
+          status: 'processing',
+          pipelineStage: 'analyze',
+          uiProgress: 0.02 // Start at 2% to match normal flow
+        }));
+
+        // Enqueue analysis with already uploaded URLs
+        await enqueueLiftAnalysis({
+          userId,
+          liftId, // DB id
+          lift: {
+            ...liftData,
+            videoLink: liftData.uploadedVideoUrl,
+            thumbnailUri: liftData.uploadedThumbnailUrl,
+            assetId: finalAssetId,
+          },
+          hasHdVideos,
+        });
+        return;
+      }
+
+      // Update to uploading status
+      safeUpdateLift(liftId, l => ({ ...l, status: 'uploading', pipelineStage: 'upload_video' }));
 
       // Upload video
       if (!liftData.videoLink) throw new Error('No video link provided');
-      const { publicUrl: videoUrl } = await uploadLiftVideo(userId, liftId, liftData.videoLink, assetId, hasHdVideos);
-      setAllLoadingLifts(prev => prev.map(l => l.id === liftId ? { ...l, uploadedVideoUrl: videoUrl } : l));
+      const { publicUrl: videoUrl } = await uploadLiftVideo(userId, liftId, liftData.videoLink, finalAssetId, hasHdVideos);
+      setAllLoadingLifts(prev => prev.map(l => l.id === liftId ? { ...l, uploadedVideoUrl: videoUrl, pipelineStage: 'upload_thumbnail' } : l));
 
       // Upload thumbnail
       if (!liftData.thumbnailUri) throw new Error('No thumbnail URI provided');
       const { publicUrl: thumbUrl } = await uploadLiftThumbnail(userId, liftId, liftData.thumbnailUri);
-      setAllLoadingLifts(prev => prev.map(l => l.id === liftId ? { ...l, uploadedThumbnailUrl: thumbUrl } : l));
+      setAllLoadingLifts(prev => prev.map(l => l.id === liftId ? { ...l, uploadedThumbnailUrl: thumbUrl, pipelineStage: 'analyze', status: 'processing' } : l));
 
-      // 3) Enqueue analysis (fast 202)
+      // Enqueue analysis (fast 202)
       await enqueueLiftAnalysis({
         userId,
         liftId, // DB id
@@ -1200,40 +1323,76 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
           ...liftData,
           videoLink: videoUrl,       // uploaded raw URL
           thumbnailUri: thumbUrl, // uploaded thumb URL
-          assetId: assetId,
+          assetId: finalAssetId,
         },
         hasHdVideos,
       });
     } catch (error) {
       // Track error event
       trackErrorOnce(liftId, 'UPLOAD_FAILED');
-      safeUpdateLift(liftId, l => ({ 
-        ...l, 
-        status: 'error', 
-        errorMessage: 'Failed to upload video. Please try again.' 
+      safeUpdateLift(liftId, l => ({
+        ...l,
+        status: 'error',
+        errorMessage: 'Failed to upload video. Please try again.'
       }));
     }
-
-    return liftId;
   };
 
+  const addLoadingLift = async (liftData: Omit<LoadingLiftData, 'id' | 'isComplete' | 'status' | 'pipelineStage'>): Promise<string> => {
+    const liftId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
+    // Check if there's already a lift processing
+    const hasProcessingLift = allLoadingLifts.some(lift => 
+      lift.status === 'uploading' || lift.status === 'processing'
+    );
 
+    if (hasProcessingLift) {
+      // Add to queue and show waiting card - include ref to waiting card ID
+      const queueId = await queueService.addToQueue({ ...liftData, ref: liftId } as any);
 
-  function normalizeApiLift(data: any) {
-    return {
-      id: data.id,
-      is_favourite: data.is_favourite ?? data.isFavourite,
-      lift_type: data.lift_type ?? data.liftType,
-      lift_date: data.lift_date ?? data.liftDate,
-      lift_time: data.lift_time ?? data.liftTime,
-      metric_weight: data.metric_weight ?? data.metricWeight,
-      reps: data.reps,
-      thumbnail_url: data.thumbnail_url ?? data.thumbnailURL,
-      analysis: data.analysis,
-    };
-  }
+      const waitingLift: LoadingLiftData = {
+        ...liftData,
+        id: liftId,
+        assetId: liftData.assetId,
+        status: 'waiting',
+        isComplete: false,
+        pipelineStage: 'upload_video',
+        uiProgress: 0,
+        // Store the queue entry id for reliable removal (always a string or null)
+        queueId,
+        enqueuedAt: Date.now(), // Timestamp for FIFO ordering
+      };
 
+      setAllLoadingLifts(prev => [...prev, waitingLift]); // Append for FIFO
+      return liftId;
+    } else {
+      // Process immediately
+      const now = Date.now();
+      const startProg = 0.02;
+
+      const newLift: LoadingLiftData = {
+        ...liftData,
+        id: liftId,
+        assetId: liftData.assetId,
+        status: 'processing',
+        isComplete: false,
+        pipelineStage: 'upload_video',
+        uiProgress: startProg,
+        simStartAt: now,
+        simStartProgress: startProg,
+        simDurationMs: (((liftData.videoDurationSec || 10) * 4) + 90) * 1000,
+      };
+
+      setAllLoadingLifts(prev => [newLift, ...prev]);
+
+      // Process the lift uploads
+      setTimeout(() => {
+        processLiftUploads(liftId, liftData, liftData.assetId);
+      }, 0);
+
+      return liftId;
+    }
+  };
 
   const completeLift = (id: string, analysisData?: any) => {
     // No-op: streak modal is no longer triggered manually
@@ -1246,16 +1405,67 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
   const retryLift = async (id: string) => {
     const l = allLoadingLifts.find(x => x.id === id);
     if (!l) return;
+    
+    // If this is a waiting lift, check if we can process it now
+    if (l.status === 'waiting') {
+      const hasProcessingLift = allLoadingLifts.some(lift => 
+        lift.id !== id && (lift.status === 'uploading' || lift.status === 'processing')
+      );
+      
+      if (hasProcessingLift) {
+        // Still waiting, do nothing
+        return;
+      } else {
+        // Can process now, remove from queue using stored queueId
+        if (l.queueId) {
+          try { 
+            await queueService.removeFromQueue(l.queueId); 
+          } catch (error) {
+            console.warn('Failed to remove from queue:', error);
+          }
+        }
+        
+        const now = Date.now();
+        const startProg = 0.02;
+        
+        // Update the existing waiting lift to processing
+        safeUpdateLift(id, x => ({
+          ...x,
+          status: 'processing',
+          isComplete: false,
+          pipelineStage: 'upload_video',
+          uiProgress: startProg,
+          simStartAt: now,
+          simStartProgress: startProg,
+          simDurationMs: (((x.videoDurationSec || 10) * 4) + 90) * 1000,
+        }));
+        
+        // Process the lift uploads
+        setTimeout(() => {
+          processLiftUploads(id, l, l.assetId);
+        }, 0);
+        return;
+      }
+    }
+    
     if (!l.assetId) {
       return;
     }
 
+    const now = Date.now();
     safeUpdateLift(id, x => ({
       ...x,
       status: 'processing',
       errorMessage: undefined,
       failureStage: undefined,
-      simStartAt: Date.now(), // Reset simulation start time for fresh progress calculation
+      // hard reset progress to 2%
+      uiProgress: 0.02,
+      simStartAt: now,
+      simStartProgress: 0.02,
+      // keep duration consistent with your wall-clock progress calc
+      simDurationMs: (((x.videoDurationSec || 10) * 4) + 90) * 1000,
+      lastTriedAt: now,
+      retryCount: (x.retryCount || 0) + 1,
     }));
 
     const userId = await getUserId();
@@ -1288,7 +1498,20 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
       });
     }
     
+    // If this was a waiting lift, remove from queue using stored queueId
+    if (lift?.status === 'waiting' && lift.queueId) {
+      queueService.removeFromQueue(lift.queueId);
+      // Only clear the lock if this was the currently processing item
+      const queueState = queueService.getQueueState();
+      if (queueState.currentProcessingId === lift.queueId) {
+        queueService.markProcessingError(lift.queueId);
+      }
+    }
+    
     setAllLoadingLifts(prev => prev.filter(lift => lift.id !== id));
+    
+    // Process queue after removing a lift
+    processQueue();
   };
 
   const removeLoadingLiftByFinalId = (finalId: string) => {
@@ -1323,32 +1546,7 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
     setShowStreakModal(false);
   };
 
-  // Function to automatically delete error lifts in the background
-  const autoDeleteErrorLift = async (liftId: string) => {
-    if (deletingRef.current.has(liftId)) return;
-    if (autoDeletedLifts.has(liftId)) return;
-    deletingRef.current.add(liftId);
-    try {
-      // Call the storage delete API in the background
-      const success = await autoDeleteLiftErrorCardData(liftId);
-      
-      if (success) {
-        // Mark this lift as auto-deleted for instant UI removal later
-        setAutoDeletedLifts(prev => new Set([...prev, liftId]));
-        // Note: invalidateUserCheckIns() is now handled manually in StreakModal when user clicks continue
-      }
-    } catch (error) {
-    } finally {
-      deletingRef.current.delete(liftId);
-    }
-  };
-
   // All mock helpers removed; rely on backend data
-
-  // Function to check if a lift has been auto-deleted
-  const isLiftAutoDeleted = (liftId: string): boolean => {
-    return autoDeletedLifts.has(liftId);
-  };
 
   // Emergency purge helper for debugging
   const purgeAllLoadingLifts = useCallback(() => {
@@ -1377,13 +1575,11 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
     setAllLoadingLifts([]);
     setCompletedLifts([]);
     setShowStreakModal(false);
-    setAutoDeletedLifts(new Set());
     // Clear all refs
     inflightRef.current.clear();
     retryTimersRef.current.forEach(clearTimeout);
     retryTimersRef.current.clear();
     queuedRef.current.clear();
-    deletingRef.current.clear();
     streakShownForRef.current.clear();
     trackedErrorsRef.current.clear();
     latestLiftsRef.current = [];
@@ -1425,7 +1621,6 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
         openStreakModal,
         closeStreakModal,
         handleStreakModalContinue,
-        isLiftAutoDeleted,
         removeLoadingLiftByFinalId,
         purgeAllLoadingLifts,
       }}

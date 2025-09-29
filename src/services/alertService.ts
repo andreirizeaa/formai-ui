@@ -13,7 +13,7 @@ export function showAlert(
   // Track error if errorId is provided
   if (errorId) {
     track('Errors', {
-      error_id: errorId,
+      type: errorId,
       details: errorDetails ? JSON.stringify(errorDetails) : undefined
     });
   }

@@ -1,7 +1,23 @@
 // services/liftApi.ts
 import { API_CONFIG } from './api';
+import { supabase } from '../lib/supabase';
 
 const API = API_CONFIG.baseURL;
+
+export async function deleteLiftFailure(userId: string, liftId: string, assetId: string): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('lift_failures')
+      .delete()
+      .eq('user_id', userId)
+      .eq('lift_id', liftId)
+      .eq('asset_id', assetId);
+    
+    return !error;
+  } catch (_) {
+    return false;
+  }
+}
 
 export async function enqueueLiftAnalysis(body: {
   userId: string; 
@@ -9,6 +25,11 @@ export async function enqueueLiftAnalysis(body: {
   lift: any;
   hasHdVideos?: boolean;
 }): Promise<{ job_id: string; lift_id: string }> {
+  // First delete any existing failure record for this lift
+  if (body.lift?.assetId) {
+    await deleteLiftFailure(body.userId, body.liftId, body.lift.assetId);
+  }
+
   const res = await fetch(`${API}/lifts/analyse`, {
     method: 'POST',
     headers: {'Content-Type':'application/json'},

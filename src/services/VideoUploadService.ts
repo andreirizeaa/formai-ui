@@ -3,36 +3,13 @@ import * as FileSystem from 'expo-file-system';
 import { Video as VideoCompressor } from 'react-native-compressor';
 import { showAlert } from './alertService';
 
-function base64ToArrayBuffer(base64: string): ArrayBuffer {
-  const base64Chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
-  let bufferLength = base64.length * 0.75;
-  if (base64[base64.length - 1] === '=') bufferLength--;
-  if (base64[base64.length - 2] === '=') bufferLength--;
-
-  const bytes = new Uint8Array(bufferLength);
-  let p = 0;
-
-  for (let i = 0; i < base64.length; i += 4) {
-    const encoded1 = base64Chars.indexOf(base64[i]);
-    const encoded2 = base64Chars.indexOf(base64[i + 1]);
-    const encoded3 = base64Chars.indexOf(base64[i + 2]);
-    const encoded4 = base64Chars.indexOf(base64[i + 3]);
-
-    const triplet = (encoded1 << 18) | (encoded2 << 12) | ((encoded3 & 63) << 6) | (encoded4 & 63);
-
-    if (encoded3 === 64) {
-      bytes[p++] = (triplet >> 16) & 0xff;
-    } else if (encoded4 === 64) {
-      bytes[p++] = (triplet >> 16) & 0xff;
-      bytes[p++] = (triplet >> 8) & 0xff;
-    } else {
-      bytes[p++] = (triplet >> 16) & 0xff;
-      bytes[p++] = (triplet >> 8) & 0xff;
-      bytes[p++] = triplet & 0xff;
-    }
+// Helper to get Supabase auth header for direct storage API calls
+async function getSupabaseAuthHeader(): Promise<string> {
+  const { data, error } = await supabase.auth.getSession();
+  if (error || !data.session?.access_token) {
+    throw new Error('No Supabase session');
   }
-
-  return bytes.buffer;
+  return `Bearer ${data.session.access_token}`;
 }
 
 function inferExtensionFromUri(uri: string): string {
@@ -83,31 +60,35 @@ export async function uploadLiftVideo(userId: string, liftId: string, fileUri: s
 
   // Only compress video if user doesn't have HD videos entitlement
   if (!hasHdVideos) {
-    // Compress video to reduce size (works on iOS and Android)
-    const compressedPath = await VideoCompressor.compress(
-      fileUri,
-      {
-        compressionMethod: 'manual',
-        // 540p target at ~0.6 Mbps
-        bitrate: 600_000,
-        maxSize: 540,
-        // Always allow compression (0 disables threshold)
-        minimumFileSizeForCompress: 0,
-      }
-    );
-
-    uploadUri = compressedPath.startsWith('file://') ? compressedPath : `file://${compressedPath}`;
-
-    // Validate compressed file; if missing/empty, fall back to original URI
     try {
-      const info = await FileSystem.getInfoAsync(uploadUri);
-      if (!info.exists || !info.size || info.size === 0) {
-        // Fallback to original
+      // Compress video to reduce size (works on iOS and Android)
+      const compressedPath = await VideoCompressor.compress(
+        fileUri,
+        {
+          compressionMethod: 'manual',
+          // 540p target at ~0.6 Mbps
+          bitrate: 600_000,
+          maxSize: 540,
+          // Always allow compression (0 disables threshold)
+          minimumFileSizeForCompress: 0,
+        }
+      );
+
+      uploadUri = compressedPath.startsWith('file://') ? compressedPath : `file://${compressedPath}`;
+
+      // Validate compressed file; if missing/empty, fall back to original URI
+      try {
+        const info = await FileSystem.getInfoAsync(uploadUri);
+        if (!info.exists || !info.size || info.size === 0) {
+          // Fallback to original
+          uploadUri = fileUri;
+        }
+      } catch (_) {
+        // If we fail to stat the file, proceed but prefer original URI for safety
         uploadUri = fileUri;
       }
-    } catch (_) {
-      // If we fail to stat the file, proceed but prefer original URI for safety
-      uploadUri = fileUri;
+    } catch {
+      uploadUri = fileUri; // fallback on compression failure
     }
   }
 
@@ -118,16 +99,25 @@ export async function uploadLiftVideo(userId: string, liftId: string, fileUri: s
   const fileName = assetId ? `${assetId}.${ext}` : `${Date.now()}.${ext}`;
   const path = `${userId}/${liftId}/videos/${fileName}`;
 
-  // Read file as base64 (RN-friendly) and convert to ArrayBuffer for Supabase
-  const base64 = await FileSystem.readAsStringAsync(uploadUri, { encoding: FileSystem.EncodingType.Base64 });
-  const arrayBuffer = base64ToArrayBuffer(base64);
+  // Use direct Supabase Storage API with native streaming - NO base64 conversion
+  const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL!;
+  const url = `${supabaseUrl}/storage/v1/object/${encodeURIComponent('lifts')}/${encodeURIComponent(path)}`;
+  const auth = await getSupabaseAuthHeader();
 
-  const { error } = await supabase.storage.from('lifts').upload(path, arrayBuffer, {
-    contentType,
-    upsert: true,
+  // Stream the file directly from disk - this runs natively and won't block JS thread
+  const result = await FileSystem.uploadAsync(url, uploadUri, {
+    headers: {
+      'Authorization': auth,
+      'Content-Type': contentType,
+      'x-upsert': 'true',
+    },
+    httpMethod: 'POST',
+    uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
   });
 
-  if (error) throw error;
+  if (result.status < 200 || result.status >= 300) {
+    throw new Error(`Video upload failed with status ${result.status}: ${result.body?.slice(0, 200)}`);
+  }
 
   const { data } = supabase.storage.from('lifts').getPublicUrl(path);
   return { publicUrl: data.publicUrl, path };
@@ -139,15 +129,35 @@ export async function uploadLiftThumbnail(userId: string, liftId: string, fileUr
   const fileName = `${Date.now()}.${ext}`;
   const path = `${userId}/${liftId}/thumbnails/${fileName}`;
 
-  // Read file as base64 and convert to ArrayBuffer for Supabase
-  const base64 = await FileSystem.readAsStringAsync(fileUri, { encoding: FileSystem.EncodingType.Base64 });
-  const arrayBuffer = base64ToArrayBuffer(base64);
+  // Handle data URLs by writing to temp file first
+  let uploadUri = fileUri;
+  if (fileUri.startsWith('data:image/')) {
+    const tmpPath = `${FileSystem.cacheDirectory}${fileName}`;
+    await FileSystem.writeAsStringAsync(tmpPath, fileUri.replace(/^data:image\/(png|jpe?g);base64,/, ''), {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+    uploadUri = tmpPath;
+  }
 
-  const { error } = await supabase.storage.from('lifts').upload(path, arrayBuffer, {
-    contentType,
-    upsert: true,
+  // Use direct Supabase Storage API with native streaming - NO base64 conversion
+  const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL!;
+  const url = `${supabaseUrl}/storage/v1/object/${encodeURIComponent('lifts')}/${encodeURIComponent(path)}`;
+  const auth = await getSupabaseAuthHeader();
+
+  // Stream the file directly from disk - this runs natively and won't block JS thread
+  const result = await FileSystem.uploadAsync(url, uploadUri, {
+    headers: {
+      'Authorization': auth,
+      'Content-Type': contentType,
+      'x-upsert': 'true',
+    },
+    httpMethod: 'POST',
+    uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
   });
-  if (error) throw error;
+
+  if (result.status < 200 || result.status >= 300) {
+    throw new Error(`Thumbnail upload failed with status ${result.status}: ${result.body?.slice(0, 200)}`);
+  }
 
   const { data } = supabase.storage.from('lifts').getPublicUrl(path);
   return { publicUrl: data.publicUrl, path };

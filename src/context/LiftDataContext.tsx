@@ -31,6 +31,14 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
     setIsLoaded(false);
   }, []);
 
+  // Keep userId in sync with Supabase auth too (nice to have)
+  useEffect(() => {
+    const { data: sub } = supabase.auth.onAuthStateChange((_evt, session) => {
+      setUserIdState(session?.user?.id ?? null);
+    });
+    return () => { sub?.subscription?.unsubscribe?.(); };
+  }, []);
+
   // Set loaded to true if there's no userId (onboarding case)
   useEffect(() => {
     if (userId === null) {
@@ -179,6 +187,20 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
     setIsTutorialReplay(false);
   }, [restoreLiftDataFromStorage]);
 
+  const setSignedInUser = useCallback(async (id: string | null) => {
+    setUserIdState(id);
+    // re-gate until we actually fetch lifts
+    setIsLoaded(false);
+    if (!id) {
+      setLiftData([]);
+      setIsLoaded(true);
+      return;
+    }
+    // trigger the exact query that powers the provider
+    await queryClient.refetchQueries({ queryKey: ['lifts-by-user', id], exact: true });
+    // when the queryFn resolves it will set liftData and set isLoaded(true) in its finally{}
+  }, [queryClient]);
+
   // Fetch lifts on load and whenever userId changes
   useQuery({
     queryKey: ['lifts-by-user', userId],
@@ -235,6 +257,11 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
           signPath(rawKey),
           signPath(poseKey),
         ]);
+
+        // Fallback to original URLs if signing fails
+        const finalThumbnailURL = thumbnailURL || row.thumbnail_url;
+        const finalRawVideoURL = rawVideoURL || row.raw_video_url;
+        const finalPoseVideoURL = poseVideoURL || row.pose_video_url;
         const rawFeedback: Array<{ imageURL: any; flaws: any; improvement: any }> = Array.isArray(row.analysis?.feedback) ? row.analysis.feedback : [];
         const signedFeedback = await Promise.all(
           rawFeedback.map(async (f) => {
@@ -251,9 +278,9 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
           liftTime: row.lift_time,
           metricWeight: Number(row.metric_weight),
           reps: Number(row.reps),
-          rawVideoURL,
-          poseVideoURL,
-          thumbnailURL,
+          rawVideoURL: finalRawVideoURL,
+          poseVideoURL: finalPoseVideoURL,
+          thumbnailURL: finalThumbnailURL,
           analysis: {
             accuracy: Number(row.analysis?.accuracy ?? 0),
             lineGraphValues: Array.isArray(row.analysis?.lineGraphValues) ? row.analysis.lineGraphValues : [],
@@ -365,6 +392,11 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
             signPathInner(rawKey),
             signPathInner(poseKey),
           ]);
+
+          // Fallback to original URLs if signing fails
+          const finalThumbnailURL = thumbnailURL || data.thumbnail_url;
+          const finalRawVideoURL = rawVideoURL || data.raw_video_url;
+          const finalPoseVideoURL = poseVideoURL || data.pose_video_url;
           const rawFeedback: Array<{ imageURL: any; flaws: any; improvement: any }> = Array.isArray(data.analysis?.feedback) ? data.analysis.feedback : [];
           const signedFeedback = await Promise.all(
             rawFeedback.map(async (f) => {
@@ -381,9 +413,9 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
             liftTime: data.lift_time,
             metricWeight: Number(data.metric_weight),
             reps: Number(data.reps),
-            rawVideoURL,
-            poseVideoURL,
-            thumbnailURL,
+            rawVideoURL: finalRawVideoURL,
+            poseVideoURL: finalPoseVideoURL,
+            thumbnailURL: finalThumbnailURL,
             analysis: {
               accuracy: Number(data.analysis?.accuracy ?? 0),
               lineGraphValues: Array.isArray(data.analysis?.lineGraphValues) ? data.analysis.lineGraphValues : [],
@@ -422,6 +454,7 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
     restoreLiftDataFromStorage,
     clearLiftDataForTutorial,
     restoreLiftDataAfterTutorial,
+    setSignedInUser,
   }), [
     liftData,
     addLift,
@@ -445,6 +478,7 @@ export function LiftDataProvider({ children }: LiftDataProviderProps) {
     restoreLiftDataFromStorage,
     clearLiftDataForTutorial,
     restoreLiftDataAfterTutorial,
+    setSignedInUser,
   ]);
 
   // Function to clear only tutorial-seeded lifts (those with IDs starting with 'demo-')

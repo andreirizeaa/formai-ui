@@ -1,7 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, ActivityIndicator, TextInput, Keyboard } from 'react-native';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, ActivityIndicator, TextInput, Keyboard, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ChevronLeft, Ellipsis, Heart, Trash2, X, Pencil } from 'lucide-react-native';
+import { ChevronLeft, Ellipsis, Heart, Trash2, X, Pencil, Download } from 'lucide-react-native';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { LinearGradient } from 'expo-linear-gradient';
 import SwipeableLiftDetailsGraphs from '../../../components/ui/SwipeableLiftDetailsGraphs';
@@ -19,6 +19,10 @@ import { useUserCheckIns } from '../../../context/UserCheckInsContext';
 import i18n from '../../../utils/i18n';
 import { VideoPlayerComponentProps, LiftDetailsProps } from '../../../types/Lifts';
 import { track } from '../../../services/analytics';
+import { PermissionContainer } from '../../../components/ui/PermissionContainer';
+import { openAppSettings } from '../../../utils/openAppSettings';
+import * as MediaLibrary from 'expo-media-library';
+import { downloadVideoToLibrary } from '../../../services/downloadVideoService';
 
 function VideoPlayerComponent({ videoUri, onReady }: { videoUri: string | number; onReady: () => void }) {
   const player = useVideoPlayer(videoUri as any, (player) => {
@@ -56,6 +60,12 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
   const [isUpdatingWeight, setIsUpdatingWeight] = useState(false);
   const [editWeight, setEditWeight] = useState('');
   const editWeightInputRef = useRef<TextInput>(null);
+  const [showMediaPermission, setShowMediaPermission] = useState(false);
+  const [hasMediaPermission, setHasMediaPermission] = useState<boolean | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
+  
+  // Animation value for finger icon
+  const fingerTranslateY = useMemo(() => new Animated.Value(0), []);
   
   // Track screen view on mount
   useEffect(() => {
@@ -93,9 +103,15 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
       if (typeof source === 'number') { setResolvedPoseUrl(source); return; }
       try {
         const key = await extractObjectKeyFromUrl(typeof source === 'string' ? source : undefined);
-        const signed = await signPath(key);
-        if (!cancelled) setResolvedPoseUrl(signed || (typeof source === 'string' ? source : null));
-      } catch (_) {
+        if (key) {
+          const signed = await signPath(key);
+          if (!cancelled) setResolvedPoseUrl(signed || (typeof source === 'string' ? source : null));
+        } else {
+          // If we can't extract a key, the source might already be a valid URL or path
+          if (!cancelled) setResolvedPoseUrl(typeof source === 'string' ? source : null);
+        }
+      } catch (error) {
+        console.warn('Failed to resolve pose video URL:', error);
         if (!cancelled) setResolvedPoseUrl(typeof source === 'string' ? source : null);
       }
     })();
@@ -195,6 +211,7 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
 
   const handleFavourite = () => {
     hapticFeedback.success();
+    track('Lift details clicks', { event: 'Favourite' });
     handleStarPress();
     setShowDropdown(false);
   };
@@ -281,6 +298,97 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
     }
   };
 
+  // Check media library permission
+  const checkMediaPermission = async () => {
+    try {
+      const { status } = await MediaLibrary.getPermissionsAsync();
+      setHasMediaPermission(status === 'granted');
+    } catch (e) {
+      setHasMediaPermission(false);
+    }
+  };
+
+  // Request media library permission
+  const requestMediaPermissionFromUser = async () => {
+    try {
+      const result = await MediaLibrary.requestPermissionsAsync();
+      if (!result.granted && result.canAskAgain === false) {
+        openAppSettings();
+        setHasMediaPermission(false);
+        return;
+      }
+      setHasMediaPermission(result.granted);
+      if (result.granted) {
+        setShowMediaPermission(false);
+        // Retry download after permission is granted
+        handleDownload();
+      }
+    } catch (e) {
+      setHasMediaPermission(false);
+    }
+  };
+
+  // Finger animation effect
+  useEffect(() => {
+    if (showMediaPermission) {
+      const startFingerAnimation = () => {
+        Animated.loop(
+          Animated.sequence([
+            Animated.timing(fingerTranslateY, {
+              toValue: -15,
+              duration: 600,
+              useNativeDriver: true,
+            }),
+            Animated.timing(fingerTranslateY, {
+              toValue: 0,
+              duration: 600,
+              useNativeDriver: true,
+            }),
+          ])
+        ).start();
+      };
+      
+      startFingerAnimation();
+    } else {
+      // Reset animation when not showing permission screen
+      fingerTranslateY.setValue(0);
+    }
+  }, [showMediaPermission, fingerTranslateY]);
+
+  const handleDownload = async () => {
+    hapticFeedback.selection();
+    // Track lift details clicks for download
+    track('Lift details clicks', { event: 'Download' });
+    
+    setIsDownloading(true);
+    
+    try {
+      // Check permission first
+      await checkMediaPermission();
+      
+      if (hasMediaPermission === false) {
+        setShowMediaPermission(true);
+        return;
+      }
+      
+      const success = await downloadVideoToLibrary({
+        videoUrl: resolvedPoseUrl,
+        onSuccess: () => {
+          // Video downloaded successfully
+        },
+        onError: (error: any) => {
+          // Video download failed
+        },
+        onPermissionRequired: () => {
+          setShowMediaPermission(true);
+        }
+      });
+    } finally {
+      setIsDownloading(false);
+      setShowDropdown(false);
+    }
+  };
+
   const isEditWeightValid = () => {
     const metricWeight = parseFloat(editWeight);
     if (metricWeight <= 0) return false;
@@ -320,6 +428,30 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
   }
 
   // No chart data computed here; handled by SwipeableLiftDetailsGraphs
+  
+  // Show permission screen if no media library permission
+  if (showMediaPermission) {
+    return (
+      <SafeAreaView
+        style={[
+          styles.container,
+          { backgroundColor: '#1d293d' }
+        ]}
+      >
+        <PermissionContainer
+          title={i18n.t('upload.permissionTitle')}
+          dialogText={i18n.t('upload.permissionMessage')}
+          fingerTranslateY={fingerTranslateY}
+          allowButtonText={i18n.t('upload.allow')}
+          dontAllowButtonText={i18n.t('upload.dontAllow')}
+          onDontAllow={() => {
+            // Don't allow just stays in this state
+          }}
+          onAllow={requestMediaPermissionFromUser}
+        />
+      </SafeAreaView>
+    );
+  }
   
   return (
     <View style={styles.container}>
@@ -450,6 +582,24 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
           onPress={() => setShowDropdown(false)}
         >
           <View style={styles.dropdownContainer}>
+            <TouchableOpacity 
+              style={styles.dropdownOption} 
+              onPress={handleDownload}
+              activeOpacity={0.7}
+              disabled={isDownloading}
+            >
+              <Text style={[styles.dropdownOptionText, isDownloading && styles.dropdownOptionTextDisabled]}>
+                {i18n.t('feedback.download')}
+              </Text>
+              <View style={styles.dropdownIconContainer}>
+                {isDownloading ? (
+                  <ActivityIndicator size="small" color="#ffffff" />
+                ) : (
+                  <Download size={20} color="#ffffff" />
+                )}
+              </View>
+            </TouchableOpacity>
+            <View style={styles.dropdownDivider} />
             <TouchableOpacity 
               style={styles.dropdownOption} 
               onPress={handleFavourite}
@@ -826,22 +976,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 8,
-    minHeight: 44, // Ensure consistent height
+    minHeight: 30, // Ensure consistent height
     width: '100%', // Take full width of container
     maxWidth: 164, // Account for container padding (180 - 16)
   },
   dropdownOptionText: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '700',
     color: '#FFFFFF',
     fontFamily: 'SF Pro Display',
     flex: 1,
     flexWrap: 'wrap',
     marginRight: 8,
     maxWidth: 120, // Constrain text width to prevent pushing icon
+  },
+  dropdownOptionTextDisabled: {
+    color: '#8E8E93',
+    opacity: 0.6,
   },
   dropdownOptionTextDestructive: {
     fontSize: 14,
@@ -1090,6 +1243,8 @@ const styles = StyleSheet.create({
   accuracyCard: {
     width: "auto",
     flex: 0, // Override flex to use fixed width
+    marginBottom: 8,
+    marginLeft: 8,
   },
   // Edit weight modal styles
   editWeightSection: {
