@@ -1,9 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { View, InteractionManager } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
 import { Asset } from 'expo-asset';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useQuickActionCallback } from 'expo-quick-actions/hooks';
+import { openDeletionFeedbackEmail } from './src/services/emailService';
+import { track } from './src/services/analytics';
 import { LoadingLiftsProvider } from './src/context/LoadingLiftsContext';
 import { LiftDataProvider } from './src/context/LiftDataContext';
 import { UserDetailsProvider } from './src/context/UserDetailsContext';
@@ -37,10 +40,29 @@ function AppContent() {
   const [passedInitialDataGate, setPassedInitialDataGate] = useState(false);
   const [extraDelayDone, setExtraDelayDone] = useState(false);
   const [splashHidden, setSplashHidden] = useState(false);
+  
+  // Ref to prevent multiple email composer calls
+  const emailComposerCalled = useRef(false);
+
+  // Handle quick actions using the hook
+  useQuickActionCallback((action) => {
+    if (action?.id === 'deletion_feedback' && !emailComposerCalled.current) {
+      emailComposerCalled.current = true;
+      
+      // Track the quick action event
+      track('Feedback quick action', {
+        event: 'Quick action triggered',
+        action_id: 'deletion_feedback',
+        source: 'ios_quick_action'
+      });
+      
+      openDeletionFeedbackEmail();
+    }
+  });
 
   const { hasSubscription, isInitializing } = usePurchases();
   const { isUserDetailsLoaded, refetchUserDetails, userDetails, setSignedInUser: setUserDetailsSignedInUser } = useUserDetails();
-  const { isLiftDataLoaded, liftData } = useLiftData();
+  const { isLiftDataLoaded, liftData, setSignedInUser: setLiftDataSignedInUser } = useLiftData();
   const { 
     isLoading: isUserCheckInsLoading, 
     data: checkIns, 
@@ -92,16 +114,20 @@ function AppContent() {
           require('./assets/icons/appstore.png'),
           require('./assets/icons/playstore.png'),
           require('./assets/icons/x.png'),
-          require('./assets/animations/confetti.json'),
-          require('./assets/animations/star-rating.json'),
-          require('./assets/animations/bell.json'),
-          require('./assets/animations/loading.json'),
           require('./assets/tutorial/formai-example-feedback.png'),
           require('./assets/tutorial/formai-example-pose.mp4'),
           require('./assets/tutorial/formai-example-video-thumbnail.jpg'),
           require('./assets/tutorial/formai-example-video.mp4'),
           require('./assets/onboarding/progress_tracking.png'),
-        ];
+        ].filter(asset => {
+          // Filter out any assets that might be objects instead of module references
+          if (typeof asset === 'object' && asset !== null && !asset.uri && !asset.__packager_asset) {
+            console.warn('Skipping invalid asset (likely JSON):', asset);
+            return false;
+          }
+          return true;
+        });
+
         await Asset.loadAsync(assetsToLoad);
       } catch (error) {
         console.warn('Asset preloading failed:', error);
@@ -212,6 +238,7 @@ function AppContent() {
     setRoute('MAIN');
   };
 
+
   const handleOnboardingComplete = () => {
     goToMainGated();
   };
@@ -222,16 +249,19 @@ function AppContent() {
     // Make sure providers *know* the userId immediately
     const id = await getUserId().catch(() => null);
     if (id) {
-      // Set the user ID in both contexts immediately
+      // Set the user ID in all contexts immediately
       try { 
         setUserDetailsSignedInUser?.(id); 
       } catch {}
       try { 
         setCheckInsSignedInUser?.(id); 
       } catch {}
+      try {
+        setLiftDataSignedInUser?.(id);
+      } catch {}
     }
     
-    // Now refetch both contexts
+    // Now refetch all contexts
     await Promise.all([
       refetchUserDetails(),
       refetchUserCheckIns ? refetchUserCheckIns() : Promise.resolve(),

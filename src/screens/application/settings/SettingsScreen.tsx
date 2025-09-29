@@ -735,7 +735,7 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
         </View>
 
         {/* Development Test Buttons - Only visible in development */}
-        {/* {__DEV__ && (
+        {__DEV__ && (
           <View style={styles.card}>
             <Text style={styles.devSectionTitle}>Development Tools</Text>
             <TouchableOpacity
@@ -762,7 +762,7 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
               <Text style={[styles.devButtonText, styles.devButtonTextTertiary]}>Add Today's Test Lifts</Text>
             </TouchableOpacity>
           </View>
-        )} */}
+        )}
       </View>
 
       {/* Delete Account Modal */}

@@ -13,6 +13,29 @@ import { track } from '../../../services/analytics';
 function isLoadingLift(x: ILiftData | LoadingLiftData): x is LoadingLiftData {
   return 'status' in x;
 }
+
+// Helper function to parse 12-hour format time strings (e.g., "9:56 AM", "2:45 PM")
+function parseTimeString(timeString: string): number {
+  try {
+    // Create a date object for today with the parsed time
+    const today = new Date();
+    const [time, period] = timeString.split(' ');
+    const [hours, minutes] = time.split(':').map(Number);
+    
+    let hour24 = hours;
+    if (period === 'PM' && hours !== 12) {
+      hour24 = hours + 12;
+    } else if (period === 'AM' && hours === 12) {
+      hour24 = 0;
+    }
+    
+    const date = new Date(today.getFullYear(), today.getMonth(), today.getDate(), hour24, minutes);
+    return date.getTime();
+  } catch (error) {
+    // Fallback to current time if parsing fails
+    return Date.now();
+  }
+}
 import { LiftCard } from '../../../components/ui/LiftCard';
 import { SwipeableCalendar } from '../../../components/ui/SwipeableCalendar';
 import { SwipeableAccuracyCard } from '../../../components/ui/SwipeableAccuracyCard';
@@ -79,8 +102,32 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
       l => !completedFinalIds.has(l.id)
     );
 
-    // Stable, no key swapping
-    return [...loadingCards, ...additionalFinals];
+    // Combine all lifts
+    const allLifts = [...loadingCards, ...additionalFinals];
+
+    // Sort by time - earliest first (top), latest last (bottom)
+    return allLifts.sort((a, b) => {
+      let aTime: number;
+      let bTime: number;
+      
+      if (isLoadingLift(a)) {
+        // For loading lifts, use enqueuedAt or fallback to id timestamp
+        aTime = a.enqueuedAt ?? parseInt(a.id.split('-')[0]);
+      } else {
+        // For final lifts, parse 12-hour format liftTime (e.g., "9:56 AM", "2:45 PM")
+        aTime = parseTimeString(a.liftTime);
+      }
+      
+      if (isLoadingLift(b)) {
+        // For loading lifts, use enqueuedAt or fallback to id timestamp
+        bTime = b.enqueuedAt ?? parseInt(b.id.split('-')[0]);
+      } else {
+        // For final lifts, parse 12-hour format liftTime (e.g., "9:56 AM", "2:45 PM")
+        bTime = parseTimeString(b.liftTime);
+      }
+      
+      return aTime - bTime; // Ascending order (earliest first)
+    });
   }, [loadingLifts, liftsForSelectedDate]);
   
   // Calculate average accuracy for the selected date
@@ -517,7 +564,7 @@ const styles = StyleSheet.create({
   },
   seeAllText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#8E8E93',
     fontFamily: 'SF Pro Text',
     marginRight: 2,

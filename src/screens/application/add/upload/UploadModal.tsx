@@ -8,6 +8,8 @@ import i18n from '../../../../utils/i18n';
 import { hapticFeedback } from '../../../../utils/haptic';
 import { generateVideoThumbnail } from '../../../../utils/generateVideoThumbnail';
 import { getStableAssetId } from '../../../../utils/getStableAssetId';
+import { uploadLiftVideo, uploadLiftThumbnail } from '../../../../services/VideoUploadService';
+import { enqueueLiftAnalysis } from '../../../../services/liftApi';
 import { openAppSettings } from '../../../../utils/openAppSettings';
 import { VideoPreviewScreen } from '../common/VideoPreviewScreen';
 import { MovementSelectionScreen } from '../common/MovementSelectionScreen';
@@ -15,6 +17,7 @@ import { PracticesScreen } from '../common/PracticesScreen';
 import { WeightRepsScreen } from '../common/WeightRepsScreen';
 import { useLoadingLifts } from '../../../../context/LoadingLiftsContext';
 import { useSelectedDate } from '../../../../context/SelectedDateContext';
+import { usePurchases } from '../../../../context/PurchasesContext';
 import { gymMovements, BodyPart } from '../../../../constants/gymMovements';
 import { X } from 'lucide-react-native';
 import { checkDuplicateAssetId } from '../../../../services/liftService';
@@ -37,6 +40,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
   const navigation = useNavigation<NativeStackNavigationProp<MainStackParamList>>();
   const { addLoadingLift } = useLoadingLifts();
   const { selectedDate } = useSelectedDate();
+  const { hasHdVideos } = usePurchases();
   const [selectedVideo, setSelectedVideo] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const [showMovementSelection, setShowMovementSelection] = useState(false);
   const [showWeightReps, setShowWeightReps] = useState(false);
@@ -242,6 +246,10 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
   // Weight and reps state
   const [weightReps, setWeightReps] = useState<{ weight: number; unit: 'kg' | 'lbs'; reps: number } | null>(null);
 
+  // Loading state for video upload
+  const [isUploading, setIsUploading] = useState(false);
+  const [isModalDisabled, setIsModalDisabled] = useState(false);
+
 
   // Reset states when modal becomes invisible
   useEffect(() => {
@@ -258,6 +266,8 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
       setShowVideoTooLongModal(false);
       setShowVideoTooShortModal(false);
       setDuplicateAssetId('');
+      setIsUploading(false);
+      setIsModalDisabled(false);
     }
   }, [isVisible]);
 
@@ -572,23 +582,23 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
   };
 
   const handleFinalCompleteClicked = async (data: { weight: number; unit: 'kg' | 'lbs'; reps: number }) => {
-    const videoUri = selectedVideo?.uri || '';
-    const { date, time } = getDateAndTime();
+    if (!selectedVideo?.uri || isUploading) return;
 
-    // Close the modal immediately
-    onClose();
+    setIsUploading(true);
+    const videoUri = selectedVideo.uri;
+    const { date, time } = getDateAndTime();
 
     try {
       // Generate stable asset ID using the selected video
-      const baseAssetId = await getStableAssetId({ 
-        assetId: selectedVideo!.assetId || undefined, 
-        uri: selectedVideo!.uri 
+      const baseAssetId = await getStableAssetId({
+        assetId: selectedVideo.assetId || undefined,
+        uri: selectedVideo.uri
       });
       const thumbnailUri = await generateVideoThumbnail(videoUri);
-      
+
       // Get video duration
       let videoDurationSec: number | undefined = undefined;
-      if (selectedVideo?.duration) {
+      if (selectedVideo.duration) {
         videoDurationSec = selectedVideo.duration;
         if (typeof videoDurationSec === 'number' && videoDurationSec > 1000) {
           videoDurationSec = videoDurationSec / 1000; // Convert from milliseconds to seconds
@@ -598,10 +608,25 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
       // Use weightReps state if available, otherwise fall back to data parameter
       const finalWeightReps = weightReps || data;
 
-      // Enqueue the loading lift without awaiting
-      void addLoadingLift({
-        videoLink: videoUri,
-        thumbnailUri,
+      // Get user ID for uploads
+      const userId = await getUserId();
+      if (!userId) {
+        throw new Error('No user ID available');
+      }
+
+      // Generate a lift ID for this upload
+      const liftId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+      // Upload video and thumbnail using VideoUploadService
+      const { publicUrl: videoUrl } = await uploadLiftVideo(userId, liftId, videoUri, baseAssetId, hasHdVideos);
+      const { publicUrl: thumbUrl } = await uploadLiftThumbnail(userId, liftId, thumbnailUri);
+
+      // Create the loading lift with uploaded URLs
+      await addLoadingLift({
+        videoLink: videoUrl,
+        thumbnailUri: thumbUrl,
+        uploadedVideoUrl: videoUrl,
+        uploadedThumbnailUrl: thumbUrl,
         dateToday: date,
         timeToday: time,
         movementType: selectedMovement,
@@ -609,14 +634,18 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
         reps: finalWeightReps.reps,
         assetId: baseAssetId,
         videoDurationSec: videoDurationSec,
-        pipelineStage: 'upload_video',
+        pipelineStage: 'analyze',
       });
-      
+
       hapticFeedback.success();
+
+      // Close the modal after successful upload
+      onClose();
     } catch (error) {
+      setIsUploading(false);
       showAlert(
-        i18n.t('upload.error'), 
-        i18n.t('upload.failedToGenerateThumbnail'),
+        i18n.t('upload.error'),
+        error instanceof Error ? error.message : i18n.t('upload.failedToGenerateThumbnail'),
         undefined,
         'UPLOAD_FAILED_TO_GENERATE_THUMBNAIL',
         error
@@ -673,9 +702,14 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
   };
 
   const handleClose = () => {
+    if (isUploading || isModalDisabled) return;
     hapticFeedback.selection();
     resetModal();
     onClose();
+  };
+
+  const handleDisabledStateChange = (disabled: boolean) => {
+    setIsModalDisabled(disabled);
   };
 
   if (!isVisible) {
@@ -694,9 +728,11 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
         {/* Close Button */}
         <View style={styles.permissionTopControls}>
           <TouchableOpacity onPress={() => {
+            if (isUploading || isModalDisabled) return;
             hapticFeedback.selection();
             onClose();
-          }} style={[styles.closeButton]}>
+          }} style={[styles.closeButton, (isUploading || isModalDisabled) && styles.closeButtonDisabled]}
+          disabled={isUploading || isModalDisabled}>
             <X width={24} height={24} color={'#000000'} />
           </TouchableOpacity>
         </View>
@@ -728,9 +764,11 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
           <Text style={styles.title}>{i18n.t('add.uploadVideo')}</Text>
         </View>
         <TouchableOpacity onPress={() => {
+          if (isUploading || isModalDisabled) return;
           hapticFeedback.selection();
           onClose();
-        }} style={styles.closeButton}>
+        }} style={[styles.closeButton, (isUploading || isModalDisabled) && styles.closeButtonDisabled]}
+        disabled={isUploading || isModalDisabled}>
           <X width={24} height={24} color="#000000" />
         </TouchableOpacity>
       </View>
@@ -769,6 +807,8 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
             onChange={setWeightReps}
             onBack={handleWeightRepsBack}
             onUpload={handleFinalCompleteClicked}
+            isLoading={isUploading}
+            onDisabledStateChange={handleDisabledStateChange}
           />
         ) : (
           // Video Preview - shown when video is selected but movement not yet selected
@@ -860,6 +900,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#F0F0F0',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  closeButtonDisabled: {
+    opacity: 0.5,
   },
   content: {
     flex: 1,

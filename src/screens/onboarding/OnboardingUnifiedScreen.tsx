@@ -498,12 +498,6 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
         { value: 'other', label: i18n.t('onboarding.discovery.other'), icon: <BookCopy size={iconSize} color={iconColor} /> },
       ],
     },
-    {
-      type: 'notificationPermission',
-      id: 'notificationPermission',
-      title: i18n.t('onboarding.notificationPermission.title'),
-      subtitle: '',
-    },
     // {
     //   type: 'rating',
     //   id: 'rating',
@@ -515,6 +509,12 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       id: 'referralCode',
       title: i18n.t('onboarding.referralCode.title'),
       subtitle: i18n.t('onboarding.referralCode.subtitle'),
+    },
+    {
+      type: 'notificationPermission',
+      id: 'notificationPermission',
+      title: i18n.t('onboarding.notificationPermission.title'),
+      subtitle: '',
     },
     {
       type: 'allDone',

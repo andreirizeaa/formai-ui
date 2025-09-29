@@ -7,8 +7,8 @@ import { X } from 'lucide-react-native';
 import { track } from '../../../services/analytics';
 
 interface DateRange {
-  from: { month: number; day: number; year: number } | null;
-  to: { month: number; day: number; year: number } | null;
+  from: { month: number; year: number } | null;
+  to: { month: number; year: number } | null;
 }
 
 interface DateRangeModalProps {
@@ -31,37 +31,23 @@ export function DateRangeModal({
   // Date picker helper functions - use translated month names
   const months = i18n.t('months.array');
 
-  const getDaysInMonth = (month: number, year: number) => {
-    return new Date(year, month, 0).getDate();
-  };
-
-  const isDateValid = (fromDate: { month: number; day: number; year: number } | null, toDate: { month: number; day: number; year: number } | null) => {
+  const isDateValid = (fromDate: { month: number; year: number } | null, toDate: { month: number; year: number } | null) => {
     if (!fromDate || !toDate) return true;
     
-    const from = new Date(fromDate.year, fromDate.month - 1, fromDate.day);
-    const to = new Date(toDate.year, toDate.month - 1, toDate.day);
+    const from = new Date(fromDate.year, fromDate.month - 1, 1);
+    const to = new Date(toDate.year, toDate.month - 1, 1);
     
     return to >= from;
   };
 
-  const updateDateRange = (type: 'from' | 'to', field: 'month' | 'day' | 'year', value: number | null) => {
+  const updateDateRange = (type: 'from' | 'to', field: 'month' | 'year', value: number | null) => {
     hapticFeedback.selection();
-    const currentDate = dateRange[type] || { month: 1, day: 1, year: new Date().getFullYear() };
+    const currentDate = dateRange[type] || { month: 1, year: new Date().getFullYear() };
     
     const updatedDate = {
       ...currentDate,
       [field]: value,
     };
-    
-    // If changing month or year, validate the day
-    if (field === 'month' || field === 'year') {
-      if (updatedDate.month && updatedDate.year && updatedDate.day) {
-        const maxDays = getDaysInMonth(updatedDate.month, updatedDate.year);
-        if (updatedDate.day > maxDays) {
-          updatedDate.day = maxDays;
-        }
-      }
-    }
     
     const newDateRange = {
       ...dateRange,
@@ -101,13 +87,6 @@ export function DateRangeModal({
   // Repeat months 'repeats' times
   const repeatedMonths = Array.from({ length: repeats }, () => months).flat();
 
-  // Compute max days for each section
-  const fromMaxDays = dateRange.from?.month && dateRange.from?.year
-    ? getDaysInMonth(dateRange.from.month, dateRange.from.year)
-    : 31;
-  const toMaxDays = dateRange.to?.month && dateRange.to?.year
-    ? getDaysInMonth(dateRange.to.month, dateRange.to.year)
-    : 31;
 
   return (
     <Modal
@@ -162,28 +141,6 @@ export function DateRangeModal({
                   </View>
                 </View>
 
-                {/* Day Picker */}
-                <View style={styles.dayPickerSection}>
-                  <View style={styles.pickerWrapper}>
-                    <Picker
-                      selectedValue={dateRange.from?.day ? (middleRepeatIndex * fromMaxDays) + (dateRange.from.day - 1) : undefined}
-                      onValueChange={(value) => updateDateRange('from', 'day', (value % fromMaxDays) + 1)}
-                      style={styles.picker}
-                      itemStyle={Platform.OS === 'ios' ? { color: '#000000', fontSize: 14 } : undefined}
-                      dropdownIconColor="#000000"
-                    >
-                      {Array.from({ length: repeats * fromMaxDays }, (_, i) => (i % fromMaxDays) + 1).map((day, index) => (
-                        <Picker.Item 
-                          key={`${index}`}
-                          label={day.toString()} 
-                          value={index}
-                          color="#000000"
-                        />
-                      ))}
-                    </Picker>
-                  </View>
-                </View>
-
                 {/* Year Picker */}
                 <View style={styles.yearPickerSection}>
                   <View style={styles.pickerWrapper}>
@@ -229,28 +186,6 @@ export function DateRangeModal({
                         <Picker.Item 
                           key={`${index}`}
                           label={month} 
-                          value={index}
-                          color="#000000"
-                        />
-                      ))}
-                    </Picker>
-                  </View>
-                </View>
-
-                {/* Day Picker */}
-                <View style={styles.dayPickerSection}>
-                  <View style={styles.pickerWrapper}>
-                    <Picker
-                      selectedValue={dateRange.to?.day ? (middleRepeatIndex * toMaxDays) + (dateRange.to.day - 1) : undefined}
-                      onValueChange={(value) => updateDateRange('to', 'day', (value % toMaxDays) + 1)}
-                      style={styles.picker}
-                      itemStyle={Platform.OS === 'ios' ? { color: '#000000', fontSize: 14 } : undefined}
-                      dropdownIconColor="#000000"
-                    >
-                      {Array.from({ length: repeats * toMaxDays }, (_, i) => (i % toMaxDays) + 1).map((day, index) => (
-                        <Picker.Item 
-                          key={`${index}`}
-                          label={day.toString()} 
                           value={index}
                           color="#000000"
                         />
@@ -385,12 +320,8 @@ const styles = StyleSheet.create({
     flex: 1.5, // wider flex for month
     alignItems: 'center',
   },
-  dayPickerSection: {
-    flex: 0.9,
-    alignItems: 'center',
-  },
   yearPickerSection: {
-    flex: 1.1, // normal flex for year
+    flex: 1.5, // equal flex for year
     alignItems: 'center',
   },
   pickerWrapper: {

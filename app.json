@@ -35,7 +35,7 @@
         {
           "backgroundColor": "#ffffff",
           "image": "./assets/formai-splash.png",
-          "imageWidth": 250
+          "imageWidth": 225
         }
       ],
       [
@@ -59,7 +59,20 @@
         }
       ],
       "react-native-compressor",
-      "expo-background-task"
+      "expo-background-task",
+      [
+        "expo-quick-actions",
+        {
+          "iosActions": [
+            {
+              "id": "deletion_feedback",
+              "title": "Deleting? Tell us why.",
+              "subtitle": "Send feedback before you delete.",
+              "icon": "compose"
+            }
+          ]
+        }
+      ]
     ],
     "ios": {
       "bundleIdentifier": "com.useformai.formai",
@@ -84,7 +97,7 @@
         "NSMicrophoneUsageDescription": "This app uses the microphone while recording workout videos.",
         "NSPhotoLibraryUsageDescription": "This app saves workout videos to your photo library for easy access.",
         "NSPhotoLibraryAddUsageDescription": "This app saves workout videos to your photo library for easy access.",
-        "NSUserTrackingUsageDescription": "This identifier will be used to deliver personalized ads to you.",
+        "NSUserTrackingUsageDescription": "We use this to ensure the app works for you and others that download it by reviewing usage logs.",
         "ITSAppUsesNonExemptEncryption": false
       }
     },

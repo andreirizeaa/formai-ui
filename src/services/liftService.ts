@@ -228,71 +228,57 @@ export async function favouriteLift(liftId: string): Promise<boolean> {
   }
 }
 
-export async function manualDeleteLiftCardData(liftId: string): Promise<boolean> {
+export async function deleteLiftCardData(
+  liftId: string,
+  opts?: { assetId?: string }
+): Promise<boolean> {
   const userId = await getUserId();
   if (!userId) return false;
   try {
-    // Fetch lift row to collect URLs
-    const { data: liftRow, error: liftErr } = await supabase
+    const prefix = `${userId}/${liftId}`;
+
+    // Try to fetch row to collect strays (ok if not found)
+    const { data: liftRow } = await supabase
       .from('lifts')
       .select('id, raw_video_url, pose_video_url, thumbnail_url, analysis')
       .eq('id', liftId)
       .eq('user_id', userId)
       .maybeSingle();
-    if (liftErr || !liftRow) return false;
 
-    // 1) Delete storage under userId/liftId/**
-    const prefix = `${userId}/${liftId}`;
+    // 1) Delete everything under userId/liftId/**
     await deleteStoragePrefix('lifts', prefix);
 
-    // 2) Delete stray URLs not under prefix
-    const strayUrls: string[] = [];
-    for (const key of ['raw_video_url', 'pose_video_url', 'thumbnail_url'] as const) {
-      const url = (liftRow as any)?.[key];
-      if (url) strayUrls.push(String(url));
+    // 2) Delete strays referenced on the row (if any)
+    if (liftRow) {
+      const strayUrls: string[] = [];
+      for (const key of ['raw_video_url', 'pose_video_url', 'thumbnail_url'] as const) {
+        const url = (liftRow as any)?.[key];
+        if (url) strayUrls.push(String(url));
+      }
+      const screenshotUrls = extractScreenshotUrlsFromAnalysis(liftRow?.analysis);
+      strayUrls.push(...screenshotUrls);
+      const uniqueStrays = Array.from(new Set(strayUrls));
+      for (const url of uniqueStrays) {
+        // eslint-disable-next-line no-await-in-loop
+        await deleteStorageByUrl(url, prefix);
+      }
     }
-    const screenshotUrls = extractScreenshotUrlsFromAnalysis(liftRow?.analysis);
-    strayUrls.push(...screenshotUrls);
-    const uniqueStrays = Array.from(new Set(strayUrls));
-    for (const url of uniqueStrays) await deleteStorageByUrl(url, prefix);
 
-    // 3) Delete DB row
-    const { error: delErr } = await supabase
-      .from('lifts')
-      .delete()
-      .eq('id', liftId)
-      .eq('user_id', userId);
-    if (delErr) return false;
-
-    // Notify listeners so contexts can invalidate their queries/caches
-    try { emitLiftDeleted(liftId); } catch (_) {}
-
-    // Optionally, we could reconcile streaks here if needed using UserCheckIns context.
-    return true;
-  } catch (_) {
-    return false;
-  }
-}
-
-export async function autoDeleteLiftErrorCardData(liftId: string): Promise<boolean> {
-  const userId = await getUserId();
-  if (!userId) return false;
-  try {
-    const prefix = `${userId}/${liftId}`;
-    await deleteStoragePrefix('lifts', prefix);
-
-    // Try to delete DB row if present (idempotent)
+    // 3) Best-effort DB cleanup (idempotent)
     await supabase
       .from('lifts')
       .delete()
       .eq('id', liftId)
       .eq('user_id', userId);
-    
+
+    // 4) Remove any recorded failures by lift_id or asset_id (if provided)
+    const orParts: string[] = [`lift_id.eq.${liftId}`];
+    if (opts?.assetId) orParts.push(`asset_id.eq.${opts.assetId}`);
     await supabase
       .from('lift_failures')
       .delete()
-      .eq('lift_id', liftId)
-      .eq('user_id', userId);
+      .eq('user_id', userId)
+      .or(orParts.join(','));
 
     try { emitLiftDeleted(liftId); } catch (_) {}
     return true;

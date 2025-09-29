@@ -726,7 +726,15 @@ const fr = {
         "message": "Veuillez réessayer plus tard"
       },
       "editWeight": "Modifier le Poids",
-      "apply": "Appliquer"
+      "apply": "Appliquer",
+      "download": "Télécharger",
+      "permissionRequired": "Permission Requise",
+      "photoLibraryPermissionMessage": "L'accès à la bibliothèque de photos est requis pour sauvegarder les vidéos dans votre appareil photo.",
+      "downloadSuccess": "Téléchargement Réussi",
+      "videoSavedToPhotos": "La vidéo a été sauvegardée dans votre app Photos dans l'album FormAI.",
+      "downloadFailed": "Échec du Téléchargement",
+      "videoNotAvailable": "La vidéo n'est pas disponible au téléchargement.",
+      "downloadErrorMessage": "Échec du téléchargement de la vidéo. Veuillez réessayer plus tard."
     },
     "common": {
       "accuracy": "Précision",
