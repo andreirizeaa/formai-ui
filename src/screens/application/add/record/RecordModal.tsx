@@ -537,8 +537,12 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
 
       hapticFeedback.success();
 
-      // Close the modal after successful upload
-      onClose();
+      // Hide loading overlay and close modal smoothly
+      setIsUploading(false);
+      // Brief delay to let LoadingOverlay start fading before closing modal
+      setTimeout(() => {
+        onClose();
+      }, 50);
     } catch (error) {
       setIsUploading(false);
       showAlert(

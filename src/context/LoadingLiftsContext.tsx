@@ -4,7 +4,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
 import { ILiftData } from './LiftDataContext';
 import { getUserId } from '../services/storageService';
-import { uploadLiftVideo, uploadLiftThumbnail } from '../services/VideoUploadService';
 import { useLiftData, extractObjectKeyFromUrl, signPath } from './LiftDataContext';
 import { useSelectedDate } from './SelectedDateContext';
 import { useUserCheckIns } from './UserCheckInsContext';
@@ -127,6 +126,9 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
         dateToday: waitingLift.dateToday,
         timeToday: waitingLift.timeToday,
         videoDurationSec: waitingLift.videoDurationSec,
+        // Include uploaded URLs if they exist (for lifts from modals)
+        uploadedVideoUrl: waitingLift.uploadedVideoUrl,
+        uploadedThumbnailUrl: waitingLift.uploadedThumbnailUrl,
       };
       processLiftUploads(waitingLift.id, liftDataForProcessing, waitingLift.assetId);
     }, 0);
@@ -1302,31 +1304,10 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
         return;
       }
 
-      // Update to uploading status
-      safeUpdateLift(liftId, l => ({ ...l, status: 'uploading', pipelineStage: 'upload_video' }));
-
-      // Upload video
-      if (!liftData.videoLink) throw new Error('No video link provided');
-      const { publicUrl: videoUrl } = await uploadLiftVideo(userId, liftId, liftData.videoLink, finalAssetId, hasHdVideos);
-      setAllLoadingLifts(prev => prev.map(l => l.id === liftId ? { ...l, uploadedVideoUrl: videoUrl, pipelineStage: 'upload_thumbnail' } : l));
-
-      // Upload thumbnail
-      if (!liftData.thumbnailUri) throw new Error('No thumbnail URI provided');
-      const { publicUrl: thumbUrl } = await uploadLiftThumbnail(userId, liftId, liftData.thumbnailUri);
-      setAllLoadingLifts(prev => prev.map(l => l.id === liftId ? { ...l, uploadedThumbnailUrl: thumbUrl, pipelineStage: 'analyze', status: 'processing' } : l));
-
-      // Enqueue analysis (fast 202)
-      await enqueueLiftAnalysis({
-        userId,
-        liftId, // DB id
-        lift: {
-          ...liftData,
-          videoLink: videoUrl,       // uploaded raw URL
-          thumbnailUri: thumbUrl, // uploaded thumb URL
-          assetId: finalAssetId,
-        },
-        hasHdVideos,
-      });
+      // If we reach here, uploads should have been done by the modals
+      // This is a fallback case that shouldn't normally happen
+      console.warn('processLiftUploads called without pre-uploaded content:', liftId);
+      safeUpdateLift(liftId, l => ({ ...l, status: 'error', errorMessage: 'Upload process not handled correctly' }));
     } catch (error) {
       // Track error event
       trackErrorOnce(liftId, 'UPLOAD_FAILED');
@@ -1446,6 +1427,53 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
         }, 0);
         return;
       }
+    }
+    
+    // Check if there's already a lift in progress (for error lifts)
+    const hasProcessingLift = allLoadingLifts.some(lift => 
+      lift.id !== id && (lift.status === 'uploading' || lift.status === 'processing')
+    );
+    
+    if (hasProcessingLift) {
+      // There's already a lift processing, queue this retry instead
+      const liftDataForQueue = {
+        videoLink: l.uploadedVideoUrl || l.videoLink || l.sourceVideoUri,
+        thumbnailUri: l.uploadedThumbnailUrl || l.thumbnailUri || l.sourceThumbnailUri,
+        movementType: l.movementType,
+        reps: l.reps,
+        metricWeight: l.metricWeight,
+        dateToday: l.dateToday,
+        timeToday: l.timeToday,
+        videoDurationSec: l.videoDurationSec,
+        assetId: l.assetId,
+        ref: id, // Reference to the error card ID for reliable matching
+        // Include uploaded URLs if they exist (for lifts from modals)
+        uploadedVideoUrl: l.uploadedVideoUrl,
+        uploadedThumbnailUrl: l.uploadedThumbnailUrl,
+      };
+      
+      // Add to queue
+      const queueId = await queueService.addToQueue(liftDataForQueue as any);
+      
+      // Update the error lift to waiting status and ensure it has the video/thumbnail data
+      safeUpdateLift(id, x => ({
+        ...x,
+        status: 'waiting',
+        errorMessage: undefined,
+        failureStage: undefined,
+        uiProgress: 0,
+        queueId,
+        enqueuedAt: Date.now(),
+        lastTriedAt: Date.now(),
+        retryCount: (x.retryCount || 0) + 1,
+        // Ensure video/thumbnail data is available for processing
+        videoLink: liftDataForQueue.videoLink,
+        thumbnailUri: liftDataForQueue.thumbnailUri,
+        uploadedVideoUrl: l.uploadedVideoUrl,
+        uploadedThumbnailUrl: l.uploadedThumbnailUrl,
+      }));
+      
+      return;
     }
     
     if (!l.assetId) {
