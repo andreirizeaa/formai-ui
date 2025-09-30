@@ -12,6 +12,7 @@ import {
 import { editUserDetails } from '../../../../services/userService';
 import { ChevronLeft } from 'lucide-react-native';
 import { track } from '../../../../services/analytics';
+import { showAlert } from '../../../../services/alertService';
 
 interface EditHeightScreenProps {
   onBack: () => void;
