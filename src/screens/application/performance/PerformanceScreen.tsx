@@ -100,32 +100,57 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
     return new Date(year, month - 1, day);
   }
 
-  function calculateAverageFormImprovement(lifts: Array<{ liftDate?: string; analysis?: { accuracy?: number } }>): number {
-    if (!Array.isArray(lifts) || lifts.length < 2) return 0;
+  // Helper to determine lift type for grouping
+  function getLiftType(l: any): string | null {
+    const candidates = [
+      l?.liftType,
+      l?.exerciseName,
+      l?.exercise?.name,
+      l?.movementName,
+      l?.liftName,
+      l?.name,
+      l?.type,
+    ];
+    const type = candidates.find(v => typeof v === 'string' && v.trim().length > 0);
+    return type ? String(type) : null;
+  }
 
-    const sorted = [...lifts]
-      .map(l => ({
-        date: parseDateDDMMYYYY((l as any).liftDate as string),
-        accuracy: typeof (l as any)?.analysis?.accuracy === 'number' ? (l as any).analysis.accuracy : null,
-      }))
-      .filter(it => it.date && typeof it.accuracy === 'number')
-      .sort((a, b) => (a.date as Date).getTime() - (b.date as Date).getTime());
+  // Calculate improvement per lift type: (max accuracy - min accuracy) for each type, then average
+  function calculateImprovementByTypeAverage(
+    lifts: Array<{ analysis?: { accuracy?: number } }>
+  ): number {
+    if (!Array.isArray(lifts) || lifts.length === 0) return 0;
 
-    if (sorted.length < 2) return 0;
+    // Group accuracies by lift type
+    const groups = new Map<string, number[]>();
+    for (const l of lifts) {
+      const acc = typeof l?.analysis?.accuracy === 'number' ? l.analysis.accuracy : null;
+      if (acc == null || Number.isNaN(acc)) continue;
+      const type = getLiftType(l);
+      if (!type) continue;
+      if (!groups.has(type)) groups.set(type, []);
+      groups.get(type)!.push(acc);
+    }
 
-    const segment = Math.max(1, Math.floor(sorted.length / 3));
-    const early = sorted.slice(0, segment);
-    const recent = sorted.slice(-segment);
+    if (groups.size === 0) return 0;
 
-    const avg = (arr: Array<{ accuracy: number | null }>) => {
-      const vals = arr.map(x => x.accuracy as number).filter(v => typeof v === 'number');
-      if (vals.length === 0) return 0;
-      return vals.reduce((s, v) => s + v, 0) / vals.length;
-    };
+    // Compute per-type improvement scores
+    const improvements: number[] = [];
+    groups.forEach(accs => {
+      if (!accs || accs.length < 2) {
+        // With fewer than 2 datapoints, improvement is 0 by definition
+        improvements.push(0);
+        return;
+      }
+      const minAcc = Math.max(0, Math.min(...accs));
+      const maxAcc = Math.min(100, Math.max(...accs));
+      const imp = Math.max(0, Math.min(100, maxAcc - minAcc)); // Clamp to [0,100]
+      improvements.push(imp);
+    });
 
-    const earlyAvg = avg(early);
-    const recentAvg = avg(recent);
-    return recentAvg - earlyAvg;
+    if (improvements.length === 0) return 0;
+    const avg = improvements.reduce((s, v) => s + v, 0) / improvements.length;
+    return avg;
   }
 
   const { averageAccuracy, improvementValue, accuracyColor, improvementColor, isImprovementNegative } = useMemo(() => {
@@ -137,13 +162,14 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
       : 0;
     const accColor = averageAccuracyRaw > 80 ? '#00a63e' : averageAccuracyRaw < 50 ? '#fb2c36' : '#fe9a00';
 
-    const improvementRaw = Math.round(calculateAverageFormImprovement(stableLiftData as any));
-    const impColor = improvementRaw >= 0 ? '#00a63e' : '#fb2c36';
-    const isNegative = improvementRaw < 0;
+    // Use new per-type improvement calculation
+    const improvementRaw = Math.round(calculateImprovementByTypeAverage(stableLiftData as any));
+    const impColor = '#00a63e'; // Improvement is non-negative by definition now
+    const isNegative = false; // Improvement is always non-negative
 
     return {
-      averageAccuracy: averageAccuracyRaw,
-      improvementValue: improvementRaw,
+      averageAccuracy: Math.max(0, Math.min(100, averageAccuracyRaw)),
+      improvementValue: Math.max(0, Math.min(100, improvementRaw)),
       accuracyColor: accColor,
       improvementColor: impColor,
       isImprovementNegative: isNegative,
@@ -260,7 +286,7 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
                   backgroundColor="#E5E5E5"
                   strokeWidth={10}
                   radius={40}
-                  clockwise={!isImprovementNegative}
+                  clockwise={true}
                 />
                 <Text style={styles.progressText} accessibilityLabel="Improvement value">
                   {`${improvementValue}%`}
