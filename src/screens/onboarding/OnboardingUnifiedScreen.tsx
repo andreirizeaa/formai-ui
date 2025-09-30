@@ -566,8 +566,8 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
   const feetOptions = Array.from({ length: 8 }, (_, i) => 1 + i); // 1-8 feet
   const inchesOptions = Array.from({ length: 12 }, (_, i) => i); // 0-11 inches
   const weightOptions = isMetric
-    ? Array.from({ length: 151 }, (_, i) => 40 + i) // 40-190 kg
-    : Array.from({ length: 251 }, (_, i) => 90 + i); // 90-340 lbs
+    ? Array.from({ length: 211 }, (_, i) => 40 + i) // 40-250 kg
+    : Array.from({ length: 468 }, (_, i) => 88 + i); // 88-555 lbs (equivalent to 40-250 kg)
 
   // Repeated picker logic (20 repeats with middle selected by default)
   const repeats = 20;

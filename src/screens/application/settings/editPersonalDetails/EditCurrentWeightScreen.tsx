@@ -12,6 +12,7 @@ import {
 } from '../../../../utils/unitConversions';
 import { ChevronLeft } from 'lucide-react-native';
 import { track } from '../../../../services/analytics';
+import { showAlert } from '../../../../services/alertService';
 
 interface EditCurrentWeightScreenProps {
   onBack: () => void;
@@ -35,11 +36,11 @@ export function EditCurrentWeightScreen({ onBack, currentValue, onSave }: EditCu
   // Generate weight options similar to onboarding
   const weightOptions = useMemo(() => {
     if (isMetric) {
-      // 30kg to 300kg in 0.1kg increments (2701 options)
-      return Array.from({ length: 2701 }, (_, i) => Number((30 + i * 0.1).toFixed(1)));
+      // 40kg to 250kg in 0.1kg increments (2101 options)
+      return Array.from({ length: 2101 }, (_, i) => Number((40 + i * 0.1).toFixed(1)));
     } else {
-      // 66lbs to 660lbs in 0.1lb increments (5941 options) - equivalent to 30-300kg
-      return Array.from({ length: 5941 }, (_, i) => Number((66 + i * 0.1).toFixed(1)));
+      // 88lbs to 550lbs in 0.1lb increments (4621 options) - equivalent to 40-250kg
+      return Array.from({ length: 4621 }, (_, i) => Number((88 + i * 0.1).toFixed(1)));
     }
   }, [isMetric]);
 
@@ -138,7 +139,7 @@ export function EditCurrentWeightScreen({ onBack, currentValue, onSave }: EditCu
           <View style={styles.pickerWrapper}>
             <Picker
               selectedValue={(() => {
-                const base = isMetric ? 30 : 66;
+                const base = isMetric ? 40 : 88;
                 const len = weightOptions.length;
                 const idx = Math.max(0, Math.min(len - 1, Math.round((selectedWeight - base) * 10)));
                 return middleRepeatIndex * len + idx;
