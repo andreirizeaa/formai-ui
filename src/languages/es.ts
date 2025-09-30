@@ -626,8 +626,8 @@ const es = {
           message: 'Tu precisión promedio de forma a través de todo el tiempo. Calculado como la media de las puntuaciones de precisión para todos los levantamientos.'
         },
         improvement: {
-          title: 'Mejora',
-          message: 'Cómo tu forma cambió a lo largo de todo el tiempo. Comparamos el primer tercio de tus levantamientos con el último tercio y mostramos la diferencia en precisión promedio.'
+          title: 'Tendencia',
+          message: 'Muestra tu progreso a través de todos los tipos de levantamiento. Para cada tipo de ejercicio, comparamos tu primer rendimiento con tu rendimiento más reciente y calculamos el cambio porcentual relativo al espacio de mejora disponible. Los valores van de -100% (declive) a +100% (mejora), luego promediamos entre todos los tipos de ejercicio.'
         }
       },
       metricsFeedback: {

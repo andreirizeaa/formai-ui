@@ -625,8 +625,8 @@ const de = {
           "message": "Deine durchschnittliche Präzision über die gesamte Zeit. Mittelwert aller Präzisionswerte."
         },
         "improvement": {
-          "title": "Verbesserung",
-          "message": "Veränderung deiner Form über die gesamte Zeit: Vergleich des ersten Drittels deiner Lifts mit dem letzten Drittel."
+          "title": "Trend",
+          "message": "Zeigt deinen Fortschritt über alle Lift-Typen. Für jeden Übungstyp vergleichen wir deine erste Leistung mit deiner neuesten Leistung und berechnen die prozentuale Änderung relativ zum verfügbaren Verbesserungsraum. Werte reichen von -100% (Rückgang) bis +100% (Verbesserung), dann Durchschnitt über alle Übungstypen."
         }
       },
       "metricsFeedback": {

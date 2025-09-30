@@ -626,8 +626,8 @@ const ro = {
           "message": "Precizia medie pe toată perioada. Media scorurilor tuturor lifturilor."
         },
         "improvement": {
-          "title": "Îmbunătățire",
-          "message": "Schimbarea formei pe toată perioada: comparăm prima treime a lifturilor cu ultima treime și afișăm diferența medie."
+          "title": "Tendință",
+          "message": "Arată progresul tău prin toate tipurile de lifturi. Pentru fiecare tip de exercițiu, comparăm prima ta performanță cu cea mai recentă și calculăm schimbarea procentuală relativă la spațiul de îmbunătățire disponibil. Valorile merg de la -100% (declin) la +100% (îmbunătățire), apoi media pe toate tipurile de exercițiu."
         }
       },
       "metricsFeedback": {

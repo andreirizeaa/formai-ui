@@ -626,8 +626,8 @@ const it = {
           message: 'La tua accuratezza media della forma attraverso tutto il tempo. Calcolato come la media dei punteggi di accuratezza per tutti i sollevamenti.'
         },
         improvement: {
-          title: 'Miglioramento',
-          message: 'Come la tua forma è cambiata attraverso tutto il tempo. Confrontiamo il primo terzo dei tuoi sollevamenti con l\'ultimo terzo e mostriamo la differenza nell\'accuratezza media.'
+          title: 'Tendenza',
+          message: 'Mostra il tuo progresso attraverso tutti i tipi di sollevamento. Per ogni tipo di esercizio, confrontiamo la tua prima performance con la tua performance più recente e calcoliamo la variazione percentuale relativa allo spazio di miglioramento disponibile. I valori vanno da -100% (declino) a +100% (miglioramento), poi calcoliamo la media tra tutti i tipi di esercizio.'
         }
       },
       metricsFeedback: {

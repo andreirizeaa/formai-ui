@@ -629,8 +629,8 @@ const en = {
           message: 'Your average form accuracy across all time. Calculated as the mean of accuracy scores for all lifts.'
         },
         improvement: {
-          title: 'Improvement',
-          message: 'Shows your overall improvement across all lift types. For each exercise type, we calculate the difference between your highest and lowest accuracy scores, then average all these improvements together.'
+          title: 'Trend',
+          message: 'Shows your progress across all lift types. For each exercise type, we compare your first performance to your most recent performance and calculate the percentage change relative to available improvement room. Values range from -100% (decline) to +100% (improvement), then averaged across all exercise types.'
         }
       },
       metricsFeedback: {

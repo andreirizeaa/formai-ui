@@ -626,8 +626,8 @@ const pt = {
           message: 'Sua precisão média de forma através de todo o tempo. Calculado como a média das pontuações de precisão para todos os levantamentos.'
         },
         improvement: {
-          title: 'Melhoria',
-          message: 'Como sua forma mudou ao longo de todo o tempo. Comparamos o primeiro terço dos seus levantamentos com o último terço e mostramos a diferença na precisão média.'
+          title: 'Tendência',
+          message: 'Mostra seu progresso em todos os tipos de levantamento. Para cada tipo de exercício, comparamos seu primeiro desempenho com seu desempenho mais recente e calculamos a mudança percentual relativa ao espaço de melhoria disponível. Valores variam de -100% (declínio) a +100% (melhoria), então calculamos a média entre todos os tipos de exercício.'
         }
       },
       metricsFeedback: {

@@ -570,7 +570,7 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
       poseVideoURL: require('../../../../assets/tutorial/formai-example-pose.mp4'),
       thumbnailURL: require('../../../../assets/tutorial/formai-example-video-thumbnail.jpg'),
       analysis: {
-        accuracy: 72,
+        accuracy: 50,
         lineGraphValues: [70, 72, 74, 71, 73],
         barChartValues: [70, 72, 74, 71, 73],
         feedback: [
@@ -607,7 +607,7 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
       poseVideoURL: require('../../../../assets/tutorial/formai-example-pose.mp4'),
       thumbnailURL: require('../../../../assets/tutorial/thumbnail.jpeg'),
       analysis: {
-        accuracy: 82,
+        accuracy: 90,
         lineGraphValues: [80, 82, 84, 81, 83, 80, 82, 84],
         barChartValues: [80, 82, 84, 81, 83, 80, 82, 84],
         feedback: [
