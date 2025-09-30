@@ -791,7 +791,7 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
           textStyle={styles.footerLogoText}
         />
         <Text style={styles.versionText}>
-          Version {Constants.expoConfig?.version || '1.0.0'}
+          Version {Constants.expoConfig?.version}
         </Text>
       </View>
     </ScrollView>

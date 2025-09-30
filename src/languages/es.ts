@@ -168,6 +168,11 @@ const es = {
         title: 'Bienvenido',
         message: 'Gracias por confiar en Form AI. Estamos emocionados de ayudarte a alcanzar tus objetivos.',
         ctaButton: 'Vamos a enseñarte cómo funciona',
+        upgrade: {
+          title: 'Nueva versión',
+          whatsNew: 'Qué hay de nuevo',
+          updateButton: 'Actualizar Form AI',
+        },
       },
     },
     onboarding: {
@@ -778,6 +783,16 @@ const es = {
       weightRepsComplete: {
         title: 'Peso y repeticiones',
         description: 'Esto se usará para rastrear tu progreso y ver cómo estás mejorando a lo largo del tiempo.',
+      },
+      weightRepsInfo: {
+        weight: {
+          title: 'Peso',
+          message: 'Ingresa el peso que levantaste para rastrear tu progreso a lo largo del tiempo en la pantalla de progreso. Por favor sé preciso. Puedes cambiar esto más tarde.',
+        },
+        reps: {
+          title: 'Repeticiones',
+          message: 'Ingresa el número exacto de repeticiones que realizaste. El análisis solo evaluará el número específico de repeticiones que ingreses, y esto no se puede cambiar más tarde.',
+        },
       },
       homeFirstLiftCard: {
         title: 'Haz clic aquí para encontrar tu análisis',

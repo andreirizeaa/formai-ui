@@ -36,6 +36,8 @@ import { supabase } from '../lib/supabase';
 import { extractObjectKeyFromUrl, signPath } from '../context/LiftDataContext';
 import { useUserDetails } from '../context/UserDetailsContext';
 import { getUserJustPaid, clearUserJustPaid } from '../services/storageService';
+import { UpgradeAppModal } from '../components/ui/UpgradeAppModal';
+import { checkAppVersion, forceCheckAppVersion, VersionCheckResult } from '../services/appVersionService';
 
 // Types for navigation
 export type MainTabParamList = {
@@ -56,6 +58,7 @@ export type MainStackParamList = {
   EditGender: { currentValue: string };
   RecordModal: undefined;
   UploadModal: undefined;
+  UpgradeAppModal: { versionCheckResult: VersionCheckResult };
   LiftDetails: {
     liftData: ILiftData;
   };
@@ -549,17 +552,48 @@ function LibraryScreenWrapperWithProps() {
   );
 }
 
+function UpgradeAppModalWrapper() {
+  const navigation = useNavigation<MainStackNavigationProp>();
+  const route = useRoute<RouteProp<MainStackParamList, 'UpgradeAppModal'>>();
+  
+  const handleClose = () => {
+    // Only allow closing if it's not a force update
+    if (!route.params.versionCheckResult.forceUpdate) {
+      navigation.goBack();
+    }
+  };
+
+  return (
+    <UpgradeAppModal
+      isVisible={true}
+      onClose={handleClose}
+      versionCheckResult={route.params.versionCheckResult}
+    />
+  );
+}
+
 // Main tabs navigator with custom bottom navigation
 function MainTabsNavigator({ onLogout, onAddPress }: { onLogout?: () => void; onAddPress?: () => boolean | void }) {
   const [activeTab, setActiveTab] = React.useState<'home' | 'progress' | 'settings'>('home');
   const [showAddOptions, setShowAddOptions] = React.useState(false);
+  const [versionCheckResult, setVersionCheckResult] = React.useState<VersionCheckResult | null>(null);
+  const [showUpgradeAppModal, setShowUpgradeAppModal] = React.useState(false);
   const navigation = useNavigation<MainStackNavigationProp>();
 
   const handleTabPress = (tab: 'home' | 'progress' | 'settings') => {
     setActiveTab(tab);
   };
 
-  const handleAddPress = () => {
+  const handleAddPress = async () => {
+    // Force check app version when add button is pressed (bypasses 24-hour check)
+    const result = await forceCheckAppVersion();
+    setVersionCheckResult(result);
+    
+    if (result?.shouldShowModal) {
+      setShowUpgradeAppModal(true);
+      return; // Don't show add options if upgrade modal should be shown
+    }
+
     // Check if there's a custom onAddPress handler (for subscription checks)
     if (onAddPress) {
       const wasHandled = onAddPress();
@@ -600,6 +634,39 @@ function MainTabsNavigator({ onLogout, onAddPress }: { onLogout?: () => void; on
     };
     checkPaymentFailsafe();
   }, []);
+
+  // Function to manually check app version (respects 24-hour interval)
+  const checkAppVersionManually = async () => {
+    try {
+      const result = await checkAppVersion();
+      setVersionCheckResult(result);
+      
+      if (result.shouldShowModal) {
+        setShowUpgradeAppModal(true);
+      }
+      
+      return result;
+    } catch (error) {
+      console.error('Error checking app version:', error);
+      return null;
+    }
+  };
+
+  // Check app version on mount
+  React.useEffect(() => {
+    checkAppVersionManually();
+  }, []);
+
+  // Show upgrade modal with delay when version check indicates it should be shown
+  React.useEffect(() => {
+    if (showUpgradeAppModal && versionCheckResult?.shouldShowModal) {
+      const timer = setTimeout(() => {
+        navigation.navigate('UpgradeAppModal', { versionCheckResult });
+      }, 3000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [showUpgradeAppModal, versionCheckResult, navigation]);
 
   // Expose the add press function globally
   React.useEffect(() => {
@@ -803,6 +870,15 @@ export function MainAppNavigator({ onLogout, onAddPress }: { onLogout?: () => vo
           <Stack.Screen 
             name="UploadModal" 
             component={UploadModalWrapper}
+            options={{
+              presentation: 'card',
+              animation: 'slide_from_bottom',
+              animationDuration: 300,
+            }}
+          />
+          <Stack.Screen 
+            name="UpgradeAppModal" 
+            component={UpgradeAppModalWrapper}
             options={{
               presentation: 'card',
               animation: 'slide_from_bottom',

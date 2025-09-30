@@ -168,6 +168,11 @@ const en = {
         title: 'Welcome',
         message: 'Thank you for trusting Form AI. We\'re excited to help you achieve your goals.',
         ctaButton: 'Let\'s show you around',
+        upgrade: {
+          title: 'New version',
+          whatsNew: 'What\'s New',
+          updateButton: 'Upgrade Form AI',
+        },
       },
     },
     onboarding: {
@@ -786,6 +791,16 @@ const en = {
       weightRepsComplete: {
         title: 'Weight & reps',
         description: 'This will be used to track your progress and see how you are improving over time.',
+      },
+      weightRepsInfo: {
+        weight: {
+          title: 'Weight',
+          message: 'Enter the weight you lifted to track your progress over time in the progress screen. Please be accurate. You can change this later.',
+        },
+        reps: {
+          title: 'Reps',
+          message: 'Enter the exact number of reps you performed. The analysis will only evaluate the specific number of reps you enter, and this cannot be changed later.',
+        },
       },
       homeFirstLiftCard: {
         title: 'Click into this to find your analysis',

@@ -79,7 +79,8 @@
     "react-native-svg-charts": "^5.4.0",
     "react-native-url-polyfill": "^2.0.0",
     "react-native-vision-camera": "^4.7.1",
-    "supabase": "^2.40.7"
+    "supabase": "^2.40.7",
+    "expo-updates": "~0.28.17"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

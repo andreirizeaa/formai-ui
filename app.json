@@ -8,6 +8,12 @@
     "icon": "./assets/formai-ios-icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
+    "updates": {
+      "enabled": true,
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0,
+      "url": "https://u.expo.dev/cbbfb6a7-e285-419f-af75-79337f5c77f9"
+    },
     "splash": {
       "image": "./assets/formai-splash.png",
       "backgroundColor": "#ffffff"
@@ -18,7 +24,19 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.useformai.formai",
-      "useNextNotificationsApi": true
+      "useNextNotificationsApi": true,
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.ACCESS_MEDIA_LOCATION",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.ACCESS_MEDIA_LOCATION",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "proxy": "https://formai-service.onrender.com"
@@ -35,7 +53,7 @@
         {
           "backgroundColor": "#ffffff",
           "image": "./assets/formai-splash.png",
-          "imageWidth": 225
+          "imageWidth": 200
         }
       ],
       [
@@ -83,9 +101,18 @@
         "UIBackgroundModes": [
           "remote-notification",
           "fetch",
+          "processing",
+          "remote-notification",
+          "fetch",
           "processing"
         ],
         "CFBundleURLTypes": [
+          {
+            "CFBundleURLName": "Google Sign-In",
+            "CFBundleURLSchemes": [
+              "com.googleusercontent.apps.338047674329-5dfpj06alfpfn0phi57c4bgdg6nihv87"
+            ]
+          },
           {
             "CFBundleURLName": "Google Sign-In",
             "CFBundleURLSchemes": [
@@ -106,6 +133,9 @@
       "eas": {
         "projectId": "cbbfb6a7-e285-419f-af75-79337f5c77f9"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
     }
   }
 }

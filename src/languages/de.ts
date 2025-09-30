@@ -166,7 +166,12 @@ const de = {
       "modal": {
         "title": "Willkommen",
         "message": "Danke für dein Vertrauen in Form AI. Wir freuen uns, dir beim Erreichen deiner Ziele zu helfen.",
-        "ctaButton": "Los geht’s mit einer Tour"
+        "ctaButton": "Los geht's mit einer Tour",
+        "upgrade": {
+          "title": "Neue Version",
+          "whatsNew": "Was ist neu",
+          "updateButton": "Form AI aktualisieren"
+        }
       }
     },
     "onboarding": {
@@ -769,6 +774,16 @@ const de = {
       "weightRepsComplete": {
         "title": "Gewicht & Wiederholungen",
         "description": "Damit verfolgen wir deinen Fortschritt und sehen deine Verbesserung."
+      },
+      "weightRepsInfo": {
+        "weight": {
+          "title": "Gewicht",
+          "message": "Gib das Gewicht ein, das du gehoben hast, um deinen Fortschritt im Fortschrittsbildschirm zu verfolgen. Bitte sei genau. Du kannst das später ändern."
+        },
+        "reps": {
+          "title": "Wiederholungen",
+          "message": "Gib die exakte Anzahl der Wiederholungen ein, die du ausgeführt hast. Die Analyse wird nur die spezifische Anzahl der eingegebenen Wiederholungen bewerten, und das kann später nicht geändert werden."
+        }
       },
       "homeFirstLiftCard": {
         "title": "Tippe hier, um deine Analyse zu sehen",

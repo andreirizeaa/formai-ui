@@ -98,40 +98,91 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
     const now = Date.now();
     const startProg = 0.02;
 
-    // Update the existing waiting lift to processing
-    setAllLoadingLifts(prev => prev.map(lift => 
-      lift.id === waitingLift.id 
-        ? {
-            ...lift,
-            status: 'processing',
-            isComplete: false,
-            pipelineStage: 'upload_video',
-            uiProgress: startProg,
-            simStartAt: now,
-            simStartProgress: startProg,
-            simDurationMs: (((lift.videoDurationSec || 10) * 4) + 90) * 1000,
-          }
-        : lift
-    ));
+    // Check if this lift already has analysis enqueued (from modals)
+    const hasAnalysisEnqueued = waitingLift.uploadedVideoUrl && waitingLift.uploadedThumbnailUrl;
 
-    // Process the lift uploads using the waiting lift's data
-    setTimeout(() => {
-      // Ensure the waiting lift has the required properties for processLiftUploads
-      const liftDataForProcessing = {
-        videoLink: waitingLift.videoLink || waitingLift.sourceVideoUri,
-        thumbnailUri: waitingLift.thumbnailUri || waitingLift.sourceThumbnailUri,
-        movementType: waitingLift.movementType,
-        reps: waitingLift.reps,
-        metricWeight: waitingLift.metricWeight,
-        dateToday: waitingLift.dateToday,
-        timeToday: waitingLift.timeToday,
-        videoDurationSec: waitingLift.videoDurationSec,
-        // Include uploaded URLs if they exist (for lifts from modals)
-        uploadedVideoUrl: waitingLift.uploadedVideoUrl,
-        uploadedThumbnailUrl: waitingLift.uploadedThumbnailUrl,
-      };
-      processLiftUploads(waitingLift.id, liftDataForProcessing, waitingLift.assetId);
-    }, 0);
+    if (hasAnalysisEnqueued) {
+      // For lifts with pre-uploaded content, check if job is running before transitioning
+      try {
+        const userId = await getUserId();
+        if (userId && waitingLift.assetId) {
+          const job = await getJobStatus(waitingLift.assetId, userId, waitingLift.id);
+          const status = String(job?.status || '').toLowerCase();
+
+          if (status === 'running') {
+            // Job is running, transition to processing
+            setAllLoadingLifts(prev => prev.map(lift =>
+              lift.id === waitingLift.id
+                ? {
+                    ...lift,
+                    status: 'processing',
+                    isComplete: false,
+                    pipelineStage: 'analyze',
+                    uiProgress: startProg,
+                    simStartAt: now,
+                    simStartProgress: startProg,
+                    simDurationMs: (((lift.videoDurationSec || 10) * 4) + 90) * 1000,
+                  }
+                : lift
+            ));
+          } else {
+            // Job not running yet, keep in waiting state and check again later
+            return;
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to check job status for waiting lift:', error);
+        // Fallback: transition to processing anyway
+        setAllLoadingLifts(prev => prev.map(lift =>
+          lift.id === waitingLift.id
+            ? {
+                ...lift,
+                status: 'processing',
+                isComplete: false,
+                pipelineStage: 'analyze',
+                uiProgress: startProg,
+                simStartAt: now,
+                simStartProgress: startProg,
+                simDurationMs: (((lift.videoDurationSec || 10) * 4) + 90) * 1000,
+              }
+            : lift
+        ));
+      }
+    } else {
+      // Legacy flow: update to processing and call processLiftUploads
+      setAllLoadingLifts(prev => prev.map(lift =>
+        lift.id === waitingLift.id
+          ? {
+              ...lift,
+              status: 'processing',
+              isComplete: false,
+              pipelineStage: 'upload_video',
+              uiProgress: startProg,
+              simStartAt: now,
+              simStartProgress: startProg,
+              simDurationMs: (((lift.videoDurationSec || 10) * 4) + 90) * 1000,
+            }
+          : lift
+      ));
+
+      // Process the lift uploads using the waiting lift's data
+      setTimeout(() => {
+        const liftDataForProcessing = {
+          videoLink: waitingLift.videoLink || waitingLift.sourceVideoUri,
+          thumbnailUri: waitingLift.thumbnailUri || waitingLift.sourceThumbnailUri,
+          movementType: waitingLift.movementType,
+          reps: waitingLift.reps,
+          metricWeight: waitingLift.metricWeight,
+          dateToday: waitingLift.dateToday,
+          timeToday: waitingLift.timeToday,
+          videoDurationSec: waitingLift.videoDurationSec,
+          // Include uploaded URLs if they exist (for lifts from modals)
+          uploadedVideoUrl: waitingLift.uploadedVideoUrl,
+          uploadedThumbnailUrl: waitingLift.uploadedThumbnailUrl,
+        };
+        processLiftUploads(waitingLift.id, liftDataForProcessing, waitingLift.assetId);
+      }, 0);
+    }
   }, []);
 
   // Subscribe to queue changes
@@ -1337,7 +1388,7 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
         assetId: liftData.assetId,
         status: 'waiting',
         isComplete: false,
-        pipelineStage: 'upload_video',
+        pipelineStage: 'analyze', // Set to analyze since we'll call enqueueLiftAnalysis immediately
         uiProgress: 0,
         // Store the queue entry id for reliable removal (always a string or null)
         queueId,
@@ -1345,6 +1396,29 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
       };
 
       setAllLoadingLifts(prev => [...prev, waitingLift]); // Append for FIFO
+
+      // Call enqueueLiftAnalysis immediately for queued lifts (if uploads are done)
+      if (liftData.uploadedVideoUrl && liftData.uploadedThumbnailUrl) {
+        try {
+          const userId = await getUserId();
+          if (userId) {
+            await enqueueLiftAnalysis({
+              userId,
+              liftId, // DB id
+              lift: {
+                ...liftData,
+                videoLink: liftData.uploadedVideoUrl,
+                thumbnailUri: liftData.uploadedThumbnailUrl,
+                assetId: liftData.assetId,
+              },
+              hasHdVideos,
+            });
+          }
+        } catch (error) {
+          console.warn('Failed to enqueue analysis for waiting lift:', error);
+        }
+      }
+
       return liftId;
     } else {
       // Process immediately
@@ -1408,23 +1482,82 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
         
         const now = Date.now();
         const startProg = 0.02;
-        
-        // Update the existing waiting lift to processing
-        safeUpdateLift(id, x => ({
-          ...x,
-          status: 'processing',
-          isComplete: false,
-          pipelineStage: 'upload_video',
-          uiProgress: startProg,
-          simStartAt: now,
-          simStartProgress: startProg,
-          simDurationMs: (((x.videoDurationSec || 10) * 4) + 90) * 1000,
-        }));
-        
-        // Process the lift uploads
-        setTimeout(() => {
-          processLiftUploads(id, l, l.assetId);
-        }, 0);
+
+        // Check if this lift has analysis already enqueued
+        const hasAnalysisEnqueued = l.uploadedVideoUrl && l.uploadedThumbnailUrl;
+
+        if (hasAnalysisEnqueued) {
+          // For lifts with pre-uploaded content, check if job is running before transitioning
+          try {
+            const userId = await getUserId();
+            if (userId && l.assetId) {
+              const job = await getJobStatus(l.assetId, userId, l.id);
+              const status = String(job?.status || '').toLowerCase();
+
+              if (status === 'running') {
+                // Job is running, transition to processing
+                safeUpdateLift(id, x => ({
+                  ...x,
+                  status: 'processing',
+                  isComplete: false,
+                  pipelineStage: 'analyze',
+                  uiProgress: startProg,
+                  simStartAt: now,
+                  simStartProgress: startProg,
+                  simDurationMs: (((x.videoDurationSec || 10) * 4) + 90) * 1000,
+                }));
+              } else {
+                // Job not running yet, re-enqueue analysis and keep waiting
+                try {
+                  await enqueueLiftAnalysis({
+                    userId,
+                    liftId: l.id,
+                    lift: {
+                      ...l,
+                      videoLink: l.uploadedVideoUrl,
+                      thumbnailUri: l.uploadedThumbnailUrl,
+                      assetId: l.assetId,
+                    },
+                    hasHdVideos,
+                  });
+                } catch (error) {
+                  console.warn('Failed to re-enqueue analysis:', error);
+                }
+                return; // Keep in waiting state
+              }
+            }
+          } catch (error) {
+            console.warn('Failed to check job status for retry:', error);
+            // Fallback: transition to processing
+            safeUpdateLift(id, x => ({
+              ...x,
+              status: 'processing',
+              isComplete: false,
+              pipelineStage: 'analyze',
+              uiProgress: startProg,
+              simStartAt: now,
+              simStartProgress: startProg,
+              simDurationMs: (((x.videoDurationSec || 10) * 4) + 90) * 1000,
+            }));
+          }
+        } else {
+          // Legacy flow: update to processing and call processLiftUploads
+          safeUpdateLift(id, x => ({
+            ...x,
+            status: 'processing',
+            isComplete: false,
+            pipelineStage: 'upload_video',
+            uiProgress: startProg,
+            simStartAt: now,
+            simStartProgress: startProg,
+            simDurationMs: (((x.videoDurationSec || 10) * 4) + 90) * 1000,
+          }));
+
+          // Process the lift uploads
+          setTimeout(() => {
+            processLiftUploads(id, l, l.assetId);
+          }, 0);
+        }
         return;
       }
     }
