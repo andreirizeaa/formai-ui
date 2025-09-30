@@ -15,10 +15,6 @@ import { Picker } from '@react-native-picker/picker';
 import * as StoreReview from 'expo-store-review';
 import * as Notifications from 'expo-notifications';
 import * as ImagePicker from 'expo-image-picker';
-import {
-  getTrackingPermissionsAsync,
-  requestTrackingPermissionsAsync
-} from 'expo-tracking-transparency';
 import { LinearGradient } from 'expo-linear-gradient';
 import { validateReferralCode } from '../../services/referralService';
 import { OnboardingLayout } from '../../components/onboarding/OnboardingLayout';
@@ -398,12 +394,12 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       title: '',
       subtitle: '',
     },
-    {
-      type: 'cameraPermission',
-      id: 'cameraPermission',
-      title: i18n.t('onboarding.cameraPermission.title'),
-      subtitle: '',
-    },
+    // {
+    //   type: 'cameraPermission',
+    //   id: 'cameraPermission',
+    //   title: i18n.t('onboarding.cameraPermission.title'),
+    //   subtitle: '',
+    // },
     {
       type: 'options',
       id: 'formConfidence',
@@ -712,12 +708,6 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
   setCurrentStepSelection(null);
 }, [currentStepIndex]);
 
-// Request tracking permission when language step is displayed
-useEffect(() => {
-  if (currentStep.id === 'language') {
-    requestTrackingPermissionSafe();
-  }
-}, [currentStepIndex]);
 
 
   function getPerfectFormGoalMessage() {
@@ -833,34 +823,6 @@ useEffect(() => {
     });
   }
 
-  async function requestTrackingPermissionSafe() {
-    if (Platform.OS !== 'ios') {
-      // track/skip gracefully on non-iOS platforms
-      trackPermission('tracking_transparency', false, 'language');
-      return { status: 'unavailable' };
-    }
-
-    try {
-      // Check existing status first
-      const { status: existing } = await getTrackingPermissionsAsync();
-      if (existing === 'granted' || existing === 'denied') {
-        const granted = existing === 'granted';
-        trackPermission('tracking_transparency', granted, 'language');
-        return { status: existing };
-      }
-
-      // Only prompt if still 'not-determined'
-      const result = await requestTrackingPermissionsAsync();
-      const granted = result.status === 'granted';
-      trackPermission('tracking_transparency', granted, 'language');
-      return result;
-    } catch (error) {
-      // Never crash the UI
-      console.warn('ATT request failed:', error);
-      trackPermission('tracking_transparency', false, 'language', error instanceof Error ? error.message : 'Unknown error');
-      return { status: 'unavailable' };
-    }
-  }
 
   async function handleRateFormAI() {
     hapticFeedback.selection();
@@ -1881,7 +1843,9 @@ useEffect(() => {
           fingerTranslateY={fingerTranslateY}
           allowButtonText={i18n.t('onboarding.cameraPermission.allow')}
           dontAllowButtonText={i18n.t('onboarding.cameraPermission.dontAllow')}
+          disableDontAllowButton={true}
           onDontAllow={() => {
+            // This will never be called since the button is disabled
             handleNext();
           }}
           onAllow={async () => {
@@ -1914,7 +1878,9 @@ useEffect(() => {
           fingerTranslateY={fingerTranslateY}
           allowButtonText={i18n.t('onboarding.mediaLibraryPermission.allow')}
           dontAllowButtonText={i18n.t('onboarding.mediaLibraryPermission.dontAllow')}
+          disableDontAllowButton={true}
           onDontAllow={() => {
+            // This will never be called since the button is disabled
             handleNext();
           }}
           onAllow={async () => {

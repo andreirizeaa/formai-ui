@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, Dimensions, ImageSourcePropType, ImageBackground, Modal, Animated as RNAnimated } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, Dimensions, ImageSourcePropType, ImageBackground, Modal, Animated as RNAnimated, Platform } from 'react-native';
 import { Image } from 'expo-image';
 import { FlashList } from '@shopify/flash-list';
 import { hapticFeedback } from '../../../utils/haptic';
@@ -8,6 +8,10 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useLiftData, ILiftData } from '../../../context/LiftDataContext';
 import { LoadingLiftData } from '../../../types/Lifts.d';
 import { track } from '../../../services/analytics';
+import {
+  getTrackingPermissionsAsync,
+  requestTrackingPermissionsAsync
+} from 'expo-tracking-transparency';
 
 // Type guard for loading lifts
 function isLoadingLift(x: ILiftData | LoadingLiftData): x is LoadingLiftData {
@@ -34,6 +38,47 @@ function parseTimeString(timeString: string): number {
   } catch (error) {
     // Fallback to current time if parsing fails
     return Date.now();
+  }
+}
+
+// Helper function to track permission requests
+function trackPermission(type: string, granted: boolean, stepId: string, error?: string) {
+  track('Permissions', {
+    permission_type: type,
+    step_id: stepId,
+    step_index: 0, // Home screen
+    granted: granted,
+    error: error || null,
+  });
+}
+
+// Helper function to request tracking permission safely
+async function requestTrackingPermissionSafe() {
+  if (Platform.OS !== 'ios') {
+    // track/skip gracefully on non-iOS platforms
+    trackPermission('tracking_transparency', false, 'home');
+    return { status: 'unavailable' };
+  }
+
+  try {
+    // Check existing status first
+    const { status: existing } = await getTrackingPermissionsAsync();
+    if (existing === 'granted' || existing === 'denied') {
+      const granted = existing === 'granted';
+      trackPermission('tracking_transparency', granted, 'home');
+      return { status: existing };
+    }
+
+    // Only prompt if still 'not-determined'
+    const result = await requestTrackingPermissionsAsync();
+    const granted = result.status === 'granted';
+    trackPermission('tracking_transparency', granted, 'home');
+    return result;
+  } catch (error) {
+    // Never crash the UI
+    console.warn('ATT request failed:', error);
+    trackPermission('tracking_transparency', false, 'home', error instanceof Error ? error.message : 'Unknown error');
+    return { status: 'unavailable' };
   }
 }
 import { LiftCard } from '../../../components/ui/LiftCard';
@@ -72,6 +117,9 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
 
   // Confetti animation state
   const [showConfetti, setShowConfetti] = useState(false);
+  
+  // Tracking permission state
+  const [hasRequestedTrackingPermission, setHasRequestedTrackingPermission] = useState(false);
   
   // ScrollView ref for gesture handling
   const scrollViewRef = useRef<ScrollView>(null);
@@ -286,6 +334,14 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
   // Note: Removed refreshLifts() call as it was causing lifts to disappear when reopening home screen
   // The LiftDataContext will fetch data naturally when it mounts
 
+
+  // Request tracking permission on first load
+  useEffect(() => {
+    if (!hasRequestedTrackingPermission) {
+      setHasRequestedTrackingPermission(true);
+      requestTrackingPermissionSafe();
+    }
+  }, [hasRequestedTrackingPermission]);
 
   // Track Home screen focus to control streak modal triggering
   useFocusEffect(

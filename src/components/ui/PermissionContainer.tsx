@@ -12,6 +12,7 @@ interface PermissionContainerProps {
   fingerTranslateY: Animated.Value;
   allowButtonText?: string;
   dontAllowButtonText?: string;
+  disableDontAllowButton?: boolean;
 }
 
 export function PermissionContainer({
@@ -22,6 +23,7 @@ export function PermissionContainer({
   fingerTranslateY,
   allowButtonText,
   dontAllowButtonText,
+  disableDontAllowButton = false,
 }: PermissionContainerProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -78,11 +80,12 @@ export function PermissionContainer({
                   backgroundColor: isDark ? '#2C2C2E' : '#F0F0F0',
                 }
               ]}
-              onPress={() => {
+              onPress={disableDontAllowButton ? undefined : () => {
                 hapticFeedback.selection();
                 onDontAllow();
               }}
               activeOpacity={0.7}
+              disabled={disableDontAllowButton}
             >
               <Text style={[
                 styles.buttonText,
@@ -176,6 +179,7 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     elevation: 8,
     overflow: 'hidden',
+    pointerEvents: 'auto',
   },
   textArea: {
     padding: 24,
@@ -191,11 +195,13 @@ const styles = StyleSheet.create({
   buttonContainer: {
     flexDirection: 'row',
     height: 44,
+    zIndex: 10,
   },
   button: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    pointerEvents: 'auto',
   },
   dontAllowButton: {},
   allowButton: {},
@@ -210,6 +216,7 @@ const styles = StyleSheet.create({
   animatedFingerContainer: {
     marginTop: 20,
     marginLeft: '55%',
+    pointerEvents: 'none',
   },
   pointingEmoji: {
     fontSize: 40,

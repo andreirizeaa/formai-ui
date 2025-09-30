@@ -630,7 +630,7 @@ const en = {
         },
         improvement: {
           title: 'Improvement',
-          message: 'How your form changed over all time. We compare the first third of your lifts to the last third and show the difference in average accuracy.'
+          message: 'Shows your overall improvement across all lift types. For each exercise type, we calculate the difference between your highest and lowest accuracy scores, then average all these improvements together.'
         }
       },
       metricsFeedback: {
