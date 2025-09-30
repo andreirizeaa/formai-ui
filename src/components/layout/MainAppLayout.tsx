@@ -8,6 +8,7 @@ import { TutorialLiftSeeder } from '../../context/LiftDataContext';
 import { TutorialOverlay } from '../ui/TutorialOverlay';
 import { PaymentScreen } from '../../screens/payment/PaymentScreen';
 import { usePurchases } from '../../context/PurchasesContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface MainAppLayoutProps {
   children?: React.ReactNode;
@@ -32,8 +33,24 @@ function MainAppLayoutInner({ onLogout, isAppVisible = false }: MainAppLayoutPro
 
   const [showWelcome, setShowWelcome] = React.useState(false);
   const [showPaymentScreen, setShowPaymentScreen] = React.useState(false);
+  const [isVersionCheckCleared, setIsVersionCheckCleared] = React.useState(false);
 
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
+
+  // Clear version check time on fresh app start - must complete before MainAppNavigator renders
+  React.useEffect(() => {
+    const clearVersionCheckTime = async () => {
+      try {
+        await AsyncStorage.removeItem('last_version_check_time');
+        setIsVersionCheckCleared(true);
+      } catch (error) {
+        // Silent fail - not critical if this fails
+        setIsVersionCheckCleared(true);
+      }
+    };
+    
+    clearVersionCheckTime();
+  }, []);
 
   // Fade in animation (kept, unrelated to welcome gating)
   React.useEffect(() => {
@@ -75,6 +92,11 @@ function MainAppLayoutInner({ onLogout, isAppVisible = false }: MainAppLayoutPro
 
   if (showPaymentScreen) {
     return <PaymentScreen onComplete={handlePaymentComplete} />;
+  }
+
+  // Don't render MainAppNavigator until version check time is cleared
+  if (!isVersionCheckCleared) {
+    return null;
   }
 
   return (

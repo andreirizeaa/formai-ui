@@ -1201,6 +1201,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0,
     shadowRadius: 0,
     elevation: 0,
+    height: 70, // Fixed height for all info cards
   },
   infoCardTitle: {
     fontSize: 14,
@@ -1219,6 +1220,7 @@ const styles = StyleSheet.create({
   weightCard: {
     width: "auto",
     marginRight: 8,
+    height: 70, // Ensure consistent height
   },
   weightCardTitleRow: {
     flexDirection: 'row',
@@ -1229,6 +1231,7 @@ const styles = StyleSheet.create({
   repsCard: {
     width: "auto",
     flex: 0, // Override flex to use fixed width
+    height: 70, // Ensure consistent height
   },
   editWeightButton: {
     width: 20,
@@ -1245,6 +1248,7 @@ const styles = StyleSheet.create({
     flex: 0, // Override flex to use fixed width
     marginBottom: 8,
     marginLeft: 8,
+    height: 70, // Ensure consistent height
   },
   // Edit weight modal styles
   editWeightSection: {

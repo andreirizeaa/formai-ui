@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, TextInput, Keyboard, KeyboardAvoidingView, TouchableWithoutFeedback, Animated, Easing, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, TextInput, Keyboard, KeyboardAvoidingView, TouchableWithoutFeedback, Animated, Easing, ActivityIndicator, Modal } from 'react-native';
 import { LoadingOverlay } from '../../../../components/ui/LoadingOverlay';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { hapticFeedback } from '../../../../utils/haptic';
@@ -7,6 +7,8 @@ import { useUserDetails } from '../../../../context/UserDetailsContext';
 import { useTutorialTarget, useTutorial } from '../../../../context/TutorialContext';
 import { WeightUnit } from '../../../../types/Lifts';
 import { track } from '../../../../services/analytics';
+import { CircleQuestionMark } from 'lucide-react-native';
+import i18n from '../../../../utils/i18n';
 
 interface WeightRepsScreenProps {
   weightReps: { weight: number; unit: WeightUnit; reps: number } | null;
@@ -28,6 +30,8 @@ export function WeightRepsScreen({
   const { ref: completeButtonRef } = useTutorialTarget('weight_reps_complete');
   const { isActive: isTutorialActive } = useTutorial();
   const [focusedInput, setFocusedInput] = useState<'weight' | 'reps' | null>(null);
+  const [infoModalVisible, setInfoModalVisible] = useState(false);
+  const [infoModalContent, setInfoModalContent] = useState<{ title: string; message: string }>({ title: '', message: '' });
   const { userDetails } = useUserDetails();
   const unit: WeightUnit = userDetails?.unitSystem === 'imperial' ? 'lbs' : 'kg';
   
@@ -148,6 +152,32 @@ export function WeightRepsScreen({
     setFocusedInput(inputType);
   };
 
+  // Info modal handlers
+  const openInfoModal = (type: 'weight' | 'reps') => {
+    hapticFeedback.selection();
+    
+    // Track add analysis clicks for info modals
+    track('Add analysis', { event: `${type === 'weight' ? 'Weight' : 'Reps'} info` });
+    
+    if (type === 'weight') {
+      setInfoModalContent({
+        title: i18n.t('tutorial.weightRepsInfo.weight.title'),
+        message: i18n.t('tutorial.weightRepsInfo.weight.message')
+      });
+    } else {
+      setInfoModalContent({
+        title: i18n.t('tutorial.weightRepsInfo.reps.title'),
+        message: i18n.t('tutorial.weightRepsInfo.reps.message')
+      });
+    }
+    setInfoModalVisible(true);
+  };
+
+  const closeInfoModal = () => {
+    hapticFeedback.selection();
+    setInfoModalVisible(false);
+  };
+
   const isWeightValid = weightReps?.weight && weightReps.weight > 0;
   const isUploadDisabled = !isWeightValid || !weightReps?.reps || weightReps.reps <= 0 || isLoading;
 
@@ -179,7 +209,18 @@ export function WeightRepsScreen({
           <View style={styles.content} ref={completeButtonRef}>
             {/* Weight Section */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Weight</Text>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Weight</Text>
+                <TouchableOpacity 
+                  onPress={() => openInfoModal('weight')} 
+                  activeOpacity={0.7} 
+                  accessibilityRole="button" 
+                  accessibilityLabel="Show weight information"
+                  style={styles.sectionTitleIcon}
+                >
+                  <CircleQuestionMark width={20} height={20} color="#000000" />
+                </TouchableOpacity>
+              </View>
 
               {/* Weight Input */}
               <View style={styles.inputContainer}>
@@ -220,7 +261,18 @@ export function WeightRepsScreen({
 
             {/* Sets Section */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Reps</Text>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Reps</Text>
+                <TouchableOpacity 
+                  onPress={() => openInfoModal('reps')} 
+                  activeOpacity={0.7} 
+                  accessibilityRole="button" 
+                  accessibilityLabel="Show reps information"
+                  style={styles.sectionTitleIcon}
+                >
+                  <CircleQuestionMark width={20} height={20} color="#000000" />
+                </TouchableOpacity>
+              </View>
               <View style={[styles.inputContainer, !isWeightValid && styles.inputContainerDisabled]}>
                 <TextInput
                   ref={repsInputRef}
@@ -294,6 +346,27 @@ export function WeightRepsScreen({
 
       {/* Loading overlay during upload */}
       <LoadingOverlay visible={isLoading} />
+
+      {/* Info Modal */}
+      <Modal
+        visible={infoModalVisible}
+        transparent
+        onRequestClose={closeInfoModal}
+      >
+        <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={closeInfoModal}>
+          <TouchableOpacity style={styles.infoModalContainer} activeOpacity={1} onPress={(e) => e.stopPropagation()}>
+            <Text style={styles.infoTitle}>{infoModalContent.title}</Text>
+            <Text style={styles.infoMessage}>{infoModalContent.message}</Text>
+            <TouchableOpacity 
+              style={styles.closeButton} 
+              onPress={closeInfoModal}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.closeButtonText}>Close</Text>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -313,12 +386,20 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: 40,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
   sectionTitle: {
     fontSize: 22,
     fontWeight: '500',
     color: '#000000',
-    marginBottom: 16,
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
+  sectionTitleIcon: {
+    marginLeft: 4,
+    padding: 2,
   },
   inputContainer: {
     flexDirection: 'row',
@@ -489,5 +570,55 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     backgroundColor: 'transparent',
+  },
+  // Info Modal styles
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 40,
+  },
+  infoModalContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 24,
+    width: '100%',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  infoTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#000000',
+    marginBottom: 16,
+    textAlign: 'left',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
+  infoMessage: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#1C1C1E',
+    lineHeight: 20,
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
+  closeButton: {
+    width: '100%',
+    height: 60,
+    borderRadius: 28,
+    backgroundColor: '#000000',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 24,
+  },
+  closeButtonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '800',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
 }); 

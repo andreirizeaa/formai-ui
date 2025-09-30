@@ -167,7 +167,12 @@ const ro = {
       "modal": {
         "title": "Bun venit",
         "message": "Îți mulțumim pentru încrederea acordată Form AI. Suntem încântați să te ajutăm să-ți atingi obiectivele.",
-        "ctaButton": "Hai să-ți arătăm aplicația"
+        "ctaButton": "Hai să-ți arătăm aplicația",
+        "upgrade": {
+          "title": "Versiune nouă",
+          "whatsNew": "Ce este nou",
+          "updateButton": "Actualizează Form AI"
+        }
       }
     },
     "onboarding": {
@@ -770,6 +775,16 @@ const ro = {
       "weightRepsComplete": {
         "title": "Greutate & repetări",
         "description": "Le folosim pentru a-ți urmări progresul și îmbunătățirea în timp."
+      },
+      "weightRepsInfo": {
+        "weight": {
+          "title": "Greutate",
+          "message": "Introdu greutatea pe care ai ridicat-o pentru a-ți urmări progresul în timp pe ecranul de progres. Te rog să fii precis. Poți schimba asta mai târziu."
+        },
+        "reps": {
+          "title": "Repetări",
+          "message": "Introdu numărul exact de repetări pe care le-ai efectuat. Analiza va evalua doar numărul specific de repetări pe care îl introduci, și acest lucru nu poate fi schimbat mai târziu."
+        }
       },
       "homeFirstLiftCard": {
         "title": "Atinge aici pentru analiza ta",

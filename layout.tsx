@@ -103,6 +103,7 @@ function AppContent() {
           require('./assets/refer-friends.jpg'),
           require('./assets/refer-friends-group.png'),
           require('./assets/formai-ios-icon.png'),
+          require('./assets/formai-loading.png'),
           require('./assets/app-overview-photo.png'),
           require('./assets/homescreen-refer-image.png'),
           require('./assets/icons/instagram.png'),

@@ -168,6 +168,11 @@ const zh = {
         title: '欢迎',
         message: '感谢您信任 Form AI。我们很高兴帮助您实现目标。',
         ctaButton: '让我们带您了解一下',
+        upgrade: {
+          title: '新版本',
+          whatsNew: '新功能',
+          updateButton: '升级 Form AI',
+        },
       },
     },
     onboarding: {
@@ -770,6 +775,16 @@ const zh = {
       weightRepsComplete: {
         title: '重量和重复次数',
         description: '这将用于跟踪您的进度并查看您如何随时间改善。',
+      },
+      weightRepsInfo: {
+        weight: {
+          title: '重量',
+          message: '输入您举起的重量以在进度屏幕中跟踪您随时间的进度。请准确输入。您可以稍后更改此设置。',
+        },
+        reps: {
+          title: '重复次数',
+          message: '输入您执行的确切重复次数。分析将仅评估您输入的具体重复次数，此设置无法稍后更改。',
+        },
       },
       homeFirstLiftCard: {
         title: '点击这里查找您的分析',

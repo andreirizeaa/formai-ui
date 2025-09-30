@@ -167,7 +167,12 @@ const fr = {
       "modal": {
         "title": "Bienvenue",
         "message": "Merci de faire confiance à Form AI. Nous sommes ravis de vous aider à atteindre vos objectifs.",
-        "ctaButton": "Faisons une visite"
+        "ctaButton": "Faisons une visite",
+        "upgrade": {
+          "title": "Nouvelle version",
+          "whatsNew": "Quoi de neuf",
+          "updateButton": "Mettre à jour Form AI"
+        }
       }
     },
     "onboarding": {
@@ -778,6 +783,16 @@ const fr = {
       "weightRepsComplete": {
         "title": "Poids & répétitions",
         "description": "Servent à suivre votre progression et vos améliorations."
+      },
+      "weightRepsInfo": {
+        "weight": {
+          "title": "Poids",
+          "message": "Entrez le poids que vous avez soulevé pour suivre votre progression dans l'écran de progression. Veuillez être précis. Vous pouvez le modifier plus tard."
+        },
+        "reps": {
+          "title": "Répétitions",
+          "message": "Entrez le nombre exact de répétitions que vous avez effectuées. L'analyse n'évaluera que le nombre spécifique de répétitions que vous entrez, et cela ne peut pas être modifié plus tard."
+        }
       },
       "homeFirstLiftCard": {
         "title": "Touchez ici pour voir votre analyse",
