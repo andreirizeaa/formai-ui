@@ -97,7 +97,51 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
     if (parts.length !== 3) return null;
     const [day, month, year] = parts.map(Number);
     if (!day || !month || !year) return null;
-    return new Date(year, month - 1, day);
+    const d = new Date(year, month - 1, day);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  // NEW: robust parser that handles DD-MM-YYYY, DD/MM/YYYY, ISO strings, and epoch seconds/ms
+  function parseAnyDate(input: any): Date | null {
+    if (input == null) return null;
+
+    if (input instanceof Date && !isNaN(input.getTime())) return input;
+
+    if (typeof input === 'number') {
+      const ms = input > 1e12 ? input : input * 1000; // treat <1e12 as seconds
+      const d = new Date(ms);
+      return isNaN(d.getTime()) ? null : d;
+    }
+
+    if (typeof input === 'string') {
+      // Prefer your custom DD-MM-YYYY first
+      const d1 = parseDateDDMMYYYY(input);
+      if (d1) return d1;
+
+      // Try DD/MM/YYYY
+      const m = input.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+      if (m) {
+        const [, dd, mm, yyyy] = m.map(Number);
+        const d = new Date(yyyy, mm - 1, dd);
+        if (!isNaN(d.getTime())) return d;
+      }
+
+      // Fallback to native (handles ISO-8601, etc.)
+      const d2 = new Date(input);
+      if (!isNaN(d2.getTime())) return d2;
+    }
+
+    return null;
+  }
+
+  // UPDATED: extract from several plausible fields and parse robustly
+  function getLiftDate(l: any): Date | null {
+    const candidates = [l?.liftDate, l?.date, l?.performedAt, l?.createdAt, l?.updatedAt, l?.timestamp];
+    for (const c of candidates) {
+      const d = parseAnyDate(c);
+      if (d) return d;
+    }
+    return null;
   }
 
   // Helper to determine lift type for grouping
@@ -115,61 +159,79 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
     return type ? String(type) : null;
   }
 
-  // Calculate improvement per lift type: (max accuracy - min accuracy) for each type, then average
-  function calculateImprovementByTypeAverage(
+  // Percentage improvement bounded by the 0–100 scale (first -> last per type), then averaged across types.
+  function calculateBoundedPctImprovementFirstToLastAvg(
     lifts: Array<{ analysis?: { accuracy?: number } }>
   ): number {
     if (!Array.isArray(lifts) || lifts.length === 0) return 0;
 
-    // Group accuracies by lift type
-    const groups = new Map<string, number[]>();
+    // Group entries by lift type
+    const byType = new Map<string, Array<{ t: number; acc: number }>>();
+
     for (const l of lifts) {
       const acc = typeof l?.analysis?.accuracy === 'number' ? l.analysis.accuracy : null;
       if (acc == null || Number.isNaN(acc)) continue;
+
+      const d = getLiftDate(l);
+      if (!d) continue;
+
       const type = getLiftType(l);
       if (!type) continue;
-      if (!groups.has(type)) groups.set(type, []);
-      groups.get(type)!.push(acc);
+
+      if (!byType.has(type)) byType.set(type, []);
+      byType.get(type)!.push({ t: d.getTime(), acc: Math.max(0, Math.min(100, acc)) });
     }
 
-    if (groups.size === 0) return 0;
+    if (byType.size === 0) return 0;
 
-    // Compute per-type improvement scores
-    const improvements: number[] = [];
-    groups.forEach(accs => {
-      if (!accs || accs.length < 2) {
-        // With fewer than 2 datapoints, improvement is 0 by definition
-        improvements.push(0);
-        return;
+    const perTypePercents: number[] = [];
+
+    byType.forEach(entries => {
+      if (!entries || entries.length < 2) return; // need earliest & latest
+
+      entries.sort((a, b) => a.t - b.t);
+      const first = entries[0].acc;
+      const last  = entries[entries.length - 1].acc;
+
+      let pct: number;
+      if (last >= first) {
+        // Improvement relative to headroom up to 100 => capped at +100%
+        const denom = Math.max(1, 100 - first); // avoid /0 at first=100
+        pct = ((last - first) / denom) * 100;   // 0..100
+        pct = Math.min(100, Math.max(0, pct));
+      } else {
+        // Decline relative to room to 0 => capped at -100%
+        const denom = Math.max(1, first);       // avoid /0 at first=0
+        pct = ((last - first) / denom) * 100;   // -100..0
+        pct = Math.max(-100, Math.min(0, pct));
       }
-      const minAcc = Math.max(0, Math.min(...accs));
-      const maxAcc = Math.min(100, Math.max(...accs));
-      const imp = Math.max(0, Math.min(100, maxAcc - minAcc)); // Clamp to [0,100]
-      improvements.push(imp);
+
+      if (Number.isFinite(pct)) perTypePercents.push(pct);
     });
 
-    if (improvements.length === 0) return 0;
-    const avg = improvements.reduce((s, v) => s + v, 0) / improvements.length;
-    return avg;
+    if (perTypePercents.length === 0) return 0;
+    return perTypePercents.reduce((s, v) => s + v, 0) / perTypePercents.length; // signed %, [-100,+100]
   }
 
   const { averageAccuracy, improvementValue, accuracyColor, improvementColor, isImprovementNegative } = useMemo(() => {
     const validAccuracies = stableLiftData
       .map(l => (typeof (l as any)?.analysis?.accuracy === 'number' ? (l as any).analysis.accuracy as number : null))
       .filter((v): v is number => typeof v === 'number');
+
     const averageAccuracyRaw = validAccuracies.length > 0
       ? Math.round(validAccuracies.reduce((s, v) => s + v, 0) / validAccuracies.length)
       : 0;
+
     const accColor = averageAccuracyRaw > 80 ? '#00a63e' : averageAccuracyRaw < 50 ? '#fb2c36' : '#fe9a00';
 
-    // Use new per-type improvement calculation
-    const improvementRaw = Math.round(calculateImprovementByTypeAverage(stableLiftData as any));
-    const impColor = '#00a63e'; // Improvement is non-negative by definition now
-    const isNegative = false; // Improvement is always non-negative
+    // NEW: bounded % improvement (signed) averaged across lift types
+    const improvementRaw = Math.round(calculateBoundedPctImprovementFirstToLastAvg(stableLiftData as any));
+    const isNegative = improvementRaw < 0;
+    const impColor = isNegative ? '#fb2c36' : '#00a63e';
 
     return {
       averageAccuracy: Math.max(0, Math.min(100, averageAccuracyRaw)),
-      improvementValue: Math.max(0, Math.min(100, improvementRaw)),
+      improvementValue: Math.max(-100, Math.min(100, improvementRaw)), // keep signed
       accuracyColor: accColor,
       improvementColor: impColor,
       isImprovementNegative: isNegative,
@@ -286,7 +348,7 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
                   backgroundColor="#E5E5E5"
                   strokeWidth={10}
                   radius={40}
-                  clockwise={true}
+                  clockwise={!isImprovementNegative}
                 />
                 <Text style={styles.progressText} accessibilityLabel="Improvement value">
                   {`${improvementValue}%`}

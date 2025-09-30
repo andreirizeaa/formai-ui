@@ -626,8 +626,8 @@ const fr = {
           "message": "Votre précision moyenne sur toute la période. Moyenne des scores de toutes les levées."
         },
         "improvement": {
-          "title": "Amélioration",
-          "message": "Évolution de votre technique sur toute la période : comparaison du premier tiers de levées avec le dernier tiers."
+          "title": "Tendance",
+          "message": "Affiche votre progrès à travers tous les types de levées. Pour chaque type d'exercice, nous comparons votre première performance avec votre performance la plus récente et calculons le changement en pourcentage relatif à l'espace d'amélioration disponible. Les valeurs vont de -100% (déclin) à +100% (amélioration), puis moyenne sur tous les types d'exercice."
         }
       },
       "metricsFeedback": {
