@@ -93,11 +93,10 @@ const failureNotificationTemplates: Record<string, (ctx: FailureTemplateContext)
       body: `Your analysis failed as we cannot find a lift in the video. Please upload a video with an exercise.`,
     }
   },
-  WRONG_MOVEMENT: ({ movementName }) => {
-    const movementText = movementName ? capitalize(movementName) : 'lift'
+  WRONG_MOVEMENT: () => {
     return {
       title: 'Lift mismatch during analysis',
-      body: `${movementText} not found. Please ensure you select the right movement type when analysing a video.`,
+      body: `Please ensure you select the right movement type when analysing a video.`,
     }
   },
   ERROR_OCCURED: () => ({
