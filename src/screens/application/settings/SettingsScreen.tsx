@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Platform, TouchableOpacity, ScrollView, Animate
 import { Image, ImageBackground } from 'expo-image';
 import Constants from 'expo-constants';
 import * as StoreReview from 'expo-store-review';
-import { User, Languages, Ruler, FileText, ShieldCheck, MailPlus, UserMinus, LogOut, TvMinimalPlay, Star, FileVideoCamera } from 'lucide-react-native';
+import { User, Languages, Ruler, FileText, ShieldCheck, MailPlus, UserMinus, LogOut, TvMinimalPlay, Star, FileVideoCamera, SquarePlus } from 'lucide-react-native';
 import i18n from '../../../utils/i18n';
 import { hapticFeedback } from '../../../utils/haptic';
 import { DeleteAccountModal } from './DeleteAccountModal';
@@ -289,6 +289,20 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
     // Track settings screen clicks
     track('Settings screen clicks', { event: 'Support' });
     await openSupportEmail();
+  };
+
+  const handleFeatureRequestsPress = async () => {
+    hapticFeedback.selection();
+    // Track settings screen clicks
+    track('Settings screen clicks', { event: 'Feature requests' });
+    // Small delay to ensure haptic feedback is felt before opening browser
+    setTimeout(async () => {
+      try {
+        await Linking.openURL('https://form-ai.canny.io/feature-requests');
+      } catch (error) {
+        showAlert('Error', 'Unable to open feature requests. Please try again later.');
+      }
+    }, 100);
   };
 
   const handlePrivacyPolicyPress = async () => {
@@ -694,6 +708,12 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
             title={i18n.t('settings.replayTutorial')}
             onPress={handleShowTutorialPress}
             isLoading={isReplayingTutorial}
+          />
+          <View style={styles.separator} />
+          <SettingsOption
+            icon={<SquarePlus size={iconSize} color={iconColor} />}
+            title={i18n.t('settings.featureRequests')}
+            onPress={handleFeatureRequestsPress}
           />
           <View style={styles.separator} />
           <SettingsOption

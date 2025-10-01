@@ -31,6 +31,7 @@ const de = {
       "privacyPolicy": "Datenschutzrichtlinie",
       "supportEmail": "Support-E-Mail",
       "replayTutorial": "Tutorial erneut abspielen",
+      "featureRequests": "Funktionsanfragen",
       "leaveRating": "Bewertung abgeben",
       "deleteAccount": "Konto löschen",
       "logout": "Abmelden",

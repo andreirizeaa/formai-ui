@@ -32,6 +32,7 @@ const es = {
       privacyPolicy: 'Política de Privacidad',
       supportEmail: 'Email de Soporte',
       replayTutorial: 'Repetir Tutorial',
+      featureRequests: 'Solicitudes de Características',
       leaveRating: 'Dejar una Calificación',
       deleteAccount: 'Eliminar Cuenta',
       logout: 'Cerrar Sesión',
