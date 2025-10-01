@@ -38,7 +38,6 @@ function AppContent() {
   const [contentReady, setContentReady] = useState(false);
   const [routingDecided, setRoutingDecided] = useState(false);
   const [passedInitialDataGate, setPassedInitialDataGate] = useState(false);
-  const [extraDelayDone, setExtraDelayDone] = useState(false);
   const [splashHidden, setSplashHidden] = useState(false);
   
   // Ref to prevent multiple email composer calls
@@ -180,12 +179,6 @@ function AppContent() {
     setActiveLayout();
   }, [hasSubscription, isInitializing]);
 
-  // Add an artificial universal 2.5s boot delay (optional)
-  useEffect(() => {
-    if (extraDelayDone) return;
-    const t = setTimeout(() => setExtraDelayDone(true), 2500);
-    return () => clearTimeout(t);
-  }, [extraDelayDone]);
 
   // Set sticky data gate once per app session - wait for RevenueCat + initial data
   useEffect(() => {
@@ -195,7 +188,7 @@ function AppContent() {
   }, [passedInitialDataGate, isInitializing, contextsReady]);
 
   // Set app ready when all conditions are met (don't wait for assets)
-  // For onboarding routes, only wait for extra delay. For MAIN, wait for data gate.
+  // For onboarding routes, ready immediately. For MAIN, wait for data gate.
   useEffect(() => {
     const isOnboardingRoute =
       route === 'ONBOARDING_WELCOME' ||
@@ -203,13 +196,13 @@ function AppContent() {
       route === 'ACCOUNT_LOADING';
 
     if (isOnboardingRoute) {
-      setAppReady(extraDelayDone); // true after delay
+      setAppReady(true); // ready immediately
       return;
     }
 
     // MAIN requires data gate *every time* we land on MAIN
-    setAppReady(!isLoading && extraDelayDone && contextsReady);
-  }, [route, isLoading, extraDelayDone, contextsReady]);
+    setAppReady(!isLoading && contextsReady);
+  }, [route, isLoading, contextsReady]);
 
   // Set content ready when app is ready and routing is decided
   // For onboarding routes, use routingDecided. For MAIN, use appReady.
@@ -283,7 +276,6 @@ function AppContent() {
       setContentReady(false);
       setRoutingDecided(false);
       setPassedInitialDataGate(false);
-      setExtraDelayDone(false);
 
       if ((global as any).resetUserDetailsContext) {
         (global as any).resetUserDetailsContext();
