@@ -32,6 +32,7 @@ const ar = {
       "privacyPolicy": "سياسة الخصوصية",
       "supportEmail": "البريد الداعم",
       "replayTutorial": "إعادة تشغيل الدليل",
+      "featureRequests": "طلبات الميزات",
       "leaveRating": "اترك تقييماً",
       "deleteAccount": "حذف الحساب",
       "logout": "تسجيل الخروج",

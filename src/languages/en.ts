@@ -32,6 +32,7 @@ const en = {
       privacyPolicy: 'Privacy Policy',
       supportEmail: 'Support Email',
       replayTutorial: 'Replay Tutorial',
+      featureRequests: 'Feature Requests',
       leaveRating: 'Leave a Rating',
       deleteAccount: 'Delete Account',
       logout: 'Logout',

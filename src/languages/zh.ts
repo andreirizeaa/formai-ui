@@ -32,6 +32,7 @@ const zh = {
       privacyPolicy: '隐私政策',
       supportEmail: '支持邮箱',
       replayTutorial: '重播教程',
+      featureRequests: '功能请求',
       leaveRating: '留下评价',
       deleteAccount: '删除账户',
       logout: '退出登录',

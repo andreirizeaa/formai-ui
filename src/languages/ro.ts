@@ -32,6 +32,7 @@ const ro = {
       "privacyPolicy": "Politica de confidențialitate",
       "supportEmail": "E-mail suport",
       "replayTutorial": "Redă din nou tutorialul",
+      "featureRequests": "Cereri de Funcționalități",
       "leaveRating": "Lasă o recenzie",
       "deleteAccount": "Șterge contul",
       "logout": "Deconectare",
