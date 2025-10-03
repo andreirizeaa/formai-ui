@@ -24,6 +24,11 @@ export async function enqueueLiftAnalysis(body: {
   liftId: string; 
   lift: any;
   hasHdVideos?: boolean;
+  userData: {
+    gender: string | null;
+    heightCM: number | null;
+    weightKG: number | null;
+  };
 }): Promise<{ job_id: string; lift_id: string }> {
   // First delete any existing failure record for this lift
   if (body.lift?.assetId) {
