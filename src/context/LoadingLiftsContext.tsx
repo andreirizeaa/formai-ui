@@ -8,6 +8,7 @@ import { useLiftData, extractObjectKeyFromUrl, signPath } from './LiftDataContex
 import { useSelectedDate } from './SelectedDateContext';
 import { useUserCheckIns } from './UserCheckInsContext';
 import { usePurchases } from './PurchasesContext';
+import { useUserDetails } from './UserDetailsContext';
 import { loadLoadingLifts, saveLoadingLifts } from '../services/loadingLiftsStorage';
 import { eventBus, AppEvents, LiftReadyPayload, LiftFailedPayload } from '../services/event-bus';
 import { LoadingLiftData, LoadingLiftsContextType, PipelineStage, RetryStage } from '../types/Lifts.d';
@@ -32,6 +33,7 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
   const { selectedDate } = useSelectedDate();
   const { optimisticAddToday, invalidateAndRefetch: invalidateUserCheckIns } = useUserCheckIns();
   const { hasHdVideos } = usePurchases();
+  const { userDetails } = useUserDetails();
   const persistTimer = useRef<NodeJS.Timeout | null>(null);
   const appState = useRef(AppState.currentState);
   const streakShownForRef = useRef(new Set<string>());
@@ -1351,6 +1353,11 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
             assetId: finalAssetId,
           },
           hasHdVideos,
+          userData: {
+            gender: userDetails?.gender || null,
+            heightCM: userDetails?.heightCM || null,
+            weightKG: userDetails?.currentWeightKG || null,
+          },
         });
         return;
       }
@@ -1412,6 +1419,11 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
                 assetId: liftData.assetId,
               },
               hasHdVideos,
+              userData: {
+                gender: userDetails?.gender || null,
+                heightCM: userDetails?.heightCM || null,
+                weightKG: userDetails?.currentWeightKG || null,
+              },
             });
           }
         } catch (error) {
@@ -1519,6 +1531,11 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
                       assetId: l.assetId,
                     },
                     hasHdVideos,
+                    userData: {
+                      gender: userDetails?.gender || null,
+                      heightCM: userDetails?.heightCM || null,
+                      weightKG: userDetails?.currentWeightKG || null,
+                    },
                   });
                 } catch (error) {
                   console.warn('Failed to re-enqueue analysis:', error);
@@ -1646,6 +1663,11 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
         assetId: l.assetId,
       },
       hasHdVideos,
+      userData: {
+        gender: userDetails?.gender || null,
+        heightCM: userDetails?.heightCM || null,
+        weightKG: userDetails?.currentWeightKG || null,
+      },
     });
   };
 
