@@ -93,6 +93,102 @@ function AnimatedHowItWorksItem({ children, delay }: AnimatedHowItWorksItemProps
   );
 }
 
+// Animated component for list items (issues/tips)
+interface AnimatedListItemProps {
+  children: React.ReactNode;
+  delay: number;
+}
+
+function AnimatedListItem({ children, delay }: AnimatedListItemProps) {
+  const translateY = useSharedValue(delay === 0 ? 0 : 30);
+  const opacity = useSharedValue(delay === 0 ? 1 : 0);
+
+  React.useEffect(() => {
+    // If delay is 0, don't animate - show immediately
+    if (delay === 0) return;
+    
+    // Animate in with a staggered delay
+    translateY.value = withDelay(
+      delay,
+      withSpring(0, {
+        damping: 25,
+        stiffness: 200,
+        mass: 0.6,
+      })
+    );
+    
+    opacity.value = withDelay(
+      delay,
+      withSpring(1, {
+        damping: 25,
+        stiffness: 200,
+      })
+    );
+  }, [delay]);
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateY: translateY.value }],
+      opacity: opacity.value,
+    };
+  });
+
+  return (
+    <ReanimatedAnimated.View style={animatedStyle}>
+      {children}
+    </ReanimatedAnimated.View>
+  );
+}
+
+// Animated component for feedback image
+interface AnimatedFeedbackImageProps {
+  children: React.ReactNode;
+  delay: number;
+  feedbackIndex: number; // Add feedback index to trigger re-animation
+}
+
+function AnimatedFeedbackImage({ children, delay, feedbackIndex }: AnimatedFeedbackImageProps) {
+  const translateY = useSharedValue(120); // Always start from below (doubled again)
+  const opacity = useSharedValue(0); // Always start invisible
+
+  React.useEffect(() => {
+    // Reset to initial state first
+    translateY.value = 120;
+    opacity.value = 0;
+    
+    // Animate in with the specified delay (slower animation)
+    translateY.value = withDelay(
+      delay,
+      withSpring(0, {
+        damping: 20, // Reduced damping for slower animation
+        stiffness: 120, // Reduced stiffness for slower animation
+        mass: 1.0, // Increased mass for slower animation
+      })
+    );
+    
+    opacity.value = withDelay(
+      delay,
+      withSpring(1, {
+        damping: 20, // Reduced damping for slower animation
+        stiffness: 120, // Reduced stiffness for slower animation
+      })
+    );
+  }, [delay, feedbackIndex]); // Add feedbackIndex to dependencies
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateY: translateY.value }],
+      opacity: opacity.value,
+    };
+  });
+
+  return (
+    <ReanimatedAnimated.View style={animatedStyle}>
+      {children}
+    </ReanimatedAnimated.View>
+  );
+}
+
 interface FeedbackSlideshowProps {
   onClose: () => void;
   onNavigateToLiftDetails?: () => void;
@@ -581,18 +677,28 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
           onMomentumScrollEnd={handleBottomMomentumEnd}
         >
           <View style={styles.listContainer}>
-            {items.map((text, idx) => (
-              <View key={`${isIssues ? 'issue' : 'tip'}-${idx}`} style={styles.listItem}>
-                {isIssues ? (
-                  <CircleX size={20} color="#FF3B30" />
-                ) : (
-                                      <CircleCheck size={20} color="#00c950" />
-                )}
-                <Text style={styles.listItemText}>{text}</Text>
-              </View>
-            ))}
+            {items.map((text, idx) => {
+              // Add 500ms delay for issues to let container slide up first
+              const baseDelay = isIssues ? 250 : 0;
+              const itemDelay = baseDelay + (idx * 100);
+              
+              return (
+                <AnimatedListItem key={`${isIssues ? 'issue' : 'tip'}-${idx}`} delay={itemDelay}>
+                  <View style={styles.listItem}>
+                    {isIssues ? (
+                      <CircleX size={20} color="#FF3B30" />
+                    ) : (
+                      <CircleCheck size={20} color="#00c950" />
+                    )}
+                    <Text style={styles.listItemText}>{text}</Text>
+                  </View>
+                </AnimatedListItem>
+              );
+            })}
             {items.length === 0 && (
-              <Text style={styles.bottomContentText}>No {isIssues ? 'issues' : 'tips'} provided.</Text>
+              <AnimatedListItem delay={isIssues ? 500 : 0}>
+                <Text style={styles.bottomContentText}>No {isIssues ? 'issues' : 'tips'} provided.</Text>
+              </AnimatedListItem>
             )}
           </View>
         </ScrollView>
@@ -771,17 +877,19 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
         {/* Content Area - Always full height */}
         <View style={styles.content}>
           {feedbackItem && (
-            <View style={styles.imageContainer} ref={feedbackSlideshowRef}>
-              <Image 
-                source={imageUri ? { uri: imageUri } : feedbackItem.imageURL}
-                style={[
-                  styles.feedbackImage,
-                  { width: '100%' },
-                  imageRatio ? { aspectRatio: imageRatio, maxHeight: screenHeight * 0.5 } : { height: 220 }
-                ]}
-                contentFit="contain"
-              />
-            </View>
+            <AnimatedFeedbackImage delay={0} feedbackIndex={currentFeedbackIndex}>
+              <View style={styles.imageContainer} ref={feedbackSlideshowRef}>
+                <Image 
+                  source={imageUri ? { uri: imageUri } : feedbackItem.imageURL}
+                  style={[
+                    styles.feedbackImage,
+                    { width: '100%' },
+                    imageRatio ? { aspectRatio: imageRatio, maxHeight: screenHeight * 0.5 } : { height: 220 }
+                  ]}
+                  contentFit="contain"
+                />
+              </View>
+            </AnimatedFeedbackImage>
           )}
         </View>
 
