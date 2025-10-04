@@ -596,12 +596,18 @@ const en = {
       },
       performance: {
       title: 'Progress',
+      wrapped: 'Form AI Wrapped',
+      shareWrapped: 'Share your Wrapped',
       editDateRange: 'Edit date range',
       from: 'From',
       to: 'To',
       reset: 'Reset',
       accuracy: 'Accuracy',
       trend: 'Trend',
+      videos: 'Videos',
+      reps: 'Reps',
+      totalWeight: 'Total weight',
+      favouriteExercise: 'Favourite exercise',
       apply: 'Apply',
       filterLifts: 'Filter lifts',
       timeRanges: {
@@ -632,8 +638,22 @@ const en = {
         improvement: {
           title: 'Trend',
           message: 'Shows your progress across all lift types. For each exercise type, we compare your first performance to your most recent performance and calculate the percentage change relative to available improvement room. Values range from -100% (decline) to +100% (improvement), then averaged across all exercise types.'
+        },
+        videos: {
+          title: 'Videos',
+          message: 'Total number of workout videos you have recorded and analyzed. Each video represents a complete set of repetitions for a specific exercise.'
+        },
+        reps: {
+          title: 'Reps',
+          message: 'Total number of repetitions performed across all your recorded workouts. This includes every rep from every set you have completed.'
+        },
+        totalWeight: {
+          title: 'Total weight moved',
+          message: 'The cumulative weight you have moved across all your workouts. Calculated by multiplying the weight used by the number of repetitions for each set, then summing across all sets.'
         }
       },
+      noData: 'No data',
+      myOverview: 'My Form AI Overview',
       metricsFeedback: {
         title: 'Want other metrics? Let us know!',
         subtitle: 'Help us improve your experience',

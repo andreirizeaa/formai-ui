@@ -1,6 +1,6 @@
 import * as Notifications from 'expo-notifications';
 import * as StoreReview from 'expo-store-review';
-import { eventBus, AppEvents } from './event-bus';
+import { eventBus, AppEvents } from './lifts/event-bus';
 import { openLiftById, navigateToFailedLiftDate } from './navigationService';
 import { navigationRef } from './navigationService';
 import { openCancellationEmail } from './emailService';

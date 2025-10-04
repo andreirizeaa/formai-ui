@@ -593,12 +593,17 @@ const pt = {
     },
     performance: {
       title: 'Progresso',
+      wrapped: 'Form AI Wrapped',
       editDateRange: 'Editar intervalo de datas',
       from: 'De',
       to: 'Para',
       reset: 'Redefinir',
       accuracy: 'Precisão',
       trend: 'Tendência',
+      videos: 'Vídeos',
+      reps: 'Repetições',
+      totalWeight: 'Peso total',
+      favouriteExercise: 'Exercício favorito',
       apply: 'Aplicar',
       filterLifts: 'Filtrar levantamentos',
       timeRanges: {
@@ -629,8 +634,22 @@ const pt = {
         improvement: {
           title: 'Tendência',
           message: 'Mostra seu progresso em todos os tipos de levantamento. Para cada tipo de exercício, comparamos seu primeiro desempenho com seu desempenho mais recente e calculamos a mudança percentual relativa ao espaço de melhoria disponível. Valores variam de -100% (declínio) a +100% (melhoria), então calculamos a média entre todos os tipos de exercício.'
+        },
+        videos: {
+          title: 'Vídeos',
+          message: 'Número total de vídeos de treino que você gravou e analisou. Cada vídeo representa uma série completa de repetições para um exercício específico.'
+        },
+        reps: {
+          title: 'Repetições',
+          message: 'Número total de repetições realizadas em todos os seus treinos gravados. Isso inclui cada repetição de cada série que você completou.'
+        },
+        totalWeight: {
+          title: 'Peso total movido',
+          message: 'O peso cumulativo que você moveu em todos os seus treinos. Calculado multiplicando o peso usado pelo número de repetições para cada série, depois somando todas as séries.'
         }
       },
+      noData: 'Sem dados',
+      myOverview: 'Meu resumo Form AI',
       metricsFeedback: {
         title: 'Quer outras métricas? Nos avise!',
         subtitle: 'Nos ajude a melhorar sua experiência',

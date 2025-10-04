@@ -13,10 +13,10 @@ import { UserDetailsProvider } from './src/context/UserDetailsContext';
 import { OnboardingNavigator } from './src/navigation/OnboardingNavigator';
 import { MainAppLayout } from './src/components/layout/MainAppLayout';
 import { UserCheckInsProvider } from './src/context/UserCheckInsContext';
-import { WalletCreditProvider } from './src/context/WalletCreditContext';
 import { SelectedDateProvider } from './src/context/SelectedDateContext';
-import { supabase } from './src/lib/supabase';
+import { supabase, setGlobalAuthErrorHandler } from './src/lib/supabase';
 import { getUserId, removeUserId } from './src/services/storageService';
+import { handleAuthError } from './src/services/authErrorService';
 import { AccountLoadingScreen } from './src/screens/onboarding/AccountLoadingScreen';
 import { fetchUserById, requiresOnboarding } from './src/services/userService';
 import { usePurchases } from './src/context/PurchasesContext';
@@ -99,15 +99,11 @@ function AppContent() {
         const assetsToLoad = [
           require('./assets/formai-homescreen.mp4'),
           require('./assets/recording-tip.png'),
-          require('./assets/refer-friends.jpg'),
-          require('./assets/refer-friends-group.png'),
           require('./assets/formai-ios-icon.png'),
           require('./assets/formai-loading.png'),
-          require('./assets/app-overview-photo.png'),
-          require('./assets/homescreen-refer-image.png'),
           require('./assets/icons/instagram.png'),
           require('./assets/icons/tiktok.png'),
-          require('./assets/icons/fasebook.png'),
+          require('./assets/icons/facebook.png'),
           require('./assets/icons/google.png'),
           require('./assets/icons/apple.png'),
           require('./assets/icons/fire.png'),
@@ -152,8 +148,17 @@ function AppContent() {
           return;
         }
 
-        const { user } = await fetchUserById(storedUserId);
-        if (!user) {
+        let user;
+        try {
+          const result = await fetchUserById(storedUserId);
+          user = result.user;
+          if (!user) {
+            setRoute('ONBOARDING_WELCOME');
+            return;
+          }
+        } catch (error) {
+          // Handle auth errors gracefully
+          await handleAuthError(error, () => setRoute('ONBOARDING_WELCOME'));
           setRoute('ONBOARDING_WELCOME');
           return;
         }
@@ -265,6 +270,13 @@ function AppContent() {
 
   const handleUserNeedsOnboarding = () => setRoute('ONBOARDING_WELCOME');
 
+  // Set up global auth error handler
+  useEffect(() => {
+    setGlobalAuthErrorHandler(() => {
+      setRoute('ONBOARDING_WELCOME');
+    });
+  }, []);
+
   const handleLogout = async () => {
     try {
       // Set route to onboarding immediately to prevent AccountLoadingScreen from showing
@@ -363,7 +375,6 @@ export function Layout() {
 
   return (
     <QueryClientProvider client={queryClientRef.current}>
-      <WalletCreditProvider>
         <UserDetailsProvider>
           <LiftDataProvider>
             <UserCheckInsProvider>
@@ -375,7 +386,6 @@ export function Layout() {
             </UserCheckInsProvider>
           </LiftDataProvider>
         </UserDetailsProvider>
-      </WalletCreditProvider>
     </QueryClientProvider>
   );
 }

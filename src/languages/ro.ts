@@ -593,12 +593,17 @@ const ro = {
     },
     "performance": {
       "title": "Progres",
+      "wrapped": "Form AI Wrapped",
       "editDateRange": "Editează intervalul",
       "from": "De la",
       "to": "Până la",
       "reset": "Resetează",
       "accuracy": "Precizie",
       "trend": "Tendință",
+      "videos": "Videoclipuri",
+      "reps": "Repetiții",
+      "totalWeight": "Greutate totală",
+      "favouriteExercise": "Exercițiu preferat",
       "apply": "Aplică",
       "filterLifts": "Filtrează lifturile",
       "timeRanges": {
@@ -629,8 +634,22 @@ const ro = {
         "improvement": {
           "title": "Tendință",
           "message": "Arată progresul tău prin toate tipurile de lifturi. Pentru fiecare tip de exercițiu, comparăm prima ta performanță cu cea mai recentă și calculăm schimbarea procentuală relativă la spațiul de îmbunătățire disponibil. Valorile merg de la -100% (declin) la +100% (îmbunătățire), apoi media pe toate tipurile de exercițiu."
+        },
+        "videos": {
+          "title": "Videoclipuri",
+          "message": "Numărul total de videoclipuri de antrenament pe care le-ai înregistrat și analizat. Fiecare videoclip reprezintă o serie completă de repetiții pentru un exercițiu specific."
+        },
+        "reps": {
+          "title": "Repetiții",
+          "message": "Numărul total de repetiții efectuate în toate antrenamentele tale înregistrate. Aceasta include fiecare repetiție din fiecare serie pe care ai completat-o."
+        },
+        "totalWeight": {
+          "title": "Greutate totală ridicată",
+          "message": "Greutatea cumulativă pe care ai ridicat-o în toate antrenamentele tale. Calculată prin înmulțirea greutății folosite cu numărul de repetiții pentru fiecare serie, apoi însumarea tuturor seriilor."
         }
       },
+      "noData": "Fără date",
+      "myOverview": "Rezumatul meu Form AI",
       "metricsFeedback": {
         "title": "Vrei și alte metrici? Spune-ne!",
         "subtitle": "Ajută-ne să-ți îmbunătățim experiența"

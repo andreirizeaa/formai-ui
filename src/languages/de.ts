@@ -592,12 +592,17 @@ const de = {
     },
     "performance": {
       "title": "Fortschritt",
+      "wrapped": "Form AI Wrapped",
       "editDateRange": "Zeitraum bearbeiten",
       "from": "Von",
       "to": "Bis",
       "reset": "Zurücksetzen",
       "accuracy": "Genauigkeit",
       "trend": "Trend",
+      "videos": "Videos",
+      "reps": "Wiederholungen",
+      "totalWeight": "Gesamtgewicht",
+      "favouriteExercise": "Lieblingsübung",
       "apply": "Anwenden",
       "filterLifts": "Lifts filtern",
       "timeRanges": {
@@ -628,8 +633,22 @@ const de = {
         "improvement": {
           "title": "Trend",
           "message": "Zeigt deinen Fortschritt über alle Lift-Typen. Für jeden Übungstyp vergleichen wir deine erste Leistung mit deiner neuesten Leistung und berechnen die prozentuale Änderung relativ zum verfügbaren Verbesserungsraum. Werte reichen von -100% (Rückgang) bis +100% (Verbesserung), dann Durchschnitt über alle Übungstypen."
+        },
+        "videos": {
+          "title": "Videos",
+          "message": "Gesamtanzahl der Trainingsvideos, die du aufgenommen und analysiert hast. Jedes Video stellt eine komplette Serie von Wiederholungen für eine bestimmte Übung dar."
+        },
+        "reps": {
+          "title": "Wiederholungen",
+          "message": "Gesamtanzahl der Wiederholungen, die du in allen deinen aufgezeichneten Workouts ausgeführt hast. Das umfasst jede Wiederholung jeder Serie, die du abgeschlossen hast."
+        },
+        "totalWeight": {
+          "title": "Gesamtgewicht bewegt",
+          "message": "Das kumulative Gewicht, das du in allen deinen Workouts bewegt hast. Berechnet durch Multiplikation des verwendeten Gewichts mit der Anzahl der Wiederholungen für jede Serie, dann Summierung aller Serien."
         }
       },
+      "noData": "Keine Daten",
+      "myOverview": "Meine Form AI Übersicht",
       "metricsFeedback": {
         "title": "Weitere Kennzahlen gewünscht? Sag es uns!",
         "subtitle": "Hilf uns, deine Erfahrung zu verbessern"

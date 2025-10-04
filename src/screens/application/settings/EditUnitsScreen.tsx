@@ -7,7 +7,7 @@ import { hapticFeedback } from '../../../utils/haptic';
 import { useUserDetails } from '../../../context/UserDetailsContext';
 import { editUserDetails } from '../../../services/userService';
 import { ChevronLeft } from 'lucide-react-native';
-import { AnimatedOptionButton } from '../../../components/onboarding/AnimatedOptionButton';
+import { AnimatedOptionButton } from '../../../components/ui/buttons/AnimatedOptionButton';
 import { track } from '../../../services/analytics';
 import { showAlert } from '../../../services/alertService';
 

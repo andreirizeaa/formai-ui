@@ -3,8 +3,8 @@ import { View, Text, StyleSheet, TouchableOpacity, Platform, Animated, Modal, Pr
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { OrangeGradientButton } from '../../components/ui/OrangeGradientButton';
-import { AnimatedOptionButton } from '../../components/onboarding/AnimatedOptionButton';
+import { OrangeGradientButton } from '../../components/ui/buttons/OrangeGradientButton';
+import { AnimatedOptionButton } from '../../components/ui/buttons/AnimatedOptionButton';
 import { useLanguage } from '../../context/LanguageContext';
 import { LANGUAGES } from '../../constants/languages';
 import i18n from '../../utils/i18n';

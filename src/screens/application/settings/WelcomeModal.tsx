@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Modal, Platform, Dimensions } from 'react-native';
 import { useColorScheme } from 'react-native';
 import LottieView from 'lottie-react-native';
-import { OrangeGradientButton } from '../../../components/ui/OrangeGradientButton';
+import { OrangeGradientButton } from '../../../components/ui/buttons/OrangeGradientButton';
 import i18n from '../../../utils/i18n';
 import { hapticFeedback } from '../../../utils/haptic';
 import { track } from '../../../services/analytics';

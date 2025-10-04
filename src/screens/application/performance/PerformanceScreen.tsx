@@ -2,7 +2,7 @@ import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, Platform, TouchableOpacity, Modal, Dimensions, InteractionManager } from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
 import { Image } from 'expo-image';
-import { SwipeableLineGraphCard } from '../../../components/ui/SwipeableLineGraphCard';
+import { SwipeableLineGraphCard } from '../../../components/ui/swipeables/SwipeableLineGraphCard';
 import { StreakCalendar } from '../../../components/ui/StreakCalendar';
 import { useLiftData } from '../../../context/LiftDataContext';
 import { useUserDetails } from '../../../context/UserDetailsContext';
@@ -14,6 +14,8 @@ import { CircleQuestionMark, X, MailPlus } from 'lucide-react-native';
 import { CircularProgressChart } from '../../../components/icons/icons';
 import { openMetricsFeedbackEmail } from '../../../services/emailService';
 import { track } from '../../../services/analytics';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Wrapped } from '../../../components/ui/Wrapped';
 
 interface PerformanceScreenProps {
   onTriggerAddOptions?: () => void;
@@ -213,7 +215,7 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
     return perTypePercents.reduce((s, v) => s + v, 0) / perTypePercents.length; // signed %, [-100,+100]
   }
 
-  const { averageAccuracy, improvementValue, accuracyColor, improvementColor, isImprovementNegative } = useMemo(() => {
+  const { averageAccuracy, improvementValue, accuracyColor, improvementColor, isImprovementNegative, totalVideos, totalReps, totalWeightMoved, favouriteLift } = useMemo(() => {
     const validAccuracies = stableLiftData
       .map(l => (typeof (l as any)?.analysis?.accuracy === 'number' ? (l as any).analysis.accuracy as number : null))
       .filter((v): v is number => typeof v === 'number');
@@ -229,18 +231,49 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
     const isNegative = improvementRaw < 0;
     const impColor = isNegative ? '#fb2c36' : '#00a63e';
 
+    // Calculate totals
+    const videos = stableLiftData.length;
+    const reps = stableLiftData.reduce((sum, lift) => sum + (lift.reps || 0), 0);
+    const weightMoved = stableLiftData.reduce((sum, lift) => {
+      const weight = lift.metricWeight || 0;
+      const reps = lift.reps || 0;
+      return sum + (weight * reps);
+    }, 0);
+
+    // Calculate favourite lift (most frequent lift type)
+    const liftTypeCounts = new Map<string, number>();
+    stableLiftData.forEach(lift => {
+      const liftType = getLiftType(lift);
+      if (liftType) {
+        liftTypeCounts.set(liftType, (liftTypeCounts.get(liftType) || 0) + 1);
+      }
+    });
+
+    let favouriteLiftName: string | null = null;
+    let maxCount = 0;
+    liftTypeCounts.forEach((count, liftType) => {
+      if (count > maxCount) {
+        maxCount = count;
+        favouriteLiftName = liftType;
+      }
+    });
+
     return {
       averageAccuracy: Math.max(0, Math.min(100, averageAccuracyRaw)),
       improvementValue: Math.max(-100, Math.min(100, improvementRaw)), // keep signed
       accuracyColor: accColor,
       improvementColor: impColor,
       isImprovementNegative: isNegative,
+      totalVideos: videos,
+      totalReps: reps,
+      totalWeightMoved: weightMoved,
+      favouriteLift: favouriteLiftName,
     };
   }, [stableLiftData]);
 
 
   // Info handlers
-  const openInfoModal = (key: 'accuracyPerWeight' | 'accuracyOverTime' | 'accuracy' | 'improvement') => {
+  const openInfoModal = (key: 'accuracyPerWeight' | 'accuracyOverTime' | 'accuracy' | 'improvement' | 'videos' | 'reps' | 'totalWeight') => {
     hapticFeedback.selection();
     
     // Track progress screen clicks only for the metric cards (not the chart cards)
@@ -250,6 +283,15 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
         break;
       case 'improvement':
         track('Progress screen clicks', { event: 'Improvement info' });
+        break;
+      case 'videos':
+        track('Progress screen clicks', { event: 'Videos info' });
+        break;
+      case 'reps':
+        track('Progress screen clicks', { event: 'Reps info' });
+        break;
+      case 'totalWeight':
+        track('Progress screen clicks', { event: 'Total weight info' });
         break;
       // Note: accuracyPerWeight and accuracyOverTime are now tracked in SwipeableLineGraphCard
     }
@@ -272,6 +314,18 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
       case 'improvement':
         title = i18n.t('performance.info.improvement.title');
         message = i18n.t('performance.info.improvement.message');
+        break;
+      case 'videos':
+        title = i18n.t('performance.info.videos.title');
+        message = i18n.t('performance.info.videos.message');
+        break;
+      case 'reps':
+        title = i18n.t('performance.info.reps.title');
+        message = i18n.t('performance.info.reps.message');
+        break;
+      case 'totalWeight':
+        title = i18n.t('performance.info.totalWeight.title');
+        message = i18n.t('performance.info.totalWeight.message');
         break;
     }
     setInfoModalContent({ title, message });
@@ -422,6 +476,16 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
               </View>
             </TouchableOpacity>
           </View>
+
+          {/* Wrapped Component with 4 Cards */}
+          <Wrapped
+            totalVideos={totalVideos}
+            totalReps={totalReps}
+            totalWeightMoved={totalWeightMoved}
+            favouriteLift={favouriteLift}
+            unitSystem={userDetails?.unitSystem || 'metric'}
+            liftData={stableLiftData}
+          />
         </View>
       </ScrollView>
 
@@ -531,6 +595,11 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 16,
     alignItems: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   metricHeaderRow: {
     width: '100%',
@@ -634,11 +703,52 @@ const styles = StyleSheet.create({
   streakCalendarWrapper: {
     alignItems: 'center',
   },
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    gap: 6,
+    marginBottom: 6,
+  },
+  statCard: {
+    flex: 0,
+    flexGrow: 1,
+    flexShrink: 1,
+    borderRadius: 20,
+    alignItems: 'center',
+  },
+  statHeaderRow: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  statTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#000000',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
+    marginBottom: 12,
+    flex: 1,
+    flexShrink: 0,
+  },
+  statTitleIcon: {
+    marginLeft: 4,
+    marginBottom: 10,
+    flexShrink: 0,
+  },
+  statValue: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#000000',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
+    alignSelf: 'flex-start',
+  },
   metricsFeedbackCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 18,
     padding: 16,
-    marginBottom: 50,
+    marginBottom: 24,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.15,

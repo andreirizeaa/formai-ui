@@ -82,9 +82,9 @@ async function requestTrackingPermissionSafe() {
   }
 }
 import { LiftCard } from '../../../components/ui/LiftCard';
-import { SwipeableCalendar } from '../../../components/ui/SwipeableCalendar';
-import { SwipeableAccuracyCard } from '../../../components/ui/SwipeableAccuracyCard';
-import { StreakModal } from '../../../components/ui/StreakModal';
+import { SwipeableCalendar } from '../../../components/ui/swipeables/SwipeableCalendar';
+import { SwipeableAccuracyCard } from '../../../components/ui/swipeables/SwipeableAccuracyCard';
+import { StreakModal } from '../../../components/ui/modals/StreakModal';
 import { FormAILogo } from '../../../components/ui/FormAILogo';
 import { useUserCheckIns } from '../../../context/UserCheckInsContext';
 import { useTutorialTarget } from '../../../context/TutorialContext';
