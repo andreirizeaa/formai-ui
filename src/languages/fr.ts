@@ -593,12 +593,17 @@ const fr = {
     },
     "performance": {
       "title": "Progression",
+      "wrapped": "Form AI Wrapped",
       "editDateRange": "Modifier la période",
       "from": "Du",
       "to": "Au",
       "reset": "Réinitialiser",
       "accuracy": "Précision",
       "trend": "Tendance",
+      "videos": "Vidéos",
+      "reps": "Répétitions",
+      "totalWeight": "Poids total",
+      "favouriteExercise": "Exercice préféré",
       "apply": "Appliquer",
       "filterLifts": "Filtrer les levées",
       "timeRanges": {
@@ -629,10 +634,24 @@ const fr = {
         "improvement": {
           "title": "Tendance",
           "message": "Affiche votre progrès à travers tous les types de levées. Pour chaque type d'exercice, nous comparons votre première performance avec votre performance la plus récente et calculons le changement en pourcentage relatif à l'espace d'amélioration disponible. Les valeurs vont de -100% (déclin) à +100% (amélioration), puis moyenne sur tous les types d'exercice."
+        },
+        "videos": {
+          "title": "Vidéos",
+          "message": "Nombre total de vidéos d'entraînement que vous avez enregistrées et analysées. Chaque vidéo représente une série complète de répétitions pour un exercice spécifique."
+        },
+        "reps": {
+          "title": "Répétitions",
+          "message": "Nombre total de répétitions effectuées dans tous vos entraînements enregistrés. Cela inclut chaque répétition de chaque série que vous avez terminée."
+        },
+        "totalWeight": {
+          "title": "Poids total soulevé",
+          "message": "Le poids cumulatif que vous avez soulevé dans tous vos entraînements. Calculé en multipliant le poids utilisé par le nombre de répétitions pour chaque série, puis en additionnant toutes les séries."
         }
       },
+      "noData": "Aucune donnée",
+      "myOverview": "Mon aperçu Form AI",
       "metricsFeedback": {
-        "title": "Envie d’autres métriques ? Dites-le nous !",
+        "title": "Envie d'autres métriques ? Dites-le nous !",
         "subtitle": "Aidez-nous à améliorer votre expérience"
       }
     },

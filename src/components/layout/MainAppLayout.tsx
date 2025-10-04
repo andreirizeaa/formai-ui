@@ -5,7 +5,7 @@ import { useUserDetails } from '../../context/UserDetailsContext';
 import { WelcomeModal } from '../../screens/application/settings/WelcomeModal';
 import { TutorialProvider, useTutorial } from '../../context/TutorialContext';
 import { TutorialLiftSeeder } from '../../context/LiftDataContext';
-import { TutorialOverlay } from '../ui/TutorialOverlay';
+import { TutorialOverlay } from '../ui/overlays/TutorialOverlay';
 import { PaymentScreen } from '../../screens/payment/PaymentScreen';
 import { usePurchases } from '../../context/PurchasesContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';

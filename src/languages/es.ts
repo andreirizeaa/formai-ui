@@ -591,14 +591,19 @@ const es = {
       saturday: 'S',
       sunday: 'D',
     },
-    performance: {
+      performance: {
       title: 'Progreso',
+      wrapped: 'Form AI Wrapped',
       editDateRange: 'Editar rango de fechas',
       from: 'Desde',
       to: 'Hasta',
       reset: 'Restablecer',
       accuracy: 'Precisión',
       trend: 'Tendencia',
+      videos: 'Videos',
+      reps: 'Repeticiones',
+      totalWeight: 'Peso total',
+      favouriteExercise: 'Ejercicio favorito',
       apply: 'Aplicar',
       filterLifts: 'Filtrar levantamientos',
       timeRanges: {
@@ -629,8 +634,22 @@ const es = {
         improvement: {
           title: 'Tendencia',
           message: 'Muestra tu progreso a través de todos los tipos de levantamiento. Para cada tipo de ejercicio, comparamos tu primer rendimiento con tu rendimiento más reciente y calculamos el cambio porcentual relativo al espacio de mejora disponible. Los valores van de -100% (declive) a +100% (mejora), luego promediamos entre todos los tipos de ejercicio.'
+        },
+        videos: {
+          title: 'Videos',
+          message: 'Número total de videos de entrenamiento que has grabado y analizado. Cada video representa una serie completa de repeticiones para un ejercicio específico.'
+        },
+        reps: {
+          title: 'Repeticiones',
+          message: 'Número total de repeticiones realizadas en todos tus entrenamientos grabados. Esto incluye cada repetición de cada serie que has completado.'
+        },
+        totalWeight: {
+          title: 'Peso total movido',
+          message: 'El peso acumulativo que has movido en todos tus entrenamientos. Calculado multiplicando el peso usado por el número de repeticiones para cada serie, luego sumando todas las series.'
         }
       },
+      noData: 'Sin datos',
+      myOverview: 'Mi resumen Form AI',
       metricsFeedback: {
         title: '¿Quieres otras métricas? ¡Haznos saber!',
         subtitle: 'Ayúdanos a mejorar tu experiencia',

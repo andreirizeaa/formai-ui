@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import * as Notifications from 'expo-notifications';
 import './app/notificationsBackground';
 import { BACKGROUND_NOTIFICATION_TASK } from './app/notificationsBackground';
-import { supabase } from './src/lib/supabase';
 import { initBackgroundFetch } from './app/backgroundFetch';
 import { Layout } from './layout';
 import { PurchasesProvider } from './src/context/PurchasesContext';
@@ -13,7 +12,6 @@ import { SuperwallProvider } from './src/context/SuperwallContext';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { initAnalytics } from './src/services/analytics';
 import { handleLiftNotificationData } from './src/services/notificationNavigation';
-import { removeUserId } from './src/services/storageService';
 
 export default function App() {
   useEffect(() => {

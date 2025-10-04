@@ -5,7 +5,7 @@ import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { X, ChevronLeft, ChevronRight, CircleCheck, CircleX } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { OrangeGradientButton } from '../../../components/ui/OrangeGradientButton';
+import { OrangeGradientButton } from '../../../components/ui/buttons/OrangeGradientButton';
 import { hapticFeedback } from '../../../utils/haptic';
 import { useTutorialTarget } from '../../../context/TutorialContext';
 import i18n from '../../../utils/i18n';

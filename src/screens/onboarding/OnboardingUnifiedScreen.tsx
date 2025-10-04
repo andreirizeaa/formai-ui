@@ -17,15 +17,15 @@ import * as Notifications from 'expo-notifications';
 import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { validateReferralCode } from '../../services/referralService';
-import { OnboardingLayout } from '../../components/onboarding/OnboardingLayout';
-import { AnimatedOptionButton } from '../../components/onboarding/AnimatedOptionButton';
+import { OnboardingLayout } from '../../components/layout/OnboardingLayout';
+import { AnimatedOptionButton } from '../../components/ui/buttons/AnimatedOptionButton';
 import { useOnboarding } from '../../context/OnboardingContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { OnboardingData } from '../../types/onboarding';
 import i18n from '../../utils/i18n';
 import { hapticFeedback } from '../../utils/haptic';
 import { LANGUAGES } from '../../constants/languages';
-import { CreateAccountScreen } from '../../components/onboarding/CreateAccountScreen';
+import { CreateAccountScreen } from '../auth/CreateAccountScreen';
 import { PermissionContainer } from '../../components/ui/PermissionContainer';
 import LottieView from 'lottie-react-native';
 import { BicepsFlexed, User, ShieldPlus, Bike, HeartPulse, CircleX, AudioWaveform, ChartNoAxesColumnDecreasing, BookCopy, ShieldOff, BatteryLow, Ellipsis, Sprout, Shrub, TreePine, ChartNoAxesCombined, Hospital, Dumbbell, ShieldCheck, ChartNoAxesColumnIncreasing, ClockArrowUp, BatteryWarning, BatteryMedium, BatteryFull, PartyPopper, Weight, Scale, TrendingUp, ThumbsUp, ThumbsDown, Users, CircleCheck, Trophy, X } from 'lucide-react-native';
@@ -123,6 +123,57 @@ function AnimatedProgressTrackingImage() {
         />
       </ReanimatedAnimated.View>
     </View>
+  );
+}
+
+function AnimatedGraphContainer({ children }: { children: React.ReactNode }) {
+  const translateY = useSharedValue(60);
+  const opacity = useSharedValue(0);
+  const scale = useSharedValue(0.95);
+
+  useEffect(() => {
+    // Animate in with a staggered delay similar to AnimatedOptionButton
+    translateY.value = withDelay(
+      200,
+      withSpring(0, {
+        damping: 25,
+        stiffness: 200,
+        mass: 0.6,
+      })
+    );
+    
+    opacity.value = withDelay(
+      200,
+      withSpring(1, {
+        damping: 25,
+        stiffness: 200,
+      })
+    );
+
+    scale.value = withDelay(
+      200,
+      withSpring(1, {
+        damping: 20,
+        stiffness: 150,
+        mass: 0.8,
+      })
+    );
+  }, []);
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        { translateY: translateY.value },
+        { scale: scale.value }
+      ],
+      opacity: opacity.value,
+    };
+  });
+
+  return (
+    <ReanimatedAnimated.View style={[styles.graphContainer, animatedStyle]}>
+      {children}
+    </ReanimatedAnimated.View>
   );
 }
 
@@ -485,7 +536,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       options: [
         { value: 'instagram', label: i18n.t('onboarding.discovery.instagram'), iconHeight: 30, iconWidth: 30 , iconImage: require('../../../assets/icons/instagram.png') },
         { value: 'tiktok', label: i18n.t('onboarding.discovery.tiktok'), iconHeight: 30, iconWidth: 30 , iconImage: require('../../../assets/icons/tiktok.png') },
-        { value: 'facebook', label: i18n.t('onboarding.discovery.facebook'), iconHeight: 30, iconWidth: 30 , iconImage: require('../../../assets/icons/fasebook.png') },
+        { value: 'facebook', label: i18n.t('onboarding.discovery.facebook'), iconHeight: 30, iconWidth: 30 , iconImage: require('../../../assets/icons/facebook.png') },
         { value: 'twitter', label: i18n.t('onboarding.discovery.twitter'), iconHeight: 30, iconWidth: 30 , iconImage: require('../../../assets/icons/x.png') },
         { value: 'google', label: i18n.t('onboarding.discovery.google'), iconHeight: 30, iconWidth: 30 , iconImage: require('../../../assets/icons/google.png') },
         { value: 'appStore', label: i18n.t('onboarding.discovery.appStore'), iconHeight: 30, iconWidth: 30 , iconImage: require('../../../assets/icons/appstore.png') },
@@ -1177,7 +1228,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       )}
 
       {currentStep.type === 'graph' && (
-        <View style={styles.graphContainer}>
+        <AnimatedGraphContainer>
           <LinearGradient
             colors={['rgba(246, 51, 154, 0.25)', 'rgba(255, 149, 0, 0.25)']}
             locations={[0, 0.9963]}
@@ -1292,7 +1343,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
               {i18n.t('onboarding.potentialGraph.subtitle')}
             </Text>
           </LinearGradient>
-        </View>
+        </AnimatedGraphContainer>
       )}
 
       {currentStep.type === 'options' && (

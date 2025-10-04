@@ -593,12 +593,17 @@ const zh = {
     },
     performance: {
       title: '进度',
+      wrapped: 'Form AI Wrapped',
       editDateRange: '编辑日期范围',
       from: '从',
       to: '到',
       reset: '重置',
       accuracy: '准确性',
       trend: '趋势',
+      videos: '视频',
+      reps: '次数',
+      totalWeight: '总重量',
+      favouriteExercise: '最喜欢的动作',
       apply: '应用',
       filterLifts: '筛选举重',
       timeRanges: {
@@ -629,8 +634,22 @@ const zh = {
         improvement: {
           title: '趋势',
           message: '显示所有举重类型的进度。对于每种运动类型，我们比较您的首次表现与最近表现，并计算相对于可用改进空间的百分比变化。数值范围从-100%（下降）到+100%（改进），然后平均所有运动类型。'
+        },
+        videos: {
+          title: '视频',
+          message: '您录制和分析的训练视频总数。每个视频代表特定练习的完整重复次数。'
+        },
+        reps: {
+          title: '次数',
+          message: '在所有录制训练中执行的总重复次数。这包括您完成的每组的每次重复。'
+        },
+        totalWeight: {
+          title: '总移动重量',
+          message: '您在所有训练中移动的累积重量。通过将使用的重量乘以每组的重复次数计算，然后对所有组求和。'
         }
       },
+      noData: '无数据',
+      myOverview: '我的 Form AI 概览',
       metricsFeedback: {
         title: '想要其他指标？让我们知道！',
         subtitle: '帮助我们改善您的体验',

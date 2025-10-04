@@ -1,5 +1,5 @@
 import { QueryClient } from '@tanstack/react-query';
-import { clearAllLoadingLifts } from './loadingLiftsStorage';
+import { clearAllLoadingLifts } from './lifts/loadingLiftsStorage';
 import { clearAllUserData } from './storageService';
 import { showAlert } from './alertService';
 

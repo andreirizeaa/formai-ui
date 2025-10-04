@@ -9,14 +9,14 @@ import { useSelectedDate } from './SelectedDateContext';
 import { useUserCheckIns } from './UserCheckInsContext';
 import { usePurchases } from './PurchasesContext';
 import { useUserDetails } from './UserDetailsContext';
-import { loadLoadingLifts, saveLoadingLifts } from '../services/loadingLiftsStorage';
-import { eventBus, AppEvents, LiftReadyPayload, LiftFailedPayload } from '../services/event-bus';
+import { loadLoadingLifts, saveLoadingLifts } from '../services/lifts/loadingLiftsStorage';
+import { eventBus, AppEvents, LiftReadyPayload, LiftFailedPayload } from '../services/lifts/event-bus';
 import { LoadingLiftData, LoadingLiftsContextType, PipelineStage, RetryStage } from '../types/Lifts.d';
-import { lookupLift, findLiftFailure } from '../services/liftService';
-import { enqueueLiftAnalysis, getJobStatus, deleteJob } from '../services/liftApi';
+import { lookupLift, findLiftFailure } from '../services/lifts/liftService';
+import { enqueueLiftAnalysis, getJobStatus, deleteJob } from '../services/lifts/liftApi';
 import { track } from '../services/analytics';
 import { getStableAssetId } from '../utils/getStableAssetId';
-import { queueService, QueueItem } from '../services/queueService';
+import { queueService, QueueItem } from '../services/lifts/queueService';
 
 const LoadingLiftsContext = createContext<LoadingLiftsContextType | undefined>(undefined);
 

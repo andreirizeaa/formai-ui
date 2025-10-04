@@ -13,8 +13,8 @@ import { DateRangeModal } from './DateRangeModal';
 import { ILiftData, useLiftData } from '../../../context/LiftDataContext';
 import { useLoadingLifts } from '../../../context/LoadingLiftsContext';
 import { useTutorialTarget } from '../../../context/TutorialContext';
-import { searchLiftByAssetId } from '../../../services/liftService';
-import { LoadingOverlay } from '../../../components/ui/LoadingOverlay';
+import { searchLiftByAssetId } from '../../../services/lifts/liftService';
+import { LoadingOverlay } from '../../../components/ui/overlays/LoadingOverlay';
 import { track } from '../../../services/analytics';
 import { showAlert } from '../../../services/alertService';
 

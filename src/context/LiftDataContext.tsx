@@ -2,9 +2,9 @@ import React, { createContext, useContext, useState, ReactNode, useCallback, use
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { getUserId } from '../services/storageService';
-import { favouriteLift as favouriteLiftApi } from '../services/liftService';
-import { subscribeLiftDeleted } from '../services/liftEvents';
-import { eventBus, AppEvents } from '../services/event-bus';
+import { favouriteLift as favouriteLiftApi } from '../services/lifts/liftService';
+import { subscribeLiftDeleted } from '../services/lifts/liftEvents';
+import { eventBus, AppEvents } from '../services/lifts/event-bus';
 import { ILiftData, LiftDataContextType } from '../types/Lifts.d';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 

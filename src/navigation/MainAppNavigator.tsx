@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { navigationRef } from '../services/navigationService';
-import { eventBus, AppEvents } from '../services/event-bus';
+import { eventBus, AppEvents } from '../services/lifts/event-bus';
 import { openLiftById, navigateToFailedLiftDate } from '../services/navigationService';
 import { handleColdStartNotificationIfAny } from '../services/notificationNavigation';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -36,7 +36,7 @@ import { supabase } from '../lib/supabase';
 import { extractObjectKeyFromUrl, signPath } from '../context/LiftDataContext';
 import { useUserDetails } from '../context/UserDetailsContext';
 import { getUserJustPaid, clearUserJustPaid } from '../services/storageService';
-import { UpgradeAppModal } from '../components/ui/UpgradeAppModal';
+import { UpgradeAppModal } from '../components/ui/modals/UpgradeAppModal';
 import { checkAppVersion, forceCheckAppVersion, VersionCheckResult } from '../services/appVersionService';
 
 // Types for navigation
