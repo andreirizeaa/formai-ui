@@ -9,7 +9,6 @@ import { OnboardingUnifiedScreen } from '../screens/onboarding/OnboardingUnified
 import { NotificationPermissionScreen } from '../screens/onboarding/NotificationPermissionScreen';
 import { AccountLoadingScreen } from '../screens/onboarding/AccountLoadingScreen';
 import { PaymentScreen } from '../screens/payment/PaymentScreen';
-import { SignInScreen } from '../screens/auth/SignInScreen';
 import Purchases from 'react-native-purchases';
 import { usePurchases } from '../context/PurchasesContext';
 import { useUserDetails } from '../context/UserDetailsContext';
@@ -29,7 +28,6 @@ export type OnboardingStackParamList = {
   NotificationPermission: undefined;
   AccountLoading: undefined;
   Payment: undefined;
-  SignIn: undefined;
   AllDone: undefined;
 };
 
@@ -47,10 +45,27 @@ function WelcomeScreenWrapper({ onSignIn, isAppVisible }: { onSignIn: () => void
   };
 
   const handleSignIn = () => {
-    navigation.navigate('SignIn');
+    // SignIn functionality is now handled by CreateAccountScreen
+    onSignIn();
   };
 
-  return <WelcomeScreen onGetStarted={handleGetStarted} onSignIn={handleSignIn} isAppVisible={isAppVisible} />;
+  const handleNavigateToOnboarding = () => {
+    navigation.navigate('Onboarding');
+  };
+
+  const handleRequirePayment = () => {
+    navigation.navigate('Payment');
+  };
+
+  return (
+    <WelcomeScreen 
+      onGetStarted={handleGetStarted} 
+      onSignIn={onSignIn} 
+      onNavigateToOnboarding={handleNavigateToOnboarding}
+      onRequirePayment={handleRequirePayment}
+      isAppVisible={isAppVisible} 
+    />
+  );
 }
 
 function UnifiedOnboardingScreenWrapper() {
@@ -70,20 +85,6 @@ function PaymentScreenWrapper() {
   );
 }
 
-function SignInScreenWrapper({ onSignIn, onUserNeedsOnboarding }: { onSignIn: () => void; onUserNeedsOnboarding: () => void }) {
-  const navigation = useNavigation<OnboardingNavigationProp>();
-  
-  const handleNavigateToOnboarding = () => {
-    onUserNeedsOnboarding();
-    navigation.navigate('Onboarding');
-  };
-
-  const handleRequirePayment = () => {
-    navigation.navigate('Payment');
-  };
-
-  return <SignInScreen onSignIn={onSignIn} onBack={() => navigation.goBack()} onNavigateToOnboarding={handleNavigateToOnboarding} onRequirePayment={handleRequirePayment} />;
-}
 
 
 function NotificationPermissionScreenWrapper() {
@@ -157,11 +158,6 @@ export function OnboardingNavigator({ onComplete, onSignIn, onUserNeedsOnboardin
           {() => <PaymentScreenWrapper />}
         </Stack.Screen>
 
-        <Stack.Screen 
-          name="SignIn"
-        >
-          {() => <SignInScreenWrapper onSignIn={onSignIn} onUserNeedsOnboarding={onUserNeedsOnboarding} />}
-        </Stack.Screen>
 
       </Stack.Navigator>
     </NavigationContainer>

@@ -5,6 +5,10 @@ const ar = {
     "dontHaveAccount": "ليس لديك حساب؟",
     "startToday": "ابدأ اليوم",
     "alreadyHaveAccount": "لديك حساب بالفعل؟",
+    "termsAgreement": "بالمتابعة، فإنك توافق على",
+    "termsOfUse": "شروط الاستخدام",
+    "and": "و",
+    "privacyPolicy": "سياسة الخصوصية",
     "perfectFormAlways": "شكل مثالي، دائماً!",
     "getStartedButton": "ابدأ!",
     "signInButton": "تسجيل الدخول",
@@ -33,6 +37,8 @@ const ar = {
       "supportEmail": "البريد الداعم",
       "replayTutorial": "إعادة تشغيل الدليل",
       "featureRequests": "طلبات الميزات",
+      "syncData": "مزامنة البيانات",
+      "lastSynced": "آخر مزامنة: {{time}}",
       "leaveRating": "اترك تقييماً",
       "deleteAccount": "حذف الحساب",
       "logout": "تسجيل الخروج",
@@ -925,7 +931,6 @@ const ar = {
       "accessibility": {
         "flipCamera": "تبديل الكاميرا",
         "toggleTorch": "تشغيل/إطفاء المصباح",
-        "toggleMic": "تشغيل/إيقاف الميكروفون",
         "countdown": "عد تنازلي"
       }
     }

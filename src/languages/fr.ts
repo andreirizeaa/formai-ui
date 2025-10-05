@@ -5,6 +5,10 @@ const fr = {
     "dontHaveAccount": "Vous n'avez pas de compte ?",
     "startToday": "Commencer aujourd'hui",
     "alreadyHaveAccount": "Vous avez déjà un compte ?",
+    "termsAgreement": "En continuant, vous acceptez les",
+    "termsOfUse": "Conditions d'Utilisation",
+    "and": "et",
+    "privacyPolicy": "Politique de Confidentialité",
     "perfectFormAlways": "Forme parfaite, toujours !",
     "getStartedButton": "Commencer !",
     "signInButton": "Se connecter",
@@ -33,6 +37,8 @@ const fr = {
       "supportEmail": "E-mail d'assistance",
       "replayTutorial": "Revoir le tutoriel",
       "featureRequests": "Demandes de Fonctionnalités",
+      "syncData": "Synchroniser les données",
+      "lastSynced": "Dernière synchronisation : {{time}}",
       "leaveRating": "Laisser une note",
       "deleteAccount": "Supprimer le compte",
       "logout": "Se déconnecter",
@@ -932,7 +938,6 @@ const fr = {
       "accessibility": {
         "flipCamera": "Inverser la caméra",
         "toggleTorch": "Activer/Désactiver la lampe",
-        "toggleMic": "Activer/Désactiver le micro",
         "countdown": "Compte à rebours"
       }
     }

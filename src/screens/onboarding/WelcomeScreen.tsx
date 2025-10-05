@@ -5,6 +5,7 @@ import { useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { OrangeGradientButton } from '../../components/ui/buttons/OrangeGradientButton';
 import { AnimatedOptionButton } from '../../components/ui/buttons/AnimatedOptionButton';
+import { WelcomeScreenSignIn } from '../../components/ui/modals/WelcomeScreenSignIn';
 import { useLanguage } from '../../context/LanguageContext';
 import { LANGUAGES } from '../../constants/languages';
 import i18n from '../../utils/i18n';
@@ -16,14 +17,23 @@ import { X } from 'lucide-react-native';
 interface WelcomeScreenProps {
   onGetStarted: () => void;
   onSignIn: () => void;
+  onNavigateToOnboarding?: () => void;
+  onRequirePayment?: () => void;
   isAppVisible?: boolean;
 }
 
-export function WelcomeScreen({ onGetStarted, onSignIn, isAppVisible = false }: WelcomeScreenProps) {
+export function WelcomeScreen({ 
+  onGetStarted, 
+  onSignIn, 
+  onNavigateToOnboarding, 
+  onRequirePayment, 
+  isAppVisible = false 
+}: WelcomeScreenProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const [userId, setUserId] = useState<string | null>(null);
   const [showLanguageModal, setShowLanguageModal] = useState(false);
+  const [showSignInModal, setShowSignInModal] = useState(false);
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
   const { currentLanguage, setLanguage } = useLanguage();
 
@@ -159,7 +169,11 @@ export function WelcomeScreen({ onGetStarted, onSignIn, isAppVisible = false }: 
   const handleSignIn = () => {
     hapticFeedback.selection();
     track('Welcome Screen CTA Clicked', { cta: 'sign_in' });
-    onSignIn();
+    setShowSignInModal(true);
+  };
+
+  const handleCloseSignInModal = () => {
+    setShowSignInModal(false);
   };
 
   const handleLanguagePress = () => {
@@ -184,13 +198,14 @@ export function WelcomeScreen({ onGetStarted, onSignIn, isAppVisible = false }: 
   const currentLangInfo = LANGUAGES.find(lang => lang.code === currentLanguage) || LANGUAGES[0];
 
   return (
-    <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
-      <SafeAreaView
-        style={[
-          styles.container,
-          { backgroundColor: isDark ? '#000000' : '#FFFFFF' }
-        ]}
-      >
+    <>
+      <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
+        <SafeAreaView
+          style={[
+            styles.container,
+            { backgroundColor: isDark ? '#000000' : '#FFFFFF' }
+          ]}
+        >
       {/* Absolutely positioned language pill */}
       <Pressable
         style={({ pressed }) => [
@@ -319,8 +334,18 @@ export function WelcomeScreen({ onGetStarted, onSignIn, isAppVisible = false }: 
         </TouchableOpacity>
       </Modal>
 
-      </SafeAreaView>
-    </Animated.View>
+        </SafeAreaView>
+      </Animated.View>
+
+      {/* Sign In Modal - Completely outside Animated.View */}
+      <WelcomeScreenSignIn
+        visible={showSignInModal}
+        onClose={handleCloseSignInModal}
+        onSignIn={onSignIn}
+        onNavigateToOnboarding={onNavigateToOnboarding}
+        onRequirePayment={onRequirePayment}
+      />
+    </>
   );
 }
 

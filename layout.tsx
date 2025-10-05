@@ -4,6 +4,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
 import { Asset } from 'expo-asset';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { initializeSyncService, startSyncService, stopSyncService } from './src/services/syncService';
 import { useQuickActionCallback } from 'expo-quick-actions/hooks';
 import { openDeletionFeedbackEmail } from './src/services/emailService';
 import { track } from './src/services/analytics';
@@ -371,6 +372,18 @@ export function Layout() {
   if (!queryClientRef.current) {
     queryClientRef.current = new QueryClient();
   }
+
+  // Initialize sync service
+  React.useEffect(() => {
+    if (queryClientRef.current) {
+      initializeSyncService(queryClientRef.current);
+      startSyncService();
+    }
+
+    return () => {
+      stopSyncService();
+    };
+  }, []);
 
   return (
     <QueryClientProvider client={queryClientRef.current}>

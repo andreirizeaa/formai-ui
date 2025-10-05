@@ -1849,10 +1849,6 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
             // Navigate to AllDone screen
             navigation.navigate('AllDone' as never);
           }}
-          onSignIn={() => {
-            // Navigate to sign in screen
-            navigation.navigate('SignIn' as never);
-          }}
         />
       )}
 
