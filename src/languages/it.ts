@@ -594,6 +594,10 @@ const it = {
     performance: {
       title: 'Progressi',
       wrapped: 'Form AI Wrapped',
+      none: 'Nessuno',
+      lifts: 'Esercizi',
+      longestStreak: 'Serie Più Lunga',
+      longestBreak: 'Pausa Più Lunga',
       editDateRange: 'Modifica intervallo di date',
       from: 'Da',
       to: 'A',
@@ -653,7 +657,12 @@ const it = {
       metricsFeedback: {
         title: 'Vuoi altre metriche? Faccelo sapere!',
         subtitle: 'Aiutaci a migliorare la tua esperienza',
-      }
+      },
+      noLifts: 'Nessun sollevamento registrato',
+      startAnalyzingWorkout: 'Inizia ad analizzare l\'allenamento di oggi facendo un video veloce',
+      thankYou: 'Grazie',
+      shareError: 'Impossibile condividere',
+      unknownError: 'Errore sconosciuto',
     },
     library: {
       title: 'Libreria',

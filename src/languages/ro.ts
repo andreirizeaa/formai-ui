@@ -594,6 +594,10 @@ const ro = {
     "performance": {
       "title": "Progres",
       "wrapped": "Form AI Wrapped",
+      "none": "Niciunul",
+      "lifts": "Exerciții",
+      "longestStreak": "Șirul Cel Mai Lung",
+      "longestBreak": "Pauza Cea Mai Lungă",
       "editDateRange": "Editează intervalul",
       "from": "De la",
       "to": "Până la",
@@ -653,7 +657,12 @@ const ro = {
       "metricsFeedback": {
         "title": "Vrei și alte metrici? Spune-ne!",
         "subtitle": "Ajută-ne să-ți îmbunătățim experiența"
-      }
+      },
+      "noLifts": "Nicio ridicare înregistrată",
+      "startAnalyzingWorkout": "Începe să analizezi antrenamentul de azi făcând un video rapid",
+      "thankYou": "Mulțumim",
+      "shareError": "Nu s-a putut partaja",
+      "unknownError": "Eroare necunoscută"
     },
     "library": {
       "title": "Bibliotecă",

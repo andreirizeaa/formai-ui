@@ -1,7 +1,7 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, forwardRef, useImperativeHandle } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Crown, Share, Zap, BicepsFlexed, Video } from 'lucide-react-native';
+import { Crown, Share, Zap, BicepsFlexed, Video, Flame, Ghost, Dumbbell } from 'lucide-react-native';
 import i18n from '../../utils/i18n';
 import { hapticFeedback } from '../../utils/haptic';
 import { track } from '../../services/analytics';
@@ -24,96 +24,61 @@ interface WrappedProps {
   totalReps: number;
   totalWeightMoved: number;
   favouriteLift: string | null;
+  longestStreak: number;
+  longestBreak: number;
+  distinctLiftTypes: number;
+  personality: string;
   unitSystem?: 'metric' | 'imperial';
   liftData?: LiftData[];
+  selectedYear?: string;
 }
 
-export function Wrapped({
+export const Wrapped = forwardRef<any, WrappedProps>(({
   totalVideos,
   totalReps,
   totalWeightMoved,
   favouriteLift,
+  longestStreak,
+  longestBreak,
+  distinctLiftTypes,
+  personality,
   unitSystem = 'metric',
   liftData = [],
-}: WrappedProps) {
-  const [selectedYear, setSelectedYear] = useState<string>(() => {
-    // Always default to current year
-    return new Date().getFullYear().toString();
-  });
+  selectedYear,
+}, ref) => {
+  // Use the selectedYear prop directly
+  const currentSelectedYear = selectedYear || new Date().getFullYear().toString();
   const [showShareOverlay, setShowShareOverlay] = useState(false);
   const shareAreaRef = useRef<View>(null);
 
-  // Extract unique years from lift data
-  const availableYears = useMemo(() => {
-    const currentYear = new Date().getFullYear().toString();
-    
-    if (!liftData || !Array.isArray(liftData) || liftData.length === 0) {
-      // If no data, show current year
-      return [currentYear];
+  // Helper function to get personality display text
+  const getPersonalityText = (personalityType: string) => {
+    switch (personalityType) {
+      case 'morningBird':
+        return i18n.t('performance.morningBird');
+      case 'lunchMonster':
+        return i18n.t('performance.lunchMonster');
+      case 'nightMachine':
+        return i18n.t('performance.nightMachine');
+      default:
+        return i18n.t('performance.morningBird');
     }
-    
-    const years = new Set<string>();
-    // Always include current year
-    years.add(currentYear);
-    
-    liftData.forEach(lift => {
-      // Extract year from DD-MM-YYYY format
-      const year = lift.liftDate.split('-')[2];
-      if (year) {
-        years.add(year);
-      }
-    });
-    return Array.from(years).sort((a, b) => b.localeCompare(a)); // Sort descending (newest first)
-  }, [liftData]);
+  };
+
 
   // Filter lift data by selected year
   const filteredLiftData = useMemo(() => {
     if (!liftData || !Array.isArray(liftData)) {
       return [];
     }
-    if (selectedYear === 'all') return liftData;
-    return liftData.filter(lift => lift.liftDate.split('-')[2] === selectedYear);
-  }, [liftData, selectedYear]);
+    if (currentSelectedYear === 'all') return liftData;
+    return liftData.filter(lift => lift.liftDate.split('-')[2] === currentSelectedYear);
+  }, [liftData, currentSelectedYear]);
 
-  // Recalculate metrics based on filtered data
+  // Use the props passed from parent, but calculate average accuracy from filtered data
   const filteredMetrics = useMemo(() => {
-    // If no lift data available, use the original props
-    if (!liftData || liftData.length === 0) {
-      return {
-        totalVideos,
-        totalReps,
-        totalWeightMoved,
-        favouriteLift: null, // No favourite lift when no data
-        averageAccuracy: 0, // No accuracy when no data
-      };
-    }
 
-    const videos = filteredLiftData.length;
-    const reps = filteredLiftData.reduce((sum, lift) => sum + (lift.reps || 0), 0);
-    const weightMoved = filteredLiftData.reduce((sum, lift) => {
-      const weight = lift.metricWeight || 0;
-      const reps = lift.reps || 0;
-      return sum + (weight * reps);
-    }, 0);
-
-    const liftTypeCounts = new Map<string, number>();
-    filteredLiftData.forEach(lift => {
-      const liftType = lift.liftType;
-      if (liftType) {
-        liftTypeCounts.set(liftType, (liftTypeCounts.get(liftType) || 0) + 1);
-      }
-    });
-
-    let favouriteLiftName = 'Bench Press'; // default
-    let maxCount = 0;
-    liftTypeCounts.forEach((count, liftType) => {
-      if (count > maxCount) {
-        maxCount = count;
-        favouriteLiftName = liftType;
-      }
-    });
-
-    // Calculate average accuracy
+    // Calculate average accuracy from filtered data
     const validAccuracies = filteredLiftData
       .map(lift => lift.analysis?.accuracy)
       .filter((accuracy): accuracy is number => typeof accuracy === 'number' && !isNaN(accuracy));
@@ -123,21 +88,14 @@ export function Wrapped({
       : 0;
 
     return {
-      totalVideos: videos,
-      totalReps: reps,
-      totalWeightMoved: weightMoved,
-      favouriteLift: favouriteLiftName,
+      totalVideos,
+      totalReps,
+      totalWeightMoved,
+      favouriteLift,
       averageAccuracy,
     };
   }, [filteredLiftData, totalVideos, totalReps, totalWeightMoved, favouriteLift]);
 
-  const handleYearChange = (year: string) => {
-    if (year !== selectedYear) {
-      hapticFeedback.selection();
-      track('Wrapped year filter', { year });
-      setSelectedYear(year);
-    }
-  };
 
   // Render function for the cards (screen version - no title, logo, year)
   const renderCards = () => (
@@ -145,241 +103,312 @@ export function Wrapped({
       {/* Videos and Reps Row */}
       <View style={styles.statsRow}>
         {/* Videos Card */}
-        <View style={[styles.statCard, styles.cardShadow]}>
-          <LinearGradient
-            colors={['#e2e8f0', '#f5f3ff']}
-            locations={[0, 0.3]}
-            style={styles.gradientFill}
-            start={{ x: 0.6, y: 0 }}
-            end={{ x: 0, y: 1 }}
-          >
-            <View style={styles.statHeaderRow}>
-              <Text style={styles.statTitle}>{i18n.t('performance.videos')}</Text>
-            </View>
-            <View style={styles.statValueContainer}>
-              <Text style={styles.statValue}>{filteredMetrics.totalVideos}</Text>
-              <Video width={24} height={24} color="#000000" />
-            </View>
-          </LinearGradient>
+        <View style={[styles.statCard, styles.cardShadow, styles.videosCardSolid, styles.solidCard]}>
+          <Text style={styles.solidCardTitle}>{i18n.t('performance.videos')}</Text>
+          <View style={styles.solidCardValueContainer}>
+            <Text style={styles.solidCardValue}>{filteredMetrics.totalVideos || 0}</Text>
+            <Video width={24} height={24} color="#FFFFFF" style={{ marginLeft: 8 }} />
+          </View>
         </View>
 
         {/* Reps Card */}
-        <View style={[styles.statCard, styles.cardShadow]}>
-          <LinearGradient
-            colors={['#e2e8f0', '#f5f3ff']}
-            locations={[0, 0.3]}
-            style={styles.gradientFill}
-            start={{ x: 0.6, y: 0 }}
-            end={{ x: 0, y: 1 }}
-          >
-            <View style={styles.statHeaderRow}>
-              <Text style={styles.statTitle}>{i18n.t('performance.reps')}</Text>
-            </View>
-            <Text style={styles.statValue}>{filteredMetrics.totalReps}</Text>
-          </LinearGradient>
+        <View style={[styles.statCard, styles.cardShadow, styles.repsCardSolid, styles.solidCard]}>
+          <Text style={styles.solidCardTitle}>{i18n.t('performance.reps')}</Text>
+          <View style={styles.solidCardValueContainer}>
+            <Text style={styles.solidCardValue}>{filteredMetrics.totalReps || 0}</Text>
+          </View>
         </View>
       </View>
 
       {/* Total Weight and Accuracy Row */}
       <View style={styles.weightAccuracyRow}>
         {/* Total Weight Moved Card - 70% */}
-        <View style={[styles.totalWeightCard, styles.cardShadow, styles.weightCard70]}>
-          <LinearGradient
-            colors={['#f5f3ff', '#e2e8f0']}
-            locations={[0, 0.3]}
-            style={styles.gradientFill}
-            start={{ x: 0.6, y: 0 }}
-            end={{ x: 0, y: 1 }}
-          >
-          <View style={styles.totalWeightHeaderRow}>
-            <Text style={styles.totalWeightTitle}>{i18n.t('performance.totalWeight')}</Text>
+        <View style={[styles.totalWeightCard, styles.cardShadow, styles.weightCard70, styles.totalWeightCardSolid, styles.solidCard]}>
+          <Text style={styles.solidCardTitle}>{i18n.t('performance.totalWeight')}</Text>
+          <View style={styles.solidCardValueContainer}>
+            <Text style={styles.solidCardValue}>
+              {unitSystem === 'imperial'
+                ? Math.round((filteredMetrics.totalWeightMoved || 0) * 2.20462).toLocaleString()
+                : Math.round(filteredMetrics.totalWeightMoved || 0).toLocaleString()
+              } {unitSystem === 'imperial' ? i18n.t('feedback.lbs') : i18n.t('feedback.kg')}
+            </Text>
+            <BicepsFlexed width={24} height={24} color="#FFFFFF" style={{ marginLeft: 8 }} />
           </View>
-            <View style={styles.totalWeightValueContainer}>
-              <Text style={styles.totalWeightValue}>
-                {unitSystem === 'imperial'
-                  ? Math.round(filteredMetrics.totalWeightMoved * 2.20462).toLocaleString()
-                  : Math.round(filteredMetrics.totalWeightMoved).toLocaleString()
-                } {unitSystem === 'imperial' ? i18n.t('feedback.lbs') : i18n.t('feedback.kg')}
-              </Text>
-              <BicepsFlexed width={24} height={24} color="#000000" />
-            </View>
-          </LinearGradient>
         </View>
 
         {/* Accuracy Card - 30% */}
-        <View style={[styles.accuracyCard, styles.cardShadow, styles.accuracyCard30]}>
-          <LinearGradient
-            colors={['#e2e8f0', '#f5f3ff']}
-            locations={[0, 0.3]}
-            style={styles.gradientFill}
-            start={{ x: 0.6, y: 0 }}
-            end={{ x: 0, y: 1 }}
-          >
+          <View style={[styles.accuracyCard, styles.cardShadow, styles.accuracyCard30]}>
+            <LinearGradient
+              colors={['#f6339a', '#fb2c36', '#ff6900', '#fe9a00']}
+              locations={[0, 0.5, 0.8, 1]}
+              style={styles.gradientFill}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+            >
             <View style={styles.accuracyHeaderRow}>
               <Text style={styles.accuracyTitle}>{i18n.t('performance.accuracy')}</Text>
             </View>
             <View style={styles.accuracyValueContainer}>
-              <Text style={styles.accuracyValue}>{filteredMetrics.averageAccuracy}%</Text>
-              <Zap width={24} height={24} color="#000000" />
+              <Text style={styles.accuracyValue}>{filteredMetrics.averageAccuracy || 0}%</Text>
+              <Zap width={24} height={24} color="#FFFFFF" />
             </View>
           </LinearGradient>
         </View>
       </View>
 
-      {/* Favourite Exercise Card - always show */}
-      <View style={[styles.favouriteLiftCard, styles.cardShadow]}>
-        <LinearGradient
-          colors={['#e2e8f0', '#f5f3ff']}
-          locations={[0, 0.3]}
-          style={styles.gradientFill}
-          start={{ x: 0.6, y: 0 }}
-          end={{ x: 0, y: 1 }}
-        >
-          <View style={styles.favouriteLiftHeaderRow}>
-            <Text style={styles.favouriteLiftTitle}>{i18n.t('performance.favouriteExercise')}</Text>
+      {/* Lifts and Favourite Row */}
+      <View style={styles.statsRow}>
+        {/* Lifts Card */}
+        <View style={[styles.statCard, styles.cardShadow, styles.liftsCardSolid, styles.solidCard]}>
+          <Text style={styles.solidCardTitle}>{i18n.t('performance.lifts')}</Text>
+          <View style={styles.solidCardValueContainer}>
+            <Text style={styles.solidCardValue}>{distinctLiftTypes || 0}</Text>
+            <Dumbbell width={24} height={24} color="#FFFFFF" style={{ marginLeft: 8 }} />
           </View>
-          <View style={styles.favouriteLiftValueRow}>
-            <Text style={styles.favouriteLiftValue}>
-              {filteredMetrics.favouriteLift || i18n.t('performance.noData')}
-            </Text>
-            {filteredMetrics.favouriteLift && <Crown width={28} height={28} color="#000000" />}
+        </View>
+
+      {/* Favourite Exercise Card */}
+      <View style={[styles.statCard, styles.cardShadow, styles.favouriteExerciseCard, styles.solidCard]}>
+        <Text style={styles.solidCardTitle}>{i18n.t('performance.favouriteExercise')}</Text>
+        <View style={styles.solidCardValueContainer}>
+          <Text style={styles.solidCardValue}>
+            {filteredMetrics.favouriteLift || i18n.t('performance.noData')}
+          </Text>
+          {filteredMetrics.favouriteLift && <Crown width={24} height={24} color="#FFFFFF" style={{ marginLeft: 8 }} />}
+        </View>
+      </View>
+      </View>
+
+      {/* Streak and Break Row */}
+      <View style={styles.statsRow}>
+        {/* {i18n.t('performance.longestStreak')} Card */}
+        <View style={[styles.statCard, styles.cardShadow, styles.longestStreakCardSolid, styles.solidCard]}>
+          <Text style={styles.solidCardTitle}>{i18n.t('performance.longestStreak')}</Text>
+          <View style={styles.solidCardValueContainer}>
+            <Text style={styles.solidCardValue}>{longestStreak || 0}</Text>
+            <Flame width={24} height={24} color="#FFFFFF" style={{ marginLeft: 8 }} />
           </View>
-        </LinearGradient>
+        </View>
+
+        {/* {i18n.t('performance.longestBreak')} Card */}
+        <View style={[styles.statCard, styles.cardShadow, styles.longestBreakCardSolid, styles.solidCard]}>
+          <Text style={styles.solidCardTitle}>{i18n.t('performance.longestBreak')}</Text>
+          <View style={styles.solidCardValueContainer}>
+            <Text style={styles.solidCardValue}>{longestBreak === 0 ? i18n.t('performance.none') : longestBreak}</Text>
+            <Ghost width={24} height={24} color="#FFFFFF" style={{ marginLeft: 8 }} />
+          </View>
+        </View>
+      </View>
+
+      {/* Personality, Logo and Year Row */}
+      <View style={styles.weightAccuracyRow}>
+        {/* Left side - Two horizontal cards */}
+        <View style={styles.leftCardsContainer}>
+          {/* Personality Card */}
+          <View style={[styles.statCard, styles.cardShadow, styles.personalityCard, styles.personalityCardSolid, styles.solidCard]}>
+            <Text style={styles.solidCardTitle}>{i18n.t('performance.personality')}</Text>
+            <View style={styles.solidCardValueContainer}>
+              <Text style={styles.solidCardValue}>{getPersonalityText(personality)}</Text>
+            </View>
+          </View>
+
+          {/* FormAI Logo Card */}
+          <View style={[styles.statCard, styles.cardShadow, styles.logoCard, styles.logoCardSolid, styles.solidCard]}>
+            <Text style={styles.logoCardTitle}>{i18n.t('performance.thankYou')}</Text>
+            <View style={styles.logoContainer}>
+              <FormAILogo
+                iconSize={32}
+                textStyle={styles.logoTextGray}
+              />
+            </View>
+          </View>
+        </View>
+
+        {/* Year Card - 35% width with vertical text */}
+        <View style={[styles.accuracyCard, styles.cardShadow, styles.yearCard]}>
+          <LinearGradient
+            colors={['#f6339a', '#fb2c36', '#ff6900', '#fe9a00']}
+            locations={[0, 0.5, 0.8, 1]}
+            style={styles.yearGradientFill}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+          >
+            <View style={styles.yearContainer}>
+              <View style={styles.verticalTextContainer}>
+                <Text 
+                  style={styles.verticalYearText}
+                  numberOfLines={1}
+                >
+                  {selectedYear === 'all' ? i18n.t('performance.timeRanges.allTime') : selectedYear}
+                </Text>
+              </View>
+            </View>
+          </LinearGradient>
+        </View>
       </View>
     </>
   );
 
   // Render function for shareable content (includes overview title, logo, year)
   const renderShareableCards = () => (
-    <LinearGradient
-      colors={['#e2e8f0', '#ffffff']}
-      locations={[0, 0.9]}
-      style={styles.shareableBackground}
-      start={{ x: 0.5, y: 0 }}
-      end={{ x: 0, y: 1 }}
-    >
+    <View style={styles.shareableBackground}>
       {/* Overview Title */}
       <Text style={styles.overviewTitle}>{i18n.t('performance.myOverview')}</Text>
       
       {/* Videos and Reps Row */}
       <View style={styles.statsRow}>
         {/* Videos Card */}
-        <View style={[styles.statCard, styles.cardShadow]}>
-          <LinearGradient
-            colors={['#e2e8f0', '#f5f3ff']}
-            locations={[0, 0.3]}
-            style={styles.gradientFill}
-            start={{ x: 0.6, y: 0 }}
-            end={{ x: 0, y: 1 }}
-          >
-            <View style={styles.statHeaderRow}>
-              <Text style={styles.statTitle}>{i18n.t('performance.videos')}</Text>
-            </View>
-            <View style={styles.statValueContainer}>
-              <Text style={styles.statValue}>{filteredMetrics.totalVideos}</Text>
-              <Video width={24} height={24} color="#000000" />
-            </View>
-          </LinearGradient>
+        <View style={[styles.statCard, styles.cardShadow, styles.videosCardSolid, styles.solidCard]}>
+          <Text style={styles.solidCardTitle}>{i18n.t('performance.videos')}</Text>
+          <View style={styles.solidCardValueContainer}>
+            <Text style={styles.solidCardValue}>{filteredMetrics.totalVideos || 0}</Text>
+            <Video width={24} height={24} color="#FFFFFF" style={{ marginLeft: 8 }} />
+          </View>
         </View>
 
         {/* Reps Card */}
-        <View style={[styles.statCard, styles.cardShadow]}>
-          <LinearGradient
-            colors={['#e2e8f0', '#f5f3ff']}
-            locations={[0, 0.3]}
-            style={styles.gradientFill}
-            start={{ x: 0.6, y: 0 }}
-            end={{ x: 0, y: 1 }}
-          >
-            <View style={styles.statHeaderRow}>
-              <Text style={styles.statTitle}>{i18n.t('performance.reps')}</Text>
-            </View>
-            <Text style={styles.statValue}>{filteredMetrics.totalReps}</Text>
-          </LinearGradient>
+        <View style={[styles.statCard, styles.cardShadow, styles.repsCardSolid, styles.solidCard]}>
+          <Text style={styles.solidCardTitle}>{i18n.t('performance.reps')}</Text>
+          <View style={styles.solidCardValueContainer}>
+            <Text style={styles.solidCardValue}>{filteredMetrics.totalReps || 0}</Text>
+          </View>
         </View>
       </View>
 
       {/* Total Weight and Accuracy Row */}
       <View style={styles.weightAccuracyRow}>
         {/* Total Weight Moved Card - 70% */}
-        <View style={[styles.totalWeightCard, styles.cardShadow, styles.weightCard70]}>
-          <LinearGradient
-            colors={['#f5f3ff', '#e2e8f0']}
-            locations={[0, 0.3]}
-            style={styles.gradientFill}
-            start={{ x: 0.6, y: 0 }}
-            end={{ x: 0, y: 1 }}
-          >
-          <View style={styles.totalWeightHeaderRow}>
-            <Text style={styles.totalWeightTitle}>{i18n.t('performance.totalWeight')}</Text>
+        <View style={[styles.totalWeightCard, styles.cardShadow, styles.weightCard70, styles.totalWeightCardSolid, styles.solidCard]}>
+          <Text style={styles.solidCardTitle}>{i18n.t('performance.totalWeight')}</Text>
+          <View style={styles.solidCardValueContainer}>
+            <Text style={styles.solidCardValue}>
+              {unitSystem === 'imperial'
+                ? Math.round((filteredMetrics.totalWeightMoved || 0) * 2.20462).toLocaleString()
+                : Math.round(filteredMetrics.totalWeightMoved || 0).toLocaleString()
+              } {unitSystem === 'imperial' ? i18n.t('feedback.lbs') : i18n.t('feedback.kg')}
+            </Text>
+            <BicepsFlexed width={24} height={24} color="#FFFFFF" style={{ marginLeft: 8 }} />
           </View>
-            <View style={styles.totalWeightValueContainer}>
-              <Text style={styles.totalWeightValue}>
-                {unitSystem === 'imperial'
-                  ? Math.round(filteredMetrics.totalWeightMoved * 2.20462).toLocaleString()
-                  : Math.round(filteredMetrics.totalWeightMoved).toLocaleString()
-                } {unitSystem === 'imperial' ? i18n.t('feedback.lbs') : i18n.t('feedback.kg')}
-              </Text>
-              <BicepsFlexed width={24} height={24} color="#000000" />
-            </View>
-          </LinearGradient>
         </View>
 
         {/* Accuracy Card - 30% */}
-        <View style={[styles.accuracyCard, styles.cardShadow, styles.accuracyCard30]}>
-          <LinearGradient
-            colors={['#e2e8f0', '#f5f3ff']}
-            locations={[0, 0.3]}
-            style={styles.gradientFill}
-            start={{ x: 0.6, y: 0 }}
-            end={{ x: 0, y: 1 }}
-          >
+          <View style={[styles.accuracyCard, styles.cardShadow, styles.accuracyCard30]}>
+            <LinearGradient
+              colors={['#f6339a', '#fb2c36', '#ff6900', '#fe9a00']}
+              locations={[0, 0.5, 0.8, 1]}
+              style={styles.gradientFill}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+            >
             <View style={styles.accuracyHeaderRow}>
               <Text style={styles.accuracyTitle}>{i18n.t('performance.accuracy')}</Text>
             </View>
             <View style={styles.accuracyValueContainer}>
-              <Text style={styles.accuracyValue}>{filteredMetrics.averageAccuracy}%</Text>
-              <Zap width={24} height={24} color="#000000" />
+              <Text style={styles.accuracyValue}>{filteredMetrics.averageAccuracy || 0}%</Text>
+              <Zap width={24} height={24} color="#FFFFFF" />
             </View>
           </LinearGradient>
         </View>
       </View>
 
-      {/* Favourite Exercise Card - always show */}
-      <View style={[styles.favouriteLiftCard, styles.cardShadow]}>
-        <LinearGradient
-          colors={['#e2e8f0', '#f5f3ff']}
-          locations={[0, 0.3]}
-          style={styles.gradientFill}
-          start={{ x: 0.6, y: 0 }}
-          end={{ x: 0, y: 1 }}
-        >
-          <View style={styles.favouriteLiftHeaderRow}>
-            <Text style={styles.favouriteLiftTitle}>{i18n.t('performance.favouriteExercise')}</Text>
+      {/* Lifts and Favourite Row */}
+      <View style={styles.statsRow}>
+        {/* Lifts Card */}
+        <View style={[styles.statCard, styles.cardShadow, styles.liftsCardSolid, styles.solidCard]}>
+          <Text style={styles.solidCardTitle}>{i18n.t('performance.lifts')}</Text>
+          <View style={styles.solidCardValueContainer}>
+            <Text style={styles.solidCardValue}>{distinctLiftTypes || 0}</Text>
+            <Dumbbell width={24} height={24} color="#FFFFFF" style={{ marginLeft: 8 }} />
           </View>
-          <View style={styles.favouriteLiftValueRow}>
-            <Text style={styles.favouriteLiftValue}>
-              {filteredMetrics.favouriteLift || i18n.t('performance.noData')}
-            </Text>
-            {filteredMetrics.favouriteLift && <Crown width={28} height={28} color="#000000" />}
-          </View>
-        </LinearGradient>
+        </View>
+
+      {/* Favourite Exercise Card */}
+      <View style={[styles.statCard, styles.cardShadow, styles.favouriteExerciseCard, styles.solidCard]}>
+        <Text style={styles.solidCardTitle}>{i18n.t('performance.favouriteExercise')}</Text>
+        <View style={styles.solidCardValueContainer}>
+          <Text style={styles.solidCardValue}>
+            {filteredMetrics.favouriteLift || i18n.t('performance.noData')}
+          </Text>
+          {filteredMetrics.favouriteLift && <Crown width={24} height={24} color="#FFFFFF" style={{ marginLeft: 8 }} />}
+        </View>
+      </View>
       </View>
 
-      {/* Footer with FormAILogo and Year - only for shareable */}
-      <View style={styles.footerRow}>
-        <FormAILogo iconSize={24} textStyle={styles.footerLogoText} />
-        <Text style={styles.yearText}>
-          {selectedYear === 'all' ? i18n.t('performance.timeRanges.allTime') : selectedYear}
-        </Text>
+      {/* Streak and Break Row */}
+      <View style={styles.statsRow}>
+        {/* {i18n.t('performance.longestStreak')} Card */}
+        <View style={[styles.statCard, styles.cardShadow, styles.longestStreakCardSolid, styles.solidCard]}>
+          <Text style={styles.solidCardTitle}>{i18n.t('performance.longestStreak')}</Text>
+          <View style={styles.solidCardValueContainer}>
+            <Text style={styles.solidCardValue}>{longestStreak || 0}</Text>
+            <Flame width={24} height={24} color="#FFFFFF" style={{ marginLeft: 8 }} />
+          </View>
+        </View>
+
+        {/* {i18n.t('performance.longestBreak')} Card */}
+        <View style={[styles.statCard, styles.cardShadow, styles.longestBreakCardSolid, styles.solidCard]}>
+          <Text style={styles.solidCardTitle}>{i18n.t('performance.longestBreak')}</Text>
+          <View style={styles.solidCardValueContainer}>
+            <Text style={styles.solidCardValue}>{longestBreak === 0 ? i18n.t('performance.none') : longestBreak}</Text>
+            <Ghost width={24} height={24} color="#FFFFFF" style={{ marginLeft: 8 }} />
+          </View>
+        </View>
       </View>
-    </LinearGradient>
+
+      {/* Personality, Logo and Year Row */}
+      <View style={styles.weightAccuracyRow}>
+        {/* Left side - Two horizontal cards */}
+        <View style={styles.leftCardsContainer}>
+          {/* Personality Card */}
+          <View style={[styles.statCard, styles.cardShadow, styles.personalityCard, styles.personalityCardSolid, styles.solidCard]}>
+            <Text style={styles.solidCardTitle}>{i18n.t('performance.personality')}</Text>
+            <View style={styles.solidCardValueContainer}>
+              <Text style={styles.solidCardValue}>{getPersonalityText(personality)}</Text>
+            </View>
+          </View>
+
+          {/* FormAI Logo Card */}
+          <View style={[styles.statCard, styles.cardShadow, styles.logoCard, styles.logoCardSolid, styles.solidCard]}>
+            <Text style={styles.logoCardTitle}>{i18n.t('performance.thankYou')}</Text>
+            <View style={styles.logoContainer}>
+              <FormAILogo
+                iconSize={32}
+                textStyle={styles.logoTextGray}
+              />
+            </View>
+          </View>
+        </View>
+
+        {/* Year Card - 35% width with vertical text */}
+        <View style={[styles.accuracyCard, styles.cardShadow, styles.yearCard]}>
+          <LinearGradient
+            colors={['#f6339a', '#fb2c36', '#ff6900', '#fe9a00']}
+            locations={[0, 0.5, 0.8, 1]}
+            style={styles.yearGradientFill}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+          >
+            <View style={styles.yearContainer}>
+              <View style={styles.verticalTextContainer}>
+                <Text 
+                  style={styles.verticalYearText}
+                  numberOfLines={1}
+                >
+                  {selectedYear === 'all' ? i18n.t('performance.timeRanges.allTime') : selectedYear}
+                </Text>
+              </View>
+            </View>
+          </LinearGradient>
+        </View>
+      </View>
+      
+    </View>
   );
 
   const handleShare = async () => {
     try {
       hapticFeedback.selection();
-      track('Wrapped share tapped', { year: selectedYear });
+      track('Wrapped share tapped', { year: currentSelectedYear });
 
       setShowShareOverlay(true); // mount the hidden white version
       await new Promise((r) => requestAnimationFrame(() => setTimeout(r, 0))); // wait a frame
@@ -387,7 +416,7 @@ export function Wrapped({
       const uri = await captureRef(shareAreaRef, {
         format: 'png',
         quality: 1,
-        fileName: `lift-wrapped-${selectedYear}`,
+        fileName: `lift-wrapped-${currentSelectedYear}`,
         result: 'tmpfile',
       });
 
@@ -405,63 +434,16 @@ export function Wrapped({
       });
     } catch (e: any) {
       setShowShareOverlay(false);
-      Alert.alert('Could not share', e?.message ?? 'Unknown error');
+      Alert.alert(i18n.t('performance.shareError'), e?.message ?? i18n.t('performance.unknownError'));
     }
   };
+
+  // Expose handleShare function to parent components
+  useImperativeHandle(ref, () => ({
+    handleShare,
+  }));
   return (
     <View style={styles.container}>
-      {/* Title row + Share button */}
-      <View style={styles.titleRow}>
-        <Text style={styles.title}>{i18n.t('performance.wrapped')}</Text>
-        {liftData && liftData.length > 0 && (
-          <TouchableOpacity
-            onPress={handleShare}
-            accessibilityRole="button"
-            accessibilityLabel="Share this summary"
-            style={styles.shareBtn}
-            activeOpacity={0.8}
-          >
-            <Share width={22} height={22} color="#000" />
-          </TouchableOpacity>
-        )}
-      </View>
-      
-      {/* Year Segmented Control */}
-      {availableYears.length > 0 && (
-        <View style={styles.segmentedWrapper}>
-          <View style={styles.segmented}>
-            {/* Only show "All Time" if there's actual lift data */}
-            {liftData && liftData.length > 0 && (
-              <TouchableOpacity
-                style={[styles.segment, selectedYear === 'all' ? styles.segmentActive : styles.segmentInactive]}
-                activeOpacity={0.9}
-                onPress={() => handleYearChange('all')}
-                accessibilityRole="button"
-                accessibilityState={{ selected: selectedYear === 'all' }}
-              >
-                <Text style={[styles.segmentText, selectedYear === 'all' && styles.segmentTextActive]}>
-                  All Time
-                </Text>
-              </TouchableOpacity>
-            )}
-            {availableYears.map((year) => (
-              <TouchableOpacity
-                key={year}
-                style={[styles.segment, selectedYear === year ? styles.segmentActive : styles.segmentInactive]}
-                activeOpacity={0.9}
-                onPress={() => handleYearChange(year)}
-                accessibilityRole="button"
-                accessibilityState={{ selected: selectedYear === year }}
-              >
-                <Text style={[styles.segmentText, selectedYear === year && styles.segmentTextActive]}>
-                  {year}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-      )}
-
       {/* Visible Cards */}
       {renderCards()}
 
@@ -478,29 +460,11 @@ export function Wrapped({
       )}
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {
     marginBottom: 50,
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#000000',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
-    textAlign: 'left',
-    flex: 1,
-  },
-  shareBtn: {
-    marginLeft: 8,
-    padding: 8,
-    borderRadius: 10,
   },
   shareableTitle: {
     fontSize: 28,
@@ -521,6 +485,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     borderRadius: 20,
+    backgroundColor: '#1d293d',
   },
   statsRow: {
     flexDirection: 'row',
@@ -534,6 +499,7 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     borderRadius: 20,
     alignItems: 'center',
+    minHeight: 80,
   },
   statHeaderRow: {
     width: '100%',
@@ -544,8 +510,8 @@ const styles = StyleSheet.create({
   },
   statTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#000000',
+    fontWeight: '700',
+    color: '#FFFFFF',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
     flex: 1,
     flexShrink: 0,
@@ -558,23 +524,25 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 22,
     fontWeight: '800',
-    color: '#000000',
+    color: '#FFFFFF',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
   },
   weightAccuracyRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     gap: 6,
     marginBottom: 6,
   },
   totalWeightCard: {
     borderRadius: 20,
+    minHeight: 80,
   },
   weightCard70: {
     flex: 0.65,
   },
   accuracyCard: {
     borderRadius: 20,
+    minHeight: 80,
   },
   accuracyCard30: {
     flex: 0.35,
@@ -586,8 +554,8 @@ const styles = StyleSheet.create({
   },
   accuracyTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#000000',
+    fontWeight: '700',
+    color: '#FFFFFF',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
     flex: 1,
   },
@@ -599,7 +567,7 @@ const styles = StyleSheet.create({
   accuracyValue: {
     fontSize: 22,
     fontWeight: '800',
-    color: '#000000',
+    color: '#FFFFFF',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
   },
   totalWeightHeaderRow: {
@@ -609,8 +577,8 @@ const styles = StyleSheet.create({
   },
   totalWeightTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#000000',
+    fontWeight: '700',
+    color: '#FFFFFF',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
     flex: 1,
   },
@@ -622,43 +590,15 @@ const styles = StyleSheet.create({
   totalWeightValue: {
     fontSize: 22,
     fontWeight: '800',
-    color: '#000000',
+    color: '#FFFFFF',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
   },
   totalWeightUnit: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#000000',
+    color: '#FFFFFF',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
     alignSelf: 'flex-start',
-  },
-  favouriteLiftCard: {
-    borderRadius: 20,
-    marginBottom: 8,
-  },
-  favouriteLiftHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  favouriteLiftTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#000000',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
-  },
-  favouriteLiftValueRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    flex: 1,
-  },
-  favouriteLiftValue: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#000000',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
-    flex: 1,
   },
   cardShadow: {
     shadowColor: '#000000',
@@ -667,66 +607,142 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 2,
   },
+  leftCardsContainer: {
+    flex: 1,
+    gap: 6,
+  },
+  personalityCard: {
+    flex: 0,
+    minHeight: 80,
+    width: '100%',
+  },
+  logoCard: {
+    flex: 1,
+    width: '100%',
+    minHeight: 80,
+  },
+  // Generic solid card styles
+  solidCard: {
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  solidCardTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+    marginBottom: 8,
+    textAlign: 'left',
+  },
+  solidCardValue: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
+    textAlign: 'left',
+  },
+  solidCardValueContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    alignSelf: 'flex-start',
+  },
+  logoCardSolid: {
+    backgroundColor: '#cad5e2',
+  },
+  logoCardTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#000000',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+    marginBottom: 8,
+    textAlign: 'left',
+  },
+  logoTextGray: {
+    color: '#000000',
+    fontSize: 30,
+    fontWeight: '800',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
+  },
+  favouriteExerciseCard: {
+    backgroundColor: '#74d4ff',
+  },
+  personalityCardSolid: {
+    backgroundColor: '#46ecd5',
+  },
+  longestStreakCardSolid: {
+    backgroundColor: '#ffb86a',
+  },
+  longestBreakCardSolid: {
+    backgroundColor: '#ffa2a2',
+  },
+  totalWeightCardSolid: {
+    backgroundColor: '#5ee9b5',
+  },
+  liftsCardSolid: {
+    backgroundColor: '#f4a8ff',
+  },
+  repsCardSolid: {
+    backgroundColor: '#c4b4ff',
+  },
+  videosCardSolid: {
+    backgroundColor: '#ffd230',
+  },
+  logoContainer: {
+    flex: 1,
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+  },
+  logoText: {
+    color: '#000000',
+    fontSize: 24,
+    fontWeight: '800',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
+  },
+  logoWrapper: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  yearCard: {
+    width: 100,
+    flexShrink: 0,
+    minHeight: 170,
+  },
+  yearContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  verticalTextContainer: {
+    transform: [{ rotate: '-90deg' }],
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  verticalYearText: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
+    textAlign: 'center',
+  },
   gradientFill: {
     flex: 1,
     borderRadius: 20,
     padding: 16,
   },
-  // Segmented control styles
-  segmentedWrapper: {
-    width: '100%',
-    marginBottom: 24,
-    paddingHorizontal: 0,
-  },
-  segmented: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#F0F0F0',
-    borderRadius: 12,
-    padding: 4,
-    // Platform-specific shadow optimization
-    ...(Platform.OS === 'android' ? { elevation: 1 } : {
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.1,
-      shadowRadius: 1,
-    }),
-  },
-  segment: {
-    flexGrow: 1,
-    flexShrink: 0,
-    paddingVertical: 10,
-    paddingHorizontal: 8,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginHorizontal: 1, // Small margin between segments
-  },
-  segmentInactive: {},
-  segmentActive: {
-    backgroundColor: '#FFFFFF',
-    // Platform-specific shadow optimization
-    ...(Platform.OS === 'android' ? { elevation: 2 } : {
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.1,
-      shadowRadius: 2,
-    }),
-  },
-  segmentText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#000',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
-  },
-  segmentTextActive: {
-    color: '#000',
-    fontWeight: '800',
+  yearGradientFill: {
+    flex: 1,
+    borderRadius: 20,
+    padding: 0,
   },
   overviewTitle: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: '800',
-    color: '#000000',
+    color: '#ffffff',
     textAlign: 'center',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
     marginBottom: 16,
@@ -746,7 +762,7 @@ const styles = StyleSheet.create({
   },
   yearText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#666666',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },

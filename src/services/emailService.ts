@@ -1,5 +1,6 @@
 import * as MailComposer from 'expo-mail-composer';
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 import { showAlert } from './alertService';
 import { getUserId } from './storageService';
 
@@ -49,6 +50,7 @@ export async function openSupportEmail(): Promise<void> {
 
               - Platform: ${Platform.OS}
               - Device Version: ${Platform.Version}
+              - App Version: ${Constants.expoConfig?.version}
               - User ID: ${userId}
           `,
   };

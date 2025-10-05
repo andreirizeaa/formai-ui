@@ -10,15 +10,92 @@ import { useUserCheckIns } from '../../../context/UserCheckInsContext';
 import { hapticFeedback } from '../../../utils/haptic';
 import i18n from '../../../utils/i18n';
 import { useTutorialTarget } from '../../../context/TutorialContext';
-import { CircleQuestionMark, X, MailPlus } from 'lucide-react-native';
+import { CircleQuestionMark, X, MailPlus, CircleStar } from 'lucide-react-native';
 import { CircularProgressChart } from '../../../components/icons/icons';
 import { openMetricsFeedbackEmail } from '../../../services/emailService';
 import { track } from '../../../services/analytics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Wrapped } from '../../../components/ui/Wrapped';
+import { LiftCard } from '../../../components/ui/LiftCard';
+import { SvgXml } from 'react-native-svg';
 
 interface PerformanceScreenProps {
   onTriggerAddOptions?: () => void;
+}
+
+interface WrappedYearCardsProps {
+  liftData: any[];
+  onYearPress: (year: string) => void;
+}
+
+function WrappedYearCards({ liftData, onYearPress }: WrappedYearCardsProps) {
+  // Extract unique years from lift data
+  const availableYears = useMemo(() => {
+    const currentYear = new Date().getFullYear().toString();
+    
+    if (!liftData || !Array.isArray(liftData) || liftData.length === 0) {
+      return [currentYear];
+    }
+    
+    const years = new Set<string>();
+    // Always include current year
+    years.add(currentYear);
+    
+    liftData.forEach(lift => {
+      // Extract year from DD-MM-YYYY format
+      const year = lift.liftDate.split('-')[2];
+      if (year) {
+        years.add(year);
+      }
+    });
+    return Array.from(years).sort((a, b) => b.localeCompare(a)); // Sort descending (newest first)
+  }, [liftData]);
+
+  return (
+    <View>
+      {/* All Time Option */}
+      <TouchableOpacity
+        style={styles.optionRow}
+        onPress={() => {
+          hapticFeedback.selection();
+          onYearPress('all');
+        }}
+        activeOpacity={0.7}
+      >
+        <View style={styles.iconContainer}>
+          <CircleStar size={26} color="#000000" />
+        </View>
+        <View style={styles.textContainer}>
+          <Text style={styles.optionTitle}>{i18n.t('performance.timeRanges.allTime')}</Text>
+        </View>
+      </TouchableOpacity>
+
+      {/* Year Options */}
+      {availableYears.map((year, index) => {
+        const yearLifts = liftData.filter(lift => lift.liftDate.split('-')[2] === year);
+        return (
+          <View key={year}>
+            <View style={styles.separator} />
+            <TouchableOpacity
+              style={styles.optionRow}
+              onPress={() => {
+                hapticFeedback.selection();
+                onYearPress(year);
+              }}
+              activeOpacity={0.7}
+            >
+              <View style={styles.iconContainer}>
+                <CircleStar size={26} color="#000000" />
+              </View>
+              <View style={styles.textContainer}>
+                <Text style={styles.optionTitle}>{year}</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+        );
+      })}
+    </View>
+  );
 }
 
 
@@ -477,15 +554,31 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
             </TouchableOpacity>
           </View>
 
-          {/* Wrapped Component with 4 Cards */}
-          <Wrapped
-            totalVideos={totalVideos}
-            totalReps={totalReps}
-            totalWeightMoved={totalWeightMoved}
-            favouriteLift={favouriteLift}
-            unitSystem={userDetails?.unitSystem || 'metric'}
-            liftData={stableLiftData}
-          />
+          {/* Wrapped Section */}
+          <View style={styles.wrappedSection}>
+            {stableLiftData.length === 0 ? (
+              <LiftCard
+                lift={null}
+                isNoLiftsCard={true}
+                noLiftsTitle={i18n.t('performance.noLifts')}
+                noLiftsSubtitle={i18n.t('performance.startAnalyzingWorkout')}
+                onNoLiftsPress={onTriggerAddOptions}
+              />
+            ) : (
+              <View style={styles.card}>
+                <Text style={styles.wrappedTitle}>{i18n.t('performance.wrapped')}</Text>
+                <WrappedYearCards
+                  liftData={stableLiftData}
+                  onYearPress={(year) => {
+                    // Navigate to wrapped details screen
+                    if ((global as any).navigateToWrappedDetails) {
+                      (global as any).navigateToWrappedDetails(year);
+                    }
+                  }}
+                />
+              </View>
+            )}
+          </View>
         </View>
       </ScrollView>
 
@@ -748,7 +841,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 18,
     padding: 16,
-    marginBottom: 24,
+    marginBottom: 26,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.15,
@@ -780,5 +873,98 @@ const styles = StyleSheet.create({
     color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
     marginTop: 2,
+  },
+  wrappedSection: {
+    marginBottom: 50,
+  },
+  wrappedTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#000000',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
+    marginBottom: 16,
+    marginTop: 0,
+    paddingLeft: 4,
+  },
+  yearCardsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginBottom: 0,
+  },
+  yearCard: {
+    flex: 1,
+    minWidth: '45%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    alignItems: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  yearCardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  yearCardIcon: {
+    marginTop: -2, // Slight upward adjustment to align with text baseline
+  },
+  yearCardTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#000000',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
+    marginBottom: 4,
+  },
+  yearCardSubtitle: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#8E8E93',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 24,
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  optionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  iconContainer: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  textContainer: {
+    flex: 1,
+  },
+  optionTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#000000',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
+  separator: {
+    height: 1,
+    backgroundColor: '#E5E5EA',
+    marginVertical: 4,
   },
 }); 

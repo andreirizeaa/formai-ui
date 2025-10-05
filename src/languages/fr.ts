@@ -594,6 +594,10 @@ const fr = {
     "performance": {
       "title": "Progression",
       "wrapped": "Form AI Wrapped",
+      "none": "Aucun",
+      "lifts": "Exercices",
+      "longestStreak": "Série la plus longue",
+      "longestBreak": "Pause la plus longue",
       "editDateRange": "Modifier la période",
       "from": "Du",
       "to": "Au",
@@ -653,7 +657,12 @@ const fr = {
       "metricsFeedback": {
         "title": "Envie d'autres métriques ? Dites-le nous !",
         "subtitle": "Aidez-nous à améliorer votre expérience"
-      }
+      },
+      "noLifts": "Aucune levée enregistrée",
+      "startAnalyzingWorkout": "Commencez l'analyse d'aujourd'hui avec une courte vidéo",
+      "thankYou": "Merci",
+      "shareError": "Impossible de partager",
+      "unknownError": "Erreur inconnue"
     },
     "library": {
       "title": "Bibliothèque",

@@ -159,7 +159,6 @@ export async function createDefaultAppVersion(): Promise<AppVersion | null> {
       return null;
     }
 
-    console.log('Created default app version:', data);
     return data;
   } catch (error) {
     console.error('Error in createDefaultAppVersion:', error);
