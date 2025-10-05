@@ -312,7 +312,7 @@ export function SwipeableCalendar({ onDateSelect, onSwipe, initialSelectedDate }
         data={weeks}
         horizontal
         showsHorizontalScrollIndicator={false}
-
+        pagingEnabled
         // ✅ same snap mode as the fixed components
         snapToInterval={ITEM_WIDTH}
         snapToAlignment="start"

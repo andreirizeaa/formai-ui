@@ -219,6 +219,7 @@ export function SwipeableLiftDetailsGraphs({ data, formGraphRef, depthGraphRef }
           ref={listRef}
           data={cards}
           horizontal
+          pagingEnabled
           showsHorizontalScrollIndicator={false}
           snapToInterval={ITEM_WIDTH}
           snapToAlignment="start"

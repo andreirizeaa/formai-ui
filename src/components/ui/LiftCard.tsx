@@ -840,7 +840,9 @@ export const LiftCard = memo(function LiftCard({
             </View>
             <View style={styles.bottomRowItem}>
               <ChartNoAxesCombined size={16} color="#000000" />
-              <Text style={styles.bottomRowText}>{finalView?.analysis.feedback?.length || 0} {i18n.t('feedback.improvements')}</Text>
+              <Text style={styles.improvementText} numberOfLines={1}>
+                {finalView?.analysis.feedback?.length || 0} {i18n.t('feedback.improvements')}
+              </Text>
             </View>
           </View>
         </View>
@@ -994,7 +996,7 @@ const styles = StyleSheet.create({
     fontSize: 20, color: '#000000', fontWeight: '800',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
-  bottomRow: { flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center', gap: 20 },
+  bottomRow: { flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center', gap: 10 },
   bottomRowItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   bottomRowText: {
     fontSize: 14, color: '#000000', fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto', fontWeight: '600',
@@ -1102,5 +1104,9 @@ const styles = StyleSheet.create({
   crossfadeLayer: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 0,
+  },
+  improvementText: {
+    fontSize: 14, color: '#000000', fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto', fontWeight: '600',
+    maxWidth: 100,
   },
 });

@@ -192,6 +192,7 @@ export function SwipeableAccuracyCard({
           data={cardData}
           horizontal
           showsHorizontalScrollIndicator={false}
+          pagingEnabled
 
           // same snap config as LineGraph
           snapToInterval={ITEM_WIDTH}
