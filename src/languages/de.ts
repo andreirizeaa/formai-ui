@@ -593,6 +593,10 @@ const de = {
     "performance": {
       "title": "Fortschritt",
       "wrapped": "Form AI Wrapped",
+      "none": "Keine",
+      "lifts": "Übungen",
+      "longestStreak": "Längste Serie",
+      "longestBreak": "Längste Pause",
       "editDateRange": "Zeitraum bearbeiten",
       "from": "Von",
       "to": "Bis",
@@ -652,7 +656,12 @@ const de = {
       "metricsFeedback": {
         "title": "Weitere Kennzahlen gewünscht? Sag es uns!",
         "subtitle": "Hilf uns, deine Erfahrung zu verbessern"
-      }
+      },
+      "noLifts": "Keine Lifts aufgezeichnet",
+      "startAnalyzingWorkout": "Beginne mit der Analyse des heutigen Trainings durch ein kurzes Video",
+      "thankYou": "Danke",
+      "shareError": "Teilen nicht möglich",
+      "unknownError": "Unbekannter Fehler"
     },
     "library": {
       "title": "Bibliothek",

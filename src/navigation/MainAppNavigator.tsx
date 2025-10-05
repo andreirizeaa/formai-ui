@@ -30,6 +30,7 @@ import { LiftDetails } from '../screens/application/feedback/liftDetails';
 import { ILiftData } from '../context/LiftDataContext';
 import { FeedbackSlideshow } from '../screens/application/feedback/feedbackSlideshow';
 import { LibraryScreen } from '../screens/application/library/LibraryScreen';
+import { WrappedDetailsScreen } from '../screens/application/performance/WrappedDetailsScreen';
 import { BottomNavigationBar } from './BottomNavigationBar';
 import { useLiftData } from '../context/LiftDataContext';
 import { supabase } from '../lib/supabase';
@@ -69,6 +70,7 @@ export type MainStackParamList = {
     liftData: ILiftData;
   };
   Library: { selectedFilters?: string[] };
+  WrappedDetails: { selectedYear: string };
 };
 
 type MainStackNavigationProp = NativeStackNavigationProp<MainStackParamList>;
@@ -572,6 +574,22 @@ function UpgradeAppModalWrapper() {
   );
 }
 
+function WrappedDetailsScreenWrapper() {
+  const navigation = useNavigation<MainStackNavigationProp>();
+  const route = useRoute<RouteProp<MainStackParamList, 'WrappedDetails'>>();
+  
+  const handleClose = () => {
+    navigation.goBack();
+  };
+
+  return (
+    <WrappedDetailsScreen
+      selectedYear={route.params.selectedYear}
+      onClose={handleClose}
+    />
+  );
+}
+
 // Main tabs navigator with custom bottom navigation
 function MainTabsNavigator({ onLogout, onAddPress }: { onLogout?: () => void; onAddPress?: () => boolean | void }) {
   const [activeTab, setActiveTab] = React.useState<'home' | 'progress' | 'settings'>('home');
@@ -712,6 +730,9 @@ function MainTabsNavigator({ onLogout, onAddPress }: { onLogout?: () => void; on
       if (global.showFirstLiftDetails) {
         global.showFirstLiftDetails();
       }
+    };
+    (global as any).navigateToWrappedDetails = (year: string) => {
+      navigation.navigate('WrappedDetails', { selectedYear: year });
     };
   }, []);
 
@@ -909,6 +930,15 @@ export function MainAppNavigator({ onLogout, onAddPress }: { onLogout?: () => vo
               freezeOnBlur: true, 
               animation: 'slide_from_bottom',
               animationDuration: 350,
+            }}
+          />
+          <Stack.Screen 
+            name="WrappedDetails" 
+            component={WrappedDetailsScreenWrapper}
+            options={{
+              presentation: 'card',
+              animation: 'slide_from_bottom',
+              animationDuration: 300,
             }}
           />
         </Stack.Navigator>

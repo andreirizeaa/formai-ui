@@ -593,7 +593,16 @@ const es = {
     },
       performance: {
       title: 'Progreso',
+      overview: 'Resumen',
       wrapped: 'Form AI Wrapped',
+      none: 'Ninguno',
+      lifts: 'Ejercicios',
+      longestStreak: 'Racha Más Larga',
+      longestBreak: 'Descanso Más Largo',
+      personality: 'Personalidad',
+      morningBird: 'Ave Matutina',
+      lunchMonster: 'Monstruo del Almuerzo',
+      nightMachine: 'Máquina Nocturna',
       editDateRange: 'Editar rango de fechas',
       from: 'Desde',
       to: 'Hasta',
@@ -653,7 +662,12 @@ const es = {
       metricsFeedback: {
         title: '¿Quieres otras métricas? ¡Haznos saber!',
         subtitle: 'Ayúdanos a mejorar tu experiencia',
-      }
+      },
+      noLifts: 'No hay levantamientos grabados',
+      startAnalyzingWorkout: 'Comienza a analizar el entrenamiento de hoy tomando un video rápido',
+      thankYou: 'Gracias',
+      shareError: 'No se pudo compartir',
+      unknownError: 'Error desconocido',
     },
     library: {
       title: 'Biblioteca',

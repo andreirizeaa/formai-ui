@@ -95,7 +95,6 @@ export async function downloadVideoToLibrary({
       const mp4Uri = download.uri.replace(/(\.[^/]+)?$/, '.mp4');
       await FileSystem.moveAsync({ from: download.uri, to: mp4Uri });
       finalUri = mp4Uri;
-      console.log('Renamed file to .mp4 for iOS compatibility:', finalUri);
     }
 
     // 6) Verify the downloaded file

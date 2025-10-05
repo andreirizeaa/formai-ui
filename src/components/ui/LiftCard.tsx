@@ -960,8 +960,8 @@ const styles = StyleSheet.create({
   },
   cardShadow: {
     width: '100%', alignSelf: 'stretch', borderRadius: 18, backgroundColor: 'transparent',
-    paddingHorizontal: 20, shadowColor: '#000000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2, shadowRadius: 3, elevation: 4,
+    paddingHorizontal: 20, shadowColor: '#000000', shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1, shadowRadius: 2, elevation: 2,
   },
   cardInner: { borderRadius: 18, overflow: 'hidden' },
   cardGradient: { flex: 1, borderRadius: 18 },
@@ -1065,11 +1065,11 @@ const styles = StyleSheet.create({
     shadowColor: '#000000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 1,
     },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-    elevation: 3,
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   noLiftsContent: {
     alignItems: 'center',

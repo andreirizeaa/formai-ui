@@ -14,6 +14,7 @@ import { ILiftData, useLiftData } from '../../../context/LiftDataContext';
 import { useLoadingLifts } from '../../../context/LoadingLiftsContext';
 import { useTutorialTarget } from '../../../context/TutorialContext';
 import { searchLiftByAssetId } from '../../../services/lifts/liftService';
+import { getUserId } from '../../../services/storageService';
 import { LoadingOverlay } from '../../../components/ui/overlays/LoadingOverlay';
 import { track } from '../../../services/analytics';
 import { showAlert } from '../../../services/alertService';
@@ -310,16 +311,29 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
         const fullAssetId = asset.assetId;
         const baseAssetId = fullAssetId.split('/')[0];
         
+        // Get userId for the search
+        const userId = await getUserId();
+        if (!userId) {
+          showAlert(
+            i18n.t('library.searchAnalysis.error'), 
+            i18n.t('library.searchAnalysis.errorMessage'),
+            undefined,
+            'LIBRARY_SEARCH_NO_USER_ID'
+          );
+          setIsSearching(false);
+          return;
+        }
+        
         // Search for the lift by asset ID
-        const foundLift = await searchLiftByAssetId(baseAssetId);
+        const foundLift = await searchLiftByAssetId(baseAssetId, userId);
         
         if (foundLift) {
           // Check if we're on the favourites tab and the lift is not favourited
           if (activeTab === 'favourites' && !foundLift.isFavourite) {
             // Show alert that analysis was found but not favourited
             showAlert(
-              i18n.t('library.search.analysisFound'),
-              i18n.t('library.search.analysisFoundNotFavourited'),
+              i18n.t('library.searchAnalysis.analysisFound'),
+              i18n.t('library.searchAnalysis.analysisFoundNotFavourited'),
               () => {
                 navigation.navigate('LiftDetails', { 
                   liftData: foundLift,
@@ -348,8 +362,8 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
           // Show alert with Analyse button if video is under 90 seconds
           if (durationInSeconds !== undefined && durationInSeconds !== null && durationInSeconds <= 90) {
             showAlert(
-              i18n.t('library.search.noAnalysisFound'),
-              i18n.t('library.search.noAnalysisFoundMessage'),
+              i18n.t('library.searchAnalysis.noAnalysisFound'),
+              i18n.t('library.searchAnalysis.noAnalysisFoundMessage'),
               undefined,
               'LIBRARY_SEARCH_NO_ANALYSIS_FOUND_UNDER_90S'
             );
@@ -358,8 +372,8 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
           } else {
             // Show regular alert if video is too long or duration unknown
             showAlert(
-              i18n.t('library.search.noAnalysisFound'),
-              i18n.t('library.search.noAnalysisFoundMessage'),
+              i18n.t('library.searchAnalysis.noAnalysisFound'),
+              i18n.t('library.searchAnalysis.noAnalysisFoundMessage'),
               undefined,
               'LIBRARY_SEARCH_NO_ANALYSIS_FOUND_OVER_90S'
             );
@@ -372,15 +386,15 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
       // Handle permission errors specifically
       if (error instanceof Error && error.message.includes('permission')) {
         showAlert(
-          i18n.t('library.search.permissionRequired'),
-          i18n.t('library.search.permissionMessage'),
+          i18n.t('library.searchAnalysis.permissionRequired'),
+          i18n.t('library.searchAnalysis.permissionMessage'),
           undefined,
           'LIBRARY_SEARCH_PERMISSION_ERROR'
         );
       } else {
         showAlert(
-          i18n.t('library.search.error'), 
-          i18n.t('library.search.errorMessage'),
+          i18n.t('library.searchAnalysis.error'), 
+          i18n.t('library.searchAnalysis.errorMessage'),
           undefined,
           'LIBRARY_SEARCH_GENERAL_ERROR'
         );

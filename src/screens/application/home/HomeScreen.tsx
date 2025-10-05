@@ -639,7 +639,7 @@ const styles = StyleSheet.create({
       height: 2,
     },
     shadowOpacity: 0.3,
-    shadowRadius: 2,
+    shadowRadius: 3,
     elevation: 3,
   },
   spacer: {

@@ -594,6 +594,10 @@ const zh = {
     performance: {
       title: '进度',
       wrapped: 'Form AI Wrapped',
+      none: '无',
+      lifts: '练习',
+      longestStreak: '最长连续',
+      longestBreak: '最长间隔',
       editDateRange: '编辑日期范围',
       from: '从',
       to: '到',
@@ -653,7 +657,12 @@ const zh = {
       metricsFeedback: {
         title: '想要其他指标？让我们知道！',
         subtitle: '帮助我们改善您的体验',
-      }
+      },
+      noLifts: '没有记录的举重',
+      startAnalyzingWorkout: '通过拍摄快速视频开始分析今天的锻炼',
+      thankYou: '谢谢',
+      shareError: '无法分享',
+      unknownError: '未知错误',
     },
     library: {
       title: '库',

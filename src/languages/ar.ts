@@ -593,7 +593,12 @@ const ar = {
     },
     "performance": {
       "title": "التقدم",
+      "overview": "نظرة عامة",
       "wrapped": "Form AI Wrapped",
+      "none": "لا شيء",
+      "lifts": "التمارين",
+      "longestStreak": "أطول سلسلة",
+      "longestBreak": "أطول استراحة",
       "editDateRange": "تعديل النطاق الزمني",
       "from": "من",
       "to": "إلى",
@@ -653,7 +658,12 @@ const ar = {
       "metricsFeedback": {
         "title": "تريد مقاييس أخرى؟ أخبرنا!",
         "subtitle": "ساعدنا على تحسين تجربتك"
-      }
+      },
+      "noLifts": "لا توجد تمارين مسجلة",
+      "startAnalyzingWorkout": "ابدأ في تحليل تمرين اليوم من خلال تصوير فيديو سريع",
+      "thankYou": "شكراً",
+      "shareError": "لا يمكن المشاركة",
+      "unknownError": "خطأ غير معروف"
     },
     "library": {
       "title": "المكتبة",

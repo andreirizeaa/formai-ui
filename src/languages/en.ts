@@ -596,8 +596,17 @@ const en = {
       },
       performance: {
       title: 'Progress',
+      overview: 'Overview',
       wrapped: 'Form AI Wrapped',
       shareWrapped: 'Share your Wrapped',
+      none: 'None',
+      lifts: 'Lifts',
+      longestStreak: 'Longest Streak',
+      longestBreak: 'Longest Break',
+      personality: 'Personality',
+      morningBird: 'Morning Bird',
+      lunchMonster: 'Lunch Monster',
+      nightMachine: 'Night Machine',
       editDateRange: 'Edit date range',
       from: 'From',
       to: 'To',
@@ -657,7 +666,12 @@ const en = {
       metricsFeedback: {
         title: 'Want other metrics? Let us know!',
         subtitle: 'Help us improve your experience',
-      }
+      },
+      noLifts: 'No lifts recorded',
+      startAnalyzingWorkout: 'Start analyzing today\'s workout by taking a quick video',
+      thankYou: 'Thank you',
+      shareError: 'Could not share',
+      unknownError: 'Unknown error',
     },
     library: {
       title: 'Library',

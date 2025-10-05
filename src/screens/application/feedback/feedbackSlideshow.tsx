@@ -726,7 +726,7 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
               style={styles.closeButton} 
               onPress={handleClose}
             >
-              <X size={24} color="#000000" />
+              <X size={20} color="#000000" />
             </TouchableOpacity>
           </View>
 
@@ -820,7 +820,7 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
               style={styles.closeButton} 
               onPress={handleClose}
             >
-              <X size={24} color="#000000" />
+              <X size={20} color="#000000" />
             </TouchableOpacity>
           </View>
 
@@ -993,9 +993,9 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   closeButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: '#F0F0F0',
     alignItems: 'center',
     justifyContent: 'center',
