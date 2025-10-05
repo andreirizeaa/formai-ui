@@ -167,7 +167,6 @@ function AppContent() {
           setRoute('ONBOARDING_WELCOME');
           return;
         }
-
         if (!hasSubscription) {
           setRoute('ONBOARDING_PAYMENT');
           return;
