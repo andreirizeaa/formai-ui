@@ -168,7 +168,7 @@ export const getDynamicAppConfig = (
 
   if (environment === "preview") {
     return {
-      name: `${APP_NAME} Preview`,
+      name: `${APP_NAME}`,
       bundleIdentifier: BUNDLE_IDENTIFIER, // Keep same bundle ID for RevenueCat compatibility
       packageName: PACKAGE_NAME, // Keep same package name for RevenueCat compatibility
       icon: "./assets/formai-ios-icon.png", // You can create separate preview icons
@@ -178,7 +178,7 @@ export const getDynamicAppConfig = (
   }
 
   return {
-    name: `${APP_NAME} Development`,
+    name: `${APP_NAME}`,
     bundleIdentifier: BUNDLE_IDENTIFIER, // Keep same bundle ID for RevenueCat compatibility
     packageName: PACKAGE_NAME, // Keep same package name for RevenueCat compatibility
     icon: "./assets/formai-ios-icon.png", // You can create separate dev icons
