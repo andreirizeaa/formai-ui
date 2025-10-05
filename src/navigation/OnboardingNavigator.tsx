@@ -44,11 +44,6 @@ function WelcomeScreenWrapper({ onSignIn, isAppVisible }: { onSignIn: () => void
     navigation.navigate('Onboarding');
   };
 
-  const handleSignIn = () => {
-    // SignIn functionality is now handled by CreateAccountScreen
-    onSignIn();
-  };
-
   const handleNavigateToOnboarding = () => {
     navigation.navigate('Onboarding');
   };
