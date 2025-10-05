@@ -671,6 +671,7 @@ function SwipeableLineGraphCard({
           data={processedCardData}
           horizontal
           showsHorizontalScrollIndicator={false}
+          pagingEnabled
           // Avoid pagingEnabled quirks; use snapToInterval for exact paging
           snapToInterval={ITEM_WIDTH}
           snapToAlignment="start"
