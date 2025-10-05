@@ -5,6 +5,10 @@ const ro = {
     "dontHaveAccount": "Nu ai un cont?",
     "startToday": "Începe astăzi",
     "alreadyHaveAccount": "Ai deja un cont?",
+    "termsAgreement": "Prin continuare, ești de acord cu",
+    "termsOfUse": "Termenii de Utilizare",
+    "and": "și",
+    "privacyPolicy": "Politica de Confidențialitate",
     "perfectFormAlways": "Formă perfectă, întotdeauna!",
     "getStartedButton": "Începe!",
     "signInButton": "Autentificare",
@@ -33,6 +37,8 @@ const ro = {
       "supportEmail": "E-mail suport",
       "replayTutorial": "Redă din nou tutorialul",
       "featureRequests": "Cereri de Funcționalități",
+      "syncData": "Sincronizează datele",
+      "lastSynced": "Ultima sincronizare: {{time}}",
       "leaveRating": "Lasă o recenzie",
       "deleteAccount": "Șterge contul",
       "logout": "Deconectare",
@@ -924,7 +930,6 @@ const ro = {
       "accessibility": {
         "flipCamera": "Comută camera",
         "toggleTorch": "Pornește/Oprește lanterna",
-        "toggleMic": "Pornește/Oprește microfonul",
         "countdown": "Numărătoare inversă"
       }
     }

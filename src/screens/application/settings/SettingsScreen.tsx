@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Platform, TouchableOpacity, ScrollView, Animate
 import { Image, ImageBackground } from 'expo-image';
 import Constants from 'expo-constants';
 import * as StoreReview from 'expo-store-review';
-import { User, Languages, Ruler, FileText, ShieldCheck, MailPlus, UserMinus, LogOut, TvMinimalPlay, Star, FileVideoCamera, SquarePlus } from 'lucide-react-native';
+import { IdCard, Languages, Ruler, FileText, ShieldCheck, MailPlus, UserMinus, LogOut, TvMinimalPlay, Star, FileVideoCamera, Megaphone, RefreshCw } from 'lucide-react-native';
 import i18n from '../../../utils/i18n';
 import { hapticFeedback } from '../../../utils/haptic';
 import { DeleteAccountModal } from './DeleteAccountModal';
@@ -23,6 +23,7 @@ import { useLiftData } from '../../../context/LiftDataContext';
 import { useLoadingLifts } from '../../../context/LoadingLiftsContext';
 import * as Linking from 'expo-linking';
 import { track } from '../../../services/analytics';
+import { performManualSync, getFormattedLastSyncTime } from '../../../services/syncService';
 
 interface SettingsScreenProps {
   onPersonalDetailsPress: () => void;
@@ -81,6 +82,8 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
   const [isDeleting, setIsDeleting] = useState(false);
   const [isReplayingTutorial, setIsReplayingTutorial] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [lastSyncTime, setLastSyncTime] = useState<string | null>(null);
   const iconSize = 26;
   const iconColor = '#000000';
   const queryClient = useQueryClient();
@@ -97,6 +100,20 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
     setIsLoggingOut(false);
     setIsDeleting(false);
     setIsReplayingTutorial(false);
+    setIsSyncing(false);
+  }, []);
+
+  // Load last sync time on mount
+  useEffect(() => {
+    const loadLastSyncTime = async () => {
+      try {
+        const syncTime = await getFormattedLastSyncTime();
+        setLastSyncTime(syncTime);
+      } catch (error) {
+        console.warn('Failed to load last sync time:', error);
+      }
+    };
+    loadLastSyncTime();
   }, []);
 
   // Reset modal states when component unmounts or navigation occurs
@@ -219,6 +236,28 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
         showAlert('Error', 'Unable to open feature requests. Please try again later.');
       }
     }, 100);
+  };
+
+  const handleSyncDataPress = async () => {
+    hapticFeedback.selection();
+    // Track settings screen clicks
+    track('Settings screen clicks', { event: 'Sync Data' });
+    
+    try {
+      setIsSyncing(true);
+      await performManualSync();
+      
+      // Update last sync time after successful sync
+      const syncTime = await getFormattedLastSyncTime();
+      setLastSyncTime(syncTime);
+      
+      hapticFeedback.success();
+    } catch (error) {
+      hapticFeedback.error();
+      showAlert('Sync Failed', 'Unable to sync data. Please try again later.');
+    } finally {
+      setIsSyncing(false);
+    }
   };
 
   const handlePrivacyPolicyPress = async () => {
@@ -565,7 +604,7 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
         {/* First Card */}
         <View style={styles.card} ref={settingsFirstCardRef}>
           <SettingsOption
-            icon={<User size={iconSize} color={iconColor} />}
+            icon={<IdCard size={iconSize} color={iconColor} />}
             title={i18n.t('settings.personalDetails')}
             onPress={handlePersonalDetailsPress}
           />
@@ -627,10 +666,42 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
           />
           <View style={styles.separator} />
           <SettingsOption
-            icon={<SquarePlus size={iconSize} color={iconColor} />}
+            icon={<Megaphone size={iconSize} color={iconColor} />}
             title={i18n.t('settings.featureRequests')}
             onPress={handleFeatureRequestsPress}
           />
+          <View style={styles.separator} />
+          <TouchableOpacity 
+            style={styles.optionRow} 
+            onPress={() => {
+              if (!isSyncing) {
+                hapticFeedback.selection();
+                handleSyncDataPress();
+              }
+            }} 
+            activeOpacity={0.7}
+            disabled={isSyncing}
+          >
+            <View style={styles.iconContainer}>
+              <RefreshCw size={iconSize} color={iconColor} />
+            </View>
+            <View style={styles.textContainer}>
+              {isSyncing ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="small" color="#000000" />
+                </View>
+              ) : (
+                <Text style={styles.optionTitle}>{i18n.t('settings.syncData')}</Text>
+              )}
+            </View>
+            {!isSyncing && lastSyncTime && (
+              <View style={styles.rightTextContainer}>
+                <Text style={styles.rightSubtitle}>
+                  {i18n.t('settings.lastSynced', { time: lastSyncTime })}
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
           <View style={styles.separator} />
           <SettingsOption
             icon={<Star size={iconSize} color={iconColor} />}
@@ -755,7 +826,8 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: '#FFFFFF',
     borderRadius: 18,
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     marginBottom: 16,
     shadowColor: '#000000',
     shadowOffset: {
@@ -776,10 +848,14 @@ const styles = StyleSheet.create({
     height: 36,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 16,
+    marginRight: 8,
   },
   textContainer: {
     flex: 1,
+  },
+  rightTextContainer: {
+    alignItems: 'flex-end',
+    justifyContent: 'center',
   },
   loadingContainer: {
     flex: 1,
@@ -798,6 +874,13 @@ const styles = StyleSheet.create({
     color: '#8E8E93',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
     marginTop: 2,
+  },
+  rightSubtitle: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: '#8E8E93',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+    textAlign: 'right',
   },
   separator: {
     height: 1,

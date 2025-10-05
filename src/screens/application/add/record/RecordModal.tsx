@@ -62,7 +62,6 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
   const cameraRef = useRef<Camera>(null);
   const [cameraFacing, setCameraFacing] = useState<'back' | 'front'>('back');
   const [isTorchOn, setIsTorchOn] = useState(false);
-  const [isAudioEnabled, setIsAudioEnabled] = useState(false);
   const device = useCameraDevice(cameraFacing);
   const [permission, requestPermission] = useCameraPermissions();
   const format = useCameraFormat(device, [
@@ -794,7 +793,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
                 format={format}
                 isActive={showCamera}
                 video={true}
-                audio={isAudioEnabled}
+                audio={false}
                 torch={isTorchOn ? 'on' : 'off'}
                 onInitialized={() => setIsCameraReady(true)}
               />
@@ -855,16 +854,6 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
                   style={styles.toggleButton}
                 >
                   <Ionicons name={isTorchOn ? 'flash' : 'flash-off'} size={20} color="#FFFFFF" />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  accessibilityLabel={i18n.t('upload.accessibility.toggleMic')}
-                  onPress={() => {
-                    hapticFeedback.selection();
-                    setIsAudioEnabled(v => !v);
-                  }}
-                  style={styles.toggleButton}
-                >
-                  <Ionicons name={isAudioEnabled ? 'mic' : 'mic-off'} size={20} color="#FFFFFF" />
                 </TouchableOpacity>
                 <TouchableOpacity
                   accessibilityLabel={i18n.t('upload.accessibility.countdown')}

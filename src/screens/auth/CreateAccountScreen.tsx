@@ -15,14 +15,14 @@ import { usePlacement } from 'expo-superwall';
 import { usePurchases } from '../../context/PurchasesContext';
 import { identify, track } from '../../services/analytics';
 import { registerAndSaveExpoPushToken } from '../../services/push';
+import { fetchUserById } from '../../services/userService';
 
 interface CreateAccountScreenProps {
   onNext: () => void;
   onBack: () => void;
-  onSignIn: () => void;
 }
 
-export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountScreenProps) {
+export function CreateAccountScreen({ onNext, onBack }: CreateAccountScreenProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const { onboardingData, updateOnboardingData } = useOnboarding();
@@ -68,13 +68,8 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
           );
           setIsSigningIn(false);
         } else {
-          updateOnboardingData('signInMethod', 'google');
-          updateOnboardingData('onboardingCompleted', true);
-          updateOnboardingData('walkthroughCompleted', false);
-    
           if (data.user?.id) {
             try {
-              updateOnboardingData('userId', data.user.id);
               await setUserId(data.user.id);
               handleNewAccount(data);
             } catch (persistError) {
@@ -123,12 +118,8 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
           );
           setIsSigningIn(false);
         } else {
-          updateOnboardingData('signInMethod', 'apple');
-          updateOnboardingData('onboardingCompleted', true);
-          updateOnboardingData('walkthroughCompleted', false);
           if (data.user?.id) {
             try {
-              updateOnboardingData('userId', data.user.id);
               await setUserId(data.user.id);
               handleNewAccount(data);
             } catch (persistError) {
@@ -154,20 +145,53 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
   const handleNewAccount = async (data: any) => {
     const signInMethod = data.user?.app_metadata?.provider || 'apple';
     
-    const updatedData = {
-      ...onboardingData,
-      signInMethod: signInMethod,
-      onboardingCompleted: true,
-      walkthroughCompleted: false,
-      userId: data.user?.id
-    };
-
-    updateOnboardingData('signInMethod', signInMethod);
-    updateOnboardingData('onboardingCompleted', true);
-    updateOnboardingData('walkthroughCompleted', false);
-    updateOnboardingData('userId', data.user.id);
-    
     if (data.user?.id) {
+      // Check if user already exists in the database
+      const { user: existingUser } = await fetchUserById(data.user.id);
+      
+      if (existingUser) {
+        // User already exists, just log them in and navigate to main app
+        await logIn(data.user.id);
+        identify(data.user.id);
+        
+        // Track sign in completion for existing user
+        track('Sign In Completed', {
+          signin_method: signInMethod,
+          user_id: data.user.id,
+        });
+        
+        try {
+          // Register Expo push token for existing user
+          await registerAndSaveExpoPushToken(data.user.id);
+          setIsSigningIn(false);
+          onNext(); // Navigate directly to main app
+        } catch (error) {
+          showAlert(
+            'Error', 
+            'An error occurred while signing in. Please try again.',
+            undefined,
+            'CREATE_ACCOUNT_EXISTING_USER_ERROR',
+            error
+          );
+          setIsSigningIn(false);
+        }
+        return;
+      }
+      
+      // New user - proceed with onboarding setup
+      const updatedData = {
+        ...onboardingData,
+        signInMethod: signInMethod,
+        onboardingCompleted: true,
+        walkthroughCompleted: false,
+        userId: data.user?.id
+      };
+
+      updateOnboardingData('signInMethod', signInMethod);
+      updateOnboardingData('onboardingCompleted', true);
+      updateOnboardingData('walkthroughCompleted', false);
+      updateOnboardingData('userId', data.user.id);
+      
       await logIn(data.user.id);
 
       // Link anonymous analytics events to the user
@@ -259,27 +283,6 @@ export function CreateAccountScreen({ onNext, onBack, onSignIn }: CreateAccountS
             </View>
           </TouchableOpacity>
 
-          {/* Already have an account text */}
-          <View style={styles.haveAccountContainer}>
-            <Text style={[
-              styles.haveAccountText,
-              { color: '#ffffff' }
-            ]}>
-              {i18n.t('alreadyHaveAccount')}{' '}
-            </Text>
-            <TouchableOpacity onPress={() => {
-              hapticFeedback.selection();
-              track('Create Account Screen Sign In Pressed');
-              onSignIn();
-            }}>
-              <Text style={[
-                styles.signInLink,
-                { color: '#ffffff' }
-              ]}>
-                {i18n.t('signIn')}
-              </Text>
-            </TouchableOpacity>
-          </View>
         </View>
 
         {/* Sign in text placeholder */}
@@ -345,19 +348,5 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '800',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
-  },
-  haveAccountContainer: {
-    flexDirection: 'row',
-  },
-  haveAccountText: {
-    fontSize: 17,
-    fontWeight: '500',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
-  },
-  signInLink: {
-    fontSize: 16,
-    fontWeight: '800',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
-    textDecorationLine: 'underline',
   },
 }); 

@@ -55,10 +55,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
             ]
           }
         ],
-        NSCameraUsageDescription: "This app uses the camera to record workout videos for lift analysis and form feedback.",
-        NSMicrophoneUsageDescription: "This app uses the microphone while recording workout videos.",
-        NSPhotoLibraryUsageDescription: "This app saves workout videos to your photo library for easy access.",
-        NSPhotoLibraryAddUsageDescription: "This app saves workout videos to your photo library for easy access.",
+        NSCameraUsageDescription: "Form AI uses the camera to let you record workout videos so you can submit them for lift analysis to receive form feedback.",
+        NSPhotoLibraryUsageDescription: "Form AI accesses this so you can upload videos for analysis, save videos recorded in the app to your photo library, search for previous analyses and prevent duplicate uploads.",
+        NSPhotoLibraryAddUsageDescription: "Form AI accesses this so you can upload videos for analysis, save videos recorded in the app to your photo library, search for previous analyses and prevent duplicate uploads.",
         NSUserTrackingUsageDescription: "We use this to ensure the app works for you and others that download it by reviewing usage logs.",
         ITSAppUsesNonExemptEncryption: false
       }
@@ -73,8 +72,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         "android.permission.CAMERA",
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE",
-        "android.permission.ACCESS_MEDIA_LOCATION",
-        "android.permission.RECORD_AUDIO"
+        "android.permission.ACCESS_MEDIA_LOCATION"
       ]
     },
     updates: {
@@ -112,7 +110,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       [
         "expo-media-library",
         {
-          photosPermission: "Allow Form AI to access your photo library to save videos recorded in the app.",
+          photosPermission: "Form AI accesses this so you can upload videos for analysis, save videos recorded in the app to your photo library, search for previous analyses and prevent duplicate uploads.",
           savePhotosPermission: "Allow Form AI to save videos recorded in the app to your photo library.",
           isAccessMediaLocationEnabled: true
         }
