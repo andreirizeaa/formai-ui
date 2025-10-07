@@ -60,7 +60,10 @@ const ro = {
         "unitSystem": "Actualizarea sistemului de unități a eșuat",
         "language": "Actualizarea limbii a eșuat",
         "message": "Te rugăm să încerci mai târziu"
-      }
+      },
+      "enterName": "Introduceți numele",
+      "editName": "Editați numele",
+      "userSince": "Utilizator din {{year}}"
     },
     "share": {
       "referYourFriends": "Recomandă prietenilor",
@@ -109,6 +112,15 @@ const ro = {
       "searchMovements": "Caută mișcări...",
       "useCustomMovement": "Folosește",
       "bestRecordingPractices": "Cele mai bune practici de filmare",
+      "videoPreview": "Previzualizare Video",
+      "loadingVideo": "Se încarcă video-ul...",
+      "weight": "Greutate",
+      "reps": "Repetiții",
+      "next": "Următorul",
+      "complete": "Finalizează",
+      "close": "Închide",
+      "showWeightInformation": "Afișează informații greutate",
+      "showRepsInformation": "Afișează informații repetiții",
       "bodyParts": {
         "all": "Toate",
         "chest": "Piept",
@@ -588,15 +600,15 @@ const ro = {
       "noStreakMessage": "Încă nu ai serie. Înregistrează în zile consecutive pentru a începe.",
       "continue": "Continuă"
     },
-    "days": {
-      "monday": "L",
-      "tuesday": "M",
-      "wednesday": "M",
-      "thursday": "J",
-      "friday": "V",
-      "saturday": "S",
-      "sunday": "D",
-    },
+      "days": {
+        "monday": "Lun",
+        "tuesday": "Mar",
+        "wednesday": "Mie",
+        "thursday": "Joi",
+        "friday": "Vin",
+        "saturday": "Sâm",
+        "sunday": "Dum",
+      },
     "performance": {
       "title": "Progres",
       "wrapped": "Form AI Wrapped",
@@ -666,6 +678,7 @@ const ro = {
       },
       "noLifts": "Nicio ridicare înregistrată",
       "startAnalyzingWorkout": "Începe să analizezi antrenamentul de azi făcând un video rapid",
+      "notAvailable": "Indisponibil",
       "thankYou": "Mulțumim",
       "shareError": "Nu s-a putut partaja",
       "unknownError": "Eroare necunoscută"
@@ -900,7 +913,7 @@ const ro = {
       "videoTooLong": "Video prea lung",
       "videoTooLongMessage": "Selectează un video sub 90 de secunde.",
       "videoTooShort": "Video prea scurt",
-      "videoTooShortMessage": "Selectează un video de cel puțin 3 secunde.",
+      "videoTooShortMessage": "Asigură-te că videoclipul are cel puțin 3 secunde.",
       "error": "Eroare",
       "failedToSelectVideo": "Selectarea videoclipului a eșuat. Încearcă din nou.",
       "failedToGenerateThumbnail": "Generarea miniaturii a eșuat. Încearcă din nou.",

@@ -216,10 +216,44 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
   const { userDetails, updateHasRated } = useUserDetails();
   const { height: screenHeight } = useWindowDimensions();
 
+  // Animation for right chevron pulsing
+  const rightChevronPulse = React.useRef(new Animated.Value(1)).current;
+  const [hasClickedRightChevron, setHasClickedRightChevron] = useState(false);
+
   // Track screen view on mount
   useEffect(() => {
     track('Screen viewed', { screen_name: 'Lift Feedback' });
   }, []);
+
+  // Start continuous pulsing animation for right chevron (only if not clicked yet)
+  useEffect(() => {
+    if (hasClickedRightChevron) {
+      // Stop animation and reset to normal scale
+      rightChevronPulse.setValue(1);
+      return;
+    }
+
+    const pulseAnimation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(rightChevronPulse, {
+          toValue: 1.6,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.timing(rightChevronPulse, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+
+    pulseAnimation.start();
+
+    return () => {
+      pulseAnimation.stop();
+    };
+  }, [rightChevronPulse, hasClickedRightChevron]);
 
   // Track when user is interacting with the bottom ScrollView to avoid stealing gestures
   const interactingWithBottomScrollRef = React.useRef(false);
@@ -444,6 +478,7 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
 
   const handleRightChevron = () => {
     hapticFeedback.selection();
+    setHasClickedRightChevron(true);
     navigateForward();
   };
 
@@ -726,7 +761,7 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
               style={styles.closeButton} 
               onPress={handleClose}
             >
-              <X size={20} color="#000000" />
+              <X size={24} color="#000000" />
             </TouchableOpacity>
           </View>
 
@@ -820,7 +855,7 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
               style={styles.closeButton} 
               onPress={handleClose}
             >
-              <X size={20} color="#000000" />
+              <X size={24} color="#000000" />
             </TouchableOpacity>
           </View>
 
@@ -961,13 +996,19 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
             </View>
 
             {/* Right Chevron */}
-            <TouchableOpacity 
-              style={styles.bottomChevron}
-              onPress={handleRightChevron}
-              activeOpacity={0.7}
+            <Animated.View
+              style={{
+                transform: [{ scale: rightChevronPulse }],
+              }}
             >
-              <ChevronRight size={24} color="#000000" />
-            </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.bottomChevron}
+                onPress={handleRightChevron}
+                activeOpacity={0.7}
+              >
+                <ChevronRight size={24} color="#000000" />
+              </TouchableOpacity>
+            </Animated.View>
           </Animated.View>
         </Animated.View>
       </SafeAreaView>
@@ -993,9 +1034,9 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   closeButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 26,
     backgroundColor: '#F0F0F0',
     alignItems: 'center',
     justifyContent: 'center',

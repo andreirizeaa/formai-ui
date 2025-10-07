@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, Dimensions, ImageSourcePropType, ImageBackground, Modal, Animated as RNAnimated, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, Dimensions, ImageSourcePropType, ImageBackground, Modal, Animated as RNAnimated, Platform, RefreshControl } from 'react-native';
 import { Image } from 'expo-image';
 import { FlashList } from '@shopify/flash-list';
 import { hapticFeedback } from '../../../utils/haptic';
@@ -105,8 +105,8 @@ interface HomeScreenProps {
 
 export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibrary, onShowShare, onTriggerAddOptions, onNavigateToPerformance }: HomeScreenProps) {
   const { loadingLifts, showStreakModal, closeStreakModal, handleStreakModalContinue, removeLift: removeLoadingLift, setHomeActive } = useLoadingLifts();
-  const { liftData , getLiftsByDate , refreshLifts, removeLift } = useLiftData();
-  const { currentStreak, invalidateAndRefetch } = useUserCheckIns();
+  const { liftData , getLiftsByDate , refreshLifts, removeLift, invalidateAndRefetch: invalidateLifts } = useLiftData();
+  const { currentStreak, invalidateAndRefetch: invalidateCheckIns } = useUserCheckIns();
   const { selectedDate, setSelectedDate } = useSelectedDate();
   
   // Fire card popup state - manual trigger for fire card press
@@ -120,6 +120,9 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
   
   // Tracking permission state
   const [hasRequestedTrackingPermission, setHasRequestedTrackingPermission] = useState(false);
+
+  // Pull-to-refresh state
+  const [isRefreshing, setIsRefreshing] = useState(false);
   
   // ScrollView ref for gesture handling
   const scrollViewRef = useRef<ScrollView>(null);
@@ -331,6 +334,20 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
 
 
 
+  // Pull-to-refresh handler
+  const handleRefresh = useCallback(async () => {
+    try {
+      setIsRefreshing(true);
+      await Promise.all([
+        invalidateLifts?.(),
+        invalidateCheckIns?.(),
+      ]);
+    } catch (_) {
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [invalidateLifts, invalidateCheckIns]);
+
   // Note: Removed refreshLifts() call as it was causing lifts to disappear when reopening home screen
   // The LiftDataContext will fetch data naturally when it mounts
 
@@ -435,11 +452,19 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
   ), [handleLiftPress]);
 
   return (
-    <ScrollView 
+    <View style={{ flex: 1 }}>
+      <ScrollView 
       style={styles.scrollView}
       contentContainerStyle={styles.scrollContent}
       showsVerticalScrollIndicator={false}
       ref={scrollViewRef}
+      contentInsetAdjustmentBehavior="automatic"
+      refreshControl={
+        <RefreshControl
+          refreshing={isRefreshing}
+          onRefresh={handleRefresh}
+        />
+      }
     >
       <View style={styles.header}>
         <FormAILogo 
@@ -544,15 +569,15 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
           />
         </View>
       )}
-
-    </ScrollView>
+    
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 20,
   },
   scrollView: {
     flex: 1,
@@ -567,7 +592,7 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingBottom: 10,
     backgroundColor: 'transparent',
     zIndex: 1,
     flexDirection: 'row',
@@ -598,9 +623,9 @@ const styles = StyleSheet.create({
   },
   streakBadgeText: {
     marginLeft: 2,
-    marginTop: 4,
-    fontSize: 17,
-    fontWeight: '700',
+    fontSize: 18,
+    marginTop: 2,
+    fontWeight: '600',
     color: '#000000',
     fontFamily: 'SF Pro Display',
   },
@@ -620,7 +645,7 @@ const styles = StyleSheet.create({
   },
   seeAllText: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '600',
     color: '#8E8E93',
     fontFamily: 'SF Pro Text',
     marginRight: 2,

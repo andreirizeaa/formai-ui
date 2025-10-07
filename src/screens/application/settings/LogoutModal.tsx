@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Modal, ActivityIndicator, Animated } from 'react-native';
 import i18n from '../../../utils/i18n';
 import { hapticFeedback } from '../../../utils/haptic';
 import { X } from 'lucide-react-native';
@@ -11,30 +11,44 @@ interface LogoutModalProps {
 }
 
 export function LogoutModal({ isVisible, onClose, onConfirm }: LogoutModalProps) {
+  const [shouldRender, setShouldRender] = React.useState(isVisible);
+  const fadeOpacity = React.useRef(new Animated.Value(0)).current;
+
+  React.useEffect(() => {
+    if (isVisible) {
+      setShouldRender(true);
+      fadeOpacity.setValue(0);
+      Animated.timing(fadeOpacity, { toValue: 1, duration: 100, useNativeDriver: true }).start();
+      return;
+    }
+    Animated.timing(fadeOpacity, { toValue: 0, duration: 100, useNativeDriver: true }).start(({ finished }) => {
+      if (finished) setShouldRender(false);
+    });
+  }, [isVisible, fadeOpacity]);
 
   const handleLogout = async () => {
     hapticFeedback.success();
-    // Close modal immediately and let parent handle the logout process
-    onClose();
+    // Let parent handle closing the modal and the logout process
     onConfirm();
   };
 
   return (
     <Modal
-      visible={isVisible}
+      visible={shouldRender}
       transparent
       onRequestClose={onClose}
     >
-      <TouchableOpacity 
-        style={styles.overlay} 
-        activeOpacity={1} 
-        onPress={onClose}
-      >
+      <Animated.View style={{ flex: 1, opacity: fadeOpacity }}>
         <TouchableOpacity 
-          style={styles.modalContainer} 
+          style={styles.overlay} 
           activeOpacity={1} 
-          onPress={(e) => e.stopPropagation()}
+          onPress={onClose}
         >
+          <TouchableOpacity 
+            style={styles.modalContainer} 
+            activeOpacity={1} 
+            onPress={(e) => e.stopPropagation()}
+          >
           {/* Close button */}
           <TouchableOpacity 
             style={styles.closeButton} 
@@ -72,6 +86,7 @@ export function LogoutModal({ isVisible, onClose, onConfirm }: LogoutModalProps)
           </View>
         </TouchableOpacity>
       </TouchableOpacity>
+      </Animated.View>
     </Modal>
   );
 }

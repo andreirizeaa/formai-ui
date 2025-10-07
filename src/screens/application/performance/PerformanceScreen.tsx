@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, Modal, Dimensions, InteractionManager } from 'react-native';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, Modal, Dimensions, InteractionManager, Animated, RefreshControl } from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
 import { Image } from 'expo-image';
 import { SwipeableLineGraphCard } from '../../../components/ui/swipeables/SwipeableLineGraphCard';
@@ -101,11 +101,27 @@ function WrappedYearCards({ liftData, onYearPress }: WrappedYearCardsProps) {
 
 
 export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProps) {
-  const { liftData } = useLiftData();
+  const { liftData, invalidateAndRefetch } = useLiftData();
   const { userDetails } = useUserDetails();
   const { currentStreak } = useUserCheckIns();
   const [infoModalVisible, setInfoModalVisible] = useState(false);
   const [infoModalContent, setInfoModalContent] = useState<{ title: string; message: string }>({ title: '', message: '' });
+  const [infoShouldRender, setInfoShouldRender] = useState(false);
+  const infoOpacity = useRef(new Animated.Value(0)).current;
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  
+  // Drive fade-in/out and mount/unmount for info modal
+  useEffect(() => {
+    if (infoModalVisible) {
+      setInfoShouldRender(true);
+      infoOpacity.setValue(0);
+      Animated.timing(infoOpacity, { toValue: 1, duration: 100, useNativeDriver: true }).start();
+      return;
+    }
+    Animated.timing(infoOpacity, { toValue: 0, duration: 100, useNativeDriver: true }).start(({ finished }) => {
+      if (finished) setInfoShouldRender(false);
+    });
+  }, [infoModalVisible, infoOpacity]);
   
   // Track screen view on mount
   useEffect(() => {
@@ -130,7 +146,7 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
     (global as any).scrollToPerformanceBottom = () => {
       try {
         // Scroll down by 50% of the viewport height from current offset, clamped to max
-        const halfScreen = Math.max(0, Math.round(viewHeightRef.current * 0.6));
+        const halfScreen = Math.max(0, Math.round(viewHeightRef.current * 0.85));
         const maxScroll = Math.max(0, contentHeightRef.current - viewHeightRef.current);
         const nextY = Math.min(maxScroll, Math.max(0, currentScrollYRef.current + halfScreen));
         (scrollRef as any)?.current?.scrollTo?.({ y: nextY, animated: true });
@@ -419,6 +435,17 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
     await openMetricsFeedbackEmail();
   };
 
+  // Pull-to-refresh handler (lifts only)
+  const handleRefresh = React.useCallback(async () => {
+    try {
+      setIsRefreshing(true);
+      await invalidateAndRefetch();
+    } catch (_) {
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [invalidateAndRefetch]);
+
   return (
     <>
       <ScrollView
@@ -427,6 +454,12 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
         nestedScrollEnabled
         directionalLockEnabled
         contentInsetAdjustmentBehavior="automatic"
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+          />
+        }
         onLayout={(e) => { try { viewHeightRef.current = e.nativeEvent.layout.height; } catch {} }}
         onContentSizeChange={(w, h) => { try { contentHeightRef.current = h; } catch {} }}
         onScroll={(e) => { try { currentScrollYRef.current = e.nativeEvent.contentOffset.y; } catch {} }}
@@ -533,6 +566,26 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
             </View>
           </View>
 
+          {/* Wrapped Section */}
+          <View style={styles.wrappedSection}>
+            <View style={styles.card}>
+              <Text style={styles.wrappedTitle}>{i18n.t('performance.wrapped')}</Text>
+              {stableLiftData.length === 0 ? (
+                <Text style={styles.notAvailableText}>{i18n.t('performance.notAvailable')}</Text>
+              ) : (
+                <WrappedYearCards
+                  liftData={stableLiftData}
+                  onYearPress={(year) => {
+                    // Navigate to wrapped details screen
+                    if ((global as any).navigateToWrappedDetails) {
+                      (global as any).navigateToWrappedDetails(year);
+                    }
+                  }}
+                />
+              )}
+            </View>
+          </View>
+
           {/* Metrics Feedback Card */}
           <View style={styles.metricsFeedbackCard}>
             <TouchableOpacity 
@@ -553,54 +606,30 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
               </View>
             </TouchableOpacity>
           </View>
-
-          {/* Wrapped Section */}
-          <View style={styles.wrappedSection}>
-            {stableLiftData.length === 0 ? (
-              <LiftCard
-                lift={null}
-                isNoLiftsCard={true}
-                noLiftsTitle={i18n.t('performance.noLifts')}
-                noLiftsSubtitle={i18n.t('performance.startAnalyzingWorkout')}
-                onNoLiftsPress={onTriggerAddOptions}
-              />
-            ) : (
-              <View style={styles.card}>
-                <Text style={styles.wrappedTitle}>{i18n.t('performance.wrapped')}</Text>
-                <WrappedYearCards
-                  liftData={stableLiftData}
-                  onYearPress={(year) => {
-                    // Navigate to wrapped details screen
-                    if ((global as any).navigateToWrappedDetails) {
-                      (global as any).navigateToWrappedDetails(year);
-                    }
-                  }}
-                />
-              </View>
-            )}
-          </View>
         </View>
       </ScrollView>
 
       {/* Info Modal */}
       <Modal
-        visible={infoModalVisible}
+        visible={infoShouldRender}
         transparent
         onRequestClose={closeInfoModal}
       >
-        <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={closeInfoModal}>
-          <TouchableOpacity style={styles.infoModalContainer} activeOpacity={1} onPress={(e) => e.stopPropagation()}>
-            <Text style={styles.infoTitle}>{infoModalContent.title}</Text>
-            <Text style={styles.infoMessage}>{infoModalContent.message}</Text>
-            <TouchableOpacity 
-              style={styles.closeButton} 
-              onPress={closeInfoModal}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.closeButtonText}>{i18n.t('close')}</Text>
+        <Animated.View style={{ flex: 1, opacity: infoOpacity }}>
+          <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={closeInfoModal}>
+            <TouchableOpacity style={styles.infoModalContainer} activeOpacity={1} onPress={(e) => e.stopPropagation()}>
+              <Text style={styles.infoTitle}>{infoModalContent.title}</Text>
+              <Text style={styles.infoMessage}>{infoModalContent.message}</Text>
+              <TouchableOpacity 
+                style={styles.closeButton} 
+                onPress={closeInfoModal}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.closeButtonText}>{i18n.t('close')}</Text>
+              </TouchableOpacity>
             </TouchableOpacity>
           </TouchableOpacity>
-        </TouchableOpacity>
+        </Animated.View>
       </Modal>
     </>
   );
@@ -685,6 +714,8 @@ const styles = StyleSheet.create({
   metricCard: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+    borderWidth: 0.5,
+    borderColor: '#f0f0f0',
     borderRadius: 20,
     padding: 16,
     alignItems: 'center',
@@ -758,6 +789,8 @@ const styles = StyleSheet.create({
   },
   streakCard: {
     backgroundColor: '#FFFFFF',
+    borderWidth: 0.5,
+    borderColor: '#f0f0f0',
     borderRadius: 20,
     padding: 16,
   },
@@ -839,13 +872,15 @@ const styles = StyleSheet.create({
   },
   metricsFeedbackCard: {
     backgroundColor: '#FFFFFF',
+    borderWidth: 0.5,
+    borderColor: '#f0f0f0',
     borderRadius: 18,
     padding: 16,
-    marginBottom: 26,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.15,
     shadowRadius: 2,
+    marginBottom: 50,
   },
   metricsFeedbackRow: {
     flexDirection: 'row',
@@ -875,7 +910,6 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   wrappedSection: {
-    marginBottom: 50,
   },
   wrappedTitle: {
     fontSize: 22,
@@ -929,6 +963,8 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: '#FFFFFF',
+    borderWidth: 0.5,
+    borderColor: '#f0f0f0',
     borderRadius: 18,
     padding: 16,
     marginBottom: 24,
@@ -966,5 +1002,13 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: '#E5E5EA',
     marginVertical: 4,
+  },
+  notAvailableText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#000000',
+    textAlign: 'left',
+    marginLeft: 5,
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
   },
 }); 

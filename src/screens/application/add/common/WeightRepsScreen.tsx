@@ -31,6 +31,8 @@ export function WeightRepsScreen({
   const { isActive: isTutorialActive } = useTutorial();
   const [focusedInput, setFocusedInput] = useState<'weight' | 'reps' | null>(null);
   const [infoModalVisible, setInfoModalVisible] = useState(false);
+  const [infoShouldRender, setInfoShouldRender] = useState(false);
+  const infoOpacity = useRef(new Animated.Value(0)).current;
   const [infoModalContent, setInfoModalContent] = useState<{ title: string; message: string }>({ title: '', message: '' });
   const { userDetails } = useUserDetails();
   const unit: WeightUnit = userDetails?.unitSystem === 'imperial' ? 'lbs' : 'kg';
@@ -178,6 +180,18 @@ export function WeightRepsScreen({
     setInfoModalVisible(false);
   };
 
+  useEffect(() => {
+    if (infoModalVisible) {
+      setInfoShouldRender(true);
+      infoOpacity.setValue(0);
+      Animated.timing(infoOpacity, { toValue: 1, duration: 100, useNativeDriver: true }).start();
+      return;
+    }
+    Animated.timing(infoOpacity, { toValue: 0, duration: 100, useNativeDriver: true }).start(({ finished }) => {
+      if (finished) setInfoShouldRender(false);
+    });
+  }, [infoModalVisible, infoOpacity]);
+
   const isWeightValid = weightReps?.weight && weightReps.weight > 0;
   const isUploadDisabled = !isWeightValid || !weightReps?.reps || weightReps.reps <= 0 || isLoading;
 
@@ -210,12 +224,12 @@ export function WeightRepsScreen({
             {/* Weight Section */}
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Weight</Text>
+                <Text style={styles.sectionTitle}>{i18n.t('add.weight')}</Text>
                 <TouchableOpacity 
                   onPress={() => openInfoModal('weight')} 
                   activeOpacity={0.7} 
                   accessibilityRole="button" 
-                  accessibilityLabel="Show weight information"
+                  accessibilityLabel={i18n.t('add.showWeightInformation')}
                   style={styles.sectionTitleIcon}
                 >
                   <CircleQuestionMark width={20} height={20} color="#000000" />
@@ -262,12 +276,12 @@ export function WeightRepsScreen({
             {/* Sets Section */}
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Reps</Text>
+                <Text style={styles.sectionTitle}>{i18n.t('add.reps')}</Text>
                 <TouchableOpacity 
                   onPress={() => openInfoModal('reps')} 
                   activeOpacity={0.7} 
                   accessibilityRole="button" 
-                  accessibilityLabel="Show reps information"
+                  accessibilityLabel={i18n.t('add.showRepsInformation')}
                   style={styles.sectionTitleIcon}
                 >
                   <CircleQuestionMark width={20} height={20} color="#000000" />
@@ -324,7 +338,7 @@ export function WeightRepsScreen({
               activeOpacity={0.7}
               disabled={isLoading}
             >
-              <Text style={styles.keyboardBackButtonText}>Back</Text>
+              <Text style={styles.keyboardBackButtonText}>{i18n.t('add.back')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.keyboardPrimaryButton, isKeyboardButtonDisabled() && styles.keyboardPrimaryButtonDisabled]}
@@ -336,7 +350,7 @@ export function WeightRepsScreen({
                 <ActivityIndicator size="small" color="#FFFFFF" />
               ) : (
                 <Text style={[styles.keyboardPrimaryButtonText, isKeyboardButtonDisabled() && styles.keyboardPrimaryButtonTextDisabled]}>
-                  {focusedInput === 'weight' ? 'Next' : 'Complete'}
+                  {focusedInput === 'weight' ? i18n.t('add.next') : i18n.t('add.complete')}
                 </Text>
               )}
             </TouchableOpacity>
@@ -349,23 +363,25 @@ export function WeightRepsScreen({
 
       {/* Info Modal */}
       <Modal
-        visible={infoModalVisible}
+        visible={infoShouldRender}
         transparent
         onRequestClose={closeInfoModal}
       >
-        <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={closeInfoModal}>
-          <TouchableOpacity style={styles.infoModalContainer} activeOpacity={1} onPress={(e) => e.stopPropagation()}>
-            <Text style={styles.infoTitle}>{infoModalContent.title}</Text>
-            <Text style={styles.infoMessage}>{infoModalContent.message}</Text>
-            <TouchableOpacity 
-              style={styles.closeButton} 
-              onPress={closeInfoModal}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.closeButtonText}>Close</Text>
+        <Animated.View style={{ flex: 1, opacity: infoOpacity }}>
+          <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={closeInfoModal}>
+            <TouchableOpacity style={styles.infoModalContainer} activeOpacity={1} onPress={(e) => e.stopPropagation()}>
+              <Text style={styles.infoTitle}>{infoModalContent.title}</Text>
+              <Text style={styles.infoMessage}>{infoModalContent.message}</Text>
+              <TouchableOpacity 
+                style={styles.closeButton} 
+                onPress={closeInfoModal}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.closeButtonText}>{i18n.t('add.close')}</Text>
+              </TouchableOpacity>
             </TouchableOpacity>
           </TouchableOpacity>
-        </TouchableOpacity>
+        </Animated.View>
       </Modal>
     </SafeAreaView>
   );
@@ -434,7 +450,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     right: 0,
-    backgroundColor: '#F0F0F0',
+    backgroundColor: '#ffffff',
     borderTopWidth: 1,
     borderTopColor: '#E5E5EA',
     paddingHorizontal: 20,

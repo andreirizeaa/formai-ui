@@ -726,7 +726,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
       <SafeAreaView
         style={[
           styles.container,
-          { backgroundColor: '#1d293d' }
+          { backgroundColor: '#ffffff' }
         ]}
       >
         {/* Close Button */}
@@ -898,9 +898,9 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   closeButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 26,
     backgroundColor: '#F0F0F0',
     alignItems: 'center',
     justifyContent: 'center',

@@ -63,6 +63,8 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
   const [showMediaPermission, setShowMediaPermission] = useState(false);
   const [hasMediaPermission, setHasMediaPermission] = useState<boolean | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [editWeightShouldRender, setEditWeightShouldRender] = useState(showEditWeightModal);
+  const editWeightOpacity = useRef(new Animated.Value(0)).current;
   
   // Animation value for finger icon
   const fingerTranslateY = useMemo(() => new Animated.Value(0), []);
@@ -121,11 +123,17 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
   // Auto-focus input when edit weight modal opens
   useEffect(() => {
     if (showEditWeightModal) {
+      setEditWeightShouldRender(true);
+      editWeightOpacity.setValue(0);
+      Animated.timing(editWeightOpacity, { toValue: 1, duration: 100, useNativeDriver: true }).start();
       const timer = setTimeout(() => {
         editWeightInputRef.current?.focus();
       }, 100);
       return () => clearTimeout(timer);
     }
+    Animated.timing(editWeightOpacity, { toValue: 0, duration: 100, useNativeDriver: true }).start(({ finished }) => {
+      if (finished) setEditWeightShouldRender(false);
+    });
   }, [showEditWeightModal]);
 
   const handleClose = () => {
@@ -462,7 +470,7 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
             onPress={handleClose}
             activeOpacity={0.7}
           >
-            <ChevronLeft size={20} color="#ffffff" />
+            <ChevronLeft size={24} color="#ffffff" />
           </TouchableOpacity>
           <View style={styles.titleContainer}>
             <Text style={styles.title}>{i18n.t('feedback.liftDetails')}</Text>
@@ -472,7 +480,7 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
             onPress={handleActionSheet}
             activeOpacity={0.7}
           >
-            <Ellipsis size={20} color="#ffffff" />
+            <Ellipsis size={24} color="#ffffff" />
           </TouchableOpacity>
         </View>
         
@@ -595,7 +603,7 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
                 {isDownloading ? (
                   <ActivityIndicator size="small" color="#ffffff" />
                 ) : (
-                  <Download size={20} color="#ffffff" />
+                  <Download size={22} color="#ffffff" />
                 )}
               </View>
             </TouchableOpacity>
@@ -607,7 +615,7 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
             >
               <Text style={styles.dropdownOptionText}>{i18n.t('feedback.favourite')}</Text>
               <View style={styles.dropdownIconContainer}>
-                <Heart size={20} color="#FF3B30" fill={isFavourite ? "#FF3B30" : "none"} />
+                <Heart size={22} color="#FF3B30" fill={isFavourite ? "#FF3B30" : "none"} />
               </View>
             </TouchableOpacity>
             <View style={styles.dropdownDivider} />
@@ -618,7 +626,7 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
             >
               <Text style={styles.dropdownOptionTextDestructive}>{i18n.t('feedback.manualDeleteLiftCardData')}</Text>
               <View style={styles.dropdownIconContainer}>
-                <Trash2 size={20} color="#FF3B30" />
+                <Trash2 size={22} color="#FF3B30" />
               </View>
             </TouchableOpacity>
           </View>
@@ -677,17 +685,18 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
       )}
 
       {/* Edit Weight Modal */}
-      {showEditWeightModal && (
-        <TouchableOpacity 
-          style={styles.modalOverlay} 
-          activeOpacity={1} 
-          onPress={handleEditWeightCancel}
-        >
+      {editWeightShouldRender && (
+        <Animated.View style={[styles.modalFadeWrapper, { opacity: editWeightOpacity }]}>
           <TouchableOpacity 
-            style={styles.modalContainer} 
+            style={styles.modalOverlay} 
             activeOpacity={1} 
-            onPress={(e) => e.stopPropagation()}
+            onPress={handleEditWeightCancel}
           >
+            <TouchableOpacity 
+              style={styles.modalContainer} 
+              activeOpacity={1} 
+              onPress={(e) => e.stopPropagation()}
+            >
             {/* Close button */}
             <TouchableOpacity 
               style={styles.modalCloseButton} 
@@ -742,6 +751,7 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
             </View>
           </TouchableOpacity>
         </TouchableOpacity>
+        </Animated.View>
       )}
     </View>
   );
@@ -984,7 +994,7 @@ const styles = StyleSheet.create({
   },
   dropdownOptionText: {
     fontSize: 15,
-    fontWeight: '700',
+    fontWeight: '600',
     color: '#FFFFFF',
     fontFamily: 'SF Pro Display',
     flex: 1,
@@ -997,9 +1007,9 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   dropdownOptionTextDestructive: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
-    color: '#FF6B6B',
+    color: '#FF3B30',
     fontFamily: 'SF Pro Display',
     flex: 1,
     flexWrap: 'wrap',
@@ -1108,6 +1118,14 @@ const styles = StyleSheet.create({
   },
   modalButtonTextDisabled: {
     color: '#C7C7CC',
+  },
+  modalFadeWrapper: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 200,
   },
   reviewFeedbackButton: {
     width: '100%',

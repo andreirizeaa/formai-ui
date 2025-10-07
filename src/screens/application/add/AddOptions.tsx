@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Animated } from 'react-native';
 import i18n from '../../../utils/i18n';
 import { hapticFeedback } from '../../../utils/haptic';
 import { useTutorialTarget } from '../../../context/TutorialContext';
@@ -15,55 +15,68 @@ interface AddOptionsProps {
 
 export function AddOptions({ isVisible, onUploadPress, onRecordPress, onClose }: AddOptionsProps) {
   const { ref: uploadButtonRef } = useTutorialTarget('add_options_upload');
-  
-  if (!isVisible) return null;
+  const [shouldRender, setShouldRender] = React.useState(isVisible);
+  const fadeOpacity = React.useRef(new Animated.Value(0)).current;
+
+  React.useEffect(() => {
+    if (isVisible) {
+      setShouldRender(true);
+      fadeOpacity.setValue(0);
+      Animated.timing(fadeOpacity, { toValue: 1, duration: 100, useNativeDriver: true }).start();
+      return;
+    }
+    Animated.timing(fadeOpacity, { toValue: 0, duration: 100, useNativeDriver: true }).start(({ finished }) => {
+      if (finished) setShouldRender(false);
+    });
+  }, [isVisible, fadeOpacity]);
+
+  if (!shouldRender) return null;
 
   return (
-    <TouchableOpacity 
-      style={styles.overlay} 
-      onPress={() => {
-        hapticFeedback.selection();
-        onClose();
-      }} 
-      activeOpacity={1}
-    >
-      <View style={styles.darkOverlay}>
+    <Animated.View style={[styles.overlay, { opacity: fadeOpacity }] }>
+      <TouchableOpacity 
+        style={styles.darkOverlay}
+        onPress={() => {
+          onClose();
+        }}
+        activeOpacity={1}
+      >
         <View style={styles.cardsContainer}>
-          {/* Upload Video Card */}
-          <TouchableOpacity 
-            ref={uploadButtonRef}
-            style={styles.card} 
-            onPress={() => {
-              hapticFeedback.selection();
-              // Track add analysis clicks for upload
-              track('Add analysis', { event: 'Upload' });
-              onUploadPress();
-            }}
-          >
-            <View style={styles.iconContainer}>
-              <Upload width={32} height={32} color="currentColor" />
-            </View>
-            <Text style={styles.cardTitle}>{i18n.t('add.uploadVideo')}</Text>
-          </TouchableOpacity>
+            {/* Upload Video Card */}
+            <TouchableOpacity 
+              ref={uploadButtonRef}
+              style={styles.card} 
+              onPress={() => {
+                hapticFeedback.selection();
+                // Track add analysis clicks for upload
+                track('Add analysis', { event: 'Upload' });
+                onUploadPress();
+              }}
+            >
+              <View style={styles.iconContainer}>
+                <Upload width={32} height={32} color="currentColor" />
+              </View>
+              <Text style={styles.cardTitle}>{i18n.t('add.uploadVideo')}</Text>
+            </TouchableOpacity>
 
-          {/* Record Video Card */}
-          <TouchableOpacity 
-            style={styles.card} 
-            onPress={() => {
-              hapticFeedback.selection();
-              // Track add analysis clicks for record
-              track('Add analysis', { event: 'Record' });
-              onRecordPress();
-            }}
-          >
-            <View style={styles.iconContainer}>
-              <Video width={32} height={32} color="currentColor" />
-            </View>
-            <Text style={styles.cardTitle}>{i18n.t('add.recordVideo')}</Text>
-          </TouchableOpacity>
+            {/* Record Video Card */}
+            <TouchableOpacity 
+              style={styles.card} 
+              onPress={() => {
+                hapticFeedback.selection();
+                // Track add analysis clicks for record
+                track('Add analysis', { event: 'Record' });
+                onRecordPress();
+              }}
+            >
+              <View style={styles.iconContainer}>
+                <Video width={32} height={32} color="currentColor" />
+              </View>
+              <Text style={styles.cardTitle}>{i18n.t('add.recordVideo')}</Text>
+            </TouchableOpacity>
         </View>
-      </View>
-    </TouchableOpacity>
+      </TouchableOpacity>
+    </Animated.View>
   );
 }
 

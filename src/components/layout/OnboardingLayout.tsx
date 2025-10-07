@@ -6,6 +6,7 @@ import { BackButton } from '../ui/buttons/BackButton';
 import { ProgressBar } from '../ui/ProgressBar';
 import { NextButton } from '../ui/buttons/NextButton';
 import { hapticFeedback } from '../../utils/haptic';
+import { appColors } from '../../constants/appColorScheme';
 
 interface OnboardingLayoutProps {
   children: React.ReactNode;
@@ -46,7 +47,7 @@ export function OnboardingLayout({
     <SafeAreaView 
       style={[
         styles.container, 
-        { backgroundColor: '#1d293d' }
+        { backgroundColor: appColors.general.background }
       ]}
     >
       <View style={{ flex: 1 }}>
@@ -70,7 +71,7 @@ export function OnboardingLayout({
               style={[
                 styles.title, 
                 { 
-                  color: '#FFFFFF',
+                  color: appColors.general.title,
                   fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto'
                 }
               ]}
@@ -82,7 +83,7 @@ export function OnboardingLayout({
                 style={[
                   styles.subtitle, 
                   { 
-                    color: '#E2E8F0',
+                    color: appColors.general.subtitle,
                     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
                   }
                 ]}
@@ -166,12 +167,12 @@ const styles = StyleSheet.create({
     bottom: 0,
     marginBottom: -32,
     paddingTop: 4,
-    backgroundColor: '#1d293d',
+        backgroundColor: appColors.general.background,
     borderTopLeftRadius: 0,
     borderTopRightRadius: 0,
     borderTopWidth: 0.7,
-    borderTopColor: '#1d293d',
-    shadowColor: '#364153',
+    borderTopColor: appColors.general.border.light,
+    shadowColor: appColors.general.shadow.medium,
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,

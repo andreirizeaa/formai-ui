@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, ReactNode } from 'react';
-import { CustomPurchaseControllerProvider, SuperwallProvider as ExpoSuperwallProvider, SuperwallLoaded, useUser } from 'expo-superwall';
+import { CustomPurchaseControllerProvider, SuperwallProvider as ExpoSuperwallProvider, SuperwallLoaded, useUser, SuperwallExpoModule } from 'expo-superwall';
 import Purchases from 'react-native-purchases';
 import { usePurchases } from './PurchasesContext';
 import { showAlert } from '../services/alertService';
@@ -70,7 +70,6 @@ interface SuperwallProviderProps {
 
 export function SuperwallProvider({ children }: SuperwallProviderProps) {
   const { purchasePackage, restorePurchases, offerings } = usePurchases();
-  
   return (
     <CustomPurchaseControllerProvider
       controller={{
@@ -92,24 +91,24 @@ export function SuperwallProvider({ children }: SuperwallProviderProps) {
               }
               
               await purchasePackage(packageToPurchase);
-              return;
+              return undefined;
             } catch (error) {
               throw error;
             }
         },
         onPurchaseRestore: async () => {
-            await restorePurchases()
-            return;
+          await restorePurchases();
+          return {type: "purchased"}
         },
       }}
     >
       <ExpoSuperwallProvider 
         apiKeys={{ 
-          ios: "pk_zkKfyLcFhibPvjADIBNgv", 
+          ios: process.env.EXPO_PUBLIC_SUPERWALL_IOS_KEY, 
         }}
       >
-        <SubscriptionSync />
         <SuperwallLoaded>
+          <SubscriptionSync />
           {children}
         </SuperwallLoaded>
       </ExpoSuperwallProvider>

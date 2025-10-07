@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, ScrollView, Animated, ActivityIndicator } from 'react-native';
-import { Image, ImageBackground } from 'expo-image';
-import Constants from 'expo-constants';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { Image } from 'expo-image';
 import * as StoreReview from 'expo-store-review';
-import { IdCard, Languages, Ruler, FileText, ShieldCheck, MailPlus, UserMinus, LogOut, TvMinimalPlay, Star, FileVideoCamera, Megaphone, RefreshCw } from 'lucide-react-native';
+import { IdCard, Languages, Ruler, FileText, ShieldCheck, MailPlus, UserMinus, LogOut, School2, Star, FileVideoCamera, Megaphone, RefreshCw, User } from 'lucide-react-native';
 import i18n from '../../../utils/i18n';
 import { hapticFeedback } from '../../../utils/haptic';
 import { DeleteAccountModal } from './DeleteAccountModal';
@@ -17,13 +16,13 @@ import { usePlacement } from 'expo-superwall';
 import { supabase } from '../../../lib/supabase';
 import { openSupportEmail } from '../../../services/emailService';
 import { showAlert } from '../../../services/alertService';
-import { FormAILogo } from '../../../components/ui/FormAILogo';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLiftData } from '../../../context/LiftDataContext';
 import { useLoadingLifts } from '../../../context/LoadingLiftsContext';
 import * as Linking from 'expo-linking';
 import { track } from '../../../services/analytics';
 import { performManualSync, getFormattedLastSyncTime } from '../../../services/syncService';
+import { useUserDetails } from '../../../context/UserDetailsContext';
 
 interface SettingsScreenProps {
   onPersonalDetailsPress: () => void;
@@ -31,6 +30,7 @@ interface SettingsScreenProps {
   onLanguagePress: () => void;
   onSharePress: () => void;
   onLogout?: () => void;
+  onEditNamePress?: () => void;
 }
 
 interface SettingsOptionProps {
@@ -75,7 +75,7 @@ function SettingsOption({ icon, title, subtitle, onPress, ref, isLoading }: Sett
   );
 }
 
-export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguagePress, onSharePress, onLogout }: SettingsScreenProps) {
+export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguagePress, onSharePress, onLogout, onEditNamePress }: SettingsScreenProps) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const { hasHdVideos } = usePurchases();
@@ -89,11 +89,30 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
   const queryClient = useQueryClient();
   const { addLift, formatDateForLift } = useLiftData();
   const { purgeAllLoadingLifts } = useLoadingLifts();
+  const { userDetails } = useUserDetails();
+  
+  // Helper function to format user since date
+  const getUserSinceText = () => {
+    if (!userDetails?.createdAt) return '';
+    try {
+      const date = new Date(userDetails.createdAt);
+      const year = date.getFullYear();
+      return i18n.t('settings.userSince', { year });
+    } catch (error) {
+      return '';
+    }
+  };
   
   // Track screen view on mount
   useEffect(() => {
     track('Screen viewed', { screen_name: 'Settings' });
   }, []);
+  const openEditName = () => {
+    // Track settings screen clicks
+    track('Settings screen clicks', { event: 'Edit name' });
+    onEditNamePress?.();
+  };
+
 
   // Reset loading states on mount to prevent lingering indicators
   useEffect(() => {
@@ -597,9 +616,44 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+    <View style={{ flex: 1 }}>
+      <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false} contentInsetAdjustmentBehavior="automatic">
       <View style={styles.content}>
         <Text style={styles.title}>{i18n.t('tabs.settings')}</Text>
+
+        {/* Profile Card */}
+        <View style={styles.card}>
+          <TouchableOpacity style={styles.profileRow} onPress={() => {
+            hapticFeedback.selection();
+            openEditName();
+          }} activeOpacity={0.7}>
+            <View style={styles.profileAvatar}>
+              {userDetails?.profilePicture ? (
+                <Image source={{ uri: userDetails.profilePicture }} style={styles.profileImage as any} contentFit="cover" />
+              ) : userDetails?.fullName ? (
+                <View style={styles.fallbackAvatar}>
+                  <Text style={styles.fallbackAvatarText}>
+                    {userDetails.fullName.trim().split(' ')[0].charAt(0).toUpperCase()}
+                  </Text>
+                </View>
+              ) : (
+                <View style={styles.fallbackAvatar}>
+                  <User size={24} color="#ffffff" />
+                </View>
+              )}
+            </View>
+            <View style={styles.profileTextContainer}>
+              <Text style={styles.profileNameText} numberOfLines={1}>
+                {userDetails?.fullName || i18n.t('settings.enterName')}
+              </Text>
+              {getUserSinceText() && (
+                <Text style={styles.profileSubtitleText} numberOfLines={1}>
+                  {getUserSinceText()}
+                </Text>
+              )}
+            </View>
+          </TouchableOpacity>
+        </View>
         
         {/* First Card */}
         <View style={styles.card} ref={settingsFirstCardRef}>
@@ -659,7 +713,7 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
           />
           <View style={styles.separator} />
           <SettingsOption
-            icon={<TvMinimalPlay size={iconSize} color={iconColor} />}
+            icon={<School2 size={iconSize} color={iconColor} />}
             title={i18n.t('settings.replayTutorial')}
             onPress={handleShowTutorialPress}
             isLoading={isReplayingTutorial}
@@ -691,16 +745,17 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
                   <ActivityIndicator size="small" color="#000000" />
                 </View>
               ) : (
-                <Text style={styles.optionTitle}>{i18n.t('settings.syncData')}</Text>
+                <>
+                  <Text style={styles.optionTitle}>{i18n.t('settings.syncData')}</Text>
+                  <Text style={styles.optionSubtitle}>
+                    {lastSyncTime 
+                      ? i18n.t('settings.lastSynced', { time: lastSyncTime })
+                      : i18n.t('settings.lastSynced', { time: 'Never' })
+                    }
+                  </Text>
+                </>
               )}
             </View>
-            {!isSyncing && lastSyncTime && (
-              <View style={styles.rightTextContainer}>
-                <Text style={styles.rightSubtitle}>
-                  {i18n.t('settings.lastSynced', { time: lastSyncTime })}
-                </Text>
-              </View>
-            )}
           </TouchableOpacity>
           <View style={styles.separator} />
           <SettingsOption
@@ -790,18 +845,8 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
       {/* Personal Details Screen */}
       {/* This component is now rendered by the parent based on the onPersonalDetailsPress prop */}
       
-      {/* Footer with FormAI Logo and Version */}
-      <View style={styles.footerCard}>
-        <FormAILogo 
-          iconSize={32}
-          containerStyle={styles.footerLogoContainer}
-          textStyle={styles.footerLogoText}
-        />
-        <Text style={styles.versionText}>
-          Version {Constants.expoConfig?.version}
-        </Text>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 
@@ -825,6 +870,8 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: '#FFFFFF',
+    borderWidth: 0.5,
+    borderColor: '#f0f0f0',
     borderRadius: 18,
     paddingHorizontal: 16,
     paddingVertical: 8,
@@ -856,6 +903,54 @@ const styles = StyleSheet.create({
   rightTextContainer: {
     alignItems: 'flex-end',
     justifyContent: 'center',
+  },
+  profileRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  profileAvatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 30,
+    overflow: 'hidden',
+    marginRight: 14,
+    backgroundColor: 'transparent',
+  },
+  profileImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 21,
+  },
+  fallbackAvatar: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 21,
+    backgroundColor: '#ffb86a',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fallbackAvatarText: {
+    fontSize: 24,
+    fontWeight: '500',
+    color: '#ffffff',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
+  profileTextContainer: {
+    flex: 1,
+  },
+  profileNameText: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#000000',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
+  profileSubtitleText: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: '#000000',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+    marginTop: 2,
   },
   loadingContainer: {
     flex: 1,
@@ -950,44 +1045,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
-  },
-  footerCard: {
-    borderRadius: 18,
-    padding: 16,
-    marginHorizontal: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  footer: {
-    marginTop: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-  },
-  footerLogoContainer: {
-    marginBottom: 0,
-  },
-  footerLogoText: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#000000',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
-    marginBottom: 0,
-  },
-  versionText: {
-    marginTop: 4,
-    fontSize: 14,
-    color: '#8E8E93',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
-    fontWeight: '400',
   },
   // Development button styles
   devSectionTitle: {

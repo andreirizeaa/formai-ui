@@ -25,6 +25,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { checkDuplicateAssetId } from '../../../../services/lifts/liftService';
 import { getUserId } from '../../../../services/storageService';
 import { PermissionContainer } from '../../../../components/ui/PermissionContainer';
+import { VideoTooShortModal } from '../../../../components/ui/modals/VideoTooShortModal';
 import { showAlert } from '../../../../services/alertService';
 
 interface RecordModalProps {
@@ -72,12 +73,15 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
   // Screen states
   const [showWeightReps, setShowWeightReps] = useState(false);
 
+  // Video validation modals
+  const [showVideoTooShortModal, setShowVideoTooShortModal] = useState(false);
+
   // Countdown state
   const [countdownSetting, setCountdownSetting] = useState<number>(5); // default 5s
   const [showCountdownModal, setShowCountdownModal] = useState(false);
   const [isPreCountdown, setIsPreCountdown] = useState(false);
   const [preCountdownValue, setPreCountdownValue] = useState<number>(0);
-  const preCountdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const preCountdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Animation value for finger icon
   const fingerTranslateY = useMemo(() => new Animated.Value(0), []);
@@ -106,6 +110,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
       setIsCameraReady(false);
       setShowCamera(true);
       setShowCountdownModal(false);
+      setShowVideoTooShortModal(false);
       // reset any ongoing pre-countdown
       if (preCountdownIntervalRef.current) {
         clearInterval(preCountdownIntervalRef.current);
@@ -128,6 +133,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
       setFilteredMovements(gymMovements.map(m => m.name));
       setWeightReps(null);
       setShowCountdownModal(false);
+      setShowVideoTooShortModal(false);
       if (preCountdownIntervalRef.current) {
         clearInterval(preCountdownIntervalRef.current);
         preCountdownIntervalRef.current = null;
@@ -172,7 +178,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
   }, [hasPermission, isVisible, fingerTranslateY]);
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: ReturnType<typeof setInterval>;
     if (isRecording) {
       interval = setInterval(() => {
         setRecordingTime(prev => prev + 1);
@@ -290,6 +296,17 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
         onRecordingFinished: async(video: VideoFile) => {
           const path = video.path as string;
           const uri = path.startsWith('file://') ? path : `file://${path}`;
+          
+          // Check video duration before showing preview
+          const durationInSeconds = recordingTime;
+          
+          // Too short (< 3s)
+          if (durationInSeconds < 3) {
+            hapticFeedback.error();
+            setShowVideoTooShortModal(true);
+            return;
+          }
+          
           setRecordedVideoUri(uri);
           setShowVideoPreview(true);
           try {
@@ -359,7 +376,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
         }
         return prev - 1;
       });
-    }, 1000);
+    }, 1000) as any;
   };
 
   const handleStopRecording = async () => {
@@ -407,6 +424,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
     setSearchQuery('');
     setSelectedBodyPart('all');
     setWeightReps(null);
+    setShowVideoTooShortModal(false);
   
     // 1) unmount camera
     setShowCamera(false);
@@ -418,28 +436,47 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
     }, 50);
   };
 
+  const validateVideoBeforeContinue = async (): Promise<boolean> => {
+    if (!recordedVideoUri) return false;
+
+    // Check video duration
+    const durationInSeconds = recordingTime;
+    
+    // Too short (< 3s)
+    if (durationInSeconds < 3) {
+      hapticFeedback.error();
+      setShowVideoTooShortModal(true);
+      return false;
+    }
+
+    // Check for duplicate video using stable asset ID
+    const baseAssetId = await getStableAssetId({ uri: recordedVideoUri });
+    const isDuplicate = await checkDuplicateAssetId(baseAssetId);
+    
+    if (isDuplicate) {
+      hapticFeedback.error();
+      showAlert(
+        i18n.t('upload.duplicateVideo'),
+        i18n.t('upload.duplicateVideoMessage'),
+        () => {
+          // Go back to camera to record new video
+          handleSelectNewVideo();
+        },
+        'RECORD_DUPLICATE_VIDEO'
+      );
+      return false;
+    }
+
+    return true;
+  };
+
   const handleContinue = async () => {
     hapticFeedback.selection();
     
-    // Check for duplicate video before proceeding
-    if (recordedVideoUri) {
-      // Generate stable asset ID for the recorded video
-      const baseAssetId = await getStableAssetId({ uri: recordedVideoUri });
-      const isDuplicate = await checkDuplicateAssetId(baseAssetId);
-      
-      if (isDuplicate) {
-        hapticFeedback.error();
-        showAlert(
-          i18n.t('upload.duplicateVideo'),
-          i18n.t('upload.duplicateVideoMessage'),
-          () => {
-            // Go back to camera to record new video
-            handleSelectNewVideo();
-          },
-          'RECORD_DUPLICATE_VIDEO'
-        );
-        return;
-      }
+    // Validate video before proceeding
+    const isValid = await validateVideoBeforeContinue();
+    if (!isValid) {
+      return; // Don't proceed if validation fails
     }
     
     setShowVideoPreview(false);
@@ -632,7 +669,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
       <SafeAreaView
         style={[
           styles.container,
-          { backgroundColor: '#1d293d' }
+          { backgroundColor: '#ffffff' }
         ]}
       >
         {/* Close Button */}
@@ -828,7 +865,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
                   hapticFeedback.selection();
                   cancelPreCountdown();
                   onClose();
-                }} style={styles.closeButtonCamera} disabled={isUploading || isModalDisabled}>
+                }} style={styles.closeButtonCamera} disabled={isRecording || isUploading || isModalDisabled}>
                   <X width={24} height={24} color="#ffffff" />
                 </TouchableOpacity>
               </View>
@@ -843,7 +880,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
                   }}
                   style={styles.toggleButton}
                 >
-                  <Ionicons name="camera-reverse" size={20} color="#FFFFFF" />
+                  <Ionicons name="camera-reverse" size={24} color="#FFFFFF" />
                 </TouchableOpacity>
                 <TouchableOpacity
                   accessibilityLabel={i18n.t('upload.accessibility.toggleTorch')}
@@ -853,7 +890,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
                   }}
                   style={styles.toggleButton}
                 >
-                  <Ionicons name={isTorchOn ? 'flash' : 'flash-off'} size={20} color="#FFFFFF" />
+                  <Ionicons name={isTorchOn ? 'flash' : 'flash-off'} size={24} color="#FFFFFF" />
                 </TouchableOpacity>
                 <TouchableOpacity
                   accessibilityLabel={i18n.t('upload.accessibility.countdown')}
@@ -869,10 +906,10 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
                   {countdownSetting > 0 ? (
                     <>
                       <Text style={styles.countdownText}>{countdownSetting}s</Text>
-                      <Timer size={24} color="#000000" />
+                      <Timer size={26} color="#000000" />
                     </>
                   ) : (
-                    <TimerOff size={20} color="#FFFFFF" />
+                    <TimerOff size={24} color="#FFFFFF" />
                   )}
                 </TouchableOpacity>
               </View>
@@ -992,6 +1029,13 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
           </View>
         </SafeAreaView>
       )}
+
+      {/* Video Too Short Modal */}
+      <VideoTooShortModal
+        isVisible={showVideoTooShortModal}
+        onClose={() => setShowVideoTooShortModal(false)}
+        onSelectNewVideo={handleSelectNewVideo}
+      />
     </>
   );
 }
@@ -1031,9 +1075,9 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   closeButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 26,
     backgroundColor: '#F0F0F0',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1044,9 +1088,9 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   backButtonCamera: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 26,
     backgroundColor: 'rgba(0, 0, 0, 0.1)',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1054,9 +1098,9 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   closeButtonCamera: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 26,
     backgroundColor: 'rgba(0, 0, 0, 0.1)',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1193,9 +1237,9 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   toggleButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 26,
     backgroundColor: 'rgba(0,0,0,0.1)',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1204,9 +1248,9 @@ const styles = StyleSheet.create({
     opacity: 0.4,
   },
   countdownButton: {
-    width: 40,
+    width: 44,
     height: 60,
-    borderRadius: 20,
+    borderRadius: 26,
     backgroundColor: 'rgba(0,0,0,0.1)',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1217,7 +1261,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   countdownText: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '600',
     color: '#000000',
     marginBottom: 4,

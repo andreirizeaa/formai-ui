@@ -237,7 +237,7 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
     hapticFeedback.selection();
     // Track library screen clicks for date range container
     track('Library screen clicks', { event: 'Edit date range' });
-    setShowPopupModal(false);
+    // Open date range modal on top of popup
     setIsDateRangeModalVisible(true);
   }, []);
 
@@ -245,18 +245,20 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
     hapticFeedback.selection();
     // Track library screen clicks for lifts container
     track('Library screen clicks', { event: 'Edit lifts' });
-    setShowPopupModal(false);
+    // Open filter modal on top of popup
     setShowFilterModal(true);
   }, []);
 
   const handleFilterModalClose = useCallback(() => {
     hapticFeedback.selection();
     setShowFilterModal(false);
+    setShowPopupModal(false);
   }, []);
 
   const handleDateRangeModalClose = useCallback(() => {
     hapticFeedback.selection();
     setIsDateRangeModalVisible(false);
+    setShowPopupModal(false);
   }, []);
 
   const handleTabPress = useCallback((tab: TabOption) => {

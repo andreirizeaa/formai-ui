@@ -16,6 +16,7 @@ import { registerAndSaveExpoPushToken } from '../../../services/push';
 import { showAlert } from '../../../services/alertService';
 import * as Linking from 'expo-linking';
 import { X } from 'lucide-react-native';
+import { appColors } from '../../../constants/appColorScheme';
 
 const { height: screenHeight } = Dimensions.get('window');
 
@@ -248,7 +249,7 @@ export function WelcomeScreenSignIn({
         {/* Header with title and close button */}
         <View style={styles.header}>
           <View style={styles.headerSpacer} />
-          <Text style={styles.mainTitle}>
+          <Text style={[styles.mainTitle, { color: appColors.onboarding.signIn.title }]}>
             {i18n.t('signIn')}
           </Text>
           <TouchableOpacity 
@@ -256,12 +257,12 @@ export function WelcomeScreenSignIn({
             onPress={() => handleClose(true)}
             activeOpacity={0.7}
           >
-            <X width={20} height={20} color="#000000" />
+            <X width={20} height={20} color={appColors.onboarding.signIn.closeButton} />
           </TouchableOpacity>
         </View>
         
         {/* Divider under title */}
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: appColors.onboarding.signIn.divider }]} />
 
         {/* Main content */}
         <View style={styles.contentWrapper}>
@@ -270,17 +271,17 @@ export function WelcomeScreenSignIn({
             {/* Sign in buttons */}
             <View style={styles.buttonContainer}>
               <TouchableOpacity
-                style={styles.appleButton}
+                style={[styles.appleButton, { backgroundColor: appColors.onboarding.signIn.appleButton.background }]}
                 onPress={handleAppleSignIn}
                 activeOpacity={0.8}
               >
                 <View style={styles.buttonContent}>
                   <Image 
                     source={require('../../../../assets/icons/apple.png')}
-                    style={styles.appleIcon}
+                    style={[styles.appleIcon, { tintColor: appColors.onboarding.signIn.appleButton.iconTint }]}
                     contentFit="contain"
                   />
-                  <Text style={styles.appleButtonText}>
+                  <Text style={[styles.appleButtonText, { color: appColors.onboarding.signIn.appleButton.text }]}>
                     {i18n.t('onboarding.createAccount.signInWithApple')}
                   </Text>
                 </View>
@@ -288,7 +289,10 @@ export function WelcomeScreenSignIn({
 
               {/* Sign in with Google */}
               <TouchableOpacity
-                style={styles.googleButton}
+                style={[styles.googleButton, { 
+                  backgroundColor: appColors.onboarding.signIn.googleButton.background,
+                  borderColor: appColors.onboarding.signIn.googleButton.border 
+                }]}
                 onPress={handleGoogleSignIn}
                 activeOpacity={0.8}
               >
@@ -299,7 +303,7 @@ export function WelcomeScreenSignIn({
                     contentFit="contain"
                   />
 
-                  <Text style={styles.googleButtonText}>
+                  <Text style={[styles.googleButtonText, { color: appColors.onboarding.signIn.googleButton.text }]}>
                     {i18n.t('onboarding.createAccount.signInWithGoogle')}
                   </Text>
                 </View>
@@ -307,19 +311,19 @@ export function WelcomeScreenSignIn({
 
               {/* Terms and Privacy Policy */}
               <View style={styles.termsContainer}>
-                <Text style={styles.termsText}>
+                <Text style={[styles.termsText, { color: appColors.onboarding.signIn.terms.text }]}>
                   {i18n.t('termsAgreement')}{' '}
                 </Text>
                 <TouchableOpacity onPress={handleTermsOfServicePress}>
-                  <Text style={styles.termsLink}>
+                  <Text style={[styles.termsLink, { color: appColors.onboarding.signIn.terms.link }]}>
                     {i18n.t('termsOfUse')}
                   </Text>
                 </TouchableOpacity>
-                <Text style={styles.termsText}>
+                <Text style={[styles.termsText, { color: appColors.onboarding.signIn.terms.text }]}>
                   {i18n.t('and')}{' '}
                 </Text>
                 <TouchableOpacity onPress={handlePrivacyPolicyPress}>
-                  <Text style={styles.termsLink}>
+                  <Text style={[styles.termsLink, { color: appColors.onboarding.signIn.terms.link }]}>
                     {i18n.t('privacyPolicy')}
                   </Text>
                 </TouchableOpacity>
@@ -330,9 +334,9 @@ export function WelcomeScreenSignIn({
         
         {/* Custom loading overlay for modal only */}
         {isSigningIn && (
-          <View style={styles.modalLoadingOverlay}>
-            <View style={styles.modalLoadingContainer}>
-              <ActivityIndicator size="large" color="#FFFFFF" />
+          <View style={[styles.modalLoadingOverlay, { backgroundColor: appColors.onboarding.signIn.loading.background }]}>
+            <View style={[styles.modalLoadingContainer, { backgroundColor: appColors.onboarding.signIn.loading.container }]}>
+              <ActivityIndicator size="large" color={appColors.onboarding.signIn.loading.indicator} />
             </View>
           </View>
         )}
@@ -364,7 +368,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: screenHeight * 0.4, // 40% of screen height
-    backgroundColor: '#FFFFFF',
+    backgroundColor: appColors.onboarding.signIn.background,
     borderTopLeftRadius: 12,
     borderTopRightRadius: 12,
     shadowColor: '#000000',
@@ -389,7 +393,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textAlign: 'center',
     lineHeight: 38,
-    color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
     flex: 1,
   },
@@ -403,7 +406,6 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 0.3,
-    backgroundColor: '#000000',
     width: '100%',
   },
   contentWrapper: {
@@ -425,7 +427,6 @@ const styles = StyleSheet.create({
     borderRadius: 36,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#000000',
   },
   googleButton: {
     width: '90%',
@@ -434,8 +435,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    backgroundColor: '#FFFFFF',
-    borderColor: '#000000',
   },
   buttonContent: {
     flexDirection: 'row',
@@ -446,7 +445,6 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     marginRight: 12,
-    tintColor: '#FFFFFF',
   },
   googleIcon: {
     width: 32,
@@ -457,13 +455,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '800',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
-    color: '#FFFFFF',
   },
   googleButtonText: {
     fontSize: 18,
     fontWeight: '800',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
-    color: '#000000',
   },
   termsContainer: {
     flexDirection: 'row',
@@ -476,14 +472,12 @@ const styles = StyleSheet.create({
   termsText: {
     fontSize: 14,
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
-    color: '#8E8E93',
     textAlign: 'center',
   },
   termsLink: {
     fontSize: 14,
     fontWeight: '500',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
-    color: '#000000',
     textDecorationLine: 'underline',
   },
   modalLoadingOverlay: {
@@ -492,7 +486,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 12,
@@ -501,7 +494,6 @@ const styles = StyleSheet.create({
     width: 85,
     height: 85,
     borderRadius: 18,
-    backgroundColor: 'rgba(50, 50, 50, 0.95)',
     justifyContent: 'center',
     alignItems: 'center',
   },

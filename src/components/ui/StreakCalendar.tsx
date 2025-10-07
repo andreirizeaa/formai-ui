@@ -29,7 +29,7 @@ interface DayData {
 function CurrentWeek({ 
   days, 
   onPressDay, 
-  circleRadius = 16, 
+  circleRadius = 18, 
   iconSize = 14 
 }: { 
   days: DayData[]; 
@@ -64,10 +64,8 @@ function CurrentWeek({
                 width: circleRadius * 2,
                 height: circleRadius * 2,
                 borderRadius: circleRadius,
+                backgroundColor: day.hasStreak ? '#ed694a' : '#F0F0F0',
               },
-              day.hasStreak
-                ? styles.streakCircle
-                : styles.noStreakCircle,
             ]}
           >
             {day.hasStreak && (
@@ -80,7 +78,7 @@ function CurrentWeek({
   );
 }
 
-export function StreakCalendar({ onDateSelect, circleRadius = 16, iconSize = 14 }: StreakCalendarProps) {
+export function StreakCalendar({ onDateSelect, circleRadius = 18, iconSize = 14 }: StreakCalendarProps) {
   const { daysLogged } = useUserCheckIns();
 
   // Convert daysLogged to a Set for faster lookup
@@ -175,13 +173,13 @@ const styles = StyleSheet.create({
   },
   dayName: {
     fontSize: 16,
-    fontWeight: '800',
+    fontWeight: '600',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
     marginBottom: 8,
   },
   streakDayText: {
     color: '#ed694a', // Orange color for streak day text
-    fontWeight: '700',
+    fontWeight: '600',
   },
   defaultDayText: {
     color: '#000000', // Black color for default day text

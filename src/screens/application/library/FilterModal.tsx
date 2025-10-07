@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, TextInput, ScrollView, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, TextInput, ScrollView, Modal, Animated } from 'react-native';
 import { gymMovements } from '../../../constants/gymMovements';
 import { hapticFeedback } from '../../../utils/haptic';
 import i18n from '../../../utils/i18n';
@@ -23,6 +23,20 @@ export function FilterModal({
 }: FilterModalProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMovements, setSelectedMovements] = useState<string[]>(currentFilters);
+  const [shouldRender, setShouldRender] = React.useState(isVisible);
+  const fadeOpacity = React.useRef(new Animated.Value(0)).current;
+
+  React.useEffect(() => {
+    if (isVisible) {
+      setShouldRender(true);
+      fadeOpacity.setValue(0);
+      Animated.timing(fadeOpacity, { toValue: 1, duration: 100, useNativeDriver: true }).start();
+      return;
+    }
+    Animated.timing(fadeOpacity, { toValue: 0, duration: 100, useNativeDriver: true }).start(({ finished }) => {
+      if (finished) setShouldRender(false);
+    });
+  }, [isVisible, fadeOpacity]);
 
   // Filter movements based on search query
   const filteredMovements = useMemo(() => {
@@ -83,21 +97,22 @@ export function FilterModal({
 
   return (
     <Modal
-      visible={isVisible}
+      visible={shouldRender}
       transparent={true}
       animationType="none"
       onRequestClose={handleClose}
     >
-      <TouchableOpacity 
-        style={styles.overlay} 
-        activeOpacity={1} 
-        onPress={handleClose}
-      >
+      <Animated.View style={{ flex: 1, opacity: fadeOpacity }}>
         <TouchableOpacity 
-          style={styles.popupContainer} 
+          style={styles.overlay} 
           activeOpacity={1} 
-          onPress={() => {}} // Prevent closing when clicking inside the modal
+          onPress={handleClose}
         >
+          <TouchableOpacity 
+            style={styles.popupContainer} 
+            activeOpacity={1} 
+            onPress={() => {}} // Prevent closing when clicking inside the modal
+          >
           {/* Header */}
           <View style={styles.header}>
             <Text style={styles.headerTitle}>{title}</Text>
@@ -195,8 +210,9 @@ export function FilterModal({
               </TouchableOpacity>
             </View>
           </View>
+          </TouchableOpacity>
         </TouchableOpacity>
-      </TouchableOpacity>
+      </Animated.View>
     </Modal>
   );
 }

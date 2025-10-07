@@ -289,6 +289,8 @@ const styles = StyleSheet.create({
   },
   accuracyCard: {
     backgroundColor: '#FFFFFF',
+    borderWidth: 0.5,
+    borderColor: '#f0f0f0',
     borderRadius: 18,
     padding: 20,
     alignItems: 'center',

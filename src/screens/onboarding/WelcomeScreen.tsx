@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, TouchableOpacity, Platform, Animated, Modal, Pr
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { OrangeGradientButton } from '../../components/ui/buttons/OrangeGradientButton';
 import { AnimatedOptionButton } from '../../components/ui/buttons/AnimatedOptionButton';
 import { WelcomeScreenSignIn } from '../../components/ui/modals/WelcomeScreenSignIn';
 import { useLanguage } from '../../context/LanguageContext';
@@ -13,6 +12,7 @@ import { hapticFeedback } from '../../utils/haptic';
 import { getUserId } from '../../services/storageService';
 import { track } from '../../services/analytics';
 import { X } from 'lucide-react-native';
+import { appColors } from '../../constants/appColorScheme';
 
 interface WelcomeScreenProps {
   onGetStarted: () => void;
@@ -36,6 +36,8 @@ export function WelcomeScreen({
   const [showSignInModal, setShowSignInModal] = useState(false);
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
   const { currentLanguage, setLanguage } = useLanguage();
+  const [languageShouldRender, setLanguageShouldRender] = useState(false);
+  const languageOpacity = React.useRef(new Animated.Value(0)).current;
 
   // Animation values for video container
   const videoTranslateY = React.useRef(new Animated.Value(500)).current; // Start below screen
@@ -70,6 +72,19 @@ export function WelcomeScreen({
       useNativeDriver: true,
     }).start();
   }, [fadeAnim]);
+
+  // Fade control for language modal
+  useEffect(() => {
+    if (showLanguageModal) {
+      setLanguageShouldRender(true);
+      languageOpacity.setValue(0);
+      Animated.timing(languageOpacity, { toValue: 1, duration: 100, useNativeDriver: true }).start();
+      return;
+    }
+    Animated.timing(languageOpacity, { toValue: 0, duration: 100, useNativeDriver: true }).start(({ finished }) => {
+      if (finished) setLanguageShouldRender(false);
+    });
+  }, [showLanguageModal, languageOpacity]);
 
   // Video animation sequence - N shape movement with manual video control
   useEffect(() => {
@@ -203,19 +218,25 @@ export function WelcomeScreen({
         <SafeAreaView
           style={[
             styles.container,
-            { backgroundColor: isDark ? '#000000' : '#FFFFFF' }
+            { backgroundColor: appColors.onboarding.welcome.background }
           ]}
         >
       {/* Absolutely positioned language pill */}
       <Pressable
         style={({ pressed }) => [
           styles.languagePill,
-          { opacity: pressed ? 0.7 : 1 }
+          { 
+            opacity: pressed ? 0.7 : 1,
+            backgroundColor: appColors.onboarding.welcome.languagePill.background,
+            shadowColor: appColors.onboarding.welcome.languagePill.shadow,
+          }
         ]}
         onPress={handleLanguagePress}
       >
         <Text style={styles.languageFlag}>{currentLangInfo.flag}</Text>
-        <Text style={styles.languageCode}>{currentLangInfo.code.toUpperCase()}</Text>
+        <Text style={[styles.languageCode, { color: appColors.onboarding.welcome.languagePill.text }]}>
+          {currentLangInfo.code.toUpperCase()}
+        </Text>
       </Pressable>
 
       {/* App overview video */}
@@ -250,26 +271,30 @@ export function WelcomeScreen({
       </View>
 
       {/* Content area with text and buttons */}
-      <View style={styles.contentContainer}>
+      <View style={[styles.contentContainer, { backgroundColor: appColors.onboarding.welcome.content.background }]}>
         <View style={styles.content}>
-          <Text style={styles.subtitle}>
+          <Text style={[styles.subtitle, { color: appColors.onboarding.welcome.subtitle }]}>
             {i18n.t('perfectFormAlways')}
           </Text>
         </View>
 
         <View style={styles.actions}>
-          <OrangeGradientButton
-            title={i18n.t('getStartedButton')}
-            onPress={handleGetStarted}
+          <TouchableOpacity
             style={styles.getStartedButton}
-          />
+            onPress={handleGetStarted}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.getStartedButtonText}>
+              {i18n.t('getStartedButton')}
+            </Text>
+          </TouchableOpacity>
 
           <View style={styles.haveAccountContainer}>
-            <Text style={styles.haveAccountText}>
+            <Text style={[styles.haveAccountText, { color: appColors.onboarding.welcome.haveAccountText }]}>
               {i18n.t('alreadyHaveAccount')}{' '}
             </Text>
             <TouchableOpacity onPress={handleSignIn} activeOpacity={0.7}>
-              <Text style={styles.signInLink}>
+              <Text style={[styles.signInLink, { color: appColors.onboarding.welcome.signInLink }]}>
                 {i18n.t('signIn')}
               </Text>
             </TouchableOpacity>
@@ -279,26 +304,29 @@ export function WelcomeScreen({
 
       {/* Language Selection Modal */}
       <Modal
-        visible={showLanguageModal}
+        visible={languageShouldRender}
         transparent={true}
         animationType="none"
         onRequestClose={handleCloseLanguageModal}
       >
-        <TouchableOpacity
-          style={styles.overlay}
-          activeOpacity={1}
-          onPress={handleCloseLanguageModal}
-        >
+        <Animated.View style={{ flex: 1, opacity: languageOpacity }}>
           <TouchableOpacity
-            style={styles.popupContainer}
+            style={[styles.overlay, { backgroundColor: appColors.onboarding.welcome.modal.overlay }]}
             activeOpacity={1}
-            onPress={() => {}} // Prevent closing when clicking inside the modal
+            onPress={handleCloseLanguageModal}
           >
+            <TouchableOpacity
+              style={[styles.popupContainer, { backgroundColor: appColors.onboarding.welcome.modal.background }]}
+              activeOpacity={1}
+              onPress={() => {}} // Prevent closing when clicking inside the modal
+            >
             {/* Header */}
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Language</Text>
-              <TouchableOpacity style={styles.modalCloseButton} onPress={handleCloseLanguageModal}>
-                <X width={20} height={20} color="#000000" />
+              <Text style={[styles.modalTitle, { color: appColors.onboarding.welcome.modal.title }]}>Language</Text>
+              <TouchableOpacity style={[styles.modalCloseButton, { 
+                borderColor: appColors.onboarding.welcome.modal.closeButtonBorder 
+              }]} onPress={handleCloseLanguageModal}>
+                <X width={20} height={20} color={appColors.onboarding.welcome.modal.closeButton} />
               </TouchableOpacity>
             </View>
 
@@ -314,13 +342,21 @@ export function WelcomeScreen({
                     delay={index * 50} // Stagger animation
                     style={[
                       styles.languageButton,
-                      currentLanguage === item.code ? styles.selectedLanguageButton : styles.unselectedLanguageButton
+                      { 
+                        backgroundColor: currentLanguage === item.code 
+                          ? appColors.onboarding.welcome.modal.languageButton.selected.background
+                          : appColors.onboarding.welcome.modal.languageButton.unselected.background
+                      }
                     ]}
                   >
                     <View style={styles.languageOptionContent}>
                       <Text style={[
                         styles.languageOptionText,
-                        { color: currentLanguage === item.code ? '#FFFFFF' : '#000000' }
+                        { 
+                          color: currentLanguage === item.code 
+                            ? appColors.onboarding.welcome.modal.languageButton.selected.text
+                            : appColors.onboarding.welcome.modal.languageButton.unselected.text
+                        }
                       ]}>
                         {item.nativeName}
                       </Text>
@@ -330,8 +366,9 @@ export function WelcomeScreen({
                 ))}
               </ScrollView>
             </View>
+            </TouchableOpacity>
           </TouchableOpacity>
-        </TouchableOpacity>
+        </Animated.View>
       </Modal>
 
         </SafeAreaView>
@@ -359,12 +396,10 @@ const styles = StyleSheet.create({
     right: 20, // Position from right edge
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#ffffff', // Same as active option button background
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
     zIndex: 10,
-    shadowColor: '#000000',
     shadowOffset: {
       width: 0,
       height: 2,
@@ -380,7 +415,6 @@ const styles = StyleSheet.create({
   languageCode: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#000000', // Black text on white background
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
   photoContainer: {
@@ -400,7 +434,6 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     paddingTop: 20,
-    backgroundColor: '#FFFFFF',
     zIndex: 10,
   },
   content: {
@@ -412,7 +445,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     textAlign: 'center',
     maxWidth: 340,
-    color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
   },
   actions: {
@@ -420,7 +452,19 @@ const styles = StyleSheet.create({
     paddingBottom: 34,
   },
   getStartedButton: {
+    height: 65,
+    borderRadius: 28,
+    backgroundColor: '#000000',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
     marginBottom: 8,
+  },
+  getStartedButtonText: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
   },
   haveAccountContainer: {
     marginTop: 4,
@@ -431,27 +475,23 @@ const styles = StyleSheet.create({
   haveAccountText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
-  signInLink: {
+  signInLink: { 
     fontSize: 16,
     fontWeight: '800',
-    color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
     textDecorationLine: 'underline',
   },
   // Modal styles - similar to FilterModal
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 40,
   },
   popupContainer: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 20,
     height: '85%',
     width: '100%',
@@ -475,7 +515,6 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 22,
     fontWeight: '800',
-    color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
     textAlign: 'left',
     flex: 1,
@@ -488,7 +527,6 @@ const styles = StyleSheet.create({
     height: 32,
     borderRadius: 16,
     borderWidth: 2,
-    borderColor: '#E5E5EA',
     backgroundColor: 'transparent',
     justifyContent: 'center',
     alignItems: 'center',
@@ -512,10 +550,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   selectedLanguageButton: {
-    backgroundColor: '#000000', // Black for selected
+    // Background color now handled dynamically
   },
   unselectedLanguageButton: {
-    backgroundColor: '#F0F0F0', // Gray for unselected
+    // Background color now handled dynamically
   },
   languageOptionContent: {
     flexDirection: 'row',

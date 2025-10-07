@@ -60,7 +60,10 @@ const fr = {
         "unitSystem": "Échec de mise à jour des unités",
         "language": "Échec de mise à jour de la langue",
         "message": "Veuillez réessayer plus tard"
-      }
+      },
+      "enterName": "Entrer le nom",
+      "editName": "Modifier le nom",
+      "userSince": "Utilisateur depuis {{year}}"
     },
     "share": {
       "referYourFriends": "Parrainez vos amis",
@@ -108,7 +111,16 @@ const fr = {
       "generalTips": "Conseils généraux",
       "searchMovements": "Rechercher des mouvements…",
       "useCustomMovement": "Utiliser",
-      "bestRecordingPractices": "Bonnes pratiques d’enregistrement",
+      "bestRecordingPractices": "Bonnes pratiques d'enregistrement",
+      "videoPreview": "Aperçu de la vidéo",
+      "loadingVideo": "Chargement de la vidéo...",
+      "weight": "Poids",
+      "reps": "Répétitions",
+      "next": "Suivant",
+      "complete": "Terminer",
+      "close": "Fermer",
+      "showWeightInformation": "Afficher les informations sur le poids",
+      "showRepsInformation": "Afficher les informations sur les répétitions",
       "bodyParts": {
         "all": "Tous",
         "chest": "Poitrine",
@@ -589,13 +601,13 @@ const fr = {
       "continue": "Continuer"
     },
     "days": {
-      "monday": "L",
-      "tuesday": "M",
-      "wednesday": "M",
-      "thursday": "J",
-      "friday": "V",
-      "saturday": "S",
-      "sunday": "D",
+      "monday": "Lun",
+      "tuesday": "Mar",
+      "wednesday": "Mer",
+      "thursday": "Jeu",
+      "friday": "Ven",
+      "saturday": "Sam",
+      "sunday": "Dim",
     },
     "performance": {
       "title": "Progression",
@@ -666,6 +678,7 @@ const fr = {
       },
       "noLifts": "Aucune levée enregistrée",
       "startAnalyzingWorkout": "Commencez l'analyse d'aujourd'hui avec une courte vidéo",
+      "notAvailable": "Indisponible",
       "thankYou": "Merci",
       "shareError": "Impossible de partager",
       "unknownError": "Erreur inconnue"
@@ -908,7 +921,7 @@ const fr = {
       "videoTooLong": "Vidéo trop longue",
       "videoTooLongMessage": "Choisissez une vidéo de moins de 90 secondes.",
       "videoTooShort": "Vidéo trop courte",
-      "videoTooShortMessage": "Choisissez une vidéo d’au moins 3 secondes.",
+      "videoTooShortMessage": "Assurez-vous que la vidéo fait au moins 3 secondes.",
       "error": "Erreur",
       "failedToSelectVideo": "Échec de la sélection. Réessayez.",
       "failedToGenerateThumbnail": "Échec de la miniature. Réessayez.",

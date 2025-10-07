@@ -1,5 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Platform } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import i18n from '../../../../utils/i18n';
 import { useTutorialTarget } from '../../../../context/TutorialContext';
 import { Check, X } from 'lucide-react-native';
@@ -37,6 +38,37 @@ export function MovementSelectionScreen({
   title = "Upload Video"
 }: MovementSelectionScreenProps) {
   const { ref: continueButtonRef } = useTutorialTarget('movement_selection_continue');
+  // Variable-width segmented control with animated background
+  const segments = [
+    { label: 'All', value: 'all' as BodyPart, flex: 0.8 },
+    { label: 'Chest', value: 'chest' as BodyPart, flex: 1 },
+    { label: 'Back', value: 'back' as BodyPart, flex: 0.8 },
+    { label: 'Shoulders', value: 'shoulders' as BodyPart, flex: 1.4 },
+    { label: 'Arms', value: 'arms' as BodyPart, flex: 0.8 },
+    { label: 'Legs', value: 'legs' as BodyPart, flex: 0.8 },
+  ];
+
+  const layoutsRef = useRef<Record<string, { x: number; width: number }>>({});
+  const indicatorX = useSharedValue(0);
+  const indicatorW = useSharedValue(0);
+
+  function animateToSelection(part: BodyPart) {
+    const layout = layoutsRef.current[part];
+    if (!layout) return;
+    indicatorX.value = withTiming(layout.x, { duration: 200 });
+    indicatorW.value = withTiming(layout.width, { duration: 200 });
+  }
+
+  useEffect(() => {
+    animateToSelection(selectedBodyPart);
+  }, [selectedBodyPart]);
+
+  const animatedBackgroundStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateX: indicatorX.value }],
+      width: indicatorW.value,
+    };
+  });
   
   return (
     <>
@@ -47,25 +79,25 @@ export function MovementSelectionScreen({
           
           {/* Body Part Segmented Control */}
           <View style={styles.segmentedWrapper}>
-            <View style={styles.segmented}>
-              {[
-                { label: i18n.t('add.bodyParts.all'), value: 'all' as BodyPart, flex: 0.8 },
-                { label: i18n.t('add.bodyParts.chest'), value: 'chest' as BodyPart, flex: 1 },
-                { label: i18n.t('add.bodyParts.back'), value: 'back' as BodyPart, flex: 0.8 },
-                { label: i18n.t('add.bodyParts.shoulders'), value: 'shoulders' as BodyPart, flex: 1.4 },
-                { label: i18n.t('add.bodyParts.arms'), value: 'arms' as BodyPart, flex: 0.8 },
-                { label: i18n.t('add.bodyParts.legs'), value: 'legs' as BodyPart, flex: 0.8 },
-              ].map((segment) => {
+            <View style={styles.segmented}
+            >
+              <Animated.View style={[styles.segmentBackground, animatedBackgroundStyle]} />
+              {segments.map((segment) => {
                 const active = selectedBodyPart === segment.value;
                 return (
                   <TouchableOpacity
                     key={segment.value}
                     style={[
-                      styles.segment, 
+                      styles.segment,
+                      styles.segmentTouchable,
                       { flex: segment.flex },
-                      active ? styles.segmentActive : styles.segmentInactive
                     ]}
                     activeOpacity={0.9}
+                    onLayout={(e) => {
+                      const { x, width } = e.nativeEvent.layout;
+                      layoutsRef.current[segment.value] = { x, width };
+                      if (active) animateToSelection(segment.value);
+                    }}
                     onPress={() => {
                       if (!active) {
                         hapticFeedback.selection();
@@ -348,28 +380,42 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 1,
+    position: 'relative',
+  },
+  segmentBackground: {
+    position: 'absolute',
+    top: 4,
+    left: 0,
+    bottom: 4,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    // iOS shadow
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    // Android elevation
+    ...(Platform.OS === 'android' ? { elevation: 2 } : {}),
   },
   segment: {
     paddingVertical: 10,
     borderRadius: 8,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   segmentInactive: {},
-  segmentActive: {
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-  },
   segmentText: {
     fontSize: 13,
-    fontWeight: '500',
+    fontWeight: '700',
     color: '#000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+    textAlign: 'center',
+    flexWrap: 'wrap',
   },
   segmentTextActive: {
     color: '#000',
-    fontWeight: '800',
+  },
+  segmentTouchable: {
+    zIndex: 1,
   },
 }); 

@@ -97,7 +97,7 @@ const TutorialContext = createContext<TutorialContextType | undefined>(undefined
 
 export function TutorialProvider({ children }: { children: React.ReactNode }) {
   const registrationsRef = useRef<Map<string, TutorialTargetRegistration>>(new Map());
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isActive, setIsActive] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isProcessingStep, setIsProcessingStep] = useState(false);

@@ -8,6 +8,7 @@ import Animated, {
   runOnJS,
   withSequence
 } from 'react-native-reanimated';
+import { appColors } from '../../../constants/appColorScheme';
 
 interface AnimatedOptionButtonProps {
   children: React.ReactNode;
@@ -98,8 +99,8 @@ export function AnimatedOptionButton({
           styles.button,
           {
             backgroundColor: isSelected
-              ? '#ffffff'  // Black background when selected
-              : '#364153',
+              ? appColors.onboarding.button.active.background
+              : appColors.onboarding.button.inactive.background,
             paddingVertical: hasIcon ? 14 : 22, // Conditional padding
           },
           style

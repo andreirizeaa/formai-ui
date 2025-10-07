@@ -90,8 +90,10 @@ export async function saveOnboardingProgress(
   const { info, onboarding } = buildOnboardingPayload(data);
   // Ensure walkthrough_completed defaults to false on first creation if not provided
   if (info.walkthrough_completed === undefined) info.walkthrough_completed = false;
-  // 1) Ensure parent row exists in public.users (FK target) and not soft-deleted
-  await upsertWithRetry('users', { user_id: data.userId });
+  // 1) Ensure parent row exists in public.users (FK target) and set profile picture if provided
+  const usersPayload: Record<string, any> = { user_id: data.userId };
+  if (data.profilePicture !== undefined) usersPayload.profile_picture = data.profilePicture;
+  await upsertWithRetry('users', usersPayload);
   // 2) Upsert dependent tables
   await upsertWithRetry('user_info', info);
   await upsertWithRetry('user_onboarding', onboarding);

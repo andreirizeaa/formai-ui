@@ -18,6 +18,9 @@ interface UserDetails {
   currentStreak: number | null;
   walkthroughCompleted: boolean | null;
   hasRated: boolean | null;
+  fullName: string | null;
+  profilePicture: string | null;
+  createdAt: string | null;
 }
 
 interface UserDetailsContextType {
@@ -103,6 +106,9 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
           currentStreak: row.current_streak ?? null,
           walkthroughCompleted: row.walkthrough_completed ?? null,
           hasRated: row.has_rated ?? null,
+          fullName: (row as any).full_name ?? null,
+          profilePicture: (row as any).profile_picture ?? null,
+          createdAt: (row as any).created_at ?? null,
         });
         return row;
       } finally {
@@ -126,6 +132,9 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
         currentStreak: null,
         walkthroughCompleted: null,
         hasRated: null,
+        fullName: null,
+        profilePicture: null,
+        createdAt: null,
       };
       return { ...base, [key]: value };
     });
@@ -143,6 +152,9 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
         currentStreak: null,
         walkthroughCompleted: null,
         hasRated: null,
+        fullName: null,
+        profilePicture: null,
+        createdAt: null,
       };
       return { ...base, unitSystem };
     });
@@ -160,6 +172,9 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
         currentStreak: null,
         walkthroughCompleted: null,
         hasRated: null,
+        fullName: null,
+        profilePicture: null,
+        createdAt: null,
       };
       return { ...base, currentWeightKG: weightKg };
     });
@@ -177,6 +192,9 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
         currentStreak: null,
         walkthroughCompleted: null,
         hasRated: null,
+        fullName: null,
+        profilePicture: null,
+        createdAt: null,
       };
       return { ...base, heightCM: heightCm };
     });
@@ -194,6 +212,9 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
         currentStreak: null,
         walkthroughCompleted: null,
         hasRated: null,
+        fullName: null,
+        profilePicture: null,
+        createdAt: null,
       };
       return { ...base, walkthroughCompleted: completed };
     });
@@ -211,6 +232,9 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
         currentStreak: null,
         walkthroughCompleted: null,
         hasRated: null,
+        fullName: null,
+        profilePicture: null,
+        createdAt: null,
       };
       return { ...base, hasRated: rated };
     });
@@ -235,6 +259,9 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
         currentStreak: null,
         walkthroughCompleted: null,
         hasRated: null,
+        fullName: null,
+        profilePicture: null,
+        createdAt: null,
       };
       return { ...base, language };
     });
