@@ -3,6 +3,7 @@ import { View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import LottieView from 'lottie-react-native';
 import { useUserDetails } from '../../context/UserDetailsContext';
+import { appColors } from '../../constants/appColorScheme';
 
 interface AccountLoadingScreenProps {
   onComplete: () => void | Promise<void>;
@@ -57,7 +58,7 @@ export function AccountLoadingScreen({ onComplete }: AccountLoadingScreenProps) 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1d293d',
+    backgroundColor: appColors.general.background,
   },
   content: {
     flex: 1,

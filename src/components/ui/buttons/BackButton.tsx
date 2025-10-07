@@ -31,9 +31,9 @@ export function BackButton({ onPress }: BackButtonProps) {
 
 const styles = StyleSheet.create({
   container: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 26,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 8,

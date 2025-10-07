@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Constants from 'expo-constants';
 import i18n from '../../../utils/i18n';
 import { hapticFeedback } from '../../../utils/haptic';
 import { useUserDetails } from '../../../context/UserDetailsContext';
 import { usePurchases } from '../../../context/PurchasesContext';
 import { usePlacement } from 'expo-superwall';
-import { Pencil, X } from 'lucide-react-native';
+import { Pencil, ChevronLeft } from 'lucide-react-native';
 import { track } from '../../../services/analytics';
 import { showAlert } from '../../../services/alertService';
 
@@ -161,7 +162,7 @@ export function PersonalDetailsScreen({
             onBack();
           }}
         >
-          <X width={20} height={20} color="#000000" />
+          <ChevronLeft width={24} height={24} color="#000000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{i18n.t('settings.personalDetails')}</Text>
         <View style={styles.placeholder} />
@@ -169,42 +170,51 @@ export function PersonalDetailsScreen({
 
       {/* Content */}
       <View style={styles.content}>
-        {/* Personal Details Card */}
-        <View style={styles.card}>
-          <PersonalDetailOption
-            title={i18n.t('personalDetails.currentWeight')}
-            value={translatePersonalDataValue('currentWeight', getWeightDisplay())}
-            onPress={handleEditCurrentWeight}
-          />
-          <View style={styles.separator} />
-          <PersonalDetailOption
-            title={i18n.t('personalDetails.height')}
-            value={translatePersonalDataValue('height', getHeightDisplay())}
-            onPress={handleEditHeight}
-          />
-          <View style={styles.separator} />
-          <PersonalDetailOption
-            title={i18n.t('personalDetails.age')}
-            value={translatePersonalDataValue('ageRange', getAgeRangeDisplay())}
-            onPress={handleEditAgeRange}
-          />
-          <View style={styles.separator} />
-          <PersonalDetailOption
-            title={i18n.t('personalDetails.gender')}
-            value={translatePersonalDataValue('gender', userDetails?.gender ?? '')}
-            onPress={handleEditGender}
-          />
+        <View style={styles.scrollableContent}>
+          {/* Personal Details Card */}
+          <View style={styles.card}>
+            <PersonalDetailOption
+              title={i18n.t('personalDetails.currentWeight')}
+              value={translatePersonalDataValue('currentWeight', getWeightDisplay())}
+              onPress={handleEditCurrentWeight}
+            />
+            <View style={styles.separator} />
+            <PersonalDetailOption
+              title={i18n.t('personalDetails.height')}
+              value={translatePersonalDataValue('height', getHeightDisplay())}
+              onPress={handleEditHeight}
+            />
+            <View style={styles.separator} />
+            <PersonalDetailOption
+              title={i18n.t('personalDetails.age')}
+              value={translatePersonalDataValue('ageRange', getAgeRangeDisplay())}
+              onPress={handleEditAgeRange}
+            />
+            <View style={styles.separator} />
+            <PersonalDetailOption
+              title={i18n.t('personalDetails.gender')}
+              value={translatePersonalDataValue('gender', userDetails?.gender ?? '')}
+              onPress={handleEditGender}
+            />
+          </View>
+
+          {/* Video Quality Card */}
+          <View style={styles.card}>
+            <PersonalDetailOption
+              title={i18n.t('personalDetails.videoQuality')}
+              value={videoQuality}
+              onPress={!hasHdVideos ? () => {
+                handleHdVideoPress();
+              } : undefined}
+            />
+          </View>
         </View>
 
-        {/* Video Quality Card */}
-        <View style={styles.card}>
-          <PersonalDetailOption
-            title={i18n.t('personalDetails.videoQuality')}
-            value={videoQuality}
-            onPress={!hasHdVideos ? () => {
-              handleHdVideoPress();
-            } : undefined}
-          />
+        {/* Version Text - Fixed at bottom */}
+        <View style={styles.versionContainer}>
+          <Text style={styles.versionText}>
+            Version {Constants.expoConfig?.version}
+          </Text>
         </View>
       </View>
     </SafeAreaView>
@@ -245,10 +255,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 10,
   },
+  scrollableContent: {
+    flex: 1,
+  },
   card: {
     backgroundColor: '#FFFFFF',
     borderRadius: 18,
-    padding: 16,
+    paddingHorizontal: 16,
     borderWidth: 1,
     borderColor: '#E5E5EA',
     marginBottom: 16,
@@ -286,5 +299,15 @@ const styles = StyleSheet.create({
   separator: {
     height: 1,
     backgroundColor: '#E5E5EA',
+  },
+  versionContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  versionText: {
+    fontSize: 14,
+    color: '#8E8E93',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+    fontWeight: '400',
   },
 }); 

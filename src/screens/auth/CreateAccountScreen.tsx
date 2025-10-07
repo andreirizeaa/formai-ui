@@ -16,6 +16,8 @@ import { usePurchases } from '../../context/PurchasesContext';
 import { identify, track } from '../../services/analytics';
 import { registerAndSaveExpoPushToken } from '../../services/push';
 import { fetchUserById } from '../../services/userService';
+import { appColors } from '../../constants/appColorScheme';
+import * as Linking from 'expo-linking';
 
 interface CreateAccountScreenProps {
   onNext: () => void;
@@ -142,6 +144,34 @@ export function CreateAccountScreen({ onNext, onBack }: CreateAccountScreenProps
     }
   };
 
+  const handleTermsOfServicePress = async () => {
+    hapticFeedback.selection();
+    // Track sign in screen clicks
+    track('Sign In Screen clicks', { event: 'Terms' });
+    // Small delay to ensure haptic feedback is felt before opening browser
+    setTimeout(async () => {
+      try {
+        await Linking.openURL('https://useformai.com/legal/tos');
+      } catch (error) {
+        showAlert('Error', 'Unable to open terms of use. Please try again later.');
+      }
+    }, 100);
+  };
+
+  const handlePrivacyPolicyPress = async () => {
+    hapticFeedback.selection();
+    // Track sign in screen clicks
+    track('Sign In Screen clicks', { event: 'Privacy' });
+    // Small delay to ensure haptic feedback is felt before opening browser
+    setTimeout(async () => {
+      try {
+        await Linking.openURL('https://useformai.com/legal/privacy');
+      } catch (error) {
+        showAlert('Error', 'Unable to open privacy policy. Please try again later.');
+      }
+    }, 100);
+  };
+
   const handleNewAccount = async (data: any) => {
     const signInMethod = data.user?.app_metadata?.provider || 'apple';
     
@@ -179,18 +209,25 @@ export function CreateAccountScreen({ onNext, onBack }: CreateAccountScreenProps
       }
       
       // New user - proceed with onboarding setup
+      const profilePicture: string | null =
+        (data?.user?.user_metadata?.avatar_url as string | undefined) ??
+        (data?.user?.user_metadata?.picture as string | undefined) ??
+        null;
+
       const updatedData = {
         ...onboardingData,
         signInMethod: signInMethod,
         onboardingCompleted: true,
         walkthroughCompleted: false,
-        userId: data.user?.id
+        userId: data.user?.id,
+        profilePicture: profilePicture,
       };
 
       updateOnboardingData('signInMethod', signInMethod);
       updateOnboardingData('onboardingCompleted', true);
       updateOnboardingData('walkthroughCompleted', false);
       updateOnboardingData('userId', data.user.id);
+      updateOnboardingData('profilePicture', profilePicture);
       
       await logIn(data.user.id);
 
@@ -234,7 +271,7 @@ export function CreateAccountScreen({ onNext, onBack }: CreateAccountScreenProps
           <TouchableOpacity
             style={[
               styles.appleButton,
-              { backgroundColor: '#000000' }
+              { backgroundColor: appColors.onboarding.signIn.appleButton.background }
             ]}
             onPress={handleAppleSignIn}
             activeOpacity={0.8}
@@ -244,12 +281,12 @@ export function CreateAccountScreen({ onNext, onBack }: CreateAccountScreenProps
                 source={require('../../../assets/icons/apple.png')}
                 style={[
                   styles.appleIcon,
-                  { tintColor: isDark ? '#000000' : '#FFFFFF' }
+                  { tintColor: appColors.onboarding.signIn.appleButton.iconTint }
                 ]}
               />
               <Text style={[
                 styles.appleButtonText,
-                { color: isDark ? '#000000' : '#FFFFFF' }
+                { color: appColors.onboarding.signIn.appleButton.text }
               ]}>
                 {i18n.t('onboarding.createAccount.signInWithApple')}
               </Text>
@@ -261,7 +298,9 @@ export function CreateAccountScreen({ onNext, onBack }: CreateAccountScreenProps
             style={[
               styles.googleButton,
               { 
-                backgroundColor: isDark ? '#000000' : '#FFFFFF',
+                backgroundColor: appColors.onboarding.signIn.googleButton.background,
+                borderColor: appColors.onboarding.signIn.googleButton.border,
+                borderWidth: 1,
               }
             ]}
             onPress={isExpoGo ? () => {
@@ -276,7 +315,7 @@ export function CreateAccountScreen({ onNext, onBack }: CreateAccountScreenProps
               />
               <Text style={[
                 styles.googleButtonText,
-                { color: isDark ? '#FFFFFF' : '#000000' }
+                { color: appColors.onboarding.signIn.googleButton.text }
               ]}>
                 {i18n.t('onboarding.createAccount.signInWithGoogle')}
               </Text>
@@ -285,8 +324,25 @@ export function CreateAccountScreen({ onNext, onBack }: CreateAccountScreenProps
 
         </View>
 
-        {/* Sign in text placeholder */}
-        <View />
+        {/* Terms and Privacy Policy */}
+        <View style={styles.termsContainer}>
+          <Text style={[styles.termsText, { color: appColors.onboarding.signIn.terms.text }]}>
+            {i18n.t('termsAgreement')}{' '}
+          </Text>
+          <TouchableOpacity onPress={handleTermsOfServicePress}>
+            <Text style={[styles.termsLink, { color: appColors.onboarding.signIn.terms.link }]}>
+              {i18n.t('termsOfUse')}
+            </Text>
+          </TouchableOpacity>
+          <Text style={[styles.termsText, { color: appColors.onboarding.signIn.terms.text }]}>
+            {i18n.t('and')}{' '}
+          </Text>
+          <TouchableOpacity onPress={handlePrivacyPolicyPress}>
+            <Text style={[styles.termsLink, { color: appColors.onboarding.signIn.terms.link }]}>
+              {i18n.t('privacyPolicy')}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
       
       <LoadingOverlay visible={isSigningIn} />
@@ -299,6 +355,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: appColors.general.background,
   },
   content: {
     alignItems: 'center',
@@ -348,5 +405,23 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '800',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
+  termsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexWrap: 'wrap',
+    paddingHorizontal: 40,
+  },
+  termsText: {
+    fontSize: 14,
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+    textAlign: 'center',
+  },
+  termsLink: {
+    fontSize: 14,
+    fontWeight: '500',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+    textDecorationLine: 'underline',
   },
 }); 

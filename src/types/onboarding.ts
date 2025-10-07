@@ -27,6 +27,7 @@ export interface OnboardingData {
   onboardingCompleted: boolean;
   walkthroughCompleted: boolean;
   signInMethod: string | null;
+  profilePicture?: string | null;
 }
 
 export interface OnboardingContextType {

@@ -141,8 +141,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 40,
     paddingTop: 12,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
     shadowColor: '#000000',
     shadowOffset: {
       width: 0,

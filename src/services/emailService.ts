@@ -75,6 +75,7 @@ I'd like to suggest the following metrics for the Performance screen:
 
               - Platform: ${Platform.OS}
               - Device Version: ${Platform.Version}
+              - App Version: ${Constants.expoConfig?.version}
               - User ID: ${userId}
           `,
   };
@@ -99,6 +100,7 @@ I recently cancelled my subscription and wanted to provide feedback:
 
               - Platform: ${Platform.OS}
               - Device Version: ${Platform.Version}
+              - App Version: ${Constants.expoConfig?.version}
               - User ID: ${userId}
           `,
   };
@@ -115,6 +117,7 @@ export async function openDeletionFeedbackEmail(): Promise<void> {
 
               - Platform: ${Platform.OS}
               - Device Version: ${Platform.Version}
+              - App Version: ${Constants.expoConfig?.version}
               - User ID: ${userId}
           ` : '';
 

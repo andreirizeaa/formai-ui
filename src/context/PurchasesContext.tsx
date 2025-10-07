@@ -113,6 +113,7 @@ export function PurchasesProvider({ children, onSubscriptionUpdate }: PurchasesP
 
       // Check if any of these entitlement IDs are active
       const activeEntitlements = Object.keys(customerInfo.entitlements.active || {});
+
       return entitlementIds.some(entitlementId => activeEntitlements.includes(entitlementId));
     }
 
@@ -238,6 +239,7 @@ export function PurchasesProvider({ children, onSubscriptionUpdate }: PurchasesP
       setCustomerInfo(restoredInfo);
       // Keep packages fresh post-restore
       await refreshOfferings();
+      console.log('restoredInfo', restoredInfo);
       return restoredInfo;
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Restore failed';

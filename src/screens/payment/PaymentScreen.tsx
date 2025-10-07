@@ -9,6 +9,7 @@ import { AccountLoadingScreen } from '../onboarding/AccountLoadingScreen';
 import { track } from '../../services/analytics';
 import { getReferralCodeType, getUserReferralCode } from '../../services/referralService';
 import { getUserId, setUserJustPaid } from '../../services/storageService';
+import { appColors } from '../../constants/appColorScheme';
 
 interface PaymentScreenProps {
   onComplete: () => void;
@@ -192,7 +193,7 @@ export function PaymentScreen({ onComplete }: PaymentScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1d293d',
+    backgroundColor: appColors.general.background,
   },
   content: {
     flex: 1,

@@ -4,7 +4,6 @@ import { Image } from 'expo-image';
 import { hapticFeedback } from '../../../utils/haptic';
 import i18n from '../../../utils/i18n';
 import { StreakCalendar } from '../StreakCalendar';
-import { OrangeGradientButton } from '../buttons/OrangeGradientButton';
 import { FormAILogo } from '../FormAILogo';
 
 interface StreakModalProps {
@@ -17,9 +16,14 @@ export function StreakModal({ visible, currentStreak, onClose }: StreakModalProp
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const streakTextTranslateY = useRef(new Animated.Value(50)).current;
   const streakTextOpacity = useRef(new Animated.Value(0)).current;
+  const [shouldRender, setShouldRender] = React.useState(visible);
+  const fadeOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (visible) {
+      setShouldRender(true);
+      fadeOpacity.setValue(0);
+      Animated.timing(fadeOpacity, { toValue: 1, duration: 100, useNativeDriver: true }).start();
       // Start the pulsing animation when modal becomes visible - faster pulses for 10 seconds
       const pulseAnimation = Animated.loop(
         Animated.sequence([
@@ -67,11 +71,14 @@ export function StreakModal({ visible, currentStreak, onClose }: StreakModalProp
       };
     } else {
       // Reset animations when modal closes
+      Animated.timing(fadeOpacity, { toValue: 0, duration: 100, useNativeDriver: true }).start(({ finished }) => {
+        if (finished) setShouldRender(false);
+      });
       pulseAnim.setValue(1);
       streakTextTranslateY.setValue(50);
       streakTextOpacity.setValue(0);
     }
-  }, [visible, pulseAnim, streakTextTranslateY, streakTextOpacity]);
+  }, [visible, pulseAnim, streakTextTranslateY, streakTextOpacity, fadeOpacity]);
 
   const handleClose = () => {
     hapticFeedback.selection();
@@ -85,20 +92,21 @@ export function StreakModal({ visible, currentStreak, onClose }: StreakModalProp
 
   return (
     <Modal
-      visible={visible}
+      visible={shouldRender}
       transparent
       onRequestClose={handleClose}
     >
-      <TouchableOpacity 
-        style={styles.overlay} 
-        activeOpacity={1} 
-        onPress={handleClose}
-      >
+      <Animated.View style={{ flex: 1, opacity: fadeOpacity }}>
         <TouchableOpacity 
-          style={styles.modalContainer} 
+          style={styles.overlay} 
           activeOpacity={1} 
-          onPress={(e) => e.stopPropagation()}
+          onPress={handleClose}
         >
+          <TouchableOpacity 
+            style={styles.modalContainer} 
+            activeOpacity={1} 
+            onPress={(e) => e.stopPropagation()}
+          >
           {/* Header with FormAI logo and streak pill */}
           <View style={styles.modalHeader}>
             <FormAILogo 
@@ -162,13 +170,16 @@ export function StreakModal({ visible, currentStreak, onClose }: StreakModalProp
           </Text>
 
           {/* Action button */}
-          <OrangeGradientButton
-            title={i18n.t('home.continue')}
-            onPress={handleContinue}
+          <TouchableOpacity
             style={styles.button}
-          />
+            onPress={handleContinue}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.buttonText}>{i18n.t('home.continue')}</Text>
+          </TouchableOpacity>
         </TouchableOpacity>
       </TouchableOpacity>
+      </Animated.View>
     </Modal>
   );
 }
@@ -233,9 +244,9 @@ const styles = StyleSheet.create({
   },
   streakBadgeText: {
     marginLeft: 2,
-    marginTop: 4,
-    fontSize: 17,
-    fontWeight: '700',
+    marginTop: 2,
+    fontSize: 18,
+    fontWeight: '600',
     color: '#000000',
     fontFamily: 'SF Pro Display',
   },
@@ -275,6 +286,18 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   button: {
+    width: '100%',
+    height: 60,
+    borderRadius: 28,
+    backgroundColor: '#ed694a',
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 6,
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '800',
+    fontFamily: 'SF Pro Display',
   },
 });

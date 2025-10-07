@@ -1,7 +1,8 @@
-import React, { useState, useMemo, useCallback, useRef, useTransition } from 'react';
+import React, { useState, useMemo, useCallback, useRef, useTransition, useEffect } from 'react';
 import { View, Text, StyleSheet, Platform, TouchableOpacity, Dimensions, ActivityIndicator } from 'react-native';
 import { FlashList, ListRenderItemInfo } from '@shopify/flash-list';
 import { LineChart } from 'react-native-chart-kit';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, interpolate } from 'react-native-reanimated';
 import { hapticFeedback } from '../../../utils/haptic';
 import { formatWeightForDisplay } from '../../../utils/unitConversions';
 import { CircleQuestionMark } from 'lucide-react-native';
@@ -311,23 +312,56 @@ const SegmentedControl = React.memo(function SegmentedControl({
     { label: i18n.t('performance.timeRanges.allTime'), value: 'all' as TimeRange },
   ];
 
+  const activeIndex = Segments.findIndex(seg => seg.value === timeRange);
+
+  // Measure container width so segment width matches the actual layout
+  const [containerW, setContainerW] = useState(0);
+  const PADDING = 4; // must match styles.segmented padding
+  const GAP = 2;     // must match styles.segment marginHorizontal total effect (1 left + 1 right)
+  const SEG_COUNT = Segments.length;
+
+  // width available inside the rounded container after its horizontal padding
+  const innerW = Math.max(0, containerW - PADDING * 2);
+  // each segment gets equal width; subtract total gaps between segments
+  const segmentWidth = SEG_COUNT > 0
+    ? Math.floor((innerW - GAP * (SEG_COUNT - 1)) / SEG_COUNT)
+    : 0;
+
+  const animatedIndex = useSharedValue(activeIndex);
+  useEffect(() => {
+    animatedIndex.value = withTiming(activeIndex, { duration: 200 });
+  }, [activeIndex, animatedIndex]);
+
+  const animatedBackgroundStyle = useAnimatedStyle(() => {
+    // translate starts at left padding and moves one segmentWidth + GAP per index
+    const translateX = PADDING + animatedIndex.value * (segmentWidth + GAP);
+    return {
+      transform: [{ translateX }],
+      width: segmentWidth,
+    };
+  }, [segmentWidth]);
+
   return (
     <View style={styles.segmentedWrapper}>
-      <View style={styles.segmented}>
+      <View
+        style={styles.segmented}
+        onLayout={e => setContainerW(e.nativeEvent.layout.width)}
+      >
+        <Animated.View style={[styles.segmentBackground, animatedBackgroundStyle]} />
         {Segments.map((seg) => {
           const active = timeRange === seg.value;
           return (
             <TouchableOpacity
               key={seg.value}
-              style={[styles.segment, active ? styles.segmentActive : styles.segmentInactive]}
+              style={[styles.segment, styles.segmentTouchable]}
               activeOpacity={0.9}
               onPress={() => {
                 if (!active) {
                   hapticFeedback.selection();
-                  // Track progress screen clicks for segment selection
-                  const segmentValue = seg.value === '90d' ? '90 days' : 
-                                     seg.value === '6m' ? '6 months' : 
-                                     seg.value === '1y' ? '1 year' : 'all time';
+                  const segmentValue =
+                    seg.value === '90d' ? '90 days' :
+                    seg.value === '6m' ? '6 months' :
+                    seg.value === '1y' ? '1 year' : 'all time';
                   const cardType = chartType === 'accuracyPerWeight' ? 'AW' : 'AT';
                   track('Progress screen clicks', { event: `${cardType} ${segmentValue}` });
                   onTimeRangeChange(seg.value);
@@ -716,7 +750,7 @@ const styles = StyleSheet.create({
   // --- Segmented control styles ---
   segmentedWrapper: {
     width: '100%',
-    marginBottom: 24,
+    marginBottom: 12,
     paddingHorizontal: 0,
   },
   segmented: {
@@ -724,8 +758,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#F0F0F0',
-    borderRadius: 12,
+    borderRadius: 8,
     padding: 4,
+    position: 'relative',
     // Platform-specific shadow optimization
     ...(Platform.OS === 'android' ? { elevation: 1 } : {
       shadowColor: '#000',
@@ -734,18 +769,13 @@ const styles = StyleSheet.create({
       shadowRadius: 1,
     }),
   },
-  segment: {
-    flexGrow: 1,
-    flexShrink: 0,
-    paddingVertical: 10,
-    paddingHorizontal: 8,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginHorizontal: 1, // Small margin between segments
-  },
-  segmentInactive: {},
-  segmentActive: {
+  segmentBackground: {
+    position: 'absolute',
+    top: 4,
+    left: 0,                  // left is 0; we add PADDING in the animated style
+    bottom: 4,
     backgroundColor: '#FFFFFF',
+    borderRadius: 6,
     // Platform-specific shadow optimization
     ...(Platform.OS === 'android' ? { elevation: 2 } : {
       shadowColor: '#000',
@@ -754,15 +784,28 @@ const styles = StyleSheet.create({
       shadowRadius: 2,
     }),
   },
+  segment: {
+    flex: 1,                  // <— key change: let segments size evenly
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginHorizontal: 1,      // matches GAP/2 left & right (total 2)
+  },
+  segmentTouchable: {
+    zIndex: 1,
+  },
   segmentText: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '700',
     color: '#000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+    textAlign: 'center',
+    flexWrap: 'wrap',
   },
   segmentTextActive: {
-    color: '#000',
-    fontWeight: '800',
+    // No special styling needed - the animated background provides visual indication
   },
   // --- Card / chart ---
   carouselContainer: {
@@ -776,9 +819,12 @@ const styles = StyleSheet.create({
   },
   performanceCard: {
     backgroundColor: '#FFFFFF',
+    borderWidth: 0.5,
+    borderColor: '#f0f0f0',
     borderRadius: 18,
     padding: 16,
     marginBottom: 24,
+    
     // Platform-specific shadow optimization
     ...(Platform.OS === 'android' ? { elevation: 2 } : {
       shadowColor: '#000000',

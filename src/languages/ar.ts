@@ -60,7 +60,10 @@ const ar = {
         "unitSystem": "فشل تحديث نظام الوحدات",
         "language": "فشل تحديث اللغة",
         "message": "يرجى المحاولة لاحقًا"
-      }
+      },
+      "enterName": "أدخل الاسم",
+      "editName": "تعديل الاسم",
+      "userSince": "مستخدم منذ {{year}}"
     },
     "share": {
       "referYourFriends": "ادعُ أصدقاءك",
@@ -109,6 +112,15 @@ const ar = {
       "searchMovements": "ابحث عن الحركات...",
       "useCustomMovement": "استخدام",
       "bestRecordingPractices": "أفضل ممارسات التصوير",
+      "videoPreview": "معاينة الفيديو",
+      "loadingVideo": "جاري تحميل الفيديو...",
+      "weight": "الوزن",
+      "reps": "التكرارات",
+      "next": "التالي",
+      "complete": "إكمال",
+      "close": "إغلاق",
+      "showWeightInformation": "إظهار معلومات الوزن",
+      "showRepsInformation": "إظهار معلومات التكرارات",
       "bodyParts": {
         "all": "الكل",
         "chest": "الصدر",
@@ -588,15 +600,15 @@ const ar = {
       "noStreakMessage": "لا توجد سلسلة بعد. صوّر في أيام متتالية لبدء السلسلة.",
       "continue": "متابعة"
     },
-    "days": {
-      "monday": "ا",
-      "tuesday": "ث",
-      "wednesday": "أ",
-      "thursday": "خ",
-      "friday": "ج",
-      "saturday": "س",
-      "sunday": "ح",
-    },
+      "days": {
+        "monday": "اثن",
+        "tuesday": "ثلث",
+        "wednesday": "أرب",
+        "thursday": "خمي",
+        "friday": "جمع",
+        "saturday": "سبت",
+        "sunday": "أحد",
+      },
     "performance": {
       "title": "التقدم",
       "overview": "نظرة عامة",
@@ -667,6 +679,7 @@ const ar = {
       },
       "noLifts": "لا توجد تمارين مسجلة",
       "startAnalyzingWorkout": "ابدأ في تحليل تمرين اليوم من خلال تصوير فيديو سريع",
+      "notAvailable": "غير متاح",
       "thankYou": "شكراً",
       "shareError": "لا يمكن المشاركة",
       "unknownError": "خطأ غير معروف"
@@ -901,7 +914,7 @@ const ar = {
       "videoTooLong": "الفيديو طويل جدًا",
       "videoTooLongMessage": "يرجى اختيار فيديو أقل من 90 ثانية.",
       "videoTooShort": "الفيديو قصير جدًا",
-      "videoTooShortMessage": "يرجى اختيار فيديو لا يقل عن 3 ثوانٍ.",
+      "videoTooShortMessage": "يرجى التأكد من أن الفيديو لا يقل عن 3 ثوانٍ.",
       "error": "خطأ",
       "failedToSelectVideo": "فشل اختيار الفيديو. حاول مرة أخرى.",
       "failedToGenerateThumbnail": "فشل إنشاء صورة مصغرة للفيديو. حاول مرة أخرى.",

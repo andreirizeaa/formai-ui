@@ -25,6 +25,7 @@ import { OnboardingData } from '../../types/onboarding';
 import i18n from '../../utils/i18n';
 import { hapticFeedback } from '../../utils/haptic';
 import { LANGUAGES } from '../../constants/languages';
+import { appColors } from '../../constants/appColorScheme';
 import { CreateAccountScreen } from '../auth/CreateAccountScreen';
 import { PermissionContainer } from '../../components/ui/PermissionContainer';
 import LottieView from 'lottie-react-native';
@@ -321,7 +322,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
 
   // Global icon configuration
   const iconSize = 24;
-  const iconColor = isDark ? '#FFFFFF' : '#000000';
+  const iconColor = appColors.onboarding.button.inactive.iconColor;
 
   const steps: ReadonlyArray<StepConfig> = useMemo(() => [
     {
@@ -759,6 +760,29 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
   setCurrentStepSelection(null);
 }, [currentStepIndex]);
 
+  // Auto-select second option for options steps
+  useEffect(() => {
+    if (currentStep.type === 'options') {
+      const step = currentStep as OptionsStepConfig<keyof OnboardingData>;
+      const currentValue = onboardingData[step.preferenceKey as keyof OnboardingData] as any;
+      
+      // Only auto-select if no value is currently set
+      if (currentValue === null || currentValue === undefined || currentValue === '') {
+        // Select the second option (index 1) if it exists
+        if (step.options.length > 1) {
+          const secondOption = step.options[1];
+          updateOnboardingData(step.preferenceKey as any, secondOption.value);
+          setCurrentStepSelection(secondOption.value);
+          
+          // Handle language change if it's the language step
+          if (step.preferenceKey === 'language' && typeof secondOption.value === 'string') {
+            setLanguage(secondOption.value);
+          }
+        }
+      }
+    }
+  }, [currentStepIndex, currentStep, onboardingData, updateOnboardingData, setLanguage]);
+
 
 
   function getPerfectFormGoalMessage() {
@@ -1064,21 +1088,21 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       {currentStep.id === 'trainSafer' && (
         <View style={styles.infoStepContainer}>
           <LinearGradient
-              colors={['rgba(246, 51, 154, 0.25)', 'rgba(255, 149, 0, 0.25)']}
-              locations={[0, 0.9963]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
+              colors={appColors.onboarding.comparison.gradient.colors}
+              locations={appColors.onboarding.comparison.gradient.locations}
+              start={appColors.onboarding.comparison.gradient.start}
+              end={appColors.onboarding.comparison.gradient.end}
               style={styles.comparisonCard}
           >
               <View style={styles.comparisonRow}>
                 {/* Without FormAI */}
                 <View style={styles.comparisonSection}>
                   <View style={styles.whiteBoxContainer}>
-                    <Text style={[styles.sectionTitle, { color: '#000000' }]}>
+                    <Text style={[styles.sectionTitle, { color: appColors.onboarding.comparison.sectionTitle }]}>
                       {i18n.t('onboarding.trainSafer.withoutFormAI')}
                     </Text>
-                        <Animated.View style={[styles.percentageBox, { backgroundColor: '#1d293d', height: percentageBoxHeight }]}>
-                        <Text style={[styles.percentageText, { color: '#fff' }]}>
+                        <Animated.View style={[styles.percentageBox, { backgroundColor: appColors.onboarding.comparison.percentageBox.background, height: percentageBoxHeight }]}>
+                        <Text style={[styles.percentageText, { color: appColors.onboarding.comparison.percentageBox.text }]}>
                           60%
                         </Text>
                       </Animated.View>
@@ -1088,11 +1112,11 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                 {/* With FormAI */}
                 <View style={styles.comparisonSection}>
                   <View style={styles.whiteBoxContainer}>
-                    <Text style={[styles.sectionTitle, { color: '#000000' }]}>
+                    <Text style={[styles.sectionTitle, { color: appColors.onboarding.comparison.sectionTitle }]}>
                       {i18n.t('onboarding.trainSafer.withFormAI')}
                     </Text>
-                        <Animated.View style={[styles.formaiBox, { backgroundColor: '#000000', height: formaiBoxHeight }]}>
-                        <Text style={[styles.formaiText, { color: '#FFFFFF' }]}>
+                        <Animated.View style={[styles.formaiBox, { backgroundColor: appColors.onboarding.comparison.formaiBox.background, height: formaiBoxHeight }]}>
+                        <Text style={[styles.formaiText, { color: appColors.onboarding.comparison.formaiBox.text }]}>
                           3x less
                         </Text>
                       </Animated.View>
@@ -1100,7 +1124,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                 </View>
               </View>
 
-            <Text style={[styles.description, { color: '#ffffff' }]}>
+            <Text style={[styles.description, { color: appColors.onboarding.comparison.description }]}>
               {i18n.t('onboarding.trainSafer.description')}
             </Text>
           </LinearGradient>
@@ -1110,21 +1134,21 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       {currentStep.id === 'costComparison' && (
         <View style={styles.infoStepContainer}>
           <LinearGradient
-            colors={['rgba(246, 51, 154, 0.25)', 'rgba(255, 149, 0, 0.25)']}
-            locations={[0, 0.9963]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
+            colors={appColors.onboarding.comparison.gradient.colors}
+            locations={appColors.onboarding.comparison.gradient.locations}
+            start={appColors.onboarding.comparison.gradient.start}
+            end={appColors.onboarding.comparison.gradient.end}
             style={styles.comparisonCard}
           >
               <View style={styles.comparisonRow}>
                 {/* Personal Trainer */}
                 <View style={styles.comparisonSection}>
                   <View style={styles.whiteBoxContainer}>
-                    <Text style={[styles.sectionTitle, { color: '#000000' }]}>
+                    <Text style={[styles.sectionTitle, { color: appColors.onboarding.comparison.sectionTitle }]}>
                       {i18n.t('onboarding.costComparison.personalTrainer')}
                     </Text>
-                        <Animated.View style={[styles.percentageBox, { backgroundColor: '#1d293d', height: percentageBoxHeight }]}>
-                        <Text style={[styles.percentageText, { color: '#ffffff' }]}>
+                        <Animated.View style={[styles.percentageBox, { backgroundColor: appColors.onboarding.comparison.percentageBox.background, height: percentageBoxHeight }]}>
+                        <Text style={[styles.percentageText, { color: appColors.onboarding.comparison.percentageBox.text }]}>
                           $5000+/yr
                         </Text>
                       </Animated.View>
@@ -1134,11 +1158,11 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                 {/* With FormAI */}
                 <View style={styles.comparisonSection}>
                   <View style={styles.whiteBoxContainer}>
-                    <Text style={[styles.sectionTitle, { color: '#000000' }]}>
+                    <Text style={[styles.sectionTitle, { color: appColors.onboarding.comparison.sectionTitle }]}>
                       {i18n.t('onboarding.costComparison.withFormAI')}
                     </Text>
-                        <Animated.View style={[styles.formaiBox, { backgroundColor: '#000000', height: formaiBoxHeight }]}>
-                        <Text style={[styles.formaiText, { color: '#FFFFFF' }]}>
+                        <Animated.View style={[styles.formaiBox, { backgroundColor: appColors.onboarding.comparison.formaiBox.background, height: formaiBoxHeight }]}>
+                        <Text style={[styles.formaiText, { color: appColors.onboarding.comparison.formaiBox.text }]}>
                           {i18n.t('onboarding.costComparison.costLess')}
                         </Text>
                       </Animated.View>
@@ -1146,7 +1170,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                 </View>
               </View>
 
-            <Text style={[styles.description, { color: '#ffffff' }]}>
+            <Text style={[styles.description, { color: appColors.onboarding.comparison.description }]}>
               {i18n.t('onboarding.costComparison.description')}
             </Text>
           </LinearGradient>
@@ -1169,13 +1193,13 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
           )}
 
           <View style={styles.perfectFormGoalMessageContent}>
-            <Text style={[styles.perfectFormGoalMessageTitle]}>
-              <Text style={[styles.highlightedText, { color: '#fe9a00' }]}>
+            <Text style={[styles.perfectFormGoalMessageTitle, { color: appColors.onboarding.perfectFormGoalMessage.title }]}>
+              <Text style={[styles.highlightedText, { color: appColors.onboarding.perfectFormGoalMessage.highlightedText }]}>
                 {getPerfectFormGoalMessage().highlighted}
               </Text>
               {getPerfectFormGoalMessage().rest}
             </Text>
-            <Text style={[styles.perfectFormGoalMessageSubtitle]}>
+            <Text style={[styles.perfectFormGoalMessageSubtitle, { color: appColors.onboarding.perfectFormGoalMessage.subtitle }]}>
               {i18n.t('onboarding.perfectFormGoalMessage.subtitle')}
             </Text>
           </View>
@@ -1192,33 +1216,39 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
         >
           {/* Main card with headline and message */}
           <LinearGradient
-            colors={['rgba(246, 51, 154, 0.25)', 'rgba(255, 149, 0, 0.25)']}
-            locations={[0, 0.9963]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
+            colors={appColors.onboarding.gymChallengeInfo.gradient.colors}
+            locations={appColors.onboarding.gymChallengeInfo.gradient.locations}
+            start={appColors.onboarding.gymChallengeInfo.gradient.start}
+            end={appColors.onboarding.gymChallengeInfo.gradient.end}
             style={styles.gymChallengeInfoCard}
           >
-            <Text style={[styles.gymChallengeInfoHeadline, { color: '#ffffff' }]}>
+            <Text style={[styles.gymChallengeInfoHeadline, { color: appColors.onboarding.gymChallengeInfo.headline }]}>
               {getGymChallengeInfo().headline}
             </Text>
-            <Text style={[styles.gymChallengeInfoMessage, { color: '#ffffff' }]}>
+            <Text style={[styles.gymChallengeInfoMessage, { color: appColors.onboarding.gymChallengeInfo.message }]}>
               {getGymChallengeInfo().message}
             </Text>
           </LinearGradient>
 
           {/* How we get you there section */}
-          <Text style={[styles.howWeGetYouThereTitle]}>
+          <Text style={[styles.howWeGetYouThereTitle, { color: appColors.onboarding.gymChallengeInfo.howWeGetYouThereTitle }]}>
             {i18n.t('onboarding.gymChallengeInfo.howWeGetYouThereTitle')}:
           </Text>
 
           {/* How we get you there items */}
           {getGymChallengeInfo().howWeGetYouThere.map((item: string, index: number) => (
             <AnimatedInfoCard key={index} delay={index * 100}>
-              <View style={styles.howWeGetYouThereCard}>
-                <View style={styles.howWeGetYouThereIcon}>
-                  <Text style={styles.howWeGetYouThereNumber}>{index + 1}</Text>
+              <View style={[styles.howWeGetYouThereCard, { 
+                backgroundColor: appColors.onboarding.gymChallengeInfo.card.background,
+                borderColor: appColors.onboarding.gymChallengeInfo.card.border,
+                borderWidth: 1,
+              }]}>
+                <View style={[styles.howWeGetYouThereIcon, { backgroundColor: appColors.onboarding.gymChallengeInfo.card.iconBackground }]}>
+                  <Text style={[styles.howWeGetYouThereNumber, { color: appColors.onboarding.gymChallengeInfo.card.iconText }]}>
+                    {index + 1}
+                  </Text>
                 </View>
-                <Text style={[styles.howWeGetYouThereItem]}>
+                <Text style={[styles.howWeGetYouThereItem, { color: appColors.onboarding.gymChallengeInfo.card.text }]}>
                   {item}
                 </Text>
               </View>
@@ -1230,14 +1260,16 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       {currentStep.type === 'graph' && (
         <AnimatedGraphContainer>
           <LinearGradient
-            colors={['rgba(246, 51, 154, 0.25)', 'rgba(255, 149, 0, 0.25)']}
-            locations={[0, 0.9963]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
+            colors={appColors.onboarding.graph.gradient.colors}
+            locations={appColors.onboarding.graph.gradient.locations}
+            start={appColors.onboarding.graph.gradient.start}
+            end={appColors.onboarding.graph.gradient.end}
             style={styles.graphGradient}
           >
             <View style={styles.titleContainer}>
-              <Text style={styles.graphTitle}>{i18n.t('onboarding.potentialGraph.chartTitle')}</Text>
+              <Text style={[styles.graphTitle, { color: appColors.onboarding.graph.title }]}>
+                {i18n.t('onboarding.potentialGraph.chartTitle')}
+              </Text>
             </View>
             <LineChart
                 data={{
@@ -1278,13 +1310,13 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
               withInnerLines={false}
               withOuterLines={false}
               chartConfig={{
-                backgroundGradientFrom: '#ffffff',
-                backgroundGradientTo: '#ffffff',
+                backgroundGradientFrom: appColors.onboarding.graph.chart.background,
+                backgroundGradientTo: appColors.onboarding.graph.chart.background,
                 backgroundGradientFromOpacity: 0,
                 backgroundGradientToOpacity: 0,  
                 decimalPlaces: 0,
                 color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-                labelColor: () => `#ffffff`,
+                labelColor: () => appColors.onboarding.graph.chart.labelColor,
                 propsForLabels: {
                   fontSize: 12,
                   fontWeight: '800',
@@ -1297,8 +1329,8 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                 propsForDots: {
                   r: '6',
                   strokeWidth: '2',
-                  stroke: '#000000',
-                  fill: '#FFFFFF',
+                  stroke: appColors.onboarding.graph.chart.dotColor,
+                  fill: appColors.onboarding.graph.chart.background,
                 },
                 fillShadowGradient: '#ffb86a',
                 fillShadowGradientOpacity: 0.6,
@@ -1328,7 +1360,10 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                       key={`trophy-dot-${index}`}
                       style={[styles.customTrophyDot, { left: x - 18, top: y - 18 }]}
                     >
-                      <View style={styles.trophyDotBackground}>
+                      <View style={[styles.trophyDotBackground, { 
+                        backgroundColor: appColors.onboarding.graph.chart.trophyBackground,
+                        borderColor: appColors.onboarding.graph.chart.trophyBorder 
+                      }]}>
                         <Trophy size={20} color="#FFFFFF" />
                       </View>
                     </View>
@@ -1339,7 +1374,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
               bezier
               style={styles.chart}
             />
-            <Text style={styles.graphSubtitle}>
+            <Text style={[styles.graphSubtitle, { color: appColors.onboarding.graph.subtitle }]}>
               {i18n.t('onboarding.potentialGraph.subtitle')}
             </Text>
           </LinearGradient>
@@ -1365,16 +1400,26 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                     {item.icon ? (
                       <View style={[
                         styles.optionIconContainer,
-                        { backgroundColor: selectedValue === item.value ? '#364153' : '#FFFFFF' }
+                        { 
+                          backgroundColor: selectedValue === item.value 
+                            ? appColors.onboarding.button.active.iconBackground 
+                            : appColors.onboarding.button.inactive.iconBackground 
+                        }
                       ]}>
                         {React.cloneElement(item.icon as React.ReactElement<any>, {
-                          color: selectedValue === item.value ? '#FFFFFF' : iconColor
+                          color: selectedValue === item.value 
+                            ? appColors.onboarding.button.active.iconColor 
+                            : appColors.onboarding.button.inactive.iconColor
                         })}
                       </View>
                     ) : item.iconImage ? (
                       <View style={[
                         styles.optionIconContainer,
-                        { backgroundColor: selectedValue === item.value ? '#364153' : '#FFFFFF' }
+                        { 
+                          backgroundColor: selectedValue === item.value 
+                            ? appColors.onboarding.button.active.iconBackground 
+                            : appColors.onboarding.button.inactive.iconBackground 
+                        }
                       ]}>
                         <Image 
                           source={item.iconImage} 
@@ -1392,7 +1437,9 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                         style={[
                           styles.optionLabel,
                           {
-                            color: selectedValue === item.value ? '#000' : '#ffffff',
+                            color: selectedValue === item.value 
+                              ? appColors.onboarding.button.active.text 
+                              : appColors.onboarding.button.inactive.text,
                             fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
                           },
                         ]}
@@ -1442,16 +1489,26 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                     {option.icon ? (
                       <View style={[
                         styles.optionIconContainer,
-                        { backgroundColor: selectedValue === option.value ? '#364153' : '#FFFFFF' }
+                        { 
+                          backgroundColor: selectedValue === option.value 
+                            ? appColors.onboarding.button.active.iconBackground 
+                            : appColors.onboarding.button.inactive.iconBackground 
+                        }
                       ]}>
                         {React.cloneElement(option.icon as React.ReactElement<any>, {
-                          color: selectedValue === option.value ? '#FFFFFF' : iconColor
+                          color: selectedValue === option.value 
+                            ? appColors.onboarding.button.active.iconColor 
+                            : appColors.onboarding.button.inactive.iconColor
                         })}
                       </View>
                     ) : option.iconImage ? (
                       <View style={[
                         styles.optionIconContainer,
-                        { backgroundColor: selectedValue === option.value ? '#364153' : '#FFFFFF' }
+                        { 
+                          backgroundColor: selectedValue === option.value 
+                            ? appColors.onboarding.button.active.iconBackground 
+                            : appColors.onboarding.button.inactive.iconBackground 
+                        }
                       ]}>
                         <Image 
                           source={option.iconImage} 
@@ -1469,7 +1526,9 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                         style={[
                           styles.optionLabel,
                           {
-                            color: selectedValue === option.value ? '#00000' : '#FFFFFF',
+                            color: selectedValue === option.value 
+                              ? appColors.onboarding.button.active.text 
+                              : appColors.onboarding.button.inactive.text,
                             fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
                           },
                         ]}
@@ -1480,7 +1539,11 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                         <Text
                           style={[
                             styles.optionDescription,
-                            { color: selectedValue === option.value ? '#000000' : '#ffffff' },
+                            { 
+                              color: selectedValue === option.value 
+                                ? appColors.onboarding.button.active.text 
+                                : appColors.onboarding.button.inactive.text 
+                            },
                           ]}
                         >
                           {option.description}
@@ -1505,7 +1568,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
         >
           <View style={styles.measurementsRow}>
             <View style={styles.measurePickerSection}>
-              <Text style={[styles.pickerLabel]}>
+              <Text style={[styles.pickerLabel, { color: appColors.onboarding.measurements.pickerLabel }]}>
                 {i18n.t('onboarding.measurements.height')}
               </Text>
               <View style={styles.pickerWrapper}> 
@@ -1526,12 +1589,12 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                       const selected = heightOptions[optionIndex];
                       handleHeightSelect(selected);
                     }}
-                    style={[styles.picker, { color: isDark ? '#FFFFFF' : '#000000' }]}
-                    itemStyle={Platform.OS === 'ios' ? { color: isDark ? '#FFFFFF' : '#000000', fontSize: 14 } : undefined}
-                    dropdownIconColor={isDark ? '#FFFFFF' : '#000000'}
+                    style={[styles.picker, { color: appColors.onboarding.measurements.picker.text }]}
+                    itemStyle={Platform.OS === 'ios' ? { color: appColors.onboarding.measurements.picker.itemText, fontSize: 14 } : undefined}
+                    dropdownIconColor={appColors.onboarding.measurements.picker.dropdownIcon}
                   >
                     {Array.from({ length: repeats * heightOptions.length }, (_, i) => heightOptions[i % heightOptions.length]).map((height, index) => (
-                      <Picker.Item key={`h-${index}`} label={`${height} ${i18n.t('onboarding.measurements.cm')}`} value={index} color={'#ffffff'}/>
+                      <Picker.Item key={`h-${index}`} label={`${height} ${i18n.t('onboarding.measurements.cm')}`} value={index} color={appColors.onboarding.measurements.picker.itemText}/>
                     ))}
                   </Picker>
                 ) : (
@@ -1553,12 +1616,12 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                           const selected = feetOptions[optionIndex];
                           handleFeetSelect(selected);
                         }}
-                        style={[styles.imperialPicker, { color: isDark ? '#FFFFFF' : '#000000' }]}
-                        itemStyle={Platform.OS === 'ios' ? { color: isDark ? '#FFFFFF' : '#000000', fontSize: 14 } : undefined}
-                        dropdownIconColor={isDark ? '#FFFFFF' : '#000000'}
+                        style={[styles.imperialPicker, { color: appColors.onboarding.measurements.picker.text }]}
+                        itemStyle={Platform.OS === 'ios' ? { color: appColors.onboarding.measurements.picker.itemText, fontSize: 14 } : undefined}
+                        dropdownIconColor={appColors.onboarding.measurements.picker.dropdownIcon}
                       >
                         {Array.from({ length: repeats * feetOptions.length }, (_, i) => feetOptions[i % feetOptions.length]).map((feet, index) => (
-                          <Picker.Item key={`f-${index}`} label={`${feet} ft`} value={index} color={'#ffffff'} />
+                          <Picker.Item key={`f-${index}`} label={`${feet} ft`} value={index} color={appColors.onboarding.measurements.picker.itemText} />
                         ))}
                       </Picker>
                     </View>
@@ -1579,12 +1642,12 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                           const selected = inchesOptions[optionIndex];
                           handleInchesSelect(selected);
                         }}
-                        style={[styles.imperialPicker, { color: isDark ? '#FFFFFF' : '#000000' }]}
-                        itemStyle={Platform.OS === 'ios' ? { color: isDark ? '#FFFFFF' : '#000000', fontSize: 14 } : undefined}
-                        dropdownIconColor={isDark ? '#FFFFFF' : '#000000'}
+                        style={[styles.imperialPicker, { color: appColors.onboarding.measurements.picker.text }]}
+                        itemStyle={Platform.OS === 'ios' ? { color: appColors.onboarding.measurements.picker.itemText, fontSize: 14 } : undefined}
+                        dropdownIconColor={appColors.onboarding.measurements.picker.dropdownIcon}
                       >
                         {Array.from({ length: repeats * inchesOptions.length }, (_, i) => inchesOptions[i % inchesOptions.length]).map((inches, index) => (
-                          <Picker.Item key={`i-${index}`} label={`${inches} in`} value={index} color={'#ffffff'} />
+                          <Picker.Item key={`i-${index}`} label={`${inches} in`} value={index} color={appColors.onboarding.measurements.picker.itemText} />
                         ))}
                       </Picker>
                     </View>
@@ -1594,7 +1657,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
             </View>
 
             <View style={styles.measurePickerSection}>
-              <Text style={[styles.pickerLabel]}>
+              <Text style={[styles.pickerLabel, { color: appColors.onboarding.measurements.pickerLabel }]}>
                 {i18n.t('onboarding.measurements.weight')}
               </Text>
               <View style={styles.pickerWrapper}>
@@ -1614,12 +1677,12 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                     const selected = weightOptions[optionIndex];
                     handleWeightSelect(selected);
                   }}
-                  style={[styles.picker, { color: isDark ? '#FFFFFF' : '#000000' }]}
-                  itemStyle={Platform.OS === 'ios' ? { color: isDark ? '#FFFFFF' : '#000000', fontSize: 14 } : undefined}
-                  dropdownIconColor={isDark ? '#FFFFFF' : '#000000'}
+                  style={[styles.picker, { color: appColors.onboarding.measurements.picker.text }]}
+                  itemStyle={Platform.OS === 'ios' ? { color: appColors.onboarding.measurements.picker.itemText, fontSize: 14 } : undefined}
+                  dropdownIconColor={appColors.onboarding.measurements.picker.dropdownIcon}
                 >
                   {Array.from({ length: repeats * weightOptions.length }, (_, i) => weightOptions[i % weightOptions.length]).map((weight, index) => (
-                    <Picker.Item key={`w-${index}`} label={`${weight} ${isMetric ? i18n.t('onboarding.measurements.kg') : i18n.t('onboarding.measurements.lbs')}`} value={index} color={isDark ? '#FFFFFF' : '#ffffff'} />
+                    <Picker.Item key={`w-${index}`} label={`${weight} ${isMetric ? i18n.t('onboarding.measurements.kg') : i18n.t('onboarding.measurements.lbs')}`} value={index} color={appColors.onboarding.measurements.picker.itemText} />
                   ))}
                 </Picker>
               </View>
@@ -1804,10 +1867,11 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
           <View style={styles.allDoneContent}>
             {/* Header with checkmark and "All done!" text */}
             <View style={styles.header}>
-              <CircleCheck size={36} color={'#34C759'} />
+              <CircleCheck size={36} color={appColors.onboarding.allDone.checkmarkColor} />
               <Text 
                 style={[
-                  styles.allDoneText
+                  styles.allDoneText,
+                  { color: appColors.onboarding.allDone.allDoneText }
                 ]}
               >
                 {i18n.t('onboarding.allDone.allDone')}
@@ -1817,7 +1881,8 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
             {/* Main thank you message */}
             <Text 
               style={[
-                styles.thankYouText
+                styles.thankYouText,
+                { color: appColors.onboarding.allDone.thankYouText }
               ]}
             >
               {i18n.t('onboarding.allDone.thankYou')}
@@ -1827,6 +1892,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
             <Text 
               style={[
                 styles.privacyText,
+                { color: appColors.onboarding.allDone.privacyText }
               ]}
             >
               {i18n.t('onboarding.allDone.privacy')}
@@ -2026,7 +2092,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '800',
     marginBottom: 20,
-    color: '#ffffff',
     textAlign: 'center',
   },
   pickerWrapper: {
@@ -2201,26 +2266,22 @@ const styles = StyleSheet.create({
   allDoneText: {
     fontSize: 24,
     fontWeight: '600',
-    color: '#ffffff',
     marginLeft: 8,
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
   },
   thankYouText: {
     fontSize: 40,
     fontWeight: '800',
-    color: '#ffffff',
     textAlign: 'center',
     marginBottom: 16,
     lineHeight: 44,
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto'
-
   },
   privacyText: {
     fontSize: 17,
     fontWeight: '600',
     textAlign: 'center',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
-    color: '#ffffff',
     lineHeight: 22,
   },
   animationContainer: {
@@ -2242,7 +2303,7 @@ const styles = StyleSheet.create({
     height: 40,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: appColors.onboarding.button.inactive.iconBackground,
     borderRadius: 20,
   },
   // Info step styles
@@ -2270,7 +2331,7 @@ const styles = StyleSheet.create({
   },
   whiteBoxContainer: {
     height: 240,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: appColors.onboarding.comparison.whiteBox.background,
     borderRadius: 18,
     padding: 0,
     shadowColor: '#000',
@@ -2358,7 +2419,6 @@ const styles = StyleSheet.create({
     fontSize: 40,
     fontWeight: '800',
     textAlign: 'center',
-    color: '#ffffff',
     marginBottom: 16,
     lineHeight: 44,
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
@@ -2369,7 +2429,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     textAlign: 'center',
-    color: '#ffffff',
     lineHeight: 24,
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
@@ -2412,7 +2471,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textAlign: 'center',
     marginTop: 16,
-    color: '#ffffff',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
     lineHeight: 22,
   },
@@ -2484,15 +2542,11 @@ const styles = StyleSheet.create({
   howWeGetYouThereTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#ffffff',
     textAlign: 'left',
     marginBottom: 4,
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
   },
   howWeGetYouThereCard: {
-    backgroundColor: '#1d293d',
-    borderWidth: 1,
-    borderColor: '#E5E5EA',
     borderRadius: 18,
     paddingHorizontal: 24,
     paddingVertical: 22,
@@ -2504,7 +2558,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 15,
@@ -2512,13 +2565,11 @@ const styles = StyleSheet.create({
   howWeGetYouThereNumber: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
   },
   howWeGetYouThereItem: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#ffffff',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
     flex: 1,
   },

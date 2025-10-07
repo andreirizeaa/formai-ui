@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Modal, ActivityIndicator, Animated } from 'react-native';
 import i18n from '../../../utils/i18n';
 import { hapticFeedback } from '../../../utils/haptic';
 import { X } from 'lucide-react-native';
@@ -19,6 +19,8 @@ export function DuplicateVideoModal({
   onSelectNewVideo 
 }: DuplicateVideoModalProps) {
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
+  const [shouldRender, setShouldRender] = React.useState(isVisible);
+  const fadeOpacity = React.useRef(new Animated.Value(0)).current;
 
   // Track when modal appears
   React.useEffect(() => {
@@ -26,6 +28,18 @@ export function DuplicateVideoModal({
       track('Add analysis', { event: 'Duplicate' });
     }
   }, [isVisible]);
+
+  React.useEffect(() => {
+    if (isVisible) {
+      setShouldRender(true);
+      fadeOpacity.setValue(0);
+      Animated.timing(fadeOpacity, { toValue: 1, duration: 100, useNativeDriver: true }).start();
+      return;
+    }
+    Animated.timing(fadeOpacity, { toValue: 0, duration: 100, useNativeDriver: true }).start(({ finished }) => {
+      if (finished) setShouldRender(false);
+    });
+  }, [isVisible, fadeOpacity]);
 
   const handleViewAnalysis = async () => {
     hapticFeedback.selection();
@@ -64,20 +78,21 @@ export function DuplicateVideoModal({
 
   return (
     <Modal
-      visible={isVisible}
+      visible={shouldRender}
       transparent
       onRequestClose={handleClose}
     >
-      <TouchableOpacity 
-        style={styles.overlay} 
-        activeOpacity={1} 
-        onPress={handleClose}
-      >
+      <Animated.View style={{ flex: 1, opacity: fadeOpacity }}>
         <TouchableOpacity 
-          style={styles.modalContainer} 
+          style={styles.overlay} 
           activeOpacity={1} 
-          onPress={(e) => e.stopPropagation()}
+          onPress={handleClose}
         >
+          <TouchableOpacity 
+            style={styles.modalContainer} 
+            activeOpacity={1} 
+            onPress={(e) => e.stopPropagation()}
+          >
           {/* Close button */}
           <TouchableOpacity 
             style={styles.closeButton} 
@@ -126,6 +141,7 @@ export function DuplicateVideoModal({
           </View>
         </TouchableOpacity>
       </TouchableOpacity>
+      </Animated.View>
     </Modal>
   );
 }
@@ -168,14 +184,14 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '800',
     color: '#000000',
     marginBottom: 24,
     textAlign: 'left',
   },
   message: {
     fontSize: 16,
-    fontWeight: '400',
+    fontWeight: '500',
     color: '#000000',
     lineHeight: 22,
     marginBottom: 24,
@@ -201,13 +217,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#000000',
   },
   buttonOutlinedText: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '800',
     color: '#000000',
   },
   buttonPrimaryText: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '800',
     color: '#FFFFFF',
   },
   buttonDisabled: {

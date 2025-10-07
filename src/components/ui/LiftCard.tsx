@@ -20,7 +20,8 @@ import AnimatedReanimated, {
   withRepeat,
   withTiming as withTiming2,
   withSequence,
-  interpolate
+  interpolate,
+  Easing as Easing2
 } from 'react-native-reanimated';
 
 const AnimatedCircle = AnimatedReanimated.createAnimatedComponent(Circle);
@@ -86,7 +87,7 @@ export const LiftCard = memo(function LiftCard({
   const [deleting, setDeleting] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [resolvedThumb, setResolvedThumb] = useState<string | number | null>(null);
-  const autoResetTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const autoResetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const trackedErrorsRef = useRef<Set<string>>(new Set());
 
   // Identify the row (one id regardless of phase)
@@ -457,7 +458,7 @@ export const LiftCard = memo(function LiftCard({
         if (lift.status === 'waiting') {
           // Animate waiting spinner - slower rotation than trash icon
           waitingSpinnerAnim.value = withRepeat(
-            withTiming2(1, { duration: 4000, easing: Easing.linear }),
+            withTiming2(1, { duration: 4000, easing: Easing2.linear }),
             -1,
             false
           );
@@ -1058,6 +1059,8 @@ const styles = StyleSheet.create({
   // no lifts card styles
   noLiftsCard: {
     backgroundColor: '#FFFFFF',
+    borderWidth: 0.5,
+    borderColor: '#f0f0f0',
     borderRadius: 18,
     paddingVertical: 20,
     paddingHorizontal: 20,

@@ -137,14 +137,7 @@ export const Wrapped = forwardRef<any, WrappedProps>(({
         </View>
 
         {/* Accuracy Card - 30% */}
-          <View style={[styles.accuracyCard, styles.cardShadow, styles.accuracyCard30]}>
-            <LinearGradient
-              colors={['#f6339a', '#fb2c36', '#ff6900', '#fe9a00']}
-              locations={[0, 0.5, 0.8, 1]}
-              style={styles.gradientFill}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-            >
+          <View style={[styles.accuracyCard, styles.cardShadow, styles.accuracyCard30, styles.accuracyCardSolid]}>
             <View style={styles.accuracyHeaderRow}>
               <Text style={styles.accuracyTitle}>{i18n.t('performance.accuracy')}</Text>
             </View>
@@ -152,8 +145,7 @@ export const Wrapped = forwardRef<any, WrappedProps>(({
               <Text style={styles.accuracyValue}>{filteredMetrics.averageAccuracy || 0}%</Text>
               <Zap width={24} height={24} color="#FFFFFF" />
             </View>
-          </LinearGradient>
-        </View>
+          </View>
       </View>
 
       {/* Lifts and Favourite Row */}
@@ -292,14 +284,7 @@ export const Wrapped = forwardRef<any, WrappedProps>(({
         </View>
 
         {/* Accuracy Card - 30% */}
-          <View style={[styles.accuracyCard, styles.cardShadow, styles.accuracyCard30]}>
-            <LinearGradient
-              colors={['#f6339a', '#fb2c36', '#ff6900', '#fe9a00']}
-              locations={[0, 0.5, 0.8, 1]}
-              style={styles.gradientFill}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-            >
+          <View style={[styles.accuracyCard, styles.cardShadow, styles.accuracyCard30, styles.accuracyCardSolid]}>
             <View style={styles.accuracyHeaderRow}>
               <Text style={styles.accuracyTitle}>{i18n.t('performance.accuracy')}</Text>
             </View>
@@ -307,8 +292,7 @@ export const Wrapped = forwardRef<any, WrappedProps>(({
               <Text style={styles.accuracyValue}>{filteredMetrics.averageAccuracy || 0}%</Text>
               <Zap width={24} height={24} color="#FFFFFF" />
             </View>
-          </LinearGradient>
-        </View>
+          </View>
       </View>
 
       {/* Lifts and Favourite Row */}
@@ -485,7 +469,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     borderRadius: 20,
-    backgroundColor: '#1d293d',
+    backgroundColor: '#ffffff',
   },
   statsRow: {
     flexDirection: 'row',
@@ -546,6 +530,13 @@ const styles = StyleSheet.create({
   },
   accuracyCard30: {
     flex: 0.35,
+  },
+  accuracyCardSolid: {
+    backgroundColor: '#fccee8',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
   },
   accuracyHeaderRow: {
     flexDirection: 'row',
@@ -742,7 +733,7 @@ const styles = StyleSheet.create({
   overviewTitle: {
     fontSize: 28,
     fontWeight: '800',
-    color: '#ffffff',
+    color: '#000000',
     textAlign: 'center',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
     marginBottom: 16,

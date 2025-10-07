@@ -2,12 +2,12 @@ import React from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet, Platform, Dimensions, ActivityIndicator, Animated } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LottieView from 'lottie-react-native';
-import { OrangeGradientButton } from '../buttons/OrangeGradientButton';
 import { useTutorial } from '../../../context/TutorialContext';
 import { useUserDetails } from '../../../context/UserDetailsContext';
 import { useLanguage } from '../../../context/LanguageContext';
 import { showAlert } from '../../../services/alertService';
 import Svg, { Path, Rect } from 'react-native-svg';
+import { SkipForward } from 'lucide-react-native';
 import { hapticFeedback } from '../../../utils/haptic';
 import i18n from '../../../utils/i18n';
 import { track } from '../../../services/analytics';
@@ -165,21 +165,59 @@ export function TutorialOverlay() {
             }
           }}
         >
-          <Text style={styles.title}>{step.title}</Text>
+          <View style={styles.titleRow}>
+            <Text style={styles.title}>{step.title}</Text>
+            <View style={styles.rightContainer}>
+              <View style={styles.stepPill}>
+                <Text style={styles.stepPillText}>
+                  {currentStepIndex + 1} / {steps.length}
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={styles.skipIconContainer}
+                onPress={async () => {
+                  hapticFeedback.selection();
+                  // Track tutorial skip
+                  track('Tutorials', { data: 'skipped' });
+                  try {
+                    // Use the new finish and restore data function to restore user's data
+                    if (global.finishTutorialAndRestoreData) {
+                      await global.finishTutorialAndRestoreData();
+                    } else {
+                      // Fallback to regular stop if new function not available
+                      await stop();
+                    }
+                  } catch (error) {
+                    showAlert(
+                      'Error', 
+                      'An error occurred while skipping the tutorial. Please try again.',
+                      undefined,
+                      'TUTORIAL_OVERLAY_SKIP_ERROR',
+                      error
+                    );
+                  }
+                }}
+                activeOpacity={0.7}
+              >
+                <SkipForward size={16} color="#000000" />
+              </TouchableOpacity>
+            </View>
+          </View>
           <Text style={styles.description}>{step.description}</Text>
           
           {isAddButtonStep ? (
             // Single button layout for add_button tutorial
             <View>
-              <OrangeGradientButton
-                title={i18n.t('tutorial.buttons.next')}
+              <TouchableOpacity
+                style={styles.navButtonPrimaryFullWidth}
                 onPress={() => {
                   hapticFeedback.selection();
                   next();
                 }}
-                style={styles.navButtonPrimaryFullWidth}
-                textStyle={styles.navButtonPrimaryText}
-              />
+                activeOpacity={0.8}
+              >
+                <Text style={styles.navButtonPrimaryText}>{i18n.t('tutorial.buttons.next')}</Text>
+              </TouchableOpacity>
               
               {/* Skip guide hyperlink */}
               <TouchableOpacity
@@ -213,26 +251,28 @@ export function TutorialOverlay() {
             </View>
           ) : (
             step.id === 'settings_support_email' && isProcessingStep ? (
-              <OrangeGradientButton
-                title=""
+              <TouchableOpacity
+                style={[styles.navButtonPrimaryFullWidth, styles.navButtonDisabled]}
                 onPress={() => {}}
                 disabled={true}
-                style={styles.navButtonPrimaryFullWidth}
-                textStyle={styles.navButtonPrimaryText}
+                activeOpacity={0.8}
               >
                 <ActivityIndicator color="#FFFFFF" />
-              </OrangeGradientButton>
+              </TouchableOpacity>
             ) : (
-              <OrangeGradientButton
-                title={step.id === 'settings_support_email' ? i18n.t('tutorial.buttons.complete') : hasNext ? i18n.t('tutorial.buttons.next') : i18n.t('tutorial.buttons.complete')}
+              <TouchableOpacity
+                style={styles.navButtonPrimaryFullWidth}
                 onPress={async () => {
                   hapticFeedback.selection();
                   await next();
                 }}
                 disabled={step.id === 'settings_support_email' && isProcessingStep}
-                style={styles.navButtonPrimaryFullWidth}
-                textStyle={styles.navButtonPrimaryText}
-              />
+                activeOpacity={0.8}
+              >
+                <Text style={styles.navButtonPrimaryText}>
+                  {step.id === 'settings_support_email' ? i18n.t('tutorial.buttons.complete') : hasNext ? i18n.t('tutorial.buttons.next') : i18n.t('tutorial.buttons.complete')}
+                </Text>
+              </TouchableOpacity>
             )
             )}
         </View>
@@ -289,12 +329,43 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 10,
   },
+  titleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
   title: {
     fontSize: 24,
     fontWeight: '800',
     color: '#000000',
-    marginBottom: 12,
+    flex: 1,
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
+  },
+  rightContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  stepPill: {
+    backgroundColor: '#F0F0F0',
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  stepPillText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#000000',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
+  skipIconContainer: {
+    width: 26,
+    height: 26,
+    borderRadius: 16,
+    backgroundColor: '#F0F0F0',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   description: {
     fontSize: 17,
@@ -344,9 +415,11 @@ const styles = StyleSheet.create({
   },
   navButtonPrimaryFullWidth: {
     width: '100%',
+    backgroundColor: '#000000',
     borderRadius: 28,
     paddingVertical: 20,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   buttonContentRow: {
     flexDirection: 'row',

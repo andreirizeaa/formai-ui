@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, ScrollView, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, ScrollView, Modal, Animated } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { hapticFeedback } from '../../../utils/haptic';
 import i18n from '../../../utils/i18n';
@@ -28,6 +28,20 @@ export function DateRangeModal({
   onReset,
   title = i18n.t('performance.editDateRange')
 }: DateRangeModalProps) {
+  const [shouldRender, setShouldRender] = React.useState(isVisible);
+  const fadeOpacity = React.useRef(new Animated.Value(0)).current;
+
+  React.useEffect(() => {
+    if (isVisible) {
+      setShouldRender(true);
+      fadeOpacity.setValue(0);
+      Animated.timing(fadeOpacity, { toValue: 1, duration: 100, useNativeDriver: true }).start();
+      return;
+    }
+    Animated.timing(fadeOpacity, { toValue: 0, duration: 100, useNativeDriver: true }).start(({ finished }) => {
+      if (finished) setShouldRender(false);
+    });
+  }, [isVisible, fadeOpacity]);
   // Date picker helper functions - use translated month names
   const months = i18n.t('months.array');
 
@@ -90,21 +104,22 @@ export function DateRangeModal({
 
   return (
     <Modal
-      visible={isVisible}
+      visible={shouldRender}
       transparent={true}
       animationType="none"
       onRequestClose={onClose}
     >
-      <TouchableOpacity 
-        style={styles.overlay} 
-        activeOpacity={1} 
-        onPress={onClose}
-      >
+      <Animated.View style={{ flex: 1, opacity: fadeOpacity }}>
         <TouchableOpacity 
-          style={styles.popupContainer} 
+          style={styles.overlay} 
           activeOpacity={1} 
-          onPress={() => {}} // Prevent closing when clicking inside the modal
+          onPress={onClose}
         >
+          <TouchableOpacity 
+            style={styles.popupContainer} 
+            activeOpacity={1} 
+            onPress={() => {}} // Prevent closing when clicking inside the modal
+          >
           {/* Header */}
           <View style={styles.header}>
             <Text style={styles.headerTitle}>{title}</Text>
@@ -236,8 +251,9 @@ export function DateRangeModal({
               </TouchableOpacity>
             </View>
           </View>
+          </TouchableOpacity>
         </TouchableOpacity>
-      </TouchableOpacity>
+      </Animated.View>
     </Modal>
   );
 }

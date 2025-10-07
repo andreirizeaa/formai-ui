@@ -146,7 +146,7 @@ export function WrappedDetailsScreen({ selectedYear, onClose }: WrappedDetailsSc
           onPress={handleClose}
           activeOpacity={0.8}
         >
-          <X size={20} color="#000000" />
+          <X size={24} color="#000000" />
         </TouchableOpacity>
         
         <Text style={styles.title}>
@@ -158,7 +158,7 @@ export function WrappedDetailsScreen({ selectedYear, onClose }: WrappedDetailsSc
           onPress={handleShare}
           activeOpacity={0.8}
         >
-          <Share size={20} color="#000000" />
+          <Share size={24} color="#000000" />
         </TouchableOpacity>
       </View>
 
@@ -185,7 +185,7 @@ export function WrappedDetailsScreen({ selectedYear, onClose }: WrappedDetailsSc
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1d293d',
+    backgroundColor: '#ffffff',
   },
   header: {
     flexDirection: 'row',
@@ -195,9 +195,9 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   closeButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: '#F0F0F0',
     alignItems: 'center',
     justifyContent: 'center',
@@ -211,9 +211,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   shareButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: '#F0F0F0',
     alignItems: 'center',
     justifyContent: 'center',

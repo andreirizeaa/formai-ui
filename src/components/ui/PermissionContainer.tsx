@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, Animated, Platform, StyleSheet } from 're
 import { useColorScheme } from 'react-native';
 import { hapticFeedback } from '../../utils/haptic';
 import i18n from '../../utils/i18n';
+import { appColors } from '../../constants/appColorScheme';
 
 interface PermissionContainerProps {
   title: string;
@@ -34,7 +35,8 @@ export function PermissionContainer({
       <View style={styles.dialogWrapper}>
         {/* Title above the dialog */}
         <Text style={[
-          styles.permissionTitle
+          styles.permissionTitle,
+          { color: appColors.onboarding.permission.title }
         ]}>
           {title}
         </Text>
@@ -42,21 +44,21 @@ export function PermissionContainer({
         <View style={[
           styles.dialog,
           {
-            backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF',
-            shadowColor: isDark ? '#000000' : '#000000',
+            backgroundColor: appColors.onboarding.permission.dialog.background,
+            shadowColor: appColors.onboarding.permission.dialog.shadow,
           }
         ]}>
           {/* Text Area */}
           <View style={[
             styles.textArea,
             {
-              backgroundColor: isDark ? '#2C2C2E' : '#F0F0F0',
+              backgroundColor: appColors.onboarding.permission.textArea.background,
             }
           ]}>
             <Text style={[
               styles.dialogText,
               {
-                color: isDark ? '#FFFFFF' : '#000000',
+                color: appColors.onboarding.permission.textArea.text,
                 fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
               }
             ]}>
@@ -68,7 +70,7 @@ export function PermissionContainer({
           <View style={[
             styles.buttonContainer,
             {
-              borderTopColor: isDark ? '#2C2C2E' : '#E5E5EA',
+              borderTopColor: appColors.onboarding.permission.buttonContainer.border,
               borderTopWidth: 1,
             }
           ]}>
@@ -77,7 +79,7 @@ export function PermissionContainer({
                 styles.button,
                 styles.dontAllowButton,
                 {
-                  backgroundColor: isDark ? '#2C2C2E' : '#F0F0F0',
+                  backgroundColor: appColors.onboarding.permission.button.dontAllow.background,
                 }
               ]}
               onPress={disableDontAllowButton ? undefined : () => {
@@ -90,7 +92,7 @@ export function PermissionContainer({
               <Text style={[
                 styles.buttonText,
                 {
-                  color: isDark ? '#FFFFFF' : '#000000',
+                  color: appColors.onboarding.permission.button.dontAllow.text,
                   fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
                 }
               ]}>
@@ -101,7 +103,7 @@ export function PermissionContainer({
             <View style={[
               styles.buttonDivider,
               {
-                backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF',
+                backgroundColor: appColors.onboarding.permission.button.divider,
               }
             ]} />
 
@@ -110,7 +112,7 @@ export function PermissionContainer({
                 styles.button,
                 styles.allowButton,
                 {
-                  backgroundColor: isDark ? '#FFFFFF' : '#364153',
+                  backgroundColor: appColors.onboarding.permission.button.allow.background,
                 }
               ]}
               onPress={() => {
@@ -122,7 +124,7 @@ export function PermissionContainer({
               <Text style={[
                 styles.buttonText,
                 {
-                  color: isDark ? '#000000' : '#FFFFFF',
+                  color: appColors.onboarding.permission.button.allow.text,
                   fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
                 }
               ]}>
@@ -162,7 +164,6 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: '800',
     textAlign: 'center',
-    color: '#ffffff',
     lineHeight: 38,
     marginBottom: 40,
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
@@ -215,7 +216,7 @@ const styles = StyleSheet.create({
   },
   animatedFingerContainer: {
     marginTop: 20,
-    marginLeft: '55%',
+    marginLeft: '53%',
     pointerEvents: 'none',
   },
   pointingEmoji: {

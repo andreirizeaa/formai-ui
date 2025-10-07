@@ -6,6 +6,7 @@ import { Asset } from 'expo-asset';
 import { useTutorialTarget } from '../../../../context/TutorialContext';
 import { generateVideoThumbnailWithMetadata } from '../../../../utils/generateVideoThumbnail';
 import { track } from '../../../../services/analytics';
+import i18n from '../../../../utils/i18n';
 
 interface VideoPreviewScreenProps {
   videoUri: string | number;
@@ -44,7 +45,7 @@ function VideoPlayerComponent({ videoUri }: VideoPlayerComponentProps) {
   if (!actualVideoUri) {
     return (
       <View style={styles.noVideoContainer}>
-        <Text style={styles.noVideoText}>Loading video...</Text>
+        <Text style={styles.noVideoText}>{i18n.t('add.loadingVideo')}</Text>
       </View>
     );
   }
@@ -62,8 +63,8 @@ export function VideoPreviewScreen({
   onSelectNewVideo, 
   onContinue, 
   onClose,
-  title = "Video Preview",
-  selectNewVideoText = "Select New Video"
+  title = i18n.t('add.videoPreview'),
+  selectNewVideoText = i18n.t('add.selectNewVideo')
 }: VideoPreviewScreenProps) {
   const { ref: continueButtonRef } = useTutorialTarget('video_preview_continue');
   const { height: screenHeight } = useWindowDimensions();
@@ -112,7 +113,7 @@ export function VideoPreviewScreen({
               <VideoPlayerComponent videoUri={videoUri} />
             ) : (
               <View style={styles.noVideoContainer}>
-                <Text style={styles.noVideoText}>No video available</Text>
+                <Text style={styles.noVideoText}>{i18n.t('add.noVideoAvailable')}</Text>
               </View>
             )}
           </View>
@@ -139,7 +140,7 @@ export function VideoPreviewScreen({
               onContinue();
             }}
           >
-            <Text style={styles.continueButtonText}>Continue</Text>
+            <Text style={styles.continueButtonText}>{i18n.t('add.continue')}</Text>
           </TouchableOpacity>
         </View>
       </View>

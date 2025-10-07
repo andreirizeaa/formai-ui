@@ -12,7 +12,7 @@ const { width: RAW_W } = Dimensions.get('window');
 const SCREEN_WIDTH = Math.round(RAW_W);
 const ITEM_WIDTH = SCREEN_WIDTH;           // page width
 const WEEK_HEIGHT = 80;
-const WEEK_WIDTH = Math.round(SCREEN_WIDTH * 0.9);
+const WEEK_WIDTH = Math.round(SCREEN_WIDTH * 0.95);
 
 interface SwipeableCalendarProps {
   onDateSelect?: (date: Date) => void;
@@ -83,42 +83,55 @@ const WeekPage = React.memo(function WeekPage({
             activeOpacity={day.isFuture ? 1 : 0.7}
             disabled={day.isFuture}
           >
-            <View
-              style={[
-                styles.dayCircle,
-                // Hide entire day circle background when has lifts, or for future dates
-                day.dailyAccuracy > 0 || day.isFuture
-                  ? styles.transparentCircle
-                  : day.isActive
-                  ? styles.selectedCircle
-                  : styles.inactiveDayCircle,
-              ]}
-            >
-              {/* Circular progress indicator for days with lifts - only render when visible AND needed */}
-              {shouldRender && day.dailyAccuracy > 0 && (
-                <CircularProgress percentage={day.dailyAccuracy} size={36} strokeWidth={2} />
-              )}
+            <View style={[
+              styles.dayWrapper,
+              day.isActive && styles.selectedDayWrapper,
+              day.isToday && !day.isActive && styles.todayWrapper
+            ]}>
+              {/* Day acronym above the circle */}
               <Text
                 style={[
-                  styles.dayName,
+                  styles.dayAcronym,
                   day.isActive
-                    ? styles.activeDayText
-                    : styles.inactiveDayText,
+                    ? styles.activeDayAcronym
+                    : styles.inactiveDayAcronym,
                 ]}
               >
                 {day.dayName}
               </Text>
+              
+              <View
+                style={[
+                  styles.dayCircle,
+                  // Hide entire day circle background when has lifts or for future dates
+                  day.dailyAccuracy > 0 || day.isFuture
+                    ? styles.transparentCircle
+                    : day.isActive
+                    ? day.dailyAccuracy === 0 
+                      ? styles.inactiveDayCircle
+                      : styles.selectedCircle
+                    : styles.inactiveDayCircle,
+                ]}
+              >
+                {/* Circular progress indicator for days with lifts - only render when visible AND needed */}
+                {shouldRender && day.dailyAccuracy > 0 && (
+                  <CircularProgress percentage={day.dailyAccuracy} size={36} strokeWidth={2} />
+                )}
+                {/* Day number inside the circle */}
+                <Text
+                  style={[
+                    styles.dayNumber,
+                    day.isActive 
+                      ? styles.activeDayText 
+                      : day.isFuture
+                      ? styles.inactiveDayText
+                      : styles.pastDayText,
+                  ]}
+                >
+                  {day.dayNumber}
+                </Text>
+              </View>
             </View>
-            <Text
-              style={[
-                styles.dayNumber,
-                day.isActive 
-                  ? styles.activeDayText 
-                  : styles.inactiveDayText,
-              ]}
-            >
-              {day.dayNumber}
-            </Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -187,7 +200,7 @@ export function SwipeableCalendar({ onDateSelect, onSwipe, initialSelectedDate }
   const generateWeekData = useCallback(
     (weekDates: Date[]): DayData[] => {
       const today = new Date();
-      const dayNames = [
+      const dayAcronyms = [
         i18n.t('days.sunday'),
         i18n.t('days.monday'),
         i18n.t('days.tuesday'),
@@ -207,7 +220,7 @@ export function SwipeableCalendar({ onDateSelect, onSwipe, initialSelectedDate }
 
         return {
           date,
-          dayName: dayNames[i],
+          dayName: dayAcronyms[i],
           dayNumber: date.getDate().toString(),
           isToday,
           isActive: isSelected,
@@ -351,6 +364,7 @@ export function SwipeableCalendar({ onDateSelect, onSwipe, initialSelectedDate }
 const styles = StyleSheet.create({
   container: {
     backgroundColor: 'transparent',
+    marginBottom: 10,
   },
   weekPage: {
     width: SCREEN_WIDTH,
@@ -366,6 +380,38 @@ const styles = StyleSheet.create({
   dayContainer: {
     alignItems: 'center',
     flex: 1,
+  },
+  dayWrapper: {
+    alignItems: 'center',
+    paddingTop: 6,
+    paddingBottom: 2,
+  },
+  selectedDayWrapper: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    paddingHorizontal: 7,
+    borderWidth: 1,
+    borderColor: '#f0f0f0',
+  },
+  todayWrapper: {
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    borderRadius: 20,
+    paddingHorizontal: 7,
+    borderWidth: 1,
+    borderColor: '#F5F5F5',
+  },
+  dayAcronym: {
+    fontSize: 14,
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+    marginBottom: 8,
+  },
+  activeDayAcronym: {
+    color: '#000000',
+    fontWeight: '700',
+  },
+  inactiveDayAcronym: {
+    color: '#9CA3AF',
+    fontWeight: '600',
   },
   dayCircle: {
     width: 36,
@@ -391,11 +437,6 @@ const styles = StyleSheet.create({
     borderWidth: 0,
     backgroundColor: 'transparent',
   },
-  dayName: {
-    fontSize: 18,
-    fontWeight: '800',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
-  },
   dayNumber: {
     fontSize: 18,
     fontWeight: '600',
@@ -403,9 +444,14 @@ const styles = StyleSheet.create({
   },
   inactiveDayText: {
     color: '#9CA3AF',
+    fontWeight: '600',
+  },
+  pastDayText: {
+    color: '#000000',
+    fontWeight: '600',
   },
   activeDayText: {
     color: '#000000',
-    fontWeight: '700',
+    fontWeight: '600',
   },
 }); 

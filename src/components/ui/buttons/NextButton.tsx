@@ -1,6 +1,6 @@
 import React from 'react';
-import { StyleSheet, Platform, ActivityIndicator } from 'react-native';
-import { OrangeGradientButton } from './OrangeGradientButton';
+import { StyleSheet, Platform, ActivityIndicator, TouchableOpacity, Text } from 'react-native';
+import { appColors } from '../../../constants/appColorScheme';
 
 interface NextButtonProps {
   title: string;
@@ -13,30 +13,47 @@ export function NextButton({ title, onPress, disabled = false, loading = false }
   const isButtonDisabled = disabled || loading;
 
   return (
-    <OrangeGradientButton
-      title={title}
+    <TouchableOpacity
+      style={[
+        styles.button,
+        isButtonDisabled && styles.buttonDisabled
+      ]}
       onPress={onPress}
       disabled={isButtonDisabled}
-      style={styles.container}
+      activeOpacity={0.8}
     >
-      {loading && (
+      {loading ? (
         <ActivityIndicator 
           size="small" 
           color="#FFFFFF" 
         />
+      ) : (
+        <Text style={styles.buttonText}>
+          {title}
+        </Text>
       )}
-    </OrangeGradientButton>
+    </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  button: {
     marginHorizontal: 20,
     marginTop: 16,
     marginBottom: 40,
+    backgroundColor: '#000000',
+    borderRadius: 36,
+    height: 65,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  text: {
+  buttonDisabled: {
+    opacity: 0.5,
+  },
+  buttonText: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '800',
+    color: '#FFFFFF',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
 }); 

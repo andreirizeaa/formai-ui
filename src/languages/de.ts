@@ -59,7 +59,10 @@ const de = {
         "unitSystem": "Aktualisierung des Einheitensystems fehlgeschlagen",
         "language": "Aktualisierung der Sprache fehlgeschlagen",
         "message": "Bitte später erneut versuchen"
-      }
+      },
+      "enterName": "Namen eingeben",
+      "editName": "Namen bearbeiten",
+      "userSince": "Benutzer seit {{year}}"
     },
     "share": {
       "referYourFriends": "Empfiehl uns deinen Freunden",
@@ -108,6 +111,15 @@ const de = {
       "searchMovements": "Bewegungen suchen...",
       "useCustomMovement": "Verwenden",
       "bestRecordingPractices": "Best Practices für Aufnahmen",
+      "videoPreview": "Video-Vorschau",
+      "loadingVideo": "Video wird geladen...",
+      "weight": "Gewicht",
+      "reps": "Wiederholungen",
+      "next": "Weiter",
+      "complete": "Abschließen",
+      "close": "Schließen",
+      "showWeightInformation": "Gewichtsinformationen anzeigen",
+      "showRepsInformation": "Wiederholungsinformationen anzeigen",
       "bodyParts": {
         "all": "Alle",
         "chest": "Brust",
@@ -587,15 +599,15 @@ const de = {
       "noStreakMessage": "Noch keine Serie. Nimm an aufeinanderfolgenden Tagen auf, um zu starten.",
       "continue": "Weiter"
     },
-    "days": {
-      "monday": "Mo",
-      "tuesday": "Di",
-      "wednesday": "Mi",
-      "thursday": "Do",
-      "friday": "Fr",
-      "saturday": "Sa",
-      "sunday": "So",
-    },
+      "days": {
+        "monday": "Mon",
+        "tuesday": "Die",
+        "wednesday": "Mit",
+        "thursday": "Don",
+        "friday": "Fre",
+        "saturday": "Sam",
+        "sunday": "Son",
+      },
     "performance": {
       "title": "Fortschritt",
       "wrapped": "Form AI Wrapped",
@@ -665,6 +677,7 @@ const de = {
       },
       "noLifts": "Keine Lifts aufgezeichnet",
       "startAnalyzingWorkout": "Beginne mit der Analyse des heutigen Trainings durch ein kurzes Video",
+      "notAvailable": "Nicht verfügbar",
       "thankYou": "Danke",
       "shareError": "Teilen nicht möglich",
       "unknownError": "Unbekannter Fehler"
@@ -899,7 +912,7 @@ const de = {
       "videoTooLong": "Video zu lang",
       "videoTooLongMessage": "Bitte wähle ein Video unter 90 Sekunden.",
       "videoTooShort": "Video zu kurz",
-      "videoTooShortMessage": "Bitte wähle ein Video mit mindestens 3 Sekunden.",
+      "videoTooShortMessage": "Bitte stelle sicher, dass das Video mindestens 3 Sekunden lang ist.",
       "error": "Fehler",
       "failedToSelectVideo": "Videoauswahl fehlgeschlagen. Bitte erneut versuchen.",
       "failedToGenerateThumbnail": "Miniaturbild konnte nicht erstellt werden. Bitte erneut versuchen.",

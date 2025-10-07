@@ -18,6 +18,7 @@ import { SettingsScreen } from '../screens/application/settings/SettingsScreen';
 import { PersonalDetailsScreen } from '../screens/application/settings/PersonalDetailsScreen';
 import { EditUnitsScreen } from '../screens/application/settings/EditUnitsScreen';
 import { EditLanguageScreen } from '../screens/application/settings/EditLanguageScreen';
+import { EditNameScreen } from '../screens/application/settings/EditNameScreen';
 import { ShareScreen } from '../screens/application/settings/ShareScreen';
 import { EditCurrentWeightScreen } from '../screens/application/settings/editPersonalDetails/EditCurrentWeightScreen';
 import { EditHeightScreen } from '../screens/application/settings/editPersonalDetails/EditHeightScreen';
@@ -39,6 +40,7 @@ import { useUserDetails } from '../context/UserDetailsContext';
 import { getUserJustPaid, clearUserJustPaid } from '../services/storageService';
 import { UpgradeAppModal } from '../components/ui/modals/UpgradeAppModal';
 import { checkAppVersion, forceCheckAppVersion, VersionCheckResult } from '../services/appVersionService';
+import { TranslucentStatusBar } from '../components/ui/TranslucentStatusBar';
 
 // Types for navigation
 export type MainTabParamList = {
@@ -52,6 +54,7 @@ export type MainStackParamList = {
   PersonalDetails: undefined;
   EditUnits: undefined;
   EditLanguage: undefined;
+  EditName: undefined;
   Share: undefined;
   EditCurrentWeight: { currentValue: string };
   EditHeight: { currentValue: string };
@@ -162,6 +165,10 @@ function SettingsScreenWrapper({ onLogout }: { onLogout?: () => void }) {
     navigation.navigate('EditLanguage');
   };
 
+  const handleEditNamePress = () => {
+    navigation.navigate('EditName');
+  };
+
   const handleSharePress = () => {
     navigation.navigate('Share');
   };
@@ -171,6 +178,7 @@ function SettingsScreenWrapper({ onLogout }: { onLogout?: () => void }) {
       onPersonalDetailsPress={handlePersonalDetailsPress}
       onUnitsPress={handleUnitsPress}
       onLanguagePress={handleLanguagePress}
+      onEditNamePress={handleEditNamePress}
       onSharePress={handleSharePress}
       onLogout={onLogout}
     />
@@ -251,6 +259,18 @@ function EditLanguageScreenWrapper() {
 
   return (
     <EditLanguageScreen
+      onBack={handleBack}
+    />
+  );
+}
+
+function EditNameScreenWrapper() {
+  const navigation = useNavigation<MainStackNavigationProp>();
+  const handleBack = () => {
+    navigation.goBack();
+  };
+  return (
+    <EditNameScreen
       onBack={handleBack}
     />
   );
@@ -758,7 +778,9 @@ function MainTabsNavigator({ onLogout, onAddPress }: { onLogout?: () => void; on
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0, y: 1 }}
       >
-        <SafeAreaView style={styles.safeArea}>
+        {/* Global translucent status bar overlay, positioned outside SafeAreaView so it sits at the true top */}
+        <TranslucentStatusBar tint="light" />
+        <SafeAreaView style={styles.safeArea} edges={['bottom']}>
           <View style={styles.content}>
             {renderScreenContent()}
           </View>
@@ -840,6 +862,13 @@ export function MainAppNavigator({ onLogout, onAddPress }: { onLogout?: () => vo
           <Stack.Screen 
             name="EditLanguage" 
             component={EditLanguageScreenWrapper}
+            options={{
+              presentation: 'card',
+            }}
+          />
+          <Stack.Screen 
+            name="EditName" 
+            component={EditNameScreenWrapper}
             options={{
               presentation: 'card',
             }}
