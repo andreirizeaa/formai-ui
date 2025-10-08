@@ -13,7 +13,7 @@ import { setUserId } from '../../services/storageService';
 import i18n from '../../utils/i18n';
 import { usePlacement } from 'expo-superwall';
 import { usePurchases } from '../../context/PurchasesContext';
-import { identify, track } from '../../services/analytics';
+import { track } from '../../services/analytics';
 import { registerAndSaveExpoPushToken } from '../../services/push';
 import { fetchUserById } from '../../services/userService';
 import { appColors } from '../../constants/appColorScheme';
@@ -182,7 +182,6 @@ export function CreateAccountScreen({ onNext, onBack }: CreateAccountScreenProps
       if (existingUser) {
         // User already exists, just log them in and navigate to main app
         await logIn(data.user.id);
-        identify(data.user.id);
         
         // Track sign in completion for existing user
         track('Sign In Completed', {
@@ -230,9 +229,6 @@ export function CreateAccountScreen({ onNext, onBack }: CreateAccountScreenProps
       updateOnboardingData('profilePicture', profilePicture);
       
       await logIn(data.user.id);
-
-      // Link anonymous analytics events to the user
-      identify(data.user.id);
 
       // Track signup completion
       track('Signup Completed', {

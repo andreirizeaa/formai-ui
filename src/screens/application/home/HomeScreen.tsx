@@ -7,7 +7,7 @@ import { useLoadingLifts } from '../../../context/LoadingLiftsContext';
 import { useFocusEffect } from '@react-navigation/native';
 import { useLiftData, ILiftData } from '../../../context/LiftDataContext';
 import { LoadingLiftData } from '../../../types/Lifts.d';
-import { track } from '../../../services/analytics';
+import { track, identify, setTrackingPermission } from '../../../services/analytics';
 import {
   getTrackingPermissionsAsync,
   requestTrackingPermissionsAsync
@@ -57,6 +57,7 @@ async function requestTrackingPermissionSafe() {
   if (Platform.OS !== 'ios') {
     // track/skip gracefully on non-iOS platforms
     trackPermission('tracking_transparency', false, 'home');
+    setTrackingPermission(false);
     return { status: 'unavailable' };
   }
 
@@ -66,6 +67,16 @@ async function requestTrackingPermissionSafe() {
     if (existing === 'granted' || existing === 'denied') {
       const granted = existing === 'granted';
       trackPermission('tracking_transparency', granted, 'home');
+      setTrackingPermission(granted);
+      
+      // If permission is granted, identify the user
+      if (granted) {
+        const userId = await getUserId();
+        if (userId) {
+          identify(userId);
+        }
+      }
+      
       return { status: existing };
     }
 
@@ -73,11 +84,22 @@ async function requestTrackingPermissionSafe() {
     const result = await requestTrackingPermissionsAsync();
     const granted = result.status === 'granted';
     trackPermission('tracking_transparency', granted, 'home');
+    setTrackingPermission(granted);
+    
+    // If permission is granted, identify the user
+    if (granted) {
+      const userId = await getUserId();
+      if (userId) {
+        identify(userId);
+      }
+    }
+    
     return result;
   } catch (error) {
     // Never crash the UI
     console.warn('ATT request failed:', error);
     trackPermission('tracking_transparency', false, 'home', error instanceof Error ? error.message : 'Unknown error');
+    setTrackingPermission(false);
     return { status: 'unavailable' };
   }
 }
@@ -89,6 +111,7 @@ import { FormAILogo } from '../../../components/ui/FormAILogo';
 import { useUserCheckIns } from '../../../context/UserCheckInsContext';
 import { useTutorialTarget } from '../../../context/TutorialContext';
 import { useSelectedDate } from '../../../context/SelectedDateContext';
+import { getUserId } from '../../../services/storageService';
 
 import i18n from '../../../utils/i18n';
 import { ChevronRight, FileVideoCamera } from 'lucide-react-native';

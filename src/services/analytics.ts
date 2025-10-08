@@ -1,6 +1,7 @@
 import { Mixpanel } from 'mixpanel-react-native';
 
 let mixpanel: Mixpanel | null = null;
+let trackingPermissionGranted: boolean = false;
 
 export async function initAnalytics() {
   try {
@@ -31,9 +32,13 @@ export function track(event: string, props: Record<string, any> = {}) {
   }
 }
 
+export function setTrackingPermission(granted: boolean) {
+  trackingPermissionGranted = granted;
+}
+
 export function identify(userId: string) {
   try {
-    if (mixpanel) {
+    if (mixpanel && trackingPermissionGranted) {
       mixpanel.identify(userId);
       mixpanel.alias(userId, userId); // Links anonymous history to this user
     }
@@ -43,7 +48,7 @@ export function identify(userId: string) {
 
 export function setUserProperties(properties: Record<string, any>) {
   try {
-    if (mixpanel) {
+    if (mixpanel && trackingPermissionGranted) {
       mixpanel.getPeople().set(properties);
     }
   } catch (error) {
