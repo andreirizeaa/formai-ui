@@ -11,7 +11,7 @@ import { LoadingOverlay } from '../overlays/LoadingOverlay';
 import { removeUserId, setUserId } from '../../../services/storageService';
 import { fetchUserById, requiresOnboarding } from '../../../services/userService';
 import { usePurchases } from '../../../context/PurchasesContext';
-import { identify, track } from '../../../services/analytics';
+import { track } from '../../../services/analytics';
 import { registerAndSaveExpoPushToken } from '../../../services/push';
 import { showAlert } from '../../../services/alertService';
 import * as Linking from 'expo-linking';
@@ -86,9 +86,6 @@ export function WelcomeScreenSignIn({
         return;
       }
       await logIn(userId);
-
-      // Link anonymous analytics events to the user
-      identify(userId);
 
       // Track sign-in completion
       track('Sign In Completed', {
