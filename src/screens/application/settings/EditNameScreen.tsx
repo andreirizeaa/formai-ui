@@ -1,7 +1,22 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, TextInput, Keyboard, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { ChevronLeft } from 'lucide-react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Platform,
+  TouchableOpacity,
+  StatusBar,
+  TextInput,
+  Keyboard,
+  ActivityIndicator,
+  InteractionManager,
+  Animated,
+  Easing,
+  KeyboardAvoidingView,
+} from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ChevronLeft, X } from 'lucide-react-native';
 import i18n from '../../../utils/i18n';
 import { hapticFeedback } from '../../../utils/haptic';
 import { showAlert } from '../../../services/alertService';
@@ -16,39 +31,80 @@ export function EditNameScreen({ onBack }: EditNameScreenProps) {
   const { userDetails, updateUserDetails } = useUserDetails();
   const [name, setName] = useState<string>(userDetails?.fullName ?? '');
   const [isSaving, setIsSaving] = useState(false);
+  const [isInputFocused, setIsInputFocused] = useState(false);
 
   const inputRef = useRef<TextInput>(null);
-  const [accessoryBottom, setAccessoryBottom] = useState(0); // Instant positioning, no animation
 
+  // Match WeightRepsScreen animation behavior
+  const accessoryBottom = useRef(new Animated.Value(0)).current;
+  const insets = useSafeAreaInsets();
+  const GAP_ADJUSTMENT = 36; // same as WeightRepsScreen
+
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
+      const task = InteractionManager.runAfterInteractions(() => {
+        const timeoutId = setTimeout(() => {
+          if (!isActive) return;
+          inputRef.current?.focus();
+        }, 550); // match the feel of WeightRepsScreen
+        return () => clearTimeout(timeoutId);
+      });
+
+      return () => {
+        isActive = false;
+        task?.cancel?.();
+      };
+    }, [])
+  );
+
+  // Animate accessory with keyboard height (same structure as WeightRepsScreen)
   useEffect(() => {
-    const t = setTimeout(() => inputRef.current?.focus(), 250);
-    return () => clearTimeout(t);
-  }, []);
+    const showSub =
+      Platform.OS === 'ios'
+        ? Keyboard.addListener('keyboardWillShow', (e) => {
+            const height = e.endCoordinates?.height ?? 0;
+            Animated.timing(accessoryBottom, {
+              toValue: Math.max(height - insets.bottom + GAP_ADJUSTMENT, 0),
+              duration: e.duration ?? 300,
+              easing: Easing.out(Easing.ease),
+              useNativeDriver: false,
+            }).start();
+          })
+        : Keyboard.addListener('keyboardDidShow', (e) => {
+            const height = e.endCoordinates?.height ?? 0;
+            Animated.timing(accessoryBottom, {
+              toValue: Math.max(height + GAP_ADJUSTMENT, 0),
+              duration: 300,
+              easing: Easing.out(Easing.ease),
+              useNativeDriver: false,
+            }).start();
+          });
 
-  useEffect(() => {
-    const showSub = Platform.OS === 'ios'
-      ? Keyboard.addListener('keyboardWillShow', e => {
-          const height = e.endCoordinates?.height ?? 0;
-          setAccessoryBottom(Math.max(height, 0));
-        })
-      : Keyboard.addListener('keyboardDidShow', e => {
-          const height = e.endCoordinates?.height ?? 0;
-          setAccessoryBottom(Math.max(height, 0));
-        });
-
-    const hideSub = Platform.OS === 'ios'
-      ? Keyboard.addListener('keyboardWillHide', () => {
-          setAccessoryBottom(0);
-        })
-      : Keyboard.addListener('keyboardDidHide', () => {
-          setAccessoryBottom(0);
-        });
+    const hideSub =
+      Platform.OS === 'ios'
+        ? Keyboard.addListener('keyboardWillHide', (e) => {
+            Animated.timing(accessoryBottom, {
+              toValue: 0,
+              duration: e.duration ?? 200,
+              easing: Easing.out(Easing.ease),
+              useNativeDriver: false,
+            }).start();
+          })
+        : Keyboard.addListener('keyboardDidHide', () => {
+            Animated.timing(accessoryBottom, {
+              toValue: 0,
+              duration: 200,
+              easing: Easing.out(Easing.ease),
+              useNativeDriver: false,
+            }).start();
+          });
 
     return () => {
       showSub.remove();
       hideSub.remove();
     };
-  }, []);
+  }, [accessoryBottom, insets.bottom]);
 
   const handleSave = async () => {
     if (isSaving) return;
@@ -79,6 +135,7 @@ export function EditNameScreen({ onBack }: EditNameScreenProps) {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
@@ -90,48 +147,77 @@ export function EditNameScreen({ onBack }: EditNameScreenProps) {
         >
           <ChevronLeft width={24} height={24} color="#000000" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{i18n.t('settings.editName') || 'Edit name'}</Text>
+        <Text style={styles.headerTitle}>
+          {i18n.t('settings.editName') || 'Edit name'}
+        </Text>
         <View style={styles.placeholder} />
       </View>
 
-      {/* Input */}
-      <View style={styles.content}>
-        <View style={styles.searchInputContainer}>
-          <View style={styles.inputBackground}>
-            <View style={{ width: '100%' }}>
-              <Text style={styles.pickerLabel}>{i18n.t('settings.enterName')}</Text>
-              <TextInput
-                ref={inputRef}
-                style={styles.searchInput}
-                placeholder={i18n.t('settings.enterName') || 'Enter name'}
-                placeholderTextColor="#8E8E93"
-                value={name}
-                onChangeText={setName}
-                autoCorrect={false}
-                autoCapitalize="words"
-                autoFocus
-                onBlur={() => inputRef.current?.focus()}
-              />
-            </View>
+      {/* Use KAV like WeightRepsScreen (content inside, accessory outside) */}
+      <KeyboardAvoidingView
+        style={styles.kav}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        {/* Input */}
+        <View style={styles.content}>
+          <View style={styles.searchInputContainer}>
+             <View style={styles.inputBackground}>
+               <View style={{ width: '100%' }}>
+                 <Text style={styles.pickerLabel}>{i18n.t('settings.enterName')}</Text>
+                 <View style={styles.inputContainer}>
+                   <TextInput
+                     ref={inputRef}
+                     style={styles.searchInput}
+                     placeholder={i18n.t('settings.enterName') || 'Enter name'}
+                     placeholderTextColor="#8E8E93"
+                     value={name}
+                     onChangeText={setName}
+                     autoCorrect={false}
+                     autoCapitalize="words"
+                     onFocus={() => setIsInputFocused(true)}
+                     onBlur={() => setIsInputFocused(false)}
+                     // Keep keyboard interaction clean; no horizontal motion
+                     textContentType="none"
+                     autoComplete="off"
+                   />
+                   {name.length > 0 && (
+                     <TouchableOpacity
+                       style={styles.clearButton}
+                       onPress={() => {
+                         hapticFeedback.selection();
+                         setName('');
+                       }}
+                       activeOpacity={0.7}
+                     >
+                       <X width={20} height={20} color="#8E8E93" />
+                     </TouchableOpacity>
+                   )}
+                 </View>
+               </View>
+             </View>
           </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
 
-      {/* Keyboard Accessory (instant positioning) */}
-      <View style={[styles.keyboardAccessoryView, { bottom: accessoryBottom }]}> 
-        <TouchableOpacity
-          style={[styles.saveButton, isSaving && { opacity: 0.7 }]}
-          onPress={handleSave}
-          activeOpacity={0.7}
-          disabled={isSaving}
+      {/* Keyboard Accessory - shown only when focused, animates with keyboard height */}
+      {isInputFocused && (
+        <Animated.View
+          style={[styles.keyboardAccessoryView, { bottom: accessoryBottom }]}
         >
-          {isSaving ? (
-            <ActivityIndicator color="#FFFFFF" />
-          ) : (
-            <Text style={styles.saveButtonText}>{i18n.t('settings.save')}</Text>
-          )}
-        </TouchableOpacity>
-      </View>
+          <TouchableOpacity
+            style={[styles.saveButton, isSaving && { opacity: 0.7 }]}
+            onPress={handleSave}
+            activeOpacity={0.7}
+            disabled={isSaving}
+          >
+            {isSaving ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <Text style={styles.saveButtonText}>{i18n.t('settings.save')}</Text>
+            )}
+          </TouchableOpacity>
+        </Animated.View>
+      )}
     </SafeAreaView>
   );
 }
@@ -140,6 +226,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+  },
+  kav: {
+    flex: 1,
+    paddingHorizontal: 20,
   },
   header: {
     flexDirection: 'row',
@@ -167,7 +257,6 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingHorizontal: 20,
     paddingTop: 10,
   },
   searchInputContainer: {
@@ -195,8 +284,13 @@ const styles = StyleSheet.create({
     color: '#8E8E93',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
-  searchInput: {
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     width: '100%',
+  },
+  searchInput: {
+    flex: 1,
     height: 44,
     backgroundColor: 'transparent',
     fontSize: 18,
@@ -205,6 +299,9 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
     textAlignVertical: 'center',
     paddingVertical: 0,
+  },
+  clearButton: {
+    padding: 5,
   },
   keyboardAccessoryView: {
     position: 'absolute',
@@ -234,5 +331,3 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
 });
-
-
