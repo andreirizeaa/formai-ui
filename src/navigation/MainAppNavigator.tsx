@@ -871,6 +871,7 @@ export function MainAppNavigator({ onLogout, onAddPress }: { onLogout?: () => vo
             component={EditNameScreenWrapper}
             options={{
               presentation: 'card',
+              
             }}
           />
           <Stack.Screen 
