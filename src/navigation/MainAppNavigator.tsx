@@ -19,6 +19,7 @@ import { PersonalDetailsScreen } from '../screens/application/settings/PersonalD
 import { EditUnitsScreen } from '../screens/application/settings/EditUnitsScreen';
 import { EditLanguageScreen } from '../screens/application/settings/EditLanguageScreen';
 import { EditNameScreen } from '../screens/application/settings/EditNameScreen';
+import { AppIconScreen } from '../screens/application/settings/AppIconScreen';
 import { ShareScreen } from '../screens/application/settings/ShareScreen';
 import { EditCurrentWeightScreen } from '../screens/application/settings/editPersonalDetails/EditCurrentWeightScreen';
 import { EditHeightScreen } from '../screens/application/settings/editPersonalDetails/EditHeightScreen';
@@ -55,6 +56,7 @@ export type MainStackParamList = {
   EditUnits: undefined;
   EditLanguage: undefined;
   EditName: undefined;
+  AppIcon: undefined;
   Share: undefined;
   EditCurrentWeight: { currentValue: string };
   EditHeight: { currentValue: string };
@@ -169,6 +171,10 @@ function SettingsScreenWrapper({ onLogout }: { onLogout?: () => void }) {
     navigation.navigate('EditName');
   };
 
+  const handleAppIconPress = () => {
+    navigation.navigate('AppIcon');
+  };
+
   const handleSharePress = () => {
     navigation.navigate('Share');
   };
@@ -179,6 +185,7 @@ function SettingsScreenWrapper({ onLogout }: { onLogout?: () => void }) {
       onUnitsPress={handleUnitsPress}
       onLanguagePress={handleLanguagePress}
       onEditNamePress={handleEditNamePress}
+      onAppIconPress={handleAppIconPress}
       onSharePress={handleSharePress}
       onLogout={onLogout}
     />
@@ -271,6 +278,18 @@ function EditNameScreenWrapper() {
   };
   return (
     <EditNameScreen
+      onBack={handleBack}
+    />
+  );
+}
+
+function AppIconScreenWrapper() {
+  const navigation = useNavigation<MainStackNavigationProp>();
+  const handleBack = () => {
+    navigation.goBack();
+  };
+  return (
+    <AppIconScreen
       onBack={handleBack}
     />
   );
@@ -872,6 +891,13 @@ export function MainAppNavigator({ onLogout, onAddPress }: { onLogout?: () => vo
             options={{
               presentation: 'card',
               
+            }}
+          />
+          <Stack.Screen 
+            name="AppIcon" 
+            component={AppIconScreenWrapper}
+            options={{
+              presentation: 'card',
             }}
           />
           <Stack.Screen 

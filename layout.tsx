@@ -100,7 +100,6 @@ function AppContent() {
         const assetsToLoad = [
           require('./assets/formai-homescreen.mp4'),
           require('./assets/recording-tip.png'),
-          require('./assets/formai-ios-icon.png'),
           require('./assets/formai-loading.png'),
           require('./assets/icons/instagram.png'),
           require('./assets/icons/tiktok.png'),

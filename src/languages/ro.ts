@@ -26,6 +26,8 @@ const ro = {
       "selectLanguage": "Selectează limba",
       "units": "Schimbă unitățile",
       "appTheme": "Temă aplicație",
+      "appIcon": "Personalizează Icona Aplicație",
+      "appIconTitle": "Icona Aplicație",
       "whyLowQualityVideos": "De ce au videoclipurile o calitate scăzută?",
       "referFriends": "Recomandă prietenilor",
       "growStrongerTogether": "Deveniți mai puternici împreună!",
@@ -61,7 +63,7 @@ const ro = {
         "language": "Actualizarea limbii a eșuat",
         "message": "Te rugăm să încerci mai târziu"
       },
-      "enterName": "Introduceți numele",
+      "enterName": "Introduceți numele dvs.",
       "editName": "Editați numele",
       "userSince": "Utilizator din {{year}}"
     },

@@ -26,6 +26,8 @@ const ar = {
       "selectLanguage": "اختر اللغة",
       "units": "تغيير الوحدات",
       "appTheme": "سمة التطبيق",
+      "appIcon": "تخصيص أيقونة التطبيق",
+      "appIconTitle": "أيقونة التطبيق",
       "whyLowQualityVideos": "لماذا جودة الفيديو منخفضة؟",
       "referFriends": "دعوة الأصدقاء",
       "growStrongerTogether": "لنصبح أقوى معًا!",
@@ -61,7 +63,7 @@ const ar = {
         "language": "فشل تحديث اللغة",
         "message": "يرجى المحاولة لاحقًا"
       },
-      "enterName": "أدخل الاسم",
+      "enterName": "أدخل اسمك",
       "editName": "تعديل الاسم",
       "userSince": "مستخدم منذ {{year}}"
     },

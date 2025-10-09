@@ -25,7 +25,9 @@ const fr = {
       "language": "Langue",
       "selectLanguage": "Choisir la langue",
       "units": "Changer les unités",
-      "appTheme": "Thème de l’app",
+      "appTheme": "Thème de l'app",
+      "appIcon": "Personnaliser Icône App",
+      "appIconTitle": "Icône App",
       "whyLowQualityVideos": "Pourquoi mes vidéos sont-elles de faible qualité ?",
       "referFriends": "Parrainer des amis",
       "growStrongerTogether": "Devenez plus forts ensemble !",
@@ -61,7 +63,7 @@ const fr = {
         "language": "Échec de mise à jour de la langue",
         "message": "Veuillez réessayer plus tard"
       },
-      "enterName": "Entrer le nom",
+      "enterName": "Entrez votre nom",
       "editName": "Modifier le nom",
       "userSince": "Utilisateur depuis {{year}}"
     },
