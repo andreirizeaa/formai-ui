@@ -709,7 +709,7 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
                 <Text style={styles.profileNameText} numberOfLines={1}>
                   {userDetails?.fullName || i18n.t('settings.enterName')}
                 </Text>
-                <Pencil size={16} color="#8E8E93" />
+                {!userDetails?.fullName && <Pencil size={16} color="#8E8E93" />}
               </View>
               {getUserSinceText() && (
                 <Text style={styles.profileSubtitleText} numberOfLines={1}>
