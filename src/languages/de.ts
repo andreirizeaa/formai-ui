@@ -25,6 +25,8 @@ const de = {
       "selectLanguage": "Sprache auswählen",
       "units": "Einheiten ändern",
       "appTheme": "App-Design",
+      "appIcon": "App-Symbol anpassen",
+      "appIconTitle": "App-Symbol",
       "whyLowQualityVideos": "Warum ist die Videoqualität niedrig?",
       "referFriends": "Freunde einladen",
       "growStrongerTogether": "Gemeinsam stärker werden!",
@@ -60,7 +62,7 @@ const de = {
         "language": "Aktualisierung der Sprache fehlgeschlagen",
         "message": "Bitte später erneut versuchen"
       },
-      "enterName": "Namen eingeben",
+      "enterName": "Geben Sie Ihren Namen ein",
       "editName": "Namen bearbeiten",
       "userSince": "Benutzer seit {{year}}"
     },

@@ -11,8 +11,8 @@ const OWNER = "andreirizea";
 const APP_NAME = "Form AI";
 const BUNDLE_IDENTIFIER = "com.useformai.formai";
 const PACKAGE_NAME = "com.useformai.formai";
-const ICON = "./assets/formai-ios-icon.png";
-const ADAPTIVE_ICON = "./assets/formai-ios-icon.png";
+const ICON = "./assets/appIcons/formai-ios-icon.png";
+const ADAPTIVE_ICON = "./assets/appIcons/formai-ios-icon.png";
 const SCHEME = "formai";
 
 export default ({ config }: ConfigContext): ExpoConfig => {
@@ -100,6 +100,87 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       "expo-task-manager",
       "react-native-vision-camera",
       [
+        "expo-dynamic-app-icon",
+        {
+          default: {
+            image: "./assets/appIcons/formai-ios-icon.png",
+            prerendered: true
+          },
+          black: {
+            image: "./assets/appIcons/form-ai-icon-black.png",
+            prerendered: true
+          },
+          blue: {
+            image: "./assets/appIcons/form-ai-icon-blue.png",
+            prerendered: true
+          },
+          green: {
+            image: "./assets/appIcons/form-ai-icon-green.png",
+            prerendered: true
+          },
+          orange: {
+            image: "./assets/appIcons/form-ai-icon-orange.png",
+            prerendered: true
+          },
+          pink: {
+            image: "./assets/appIcons/form-ai-icon-pink.png",
+            prerendered: true
+          },
+          purple: {
+            image: "./assets/appIcons/form-ai-icon-purple.png",
+            prerendered: true
+          },
+          red: {
+            image: "./assets/appIcons/form-ai-icon-red.png",
+            prerendered: true
+          },
+          yellow: {
+            image: "./assets/appIcons/form-ai-icon-yellow.png",
+            prerendered: true
+          },
+          "gradient-1": {
+            image: "./assets/appIcons/form-ai-icon-gradient-1.png",
+            prerendered: true
+          },
+          "gradient-2": {
+            image: "./assets/appIcons/form-ai-icon-gradient-2.png",
+            prerendered: true
+          },
+          "gradient-3": {
+            image: "./assets/appIcons/form-ai-icon-gradient-3.png",
+            prerendered: true
+          },
+          "gradient-4": {
+            image: "./assets/appIcons/form-ai-icon-gradient-4.png",
+            prerendered: true
+          },
+          "gradient-5": {
+            image: "./assets/appIcons/form-ai-icon-gradient-5.png",
+            prerendered: true
+          },
+          "gradient-6": {
+            image: "./assets/appIcons/form-ai-icon-gradient-6.png",
+            prerendered: true
+          },
+          "gradient-7": {
+            image: "./assets/appIcons/form-ai-icon-gradient-7.png",
+            prerendered: true
+          },
+          "gradient-8": {
+            image: "./assets/appIcons/form-ai-icon-gradient-8.png",
+            prerendered: true
+          },
+          "gradient-9": {
+            image: "./assets/appIcons/form-ai-icon-gradient-9.png",
+            prerendered: true
+          },
+          "gradient-10": {
+            image: "./assets/appIcons/form-ai-icon-gradient-10.png",
+            prerendered: true
+          }
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           backgroundColor: "#ffffff",
@@ -171,8 +252,8 @@ export const getDynamicAppConfig = (
       name: `${APP_NAME}`,
       bundleIdentifier: BUNDLE_IDENTIFIER, // Keep same bundle ID for RevenueCat compatibility
       packageName: PACKAGE_NAME, // Keep same package name for RevenueCat compatibility
-      icon: "./assets/formai-ios-icon.png", // You can create separate preview icons
-      adaptiveIcon: "./assets/formai-ios-icon.png", // You can create separate preview icons
+      icon: "./assets/appIcons/formai-ios-icon.png", // You can create separate preview icons
+      adaptiveIcon: "./assets/appIcons/formai-ios-icon.png", // You can create separate preview icons
       scheme: `${SCHEME}`,
     };
   }
@@ -181,8 +262,8 @@ export const getDynamicAppConfig = (
     name: `${APP_NAME}`,
     bundleIdentifier: BUNDLE_IDENTIFIER, // Keep same bundle ID for RevenueCat compatibility
     packageName: PACKAGE_NAME, // Keep same package name for RevenueCat compatibility
-    icon: "./assets/formai-ios-icon.png", // You can create separate dev icons
-    adaptiveIcon: "./assets/formai-ios-icon.png", // You can create separate dev icons
+    icon: "./assets/appIcons/formai-ios-icon.png", // You can create separate dev icons
+    adaptiveIcon: "./assets/appIcons/formai-ios-icon.png", // You can create separate dev icons
     scheme: `${SCHEME}`,
   };
 };

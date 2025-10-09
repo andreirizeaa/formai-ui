@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Platform, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { Image } from 'expo-image';
 import * as StoreReview from 'expo-store-review';
-import { IdCard, Languages, Ruler, FileText, ShieldCheck, MailPlus, UserMinus, LogOut, School2, Star, FileVideoCamera, Megaphone, RefreshCw, User } from 'lucide-react-native';
+import * as DynamicAppIcon from 'expo-dynamic-app-icon';
+import { useFocusEffect } from '@react-navigation/native';
+import { IdCard, Languages, Ruler, FileText, ShieldCheck, MailPlus, UserMinus, LogOut, School2, Star, FileVideoCamera, Megaphone, RefreshCw, User, Pencil } from 'lucide-react-native';
 import i18n from '../../../utils/i18n';
 import { hapticFeedback } from '../../../utils/haptic';
 import { DeleteAccountModal } from './DeleteAccountModal';
@@ -31,6 +33,7 @@ interface SettingsScreenProps {
   onSharePress: () => void;
   onLogout?: () => void;
   onEditNamePress?: () => void;
+  onAppIconPress?: () => void;
 }
 
 interface SettingsOptionProps {
@@ -75,7 +78,7 @@ function SettingsOption({ icon, title, subtitle, onPress, ref, isLoading }: Sett
   );
 }
 
-export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguagePress, onSharePress, onLogout, onEditNamePress }: SettingsScreenProps) {
+export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguagePress, onSharePress, onLogout, onEditNamePress, onAppIconPress }: SettingsScreenProps) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const { hasHdVideos } = usePurchases();
@@ -84,6 +87,30 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState<string | null>(null);
+  const [currentAppIcon, setCurrentAppIcon] = useState<string>('default');
+
+  // App icon mapping
+  const APP_ICONS = {
+    'default': require('../../../../assets/appIcons/formai-ios-icon.png'),
+    'black': require('../../../../assets/appIcons/form-ai-icon-black.png'),
+    'blue': require('../../../../assets/appIcons/form-ai-icon-blue.png'),
+    'green': require('../../../../assets/appIcons/form-ai-icon-green.png'),
+    'orange': require('../../../../assets/appIcons/form-ai-icon-orange.png'),
+    'pink': require('../../../../assets/appIcons/form-ai-icon-pink.png'),
+    'purple': require('../../../../assets/appIcons/form-ai-icon-purple.png'),
+    'red': require('../../../../assets/appIcons/form-ai-icon-red.png'),
+    'yellow': require('../../../../assets/appIcons/form-ai-icon-yellow.png'),
+    'gradient-1': require('../../../../assets/appIcons/form-ai-icon-gradient-1.png'),
+    'gradient-2': require('../../../../assets/appIcons/form-ai-icon-gradient-2.png'),
+    'gradient-3': require('../../../../assets/appIcons/form-ai-icon-gradient-3.png'),
+    'gradient-4': require('../../../../assets/appIcons/form-ai-icon-gradient-4.png'),
+    'gradient-5': require('../../../../assets/appIcons/form-ai-icon-gradient-5.png'),
+    'gradient-6': require('../../../../assets/appIcons/form-ai-icon-gradient-6.png'),
+    'gradient-7': require('../../../../assets/appIcons/form-ai-icon-gradient-7.png'),
+    'gradient-8': require('../../../../assets/appIcons/form-ai-icon-gradient-8.png'),
+    'gradient-9': require('../../../../assets/appIcons/form-ai-icon-gradient-9.png'),
+    'gradient-10': require('../../../../assets/appIcons/form-ai-icon-gradient-10.png'),
+  };
   const iconSize = 26;
   const iconColor = '#000000';
   const queryClient = useQueryClient();
@@ -113,6 +140,12 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
     onEditNamePress?.();
   };
 
+  const handleAppIconPress = () => {
+    // Track settings screen clicks
+    track('Settings screen clicks', { event: 'App Icon' });
+    onAppIconPress?.();
+  };
+
 
   // Reset loading states on mount to prevent lingering indicators
   useEffect(() => {
@@ -134,6 +167,35 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
     };
     loadLastSyncTime();
   }, []);
+
+  // Load current app icon on mount
+  useEffect(() => {
+    const loadCurrentAppIcon = async () => {
+      try {
+        const icon = await DynamicAppIcon.getAppIcon();
+        setCurrentAppIcon(icon || 'default');
+      } catch (error) {
+        console.warn('Error loading current app icon:', error);
+        setCurrentAppIcon('default');
+      }
+    };
+    loadCurrentAppIcon();
+  }, []);
+
+  // Refresh app icon when screen comes into focus (e.g., returning from AppIconScreen)
+  useFocusEffect(
+    React.useCallback(() => {
+      const refreshAppIcon = async () => {
+        try {
+          const icon = await DynamicAppIcon.getAppIcon();
+          setCurrentAppIcon(icon || 'default');
+        } catch (error) {
+          console.warn('Error refreshing app icon:', error);
+        }
+      };
+      refreshAppIcon();
+    }, [])
+  );
 
   // Reset modal states when component unmounts or navigation occurs
   useEffect(() => {
@@ -643,9 +705,12 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
               )}
             </View>
             <View style={styles.profileTextContainer}>
-              <Text style={styles.profileNameText} numberOfLines={1}>
-                {userDetails?.fullName || i18n.t('settings.enterName')}
-              </Text>
+              <View style={styles.profileNameRow}>
+                <Text style={styles.profileNameText} numberOfLines={1}>
+                  {userDetails?.fullName || i18n.t('settings.enterName')}
+                </Text>
+                <Pencil size={16} color="#8E8E93" />
+              </View>
               {getUserSinceText() && (
                 <Text style={styles.profileSubtitleText} numberOfLines={1}>
                   {getUserSinceText()}
@@ -673,6 +738,17 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
             icon={<Ruler size={iconSize} color={iconColor} />}
             title={i18n.t('settings.units')}
             onPress={handleUnitsPress}
+          />
+          <View style={styles.separator} />
+          <SettingsOption
+            icon={
+              <Image
+                source={APP_ICONS[currentAppIcon as keyof typeof APP_ICONS]}
+                style={{ width: 36, height: 36, borderRadius: (36 / 2) * 0.4453125 }}
+              />
+            }
+            title={i18n.t('settings.appIcon')}
+            onPress={handleAppIconPress}
           />
           {/* <View style={styles.separator} /> */}
           {/* <SettingsOption
@@ -938,6 +1014,11 @@ const styles = StyleSheet.create({
   },
   profileTextContainer: {
     flex: 1,
+  },
+  profileNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   profileNameText: {
     fontSize: 20,
