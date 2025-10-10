@@ -183,8 +183,6 @@ export default ({ config }: ConfigContext): ExpoConfig => {
           }
         }
       ],
-      // Remove iPad alternate icons to avoid App Store warnings about 152/167px alt icons
-      withRemoveIpadAlternateIcons as any,
       [
         "expo-splash-screen",
         {
