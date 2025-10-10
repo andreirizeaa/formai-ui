@@ -1,4 +1,5 @@
 import { ConfigContext, ExpoConfig } from "expo/config";
+import { withInfoPlist, ConfigPlugin } from "@expo/config-plugins";
 import { version } from "./package.json";
 
 // Replace these with your EAS project ID and project slug.
@@ -42,6 +43,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       bundleIdentifier: bundleIdentifier,
       buildNumber: "1",
       infoPlist: {
+        NSLocationWhenInUseUsageDescription:
+          "Form AI may request your location to personalize experiences and support features that depend on your current region and also for usage analytics.",
         UIBackgroundModes: [
           "remote-notification",
           "fetch",
@@ -51,7 +54,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
           {
             CFBundleURLName: "Google Sign-In",
             CFBundleURLSchemes: [
-              "com.googleusercontent.apps.338047674329-5dfpj06alfpfn0phi57c4bgdg6nihv87"
+              process.env.GOOGLE_URL_SCHEME!
             ]
           }
         ],
@@ -180,6 +183,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
           }
         }
       ],
+      // Remove iPad alternate icons to avoid App Store warnings about 152/167px alt icons
+      withRemoveIpadAlternateIcons as any,
       [
         "expo-splash-screen",
         {
@@ -199,7 +204,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       [
         "@react-native-google-signin/google-signin",
         {
-          iosUrlScheme: "com.googleusercontent.apps.338047674329-5dfpj06alfpfn0phi57c4bgdg6nihv87"
+          iosUrlScheme: process.env.GOOGLE_URL_SCHEME!
         }
       ],
       [
@@ -267,3 +272,13 @@ export const getDynamicAppConfig = (
     scheme: `${SCHEME}`,
   };
 };
+
+// Custom plugin: remove CFBundleAlternateIcons for iPad so Apple doesn't expect iPad-specific alt icon sizes
+const withRemoveIpadAlternateIcons: ConfigPlugin = (config) =>
+  withInfoPlist(config, (cfg) => {
+    const ipadIcons = (cfg.modResults as any)["CFBundleIcons~ipad"];
+    if (ipadIcons && typeof ipadIcons === "object") {
+      if (ipadIcons.CFBundleAlternateIcons) delete ipadIcons.CFBundleAlternateIcons;
+    }
+    return cfg;
+  });
