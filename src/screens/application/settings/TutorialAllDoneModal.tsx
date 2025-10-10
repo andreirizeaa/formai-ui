@@ -1,6 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Modal, Platform, Dimensions } from 'react-native';
-import { useColorScheme } from 'react-native';
+import { View, Text, StyleSheet, Modal, Dimensions } from 'react-native';
 import LottieView from 'lottie-react-native';
 import { OrangeGradientButton } from '../../../components/ui/buttons/OrangeGradientButton';
 import i18n from '../../../utils/i18n';
@@ -12,8 +11,6 @@ interface TutorialAllDoneModalProps {
 }
 
 export function TutorialAllDoneModal({ isVisible, onComplete }: TutorialAllDoneModalProps) {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
   const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
   const confettiRef = React.useRef<LottieView>(null as any);
 
@@ -50,22 +47,21 @@ export function TutorialAllDoneModal({ isVisible, onComplete }: TutorialAllDoneM
             source={require('../../../../assets/animations/confetti.json')}
             autoPlay={false}
             loop={false}
-            contentFit="cover"
             ref={confettiRef}
             style={{ width: screenWidth, height: screenHeight * 1.35 }}
           />
         </View>
         <View style={[
           styles.modalContainer,
-          { backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF' }
+          { backgroundColor: '#FFFFFF' }
         ]}>
           <Text style={[
             styles.title,
-            { color: isDark ? '#FFFFFF' : '#000000' }
+            { color: '#000000' }
           ]}>{i18n.t('tutorial.completionModal.title')}</Text>
           <Text style={[
             styles.message,
-            { color: isDark ? '#AEAEB2' : '#000000' }
+            { color: '#000000' }
           ]}>{i18n.t('tutorial.completionModal.message')}</Text>
 
           <View style={styles.footer}>

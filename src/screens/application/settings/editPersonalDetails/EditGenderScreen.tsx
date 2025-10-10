@@ -74,7 +74,6 @@ export function EditGenderScreen({ onBack, currentValue, onSave }: EditGenderScr
         <View style={styles.optionsContainer}>
           <AnimatedOptionButton
             isSelected={selectedGender === 'male'}
-            isDark={false}
             delay={0}
             style={[
               styles.genderButton,
@@ -97,7 +96,6 @@ export function EditGenderScreen({ onBack, currentValue, onSave }: EditGenderScr
 
           <AnimatedOptionButton
             isSelected={selectedGender === 'female'}
-            isDark={false}
             delay={100}
             style={[
               styles.genderButton,

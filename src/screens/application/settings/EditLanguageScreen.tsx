@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, ActivityIndicator, Alert, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useColorScheme } from 'react-native';
 import i18n from '../../../utils/i18n';
 import { hapticFeedback } from '../../../utils/haptic';
 import { useLanguage } from '../../../context/LanguageContext';
@@ -18,8 +17,6 @@ interface EditLanguageScreenProps {
 }
 
 export function EditLanguageScreen({ onBack }: EditLanguageScreenProps) {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
   const { currentLanguage, setLanguage } = useLanguage();
   const { userDetails, isUserDetailsLoaded, refetchUserDetails } = useUserDetails();
   const [selectedLanguage, setSelectedLanguage] = useState(currentLanguage);
@@ -121,7 +118,6 @@ export function EditLanguageScreen({ onBack }: EditLanguageScreenProps) {
               <AnimatedOptionButton
                 key={language.code}
                 isSelected={isSelected}
-                isDark={isDark}
                 delay={index * 50}
                 onPress={() => handleLanguageSelect(language.code)}
                 disabled={isSaving}

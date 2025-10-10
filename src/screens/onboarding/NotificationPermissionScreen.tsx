@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform, Alert } from 'react-native';
-import { useColorScheme } from 'react-native';
 import { OnboardingLayout } from '../../components/layout/OnboardingLayout';
 import i18n from '../../utils/i18n';
 import { hapticFeedback } from '../../utils/haptic';
@@ -13,9 +12,6 @@ interface NotificationPermissionScreenProps {
 }
 
 export function NotificationPermissionScreen({ onNext, onBack }: NotificationPermissionScreenProps) {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
-
   const handleAllowNotifications = async () => {
     hapticFeedback.selection();
     try {
@@ -81,21 +77,21 @@ export function NotificationPermissionScreen({ onNext, onBack }: NotificationPer
         <View style={[
           styles.dialog,
           {
-            backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF',
-            shadowColor: isDark ? '#000000' : '#000000',
+            backgroundColor: '#FFFFFF',
+            shadowColor: '#000000',
           }
         ]}>
           {/* Text Area */}
           <View style={[
             styles.textArea,
             {
-              backgroundColor: isDark ? '#2C2C2E' : '#F0F0F0',
+              backgroundColor: '#F0F0F0',
             }
           ]}>
             <Text style={[
               styles.dialogText,
               {
-                color: isDark ? '#FFFFFF' : '#000000',
+                color: '#000000',
                 fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
               }
             ]}>
@@ -107,7 +103,7 @@ export function NotificationPermissionScreen({ onNext, onBack }: NotificationPer
           <View style={[
             styles.buttonContainer,
             {
-              borderTopColor: isDark ? '#2C2C2E' : '#E5E5EA',
+              borderTopColor: '#E5E5EA',
               borderTopWidth: 1,
             }
           ]}>
@@ -116,7 +112,7 @@ export function NotificationPermissionScreen({ onNext, onBack }: NotificationPer
                 styles.button,
                 styles.dontAllowButton,
                 {
-                  backgroundColor: isDark ? '#2C2C2E' : '#F0F0F0',
+                  backgroundColor: '#F0F0F0',
                 }
               ]}
               onPress={handleDontAllow}
@@ -125,7 +121,7 @@ export function NotificationPermissionScreen({ onNext, onBack }: NotificationPer
               <Text style={[
                 styles.buttonText,
                 {
-                  color: isDark ? '#FFFFFF' : '#000000',
+                  color: '#000000',
                   fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
                 }
               ]}>
@@ -136,7 +132,7 @@ export function NotificationPermissionScreen({ onNext, onBack }: NotificationPer
             <View style={[
               styles.buttonDivider,
               {
-                backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF',
+                backgroundColor: '#FFFFFF',
               }
             ]} />
             
@@ -145,7 +141,7 @@ export function NotificationPermissionScreen({ onNext, onBack }: NotificationPer
                 styles.button,
                 styles.allowButton,
                 {
-                  backgroundColor: isDark ? '#FFFFFF' : '#000000',
+                  backgroundColor: '#000000',
                 }
               ]}
               onPress={handleAllowNotifications}
@@ -154,7 +150,7 @@ export function NotificationPermissionScreen({ onNext, onBack }: NotificationPer
               <Text style={[
                 styles.buttonText,
                 {
-                  color: isDark ? '#000000' : '#FFFFFF',
+                  color: '#FFFFFF',
                   fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
                 }
               ]}>

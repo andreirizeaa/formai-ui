@@ -1,13 +1,11 @@
 import React from 'react';
 import { View, Text, StyleSheet, Platform, TouchableOpacity, Animated, Dimensions, ActivityIndicator } from 'react-native';
 import { Image } from 'expo-image';
-import { useColorScheme } from 'react-native';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import Constants from 'expo-constants';
 import i18n from '../../../utils/i18n';
 import { hapticFeedback } from '../../../utils/haptic';
 import { supabase } from '../../../lib/supabase';
-import { LoadingOverlay } from '../overlays/LoadingOverlay';
 import { removeUserId, setUserId } from '../../../services/storageService';
 import { fetchUserById, requiresOnboarding } from '../../../services/userService';
 import { usePurchases } from '../../../context/PurchasesContext';
@@ -35,8 +33,6 @@ export function WelcomeScreenSignIn({
   onNavigateToOnboarding, 
   onRequirePayment 
 }: WelcomeScreenSignInProps) {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
   const [isSigningIn, setIsSigningIn] = React.useState(false);
   const [isAnimatingOut, setIsAnimatingOut] = React.useState(false);
   const [isVisible, setIsVisible] = React.useState(false);

@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useColorScheme } from 'react-native';
 import i18n from '../../../utils/i18n';
 import { hapticFeedback } from '../../../utils/haptic';
 import { useUserDetails } from '../../../context/UserDetailsContext';
@@ -16,8 +15,6 @@ interface EditUnitsScreenProps {
 }
 
 export function EditUnitsScreen({ onBack }: EditUnitsScreenProps) {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
   const { userDetails } = useUserDetails();
   const [selectedUnit, setSelectedUnit] = React.useState(userDetails?.unitSystem ?? 'metric');
   const [isSaving, setIsSaving] = React.useState(false);
@@ -80,7 +77,6 @@ export function EditUnitsScreen({ onBack }: EditUnitsScreenProps) {
         <View style={styles.optionsContainer}>
           <AnimatedOptionButton
             isSelected={selectedUnit === 'metric'}
-            isDark={isDark}
             delay={0}
             onPress={() => handleUnitSelect('metric')}
             style={[
@@ -110,7 +106,6 @@ export function EditUnitsScreen({ onBack }: EditUnitsScreenProps) {
 
           <AnimatedOptionButton
             isSelected={selectedUnit === 'imperial'}
-            isDark={isDark}
             delay={100}
             onPress={() => handleUnitSelect('imperial')}
             style={[

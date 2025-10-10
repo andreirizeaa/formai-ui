@@ -14,7 +14,6 @@ interface AnimatedOptionButtonProps {
   children: React.ReactNode;
   onPress: () => void;
   isSelected: boolean;
-  isDark: boolean;
   delay: number;
   style?: any;
   activeOpacity?: number;
@@ -26,7 +25,6 @@ export function AnimatedOptionButton({
   children,
   onPress,
   isSelected,
-  isDark,
   delay,
   style,
   activeOpacity = 0.7,

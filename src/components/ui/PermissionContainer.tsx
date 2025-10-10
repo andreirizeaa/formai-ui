@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Animated, Platform, StyleSheet } from 'react-native';
-import { useColorScheme } from 'react-native';
 import { hapticFeedback } from '../../utils/haptic';
 import i18n from '../../utils/i18n';
 import { appColors } from '../../constants/appColorScheme';
@@ -26,9 +25,6 @@ export function PermissionContainer({
   dontAllowButtonText,
   disableDontAllowButton = false,
 }: PermissionContainerProps) {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
-
   return (
     <View style={styles.permissionContainer}>
       {/* Dialog container with flex to center dialog */}
