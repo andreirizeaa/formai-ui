@@ -273,12 +273,13 @@ export const getDynamicAppConfig = (
   };
 };
 
-// Custom plugin: remove CFBundleAlternateIcons for iPad so Apple doesn't expect iPad-specific alt icon sizes
+// Custom plugin: explicitly set empty CFBundleAlternateIcons for iPad so iOS doesn't expect iPad-specific alt icon sizes (152/167px)
 const withRemoveIpadAlternateIcons: ConfigPlugin = (config) =>
   withInfoPlist(config, (cfg) => {
     const ipadIcons = (cfg.modResults as any)["CFBundleIcons~ipad"];
     if (ipadIcons && typeof ipadIcons === "object") {
-      if (ipadIcons.CFBundleAlternateIcons) delete ipadIcons.CFBundleAlternateIcons;
+      // Ensure iPad has no alternate icons declared
+      ipadIcons.CFBundleAlternateIcons = {};
     }
     return cfg;
   });
