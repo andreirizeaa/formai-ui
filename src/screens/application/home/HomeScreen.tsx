@@ -7,7 +7,7 @@ import { useLoadingLifts } from '../../../context/LoadingLiftsContext';
 import { useFocusEffect } from '@react-navigation/native';
 import { useLiftData, ILiftData } from '../../../context/LiftDataContext';
 import { LoadingLiftData } from '../../../types/Lifts.d';
-import { track, identify, setTrackingPermission } from '../../../services/analytics';
+import { track, identify } from '../../../services/analytics';
 import {
   getTrackingPermissionsAsync,
   requestTrackingPermissionsAsync
@@ -57,7 +57,13 @@ async function requestTrackingPermissionSafe() {
   if (Platform.OS !== 'ios') {
     // track/skip gracefully on non-iOS platforms
     trackPermission('tracking_transparency', false, 'home');
-    setTrackingPermission(false);
+    
+    // Always identify user for analytics
+    const userId = await getUserId();
+    if (userId) {
+      identify(userId);
+    }
+    
     return { status: 'unavailable' };
   }
 
@@ -67,14 +73,11 @@ async function requestTrackingPermissionSafe() {
     if (existing === 'granted' || existing === 'denied') {
       const granted = existing === 'granted';
       trackPermission('tracking_transparency', granted, 'home');
-      setTrackingPermission(granted);
       
-      // If permission is granted, identify the user
-      if (granted) {
-        const userId = await getUserId();
-        if (userId) {
-          identify(userId);
-        }
+      // Always identify user for analytics
+      const userId = await getUserId();
+      if (userId) {
+        identify(userId);
       }
       
       return { status: existing };
@@ -84,14 +87,11 @@ async function requestTrackingPermissionSafe() {
     const result = await requestTrackingPermissionsAsync();
     const granted = result.status === 'granted';
     trackPermission('tracking_transparency', granted, 'home');
-    setTrackingPermission(granted);
     
-    // If permission is granted, identify the user
-    if (granted) {
-      const userId = await getUserId();
-      if (userId) {
-        identify(userId);
-      }
+    // Always identify user for analytics
+    const userId = await getUserId();
+    if (userId) {
+      identify(userId);
     }
     
     return result;
@@ -99,7 +99,13 @@ async function requestTrackingPermissionSafe() {
     // Never crash the UI
     console.warn('ATT request failed:', error);
     trackPermission('tracking_transparency', false, 'home', error instanceof Error ? error.message : 'Unknown error');
-    setTrackingPermission(false);
+    
+    // Always identify user for analytics even if permission request fails
+    const userId = await getUserId();
+    if (userId) {
+      identify(userId);
+    }
+    
     return { status: 'unavailable' };
   }
 }
