@@ -1,5 +1,4 @@
 import { ConfigContext, ExpoConfig } from "expo/config";
-import { withInfoPlist, ConfigPlugin } from "@expo/config-plugins";
 import { version } from "./package.json";
 
 // Replace these with your EAS project ID and project slug.
@@ -270,14 +269,3 @@ export const getDynamicAppConfig = (
     scheme: `${SCHEME}`,
   };
 };
-
-// Custom plugin: explicitly set empty CFBundleAlternateIcons for iPad so iOS doesn't expect iPad-specific alt icon sizes (152/167px)
-const withRemoveIpadAlternateIcons: ConfigPlugin = (config) =>
-  withInfoPlist(config, (cfg) => {
-    const ipadIcons = (cfg.modResults as any)["CFBundleIcons~ipad"];
-    if (ipadIcons && typeof ipadIcons === "object") {
-      // Ensure iPad has no alternate icons declared
-      ipadIcons.CFBundleAlternateIcons = {};
-    }
-    return cfg;
-  });
