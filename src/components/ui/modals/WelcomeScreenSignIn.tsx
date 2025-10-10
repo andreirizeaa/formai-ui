@@ -54,7 +54,7 @@ export function WelcomeScreenSignIn({
       import('@react-native-google-signin/google-signin').then(({ GoogleSignin }) => {
         GoogleSignin.configure({
           scopes: ['email', 'profile'],
-          iosClientId: '338047674329-5dfpj06alfpfn0phi57c4bgdg6nihv87.apps.googleusercontent.com',
+          iosClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID!,
         });
       }).catch(() => {
         // Intentionally no logs
