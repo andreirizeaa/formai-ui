@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, Text, StyleSheet, Platform } from 'react-native';
-import { useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BackButton } from '../ui/buttons/BackButton';
 import { ProgressBar } from '../ui/ProgressBar';
@@ -40,9 +39,6 @@ export function OnboardingLayout({
   hideTitle = false,
 }: OnboardingLayoutProps) {
   
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
-
   return (
     <SafeAreaView 
       style={[

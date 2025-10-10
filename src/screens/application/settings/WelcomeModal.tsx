@@ -1,6 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Modal, Platform, Dimensions } from 'react-native';
-import { useColorScheme } from 'react-native';
+import { View, Text, StyleSheet, Modal, Dimensions } from 'react-native';
 import LottieView from 'lottie-react-native';
 import { OrangeGradientButton } from '../../../components/ui/buttons/OrangeGradientButton';
 import i18n from '../../../utils/i18n';
@@ -13,9 +12,6 @@ interface WelcomeModalProps {
 }
 
 export function WelcomeModal({ isVisible, onGetStarted }: WelcomeModalProps) {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
-  const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
   const confettiRef = React.useRef<LottieView>(null as any);
 
   React.useEffect(() => {
@@ -62,16 +58,16 @@ export function WelcomeModal({ isVisible, onGetStarted }: WelcomeModalProps) {
         </View>
         <View style={[
           styles.modalContainer,
-          { backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF' }
+          { backgroundColor: '#FFFFFF' }
         ]}>
           
           <Text style={[
             styles.title,
-            { color: isDark ? '#FFFFFF' : '#000000' }
+            { color: '#000000' }
           ]}>{i18n.t('welcome.modal.title')}</Text>
           <Text style={[
             styles.message,
-            { color: isDark ? '#AEAEB2' : '#000000' }
+            { color: '#000000' }
           ]}>{i18n.t('welcome.modal.message')}</Text>
 
           <View style={styles.footer}>

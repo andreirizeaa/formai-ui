@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform, Animated, Modal, Pressable, ScrollView } from 'react-native';
 import { VideoView, useVideoPlayer } from 'expo-video';
-import { useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AnimatedOptionButton } from '../../components/ui/buttons/AnimatedOptionButton';
 import { WelcomeScreenSignIn } from '../../components/ui/modals/WelcomeScreenSignIn';
@@ -9,7 +8,6 @@ import { useLanguage } from '../../context/LanguageContext';
 import { LANGUAGES } from '../../constants/languages';
 import i18n from '../../utils/i18n';
 import { hapticFeedback } from '../../utils/haptic';
-import { getUserId } from '../../services/storageService';
 import { track } from '../../services/analytics';
 import { X } from 'lucide-react-native';
 import { appColors } from '../../constants/appColorScheme';
@@ -29,9 +27,6 @@ export function WelcomeScreen({
   onRequirePayment, 
   isAppVisible = false 
 }: WelcomeScreenProps) {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
-  const [userId, setUserId] = useState<string | null>(null);
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const [showSignInModal, setShowSignInModal] = useState(false);
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
@@ -52,14 +47,6 @@ export function WelcomeScreen({
     player.muted = true;
     playerRef.current = player;
   });
-
-  useEffect(() => {
-    const fetchUserId = async () => {
-      const userId = await getUserId();
-      setUserId(userId);
-    };
-    fetchUserId();
-  }, []);
 
   // Fade in animation when component mounts
   useEffect(() => {
@@ -338,7 +325,6 @@ export function WelcomeScreen({
                     key={item.code}
                     onPress={() => handleLanguageSelect(item.code)}
                     isSelected={currentLanguage === item.code}
-                    isDark={false}
                     delay={index * 50} // Stagger animation
                     style={[
                       styles.languageButton,

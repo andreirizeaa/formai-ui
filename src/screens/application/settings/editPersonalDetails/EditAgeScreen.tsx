@@ -160,7 +160,6 @@ export function EditAgeScreen({ onBack, currentValue, onSave }: EditAgeScreenPro
               key={ageRange.value}
               onPress={() => handleAgeRangeSelect(ageRange.value)}
               isSelected={selectedAgeRange === ageRange.value}
-              isDark={false}
               delay={index * 100}
               style={[
                 styles.ageRangeButton,

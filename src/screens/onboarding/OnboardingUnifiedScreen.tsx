@@ -7,7 +7,6 @@ import ReanimatedAnimated, {
   withDelay 
 } from 'react-native-reanimated';
 import { Image } from 'expo-image';
-import { useColorScheme } from 'react-native';
 import { showAlert } from '../../services/alertService';
 import { openAppSettings } from '../../utils/openAppSettings';
 import { useNavigation } from '@react-navigation/native';
@@ -29,7 +28,7 @@ import { appColors } from '../../constants/appColorScheme';
 import { CreateAccountScreen } from '../auth/CreateAccountScreen';
 import { PermissionContainer } from '../../components/ui/PermissionContainer';
 import LottieView from 'lottie-react-native';
-import { BicepsFlexed, User, ShieldPlus, Bike, HeartPulse, CircleX, AudioWaveform, ChartNoAxesColumnDecreasing, BookCopy, ShieldOff, BatteryLow, Ellipsis, Sprout, Shrub, TreePine, ChartNoAxesCombined, Hospital, Dumbbell, ShieldCheck, ChartNoAxesColumnIncreasing, ClockArrowUp, BatteryWarning, BatteryMedium, BatteryFull, PartyPopper, Weight, Scale, TrendingUp, ThumbsUp, ThumbsDown, Users, CircleCheck, Trophy, X } from 'lucide-react-native';
+import { BicepsFlexed, User, ShieldPlus, Bike, HeartPulse, AudioWaveform, ChartNoAxesColumnDecreasing, BookCopy, ShieldOff, BatteryLow, Ellipsis, Sprout, Shrub, TreePine, ChartNoAxesCombined, Hospital, Dumbbell, ShieldCheck, ChartNoAxesColumnIncreasing, ClockArrowUp, BatteryWarning, BatteryMedium, BatteryFull, PartyPopper, Weight, Scale, TrendingUp, ThumbsUp, ThumbsDown, Users, CircleCheck, Trophy, X } from 'lucide-react-native';
 import { LineChart } from 'react-native-chart-kit';
 import { SingleDotIcon, SixDotsIcon, ThreeDotsIcon } from '../../components/icons/icons';
 import { Line } from 'react-native-svg';
@@ -315,8 +314,6 @@ type StepConfig =
 
 export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
   const navigation = useNavigation();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
   const { onboardingData, updateOnboardingData } = useOnboarding();
   const { setLanguage, currentLanguage } = useLanguage();
 
@@ -1392,7 +1389,6 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                 <AnimatedOptionButton
                   onPress={() => handleSelectOptionStep(item.value)}
                   isSelected={selectedValue === item.value}
-                  isDark={isDark}
                   delay={0}
                   hasIcon={!!(item.icon || item.iconImage)}
                 >
@@ -1458,7 +1454,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
             initialNumToRender={16}
             maxToRenderPerBatch={20}
             updateCellsBatchingPeriod={16}
-            indicatorStyle={isDark ? 'white' : 'black'}
+            indicatorStyle={'black'}
           />
         ) : (
           <ScrollView
@@ -1467,7 +1463,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
             showsVerticalScrollIndicator
             persistentScrollbar
             scrollIndicatorInsets={{ right: 1 }}
-            indicatorStyle={isDark ? 'white' : 'black'}
+            indicatorStyle={'black'}
             bounces
             alwaysBounceVertical={false}
             nestedScrollEnabled
@@ -1480,7 +1476,6 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                   key={String(option.value)}
                   onPress={() => handleSelectOptionStep(option.value)}
                   isSelected={selectedValue === option.value}
-                  isDark={isDark}
                   delay={index * 100}
                   style={option.description ? styles.optionWithDescription : undefined}
                   hasIcon={!!(option.icon || option.iconImage)}
@@ -1703,7 +1698,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
             />
           </View>
           <View style={{ alignItems: 'center', justifyContent: 'center', marginBottom: 20, marginTop: -80 }}>
-            <Text style={{ fontSize: 24, fontWeight: '500', textAlign: 'center', width: '80%', color: isDark ? '#FFFFFF' : '#000000' }}>
+            <Text style={{ fontSize: 24, fontWeight: '500', textAlign: 'center', width: '80%', color: '#000000' }}>
               {i18n.t('onboarding.rating.middleText')}
             </Text>
           </View>
@@ -1719,7 +1714,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
             <View style={[
               styles.testimonialBox, 
               { 
-                backgroundColor: isDark ? 'rgba(28, 28, 30, 0.5)' : 'rgba(226, 232, 240, 0.6)',
+                backgroundColor: 'rgba(226, 232, 240, 0.6)',
               }
             ]}>
               <View style={styles.testimonialHeader}>
@@ -1729,14 +1724,14 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                 />
                 <View style={styles.userInfo}>
                   <View style={styles.nameStarsRow}>
-                                    <Text style={[styles.userName, { color: isDark ? '#FFFFFF' : '#000000' }]}>
+                                    <Text style={[styles.userName, { color: '#000000' }]}>
                   Sarah Johnson
                 </Text>
                     <Text style={styles.userStars}>⭐⭐⭐⭐⭐</Text>
                   </View>
                 </View>
               </View>
-              <Text style={[styles.testimonialText, { color: isDark ? '#FFFFFF' : '#000000' }]}>
+              <Text style={[styles.testimonialText, { color: '#000000' }]}>
                 "I lost 12 lbs in 6 weeks! The form corrections helped me avoid injury and I finally feel confident in the gym. Best investment I've made for my fitness!"
               </Text>
             </View>
@@ -1745,7 +1740,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
             <View style={[
               styles.testimonialBox, 
               { 
-                backgroundColor: isDark ? 'rgba(28, 28, 30, 0.5)' : 'rgba(226, 232, 240, 0.6)',
+                backgroundColor: 'rgba(226, 232, 240, 0.6)',
               }
             ]}>
               <View style={styles.testimonialHeader}>
@@ -1755,14 +1750,14 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                 />
                 <View style={styles.userInfo}>
                   <View style={styles.nameStarsRow}>
-                                    <Text style={[styles.userName, { color: isDark ? '#FFFFFF' : '#000000' }]}>
+                                    <Text style={[styles.userName, { color: '#000000' }]}>
                   Mike Chen
                 </Text>
                     <Text style={styles.userStars}>⭐⭐⭐⭐⭐</Text>
                   </View>
                 </View>
               </View>
-              <Text style={[styles.testimonialText, { color: isDark ? '#FFFFFF' : '#000000' }]}>
+              <Text style={[styles.testimonialText, { color: '#000000' }]}>
                 "Perfect form coaching! I increased my deadlift by 40lbs safely. The real-time feedback is incredible and prevented me from making costly mistakes."
               </Text>
             </View>
@@ -1771,7 +1766,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
             <View style={[
               styles.testimonialBox, 
               { 
-                backgroundColor: isDark ? 'rgba(28, 28, 30, 0.5)' : 'rgba(226, 232, 240, 0.6)',
+                backgroundColor: 'rgba(226, 232, 240, 0.6)',
               }
             ]}>
               <View style={styles.testimonialHeader}>
@@ -1781,14 +1776,14 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                 />
                 <View style={styles.userInfo}>
                   <View style={styles.nameStarsRow}>
-                                    <Text style={[styles.userName, { color: isDark ? '#FFFFFF' : '#000000' }]}>
+                                    <Text style={[styles.userName, { color: '#000000' }]}>
                   Emma Rodriguez
                 </Text>
                     <Text style={styles.userStars}>⭐⭐⭐⭐⭐</Text>
                   </View>
                 </View>
               </View>
-              <Text style={[styles.testimonialText, { color: isDark ? '#FFFFFF' : '#000000' }]}>
+              <Text style={[styles.testimonialText, { color: '#000000' }]}>
                 "Game changer for beginners! I went from being intimidated by the gym to crushing my workouts with confidence. Worth every penny!"
               </Text>
             </View>

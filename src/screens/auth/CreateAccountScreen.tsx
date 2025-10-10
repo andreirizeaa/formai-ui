@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Platform, TouchableOpacity } from 'react-native';
 import { Image } from 'expo-image';
-import { useColorScheme } from 'react-native';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import Constants from 'expo-constants';
 import { hapticFeedback } from '../../utils/haptic';
@@ -11,7 +10,6 @@ import { LoadingOverlay } from '../../components/ui/overlays/LoadingOverlay';
 import { showAlert } from '../../services/alertService';
 import { setUserId } from '../../services/storageService';
 import i18n from '../../utils/i18n';
-import { usePlacement } from 'expo-superwall';
 import { usePurchases } from '../../context/PurchasesContext';
 import { track } from '../../services/analytics';
 import { registerAndSaveExpoPushToken } from '../../services/push';
@@ -25,8 +23,6 @@ interface CreateAccountScreenProps {
 }
 
 export function CreateAccountScreen({ onNext, onBack }: CreateAccountScreenProps) {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
   const { onboardingData, updateOnboardingData } = useOnboarding();
   const { logIn } = usePurchases();
   const [isSigningIn, setIsSigningIn] = React.useState(false);

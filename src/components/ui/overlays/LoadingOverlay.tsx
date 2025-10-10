@@ -1,15 +1,11 @@
 import React from 'react';
 import { View, StyleSheet, ActivityIndicator, Modal } from 'react-native';
-import { useColorScheme } from 'react-native';
 
 interface LoadingOverlayProps {
   visible: boolean;
 }
 
 export function LoadingOverlay({ visible }: LoadingOverlayProps) {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
-
   if (!visible) return null;
 
   return (
