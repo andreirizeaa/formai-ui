@@ -27,6 +27,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     name: name,
     version, // Automatically bump your project version with `npm version patch`, `npm version minor` or `npm version major`.
     slug: PROJECT_SLUG, // Must be consistent across all environments.
+    platforms: ["ios"], // iPhone-only
     orientation: "portrait",
     userInterfaceStyle: "light",
     newArchEnabled: true,
@@ -38,7 +39,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       backgroundColor: "#ffffff"
     },
     ios: {
-      supportsTablet: true,
+      supportsTablet: false, // iPhone-only, no iPad support
       bundleIdentifier: bundleIdentifier,
       buildNumber: "1",
       infoPlist: {
