@@ -427,15 +427,17 @@ const ro = {
         "subtitle": "Accesul la cameră este necesar pentru FormAI.",
         "dialogText": "FormAI dorește acces la cameră.",
         "allow": "Permite",
-        "dontAllow": "Nu permite"
+        "dontAllow": "Nu permite",
+        "permissionRequired": "Permisiune cameră necesară",
+        "permissionRequiredMessage": "Accesul la cameră este necesar pentru a continua. Îl poți activa în Setări."
       },
       "mediaLibraryPermission": {
         "title": "Permite accesul la biblioteca de fotos",
         "dialogText": "FormAI dorește acces la biblioteca de fotos.",
         "allow": "Permite",
         "dontAllow": "Nu permite",
-        "permissionRequired": "Permisiune Necesară",
-        "permissionRequiredMessage": "Accesul la biblioteca de fotos este necesar pentru a încărca videoclipuri din galeria camerei.",
+        "permissionRequired": "Permisiune foto necesară",
+        "permissionRequiredMessage": "Accesul la foto este necesar pentru a continua. Îl poți activa în Setări.",
         "openSettings": "Deschide Setările",
         "tryAgain": "Încearcă Din Nou",
         "error": "Eroare de Permisiune",

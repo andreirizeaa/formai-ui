@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, Keyboard, Modal, Animated } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Keyboard, Modal, Animated, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Camera, useCameraDevice, type VideoFile, useCameraFormat } from 'react-native-vision-camera';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -688,7 +688,11 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
           allowButtonText={i18n.t('onboarding.cameraPermission.allow')}
           dontAllowButtonText={i18n.t('onboarding.cameraPermission.dontAllow')}
           onDontAllow={() => {
-            // Don't allow just stays in this state
+            hapticFeedback.selection();
+            Alert.alert(
+              i18n.t('onboarding.cameraPermission.permissionRequired'),
+              i18n.t('onboarding.cameraPermission.permissionRequiredMessage')
+            );
           }}
           onAllow={requestCameraPermissionFromUser}
         />

@@ -427,15 +427,17 @@ const ar = {
         "subtitle": "الوصول للكاميرا مطلوب لـ FormAI.",
         "dialogText": "يريد FormAI الوصول إلى الكاميرا.",
         "allow": "سماح",
-        "dontAllow": "عدم السماح"
+        "dontAllow": "عدم السماح",
+        "permissionRequired": "إذن الكاميرا مطلوب",
+        "permissionRequiredMessage": "الوصول للكاميرا مطلوب للمتابعة. يمكنك تفعيله في الإعدادات."
       },
       "mediaLibraryPermission": {
         "title": "السماح بالوصول لمكتبة الصور",
         "dialogText": "يريد FormAI الوصول إلى مكتبة الصور.",
         "allow": "سماح",
         "dontAllow": "عدم السماح",
-        "permissionRequired": "إذن مطلوب",
-        "permissionRequiredMessage": "الوصول لمكتبة الصور مطلوب لرفع الفيديوهات من معرض الكاميرا.",
+        "permissionRequired": "إذن الصور مطلوب",
+        "permissionRequiredMessage": "الوصول للصور مطلوب للمتابعة. يمكنك تفعيله في الإعدادات.",
         "openSettings": "فتح الإعدادات",
         "tryAgain": "حاول مرة أخرى",
         "error": "خطأ في الإذن",
