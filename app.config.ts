@@ -41,7 +41,6 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     ios: {
       supportsTablet: false, // iPhone-only, no iPad support
       bundleIdentifier: bundleIdentifier,
-      buildNumber: "2",
       infoPlist: {
         NSLocationWhenInUseUsageDescription:
           "Form AI may request your location to personalize experiences and support features that depend on your current region and also for usage analytics.",
