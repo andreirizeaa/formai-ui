@@ -426,15 +426,17 @@ const de = {
         "subtitle": "Kamerazugriff ist für FormAI erforderlich.",
         "dialogText": "FormAI möchte auf deine Kamera zugreifen.",
         "allow": "Zulassen",
-        "dontAllow": "Nicht zulassen"
+        "dontAllow": "Nicht zulassen",
+        "permissionRequired": "Kameraberechtigung erforderlich",
+        "permissionRequiredMessage": "Kamerazugriff ist erforderlich, um fortzufahren. Sie können ihn in den Einstellungen aktivieren."
       },
       "mediaLibraryPermission": {
         "title": "Fotobibliothek-Zugriff erlauben",
         "dialogText": "FormAI möchte auf deine Fotobibliothek zugreifen.",
         "allow": "Zulassen",
         "dontAllow": "Nicht zulassen",
-        "permissionRequired": "Berechtigung erforderlich",
-        "permissionRequiredMessage": "Fotobibliothek-Zugriff ist erforderlich, um Videos aus deinem Kamera-Roll hochzuladen.",
+        "permissionRequired": "Fotoberechtigung erforderlich",
+        "permissionRequiredMessage": "Fotozugriff ist erforderlich, um fortzufahren. Sie können ihn in den Einstellungen aktivieren.",
         "openSettings": "Einstellungen öffnen",
         "tryAgain": "Erneut versuchen",
         "error": "Berechtigungsfehler",

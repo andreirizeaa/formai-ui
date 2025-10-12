@@ -895,6 +895,124 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
     });
   }
 
+  // Robust media library permission request that treats "limited" as success
+  async function requestMediaLibraryPermissionAndProceed(onSuccess: () => void): Promise<void> {
+    try {
+      const current = await ImagePicker.getMediaLibraryPermissionsAsync();
+      const currentGranted = current.granted || current.accessPrivileges === 'limited';
+      if (currentGranted) {
+        trackPermission('media_library', true, 'mediaLibraryPermission');
+        hapticFeedback.success();
+        onSuccess();
+        return;
+      }
+
+      const result = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const effectiveGranted = result.granted || result.accessPrivileges === 'limited';
+      trackPermission('media_library', effectiveGranted, 'mediaLibraryPermission');
+
+      if (effectiveGranted) {
+        hapticFeedback.success();
+        onSuccess();
+        return;
+      }
+
+      if (result.canAskAgain === false) {
+        hapticFeedback.selection();
+        try {
+          await Linking.openSettings();
+          return;
+        } catch (_) {
+          try {
+            await openAppSettings();
+            return;
+          } catch (__) {
+            showAlert(
+              i18n.t('onboarding.mediaLibraryPermission.error'),
+              i18n.t('onboarding.mediaLibraryPermission.errorMessage')
+            );
+            return;
+          }
+        }
+      }
+
+      // Still denied but can ask again – keep CTA enabled and show explanation
+      showAlert(
+        i18n.t('onboarding.mediaLibraryPermission.error'),
+        i18n.t('onboarding.mediaLibraryPermission.errorMessage')
+      );
+    } catch (error) {
+      trackPermission(
+        'media_library',
+        false,
+        'mediaLibraryPermission',
+        error instanceof Error ? error.message : 'Unknown error'
+      );
+      showAlert(
+        i18n.t('onboarding.mediaLibraryPermission.error'),
+        i18n.t('onboarding.mediaLibraryPermission.errorMessage'),
+        undefined,
+        'ONBOARDING_MEDIA_LIBRARY_PERMISSION_ERROR',
+        error
+      );
+    }
+  }
+
+  // Robust camera permission request with pre-check and Settings fallback
+  async function requestCameraPermissionAndProceed(onSuccess: () => void): Promise<void> {
+    try {
+      const { Camera } = await import('expo-camera');
+      const current = await Camera.getCameraPermissionsAsync();
+      if (current.granted) {
+        trackPermission('camera', true, 'cameraPermission');
+        hapticFeedback.success();
+        onSuccess();
+        return;
+      }
+
+      const result = await Camera.requestCameraPermissionsAsync();
+      trackPermission('camera', result.granted, 'cameraPermission');
+
+      if (result.granted) {
+        hapticFeedback.success();
+        onSuccess();
+        return;
+      }
+
+      if (result.canAskAgain === false) {
+        hapticFeedback.selection();
+        try {
+          await Linking.openSettings();
+          return;
+        } catch (_) {
+          try {
+            await openAppSettings();
+            return;
+          } catch (__) {
+            showAlert(
+              'Camera permission needed',
+              'Please enable Camera access for Form AI in Settings to continue.'
+            );
+            return;
+          }
+        }
+      }
+
+      // Denied but can ask again – show explanation; keep CTA enabled to retry
+      showAlert(
+        'Camera permission required',
+        'We need Camera access to record your workout videos for analysis.'
+      );
+    } catch (error) {
+      trackPermission(
+        'camera',
+        false,
+        'cameraPermission',
+        error instanceof Error ? error.message : 'Unknown error'
+      );
+    }
+  }
+
 
   async function handleRateFormAI() {
     hapticFeedback.selection();
@@ -1951,30 +2069,16 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
           fingerTranslateY={fingerTranslateY}
           allowButtonText={i18n.t('onboarding.cameraPermission.allow')}
           dontAllowButtonText={i18n.t('onboarding.cameraPermission.dontAllow')}
-          disableDontAllowButton={true}
+          disableDontAllowButton={false}
           onDontAllow={() => {
-            // This will never be called since the button is disabled
-            handleNext();
+            hapticFeedback.selection();
+            Alert.alert(
+              i18n.t('onboarding.cameraPermission.permissionRequired'),
+              i18n.t('onboarding.cameraPermission.permissionRequiredMessage')
+            );
           }}
           onAllow={async () => {
-            try {
-              const { Camera } = await import('expo-camera');
-              const result = await Camera.requestCameraPermissionsAsync();
-              const granted = result.granted;
-              trackPermission('camera', granted, 'cameraPermission');
-
-              if (granted) {
-                handleNext();
-              } else {
-                // If we can't ask again, open settings directly
-                if (result.canAskAgain === false) {
-                  openAppSettings();
-                }
-                // If permission denied but we can ask again, do nothing (user can tap again)
-              }
-            } catch (error) {
-              trackPermission('camera', false, 'cameraPermission', error instanceof Error ? error.message : 'Unknown error');
-            }
+            await requestCameraPermissionAndProceed(() => handleNext());
           }}
         />
       )}
@@ -1986,36 +2090,16 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
           fingerTranslateY={fingerTranslateY}
           allowButtonText={i18n.t('onboarding.mediaLibraryPermission.allow')}
           dontAllowButtonText={i18n.t('onboarding.mediaLibraryPermission.dontAllow')}
-          disableDontAllowButton={true}
+          disableDontAllowButton={false}
           onDontAllow={() => {
-            // This will never be called since the button is disabled
-            handleNext();
+            hapticFeedback.selection();
+            Alert.alert(
+              i18n.t('onboarding.mediaLibraryPermission.permissionRequired'),
+              i18n.t('onboarding.mediaLibraryPermission.permissionRequiredMessage')
+            );
           }}
           onAllow={async () => {
-            try {
-              const result = await ImagePicker.requestMediaLibraryPermissionsAsync();
-              const granted = result.granted;
-              trackPermission('media_library', granted, 'mediaLibraryPermission');
-
-              if (granted) {
-                handleNext();
-              } else {
-                // If we can't ask again, open settings directly
-                if (result.canAskAgain === false) {
-                  openAppSettings();
-                }
-                // If permission denied but we can ask again, do nothing (user can tap again)
-              }
-            } catch (error) {
-              trackPermission('media_library', false, 'mediaLibraryPermission', error instanceof Error ? error.message : 'Unknown error');
-              showAlert(
-                i18n.t('onboarding.mediaLibraryPermission.error'),
-                i18n.t('onboarding.mediaLibraryPermission.errorMessage'),
-                undefined,
-                'ONBOARDING_MEDIA_LIBRARY_PERMISSION_ERROR',
-                error
-              );
-            }
+            await requestMediaLibraryPermissionAndProceed(() => handleNext());
           }}
         />
       )}

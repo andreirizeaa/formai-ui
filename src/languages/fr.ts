@@ -427,15 +427,17 @@ const fr = {
         "subtitle": "L'accès caméra est requis pour FormAI.",
         "dialogText": "FormAI souhaite accéder à votre caméra.",
         "allow": "Autoriser",
-        "dontAllow": "Ne pas autoriser"
+        "dontAllow": "Ne pas autoriser",
+        "permissionRequired": "Autorisation caméra requise",
+        "permissionRequiredMessage": "L'accès caméra est requis pour continuer. Vous pouvez l'activer dans les Paramètres."
       },
       "mediaLibraryPermission": {
         "title": "Autoriser l'accès à la photothèque",
         "dialogText": "FormAI souhaite accéder à votre photothèque.",
         "allow": "Autoriser",
         "dontAllow": "Ne pas autoriser",
-        "permissionRequired": "Autorisation requise",
-        "permissionRequiredMessage": "L'accès à la photothèque est requis pour télécharger des vidéos depuis votre pellicule.",
+        "permissionRequired": "Autorisation photos requise",
+        "permissionRequiredMessage": "L'accès aux photos est requis pour continuer. Vous pouvez l'activer dans les Paramètres.",
         "openSettings": "Ouvrir les paramètres",
         "tryAgain": "Réessayer",
         "error": "Erreur d'autorisation",

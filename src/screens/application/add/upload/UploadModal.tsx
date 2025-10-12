@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, Keyboard, Linking, Animated } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Keyboard, Linking, Animated, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -59,28 +59,68 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
   // Check media library permission
   const checkMediaPermission = async () => {
     try {
-      const { status } = await ImagePicker.getMediaLibraryPermissionsAsync();
-      setHasMediaPermission(status === 'granted');
+      const { status, accessPrivileges } = await ImagePicker.getMediaLibraryPermissionsAsync();
+      const effectiveGranted = status === 'granted' || accessPrivileges === 'limited';
+      setHasMediaPermission(effectiveGranted);
     } catch (e) {
       setHasMediaPermission(false);
     }
   };
 
-  // Request media library permission
+  // Robust media library permission request that treats "limited" as success
   const requestMediaPermissionFromUser = async () => {
     try {
-      const result = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (!result.granted && result.canAskAgain === false) {
-        openAppSettings();
-        setHasMediaPermission(false);
+      const current = await ImagePicker.getMediaLibraryPermissionsAsync();
+      const currentGranted = current.granted || current.accessPrivileges === 'limited';
+      if (currentGranted) {
+        hapticFeedback.success();
+        setHasMediaPermission(true);
+        setShowMediaPermission(false);
         return;
       }
-      setHasMediaPermission(result.granted);
-      if (result.granted) {
+
+      const result = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const effectiveGranted = result.granted || result.accessPrivileges === 'limited';
+
+      if (effectiveGranted) {
+        hapticFeedback.success();
+        setHasMediaPermission(true);
         setShowMediaPermission(false);
+        return;
       }
-    } catch (e) {
-      setHasMediaPermission(false);
+
+      if (result.canAskAgain === false) {
+        hapticFeedback.selection();
+        try {
+          await Linking.openSettings();
+          return;
+        } catch (_) {
+          try {
+            await openAppSettings();
+            return;
+          } catch (__) {
+            showAlert(
+              i18n.t('onboarding.mediaLibraryPermission.error'),
+              i18n.t('onboarding.mediaLibraryPermission.errorMessage')
+            );
+            return;
+          }
+        }
+      }
+
+      // Still denied but can ask again – keep CTA enabled and show explanation
+      showAlert(
+        i18n.t('onboarding.mediaLibraryPermission.error'),
+        i18n.t('onboarding.mediaLibraryPermission.errorMessage')
+      );
+    } catch (error) {
+      showAlert(
+        i18n.t('onboarding.mediaLibraryPermission.error'),
+        i18n.t('onboarding.mediaLibraryPermission.errorMessage'),
+        undefined,
+        'UPLOAD_MEDIA_LIBRARY_PERMISSION_ERROR',
+        error
+      );
     }
   };
 
@@ -329,27 +369,71 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
   }, [selectedVideo, showMovementSelection, showWeightReps]);
 
 
+  // Robust media library permission check for upload actions
+  const checkMediaPermissionForUpload = async (): Promise<boolean> => {
+    try {
+      const current = await ImagePicker.getMediaLibraryPermissionsAsync();
+      const currentGranted = current.granted || current.accessPrivileges === 'limited';
+      if (currentGranted) {
+        return true;
+      }
+
+      const result = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const effectiveGranted = result.granted || result.accessPrivileges === 'limited';
+
+      if (effectiveGranted) {
+        return true;
+      }
+
+      if (result.canAskAgain === false) {
+        hapticFeedback.selection();
+        try {
+          await Linking.openSettings();
+          return false;
+        } catch (_) {
+          try {
+            await openAppSettings();
+            return false;
+          } catch (__) {
+            showAlert(
+              i18n.t('upload.permissionRequired'),
+              i18n.t('upload.permissionMessage')
+            );
+            return false;
+          }
+        }
+      }
+
+      // Still denied but can ask again – show explanation
+      showAlert(
+        i18n.t('upload.permissionRequired'),
+        i18n.t('upload.permissionMessage')
+      );
+      return false;
+    } catch (error) {
+      showAlert(
+        i18n.t('upload.permissionRequired'),
+        i18n.t('upload.permissionMessage'),
+        undefined,
+        'UPLOAD_PERMISSION_ERROR',
+        error
+      );
+      return false;
+    }
+  };
+
   const handleUploadPress = async () => {
     // Selection haptic feedback
     hapticFeedback.selection();
     
-    // Check for media library permissions first
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    
-    if (permissionResult.status !== 'granted') {
-      showAlert(
-        i18n.t('upload.permissionRequired'),
-        i18n.t('upload.permissionMessage'),
-        () => {
-          // Open app settings with fallback
-          openAppSettings();
-        },
-        'UPLOAD_PERMISSION_REQUIRED'
-      );
+    // Check for media library permissions using robust method
+    const hasPermission = await checkMediaPermissionForUpload();
+    if (!hasPermission) {
       return;
     }
 
     // Check if user has limited access and show upgrade prompt
+    const permissionResult = await ImagePicker.getMediaLibraryPermissionsAsync();
     if (permissionResult.accessPrivileges === 'limited') {
       showAlert(
         i18n.t('upload.fullAccessRequired'),
@@ -417,19 +501,9 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
   const handleSelectNewVideoForErrors = async () => {
     hapticFeedback.selection();
     
-    // Check for media library permissions first
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    
-    if (permissionResult.status !== 'granted') {
-      showAlert(
-        i18n.t('upload.permissionRequired'),
-        i18n.t('upload.permissionMessage'),
-        () => {
-          // Open app settings with fallback
-          openAppSettings();
-        },
-        'UPLOAD_SELECT_NEW_VIDEO_PERMISSION_REQUIRED'
-      );
+    // Check for media library permissions using robust method
+    const hasPermission = await checkMediaPermissionForUpload();
+    if (!hasPermission) {
       return;
     }
     
@@ -748,7 +822,11 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
           allowButtonText={i18n.t('upload.allow')}
           dontAllowButtonText={i18n.t('upload.dontAllow')}
           onDontAllow={() => {
-            // Don't allow just stays in this state
+            hapticFeedback.selection();
+            Alert.alert(
+              i18n.t('onboarding.mediaLibraryPermission.permissionRequired'),
+              i18n.t('onboarding.mediaLibraryPermission.permissionRequiredMessage')
+            );
           }}
           onAllow={requestMediaPermissionFromUser}
         />
