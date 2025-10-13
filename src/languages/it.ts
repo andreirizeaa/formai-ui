@@ -117,6 +117,7 @@ const it = {
       loadingVideo: 'Caricamento video...',
       weight: 'Peso',
       reps: 'Ripetizioni',
+      repsCapped: 'Le ripetizioni sono limitate a 15',
       next: 'Avanti',
       complete: 'Completa',
       close: 'Chiudi',

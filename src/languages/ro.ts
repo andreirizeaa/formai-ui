@@ -118,6 +118,7 @@ const ro = {
       "loadingVideo": "Se încarcă video-ul...",
       "weight": "Greutate",
       "reps": "Repetiții",
+      "repsCapped": "Repetițiile sunt limitate la 15",
       "next": "Următorul",
       "complete": "Finalizează",
       "close": "Închide",

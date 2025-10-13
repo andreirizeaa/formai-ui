@@ -289,6 +289,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
   // Loading state for video upload
   const [isUploading, setIsUploading] = useState(false);
   const [isModalDisabled, setIsModalDisabled] = useState(false);
+  const [isOpeningMediaLibrary, setIsOpeningMediaLibrary] = useState(false);
 
 
   // Reset states when modal becomes invisible
@@ -308,6 +309,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
       setDuplicateAssetId('');
       setIsUploading(false);
       setIsModalDisabled(false);
+      setIsOpeningMediaLibrary(false);
     }
   }, [isVisible]);
 
@@ -426,30 +428,33 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
     // Selection haptic feedback
     hapticFeedback.selection();
     
-    // Check for media library permissions using robust method
-    const hasPermission = await checkMediaPermissionForUpload();
-    if (!hasPermission) {
-      return;
-    }
-
-    // Check if user has limited access and show upgrade prompt
-    const permissionResult = await ImagePicker.getMediaLibraryPermissionsAsync();
-    if (permissionResult.accessPrivileges === 'limited') {
-      showAlert(
-        i18n.t('upload.fullAccessRequired'),
-        i18n.t('upload.fullAccessMessage'),
-        () => {
-          // Open app settings with fallback
-          openAppSettings();
-        },
-        'UPLOAD_LIMITED_ACCESS_UPGRADE',
-        undefined,
-        i18n.t('upload.grant')
-      );
-      return;
-    }
+    // Set loading state for media library opening
+    setIsOpeningMediaLibrary(true);
     
     try {
+      // Check for media library permissions using robust method
+      const hasPermission = await checkMediaPermissionForUpload();
+      if (!hasPermission) {
+        return;
+      }
+
+      // Check if user has limited access and show upgrade prompt
+      const permissionResult = await ImagePicker.getMediaLibraryPermissionsAsync();
+      if (permissionResult.accessPrivileges === 'limited') {
+        showAlert(
+          i18n.t('upload.fullAccessRequired'),
+          i18n.t('upload.fullAccessMessage'),
+          () => {
+            // Open app settings with fallback
+            openAppSettings();
+          },
+          'UPLOAD_LIMITED_ACCESS_UPGRADE',
+          undefined,
+          i18n.t('upload.grant')
+        );
+        return;
+      }
+      
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: 'videos',
         allowsEditing: true,
@@ -490,6 +495,9 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
           error
         );
       }
+    } finally {
+      // Always clear loading state
+      setIsOpeningMediaLibrary(false);
     }
   };
 
@@ -866,6 +874,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
               i18n.t('upload.tips.goodLighting'),
               i18n.t('upload.tips.sideView')
             ]}
+            isLoading={isOpeningMediaLibrary}
           />
         ) : showMovementSelection ? (
           // Movement Selection - shown when video is selected and user clicked continue

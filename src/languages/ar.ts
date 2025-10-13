@@ -118,6 +118,7 @@ const ar = {
       "loadingVideo": "جاري تحميل الفيديو...",
       "weight": "الوزن",
       "reps": "التكرارات",
+      "repsCapped": "التكرارات محدودة بـ 15",
       "next": "التالي",
       "complete": "إكمال",
       "close": "إغلاق",

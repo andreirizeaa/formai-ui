@@ -117,6 +117,7 @@ const zh = {
       loadingVideo: '加载视频中...',
       weight: '重量',
       reps: '重复次数',
+      repsCapped: '重复次数限制为15次',
       next: '下一步',
       complete: '完成',
       close: '关闭',

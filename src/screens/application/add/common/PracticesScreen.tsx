@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, ActivityIndicator } from 'react-native';
 import { Image } from 'expo-image';
 import { hapticFeedback } from '../../../../utils/haptic';
 import i18n from '../../../../utils/i18n';
@@ -12,6 +12,7 @@ interface PracticesScreenProps {
   title?: string;
   buttonText?: string;
   tips?: string[];
+  isLoading?: boolean; // Loading state for button
 }
 
 export function PracticesScreen({
@@ -19,11 +20,13 @@ export function PracticesScreen({
   onUpload,
   title = i18n.t('add.bestRecordingPractices'),
   buttonText,
-  tips = i18n.t('add.recordingTips') as string[]
+  tips = i18n.t('add.recordingTips') as string[],
+  isLoading = false
 }: PracticesScreenProps) {
   const { ref: practicesCtaRef } = useTutorialTarget('upload_practices_cta');
   
   const handleButtonPress = () => {
+    if (isLoading) return; // Don't process button press when loading
     hapticFeedback.selection();
     if (onNext) {
       onNext();
@@ -74,8 +77,17 @@ export function PracticesScreen({
       {buttonText && (
         <View style={styles.bottomControls}>
           <View style={styles.buttonStack}>
-            <TouchableOpacity style={styles.nextButton} onPress={handleButtonPress}>
-              <Text style={styles.nextButtonText}>{buttonText}</Text>
+            <TouchableOpacity 
+              style={[styles.nextButton, isLoading && styles.nextButtonDisabled]} 
+              onPress={handleButtonPress}
+              disabled={isLoading}
+              activeOpacity={isLoading ? 1 : 0.7}
+            >
+              {isLoading ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <Text style={styles.nextButtonText}>{buttonText}</Text>
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -189,5 +201,9 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '800',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
+  nextButtonDisabled: {
+    backgroundColor: '#8E8E93',
+    opacity: 0.7,
   },
 }); 

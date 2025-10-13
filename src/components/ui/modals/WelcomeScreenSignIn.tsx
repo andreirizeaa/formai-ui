@@ -378,7 +378,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: screenHeight * 0.45, // 40% of screen height
+    height: screenHeight * 0.5, // 40% of screen height
     backgroundColor: appColors.onboarding.signIn.background,
     borderTopLeftRadius: 12,
     borderTopRightRadius: 12,
