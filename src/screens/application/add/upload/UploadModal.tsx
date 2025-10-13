@@ -52,6 +52,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
   // Media library permission state
   const [hasMediaPermission, setHasMediaPermission] = useState<boolean | null>(null);
   const [showMediaPermission, setShowMediaPermission] = useState(false);
+  const [mediaPermissionLoading, setMediaPermissionLoading] = useState(false);
   
   // Animation value for finger icon
   const fingerTranslateY = useMemo(() => new Animated.Value(0), []);
@@ -69,10 +70,24 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
 
   // Robust media library permission request that treats "limited" as success
   const requestMediaPermissionFromUser = async () => {
+    setMediaPermissionLoading(true);
+    
+    // Set up 5 second timeout
+    const timeoutId = setTimeout(() => {
+      setMediaPermissionLoading(false);
+      showAlert(
+        'Permission Timeout',
+        'The permission request is taking longer than expected. Please try again or enable permissions in Settings.',
+        undefined,
+        'UPLOAD_MEDIA_LIBRARY_PERMISSION_TIMEOUT'
+      );
+    }, 5000);
+    
     try {
       const current = await ImagePicker.getMediaLibraryPermissionsAsync();
       const currentGranted = current.granted || current.accessPrivileges === 'limited';
       if (currentGranted) {
+        clearTimeout(timeoutId);
         hapticFeedback.success();
         setHasMediaPermission(true);
         setShowMediaPermission(false);
@@ -80,6 +95,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
       }
 
       const result = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      clearTimeout(timeoutId);
       const effectiveGranted = result.granted || result.accessPrivileges === 'limited';
 
       if (effectiveGranted) {
@@ -114,6 +130,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
         i18n.t('onboarding.mediaLibraryPermission.errorMessage')
       );
     } catch (error) {
+      clearTimeout(timeoutId);
       showAlert(
         i18n.t('onboarding.mediaLibraryPermission.error'),
         i18n.t('onboarding.mediaLibraryPermission.errorMessage'),
@@ -121,6 +138,9 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
         'UPLOAD_MEDIA_LIBRARY_PERMISSION_ERROR',
         error
       );
+    } finally {
+      clearTimeout(timeoutId);
+      setMediaPermissionLoading(false);
     }
   };
 
@@ -829,6 +849,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
           fingerTranslateY={fingerTranslateY}
           allowButtonText={i18n.t('upload.allow')}
           dontAllowButtonText={i18n.t('upload.dontAllow')}
+          isLoading={mediaPermissionLoading}
           onDontAllow={() => {
             hapticFeedback.selection();
             Alert.alert(

@@ -115,25 +115,21 @@ export function SwipeableLiftDetailsGraphs({ data, formGraphRef, depthGraphRef }
 
   const shouldRenderIndex = useCallback((index: number) => Math.abs(index - currentIndex) <= 1, [currentIndex]);
 
-  const onScroll = useCallback((e: any) => {
-    const x = e?.nativeEvent?.contentOffset?.x || 0;
-    const idx = Math.max(0, Math.min(Math.floor((x + ITEM_WIDTH / 2) / ITEM_WIDTH), (cards.length || 1) - 1));
-    if (idx !== currentIndex) {
-      // Track lift details clicks for card swipe
-      track('Lift details clicks', { event: 'Card swipe' });
-      setCurrentIndex(idx);
+  const onViewableItemsChanged = useCallback(({ viewableItems }: any) => {
+    if (viewableItems && viewableItems.length > 0) {
+      const firstVisibleIndex = viewableItems[0]?.index ?? 0;
+      if (firstVisibleIndex !== currentIndex) {
+        // Track lift details clicks for card swipe
+        track('Lift details clicks', { event: 'Card swipe' });
+        setCurrentIndex(firstVisibleIndex);
+      }
     }
-  }, [currentIndex, cards.length]);
+  }, [currentIndex]);
 
-  const onMomentumScrollEnd = useCallback((e: any) => {
-    const x = e?.nativeEvent?.contentOffset?.x || 0;
-    const idx = Math.max(0, Math.min(Math.round(x / ITEM_WIDTH), (cards.length || 1) - 1));
-    if (idx !== currentIndex) {
-      // Track lift details clicks for card swipe
-      track('Lift details clicks', { event: 'Card swipe' });
-      setCurrentIndex(idx);
-    }
-  }, [currentIndex, cards.length]);
+  const viewabilityConfig = useRef({
+    itemVisiblePercentThreshold: 50,
+    minimumViewTime: 0,
+  }).current;
 
   const renderItem = useCallback(({ item, index }: ListRenderItemInfo<CardKind>) => {
     const shouldRender = shouldRenderIndex(index);
@@ -221,8 +217,6 @@ export function SwipeableLiftDetailsGraphs({ data, formGraphRef, depthGraphRef }
           horizontal
           pagingEnabled
           showsHorizontalScrollIndicator={false}
-          snapToInterval={ITEM_WIDTH}
-          snapToAlignment="start"
           decelerationRate="fast"
           overrideItemLayout={(layout, index) => {
             layout.size = ITEM_WIDTH;
@@ -236,9 +230,8 @@ export function SwipeableLiftDetailsGraphs({ data, formGraphRef, depthGraphRef }
           removeClippedSubviews
           nestedScrollEnabled
           contentInsetAdjustmentBehavior="never"
-          onScroll={onScroll}
-          scrollEventThrottle={16}
-          onMomentumScrollEnd={onMomentumScrollEnd}
+          onViewableItemsChanged={onViewableItemsChanged}
+          viewabilityConfig={viewabilityConfig}
           extraData={{ currentIndex }}
         />
       </View>
