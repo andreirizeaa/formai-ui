@@ -119,6 +119,7 @@ const en = {
       loadingVideo: 'Loading video...',
       weight: 'Weight',
       reps: 'Reps',
+      repsCapped: 'Reps are capped at 15',
       next: 'Next',
       complete: 'Complete',
       close: 'Close',

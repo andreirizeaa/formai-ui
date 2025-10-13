@@ -1,4 +1,4 @@
-import { usePlacement, useSuperwall, useSuperwallEvents } from 'expo-superwall';
+import { usePlacement, useSuperwallEvents } from 'expo-superwall';
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -17,15 +17,13 @@ interface PaymentScreenProps {
 
 export function PaymentScreen({ onComplete }: PaymentScreenProps) {
   const { registerPlacement } = usePlacement();
-  const { dismiss } = useSuperwall();
   const { customerInfo, refreshCustomerInfo } = usePurchases();
   const { onboardingData } = useOnboarding();
-  const [ hasSeenDiscountPaywall, setHasSeenDiscountPaywall ] = useState(false);
   const [ showAccountLoading, setShowAccountLoading ] = useState(false);
   const [ referralCodeType, setReferralCodeType ] = useState<'DISCOUNT' | 'SKIP_PAYWALL' | null>(null);
   const [ isReferralCodeProcessed, setIsReferralCodeProcessed ] = useState(false);
 
-  // Listen for transactionAbandon events to show discount paywall
+  // Listen for Superwall events
   useSuperwallEvents({
     onCustomPaywallAction: (name: string) => {
       if (name === "hapticSelection") {
@@ -50,54 +48,20 @@ export function PaymentScreen({ onComplete }: PaymentScreenProps) {
         await refreshCustomerInfo();
         // Let AccountLoadingScreen handle its own timing - don't set timeout here
       }
-      if (String(eventInfo.event.event) === "transactionAbandon" && String(eventInfo.params.abandoned_product_id) === "formai_yearly") {
+      if (String(eventInfo.event.event) === "transactionAbandon") {
         // Track purchase abandonment
         track("Purchase Abandoned", {
           product_id: eventInfo.params.abandoned_product_id,
         });
-
-        // Dismiss the current paywall first
-        dismiss();
-        
-        setTimeout(async() => {
-          if (customerInfo?.activeSubscriptions?.length === 0 && !hasSeenDiscountPaywall) {
-            await registerPlacement({
-              placement: "discount_trigger",
-            });
-            setHasSeenDiscountPaywall(true)
-          } else if (customerInfo?.activeSubscriptions?.length === 0 && hasSeenDiscountPaywall) {
-            await registerPlacement({
-              placement: "default_trigger",
-            });
-          }
-        }, 500);
       }
     },
     onPaywallDismiss: async(info, result) => {
-      // Handle referral trigger dismiss - re-show referral trigger if user closes it
-      if (referralCodeType === 'DISCOUNT' && String(info.closeReason) === "manualClose") {
+      // Only re-show paywall on manual close and if user has no active subscription
+      if (String(info.closeReason) === "manualClose" && customerInfo?.activeSubscriptions?.length === 0) {
+        const placement = referralCodeType === 'DISCOUNT' ? "referral_trigger" : "default_trigger";
         await registerPlacement({
-          placement: "referral_trigger",
+          placement,
         });
-        return;
-      }
-
-      // Also try to show discount paywall on dismiss
-      if (String(info.identifier) === "discount-offer-template-a792-2025-08-26" && String(info.closeReason) === "manualClose") {
-        await registerPlacement({
-          placement: "default_trigger",
-        });
-      } else {
-        if (customerInfo?.activeSubscriptions?.length === 0 && !hasSeenDiscountPaywall) {
-          await registerPlacement({
-            placement: "discount_trigger",
-          });
-          setHasSeenDiscountPaywall(true)
-        } else if (customerInfo?.activeSubscriptions?.length === 0 && hasSeenDiscountPaywall) {
-          await registerPlacement({
-            placement: "default_trigger",
-          });
-        }
       }
     },
   });
@@ -198,12 +162,4 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
   },
-}); 
-
-function identify(arg0: {
-  userId: string;
-  // Add any other properties that might be needed for audience matching
-  properties: { isNewUser: boolean; hasCompletedOnboarding: boolean; };
-}) {
-  throw new Error('Function not implemented.');
-}
+});

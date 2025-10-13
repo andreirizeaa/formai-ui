@@ -118,6 +118,7 @@ const fr = {
       "loadingVideo": "Chargement de la vidéo...",
       "weight": "Poids",
       "reps": "Répétitions",
+      "repsCapped": "Les répétitions sont limitées à 15",
       "next": "Suivant",
       "complete": "Terminer",
       "close": "Fermer",

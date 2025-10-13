@@ -117,6 +117,7 @@ const de = {
       "loadingVideo": "Video wird geladen...",
       "weight": "Gewicht",
       "reps": "Wiederholungen",
+      "repsCapped": "Wiederholungen sind auf 15 begrenzt",
       "next": "Weiter",
       "complete": "Abschließen",
       "close": "Schließen",

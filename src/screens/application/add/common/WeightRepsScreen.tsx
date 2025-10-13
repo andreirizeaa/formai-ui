@@ -34,6 +34,7 @@ export function WeightRepsScreen({
   const [infoShouldRender, setInfoShouldRender] = useState(false);
   const infoOpacity = useRef(new Animated.Value(0)).current;
   const [infoModalContent, setInfoModalContent] = useState<{ title: string; message: string }>({ title: '', message: '' });
+  const [showRepsCapMessage, setShowRepsCapMessage] = useState(false);
   const { userDetails } = useUserDetails();
   const unit: WeightUnit = userDetails?.unitSystem === 'imperial' ? 'lbs' : 'kg';
   
@@ -298,10 +299,14 @@ export function WeightRepsScreen({
                       track('Add analysis', { event: 'Reps input' });
                     }
                     const repsValue = parseInt(text) || 0;
+                    // Cap reps at 15
+                    const cappedReps = Math.min(repsValue, 15);
+                    const wasCapped = repsValue > 15;
+                    setShowRepsCapMessage(wasCapped);
                     onChange({
                       weight: weightReps?.weight || 0,
                       unit,
-                      reps: repsValue
+                      reps: cappedReps
                     });
                   }}
                   placeholder="1"
@@ -323,6 +328,9 @@ export function WeightRepsScreen({
                   pointerEvents={isLoading ? 'none' : (isWeightValid ? 'auto' : 'none')}
                 />
               </View>
+              {showRepsCapMessage && (
+                <Text style={styles.capMessage}>{i18n.t('add.repsCapped')}</Text>
+              )}
             </View>
           </View>
         </TouchableWithoutFeedback>
@@ -635,6 +643,14 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: '800',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
+  capMessage: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#FF3B30',
+    textAlign: 'center',
+    marginTop: 8,
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
 }); 

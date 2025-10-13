@@ -212,6 +212,21 @@ function PersonalDetailsScreenWrapper() {
   const navigation = useNavigation<MainStackNavigationProp>();
   const { userDetails, getWeightDisplay, getHeightDisplay, getAgeRangeDisplay } = useUserDetails();
   
+  // Temporarily neutralize global navigateToHome while this screen is mounted
+  React.useEffect(() => {
+    const previousNavigateToHome = (global as any).navigateToHome;
+    (global as any).navigateToHome = () => {};
+    return () => {
+      if (previousNavigateToHome) {
+        (global as any).navigateToHome = previousNavigateToHome;
+      } else if ((global as any).__navigateToHomeBase) {
+        (global as any).navigateToHome = (global as any).__navigateToHomeBase;
+      } else {
+        try { delete (global as any).navigateToHome; } catch {}
+      }
+    };
+  }, []);
+  
   const handleBack = () => {
     navigation.goBack();
   };
@@ -246,6 +261,21 @@ function PersonalDetailsScreenWrapper() {
 function EditUnitsScreenWrapper() {
   const navigation = useNavigation<MainStackNavigationProp>();
   
+  // Temporarily neutralize global navigateToHome while this screen is mounted
+  React.useEffect(() => {
+    const previousNavigateToHome = (global as any).navigateToHome;
+    (global as any).navigateToHome = () => {};
+    return () => {
+      if (previousNavigateToHome) {
+        (global as any).navigateToHome = previousNavigateToHome;
+      } else if ((global as any).__navigateToHomeBase) {
+        (global as any).navigateToHome = (global as any).__navigateToHomeBase;
+      } else {
+        try { delete (global as any).navigateToHome; } catch {}
+      }
+    };
+  }, []);
+  
   const handleBack = () => {
     navigation.goBack();
   };
@@ -259,6 +289,21 @@ function EditUnitsScreenWrapper() {
 
 function EditLanguageScreenWrapper() {
   const navigation = useNavigation<MainStackNavigationProp>();
+  
+  // Temporarily neutralize global navigateToHome while this screen is mounted
+  React.useEffect(() => {
+    const previousNavigateToHome = (global as any).navigateToHome;
+    (global as any).navigateToHome = () => {};
+    return () => {
+      if (previousNavigateToHome) {
+        (global as any).navigateToHome = previousNavigateToHome;
+      } else if ((global as any).__navigateToHomeBase) {
+        (global as any).navigateToHome = (global as any).__navigateToHomeBase;
+      } else {
+        try { delete (global as any).navigateToHome; } catch {}
+      }
+    };
+  }, []);
   
   const handleBack = () => {
     navigation.goBack();

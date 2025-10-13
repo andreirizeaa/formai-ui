@@ -117,6 +117,7 @@ const pt = {
       loadingVideo: 'Carregando vídeo...',
       weight: 'Peso',
       reps: 'Repetições',
+      repsCapped: 'As repetições estão limitadas a 15',
       next: 'Próximo',
       complete: 'Completar',
       close: 'Fechar',
