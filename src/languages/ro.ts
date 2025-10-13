@@ -197,6 +197,10 @@ const ro = {
       }
     },
     "onboarding": {
+      "incompleteAccount": {
+        "title": "Cont nefinalizat",
+        "message": "Configurarea contului tău nu este încă finalizată. Te rugăm să finalizezi onboarding-ul pentru a continua."
+      },
       "language": {
         "title": "Limbă",
         "subtitle": "Poți schimba oricând mai târziu",

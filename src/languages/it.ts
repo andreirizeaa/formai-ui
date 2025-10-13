@@ -196,6 +196,10 @@ const it = {
       },
     },
     onboarding: {
+      incompleteAccount: {
+        title: 'Account incompleto',
+        message: "La configurazione del tuo account non è ancora completa. Completa l'onboarding per continuare.",
+      },
       language: {
         title: 'Lingua',
         subtitle: 'Puoi sempre cambiare questo in seguito',

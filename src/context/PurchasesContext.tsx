@@ -239,7 +239,6 @@ export function PurchasesProvider({ children, onSubscriptionUpdate }: PurchasesP
       setCustomerInfo(restoredInfo);
       // Keep packages fresh post-restore
       await refreshOfferings();
-      console.log('restoredInfo', restoredInfo);
       return restoredInfo;
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Restore failed';

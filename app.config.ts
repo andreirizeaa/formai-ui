@@ -59,7 +59,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         ],
         NSCameraUsageDescription: "Form AI uses the camera to let you record workout videos so you can submit them for lift analysis to receive form feedback.",
         NSPhotoLibraryUsageDescription: "Form AI accesses this so you can upload videos for analysis, save videos recorded in the app to your photo library, search for previous analyses and prevent duplicate uploads.",
-        NSPhotoLibraryAddUsageDescription: "Form AI accesses this so you can upload videos for analysis, save videos recorded in the app to your photo library, search for previous analyses and prevent duplicate uploads.",
+        NSPhotoLibraryAddUsageDescription: "Form AI accesses your photo library so you can upload videos for analysis, save videos recorded in the app to your photo library, search for previously analysed videos and to prevent duplicate video uploads.",
         NSUserTrackingUsageDescription: "We use this to ensure the app works for you and others that download it by reviewing usage logs.",
         ITSAppUsesNonExemptEncryption: false
       }
@@ -193,9 +193,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       [
         "expo-media-library",
         {
-          photosPermission: "Form AI accesses this so you can upload videos for analysis, save videos recorded in the app to your photo library, search for previous analyses and prevent duplicate uploads.",
-          savePhotosPermission: "Allow Form AI to save videos recorded in the app to your photo library.",
-          isAccessMediaLocationEnabled: true
+          photosPermission: "Form AI accesses your photo library so you can upload videos for analysis, save videos recorded in the app to your photo library, search for previously analysed videos and to prevent duplicate video uploads.",
+          savePhotosPermission: "Form AI accesses your photo library so you can upload videos for analysis, save videos recorded in the app to your photo library, search for previously analysed videos and to prevent duplicate video uploads.",
+          isAccessMediaLocationEnabled: false
         }
       ],
       [
@@ -207,7 +207,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       [
         "expo-image-picker",
         {
-          photosPermission: "The app accesses your photo library to allow you to select videos to upload for analysis."
+          photosPermission: "Form AI accesses your photo library so you can upload videos for analysis, save videos recorded in the app to your photo library, search for previously analysed videos and to prevent duplicate video uploads."
         }
       ],
       "react-native-compressor",

@@ -196,6 +196,10 @@ const zh = {
       },
     },
     onboarding: {
+      incompleteAccount: {
+        title: '账户未完成',
+        message: '您的账户设置尚未完成。请完成新手引导以继续。',
+      },
       language: {
         title: '语言',
         subtitle: '您随时可以更改此设置',
