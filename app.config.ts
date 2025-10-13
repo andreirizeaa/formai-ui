@@ -61,7 +61,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         NSPhotoLibraryUsageDescription: "Form AI accesses this so you can upload videos for analysis, save videos recorded in the app to your photo library, search for previous analyses and prevent duplicate uploads.",
         NSPhotoLibraryAddUsageDescription: "Form AI accesses your photo library so you can upload videos for analysis, save videos recorded in the app to your photo library, search for previously analysed videos and to prevent duplicate video uploads.",
         NSUserTrackingUsageDescription: "We use this to ensure the app works for you and others that download it by reviewing usage logs.",
-        ITSAppUsesNonExemptEncryption: false
+        ITSAppUsesNonExemptEncryption: false,
+        SKIncludeConsumableInAppPurchaseHistory: true
       }
     },
     android: {
