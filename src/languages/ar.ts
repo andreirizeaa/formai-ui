@@ -197,6 +197,10 @@ const ar = {
       }
     },
     "onboarding": {
+      "incompleteAccount": {
+        "title": "الحساب غير مكتمل",
+        "message": "إعداد حسابك غير مكتمل بعد. يرجى إكمال عملية الإعداد للمتابعة."
+      },
       "language": {
         "title": "اللغة",
         "subtitle": "يمكنك تغييرها لاحقًا",

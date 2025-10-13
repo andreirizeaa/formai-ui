@@ -198,6 +198,10 @@ const en = {
       },
     },
     onboarding: {
+      incompleteAccount: {
+        title: 'Account incomplete',
+        message: "Your account setup isn't complete yet. Please complete onboarding to continue.",
+      },
       language: {
         title: 'Language',
         subtitle: 'You can always change this later',

@@ -9,6 +9,7 @@ import { supabase } from '../../../lib/supabase';
 import { removeUserId, setUserId } from '../../../services/storageService';
 import { fetchUserById, requiresOnboarding } from '../../../services/userService';
 import { usePurchases } from '../../../context/PurchasesContext';
+import { useOnboarding } from '../../../context/OnboardingContext';
 import { track } from '../../../services/analytics';
 import { registerAndSaveExpoPushToken } from '../../../services/push';
 import { showAlert } from '../../../services/alertService';
@@ -37,6 +38,7 @@ export function WelcomeScreenSignIn({
   const [isAnimatingOut, setIsAnimatingOut] = React.useState(false);
   const [isVisible, setIsVisible] = React.useState(false);
   const { hasSubscription, logIn } = usePurchases();
+  const { updateOnboardingData } = useOnboarding();
   
   // Animation values - similar to feedback slideshow
   const slideAnim = React.useRef(new Animated.Value(screenHeight)).current; // Start off-screen
@@ -73,12 +75,22 @@ export function WelcomeScreenSignIn({
 
   const handlePostAuthentication = async (userId: string) => {
     try {
+      // Set onboardingData.userId immediately after authentication
+      updateOnboardingData('userId', userId);
+      
       await setUserId(userId);
       const { user } = await fetchUserById(userId);
       if (!user) {
         hapticFeedback.error();
-        if (onNavigateToOnboarding) onNavigateToOnboarding();
-        else onSignIn();
+        // Inform user they need to complete onboarding before proceeding
+        showAlert(
+          i18n.t('onboarding.incompleteAccount.title'),
+          i18n.t('onboarding.incompleteAccount.message'),
+          () => {
+            if (onNavigateToOnboarding) onNavigateToOnboarding();
+            else onSignIn();
+          }
+        );
         return;
       }
       await logIn(userId);
@@ -93,8 +105,14 @@ export function WelcomeScreenSignIn({
       if (requiresOnboarding(user)) {
         hapticFeedback.error();
         await removeUserId();
-        if (onNavigateToOnboarding) onNavigateToOnboarding();
-        else onSignIn();
+        showAlert(
+          i18n.t('onboarding.incompleteAccount.title'),
+          i18n.t('onboarding.incompleteAccount.message'),
+          () => {
+            if (onNavigateToOnboarding) onNavigateToOnboarding();
+            else onSignIn();
+          }
+        );
         return;
       }
       if (!hasSubscription) {
@@ -360,7 +378,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: screenHeight * 0.4, // 40% of screen height
+    height: screenHeight * 0.45, // 40% of screen height
     backgroundColor: appColors.onboarding.signIn.background,
     borderTopLeftRadius: 12,
     borderTopRightRadius: 12,
@@ -459,7 +477,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     flexWrap: 'wrap',
-    paddingHorizontal: 40,
     marginBottom: 24,
   },
   termsText: {

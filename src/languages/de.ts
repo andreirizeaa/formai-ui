@@ -196,6 +196,10 @@ const de = {
       }
     },
     "onboarding": {
+      "incompleteAccount": {
+        "title": "Konto unvollständig",
+        "message": "Deine Kontoeinrichtung ist noch nicht abgeschlossen. Bitte schließe das Onboarding ab, um fortzufahren."
+      },
       "language": {
         "title": "Sprache",
         "subtitle": "Du kannst das später jederzeit ändern",

@@ -172,6 +172,9 @@ export function CreateAccountScreen({ onNext, onBack }: CreateAccountScreenProps
     const signInMethod = data.user?.app_metadata?.provider || 'apple';
     
     if (data.user?.id) {
+      // Navigate to loading screen immediately
+      onNext();
+      
       // Check if user already exists in the database
       const { user: existingUser } = await fetchUserById(data.user.id);
       
@@ -189,7 +192,7 @@ export function CreateAccountScreen({ onNext, onBack }: CreateAccountScreenProps
           // Register Expo push token for existing user
           await registerAndSaveExpoPushToken(data.user.id);
           setIsSigningIn(false);
-          onNext(); // Navigate directly to main app
+          // AccountLoading screen will handle next navigation
         } catch (error) {
           showAlert(
             'Error', 
@@ -238,7 +241,7 @@ export function CreateAccountScreen({ onNext, onBack }: CreateAccountScreenProps
         const { saveOnboardingProgress } = await import('../../services/onboardingService');
         await saveOnboardingProgress(updatedData);
         setIsSigningIn(false);
-        onNext();
+        // AccountLoading screen will handle next navigation
       } catch (persistError) {
         showAlert(
           'Error', 

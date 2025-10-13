@@ -33,6 +33,11 @@ import { LineChart } from 'react-native-chart-kit';
 import { SingleDotIcon, SixDotsIcon, ThreeDotsIcon } from '../../components/icons/icons';
 import { Line } from 'react-native-svg';
 import { track } from '../../services/analytics';
+import { setUserId } from '../../services/storageService';
+import { fetchUserById } from '../../services/userService';
+import { registerAndSaveExpoPushToken } from '../../services/push';
+import { usePurchases } from '../../context/PurchasesContext';
+import { supabase } from '../../lib/supabase';
 
 interface OnboardingUnifiedScreenProps {}
 
@@ -316,12 +321,14 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
   const navigation = useNavigation();
   const { onboardingData, updateOnboardingData } = useOnboarding();
   const { setLanguage, currentLanguage } = useLanguage();
+  const { logIn } = usePurchases();
 
   // Global icon configuration
   const iconSize = 24;
   const iconColor = appColors.onboarding.button.inactive.iconColor;
 
-  const steps: ReadonlyArray<StepConfig> = useMemo(() => [
+  const steps: ReadonlyArray<StepConfig> = useMemo(() => {
+    const baseSteps: StepConfig[] = [
     {
       type: 'options',
       id: 'language',
@@ -567,13 +574,20 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       title: i18n.t('onboarding.allDone.title'),
       subtitle: '',
     },
-    {
-      type: 'saveProgress',
-      id: 'saveProgress',
-      title: i18n.t('onboarding.saveProgress.title'),
-      subtitle: '',
-    },
-  ], [i18n.locale]);
+    ];
+
+    // Only add saveProgress step if userId is null (user hasn't signed in yet)
+    if (onboardingData.userId === null) {
+      baseSteps.push({
+        type: 'saveProgress',
+        id: 'saveProgress',
+        title: i18n.t('onboarding.saveProgress.title'),
+        subtitle: '',
+      });
+    }
+
+    return baseSteps;
+  }, [i18n.locale, onboardingData.userId]);
 
   const totalSteps = steps.length;
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
@@ -663,6 +677,8 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
 
 
   useEffect(() => {
+    if (!currentStep) return;
+    
     if (currentStep.id === 'trainSafer' || currentStep.id === 'costComparison') {
       // Animate boxes growing from 0 height
       Animated.parallel([
@@ -682,10 +698,12 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       percentageBoxHeight.setValue(0);
       formaiBoxHeight.setValue(0);
     }
-  }, [currentStep.id, percentageBoxHeight, formaiBoxHeight]);
+  }, [currentStep, percentageBoxHeight, formaiBoxHeight]);
 
   // Finger animation effect
   useEffect(() => {
+    if (!currentStep) return;
+    
     if (currentStep.type === 'notificationPermission' || currentStep.type === 'cameraPermission' || currentStep.type === 'mediaLibraryPermission') {
       const startFingerAnimation = () => {
         Animated.loop(
@@ -709,16 +727,20 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       // Reset animation when leaving permission steps
       fingerTranslateY.setValue(0);
     }
-  }, [currentStep.type, fingerTranslateY]);
+  }, [currentStep, fingerTranslateY]);
 
   useEffect(() => {
+    if (!currentStep) return;
+    
     if (currentStep.type === 'allDone') {
       hapticFeedback.success();
     }
-  }, [currentStep.type]);
+  }, [currentStep]);
 
   // Confetti animation delay effect
   useEffect(() => {
+    if (!currentStep) return;
+    
     if (currentStep.type === 'perfectFormGoalMessage') {
       // Reset confetti state when entering the step
       setShowConfetti(false);
@@ -740,7 +762,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       setShowConfetti(false);
       setShowAllDoneConfetti(false);
     }
-  }, [currentStep.type]);
+  }, [currentStep]);
 
   // Analytics tracking
   useEffect(() => {
@@ -759,6 +781,8 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
 
   // Auto-select second option for options steps
   useEffect(() => {
+    if (!currentStep) return;
+    
     if (currentStep.type === 'options') {
       const step = currentStep as OptionsStepConfig<keyof OnboardingData>;
       const currentValue = onboardingData[step.preferenceKey as keyof OnboardingData] as any;
@@ -1071,6 +1095,108 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
     }
   }
 
+  async function handleDirectAccountCreation() {
+    console.log('handleDirectAccountCreation', onboardingData.userId);
+    
+    // Navigate to AccountLoading screen immediately to show loading state
+    navigation.navigate('AccountLoading' as never);
+    
+    try {
+      // Get the current user from Supabase auth
+      const { data: { user }, error } = await supabase.auth.getUser();
+      
+      if (error || !user?.id) {
+        showAlert('Error', 'Unable to get user information. Please try again.');
+        return;
+      }
+
+      // Check if user already exists in the database
+      const { user: existingUser } = await fetchUserById(user.id);
+      console.log('existingUser', existingUser);
+      
+      if (existingUser) {
+        // User already exists, just log them in and navigate to main app
+        await logIn(user.id);
+        
+        // Track sign in completion for existing user
+        track('Sign In Completed', {
+          signin_method: 'onboarding_completion',
+          user_id: user.id,
+        });
+        
+        try {
+          // Register Expo push token for existing user
+          await registerAndSaveExpoPushToken(user.id);
+          // AccountLoading screen will handle the next navigation via its onComplete
+        } catch (error) {
+          showAlert(
+            'Error', 
+            'An error occurred while signing in. Please try again.',
+            undefined,
+            'ONBOARDING_EXISTING_USER_ERROR',
+            error
+          );
+        }
+        return;
+      }
+      
+      // New user - proceed with onboarding setup
+      const signInMethod = user?.app_metadata?.provider || 'onboarding_completion';
+      
+      const profilePicture: string | null =
+        (user?.user_metadata?.avatar_url as string | undefined) ??
+        (user?.user_metadata?.picture as string | undefined) ??
+        null;
+
+      const updatedData = {
+        ...onboardingData,
+        signInMethod: signInMethod,
+        onboardingCompleted: true,
+        walkthroughCompleted: false,
+        userId: user.id,
+        profilePicture: profilePicture,
+      };
+
+      updateOnboardingData('signInMethod', signInMethod);
+      updateOnboardingData('onboardingCompleted', true);
+      updateOnboardingData('walkthroughCompleted', false);
+      updateOnboardingData('userId', user.id);
+      updateOnboardingData('profilePicture', profilePicture);
+      
+      await logIn(user.id);
+
+      // Track signup completion
+      track('Signup Completed', {
+        signup_method: signInMethod,
+        user_id: user.id,
+      });
+
+      try {
+        // Register Expo push token and persist onboarding data
+        await registerAndSaveExpoPushToken(user.id);
+        const { saveOnboardingProgress } = await import('../../services/onboardingService');
+        await saveOnboardingProgress(updatedData);
+        // AccountLoading screen will handle the next navigation via its onComplete
+      } catch (persistError) {
+        showAlert(
+          'Error', 
+          'An error occurred while setting up your account. Please try again.',
+          undefined,
+          'ONBOARDING_DIRECT_ACCOUNT_CREATION_ERROR',
+          persistError
+        );
+      }
+    } catch (error) {
+      showAlert(
+        'Error', 
+        'An error occurred while creating your account. Please try again.',
+        undefined,
+        'ONBOARDING_DIRECT_ACCOUNT_CREATION_ERROR',
+        error
+      );
+    }
+  }
+
   function handleNext() {
     const isLast = currentStepIndex === totalSteps - 1;
 
@@ -1134,8 +1260,17 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       final_step_type: currentStep.type,
     });
 
-    // When finished, check if it's the save progress step
-    if (currentStep.type === 'saveProgress') {
+    // When finished, check if it's the allDone step
+    if (currentStep.type === 'allDone') {
+      // Check if userId is not null (user signed in but onboarding not complete)
+      if (onboardingData.userId !== null) {
+        // Skip create account screen and directly execute account creation logic
+        handleDirectAccountCreation();
+      } else {
+        // User hasn't signed in yet, navigate to payment
+        navigation.navigate('Payment' as never);
+      }
+    } else if (currentStep.type === 'saveProgress') {
       // Navigate to payment screens
       navigation.navigate('Payment' as never);
     } else {
@@ -1151,6 +1286,11 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
     }
     // Navigate back to previous screen in stack
     navigation.goBack();
+  }
+
+  // Safety check: if currentStep is undefined (e.g., steps array changed during re-render), return null
+  if (!currentStep) {
+    return null;
   }
 
   // Compute next disabled based on step type
