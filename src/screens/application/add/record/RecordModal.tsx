@@ -83,6 +83,9 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
   // Animation value for finger icon
   const fingerTranslateY = useMemo(() => new Animated.Value(0), []);
 
+  // Loading state for camera permission request
+  const [cameraPermissionLoading, setCameraPermissionLoading] = useState(false);
+
   useEffect(() => {
     if (isRecording && recordingTime >= 60) {
       handleStopRecording();
@@ -266,8 +269,22 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
   };
 
   const requestCameraPermissionFromUser = async () => {
+    setCameraPermissionLoading(true);
+    
+    // Set up 5 second timeout
+    const timeoutId = setTimeout(() => {
+      setCameraPermissionLoading(false);
+      showAlert(
+        'Permission Timeout',
+        'The permission request is taking longer than expected. Please try again or enable permissions in Settings.',
+        undefined,
+        'RECORD_CAMERA_PERMISSION_TIMEOUT'
+      );
+    }, 5000);
+    
     try {
       const result = await requestPermission();
+      clearTimeout(timeoutId);
       if (!result.granted && result.canAskAgain === false) {
         openAppSettings();
         setHasPermission(false);
@@ -275,7 +292,11 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
       }
       setHasPermission(result.granted);
     } catch (e) {
+      clearTimeout(timeoutId);
       setHasPermission(false);
+    } finally {
+      clearTimeout(timeoutId);
+      setCameraPermissionLoading(false);
     }
   };
 
@@ -687,6 +708,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
           fingerTranslateY={fingerTranslateY}
           allowButtonText={i18n.t('onboarding.cameraPermission.allow')}
           dontAllowButtonText={i18n.t('onboarding.cameraPermission.dontAllow')}
+          isLoading={cameraPermissionLoading}
           onDontAllow={() => {
             hapticFeedback.selection();
             Alert.alert(

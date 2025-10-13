@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, Animated, Platform, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, Animated, Platform, StyleSheet, ActivityIndicator } from 'react-native';
 import { hapticFeedback } from '../../utils/haptic';
 import i18n from '../../utils/i18n';
 import { appColors } from '../../constants/appColorScheme';
@@ -13,6 +13,7 @@ interface PermissionContainerProps {
   allowButtonText?: string;
   dontAllowButtonText?: string;
   disableDontAllowButton?: boolean;
+  isLoading?: boolean;
 }
 
 export function PermissionContainer({
@@ -24,6 +25,7 @@ export function PermissionContainer({
   allowButtonText,
   dontAllowButtonText,
   disableDontAllowButton = false,
+  isLoading = false,
 }: PermissionContainerProps) {
   return (
     <View style={styles.permissionContainer}>
@@ -112,20 +114,26 @@ export function PermissionContainer({
                 }
               ]}
               onPress={() => {
+                if (isLoading) return;
                 hapticFeedback.selection();
                 onAllow();
               }}
               activeOpacity={0.8}
+              disabled={isLoading}
             >
-              <Text style={[
-                styles.buttonText,
-                {
-                  color: appColors.onboarding.permission.button.allow.text,
-                  fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
-                }
-              ]}>
-                {allowButtonText || i18n.t('onboarding.notificationPermission.allow')}
-              </Text>
+              {isLoading ? (
+                <ActivityIndicator size="small" color={appColors.onboarding.permission.button.allow.text} />
+              ) : (
+                <Text style={[
+                  styles.buttonText,
+                  {
+                    color: appColors.onboarding.permission.button.allow.text,
+                    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
+                  }
+                ]}>
+                  {allowButtonText || i18n.t('onboarding.notificationPermission.allow')}
+                </Text>
+              )}
             </TouchableOpacity>
           </View>
         </View>

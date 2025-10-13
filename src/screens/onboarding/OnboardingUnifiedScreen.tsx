@@ -605,6 +605,10 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
   const [referralError, setReferralError] = useState(false);
   const [applyButtonLoading, setApplyButtonLoading] = useState(false);
 
+  // Loading states for permission requests
+  const [notificationPermissionLoading, setNotificationPermissionLoading] = useState(false);
+  const [mediaLibraryPermissionLoading, setMediaLibraryPermissionLoading] = useState(false);
+
   // Animation values for info step
   const percentageBoxHeight = useMemo(() => new Animated.Value(0), []);
   const formaiBoxHeight = useMemo(() => new Animated.Value(0), []);
@@ -2178,16 +2182,32 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
           fingerTranslateY={fingerTranslateY}
           allowButtonText={i18n.t('onboarding.notificationPermission.allow')}
           dontAllowButtonText={i18n.t('onboarding.notificationPermission.dontAllow')}
+          isLoading={notificationPermissionLoading}
           onDontAllow={() => {
             handleNext();
           }}
           onAllow={async () => {
+            setNotificationPermissionLoading(true);
+            
+            // Set up 5 second timeout
+            const timeoutId = setTimeout(() => {
+              setNotificationPermissionLoading(false);
+              showAlert(
+                'Permission Timeout',
+                'The permission request is taking longer than expected. Please try again or enable permissions in Settings.',
+                undefined,
+                'ONBOARDING_NOTIFICATION_PERMISSION_TIMEOUT'
+              );
+            }, 5000);
+            
             try {
               const result = await Notifications.requestPermissionsAsync();
+              clearTimeout(timeoutId);
               const granted = result.granted;
               trackPermission('notifications', granted, 'notificationPermission');
               handleNext();
             } catch (error) {
+              clearTimeout(timeoutId);
               trackPermission('notifications', false, 'notificationPermission', error instanceof Error ? error.message : 'Unknown error');
               showAlert(
                 'Permission Error',
@@ -2197,6 +2217,8 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                 error
               );
               handleNext();
+            } finally {
+              setNotificationPermissionLoading(false);
             }
           }}
         />
@@ -2231,6 +2253,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
           allowButtonText={i18n.t('onboarding.mediaLibraryPermission.allow')}
           dontAllowButtonText={i18n.t('onboarding.mediaLibraryPermission.dontAllow')}
           disableDontAllowButton={false}
+          isLoading={mediaLibraryPermissionLoading}
           onDontAllow={() => {
             hapticFeedback.selection();
             Alert.alert(
@@ -2239,7 +2262,28 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
             );
           }}
           onAllow={async () => {
-            await requestMediaLibraryPermissionAndProceed(() => handleNext());
+            setMediaLibraryPermissionLoading(true);
+            
+            // Set up 5 second timeout
+            const timeoutId = setTimeout(() => {
+              setMediaLibraryPermissionLoading(false);
+              showAlert(
+                'Permission Timeout',
+                'The permission request is taking longer than expected. Please try again or enable permissions in Settings.',
+                undefined,
+                'ONBOARDING_MEDIA_LIBRARY_PERMISSION_TIMEOUT'
+              );
+            }, 5000);
+            
+            try {
+              await requestMediaLibraryPermissionAndProceed(() => {
+                clearTimeout(timeoutId);
+                handleNext();
+              });
+            } finally {
+              clearTimeout(timeoutId);
+              setMediaLibraryPermissionLoading(false);
+            }
           }}
         />
       )}
