@@ -37,7 +37,7 @@ export function SwipeableAccuracyCard({
   const { selectedDate } = useSelectedDate();
   
   // Create a ref to control the list
-  const listRef = useRef<FlashList<AccuracyCardData> | null>(null);
+  const listRef = useRef<any>(null);
 
   // Track a local index for UI/lazy render; notify parent only on settle
   const [localIndex, setLocalIndex] = React.useState(currentCardIndex);
@@ -199,15 +199,6 @@ export function SwipeableAccuracyCard({
           snapToAlignment="start"
           decelerationRate="fast"
           disableIntervalMomentum   // ← helps remove the "pause then snap" on iOS
-
-          // ✅ Exact layout (no guessing)
-          overrideItemLayout={(layout, index) => {
-            layout.size = ITEM_WIDTH;
-            // @ts-ignore
-            layout.offset = ITEM_WIDTH * index;
-          }}
-          estimatedItemSize={ITEM_WIDTH}
-          estimatedListSize={{ width: SCREEN_WIDTH, height: CARD_HEIGHT }}
 
           keyExtractor={(item, i) => `${item.label}-${item.percentage}-${i}`}
           renderItem={({ item, index }) => (

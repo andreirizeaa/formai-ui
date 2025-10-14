@@ -153,7 +153,7 @@ export function SwipeableCalendar({ onDateSelect, onSwipe, initialSelectedDate }
   const { daysLogged } = useUserCheckIns();
   const { getLiftsByDate } = useLiftData();
 
-  const listRef = useRef<FlashList<DayData[]> | null>(null);
+  const listRef = useRef<any>(null);
   const hasMounted = useRef(false);
 
   // Seed indices from selected date (or initialSelectedDate) before first paint
@@ -334,13 +334,6 @@ export function SwipeableCalendar({ onDateSelect, onSwipe, initialSelectedDate }
         contentInsetAdjustmentBehavior="never"
 
         // exact layout (size + offset) so FlashList never guesses
-        overrideItemLayout={(layout, index) => {
-          layout.size = ITEM_WIDTH;
-          // @ts-ignore
-          layout.offset = ITEM_WIDTH * index;
-        }}
-        estimatedItemSize={ITEM_WIDTH}
-        estimatedListSize={{ width: SCREEN_WIDTH, height: WEEK_HEIGHT }}
 
         keyExtractor={(_, i) => `week-${i}`}
         renderItem={renderItem}

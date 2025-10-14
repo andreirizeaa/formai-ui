@@ -6,7 +6,7 @@ const SYNC_INTERVAL = 5 * 60 * 1000; // 5 minutes in milliseconds
 const LAST_SYNC_KEY = 'last_sync_time';
 
 // Global state
-let syncIntervalId: NodeJS.Timeout | null = null;
+let syncIntervalId: ReturnType<typeof setInterval> | null = null;
 let queryClient: any = null;
 let isRunning = false;
 let appStateSubscription: any = null;

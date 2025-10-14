@@ -555,7 +555,6 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
               renderItem={renderLiftItem}
               keyExtractor={(item) => item.id}
               getItemType={(item) => (isLoadingLift(item) ? 'loading' : 'final')}
-              estimatedItemSize={146}
               showsVerticalScrollIndicator={false}
               scrollEnabled={false}
               extraData={combinedLiftsForDay}

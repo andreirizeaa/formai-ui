@@ -34,7 +34,7 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
   const { optimisticAddToday, invalidateAndRefetch: invalidateUserCheckIns } = useUserCheckIns();
   const { hasHdVideos } = usePurchases();
   const { userDetails } = useUserDetails();
-  const persistTimer = useRef<NodeJS.Timeout | null>(null);
+  const persistTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const appState = useRef(AppState.currentState);
   const streakShownForRef = useRef(new Set<string>());
   const trackedErrorsRef = useRef(new Set<string>()); // Track which errors have been logged
@@ -204,11 +204,11 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
   // Global sweeper configuration
   const SWEEP_MS = 6000; // poll every 6s
   const PROGRESS_MAX_BEFORE_DONE = 0.95;
-  const sweeperRef = useRef<NodeJS.Timeout | null>(null);
+  const sweeperRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Strong per-lift lock + queued retries
   const inflightRef = useRef(new Set<string>());
-  const retryTimersRef = useRef(new Map<string, NodeJS.Timeout>());
+  const retryTimersRef = useRef(new Map<string, ReturnType<typeof setTimeout>>());
   const queuedRef = useRef(new Set<string>()); // ids with a scheduled retry
   
 
@@ -1175,7 +1175,7 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
 
   // Optional: Update progress every second while active for smooth animation
   useEffect(() => {
-    let id: NodeJS.Timeout | null = null;
+    let id: ReturnType<typeof setInterval> | null = null;
     id = setInterval(() => { 
       if (AppState.currentState === 'active') {
         tickProgressFromClock(); 

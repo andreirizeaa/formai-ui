@@ -96,6 +96,10 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       proxy: "https://formai-service.onrender.com"
     },
     plugins: [
+      "expo-build-properties",
+      "expo-font",
+      "expo-localization",
+      "expo-tracking-transparency",
       "expo-mail-composer",
       "expo-video",
       "expo-apple-authentication",
@@ -186,6 +190,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       [
         "expo-splash-screen",
         {
+       
           backgroundColor: "#ffffff",
           image: "./assets/formai-splash.png",
           imageWidth: 200
