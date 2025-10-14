@@ -13,6 +13,9 @@ const zh = {
     getStartedButton: '开始！',
     signInButton: '登录',
     next: '继续',
+    trainSaferForFree: '免费安全训练',
+    noCommitmentCancelAnytime: '无需承诺，随时取消',
+    neverInjureYourselfAgain: '使用 Form AI 再也不会受伤',
     back: '返回',
     close: '关闭',
     tabs: {

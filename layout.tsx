@@ -115,6 +115,7 @@ function AppContent() {
           require('./assets/tutorial/formai-example-video-thumbnail.jpg'),
           require('./assets/tutorial/formai-example-video.mp4'),
           require('./assets/onboarding/progress_tracking.png'),
+          require('./assets/formai-payment-screen.png'),
         ].filter(asset => {
           // Filter out any assets that might be objects instead of module references
           if (typeof asset === 'object' && asset !== null && !asset.uri && !asset.__packager_asset) {

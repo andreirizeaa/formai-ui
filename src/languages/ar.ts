@@ -13,6 +13,9 @@ const ar = {
     "getStartedButton": "ابدأ!",
     "signInButton": "تسجيل الدخول",
     "next": "متابعة",
+    "trainSaferForFree": "تدرب بأمان مجاناً",
+    "noCommitmentCancelAnytime": "بدون التزام، الإلغاء في أي وقت",
+    "neverInjureYourselfAgain": "لا تصب نفسك مجدداً مع Form AI",
     "back": "رجوع",
     "close": "إغلاق",
     "tabs": {

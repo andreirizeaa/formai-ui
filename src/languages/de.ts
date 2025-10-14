@@ -12,6 +12,9 @@ const de = {
     "perfectFormAlways": "Perfekte Form, immer!",
     "getStartedButton": "Los geht's!",
     "next": "Weiter",
+    "trainSaferForFree": "Sicherer trainieren KOSTENLOS",
+    "noCommitmentCancelAnytime": "Keine Verpflichtung, jederzeit kündbar",
+    "neverInjureYourselfAgain": "Verletz Dich Nie Wieder mit Form AI",
     "back": "Zurück",
     "close": "Schließen",
     "tabs": {

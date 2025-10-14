@@ -13,6 +13,9 @@ const pt = {
     getStartedButton: 'Começar!',
     signInButton: 'Entrar',
     next: 'Continuar',
+    trainSaferForFree: 'Treine mais seguro GRÁTIS',
+    noCommitmentCancelAnytime: 'Sem compromisso, cancele a qualquer momento',
+    neverInjureYourselfAgain: 'Nunca Se Lesione Novamente com Form AI',
     back: 'Voltar',
     close: 'Fechar',
     tabs: {
