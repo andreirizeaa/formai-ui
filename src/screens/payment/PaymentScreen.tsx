@@ -1,7 +1,7 @@
 import { usePlacement, useSuperwallEvents } from 'expo-superwall';
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, StyleSheet, TouchableOpacity, Text, ActivityIndicator, Platform } from 'react-native';
+import { Image } from 'expo-image';
 import { hapticFeedback } from '../../utils/haptic';
 import { usePurchases } from '../../context/PurchasesContext';
 import { useOnboarding } from '../../context/OnboardingContext';
@@ -10,6 +10,7 @@ import { track } from '../../services/analytics';
 import { getReferralCodeType, getUserReferralCode } from '../../services/referralService';
 import { getUserId, setUserJustPaid } from '../../services/storageService';
 import { appColors } from '../../constants/appColorScheme';
+import i18n from '../../utils/i18n';
 
 interface PaymentScreenProps {
   onComplete: () => void;
@@ -22,6 +23,7 @@ export function PaymentScreen({ onComplete }: PaymentScreenProps) {
   const [ showAccountLoading, setShowAccountLoading ] = useState(false);
   const [ referralCodeType, setReferralCodeType ] = useState<'DISCOUNT' | 'SKIP_PAYWALL' | null>(null);
   const [ isReferralCodeProcessed, setIsReferralCodeProcessed ] = useState(false);
+  const [ isButtonLoading, setIsButtonLoading ] = useState(false);
 
   // Listen for Superwall events
   useSuperwallEvents({
@@ -52,15 +54,6 @@ export function PaymentScreen({ onComplete }: PaymentScreenProps) {
         // Track purchase abandonment
         track("Purchase Abandoned", {
           product_id: eventInfo.params.abandoned_product_id,
-        });
-      }
-    },
-    onPaywallDismiss: async(info, result) => {
-      // Only re-show paywall on manual close and if user has no active subscription
-      if (String(info.closeReason) === "manualClose" && customerInfo?.activeSubscriptions?.length === 0) {
-        const placement = referralCodeType === 'DISCOUNT' ? "referral_trigger" : "default_trigger";
-        await registerPlacement({
-          placement,
         });
       }
     },
@@ -96,19 +89,14 @@ export function PaymentScreen({ onComplete }: PaymentScreenProps) {
               // Skip paywall entirely
               onComplete();
               return;
-            } else if (typeResult.type === 'DISCOUNT') {
-              await registerPlacement({
-                placement: "referral_trigger",
-                feature: () => {
-                  onComplete();
-                }
-              });
-          }
+            }
+            // For DISCOUNT type, just set the type - placement will be shown on button click
           }
         }
 
         setIsReferralCodeProcessed(true);
       } catch (error) {
+
         setIsReferralCodeProcessed(true);
       }
     };
@@ -116,26 +104,29 @@ export function PaymentScreen({ onComplete }: PaymentScreenProps) {
     processReferralCode();
   }, [onboardingData.referralCode, onComplete]);
 
-  React.useEffect(() => {
-    const handleTriggerPlacement = async () => {
-      // Wait for referral code processing to complete
-      if (!isReferralCodeProcessed) return;
+  // Button click handler to show paywall
+  async function handleShowPaywall() {
+    if (!isReferralCodeProcessed) return;
+    
+    hapticFeedback.selection();
+    setIsButtonLoading(true);
 
+    try {
       // Determine which placement to show
       const placement = referralCodeType === 'DISCOUNT' ? 'referral_trigger' : 'default_trigger';
       
       // Track paywall shown
       track("Paywall Shown", { placement });
 
-      // Add a small delay to ensure event listeners are properly set up
-      setTimeout(async () => {
-        await registerPlacement({
-          placement,
-        });
-      }, 100);
-    };
-    handleTriggerPlacement();
-  }, [isReferralCodeProcessed, referralCodeType]);
+      await registerPlacement({
+        placement,
+      });
+    } catch (error) {
+      console.error('Error showing paywall:', error);
+    } finally {
+      setIsButtonLoading(false);
+    }
+  }
 
 
 
@@ -148,9 +139,55 @@ export function PaymentScreen({ onComplete }: PaymentScreenProps) {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.content} />
-    </SafeAreaView>
+    <View style={styles.container}>
+      <View style={styles.content}>
+        {/* App Icon in white container with shadow */}
+        <View style={styles.iconCard}>
+          <View style={styles.iconContainer}>
+            <Image
+              source={require('../../../assets/appIcons/formai-ios-icon.png')}
+              style={styles.appIcon}
+              contentFit="cover"
+            />
+          </View>
+        </View>
+        
+        {/* Title */}
+        <Text style={styles.paymentTitle}>{i18n.t('neverInjureYourselfAgain')}</Text>
+        
+        {/* Payment Screen Image */}
+        <View style={styles.imageContainer}>
+          <Image
+            source={require('../../../assets/formai-payment-screen.png')}
+            style={styles.paymentImage}
+            contentFit="contain"
+            priority="high"
+          />
+        </View>
+      </View>
+      
+      {/* Bottom button - styled like NextButton */}
+      <View style={styles.buttonWrapper}>
+        <TouchableOpacity
+          style={[
+            styles.button,
+            (!isReferralCodeProcessed || isButtonLoading) && styles.buttonDisabled
+          ]}
+          onPress={handleShowPaywall}
+          disabled={!isReferralCodeProcessed || isButtonLoading}
+          activeOpacity={0.8}
+        >
+          {isButtonLoading ? (
+            <ActivityIndicator size="small" color="#FFFFFF" />
+          ) : (
+            <Text style={styles.buttonText}>{i18n.t('trainSaferForFree')}</Text>
+          )}
+        </TouchableOpacity>
+        
+        {/* No commitment text */}
+        <Text style={styles.noCommitmentText}>{i18n.t('noCommitmentCancelAnytime')}</Text>
+      </View>
+    </View>
   );
 }
 
@@ -161,5 +198,86 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    width: '100%',
+  },
+  iconCard: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 0.5,
+    borderColor: '#f0f0f0',
+    borderRadius: 18,
+    padding: 2,
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
+    marginTop: 60,
+    marginBottom: 16,
+  },
+  paymentTitle: {
+    fontSize: 32,
+    fontWeight: '800',
+    lineHeight: 38,
+    textAlign: 'center',
+    paddingHorizontal: 20,
+    marginBottom: 20,
+    color: appColors.general.title,
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
+  },
+  iconContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  appIcon: {
+    width: 70,
+    height: 70,
+    borderRadius: 70 * 0.22,
+  },
+  imageContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
+    width: '100%',
+  },
+  paymentImage: {
+    width: '100%',
+    height: 400,
+    maxWidth: 400,
+  },
+  buttonWrapper: {
+    width: '100%',
+  },
+  button: {
+    marginHorizontal: 20,
+    marginTop: 16,
+    backgroundColor: '#000000',
+    borderRadius: 28,
+    height: 65,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonDisabled: {
+    opacity: 0.5,
+  },
+  buttonText: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
+  noCommitmentText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#000000',
+    textAlign: 'center',
+    marginTop: 12,
+    marginBottom: 40,
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
 });

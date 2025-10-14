@@ -13,6 +13,9 @@ const fr = {
     "getStartedButton": "Commencer !",
     "signInButton": "Se connecter",
     "next": "Continuer",
+    "trainSaferForFree": "S'entraîner plus sûrement GRATUITEMENT",
+    "noCommitmentCancelAnytime": "Sans engagement, annulez à tout moment",
+    "neverInjureYourselfAgain": "Ne Vous Blessez Plus Jamais avec Form AI",
     "back": "Retour",
     "close": "Fermer",
     "tabs": {

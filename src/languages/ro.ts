@@ -13,6 +13,9 @@ const ro = {
     "getStartedButton": "Începe!",
     "signInButton": "Autentificare",
     "next": "Continuă",
+    "trainSaferForFree": "Antrenează-te mai sigur GRATUIT",
+    "noCommitmentCancelAnytime": "Fără angajament, anulează oricând",
+    "neverInjureYourselfAgain": "Nu Te Mai Răni Niciodată cu Form AI",
     "back": "Înapoi",
     "close": "Închide",
     "tabs": {

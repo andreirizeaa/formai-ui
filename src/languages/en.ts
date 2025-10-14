@@ -13,6 +13,9 @@ const en = {
     getStartedButton: 'Get started!',
     signInButton: 'Sign in',
     next: 'Continue',
+    trainSaferForFree: 'Train Safer for FREE',
+    noCommitmentCancelAnytime: 'No commitment, cancel anytime',
+    neverInjureYourselfAgain: 'Never Injure Yourself Again with Form AI',
     back: 'Back',
     close: 'Close',
     tabs: {
