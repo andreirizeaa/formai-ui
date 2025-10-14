@@ -58,7 +58,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
           }
         ],
         NSCameraUsageDescription: "Form AI uses the camera to let you record workout videos so you can submit them for lift analysis to receive form feedback.",
-        NSPhotoLibraryUsageDescription: "Form AI accesses this so you can upload videos for analysis, save videos recorded in the app to your photo library, search for previous analyses and prevent duplicate uploads.",
+        NSPhotoLibraryUsageDescription: "Form AI accesses your photo library so you can upload videos for analysis, save videos recorded in the app to your photo library, search for previously analysed videos and to prevent duplicate video uploads.",
         NSPhotoLibraryAddUsageDescription: "Form AI accesses your photo library so you can upload videos for analysis, save videos recorded in the app to your photo library, search for previously analysed videos and to prevent duplicate video uploads.",
         NSUserTrackingUsageDescription: "We use this to ensure the app works for you and others that download it by reviewing usage logs.",
         ITSAppUsesNonExemptEncryption: false,
@@ -196,7 +196,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         {
           photosPermission: "Form AI accesses your photo library so you can upload videos for analysis, save videos recorded in the app to your photo library, search for previously analysed videos and to prevent duplicate video uploads.",
           savePhotosPermission: "Form AI accesses your photo library so you can upload videos for analysis, save videos recorded in the app to your photo library, search for previously analysed videos and to prevent duplicate video uploads.",
-          isAccessMediaLocationEnabled: false
+          isAccessMediaLocationEnabled: false,
+          granularPermissions: ["video"]
         }
       ],
       [
