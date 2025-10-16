@@ -9,8 +9,7 @@ import { OnboardingUnifiedScreen } from '../screens/onboarding/OnboardingUnified
 import { NotificationPermissionScreen } from '../screens/onboarding/NotificationPermissionScreen';
 import { AccountLoadingScreen } from '../screens/onboarding/AccountLoadingScreen';
 import { PaymentScreen } from '../screens/payment/PaymentScreen';
-import Purchases from 'react-native-purchases';
-import { usePurchases } from '../context/PurchasesContext';
+import { useSubscription } from '../context/SuperwallContext';
 import { useUserDetails } from '../context/UserDetailsContext';
 import { track } from '../services/analytics';
 
@@ -98,7 +97,7 @@ function NotificationPermissionScreenWrapper() {
 
 function AccountLoadingScreenWrapper({ onComplete }: { onComplete: () => void }) {
   const navigation = useNavigation<OnboardingNavigationProp>();
-  const { customerInfo } = usePurchases();
+  const { subscriptionStatus, refresh } = useSubscription();
   const { refetchUserDetails } = useUserDetails();
   const isRunningRef = React.useRef(false);
   
@@ -106,8 +105,9 @@ function AccountLoadingScreenWrapper({ onComplete }: { onComplete: () => void })
     if (isRunningRef.current) return; // guard against double-taps
     isRunningRef.current = true;
 
-    const entitlementIds = Object.keys(customerInfo?.entitlements.active ?? []);
-    if (entitlementIds.length === 0) {
+    await refresh().catch(() => {});
+    const isActive = subscriptionStatus?.status === 'ACTIVE';
+    if (!isActive) {
       navigation.navigate('Payment');
     } else {
       await refetchUserDetails(); // ensure context is populated, silently

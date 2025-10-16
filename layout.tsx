@@ -20,7 +20,7 @@ import { getUserId, removeUserId } from './src/services/storageService';
 import { handleAuthError } from './src/services/authErrorService';
 import { AccountLoadingScreen } from './src/screens/onboarding/AccountLoadingScreen';
 import { fetchUserById, requiresOnboarding } from './src/services/userService';
-import { usePurchases } from './src/context/PurchasesContext';
+import { useSubscription } from './src/context/SuperwallContext';
 import { useUserDetails } from './src/context/UserDetailsContext';
 import { useLiftData } from './src/context/LiftDataContext';
 import { useUserCheckIns } from './src/context/UserCheckInsContext';
@@ -60,7 +60,7 @@ function AppContent() {
     }
   });
 
-  const { hasSubscription, isInitializing } = usePurchases();
+  const { hasSubscription, isInitializing } = useSubscription();
   const { isUserDetailsLoaded, refetchUserDetails, userDetails, setSignedInUser: setUserDetailsSignedInUser } = useUserDetails();
   const { isLiftDataLoaded, liftData, setSignedInUser: setLiftDataSignedInUser } = useLiftData();
   const { 
@@ -159,7 +159,7 @@ function AppContent() {
           }
         } catch (error) {
           // Handle auth errors gracefully
-          await handleAuthError(error, () => setRoute('ONBOARDING_WELCOME'));
+          await handleAuthError(supabase, error, () => setRoute('ONBOARDING_WELCOME'));
           setRoute('ONBOARDING_WELCOME');
           return;
         }

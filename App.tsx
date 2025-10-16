@@ -4,7 +4,6 @@ import './app/notificationsBackground';
 import { BACKGROUND_NOTIFICATION_TASK } from './app/notificationsBackground';
 import { initBackgroundFetch } from './app/backgroundFetch';
 import { Layout } from './layout';
-import { PurchasesProvider } from './src/context/PurchasesContext';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { LanguageProvider } from './src/context/LanguageContext';
 import { OnboardingProvider } from './src/context/OnboardingContext';
@@ -67,13 +66,11 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <OnboardingProvider>
-          <PurchasesProvider>
-            <SuperwallProvider>
-              <LanguageProvider>
-                <Layout />
-              </LanguageProvider>
-            </SuperwallProvider>
-          </PurchasesProvider>
+          <SuperwallProvider>
+            <LanguageProvider>
+              <Layout />
+            </LanguageProvider>
+          </SuperwallProvider>
         </OnboardingProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

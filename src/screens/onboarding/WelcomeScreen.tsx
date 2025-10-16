@@ -45,6 +45,7 @@ export function WelcomeScreen({
   const player = useVideoPlayer(require('../../../assets/formai-homescreen.mp4'), player => {
     player.loop = true;
     player.muted = true;
+    player.volume = 0; // Ensure volume is 0
     playerRef.current = player;
   });
 
@@ -73,6 +74,27 @@ export function WelcomeScreen({
     });
   }, [showLanguageModal, languageOpacity]);
 
+  // Ensure video stays muted during playback
+  useEffect(() => {
+    if (!playerRef.current) return;
+    
+    const ensureMuted = () => {
+      if (playerRef.current) {
+        try {
+          playerRef.current.muted = true;
+          playerRef.current.volume = 0;
+        } catch (error) {
+          // Silent fail
+        }
+      }
+    };
+    
+    // Check every 100ms to ensure video stays muted
+    const interval = setInterval(ensureMuted, 100);
+    
+    return () => clearInterval(interval);
+  }, [videoReady]);
+
   // Video animation sequence - N shape movement with manual video control
   useEffect(() => {
     if (!videoReady || !isAppVisible) return;
@@ -84,6 +106,8 @@ export function WelcomeScreen({
       if (playerRef.current && !cancelled) {
         try {
           playerRef.current.currentTime = 0;
+          playerRef.current.muted = true; // Ensure muted
+          playerRef.current.volume = 0; // Ensure volume is 0
           playerRef.current.play();
         } catch (error) {
           console.warn('Video restart failed:', error);

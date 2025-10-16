@@ -1,126 +1,121 @@
-import React, { createContext, useContext, useEffect, ReactNode } from 'react';
-import { CustomPurchaseControllerProvider, SuperwallProvider as ExpoSuperwallProvider, SuperwallLoaded, useUser, SuperwallExpoModule } from 'expo-superwall';
-import Purchases from 'react-native-purchases';
-import { usePurchases } from './PurchasesContext';
+import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { SuperwallProvider as ExpoSuperwallProvider, SuperwallLoaded, useUser, useSuperwallEvents } from 'expo-superwall';
 import { showAlert } from '../services/alertService';
 
-interface SuperwallContextValue {
-  // Add any Superwall-specific state or methods here if needed
+// Internal subscription context derived from Superwall's useUser
+interface SubscriptionContextValue {
+  isInitializing: boolean;
+  hasSubscription: boolean;
+  hasHdVideos: boolean;
+  subscriptionStatus: any | undefined;
+  identify: (userId: string) => Promise<void>;
+  signOut: () => Promise<void>;
+  refresh: () => Promise<Record<string, any>>;
 }
 
-const SuperwallContext = createContext<SuperwallContextValue | undefined>(undefined);
-
-function SubscriptionSync() {
-  const { setSubscriptionStatus, subscriptionStatus } = useUser();
-  const { isInitializing, customerInfo } = usePurchases();
-  
-  useEffect(() => {
-    // Don't run until SDK is initialized
-    if (isInitializing) return;
-    
-    Purchases.addCustomerInfoUpdateListener((customerInfo: any) => {
-      const entitlementIds = Object.keys(customerInfo.entitlements.active);      
-      setSubscriptionStatus({
-        status: entitlementIds.length === 0 ? "INACTIVE" : "ACTIVE",
-        entitlements: entitlementIds.map(id => ({ 
-          id, 
-          type: "SERVICE_LEVEL" 
-        }))
-      });
-    });
-    
-    // Get initial customer info only after initialization
-    const syncInitialStatus = async () => {
-      try {
-        // Use the customerInfo from context if available, otherwise fetch it
-        let info = customerInfo;
-        if (!info) {
-          info = await Purchases.getCustomerInfo();
-        }
-        
-        const entitlementIds = Object.keys(info.entitlements.active);
-        
-        setSubscriptionStatus({
-          status: entitlementIds.length === 0 ? "INACTIVE" : "ACTIVE",
-          entitlements: entitlementIds.map(id => ({ 
-            id, 
-            type: "SERVICE_LEVEL" 
-          }))
-        });
-      } catch (error) {
-        showAlert(
-          'Error', 
-          'Unable to sync subscription status. Please check your connection.',
-          undefined,
-          'SUPERWALL_CONTEXT_SYNC_ERROR',
-          error
-        );
-      }
-    };
-    
-    syncInitialStatus();
-  }, [setSubscriptionStatus, isInitializing, customerInfo]);
-  
-  return null; // This component just handles the sync
-}
+const SubscriptionContext = createContext<SubscriptionContextValue | undefined>(undefined);
 
 interface SuperwallProviderProps {
   children: ReactNode;
 }
 
 export function SuperwallProvider({ children }: SuperwallProviderProps) {
-  const { purchasePackage, restorePurchases, offerings } = usePurchases();
   return (
-    <CustomPurchaseControllerProvider
-      controller={{
-        onPurchase: async (params) => {
-            try {
-              // Search through all offerings (default + upgrades)
-              let packageToPurchase = null;
-              if (offerings?.all) {
-                for (const offering of Object.values(offerings.all)) {
-                  packageToPurchase = offering.availablePackages.find(
-                    pkg => pkg.product.identifier === params.productId
-                  );
-                  if (packageToPurchase) break;
-                }
-              }
-              
-              if (!packageToPurchase) {
-                throw new Error(`Package not found for product: ${params.productId}`);
-              }
-              
-              await purchasePackage(packageToPurchase);
-              return undefined;
-            } catch (error) {
-              throw error;
-            }
-        },
-        onPurchaseRestore: async () => {
-          await restorePurchases();
-          return {type: "purchased"}
-        },
+    <ExpoSuperwallProvider 
+      apiKeys={{ 
+        ios: process.env.EXPO_PUBLIC_SUPERWALL_IOS_KEY, 
       }}
     >
-      <ExpoSuperwallProvider 
-        apiKeys={{ 
-          ios: process.env.EXPO_PUBLIC_SUPERWALL_IOS_KEY, 
-        }}
-      >
-        <SuperwallLoaded>
-          <SubscriptionSync />
+      <SuperwallLoaded>
+        <SubscriptionProvider>
           {children}
-        </SuperwallLoaded>
-      </ExpoSuperwallProvider>
-    </CustomPurchaseControllerProvider>
+        </SubscriptionProvider>
+      </SuperwallLoaded>
+    </ExpoSuperwallProvider>
   );
 }
 
-export function useSuperwall() {
-  const ctx = useContext(SuperwallContext);
-  if (!ctx) throw new Error('useSuperwall must be used within a SuperwallProvider');
+function SubscriptionProvider({ children }: { children: ReactNode }) {
+  const { identify, signOut, refresh, subscriptionStatus } = useUser();
+  const [isInitializing, setIsInitializing] = useState(true);
+  const [hasSubscription, setHasSubscription] = useState(false);
+  const [hasHdVideos, setHasHdVideos] = useState(false);
+
+  // Listen for subscription status changes
+  useSuperwallEvents({
+    onSubscriptionStatusChange: async (status) => {
+      // Check entitlements and update context immediately
+      const ents = Array.isArray((status as any).entitlements) ? (status as any).entitlements : [];
+      const hasFullAccess = ents?.some((e: any) => e?.id === 'full_access');
+      const hasHdVideosEntitlement = ents?.some((e: any) => e?.id === 'hd_videos');
+      
+      setHasSubscription(hasFullAccess);
+      setHasHdVideos(hasHdVideosEntitlement);
+      
+      // Refresh subscription status to ensure context is up to date
+      try {
+        await refresh();
+      } catch (error) {
+        // Silently handle refresh errors
+      }
+    },
+  });
+
+  // Update subscription state when subscriptionStatus changes
+  useEffect(() => {
+    if (subscriptionStatus) {
+      const ents = Array.isArray((subscriptionStatus as any)?.entitlements) ? (subscriptionStatus as any).entitlements : [];
+      const hasFullAccess = ents?.some((e: any) => e?.id === 'full_access');
+      const hasHdVideosEntitlement = ents?.some((e: any) => e?.id === 'hd_videos');
+      
+      setHasSubscription(hasFullAccess);
+      setHasHdVideos(hasHdVideosEntitlement);
+    }
+  }, [subscriptionStatus]);
+
+  // Initial refresh
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        await refresh();
+      } catch (error) {
+        showAlert(
+          'Error',
+          'Unable to refresh subscription status. Please check your connection.',
+          undefined,
+          'SUPERWALL_REFRESH_ERROR',
+          error
+        );
+      } finally {
+        if (mounted) setIsInitializing(false);
+      }
+    })();
+    return () => { mounted = false; };
+  }, [refresh]);
+
+  const value: SubscriptionContextValue = {
+    isInitializing,
+    hasSubscription,
+    hasHdVideos,
+    subscriptionStatus,
+    identify,
+    signOut,
+    refresh,
+  };
+
+  return (
+    <SubscriptionContext.Provider value={value}>
+      {children}
+    </SubscriptionContext.Provider>
+  );
+}
+
+export function useSubscription() {
+  const ctx = useContext(SubscriptionContext);
+  if (!ctx) throw new Error('useSubscription must be used within a SuperwallProvider');
   return ctx;
 }
 
-// Export the useUser hook from expo-superwall for convenience
-export { useUser };
+// Export hooks from expo-superwall for convenience
+export { useUser, useSuperwallEvents };

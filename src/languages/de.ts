@@ -376,7 +376,7 @@ const de = {
       "notificationPermission": {
         "title": "Erreiche deine Ziele mit Benachrichtigungen",
         "dialogText": "FormAI möchte dir Benachrichtigungen senden",
-        "allow": "Zulassen",
+        "allow": "Vollzugriff Zulassen",
         "dontAllow": "Nicht zulassen"
       },
       "setupLoading": {
@@ -433,15 +433,15 @@ const de = {
         "title": "Kamerazugriff erlauben",
         "subtitle": "Kamerazugriff ist für FormAI erforderlich.",
         "dialogText": "FormAI möchte auf deine Kamera zugreifen.",
-        "allow": "Zulassen",
+        "allow": "Vollzugriff Zulassen",
         "dontAllow": "Nicht zulassen",
         "permissionRequired": "Kameraberechtigung erforderlich",
         "permissionRequiredMessage": "Kamerazugriff ist erforderlich, um fortzufahren. Sie können ihn in den Einstellungen aktivieren."
       },
       "mediaLibraryPermission": {
-        "title": "Fotobibliothek-Zugriff erlauben",
+        "title": "Vollzugriff auf deine Fotobibliothek erlauben",
         "dialogText": "FormAI möchte auf deine Fotobibliothek zugreifen.",
-        "allow": "Zulassen",
+        "allow": "Vollzugriff Zulassen",
         "dontAllow": "Nicht zulassen",
         "permissionRequired": "Fotoberechtigung erforderlich",
         "permissionRequiredMessage": "Fotozugriff ist erforderlich, um fortzufahren. Sie können ihn in den Einstellungen aktivieren.",
@@ -917,8 +917,9 @@ const de = {
     "upload": {
       "permissionRequired": "Berechtigung erforderlich",
       "permissionMessage": "Bitte erlaube den Zugriff auf deine Fotomediathek.",
-      "mediaPermissionTitle": "Zugriff auf Medienbibliothek erlauben",
+      "mediaPermissionTitle": "Vollzugriff auf deine Fotobibliothek erlauben",
       "mediaPermissionDialogText": "FormAI möchte auf deine Medienbibliothek zugreifen.",
+      "mediaPermissionDetailedDescription": "Form AI greift auf deine Fotobibliothek zu, damit du Videos für die Analyse hochladen, in der App aufgenommene Videos in deiner Fotobibliothek speichern, zuvor analysierte Videos suchen und doppelte Video-Uploads verhindern kannst.",
       "allow": "Zulassen",
       "dontAllow": "Nicht zulassen",
       "videoTooLong": "Video zu lang",
@@ -929,8 +930,10 @@ const de = {
       "failedToSelectVideo": "Videoauswahl fehlgeschlagen. Bitte erneut versuchen.",
       "failedToGenerateThumbnail": "Miniaturbild konnte nicht erstellt werden. Bitte erneut versuchen.",
       "failedToCheckPermissions": "Berechtigungsprüfung fehlgeschlagen. Bitte erneut versuchen.",
-      "fullAccessRequired": "Vollzugriff auf Fotobibliothek",
-      "fullAccessMessage": "Wir benötigen vollen Zugriff auf Ihre Fotobibliothek, um Ihnen alle Funktionen unserer App für die Videoverwaltung zu bieten. Dazu gehören Duplikaterkennung, ordnungsgemäße Videoorganisation und nahtlose Videowahl in Ihrer gesamten Bibliothek.",
+      "fullAccessRequired": "Vollzugriff auf Fotobibliothek Erforderlich",
+      "deniedAccessMessage": "Wir können sehen, dass Sie den Zugriff verweigert haben. Wir benötigen jedoch vollen Zugriff auf Ihre Fotobibliothek, um Ihnen alle Funktionen unserer App für die Videoverwaltung zu bieten. Dazu gehören Duplikaterkennung, Videosuche, robuste Videoorganisation und nahtlose Videowahl in Ihrer gesamten Bibliothek.",
+      "limitedAccessMessage": "Wir können sehen, dass Sie eingeschränkten Zugriff gewährt haben. Wir benötigen jedoch vollen Zugriff auf Ihre Fotobibliothek, um Ihnen alle Funktionen unserer App für die Videoverwaltung zu bieten. Dazu gehören Duplikaterkennung, Videosuche, robuste Videoorganisation und nahtlose Videowahl in Ihrer gesamten Bibliothek.",
+      "fullAccessMessage": "Wir benötigen vollen Zugriff auf Ihre Fotobibliothek, um Ihnen alle Funktionen unserer App für die Videoverwaltung zu bieten. Dazu gehören Duplikaterkennung, Videosuche, robuste Videoorganisation und nahtlose Videowahl in Ihrer gesamten Bibliothek.",
       "grant": "Gewähren",
       "uploadVideo": "Video hochladen",
       "selectNewVideo": "Neues Video",

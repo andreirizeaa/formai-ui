@@ -13,7 +13,7 @@ import { removeUserId, getUserId } from '../../../services/storageService';
 import { deleteUserAccount } from '../../../services/authService';
 import { clearUserSpecificData } from '../../../services/contextCleanupService';
 import { useTutorialTarget, useTutorial } from '../../../context/TutorialContext';
-import { usePurchases } from '../../../context/PurchasesContext';
+import { useSubscription } from '../../../context/SuperwallContext';
 import { usePlacement } from 'expo-superwall';
 import { supabase } from '../../../lib/supabase';
 import { openSupportEmail } from '../../../services/emailService';
@@ -81,7 +81,7 @@ function SettingsOption({ icon, title, subtitle, onPress, ref, isLoading }: Sett
 export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguagePress, onSharePress, onLogout, onEditNamePress, onAppIconPress }: SettingsScreenProps) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const { hasHdVideos } = usePurchases();
+  const { hasSubscription, hasHdVideos } = useSubscription();
   const [isDeleting, setIsDeleting] = useState(false);
   const [isReplayingTutorial, setIsReplayingTutorial] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -321,11 +321,39 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
 
   const handleSyncDataPress = async () => {
     hapticFeedback.selection();
+    
+    // Check subscription status before allowing sync
+    if (!hasSubscription) {
+      // Track settings screen clicks
+      track('Settings screen clicks', { event: 'Sync Data - No Subscription' });
+      // Track paywall shown
+      track('Sync paywall shown', { source: 'settings' });
+      
+      try {
+        await registerPlacement({
+          placement: 'sync_trigger',
+        });
+        
+        // Track paywall completion
+        track('Sync paywall complete', { source: 'settings' });
+      } catch (error) {
+        showAlert(
+          'Error', 
+          'Unable to access premium features. Please try again.',
+          undefined,
+          'SETTINGS_SYNC_PAYWALL_ERROR',
+          error
+        );
+      }
+      return;
+    }
+    
     // Track settings screen clicks
     track('Settings screen clicks', { event: 'Sync Data' });
     
     try {
       setIsSyncing(true);
+      
       await performManualSync();
       
       // Update last sync time after successful sync
@@ -744,7 +772,7 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
             icon={
               <Image
                 source={APP_ICONS[currentAppIcon as keyof typeof APP_ICONS]}
-                style={{ width: 36, height: 36, borderRadius: (36 / 2) * 0.4453125 }}
+                style={{ width: 36, height: 36, borderRadius: 23 * 0.4453125 }}
               />
             }
             title={i18n.t('settings.appIcon')}

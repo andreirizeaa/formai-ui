@@ -377,7 +377,7 @@ const ro = {
       "notificationPermission": {
         "title": "Atinge-ți obiectivele cu notificări",
         "dialogText": "FormAI dorește să îți trimită notificări",
-        "allow": "Permite",
+        "allow": "Permite Acces Complet",
         "dontAllow": "Nu permite"
       },
       "setupLoading": {
@@ -434,15 +434,15 @@ const ro = {
         "title": "Permite accesul la cameră",
         "subtitle": "Accesul la cameră este necesar pentru FormAI.",
         "dialogText": "FormAI dorește acces la cameră.",
-        "allow": "Permite",
+        "allow": "Permite Acces Complet",
         "dontAllow": "Nu permite",
         "permissionRequired": "Permisiune cameră necesară",
         "permissionRequiredMessage": "Accesul la cameră este necesar pentru a continua. Îl poți activa în Setări."
       },
       "mediaLibraryPermission": {
-        "title": "Permite accesul la biblioteca de fotos",
+        "title": "Permite accesul complet la biblioteca ta de fotografii",
         "dialogText": "FormAI dorește acces la biblioteca de fotos.",
-        "allow": "Permite",
+        "allow": "Permite Acces Complet",
         "dontAllow": "Nu permite",
         "permissionRequired": "Permisiune foto necesară",
         "permissionRequiredMessage": "Accesul la foto este necesar pentru a continua. Îl poți activa în Setări.",
@@ -918,8 +918,9 @@ const ro = {
     "upload": {
       "permissionRequired": "Permisiune necesară",
       "permissionMessage": "Te rugăm să acorzi acces la biblioteca foto.",
-      "mediaPermissionTitle": "Permite accesul la biblioteca media",
+      "mediaPermissionTitle": "Permite accesul complet la biblioteca ta de fotografii",
       "mediaPermissionDialogText": "FormAI dorește acces la biblioteca media.",
+      "mediaPermissionDetailedDescription": "Form AI accesează biblioteca ta de fotografii pentru ca tu să poți încărca videoclipuri pentru analiză, să salvezi videoclipuri înregistrate în aplicație în biblioteca ta de fotografii, să cauți videoclipuri analizate anterior și să previ cărcarea de videoclipuri duplicate.",
       "allow": "Permite",
       "dontAllow": "Nu permite",
       "videoTooLong": "Video prea lung",
@@ -930,8 +931,10 @@ const ro = {
       "failedToSelectVideo": "Selectarea videoclipului a eșuat. Încearcă din nou.",
       "failedToGenerateThumbnail": "Generarea miniaturii a eșuat. Încearcă din nou.",
       "failedToCheckPermissions": "Verificarea permisiunilor a eșuat. Încearcă din nou.",
-      "fullAccessRequired": "Acces Complet la Biblioteca de Fotografii",
-      "fullAccessMessage": "Avem nevoie de acces complet la biblioteca ta de fotografii pentru a-ți oferi toate funcționalitățile aplicației noastre pentru gestionarea videoclipurilor. Aceasta include detectarea duplicatelor, organizarea corespunzătoare a videoclipurilor și selecția fără probleme a videoclipurilor din întreaga ta bibliotecă.",
+      "fullAccessRequired": "Acces Complet la Biblioteca de Fotografii Necesar",
+      "deniedAccessMessage": "Putem vedea că ai refuzat accesul. Cu toate acestea, avem nevoie de acces complet la biblioteca ta de fotografii pentru a-ți oferi toate funcționalitățile din aplicația noastră pentru gestionarea videoclipurilor. Aceasta include detectarea duplicatelor, căutarea videoclipurilor, organizarea robustă a videoclipurilor și selecția perfectă a videoclipurilor în întreaga ta bibliotecă.",
+      "limitedAccessMessage": "Putem vedea că ai permis acces limitat. Cu toate acestea, avem nevoie de acces complet la biblioteca ta de fotografii pentru a-ți oferi toate funcționalitățile din aplicația noastră pentru gestionarea videoclipurilor. Aceasta include detectarea duplicatelor, căutarea videoclipurilor, organizarea robustă a videoclipurilor și selecția perfectă a videoclipurilor în întreaga ta bibliotecă.",
+      "fullAccessMessage": "Avem nevoie de acces complet la biblioteca ta de fotografii pentru a-ți oferi toate funcționalitățile aplicației noastre pentru gestionarea videoclipurilor. Aceasta include detectarea duplicatelor, căutarea videoclipurilor, organizarea robustă a videoclipurilor și selecția fără probleme a videoclipurilor din întreaga ta bibliotecă.",
       "grant": "Acordă",
       "uploadVideo": "Încarcă video",
       "selectNewVideo": "Video nou",
