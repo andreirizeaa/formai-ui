@@ -15,7 +15,7 @@ import { PracticesScreen } from '../common/PracticesScreen';
 import { WeightRepsScreen } from '../common/WeightRepsScreen';
 import { useLoadingLifts } from '../../../../context/LoadingLiftsContext';
 import { useSelectedDate } from '../../../../context/SelectedDateContext';
-import { usePurchases } from '../../../../context/PurchasesContext';
+import { useSubscription } from '../../../../context/SuperwallContext';
 import { gymMovements, BodyPart } from '../../../../constants/gymMovements';
 import { useCameraPermissions } from 'expo-camera';
 import { ChevronLeft, X, Timer, TimerOff } from 'lucide-react-native';
@@ -35,7 +35,7 @@ interface RecordModalProps {
 export function RecordModal({ isVisible, onClose }: RecordModalProps) {
   const { addLoadingLift } = useLoadingLifts();
   const { selectedDate } = useSelectedDate();
-  const { hasHdVideos } = usePurchases();
+  const { hasHdVideos } = useSubscription();
   const [isRecording, setIsRecording] = useState(false);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [recordingTime, setRecordingTime] = useState(0);
@@ -85,6 +85,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
 
   // Loading state for camera permission request
   const [cameraPermissionLoading, setCameraPermissionLoading] = useState(false);
+  const [cameraDontAllowLoading, setCameraDontAllowLoading] = useState(false);
 
   useEffect(() => {
     if (isRecording && recordingTime >= 60) {
@@ -150,6 +151,21 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
     checkCameraPermission();
   }, [permission]);
 
+  // Check for no camera access when permission screen shows
+  useEffect(() => {
+    if (hasPermission !== false || !isVisible) return;
+    
+    const checkCameraAccess = async () => {
+      try {
+        // Silent check - no alert needed
+      } catch (error) {
+        // Silently fail
+      }
+    };
+    
+    checkCameraAccess();
+  }, [hasPermission, isVisible, permission]);
+
   // Finger animation effect
   useEffect(() => {
     if (hasPermission === false && isVisible) {
@@ -209,50 +225,14 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
       const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
       
       if (permissionResult.status !== 'granted') {
-        showAlert(
-          i18n.t('upload.permissionRequired'),
-          i18n.t('upload.permissionMessage'),
-          () => {
-            openAppSettings();
-          },
-          'UPLOAD_PERMISSION_REQUIRED'
-        );
         return;
       }
 
       if (permissionResult.accessPrivileges === 'limited') {
-        showAlert(
-          i18n.t('upload.fullAccessRequired'),
-          i18n.t('upload.fullAccessMessage'),
-          () => {
-            openAppSettings();
-          },
-          'UPLOAD_LIMITED_ACCESS_UPGRADE',
-          undefined,
-          i18n.t('upload.grant')
-        );
         return;
       }
     } catch (error) {
-      if (error instanceof Error && error.message.includes('permission')) {
-        showAlert(
-          i18n.t('upload.permissionRequired'),
-          i18n.t('upload.permissionMessage'),
-          undefined,
-          'UPLOAD_PERMISSION_ERROR',
-          error
-        );
-        return;
-      } else {
-        showAlert(
-          i18n.t('upload.error'), 
-          i18n.t('upload.failedToCheckPermissions'),
-          undefined,
-          'UPLOAD_FAILED_TO_CHECK_PERMISSIONS',
-          error
-        );
-        return;
-      }
+      // Silent fail
     }
     
     setShowPractices(false);
@@ -269,34 +249,23 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
   };
 
   const requestCameraPermissionFromUser = async () => {
-    setCameraPermissionLoading(true);
-    
-    // Set up 5 second timeout
-    const timeoutId = setTimeout(() => {
-      setCameraPermissionLoading(false);
-      showAlert(
-        'Permission Timeout',
-        'The permission request is taking longer than expected. Please try again or enable permissions in Settings.',
-        undefined,
-        'RECORD_CAMERA_PERMISSION_TIMEOUT'
-      );
-    }, 5000);
-    
     try {
       const result = await requestPermission();
-      clearTimeout(timeoutId);
+      
       if (!result.granted && result.canAskAgain === false) {
+        hapticFeedback.selection();
         openAppSettings();
         setHasPermission(false);
         return;
       }
+      
+      if (result.granted) {
+        hapticFeedback.success();
+      }
+      
       setHasPermission(result.granted);
     } catch (e) {
-      clearTimeout(timeoutId);
       setHasPermission(false);
-    } finally {
-      clearTimeout(timeoutId);
-      setCameraPermissionLoading(false);
     }
   };
 
@@ -706,17 +675,20 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
           title={i18n.t('onboarding.cameraPermission.title')}
           dialogText={i18n.t('onboarding.cameraPermission.dialogText')}
           fingerTranslateY={fingerTranslateY}
-          allowButtonText={i18n.t('onboarding.cameraPermission.allow')}
-          dontAllowButtonText={i18n.t('onboarding.cameraPermission.dontAllow')}
+          singleButton={true}
+          singleButtonText={i18n.t('onboarding.cameraPermission.allow')}
           isLoading={cameraPermissionLoading}
-          onDontAllow={() => {
-            hapticFeedback.selection();
-            Alert.alert(
-              i18n.t('onboarding.cameraPermission.permissionRequired'),
-              i18n.t('onboarding.cameraPermission.permissionRequiredMessage')
-            );
+          onSingleButtonPress={async () => {
+            setCameraPermissionLoading(true);
+            
+            try {
+              await requestCameraPermissionFromUser();
+            } finally {
+              setCameraPermissionLoading(false);
+            }
           }}
-          onAllow={requestCameraPermissionFromUser}
+          onAllow={() => {}}
+          onDontAllow={() => {}}
         />
       </SafeAreaView>
     );

@@ -40,6 +40,7 @@ supabase.auth.onAuthStateChange(async (event, session) => {
     // Token refresh failed, handle the error
     try {
       await handleAuthError(
+        supabase,
         new Error('Token refresh failed - no session available'),
         globalAuthErrorHandler || undefined
       );

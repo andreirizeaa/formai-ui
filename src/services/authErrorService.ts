@@ -1,6 +1,5 @@
-import { AuthError } from '@supabase/supabase-js';
+import { AuthError, SupabaseClient } from '@supabase/supabase-js';
 import { removeUserId } from './storageService';
-import { supabase } from '../lib/supabase';
 import { track } from './analytics';
 
 export interface AuthErrorInfo {
@@ -50,6 +49,7 @@ export function analyzeAuthError(error: any): AuthErrorInfo {
  * Handles authentication errors by clearing user data and optionally redirecting
  */
 export async function handleAuthError(
+  supabaseClient: SupabaseClient,
   error: any, 
   onRedirectToSignIn?: () => void
 ): Promise<void> {
@@ -72,7 +72,7 @@ export async function handleAuthError(
 
   // Sign out from Supabase to clear any cached session
   try {
-    await supabase.auth.signOut();
+    await supabaseClient.auth.signOut();
   } catch (signOutError) {
     console.warn('Failed to sign out from Supabase:', signOutError);
   }
@@ -87,6 +87,7 @@ export async function handleAuthError(
  * Wraps Supabase operations with automatic auth error handling
  */
 export async function withAuthErrorHandling<T>(
+  supabaseClient: SupabaseClient,
   operation: () => Promise<T>,
   onRedirectToSignIn?: () => void
 ): Promise<T | null> {
@@ -96,7 +97,7 @@ export async function withAuthErrorHandling<T>(
     const errorInfo = analyzeAuthError(error);
     
     if (errorInfo.shouldRedirectToSignIn) {
-      await handleAuthError(error, onRedirectToSignIn);
+      await handleAuthError(supabaseClient, error, onRedirectToSignIn);
       return null;
     }
     

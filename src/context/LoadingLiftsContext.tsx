@@ -7,7 +7,7 @@ import { getUserId } from '../services/storageService';
 import { useLiftData, extractObjectKeyFromUrl, signPath } from './LiftDataContext';
 import { useSelectedDate } from './SelectedDateContext';
 import { useUserCheckIns } from './UserCheckInsContext';
-import { usePurchases } from './PurchasesContext';
+import { useSubscription } from './SuperwallContext';
 import { useUserDetails } from './UserDetailsContext';
 import { loadLoadingLifts, saveLoadingLifts } from '../services/lifts/loadingLiftsStorage';
 import { eventBus, AppEvents, LiftReadyPayload, LiftFailedPayload } from '../services/lifts/event-bus';
@@ -32,7 +32,7 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
   const { liftData, refreshLifts, formatDateForLift, getLiftById, addLift, updateLift, upsertLift, invalidateAndRefetch: invalidateAndRefetchLiftData } = useLiftData();
   const { selectedDate } = useSelectedDate();
   const { optimisticAddToday, invalidateAndRefetch: invalidateUserCheckIns } = useUserCheckIns();
-  const { hasHdVideos } = usePurchases();
+  const { hasHdVideos } = useSubscription();
   const { userDetails } = useUserDetails();
   const persistTimer = useRef<NodeJS.Timeout | null>(null);
   const appState = useRef(AppState.currentState);

@@ -1,9 +1,9 @@
 import { usePlacement, useSuperwallEvents } from 'expo-superwall';
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, ActivityIndicator, Platform } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Text, Platform } from 'react-native';
 import { Image } from 'expo-image';
 import { hapticFeedback } from '../../utils/haptic';
-import { usePurchases } from '../../context/PurchasesContext';
+import { useSubscription } from '../../context/SuperwallContext';
 import { useOnboarding } from '../../context/OnboardingContext';
 import { AccountLoadingScreen } from '../onboarding/AccountLoadingScreen';
 import { track } from '../../services/analytics';
@@ -18,12 +18,11 @@ interface PaymentScreenProps {
 
 export function PaymentScreen({ onComplete }: PaymentScreenProps) {
   const { registerPlacement } = usePlacement();
-  const { customerInfo, refreshCustomerInfo } = usePurchases();
+  const { refresh } = useSubscription();
   const { onboardingData } = useOnboarding();
   const [ showAccountLoading, setShowAccountLoading ] = useState(false);
   const [ referralCodeType, setReferralCodeType ] = useState<'DISCOUNT' | 'SKIP_PAYWALL' | null>(null);
   const [ isReferralCodeProcessed, setIsReferralCodeProcessed ] = useState(false);
-  const [ isButtonLoading, setIsButtonLoading ] = useState(false);
 
   // Listen for Superwall events
   useSuperwallEvents({
@@ -46,8 +45,23 @@ export function PaymentScreen({ onComplete }: PaymentScreenProps) {
 
         // Always show loading screen on transaction complete, regardless of customerInfo state
         setShowAccountLoading(true);
-        // Refresh customer info in the background
-        await refreshCustomerInfo();
+        // Refresh subscription status in the background
+        await refresh();
+        // Let AccountLoadingScreen handle its own timing - don't set timeout here
+      }
+      if (String(eventInfo.event.event) === "restoreComplete") {
+        // Track restore completion
+        track("Purchase Restored", {
+          product_id: eventInfo.params?.product_id,
+        });
+
+        // Set flag that user just completed payment for tutorial failsafe
+        await setUserJustPaid();
+
+        // Always show loading screen on restore complete, regardless of customerInfo state
+        setShowAccountLoading(true);
+        // Refresh subscription status in the background
+        await refresh();
         // Let AccountLoadingScreen handle its own timing - don't set timeout here
       }
       if (String(eventInfo.event.event) === "transactionAbandon") {
@@ -109,7 +123,6 @@ export function PaymentScreen({ onComplete }: PaymentScreenProps) {
     if (!isReferralCodeProcessed) return;
     
     hapticFeedback.selection();
-    setIsButtonLoading(true);
 
     try {
       // Determine which placement to show
@@ -123,8 +136,6 @@ export function PaymentScreen({ onComplete }: PaymentScreenProps) {
       });
     } catch (error) {
       console.error('Error showing paywall:', error);
-    } finally {
-      setIsButtonLoading(false);
     }
   }
 
@@ -171,17 +182,13 @@ export function PaymentScreen({ onComplete }: PaymentScreenProps) {
         <TouchableOpacity
           style={[
             styles.button,
-            (!isReferralCodeProcessed || isButtonLoading) && styles.buttonDisabled
+            !isReferralCodeProcessed && styles.buttonDisabled
           ]}
           onPress={handleShowPaywall}
-          disabled={!isReferralCodeProcessed || isButtonLoading}
+          disabled={!isReferralCodeProcessed}
           activeOpacity={0.8}
         >
-          {isButtonLoading ? (
-            <ActivityIndicator size="small" color="#FFFFFF" />
-          ) : (
-            <Text style={styles.buttonText}>{i18n.t('trainSaferForFree')}</Text>
-          )}
+          <Text style={styles.buttonText}>{i18n.t('trainSaferForFree')}</Text>
         </TouchableOpacity>
         
         {/* No commitment text */}

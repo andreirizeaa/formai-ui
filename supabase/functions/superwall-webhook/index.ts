@@ -1,4 +1,4 @@
-// supabase/functions/revenuecat-webhook/index.ts
+// supabase/functions/superwall-webhook/index.ts
 // @ts-ignore
 import { createClient } from "npm:@supabase/supabase-js@2"
 declare const Deno: any
@@ -8,9 +8,17 @@ const supabase = createClient(
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
 )
 
-const RC_SECRET = Deno.env.get("RC_WEBHOOK_SECRET")
+const SW_SECRET = Deno.env.get("SUPERWALL_WEBHOOK_SECRET")
 
-// --- Helper: get Expo push token from user_notifications ---
+// --- Helpers ---
+function extractUserId(originalAppUserId?: string | null): string | null {
+  if (!originalAppUserId || typeof originalAppUserId !== "string") return null
+  // Superwall may prefix the id with "$SuperwallAlias:"
+  return originalAppUserId.startsWith("$SuperwallAlias:")
+    ? originalAppUserId.split(":").slice(1).join(":") // keep everything after the first colon
+    : originalAppUserId
+}
+
 async function getExpoPushTokenForUser(userId: string): Promise<string | null> {
   const { data, error } = await supabase
     .from("user_notifications")
@@ -27,9 +35,10 @@ Deno.serve(async (req: Request) => {
     if (req.method === "GET") return new Response("ok", { status: 200 })
     if (req.method !== "POST") return new Response("method not allowed", { status: 405 })
 
-    if (RC_SECRET) {
+    // Optional: simple bearer header auth (add this header from Superwall dashboard)
+    if (SW_SECRET) {
       const auth = req.headers.get("authorization")
-      if (auth !== `Bearer ${RC_SECRET}`) {
+      if (auth !== `Bearer ${SW_SECRET}`) {
         return new Response("unauthorized", { status: 401 })
       }
     }
@@ -37,20 +46,24 @@ Deno.serve(async (req: Request) => {
     const body = await req.json().catch(() => null)
     if (!body || typeof body !== "object") return new Response("bad request", { status: 400 })
 
-    const evt = (body as any).event ?? {}
-    const type = evt.type as string | undefined
-    const period_type = evt.period_type as string | undefined
-    const expiration_at_ms = evt.expiration_at_ms as number | string | undefined
-    const event_timestamp_ms = evt.event_timestamp_ms as number | string | undefined
-    const app_user_id = evt.app_user_id as string | undefined
-    const cancel_reason = evt.cancel_reason as string | undefined
+    // Superwall payload shape: see docs
+    // https://superwall.com/docs/dashboard/dashboard-integrations/integrations-webhooks
+    const top = body as any
+    const evt = top.data ?? {}
+    const name = (evt.name as string | undefined) ?? (top.type as string | undefined) // prefer data.name
+    const periodType = evt.periodType as string | undefined
+    const expirationAt = evt.expirationAt as number | string | undefined
+    const ts = (evt.ts ?? top.timestamp ?? evt.purchasedAt) as number | string | undefined
+    const rawAppUserId = (evt.originalAppUserId as string | undefined) ?? null
+    const app_user_id = extractUserId(rawAppUserId)
+    const cancelReason = evt.cancelReason as string | undefined
+    const productId = evt.productId as string | undefined
 
-    // 1. Trial start → schedule reminder 24h before expiry
-    if (type === "INITIAL_PURCHASE" && period_type === "TRIAL" && expiration_at_ms && app_user_id) {
-      const expireMs = Number(expiration_at_ms)
+    // ---- 1) Trial start → reminder 24h before expiry ----
+    if (name === "initial_purchase" && periodType === "TRIAL" && expirationAt && app_user_id) {
+      const expireMs = Number(expirationAt)
       if (Number.isFinite(expireMs)) {
         const sendAt = new Date(expireMs - 24 * 60 * 60 * 1000)
-
         const token = await getExpoPushTokenForUser(app_user_id)
         if (token) {
           const { error } = await supabase.from("subscription_notifications_queue").insert({
@@ -60,9 +73,7 @@ Deno.serve(async (req: Request) => {
               type: "trial_reminder",
               title: "Your free trial is ending tomorrow.",
               body: "We'd appreciate if you could give us a review!",
-              data: {
-                action: "open_store_review"
-              }
+              data: { action: "open_store_review" }
             },
             send_at: sendAt,
           })
@@ -71,12 +82,11 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    // 2. Renewal → schedule a thank-you push (10 minutes after event_timestamp)
-    if (type === "RENEWAL" && period_type === "NORMAL" && app_user_id && event_timestamp_ms) {
-      const eventMs = Number(event_timestamp_ms)
+    // ---- 2) Renewal (NORMAL) → thank-you push (2 minutes after event) ----
+    if (name === "renewal" && periodType === "NORMAL" && app_user_id && ts) {
+      const eventMs = Number(ts)
       if (Number.isFinite(eventMs)) {
         const sendAt = new Date(eventMs + 2 * 60 * 1000)
-
         const token = await getExpoPushTokenForUser(app_user_id)
         if (token) {
           const { error } = await supabase.from("subscription_notifications_queue").insert({
@@ -94,12 +104,11 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    // 3. Cancellation → schedule goodbye push (10 minutes after event_timestamp)
-    if (type === "CANCELLATION" && app_user_id && event_timestamp_ms) {
-      const eventMs = Number(event_timestamp_ms)
+    // ---- 3) Cancellation → goodbye push (2 minutes after event) ----
+    if (name === "cancellation" && app_user_id && ts) {
+      const eventMs = Number(ts)
       if (Number.isFinite(eventMs)) {
         const sendAt = new Date(eventMs + 2 * 60 * 1000)
-
         const token = await getExpoPushTokenForUser(app_user_id)
         if (token) {
           const { error } = await supabase.from("subscription_notifications_queue").insert({
@@ -109,10 +118,8 @@ Deno.serve(async (req: Request) => {
               type: "cancellation",
               title: "We're sorry to see you go. 🙁",
               body: "Please let us know why you are cancelling so we can improve!",
-              data: {
-                action: "open_cancellation_email"
-              },
-              ...(cancel_reason ? { reason: cancel_reason } : {}),
+              data: { action: "open_cancellation_email" },
+              ...(cancelReason ? { reason: cancelReason } : {}),
             },
             send_at: sendAt,
           })
@@ -121,12 +128,11 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    // 4. Non-renewing purchase → schedule active push (2 minutes after purchase)
-    if (type === "NON_RENEWING_PURCHASE" && app_user_id && event_timestamp_ms) {
-      const eventMs = Number(event_timestamp_ms)
+    // ---- 4) Non-renewing purchase → active push (2 minutes after purchase) ----
+    if (name === "non_renewing_purchase" && app_user_id && ts) {
+      const eventMs = Number(ts)
       if (Number.isFinite(eventMs)) {
         const sendAt = new Date(eventMs + 2 * 60 * 1000)
-
         const token = await getExpoPushTokenForUser(app_user_id)
         if (token) {
           const { error } = await supabase.from("subscription_notifications_queue").insert({
@@ -136,7 +142,7 @@ Deno.serve(async (req: Request) => {
               type: "non_renewing_purchase",
               title: "HD videos are actived! 🥳",
               body: "Your videos will now remain the same high quality as in your library!",
-              product_id: evt.product_id,
+              product_id: productId,
             },
             send_at: sendAt,
           })
@@ -145,12 +151,11 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    // 5. Initial purchase (non-trial) → schedule welcome push (10 minutes after event_timestamp)
-    if (type === "INITIAL_PURCHASE" && period_type !== "TRIAL" && app_user_id && event_timestamp_ms) {
-      const eventMs = Number(event_timestamp_ms)
+    // ---- 5) Initial purchase (NON-TRIAL) → welcome push (2 minutes after event) ----
+    if (name === "initial_purchase" && periodType !== "TRIAL" && app_user_id && ts) {
+      const eventMs = Number(ts)
       if (Number.isFinite(eventMs)) {
         const sendAt = new Date(eventMs + 2 * 60 * 1000)
-
         const token = await getExpoPushTokenForUser(app_user_id)
         if (token) {
           const { error } = await supabase.from("subscription_notifications_queue").insert({

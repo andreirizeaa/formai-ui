@@ -36,7 +36,7 @@ import { track } from '../../services/analytics';
 import { setUserId } from '../../services/storageService';
 import { fetchUserById } from '../../services/userService';
 import { registerAndSaveExpoPushToken } from '../../services/push';
-import { usePurchases } from '../../context/PurchasesContext';
+import { useSubscription } from '../../context/SuperwallContext';
 import { supabase } from '../../lib/supabase';
 
 interface OnboardingUnifiedScreenProps {}
@@ -321,11 +321,15 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
   const navigation = useNavigation();
   const { onboardingData, updateOnboardingData } = useOnboarding();
   const { setLanguage, currentLanguage } = useLanguage();
-  const { logIn } = usePurchases();
+  const { identify } = useSubscription();
 
   // Global icon configuration
   const iconSize = 24;
   const iconColor = appColors.onboarding.button.inactive.iconColor;
+
+  // Permission status states
+  const [notificationPermissionStatus, setNotificationPermissionStatus] = useState<'granted' | 'denied' | 'undetermined'>('undetermined');
+  const [mediaLibraryPermissionStatus, setMediaLibraryPermissionStatus] = useState<'granted' | 'denied' | 'limited' | 'undetermined'>('undetermined');
 
   const steps: ReadonlyArray<StepConfig> = useMemo(() => {
     const baseSteps: StepConfig[] = [
@@ -505,12 +509,13 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       id: 'costComparison',
       title: i18n.t('onboarding.costComparison.title'),
     },
-    {
-      type: 'mediaLibraryPermission',
+    // Media library permission step - only show if not granted
+    ...(mediaLibraryPermissionStatus !== 'granted' ? [{
+      type: 'mediaLibraryPermission' as const,
       id: 'mediaLibraryPermission',
       title: i18n.t('onboarding.mediaLibraryPermission.title'),
       subtitle: '',
-    },
+    }] : []),
     {
       type: 'measurements',
       id: 'measurements',
@@ -562,12 +567,13 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       title: i18n.t('onboarding.referralCode.title'),
       subtitle: i18n.t('onboarding.referralCode.subtitle'),
     },
-    {
-      type: 'notificationPermission',
+    // Notification permission step - only show if not granted
+    ...(notificationPermissionStatus !== 'granted' ? [{
+      type: 'notificationPermission' as const,
       id: 'notificationPermission',
       title: i18n.t('onboarding.notificationPermission.title'),
       subtitle: '',
-    },
+    }] : []),
     {
       type: 'allDone',
       id: 'allDone',
@@ -587,7 +593,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
     }
 
     return baseSteps;
-  }, [i18n.locale, onboardingData.userId]);
+  }, [i18n.locale, onboardingData.userId, notificationPermissionStatus, mediaLibraryPermissionStatus]);
 
   const totalSteps = steps.length;
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
@@ -608,6 +614,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
   // Loading states for permission requests
   const [notificationPermissionLoading, setNotificationPermissionLoading] = useState(false);
   const [mediaLibraryPermissionLoading, setMediaLibraryPermissionLoading] = useState(false);
+  const [mediaLibraryDontAllowLoading, setMediaLibraryDontAllowLoading] = useState(false);
 
   // Animation values for info step
   const percentageBoxHeight = useMemo(() => new Animated.Value(0), []);
@@ -626,6 +633,46 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       updateOnboardingData('language', currentLanguage);
     }
   }, [currentLanguage, onboardingData.language, updateOnboardingData]);
+
+  // Check permissions on component mount
+  useEffect(() => {
+    const checkPermissions = async () => {
+      try {
+        // Check notification permission
+        const notificationStatus = await Notifications.getPermissionsAsync();
+        setNotificationPermissionStatus(notificationStatus.granted ? 'granted' : 'denied');
+
+        // Check media library permission
+        const mediaLibraryStatus = await ImagePicker.getMediaLibraryPermissionsAsync();
+        if (mediaLibraryStatus.granted && mediaLibraryStatus.accessPrivileges === 'all') {
+          setMediaLibraryPermissionStatus('granted');
+        } else if (mediaLibraryStatus.accessPrivileges === 'limited') {
+          setMediaLibraryPermissionStatus('limited');
+        } else {
+          setMediaLibraryPermissionStatus('denied');
+        }
+      } catch (error) {
+        console.warn('Error checking permissions:', error);
+      }
+    };
+
+    checkPermissions();
+  }, []);
+
+  // Auto-advance when permission status changes and current step becomes invalid
+  useEffect(() => {
+    if (!currentStep) return;
+    
+    // If current step is notification permission but status is granted, advance to next step
+    if (currentStep.type === 'notificationPermission' && notificationPermissionStatus === 'granted') {
+      handleNext();
+    }
+    
+    // If current step is media library permission but status is granted, advance to next step
+    if (currentStep.type === 'mediaLibraryPermission' && mediaLibraryPermissionStatus === 'granted') {
+      handleNext();
+    }
+  }, [notificationPermissionStatus, mediaLibraryPermissionStatus, currentStep]);
 
   // Helpers for measurements
   const isMetric = onboardingData.unitSystem === 'metric';
@@ -767,6 +814,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       setShowAllDoneConfetti(false);
     }
   }, [currentStep]);
+
 
   // Analytics tracking
   useEffect(() => {
@@ -923,65 +971,51 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
     });
   }
 
-  // Robust media library permission request that treats "limited" as success
+  // Media library permission request - requires FULL access, not limited
   async function requestMediaLibraryPermissionAndProceed(onSuccess: () => void): Promise<void> {
     try {
       const current = await ImagePicker.getMediaLibraryPermissionsAsync();
-      const currentGranted = current.granted || current.accessPrivileges === 'limited';
-      if (currentGranted) {
+      
+      // Only proceed if user has granted FULL access (all photos)
+      if (current.granted && current.accessPrivileges === 'all') {
+        setMediaLibraryPermissionStatus('granted');
         trackPermission('media_library', true, 'mediaLibraryPermission');
         hapticFeedback.success();
         onSuccess();
         return;
       }
 
+      // Request permission (even if limited, to give user chance to upgrade)
       const result = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      const effectiveGranted = result.granted || result.accessPrivileges === 'limited';
-      trackPermission('media_library', effectiveGranted, 'mediaLibraryPermission');
-
-      if (effectiveGranted) {
+      
+      // Check if full access granted (all photos)
+      if (result.granted && result.accessPrivileges === 'all') {
+        setMediaLibraryPermissionStatus('granted');
+        trackPermission('media_library', true, 'mediaLibraryPermission');
         hapticFeedback.success();
         onSuccess();
         return;
       }
 
-      if (result.canAskAgain === false) {
-        hapticFeedback.selection();
+      // Not full access (limited or denied) - track and open settings
+      trackPermission('media_library', false, 'mediaLibraryPermission');
+      hapticFeedback.selection();
+      
+      try {
+        await Linking.openSettings();
+      } catch (_) {
         try {
-          await Linking.openSettings();
-          return;
-        } catch (_) {
-          try {
-            await openAppSettings();
-            return;
-          } catch (__) {
-            showAlert(
-              i18n.t('onboarding.mediaLibraryPermission.error'),
-              i18n.t('onboarding.mediaLibraryPermission.errorMessage')
-            );
-            return;
-          }
+          await openAppSettings();
+        } catch (__) {
+          // Silent fail
         }
       }
-
-      // Still denied but can ask again – keep CTA enabled and show explanation
-      showAlert(
-        i18n.t('onboarding.mediaLibraryPermission.error'),
-        i18n.t('onboarding.mediaLibraryPermission.errorMessage')
-      );
     } catch (error) {
       trackPermission(
         'media_library',
         false,
         'mediaLibraryPermission',
         error instanceof Error ? error.message : 'Unknown error'
-      );
-      showAlert(
-        i18n.t('onboarding.mediaLibraryPermission.error'),
-        i18n.t('onboarding.mediaLibraryPermission.errorMessage'),
-        undefined,
-        'ONBOARDING_MEDIA_LIBRARY_PERMISSION_ERROR',
-        error
       );
     }
   }
@@ -1120,7 +1154,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       
       if (existingUser) {
         // User already exists, just log them in and navigate to main app
-        await logIn(user.id);
+        await identify(user.id);
         
         // Track sign in completion for existing user
         track('Sign In Completed', {
@@ -1167,7 +1201,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       updateOnboardingData('userId', user.id);
       updateOnboardingData('profilePicture', profilePicture);
       
-      await logIn(user.id);
+      await identify(user.id);
 
       // Track signup completion
       track('Signup Completed', {
@@ -2184,7 +2218,9 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
           dontAllowButtonText={i18n.t('onboarding.notificationPermission.dontAllow')}
           isLoading={notificationPermissionLoading}
           onDontAllow={() => {
-            handleNext();
+            setNotificationPermissionStatus('denied');
+            // Don't call handleNext() immediately - let the component re-render
+            // with updated steps array, then the user will proceed naturally
           }}
           onAllow={async () => {
             setNotificationPermissionLoading(true);
@@ -2204,8 +2240,10 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
               const result = await Notifications.requestPermissionsAsync();
               clearTimeout(timeoutId);
               const granted = result.granted;
+              setNotificationPermissionStatus(granted ? 'granted' : 'denied');
               trackPermission('notifications', granted, 'notificationPermission');
-              handleNext();
+              // Don't call handleNext() immediately - let the component re-render
+              // with updated steps array, then the user will proceed naturally
             } catch (error) {
               clearTimeout(timeoutId);
               trackPermission('notifications', false, 'notificationPermission', error instanceof Error ? error.message : 'Unknown error');
@@ -2216,7 +2254,8 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                 'ONBOARDING_NOTIFICATION_PERMISSION_ERROR',
                 error
               );
-              handleNext();
+              // Don't call handleNext() immediately - let the component re-render
+              // with updated steps array, then the user will proceed naturally
             } finally {
               setNotificationPermissionLoading(false);
             }
@@ -2249,42 +2288,24 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
         <PermissionContainer
           title={i18n.t('onboarding.mediaLibraryPermission.title')}
           dialogText={i18n.t('onboarding.mediaLibraryPermission.dialogText')}
+          showPhotoLibraryDescription={true}
           fingerTranslateY={fingerTranslateY}
-          allowButtonText={i18n.t('onboarding.mediaLibraryPermission.allow')}
-          dontAllowButtonText={i18n.t('onboarding.mediaLibraryPermission.dontAllow')}
-          disableDontAllowButton={false}
+          singleButton={true}
+          singleButtonText={i18n.t('onboarding.mediaLibraryPermission.allow')}
           isLoading={mediaLibraryPermissionLoading}
-          onDontAllow={() => {
-            hapticFeedback.selection();
-            Alert.alert(
-              i18n.t('onboarding.mediaLibraryPermission.permissionRequired'),
-              i18n.t('onboarding.mediaLibraryPermission.permissionRequiredMessage')
-            );
-          }}
-          onAllow={async () => {
+          onSingleButtonPress={async () => {
             setMediaLibraryPermissionLoading(true);
-            
-            // Set up 5 second timeout
-            const timeoutId = setTimeout(() => {
-              setMediaLibraryPermissionLoading(false);
-              showAlert(
-                'Permission Timeout',
-                'The permission request is taking longer than expected. Please try again or enable permissions in Settings.',
-                undefined,
-                'ONBOARDING_MEDIA_LIBRARY_PERMISSION_TIMEOUT'
-              );
-            }, 5000);
             
             try {
               await requestMediaLibraryPermissionAndProceed(() => {
-                clearTimeout(timeoutId);
                 handleNext();
               });
             } finally {
-              clearTimeout(timeoutId);
               setMediaLibraryPermissionLoading(false);
             }
           }}
+          onAllow={() => {}}
+          onDontAllow={() => {}}
         />
       )}
     </OnboardingLayout>

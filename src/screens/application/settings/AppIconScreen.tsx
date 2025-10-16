@@ -181,7 +181,7 @@ export function AppIconScreen({ onBack }: AppIconScreenProps) {
                     style={{ 
                       width: itemSize,
                       height: itemSize,
-                      borderRadius: itemSize * 0.22
+                      borderRadius: 38 * 0.4453125
                     }}
                     contentFit="cover"
                     accessibilityIgnoresInvertColors
@@ -194,7 +194,7 @@ export function AppIconScreen({ onBack }: AppIconScreenProps) {
                     left: -7,
                     right: -7,
                     bottom: -7,
-                    borderRadius: itemSize * 0.29,
+                    borderRadius: 50 * 0.4453125,
                     borderWidth: 4,
                     borderColor: '#000000',
                   }} />

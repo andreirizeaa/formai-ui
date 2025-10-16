@@ -29,7 +29,7 @@ export interface UserFetchResult {
 }
 
 export async function fetchUserById(userId: string): Promise<UserFetchResult> {
-	const result = await withAuthErrorHandling(async () => {
+	const result = await withAuthErrorHandling(supabase, async () => {
 		try {
 			const { data, error } = await supabase
 				.from('user_onboarding')
@@ -75,7 +75,7 @@ export interface EditUserDetailsResponse {
 export async function editUserDetails(
   partial: EditUserDetailsPayload
 ): Promise<EditUserDetailsResponse> {
-  const result = await withAuthErrorHandling(async () => {
+  const result = await withAuthErrorHandling(supabase, async () => {
     // Helpers (mirror backend normalization/sanitization)
     function isoDateOrNull(value?: string | null): string | null {
       if (!value) return null;
@@ -152,7 +152,7 @@ export async function editUserDetails(
 }
 
 export async function fetchUserDetailsById(userId: string): Promise<UserDetailsRow | null> {
-  const result = await withAuthErrorHandling(async () => {
+  const result = await withAuthErrorHandling(supabase, async () => {
     // Fetch from user_info and users in parallel
     const [userInfoRes, usersRes] = await Promise.all([
       supabase
@@ -211,7 +211,7 @@ export interface EditUserAccountResponse {
 export async function editUserAccount(
   partial: EditUserAccountPayload
 ): Promise<EditUserAccountResponse> {
-  const result = await withAuthErrorHandling(async () => {
+  const result = await withAuthErrorHandling(supabase, async () => {
     const userId = await getUserId();
     if (!userId) throw new Error('Missing user_id');
 

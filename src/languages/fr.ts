@@ -377,7 +377,7 @@ const fr = {
       "notificationPermission": {
         "title": "Atteignez vos objectifs avec les notifications",
         "dialogText": "FormAI souhaite vous envoyer des notifications",
-        "allow": "Autoriser",
+        "allow": "Autoriser Accès Complet",
         "dontAllow": "Ne pas autoriser"
       },
       "setupLoading": {
@@ -434,15 +434,15 @@ const fr = {
         "title": "Autoriser l'accès à la caméra",
         "subtitle": "L'accès caméra est requis pour FormAI.",
         "dialogText": "FormAI souhaite accéder à votre caméra.",
-        "allow": "Autoriser",
+        "allow": "Autoriser Accès Complet",
         "dontAllow": "Ne pas autoriser",
         "permissionRequired": "Autorisation caméra requise",
         "permissionRequiredMessage": "L'accès caméra est requis pour continuer. Vous pouvez l'activer dans les Paramètres."
       },
       "mediaLibraryPermission": {
-        "title": "Autoriser l'accès à la photothèque",
+        "title": "Autoriser l'accès complet à votre photothèque",
         "dialogText": "FormAI souhaite accéder à votre photothèque.",
-        "allow": "Autoriser",
+        "allow": "Autoriser Accès Complet",
         "dontAllow": "Ne pas autoriser",
         "permissionRequired": "Autorisation photos requise",
         "permissionRequiredMessage": "L'accès aux photos est requis pour continuer. Vous pouvez l'activer dans les Paramètres.",
@@ -925,9 +925,10 @@ const fr = {
     },
     "upload": {
       "permissionRequired": "Autorisation requise",
-      "permissionMessage": "Veuillez accorder l’accès à votre photothèque.",
-      "mediaPermissionTitle": "Autoriser l’accès à la médiathèque",
+      "permissionMessage": "Veuillez accorder l'accès à votre photothèque.",
+      "mediaPermissionTitle": "Autoriser l'accès complet à votre photothèque",
       "mediaPermissionDialogText": "FormAI souhaite accéder à votre médiathèque.",
+      "mediaPermissionDetailedDescription": "Form AI accède à votre photothèque pour que vous puissiez télécharger des vidéos pour analyse, sauvegarder des vidéos enregistrées dans l'application dans votre photothèque, rechercher des vidéos précédemment analysées et empêcher les téléchargements de vidéos en double.",
       "allow": "Autoriser",
       "dontAllow": "Ne pas autoriser",
       "videoTooLong": "Vidéo trop longue",
@@ -938,8 +939,10 @@ const fr = {
       "failedToSelectVideo": "Échec de la sélection. Réessayez.",
       "failedToGenerateThumbnail": "Échec de la miniature. Réessayez.",
       "failedToCheckPermissions": "Échec de la vérification des permissions. Réessayez.",
-      "fullAccessRequired": "Accès Complet à la Bibliothèque Photos",
-      "fullAccessMessage": "Nous avons besoin d'un accès complet à votre bibliothèque photos pour vous offrir toutes les fonctionnalités de notre application pour la gestion vidéo. Cela inclut la détection de doublons, l'organisation appropriée des vidéos et la sélection fluide de vidéos dans toute votre bibliothèque.",
+      "fullAccessRequired": "Accès Complet à la Bibliothèque Photos Requis",
+      "deniedAccessMessage": "Nous pouvons voir que vous avez refusé l'accès. Cependant, nous avons besoin d'un accès complet à votre bibliothèque photos pour vous offrir toutes les fonctionnalités de notre application pour la gestion vidéo. Cela inclut la détection de doublons, la recherche vidéo, l'organisation robuste des vidéos et la sélection fluide de vidéos dans toute votre bibliothèque.",
+      "limitedAccessMessage": "Nous pouvons voir que vous avez autorisé un accès limité. Cependant, nous avons besoin d'un accès complet à votre bibliothèque photos pour vous offrir toutes les fonctionnalités de notre application pour la gestion vidéo. Cela inclut la détection de doublons, la recherche vidéo, l'organisation robuste des vidéos et la sélection fluide de vidéos dans toute votre bibliothèque.",
+      "fullAccessMessage": "Nous avons besoin d'un accès complet à votre bibliothèque photos pour vous offrir toutes les fonctionnalités de notre application pour la gestion vidéo. Cela inclut la détection de doublons, la recherche vidéo, l'organisation robuste des vidéos et la sélection fluide de vidéos dans toute votre bibliothèque.",
       "grant": "Accorder",
       "uploadVideo": "Importer une vidéo",
       "selectNewVideo": "Nouvelle vidéo",

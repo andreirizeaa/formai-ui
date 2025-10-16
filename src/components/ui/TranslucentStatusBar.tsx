@@ -12,7 +12,7 @@ interface TranslucentStatusBarProps {
 
 export function TranslucentStatusBar({
   visible = true,
-  blurIntensity = Platform.OS === 'ios' ? 20 : 20,
+  blurIntensity = Platform.OS === 'ios' ? 15 : 15,
   tint = 'light',
   extraHeight = 0,
 }: TranslucentStatusBarProps) {
