@@ -80,14 +80,17 @@ export function SuperwallProvider({ children }: SuperwallProviderProps) {
                   return {type: "failed" as const, error: `Package not found for product: ${params.productId}`};
               }
               const result = await purchasePackage(packageToPurchase);
-              if (result.type === "cancelled") {
-                SuperwallExpoModule.didPurchase({
-                  type: "cancelled",
-                });
-              }
-              return result as {type: "purchased" | "cancelled" | "failed" | "pending", error?: string};
+              return result;
            } catch (error) {
-             return {type: "failed" as const, error: error instanceof Error ? error.message : "Unknown error"};
+            const errorMessage = error instanceof Error ? error.message : "Unknown error";
+            if (errorMessage === 'Purchase was cancelled.') {
+              SuperwallExpoModule.didPurchase({
+                type: "cancelled",
+              });
+              SuperwallExpoModule.dismiss();
+            } else {
+              return {type: "failed" as const, error: errorMessage};
+            }
            }
         },
         onPurchaseRestore: async () => {

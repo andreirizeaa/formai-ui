@@ -219,36 +219,17 @@ export function PurchasesProvider({ children, onSubscriptionUpdate }: PurchasesP
   async function purchasePackage(pkg: PurchasesPackage) {
     setIsPurchasing(true);
     setPurchaseError(null);
-    try {
-      const { customerInfo } = await Purchases.purchasePackage(pkg);
-      setCustomerInfo(customerInfo);
-      // Keep packages fresh post-purchase
-      await refreshOfferings();
-      return {type: "purchased" as const};
-    } catch (error) {
-        if (error instanceof Error) {
-            const message = error.message;
-            if (message == 'Purchase was cancelled.') {
-                return {type: "cancelled" as const};
-            } else {
-                return {type: "failed" as const, error: message};
-            }
-        }
-        return {type: "failed" as const, error: "Unknown error"};
-    } finally {
-      setIsPurchasing(false);
-    }
+    const { customerInfo } = await Purchases.purchasePackage(pkg);
+    setCustomerInfo(customerInfo);
+    await refreshOfferings();
+    return {type: "purchased" as const};
   }
 
   async function restorePurchases() {
-    try {
-      const restoredInfo = await Purchases.restorePurchases();
-      setCustomerInfo(restoredInfo);
-      await refreshOfferings();
-      return restoredInfo;
-    } catch (error) {
-      return null;
-    }
+    const restoredInfo = await Purchases.restorePurchases();
+    setCustomerInfo(restoredInfo);
+    await refreshOfferings();
+    return restoredInfo;
   }
 
   async function logIn(appUserId: string) {

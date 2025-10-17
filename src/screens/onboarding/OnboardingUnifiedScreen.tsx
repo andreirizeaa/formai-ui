@@ -1134,8 +1134,6 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
   }
 
   async function handleDirectAccountCreation() {
-    console.log('handleDirectAccountCreation', onboardingData.userId);
-    
     // Navigate to AccountLoading screen immediately to show loading state
     navigation.navigate('AccountLoading' as never);
     
@@ -1150,8 +1148,6 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
 
       // Check if user already exists in the database
       const { user: existingUser } = await fetchUserById(user.id);
-      console.log('existingUser', existingUser);
-      
       if (existingUser) {
         // User already exists, just log them in and navigate to main app
         await logIn(user.id);
