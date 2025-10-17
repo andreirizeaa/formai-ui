@@ -1,6 +1,6 @@
-import { usePlacement, useSuperwallEvents } from 'expo-superwall';
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, StyleSheet, Platform, ActivityIndicator } from 'react-native';
+import { SuperwallExpoModule, usePlacement, useSuperwallEvents } from 'expo-superwall';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { hapticFeedback } from '../../utils/haptic';
 import { usePurchases } from '../../context/PurchasesContext';
 import { useOnboarding } from '../../context/OnboardingContext';
@@ -14,6 +14,8 @@ interface PaymentScreenProps {
   onComplete: () => void;
 }
 
+type PlacementKey = 'default_trigger' | 'referral_trigger' | 'transaction_abandons';
+
 export function PaymentScreen({ onComplete }: PaymentScreenProps) {
   const { registerPlacement } = usePlacement();
   const { refreshCustomerInfo } = usePurchases();
@@ -23,47 +25,58 @@ export function PaymentScreen({ onComplete }: PaymentScreenProps) {
   const [referralCodeType, setReferralCodeType] = useState<'DISCOUNT' | 'SKIP_PAYWALL' | null>(null);
   const [isReferralCodeProcessed, setIsReferralCodeProcessed] = useState(false);
 
-  // Helper to show the correct placement
-  const showPlacement = useCallback(async () => {
-    if (!isReferralCodeProcessed) return;
+  // Prevent loops: ignore the next paywall dismiss that we know we triggered ourselves
+  const ignoreNextDismissRef = useRef(false);
+  const lastPlacementRef = useRef<PlacementKey | null>(null);
 
-    try {
-      hapticFeedback.selection();
-      const placement = referralCodeType === 'DISCOUNT' ? 'referral_trigger' : 'default_trigger';
-      track('Paywall Shown', { placement });
-      await registerPlacement({ placement });
-    } catch (error) {
-      console.error('Error showing paywall:', error);
-    }
-  }, [isReferralCodeProcessed, referralCodeType, registerPlacement]);
+  const showPlacement = useCallback(
+    async (override?: PlacementKey) => {
+      if (!isReferralCodeProcessed && !override) return;
 
-  // Listen for Superwall events
-  useSuperwallEvents({
-    onCustomPaywallAction: (name: string) => {
-      if (name === 'hapticSelection') {
+      try {
         hapticFeedback.selection();
+        const computed: PlacementKey =
+          referralCodeType === 'DISCOUNT' ? 'referral_trigger' : 'default_trigger';
+        const placement = override ?? computed;
+
+        // Optionally avoid immediate re-opens of the same placement
+        // if (lastPlacementRef.current === placement) return;
+
+        track('Paywall Shown', { placement });
+        await registerPlacement({ placement });
+        lastPlacementRef.current = placement;
+      } catch (error) {
+        console.error('Error showing paywall:', error);
       }
     },
+    [isReferralCodeProcessed, referralCodeType, registerPlacement]
+  );
 
-    // Re-open the same placement if the paywall is dismissed
-    onPaywallDismiss: (_info, result) => {
+  useSuperwallEvents({
+    onCustomPaywallAction: (name: string) => {
+      if (name === 'hapticSelection') hapticFeedback.selection();
+    },
+
+    onPaywallDismiss: () => {
+      // If we dismissed programmatically (e.g., in abandon flow), skip this one
+      if (ignoreNextDismissRef.current) {
+        ignoreNextDismissRef.current = false;
+        return;
+      }
       track('Paywall Dismissed');
-      // Immediately re-call the same placement
-      showPlacement();
+      showPlacement(); // normal re-open logic
     },
 
     onSuperwallEvent: async (eventInfo) => {
-      // Useful generic events like transactionComplete / restoreComplete / abandon
       const evt = String(eventInfo.event.event);
+
       if (evt === 'transactionComplete') {
         track('Purchase Completed', {
           product_id: eventInfo.params?.product_id,
           price: eventInfo.params?.price,
           currency: eventInfo.params?.currency,
         });
-
         await setUserJustPaid();
-
         setShowAccountLoading(true);
         await refreshCustomerInfo();
       }
@@ -72,9 +85,7 @@ export function PaymentScreen({ onComplete }: PaymentScreenProps) {
         track('Purchase Restored', {
           product_id: eventInfo.params?.product_id,
         });
-
         await setUserJustPaid();
-
         setShowAccountLoading(true);
         await refreshCustomerInfo();
       }
@@ -83,27 +94,34 @@ export function PaymentScreen({ onComplete }: PaymentScreenProps) {
         track('Purchase Abandoned', {
           product_id: eventInfo.params?.abandoned_product_id,
         });
+
+        // We’re about to call dismiss() ourselves — ignore the next dismiss callback
+        ignoreNextDismissRef.current = true;
+
+        try {
+          await SuperwallExpoModule.dismiss();
+        } catch {
+          // even if dismiss fails, try to show the abandon placement
+        }
+
+        // Now explicitly show the transaction_abandons placement
+        await showPlacement('transaction_abandons');
       }
     },
   });
 
-  // Handle referral code processing on component mount
   useEffect(() => {
     const processReferralCode = async () => {
       try {
         let referralCode: string | undefined;
 
-        // Try onboarding context first
         if (onboardingData.referralCode) {
           referralCode = onboardingData.referralCode;
         } else {
-          // Fallback to user_info table
           const userId = await getUserId();
           if (userId) {
             const result = await getUserReferralCode(userId);
-            if (result.referralCode) {
-              referralCode = result.referralCode;
-            }
+            if (result.referralCode) referralCode = result.referralCode;
           }
         }
 
@@ -111,16 +129,14 @@ export function PaymentScreen({ onComplete }: PaymentScreenProps) {
           const typeResult = await getReferralCodeType(referralCode);
           if (typeResult.type) {
             setReferralCodeType(typeResult.type);
-
             if (typeResult.type === 'SKIP_PAYWALL') {
-              // Skip paywall entirely
               onComplete();
               return;
             }
           }
         }
-      } catch (error) {
-        // swallow but proceed to mark processed so we still attempt default placement
+      } catch {
+        // continue to default placement
       } finally {
         setIsReferralCodeProcessed(true);
       }
@@ -129,14 +145,10 @@ export function PaymentScreen({ onComplete }: PaymentScreenProps) {
     processReferralCode();
   }, [onboardingData.referralCode, onComplete]);
 
-  // As soon as referral code processing is complete, show the correct placement
   useEffect(() => {
-    if (isReferralCodeProcessed) {
-      showPlacement();
-    }
+    if (isReferralCodeProcessed) showPlacement();
   }, [isReferralCodeProcessed, showPlacement]);
 
-  // Show account loading screen after successful payment/restore
   if (showAccountLoading) {
     return (
       <AccountLoadingScreen
@@ -148,10 +160,9 @@ export function PaymentScreen({ onComplete }: PaymentScreenProps) {
     );
   }
 
-  // Blank screen: no content, just the background while paywall handles presentation
   return (
     <View style={styles.container}>
-      <ActivityIndicator size="large" color="#000000" />
+      <ActivityIndicator size="large" />
     </View>
   );
 }

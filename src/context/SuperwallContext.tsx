@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, ReactNode, useRef } from 'react';
 import { CustomPurchaseControllerProvider, SuperwallProvider as ExpoSuperwallProvider, SuperwallLoaded, useUser, SuperwallExpoModule } from 'expo-superwall';
 import Purchases from 'react-native-purchases';
 import { usePurchases } from './PurchasesContext';
@@ -64,61 +64,68 @@ function SubscriptionSync() {
   return null; // This component just handles the sync
 }
 
-interface SuperwallProviderProps {
-  children: ReactNode;
-}
+export function SuperwallProvider({ children }: { children: ReactNode }) {
+  const { purchasePackage, restorePurchases, packages, hasSubscription, hasHdVideos } = usePurchases();
 
-export function SuperwallProvider({ children }: SuperwallProviderProps) {
-  const { purchasePackage, restorePurchases, packages, hasSubscription} = usePurchases();
+  // Keep always-fresh booleans in refs so async flows can read the newest values
+  const hasSubRef = useRef(hasSubscription);
+  const hasHDRef = useRef(hasHdVideos);
+  useEffect(() => { hasSubRef.current = hasSubscription; }, [hasSubscription]);
+  useEffect(() => { hasHDRef.current = hasHdVideos; }, [hasHdVideos]);
+
+
   return (
     <CustomPurchaseControllerProvider
       controller={{
         onPurchase: async (params) => {
-           try {
-              const packageToPurchase = packages.find(pkg => pkg.product.identifier === params.productId);
-              if (!packageToPurchase) {
-                  return {type: "failed" as const, error: `Package not found for product: ${params.productId}`};
-              }
-              const result = await purchasePackage(packageToPurchase);
-              return result;
-           } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : "Unknown error";
-            if (errorMessage === 'Purchase was cancelled.') {
-              SuperwallExpoModule.didPurchase({
-                type: "cancelled",
-              });
-              SuperwallExpoModule.dismiss();
-            } else {
-              return {type: "failed" as const, error: errorMessage};
+          try {
+            const pkg = packages.find(p => p.product.identifier === params.productId);
+            if (!pkg) return { type: 'failed' as const, error: `Package not found for product: ${params.productId}` };
+            const result = await purchasePackage(pkg);
+            return result;
+          } catch (error) {
+            const msg = error instanceof Error ? error.message : 'Unknown error';
+            if (msg === 'Purchase was cancelled.') {
+              try { SuperwallExpoModule.didPurchase?.({ type: 'cancelled' }); } catch {}
+              return { type: 'cancelled' as const };
             }
-           }
+            return { type: 'failed' as const, error: msg };
+          }
         },
+
         onPurchaseRestore: async () => {
           try {
-            const restoredInfo = await restorePurchases();
-            if (restoredInfo) {
-              if (hasSubscription) {
-                return {type: "restored"};
+            // Snapshot which paywall we're likely on
+            const wasSubscribed = hasSubRef.current; // videos paywall if true
+            const wasHD = hasHDRef.current;
+
+            // Kick off restore with RevenueCat
+            await restorePurchases();
+
+            // Decide success strictly from usePurchases booleans
+            if (wasSubscribed) {
+              // On videos paywall: require HD videos
+              if (hasHDRef.current) {
+                try { SuperwallExpoModule.didRestore?.({ type: 'restored' }); } catch {}
+                return { type: 'restored' as const };
               }
-              return {type: "failed", error: "No active subscription found to restore"};
+              return { type: 'failed' as const, error: 'No HD Videos found to restore' };
             } else {
-              return {type: "failed", error: "No purchases found to restore"};
+              // On subscription paywall: require subscription
+              if (hasSubRef.current) {
+                try { SuperwallExpoModule.didRestore?.({ type: 'restored' }); } catch {}
+                return { type: 'restored' as const };
+              }
+              return { type: 'failed' as const, error: 'No active subscription found to restore' };
             }
           } catch (error) {
-            const restoreError = error as { message?: string };
-            return {
-              type: "failed",
-              error: restoreError?.message ?? "Unknown restore error",
-            };
+            const msg = (error as { message?: string })?.message ?? 'Unknown restore error';
+            return { type: 'failed' as const, error: msg };
           }
         },
       }}
     >
-      <ExpoSuperwallProvider 
-        apiKeys={{ 
-          ios: process.env.EXPO_PUBLIC_SUPERWALL_IOS_KEY, 
-        }}
-      >
+      <ExpoSuperwallProvider apiKeys={{ ios: process.env.EXPO_PUBLIC_SUPERWALL_IOS_KEY }}>
         <SuperwallLoaded>
           <SubscriptionSync />
           {children}
