@@ -10,7 +10,7 @@ import { LoadingOverlay } from '../../components/ui/overlays/LoadingOverlay';
 import { showAlert } from '../../services/alertService';
 import { setUserId } from '../../services/storageService';
 import i18n from '../../utils/i18n';
-import { useSubscription } from '../../context/SuperwallContext';
+import { usePurchases } from '../../context/PurchasesContext';
 import { track } from '../../services/analytics';
 import { registerAndSaveExpoPushToken } from '../../services/push';
 import { fetchUserById } from '../../services/userService';
@@ -24,7 +24,7 @@ interface CreateAccountScreenProps {
 
 export function CreateAccountScreen({ onNext, onBack }: CreateAccountScreenProps) {
   const { onboardingData, updateOnboardingData } = useOnboarding();
-  const { identify } = useSubscription();
+  const { logIn } = usePurchases();
   const [isSigningIn, setIsSigningIn] = React.useState(false);
   
   const isExpoGo = Constants.appOwnership === 'expo';
@@ -180,7 +180,7 @@ export function CreateAccountScreen({ onNext, onBack }: CreateAccountScreenProps
       
       if (existingUser) {
         // User already exists, just log them in and navigate to main app
-        await identify(data.user.id);
+        await logIn(data.user.id);
         
         // Track sign in completion for existing user
         track('Sign In Completed', {
@@ -227,7 +227,7 @@ export function CreateAccountScreen({ onNext, onBack }: CreateAccountScreenProps
       updateOnboardingData('userId', data.user.id);
       updateOnboardingData('profilePicture', profilePicture);
       
-      await identify(data.user.id);
+      await logIn(data.user.id);
 
       // Track signup completion
       track('Signup Completed', {

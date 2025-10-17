@@ -9,7 +9,7 @@ import { OnboardingUnifiedScreen } from '../screens/onboarding/OnboardingUnified
 import { NotificationPermissionScreen } from '../screens/onboarding/NotificationPermissionScreen';
 import { AccountLoadingScreen } from '../screens/onboarding/AccountLoadingScreen';
 import { PaymentScreen } from '../screens/payment/PaymentScreen';
-import { useSubscription } from '../context/SuperwallContext';
+import { usePurchases } from '../context/PurchasesContext';
 import { useUserDetails } from '../context/UserDetailsContext';
 import { track } from '../services/analytics';
 
@@ -97,7 +97,7 @@ function NotificationPermissionScreenWrapper() {
 
 function AccountLoadingScreenWrapper({ onComplete }: { onComplete: () => void }) {
   const navigation = useNavigation<OnboardingNavigationProp>();
-  const { subscriptionStatus, refresh } = useSubscription();
+  const { hasSubscription, refreshCustomerInfo } = usePurchases();
   const { refetchUserDetails } = useUserDetails();
   const isRunningRef = React.useRef(false);
   
@@ -105,9 +105,8 @@ function AccountLoadingScreenWrapper({ onComplete }: { onComplete: () => void })
     if (isRunningRef.current) return; // guard against double-taps
     isRunningRef.current = true;
 
-    await refresh().catch(() => {});
-    const isActive = subscriptionStatus?.status === 'ACTIVE';
-    if (!isActive) {
+    await refreshCustomerInfo().catch(() => {});
+    if (!hasSubscription) {
       navigation.navigate('Payment');
     } else {
       await refetchUserDetails(); // ensure context is populated, silently

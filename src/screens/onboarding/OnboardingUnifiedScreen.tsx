@@ -36,7 +36,7 @@ import { track } from '../../services/analytics';
 import { setUserId } from '../../services/storageService';
 import { fetchUserById } from '../../services/userService';
 import { registerAndSaveExpoPushToken } from '../../services/push';
-import { useSubscription } from '../../context/SuperwallContext';
+import { usePurchases } from '../../context/PurchasesContext';
 import { supabase } from '../../lib/supabase';
 
 interface OnboardingUnifiedScreenProps {}
@@ -321,7 +321,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
   const navigation = useNavigation();
   const { onboardingData, updateOnboardingData } = useOnboarding();
   const { setLanguage, currentLanguage } = useLanguage();
-  const { identify } = useSubscription();
+  const { logIn } = usePurchases();
 
   // Global icon configuration
   const iconSize = 24;
@@ -1154,7 +1154,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       
       if (existingUser) {
         // User already exists, just log them in and navigate to main app
-        await identify(user.id);
+        await logIn(user.id);
         
         // Track sign in completion for existing user
         track('Sign In Completed', {
@@ -1201,7 +1201,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       updateOnboardingData('userId', user.id);
       updateOnboardingData('profilePicture', profilePicture);
       
-      await identify(user.id);
+      await logIn(user.id);
 
       // Track signup completion
       track('Signup Completed', {

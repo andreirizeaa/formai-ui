@@ -49,7 +49,7 @@
     "expo-splash-screen": "^31.0.10",
     "expo-status-bar": "~2.2.3",
     "expo-store-review": "^8.1.5",
-    "expo-superwall": "^0.3.0",
+    "expo-superwall": "^0.3.2",
     "expo-task-manager": "~13.1.6",
     "expo-tracking-transparency": "^5.2.4",
     "expo-updates": "~0.28.17",

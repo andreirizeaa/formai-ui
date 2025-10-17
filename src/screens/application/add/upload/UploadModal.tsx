@@ -17,7 +17,7 @@ import { PracticesScreen } from '../common/PracticesScreen';
 import { WeightRepsScreen } from '../common/WeightRepsScreen';
 import { useLoadingLifts } from '../../../../context/LoadingLiftsContext';
 import { useSelectedDate } from '../../../../context/SelectedDateContext';
-import { useSubscription } from '../../../../context/SuperwallContext';
+import { usePurchases } from '../../../../context/PurchasesContext';
 import { gymMovements, BodyPart } from '../../../../constants/gymMovements';
 import { X } from 'lucide-react-native';
 import { checkDuplicateAssetId } from '../../../../services/lifts/liftService';
@@ -40,7 +40,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
   const navigation = useNavigation<NativeStackNavigationProp<MainStackParamList>>();
   const { addLoadingLift } = useLoadingLifts();
   const { selectedDate } = useSelectedDate();
-  const { hasHdVideos } = useSubscription();
+  const { hasHdVideos } = usePurchases();
   const [selectedVideo, setSelectedVideo] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const [showMovementSelection, setShowMovementSelection] = useState(false);
   const [showWeightReps, setShowWeightReps] = useState(false);

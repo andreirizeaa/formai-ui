@@ -7,9 +7,8 @@ import { TutorialProvider, useTutorial } from '../../context/TutorialContext';
 import { TutorialLiftSeeder } from '../../context/LiftDataContext';
 import { TutorialOverlay } from '../ui/overlays/TutorialOverlay';
 import { PaymentScreen } from '../../screens/payment/PaymentScreen';
-import { useSubscription } from '../../context/SuperwallContext';
+import { usePurchases } from '../../context/PurchasesContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { SuperwallExpoModule } from 'expo-superwall';
 
 interface MainAppLayoutProps {
   children?: React.ReactNode;
@@ -29,7 +28,7 @@ export function MainAppLayout(props: MainAppLayoutProps) {
 
 function MainAppLayoutInner({ onLogout, isAppVisible = false }: MainAppLayoutProps) {
   const { userDetails } = useUserDetails();
-  const { hasSubscription, refresh, subscriptionStatus } = useSubscription();
+  const { hasSubscription, customerInfo, refreshCustomerInfo, syncPurchases } = usePurchases();
   const tutorial = useTutorial();
 
   const [showWelcome, setShowWelcome] = React.useState(false);
@@ -72,33 +71,34 @@ function MainAppLayoutInner({ onLogout, isAppVisible = false }: MainAppLayoutPro
 
   // 🔄 Monitor subscription changes and show paywall when subscription is lost
   React.useEffect(() => {
-    // Skip until we have a non-unknown status
-    if (!subscriptionStatus || subscriptionStatus.status === 'UNKNOWN') return;
-    
+    // Skip if we don't have customer info yet or if this is the initial load
+    if (!customerInfo) return;
+
     // Initialize previous subscription status on first load
     if (previousSubscriptionStatus === null) {
       setPreviousSubscriptionStatus(hasSubscription);
       return;
     }
-    
+
     // Check if subscription status changed from active to inactive
     if (previousSubscriptionStatus === true && hasSubscription === false) {
       // User lost their subscription, show paywall
       setShowPaymentScreen(true);
     }
-    
+
     // Update previous subscription status
     setPreviousSubscriptionStatus(hasSubscription);
-  }, [hasSubscription, subscriptionStatus, previousSubscriptionStatus]);
+  }, [hasSubscription, customerInfo, previousSubscriptionStatus]);
 
 
   // 🔄 Refresh subscription status when app becomes active
   React.useEffect(() => {
     const handleAppStateChange = async (nextAppState: AppStateStatus) => {
-      if (nextAppState === 'active' && previousSubscriptionStatus !== null) {
+      if (nextAppState === 'active' && customerInfo && previousSubscriptionStatus !== null) {
         try {
-          // Refresh Superwall subscription status when app becomes active
-          await refresh();
+          // Force sync with RevenueCat servers when app becomes active
+          await syncPurchases();
+          await refreshCustomerInfo();
         } catch (error) {
           // Silent fail - not critical if this fails
         }
@@ -107,7 +107,7 @@ function MainAppLayoutInner({ onLogout, isAppVisible = false }: MainAppLayoutPro
 
     const subscription = AppState.addEventListener('change', handleAppStateChange);
     return () => subscription?.remove();
-  }, [previousSubscriptionStatus, refresh]);
+  }, [customerInfo, previousSubscriptionStatus, refreshCustomerInfo, syncPurchases]);
 
   // 🚀 Start tutorial ONLY when user taps "Get Started"
   const handleGetStarted = () => {
@@ -126,8 +126,17 @@ function MainAppLayoutInner({ onLogout, isAppVisible = false }: MainAppLayoutPro
       return true;
     }
     
-    // If we have subscription, do background refresh to ensure it's still valid
-    refresh().catch(() => {});
+    // If we have subscription, do background sync to ensure it's still valid
+    // This runs in the background without blocking the UI
+    syncPurchases()
+      .then(() => refreshCustomerInfo())
+      .then(() => {
+        // After background sync, check if subscription status changed
+        // If it changed to false, we'll catch it in the subscription change listener
+      })
+      .catch(error => {
+        // Silent fail - not critical if background sync fails
+      });
     
     return false;
   };
