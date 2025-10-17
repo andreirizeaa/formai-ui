@@ -3,19 +3,19 @@ import { View, Text, StyleSheet, Platform, TouchableOpacity, Animated, Dimension
 import { Image } from 'expo-image';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import Constants from 'expo-constants';
-import i18n from '../../../utils/i18n';
-import { hapticFeedback } from '../../../utils/haptic';
-import { supabase } from '../../../lib/supabase';
-import { removeUserId, setUserId } from '../../../services/storageService';
-import { fetchUserById, requiresOnboarding } from '../../../services/userService';
-import { usePurchases } from '../../../context/PurchasesContext';
-import { useOnboarding } from '../../../context/OnboardingContext';
-import { track } from '../../../services/analytics';
-import { registerAndSaveExpoPushToken } from '../../../services/push';
-import { showAlert } from '../../../services/alertService';
+import i18n from '../../utils/i18n';
+import { hapticFeedback } from '../../utils/haptic';
+import { supabase } from '../../lib/supabase';
+import { removeUserId, setUserId } from '../../services/storageService';
+import { fetchUserById, requiresOnboarding } from '../../services/userService';
+import { usePurchases } from '../../context/PurchasesContext';
+import { useOnboarding } from '../../context/OnboardingContext';
+import { track } from '../../services/analytics';
+import { registerAndSaveExpoPushToken } from '../../services/push';
+import { showAlert } from '../../services/alertService';
 import * as Linking from 'expo-linking';
 import { X } from 'lucide-react-native';
-import { appColors } from '../../../constants/appColorScheme';
+import { appColors } from '../../constants/appColorScheme';
 
 const { height: screenHeight } = Dimensions.get('window');
 
@@ -288,7 +288,7 @@ export function WelcomeScreenSignIn({
               >
                 <View style={styles.buttonContent}>
                   <Image 
-                    source={require('../../../../assets/icons/apple.png')}
+                    source={require('../../../assets/icons/apple.png')}
                     style={[styles.appleIcon, { tintColor: appColors.onboarding.signIn.appleButton.iconTint }]}
                     contentFit="contain"
                   />
@@ -309,7 +309,7 @@ export function WelcomeScreenSignIn({
               >
                 <View style={styles.buttonContent}>
                   <Image 
-                    source={require('../../../../assets/icons/google.png')}
+                    source={require('../../../assets/icons/google.png')}
                     style={styles.googleIcon}
                     contentFit="contain"
                   />

@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Platform, Animated, Modal, Pr
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AnimatedOptionButton } from '../../components/ui/buttons/AnimatedOptionButton';
-import { WelcomeScreenSignIn } from '../../components/ui/modals/WelcomeScreenSignIn';
+import { WelcomeScreenSignIn } from '../auth/WelcomeScreenSignIn';
 import { useLanguage } from '../../context/LanguageContext';
 import { LANGUAGES } from '../../constants/languages';
 import i18n from '../../utils/i18n';

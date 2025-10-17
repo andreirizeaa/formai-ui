@@ -33,7 +33,7 @@ import { ILiftData } from '../context/LiftDataContext';
 import { FeedbackSlideshow } from '../screens/application/feedback/feedbackSlideshow';
 import { LibraryScreen } from '../screens/application/library/LibraryScreen';
 import { WrappedDetailsScreen } from '../screens/application/performance/WrappedDetailsScreen';
-import { BottomNavigationBar } from './BottomNavigationBar';
+import { BottomNavigationBar } from '../components/ui/BottomNavigationBar';
 import { useLiftData } from '../context/LiftDataContext';
 import { supabase } from '../lib/supabase';
 import { extractObjectKeyFromUrl, signPath } from '../context/LiftDataContext';

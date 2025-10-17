@@ -64,7 +64,7 @@ export function AppIconScreen({ onBack }: AppIconScreenProps) {
         const current = await DynamicAppIcon.getAppIcon();
         if (!mounted) return;
         // getAppIconAsync may return null/undefined for default
-        setActiveIcon((current || 'default') as IconKey);
+        setActiveIcon((current === 'DEFAULT' ? 'default' : current || 'default') as IconKey);
       } catch {
         setActiveIcon('default');
       }
