@@ -15,7 +15,7 @@ import { PracticesScreen } from '../common/PracticesScreen';
 import { WeightRepsScreen } from '../common/WeightRepsScreen';
 import { useLoadingLifts } from '../../../../context/LoadingLiftsContext';
 import { useSelectedDate } from '../../../../context/SelectedDateContext';
-import { useSubscription } from '../../../../context/SuperwallContext';
+import { usePurchases } from '../../../../context/PurchasesContext';
 import { gymMovements, BodyPart } from '../../../../constants/gymMovements';
 import { useCameraPermissions } from 'expo-camera';
 import { ChevronLeft, X, Timer, TimerOff } from 'lucide-react-native';
@@ -35,7 +35,7 @@ interface RecordModalProps {
 export function RecordModal({ isVisible, onClose }: RecordModalProps) {
   const { addLoadingLift } = useLoadingLifts();
   const { selectedDate } = useSelectedDate();
-  const { hasHdVideos } = useSubscription();
+  const { hasHdVideos } = usePurchases();
   const [isRecording, setIsRecording] = useState(false);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [recordingTime, setRecordingTime] = useState(0);

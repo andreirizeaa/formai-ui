@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity, Text, Platform } from 'react-native';
 import { Image } from 'expo-image';
 import { hapticFeedback } from '../../utils/haptic';
-import { useSubscription } from '../../context/SuperwallContext';
+import { usePurchases } from '../../context/PurchasesContext';
 import { useOnboarding } from '../../context/OnboardingContext';
 import { AccountLoadingScreen } from '../onboarding/AccountLoadingScreen';
 import { track } from '../../services/analytics';
@@ -18,7 +18,7 @@ interface PaymentScreenProps {
 
 export function PaymentScreen({ onComplete }: PaymentScreenProps) {
   const { registerPlacement } = usePlacement();
-  const { refresh } = useSubscription();
+  const { refreshCustomerInfo } = usePurchases();
   const { onboardingData } = useOnboarding();
   const [ showAccountLoading, setShowAccountLoading ] = useState(false);
   const [ referralCodeType, setReferralCodeType ] = useState<'DISCOUNT' | 'SKIP_PAYWALL' | null>(null);
@@ -46,7 +46,7 @@ export function PaymentScreen({ onComplete }: PaymentScreenProps) {
         // Always show loading screen on transaction complete, regardless of customerInfo state
         setShowAccountLoading(true);
         // Refresh subscription status in the background
-        await refresh();
+        await refreshCustomerInfo();
         // Let AccountLoadingScreen handle its own timing - don't set timeout here
       }
       if (String(eventInfo.event.event) === "restoreComplete") {
@@ -61,14 +61,16 @@ export function PaymentScreen({ onComplete }: PaymentScreenProps) {
         // Always show loading screen on restore complete, regardless of customerInfo state
         setShowAccountLoading(true);
         // Refresh subscription status in the background
-        await refresh();
+        await refreshCustomerInfo();
         // Let AccountLoadingScreen handle its own timing - don't set timeout here
       }
       if (String(eventInfo.event.event) === "transactionAbandon") {
+        console.log('abandoned event');
         // Track purchase abandonment
         track("Purchase Abandoned", {
           product_id: eventInfo.params.abandoned_product_id,
         });
+
       }
     },
   });

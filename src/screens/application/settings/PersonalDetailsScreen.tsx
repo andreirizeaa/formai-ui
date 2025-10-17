@@ -5,7 +5,7 @@ import Constants from 'expo-constants';
 import i18n from '../../../utils/i18n';
 import { hapticFeedback } from '../../../utils/haptic';
 import { useUserDetails } from '../../../context/UserDetailsContext';
-import { useSubscription } from '../../../context/SuperwallContext';
+import { usePurchases } from '../../../context/PurchasesContext';
 import { usePlacement } from 'expo-superwall';
 import { Pencil, ChevronLeft } from 'lucide-react-native';
 import { track } from '../../../services/analytics';
@@ -101,7 +101,7 @@ export function PersonalDetailsScreen({
   onEditGender
 }: PersonalDetailsScreenProps) {
   const { userDetails, getWeightDisplay, getHeightDisplay, getAgeRangeDisplay } = useUserDetails();
-  const { hasHdVideos } = useSubscription();
+  const { hasHdVideos } = usePurchases();
   const { registerPlacement } = usePlacement();
   
   // Track screen view on mount

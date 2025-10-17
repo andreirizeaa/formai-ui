@@ -20,7 +20,8 @@ import { getUserId, removeUserId } from './src/services/storageService';
 import { handleAuthError } from './src/services/authErrorService';
 import { AccountLoadingScreen } from './src/screens/onboarding/AccountLoadingScreen';
 import { fetchUserById, requiresOnboarding } from './src/services/userService';
-import { useSubscription } from './src/context/SuperwallContext';
+import { usePurchases, PurchasesProvider } from './src/context/PurchasesContext';
+import { SuperwallProvider } from './src/context/SuperwallContext';
 import { useUserDetails } from './src/context/UserDetailsContext';
 import { useLiftData } from './src/context/LiftDataContext';
 import { useUserCheckIns } from './src/context/UserCheckInsContext';
@@ -60,7 +61,7 @@ function AppContent() {
     }
   });
 
-  const { hasSubscription, isInitializing } = useSubscription();
+  const { hasSubscription, isInitializing } = usePurchases();
   const { isUserDetailsLoaded, refetchUserDetails, userDetails, setSignedInUser: setUserDetailsSignedInUser } = useUserDetails();
   const { isLiftDataLoaded, liftData, setSignedInUser: setLiftDataSignedInUser } = useLiftData();
   const { 
@@ -387,17 +388,17 @@ export function Layout() {
 
   return (
     <QueryClientProvider client={queryClientRef.current}>
-        <UserDetailsProvider>
-          <LiftDataProvider>
-            <UserCheckInsProvider>
-              <SelectedDateProvider>
-                <LoadingLiftsProvider>
-                  <AppContent />
-                </LoadingLiftsProvider>
-              </SelectedDateProvider>
-            </UserCheckInsProvider>
-          </LiftDataProvider>
-        </UserDetailsProvider>
+          <UserDetailsProvider>
+            <LiftDataProvider>
+              <UserCheckInsProvider>
+                <SelectedDateProvider>
+                  <LoadingLiftsProvider>
+                    <AppContent />
+                  </LoadingLiftsProvider>
+                </SelectedDateProvider>
+              </UserCheckInsProvider>
+            </LiftDataProvider>
+          </UserDetailsProvider>
     </QueryClientProvider>
   );
 }

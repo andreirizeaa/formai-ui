@@ -8,7 +8,7 @@ import { hapticFeedback } from '../../../utils/haptic';
 import { supabase } from '../../../lib/supabase';
 import { removeUserId, setUserId } from '../../../services/storageService';
 import { fetchUserById, requiresOnboarding } from '../../../services/userService';
-import { useSubscription } from '../../../context/SuperwallContext';
+import { usePurchases } from '../../../context/PurchasesContext';
 import { useOnboarding } from '../../../context/OnboardingContext';
 import { track } from '../../../services/analytics';
 import { registerAndSaveExpoPushToken } from '../../../services/push';
@@ -37,7 +37,7 @@ export function WelcomeScreenSignIn({
   const [isSigningIn, setIsSigningIn] = React.useState(false);
   const [isAnimatingOut, setIsAnimatingOut] = React.useState(false);
   const [isVisible, setIsVisible] = React.useState(false);
-  const { hasSubscription, identify } = useSubscription();
+  const { hasSubscription, logIn } = usePurchases();
   const { updateOnboardingData } = useOnboarding();
   
   // Animation values - similar to feedback slideshow
@@ -93,7 +93,7 @@ export function WelcomeScreenSignIn({
         );
         return;
       }
-      await identify(userId);
+      await logIn(userId);
 
       // Track sign-in completion
       track('Sign In Completed', {

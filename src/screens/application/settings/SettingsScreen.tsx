@@ -13,7 +13,7 @@ import { removeUserId, getUserId } from '../../../services/storageService';
 import { deleteUserAccount } from '../../../services/authService';
 import { clearUserSpecificData } from '../../../services/contextCleanupService';
 import { useTutorialTarget, useTutorial } from '../../../context/TutorialContext';
-import { useSubscription } from '../../../context/SuperwallContext';
+import { usePurchases } from '../../../context/PurchasesContext';
 import { usePlacement } from 'expo-superwall';
 import { supabase } from '../../../lib/supabase';
 import { openSupportEmail } from '../../../services/emailService';
@@ -81,7 +81,7 @@ function SettingsOption({ icon, title, subtitle, onPress, ref, isLoading }: Sett
 export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguagePress, onSharePress, onLogout, onEditNamePress, onAppIconPress }: SettingsScreenProps) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const { hasSubscription, hasHdVideos } = useSubscription();
+  const { hasSubscription, hasHdVideos } = usePurchases();
   const [isDeleting, setIsDeleting] = useState(false);
   const [isReplayingTutorial, setIsReplayingTutorial] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
