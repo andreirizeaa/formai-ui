@@ -11,6 +11,7 @@ import { SuperwallProvider } from './src/context/SuperwallContext';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { initAnalytics } from './src/services/analytics';
 import { handleLiftNotificationData } from './src/services/notificationNavigation';
+import { PurchasesProvider } from './src/context/PurchasesContext';
 
 export default function App() {
   useEffect(() => {
@@ -66,11 +67,13 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <OnboardingProvider>
-          <SuperwallProvider>
-            <LanguageProvider>
-              <Layout />
-            </LanguageProvider>
-          </SuperwallProvider>
+          <PurchasesProvider>
+            <SuperwallProvider>
+              <LanguageProvider>
+                <Layout />
+              </LanguageProvider>
+            </SuperwallProvider>
+          </PurchasesProvider>
         </OnboardingProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
