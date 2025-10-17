@@ -184,6 +184,17 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         }
       ],
       [
+        "expo-build-properties",
+        {
+          "android": {
+            "minSdkVersion": 26
+          },
+          "ios": {
+              "deploymentTarget": "16.0"
+          }
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           backgroundColor: "#ffffff",
