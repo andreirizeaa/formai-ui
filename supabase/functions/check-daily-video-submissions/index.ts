@@ -164,7 +164,7 @@ Deno.serve(async () => {
           await sendExpoPush(
             token,
             "Lets get you started! 💪",
-            "Add your first lift and begin the journey to perfect form!",
+            "Add your first lift and start your journey to achieving your goals without injuries!",
             {
               type: 'new_user_reminder',
               date: todayFormatted,
@@ -182,7 +182,7 @@ Deno.serve(async () => {
             await sendExpoPush(
               token,
               "Don't lose your streak! 🔥",
-              "It's time to analyze your form!",
+              "It's time to analyze your form! Let's keep you going on a roll!",
               {
                 type: 'streak_reminder',
                 date: todayFormatted,
@@ -196,7 +196,7 @@ Deno.serve(async () => {
             await sendExpoPush(
               token,
               "Time to analyze your form! 💪",
-              "Consistency is key to achieving your fitness goals and training safely.",
+              "Remember, consistency is the key to achieving your fitness goals and training safely.",
               {
                 type: 'daily_reminder',
                 date: todayFormatted,
