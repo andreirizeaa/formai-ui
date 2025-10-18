@@ -11,8 +11,8 @@ const supabase = createClient(
 // --- Inline helper for sending Expo push ---
 async function sendExpoPush(
   to: string,
+  title: string,
   body: string,
-  title = "Form AI",
   data?: Record<string, unknown>
 ) {
   const accessToken = Deno.env.get("EXPO_ACCESS_TOKEN")
