@@ -129,7 +129,7 @@ export async function navigateToFailedLiftDate(assetId: string, liftId?: string)
       }
     }
 
-    // Alternative fallback: try to fetch using asset_id
+    // Alternative fallback: try to fetch using asset_id from lift_failures
     if (assetId) {
       try {
         const { data, error } = await supabase
@@ -141,9 +141,14 @@ export async function navigateToFailedLiftDate(assetId: string, liftId?: string)
           .maybeSingle();
 
         if (data && data.created_at && !error) {
-          // Use the failure creation date as approximation
-          const failureDate = new Date(data.created_at);
+          // Parse timestamp correctly: created_at is like "2025-10-18 19:07:21.02665+00"
+          // Extract just the date part (YYYY-MM-DD) to avoid timezone issues
+          const dateStr = data.created_at.split(' ')[0]; // "2025-10-18"
+          // Parse as local midnight to get the correct calendar date
+          const [year, month, day] = dateStr.split('-').map(Number);
+          const failureDate = new Date(year, month - 1, day); // month is 0-indexed
           navigateToHomeWithDate(failureDate);
+          new Date()
           return;
         }
       } catch (dbError) {
