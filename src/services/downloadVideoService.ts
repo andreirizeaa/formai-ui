@@ -1,10 +1,9 @@
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import * as MediaLibrary from 'expo-media-library';
 import { showAlert } from './alertService';
 import { hapticFeedback } from '../utils/haptic';
 import { track } from './analytics';
 import i18n from '../utils/i18n';
-import { supabase } from '../lib/supabase';
 import { extractObjectKeyFromUrl, signPath } from '../context/LiftDataContext';
 
 interface DownloadVideoOptions {
@@ -98,7 +97,7 @@ export async function downloadVideoToLibrary({
     }
 
     // 6) Verify the downloaded file
-    const info = await FileSystem.getInfoAsync(finalUri, { size: true });
+    const info = await FileSystem.getInfoAsync(finalUri);
     if (!info.exists || !('size' in info) || !info.size || info.size < 1024) {
       throw new Error(`Downloaded file is invalid or too small (${('size' in info ? info.size : 0)} bytes)`);
     }
@@ -230,7 +229,7 @@ export async function getVideoFileInfo(videoUrl: string): Promise<{
   uri: string;
 } | null> {
   try {
-    const info = await FileSystem.getInfoAsync(videoUrl, { size: true });
+    const info = await FileSystem.getInfoAsync(videoUrl);
     return {
       size: ('size' in info && info.size) ? info.size : 0,
       exists: info.exists ?? false,

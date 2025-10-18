@@ -96,6 +96,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       proxy: "https://formai-service.onrender.com"
     },
     plugins: [
+      "expo-font",
+      "expo-localization",
+      "expo-tracking-transparency",
       "expo-mail-composer",
       "expo-video",
       "expo-apple-authentication",
@@ -208,7 +211,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
           photosPermission: "Form AI accesses your photo library so you can upload videos for analysis, save videos recorded in the app to your photo library, search for previously analysed videos and to prevent duplicate video uploads.",
           savePhotosPermission: "Form AI accesses your photo library so you can upload videos for analysis, save videos recorded in the app to your photo library, search for previously analysed videos and to prevent duplicate video uploads.",
           isAccessMediaLocationEnabled: false,
-          granularPermissions: ["video"]
+          granularPermissions: ["video"],
+          useAssetsLibrary: false
         }
       ],
       [

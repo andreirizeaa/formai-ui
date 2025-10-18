@@ -545,7 +545,6 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
             data={filteredAndSortedLifts}
             renderItem={renderLiftItem}
             keyExtractor={(item) => item.id}
-            estimatedItemSize={146}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollContentContainer}
             extraData={filteredAndSortedLifts}

@@ -710,14 +710,6 @@ function SwipeableLineGraphCard({
           snapToInterval={ITEM_WIDTH}
           snapToAlignment="start"
           decelerationRate="fast"
-          // Important: tell FlashList exact size and offset for each index
-          overrideItemLayout={(layout, index) => {
-            layout.size = ITEM_WIDTH;          // width along scroll axis
-            // @ts-ignore - FlashList internal property
-            layout.offset = ITEM_WIDTH * index; // starting x
-          }}
-          estimatedItemSize={ITEM_WIDTH} // still good to provide
-          estimatedListSize={{ width: SCREEN_WIDTH, height: CARD_HEIGHT }}
           keyExtractor={(_, i) => `graph-${i}`}
           renderItem={renderItem}
           removeClippedSubviews

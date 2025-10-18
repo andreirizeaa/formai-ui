@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, Dimensions, Platform } from 'react-native';
-import { FlashList, ListRenderItemInfo } from '@shopify/flash-list';
+import { FlashList, FlashListRef, ListRenderItemInfo } from '@shopify/flash-list';
 import { LineChart, BarChart } from 'react-native-chart-kit';
 import i18n from '../../../utils/i18n';
 import { track } from '../../../services/analytics';
@@ -111,7 +111,7 @@ export function SwipeableLiftDetailsGraphs({ data, formGraphRef, depthGraphRef }
   const cards: CardKind[] = useMemo(() => ['line', 'bar'], []);
 
   const [currentIndex, setCurrentIndex] = useState(0);
-  const listRef = useRef<FlashList<CardKind>>(null);
+  const listRef = useRef<FlashListRef<CardKind>>(null);
 
   const shouldRenderIndex = useCallback((index: number) => Math.abs(index - currentIndex) <= 1, [currentIndex]);
 
@@ -218,13 +218,6 @@ export function SwipeableLiftDetailsGraphs({ data, formGraphRef, depthGraphRef }
           pagingEnabled
           showsHorizontalScrollIndicator={false}
           decelerationRate="fast"
-          overrideItemLayout={(layout, index) => {
-            layout.size = ITEM_WIDTH;
-            // @ts-ignore
-            layout.offset = ITEM_WIDTH * index;
-          }}
-          estimatedItemSize={ITEM_WIDTH}
-          estimatedListSize={{ width: SCREEN_WIDTH, height: CARD_HEIGHT }}
           keyExtractor={(item, i) => `${item}-${i}`}
           renderItem={renderItem}
           removeClippedSubviews

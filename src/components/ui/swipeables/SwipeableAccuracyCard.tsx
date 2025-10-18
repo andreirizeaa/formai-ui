@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
-import { FlashList, ListRenderItemInfo } from '@shopify/flash-list';
+import { FlashList, FlashListRef, ListRenderItemInfo } from '@shopify/flash-list';
 import { hapticFeedback } from '../../../utils/haptic';
 import { CircularProgressChart } from '../../icons/icons';
 import { useLiftData } from '../../../context/LiftDataContext';
@@ -37,7 +37,7 @@ export function SwipeableAccuracyCard({
   const { selectedDate } = useSelectedDate();
   
   // Create a ref to control the list
-  const listRef = useRef<FlashList<AccuracyCardData> | null>(null);
+  const listRef = useRef<FlashListRef<AccuracyCardData> | null>(null);
 
   // Track a local index for UI/lazy render; notify parent only on settle
   const [localIndex, setLocalIndex] = React.useState(currentCardIndex);
@@ -199,15 +199,6 @@ export function SwipeableAccuracyCard({
           snapToAlignment="start"
           decelerationRate="fast"
           disableIntervalMomentum   // ← helps remove the "pause then snap" on iOS
-
-          // ✅ Exact layout (no guessing)
-          overrideItemLayout={(layout, index) => {
-            layout.size = ITEM_WIDTH;
-            // @ts-ignore
-            layout.offset = ITEM_WIDTH * index;
-          }}
-          estimatedItemSize={ITEM_WIDTH}
-          estimatedListSize={{ width: SCREEN_WIDTH, height: CARD_HEIGHT }}
 
           keyExtractor={(item, i) => `${item.label}-${item.percentage}-${i}`}
           renderItem={({ item, index }) => (
