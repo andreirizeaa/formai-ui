@@ -45,6 +45,7 @@ const ro = {
       "syncData": "Sincronizează datele",
       "lastSynced": "Ultima sincronizare: {{time}}",
       "leaveRating": "Lasă o recenzie",
+      "turnOnNotifications": "Activează notificările",
       "deleteAccount": "Șterge contul",
       "logout": "Deconectare",
       "save": "Salvează",

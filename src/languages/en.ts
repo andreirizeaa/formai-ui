@@ -45,6 +45,7 @@ const en = {
       syncData: 'Sync Data',
       lastSynced: 'Last Synced: {{time}}',
       leaveRating: 'Leave a Rating',
+      turnOnNotifications: 'Turn on Notifications',
       deleteAccount: 'Delete Account',
       logout: 'Logout',
       save: 'Save',

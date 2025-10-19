@@ -45,6 +45,7 @@ const fr = {
       "syncData": "Synchroniser les données",
       "lastSynced": "Dernière synchronisation : {{time}}",
       "leaveRating": "Laisser une note",
+      "turnOnNotifications": "Activer les notifications",
       "deleteAccount": "Supprimer le compte",
       "logout": "Se déconnecter",
       "save": "Enregistrer",

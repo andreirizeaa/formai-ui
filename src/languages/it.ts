@@ -44,6 +44,7 @@ const it = {
       syncData: 'Sincronizza Dati',
       lastSynced: 'Ultima sincronizzazione: {{time}}',
       leaveRating: 'Lascia una Valutazione',
+      turnOnNotifications: 'Attiva Notifiche',
       deleteAccount: 'Elimina Account',
       logout: 'Disconnetti',
       save: 'Salva',

@@ -45,6 +45,7 @@ const es = {
       syncData: 'Sincronizar Datos',
       lastSynced: 'Última sincronización: {{time}}',
       leaveRating: 'Dejar una Calificación',
+      turnOnNotifications: 'Activar Notificaciones',
       deleteAccount: 'Eliminar Cuenta',
       logout: 'Cerrar Sesión',
       save: 'Guardar',

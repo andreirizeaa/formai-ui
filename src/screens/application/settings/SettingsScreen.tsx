@@ -3,8 +3,9 @@ import { View, Text, StyleSheet, Platform, TouchableOpacity, ScrollView, Activit
 import { Image } from 'expo-image';
 import * as StoreReview from 'expo-store-review';
 import * as DynamicAppIcon from 'expo-dynamic-app-icon';
+import * as Notifications from 'expo-notifications';
 import { useFocusEffect } from '@react-navigation/native';
-import { IdCard, Languages, Ruler, FileText, ShieldCheck, MailPlus, UserMinus, LogOut, School2, Star, FileVideoCamera, Megaphone, RefreshCw, User, Pencil } from 'lucide-react-native';
+import { IdCard, Languages, Ruler, FileText, ShieldCheck, MailPlus, UserMinus, LogOut, School2, Star, FileVideoCamera, Megaphone, RefreshCw, User, Pencil, BellRing } from 'lucide-react-native';
 import i18n from '../../../utils/i18n';
 import { hapticFeedback } from '../../../utils/haptic';
 import { DeleteAccountModal } from './DeleteAccountModal';
@@ -25,6 +26,7 @@ import * as Linking from 'expo-linking';
 import { track } from '../../../services/analytics';
 import { performManualSync, getFormattedLastSyncTime } from '../../../services/syncService';
 import { useUserDetails } from '../../../context/UserDetailsContext';
+import { openAppSettings } from '../../../utils/openAppSettings';
 
 interface SettingsScreenProps {
   onPersonalDetailsPress: () => void;
@@ -88,6 +90,7 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState<string | null>(null);
   const [currentAppIcon, setCurrentAppIcon] = useState<string>('default');
+  const [hasNotificationPermission, setHasNotificationPermission] = useState<boolean>(false);
 
   // App icon mapping
   const APP_ICONS = {
@@ -182,18 +185,37 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
     loadCurrentAppIcon();
   }, []);
 
-  // Refresh app icon when screen comes into focus (e.g., returning from AppIconScreen)
+  // Check notification permission status
+  const checkNotificationPermission = async () => {
+    try {
+      const { status } = await Notifications.getPermissionsAsync();
+      setHasNotificationPermission(status === 'granted');
+    } catch (error) {
+      console.warn('Error checking notification permission:', error);
+      setHasNotificationPermission(false);
+    }
+  };
+
+  // Load notification permission status on mount
+  useEffect(() => {
+    checkNotificationPermission();
+  }, []);
+
+  // Refresh app icon and notification permission when screen comes into focus
   useFocusEffect(
     React.useCallback(() => {
-      const refreshAppIcon = async () => {
+      const refreshData = async () => {
         try {
           const icon = await DynamicAppIcon.getAppIcon();
           setCurrentAppIcon(icon || 'default');
         } catch (error) {
           console.warn('Error refreshing app icon:', error);
         }
+        
+        // Also refresh notification permission status
+        await checkNotificationPermission();
       };
-      refreshAppIcon();
+      refreshData();
     }, [])
   );
 
@@ -490,6 +512,23 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
           fallbackError
         );
       }
+    }
+  };
+
+  const handleTurnOnNotificationsPress = async () => {
+    // Track settings screen clicks
+    track('Settings screen clicks', { event: 'Turn on Notifications' });
+    
+    try {
+      await openAppSettings();
+    } catch (error) {
+      showAlert(
+        'Error', 
+        'Unable to open app settings. Please try again later.',
+        undefined,
+        'SETTINGS_NOTIFICATIONS_ERROR',
+        error
+      );
     }
   };
 
@@ -868,6 +907,17 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
             onPress={handleLeaveRatingPress}
           />
           <View style={styles.separator} />
+          {/* Only show notifications option if user hasn't granted permission */}
+          {!hasNotificationPermission && (
+            <>
+              <SettingsOption
+                icon={<BellRing size={iconSize} color={iconColor} />}
+                title={i18n.t('settings.turnOnNotifications')}
+                onPress={handleTurnOnNotificationsPress}
+              />
+              <View style={styles.separator} />
+            </>
+          )}
           <SettingsOption
             icon={<UserMinus size={iconSize} color={iconColor} />}
             title={i18n.t('settings.deleteAccount')}

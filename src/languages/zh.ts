@@ -44,6 +44,7 @@ const zh = {
       syncData: '同步数据',
       lastSynced: '上次同步：{{time}}',
       leaveRating: '留下评价',
+      turnOnNotifications: '开启通知',
       deleteAccount: '删除账户',
       logout: '退出登录',
       save: '保存',

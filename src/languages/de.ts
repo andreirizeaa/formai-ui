@@ -44,6 +44,7 @@ const de = {
       "syncData": "Daten synchronisieren",
       "lastSynced": "Zuletzt synchronisiert: {{time}}",
       "leaveRating": "Bewertung abgeben",
+      "turnOnNotifications": "Benachrichtigungen aktivieren",
       "deleteAccount": "Konto löschen",
       "logout": "Abmelden",
       "save": "Speichern",

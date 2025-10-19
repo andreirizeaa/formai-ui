@@ -45,6 +45,7 @@ const ar = {
       "syncData": "مزامنة البيانات",
       "lastSynced": "آخر مزامنة: {{time}}",
       "leaveRating": "اترك تقييماً",
+      "turnOnNotifications": "تفعيل الإشعارات",
       "deleteAccount": "حذف الحساب",
       "logout": "تسجيل الخروج",
       "save": "حفظ",
