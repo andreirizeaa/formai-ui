@@ -88,80 +88,13 @@ export async function navigateToFailedLiftDate(assetId: string, liftId?: string)
       return;
     }
 
-    // Try to get the lift date from loading lifts context first
-    if ((global as any).getLoadingLiftDate) {
-      const date = (global as any).getLoadingLiftDate(assetId);
-      if (date) {
-        navigateToHomeWithDate(date);
-        return;
-      }
-    }
-
-    // Fallback: if we have a liftId, try to get the date from the completed lift
-    if (liftId && (global as any).getLiftFromContext) {
-      const lift = (global as any).getLiftFromContext(liftId);
-      if (lift && lift.liftDate) {
-        // Parse DD-MM-YYYY format to Date
-        const [day, month, year] = lift.liftDate.split('-').map(Number);
-        const date = new Date(year, month - 1, day);
-        navigateToHomeWithDate(date);
-        return;
-      }
-    }
-
-    // Fallback: try to fetch from database using liftId or assetId
-    if (liftId) {
-      try {
-        const { data, error } = await supabase
-          .from('lifts')
-          .select('lift_date')
-          .eq('id', liftId)
-          .maybeSingle();
-
-        if (data && data.lift_date && !error) {
-          // Parse YYYY-MM-DD format from database to Date
-          const dbDate = new Date(data.lift_date);
-          navigateToHomeWithDate(dbDate);
-          return;
-        }
-      } catch (dbError) {
-        console.warn('Database fallback failed:', dbError);
-      }
-    }
-
-    // Alternative fallback: try to fetch using asset_id from lift_failures
-    if (assetId) {
-      try {
-        const { data, error } = await supabase
-          .from('lift_failures')
-          .select('created_at')
-          .eq('asset_id', assetId)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (data && data.created_at && !error) {
-          // Parse timestamp correctly: created_at is like "2025-10-18 19:07:21.02665+00"
-          // Extract just the date part (YYYY-MM-DD) to avoid timezone issues
-          const dateStr = data.created_at.split(' ')[0]; // "2025-10-18"
-          // Parse as local midnight to get the correct calendar date
-          const [year, month, day] = dateStr.split('-').map(Number);
-          const failureDate = new Date(year, month - 1, day); // month is 0-indexed
-          navigateToHomeWithDate(failureDate);
-          new Date()
-          return;
-        }
-      } catch (dbError) {
-        console.warn('Asset fallback failed:', dbError);
-      }
-    }
-
-    // If we can't find the date, just navigate to home with today's date
-    navigateToHomeWithDate(new Date());
+    // For error cards, just navigate to home screen without setting any specific date
+    console.log('navigateToFailedLiftDate: Navigating to home screen for error card');
+    navigate('MainTabs');
   } catch (error) {
     console.warn('Error navigating to failed lift date:', error);
-    // Fallback to today's date
-    navigateToHomeWithDate(new Date());
+    // Fallback to home screen
+    navigate('MainTabs');
   }
 }
 
