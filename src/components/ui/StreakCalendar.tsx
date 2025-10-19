@@ -173,13 +173,13 @@ const styles = StyleSheet.create({
   },
   dayName: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '800',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
     marginBottom: 8,
   },
   streakDayText: {
     color: '#ed694a', // Orange color for streak day text
-    fontWeight: '600',
+    fontWeight: '800',
   },
   defaultDayText: {
     color: '#000000', // Black color for default day text

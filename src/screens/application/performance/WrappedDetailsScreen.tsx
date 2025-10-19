@@ -1,5 +1,5 @@
-import React, { useMemo, useRef } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, SafeAreaView } from 'react-native';
+import React, { useMemo, useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, SafeAreaView, ScrollView, Animated, Dimensions } from 'react-native';
 import { useLiftData } from '../../../context/LiftDataContext';
 import { useUserDetails } from '../../../context/UserDetailsContext';
 import { Wrapped } from '../../../components/ui/Wrapped';
@@ -17,6 +17,15 @@ export function WrappedDetailsScreen({ selectedYear, onClose }: WrappedDetailsSc
   const { liftData } = useLiftData();
   const { userDetails } = useUserDetails();
   const wrappedRef = useRef<any>(null);
+  const animatedValue = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(animatedValue, {
+      toValue: 1,
+      duration: 600,
+      useNativeDriver: true,
+    }).start();
+  }, []);
 
   // Filter lift data based on selected year
   const filteredLiftData = useMemo(() => {
@@ -162,22 +171,45 @@ export function WrappedDetailsScreen({ selectedYear, onClose }: WrappedDetailsSc
         </TouchableOpacity>
       </View>
 
-      <View style={styles.content}>
-        <Wrapped
-          ref={wrappedRef}
-        totalVideos={totalVideos}
-        totalReps={totalReps}
-        totalWeightMoved={totalWeightMoved}
-        favouriteLift={favouriteLift}
-        longestStreak={longestStreak}
-        longestBreak={longestBreak}
-        distinctLiftTypes={distinctLiftTypes}
-        personality={personality}
-          unitSystem={userDetails?.unitSystem || 'metric'}
-          liftData={filteredLiftData}
-          selectedYear={selectedYear}
-        />
-      </View>
+      <ScrollView
+        style={styles.content}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <Animated.View
+          style={{
+            transform: [
+              {
+                translateY: animatedValue.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [Dimensions.get('window').height, 0],
+                }),
+              },
+              {
+                scale: animatedValue.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0.95, 1],
+                }),
+              },
+            ],
+          }}
+        >
+          <Wrapped
+            ref={wrappedRef}
+            totalVideos={totalVideos}
+            totalReps={totalReps}
+            totalWeightMoved={totalWeightMoved}
+            favouriteLift={favouriteLift}
+            longestStreak={longestStreak}
+            longestBreak={longestBreak}
+            distinctLiftTypes={distinctLiftTypes}
+            personality={personality}
+            unitSystem={userDetails?.unitSystem || 'metric'}
+            liftData={filteredLiftData}
+            selectedYear={selectedYear}
+          />
+        </Animated.View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -222,5 +254,8 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 20,
     paddingTop: 20,
+  },
+  scrollContent: {
+    paddingBottom: 20,
   },
 });

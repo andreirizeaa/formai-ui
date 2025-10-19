@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, forwardRef, useImperativeHandle } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform, Alert } from 'react-native';
+import { View, Text, StyleSheet, Platform, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Crown, Share, Zap, BicepsFlexed, Video, Flame, Ghost, Dumbbell } from 'lucide-react-native';
 import i18n from '../../utils/i18n';
@@ -97,149 +97,6 @@ export const Wrapped = forwardRef<any, WrappedProps>(({
   }, [filteredLiftData, totalVideos, totalReps, totalWeightMoved, favouriteLift]);
 
 
-  // Render function for the cards (screen version - no title, logo, year)
-  const renderCards = () => (
-    <>
-      {/* Videos and Reps Row */}
-      <View style={styles.statsRow}>
-        {/* Videos Card */}
-        <View style={[styles.statCard, styles.cardShadow, styles.videosCardSolid, styles.solidCard]}>
-          <Text style={styles.solidCardTitle}>{i18n.t('performance.videos')}</Text>
-          <View style={styles.solidCardValueContainer}>
-            <Text style={styles.solidCardValue}>{filteredMetrics.totalVideos || 0}</Text>
-            <Video width={24} height={24} color="#FFFFFF" style={{ marginLeft: 8 }} />
-          </View>
-        </View>
-
-        {/* Reps Card */}
-        <View style={[styles.statCard, styles.cardShadow, styles.repsCardSolid, styles.solidCard]}>
-          <Text style={styles.solidCardTitle}>{i18n.t('performance.reps')}</Text>
-          <View style={styles.solidCardValueContainer}>
-            <Text style={styles.solidCardValue}>{filteredMetrics.totalReps || 0}</Text>
-          </View>
-        </View>
-      </View>
-
-      {/* Total Weight and Accuracy Row */}
-      <View style={styles.weightAccuracyRow}>
-        {/* Total Weight Moved Card - 70% */}
-        <View style={[styles.totalWeightCard, styles.cardShadow, styles.weightCard70, styles.totalWeightCardSolid, styles.solidCard]}>
-          <Text style={styles.solidCardTitle}>{i18n.t('performance.totalWeight')}</Text>
-          <View style={styles.solidCardValueContainer}>
-            <Text style={styles.solidCardValue}>
-              {unitSystem === 'imperial'
-                ? Math.round((filteredMetrics.totalWeightMoved || 0) * 2.20462).toLocaleString()
-                : Math.round(filteredMetrics.totalWeightMoved || 0).toLocaleString()
-              } {unitSystem === 'imperial' ? i18n.t('feedback.lbs') : i18n.t('feedback.kg')}
-            </Text>
-            <BicepsFlexed width={24} height={24} color="#FFFFFF" style={{ marginLeft: 8 }} />
-          </View>
-        </View>
-
-        {/* Accuracy Card - 30% */}
-          <View style={[styles.accuracyCard, styles.cardShadow, styles.accuracyCard30, styles.accuracyCardSolid]}>
-            <View style={styles.accuracyHeaderRow}>
-              <Text style={styles.accuracyTitle}>{i18n.t('performance.accuracy')}</Text>
-            </View>
-            <View style={styles.accuracyValueContainer}>
-              <Text style={styles.accuracyValue}>{filteredMetrics.averageAccuracy || 0}%</Text>
-              <Zap width={24} height={24} color="#FFFFFF" />
-            </View>
-          </View>
-      </View>
-
-      {/* Lifts and Favourite Row */}
-      <View style={styles.statsRow}>
-        {/* Lifts Card */}
-        <View style={[styles.statCard, styles.cardShadow, styles.liftsCardSolid, styles.solidCard]}>
-          <Text style={styles.solidCardTitle}>{i18n.t('performance.lifts')}</Text>
-          <View style={styles.solidCardValueContainer}>
-            <Text style={styles.solidCardValue}>{distinctLiftTypes || 0}</Text>
-            <Dumbbell width={24} height={24} color="#FFFFFF" style={{ marginLeft: 8 }} />
-          </View>
-        </View>
-
-      {/* Favourite Exercise Card */}
-      <View style={[styles.statCard, styles.cardShadow, styles.favouriteExerciseCard, styles.solidCard]}>
-        <Text style={styles.solidCardTitle}>{i18n.t('performance.favouriteExercise')}</Text>
-        <View style={styles.solidCardValueContainer}>
-          <Text style={styles.solidCardValue}>
-            {filteredMetrics.favouriteLift || i18n.t('performance.noData')}
-          </Text>
-          {filteredMetrics.favouriteLift && <Crown width={24} height={24} color="#FFFFFF" style={{ marginLeft: 8 }} />}
-        </View>
-      </View>
-      </View>
-
-      {/* Streak and Break Row */}
-      <View style={styles.statsRow}>
-        {/* {i18n.t('performance.longestStreak')} Card */}
-        <View style={[styles.statCard, styles.cardShadow, styles.longestStreakCardSolid, styles.solidCard]}>
-          <Text style={styles.solidCardTitle}>{i18n.t('performance.longestStreak')}</Text>
-          <View style={styles.solidCardValueContainer}>
-            <Text style={styles.solidCardValue}>{longestStreak || 0}</Text>
-            <Flame width={24} height={24} color="#FFFFFF" style={{ marginLeft: 8 }} />
-          </View>
-        </View>
-
-        {/* {i18n.t('performance.longestBreak')} Card */}
-        <View style={[styles.statCard, styles.cardShadow, styles.longestBreakCardSolid, styles.solidCard]}>
-          <Text style={styles.solidCardTitle}>{i18n.t('performance.longestBreak')}</Text>
-          <View style={styles.solidCardValueContainer}>
-            <Text style={styles.solidCardValue}>{longestBreak === 0 ? i18n.t('performance.none') : longestBreak}</Text>
-            <Ghost width={24} height={24} color="#FFFFFF" style={{ marginLeft: 8 }} />
-          </View>
-        </View>
-      </View>
-
-      {/* Personality, Logo and Year Row */}
-      <View style={styles.weightAccuracyRow}>
-        {/* Left side - Two horizontal cards */}
-        <View style={styles.leftCardsContainer}>
-          {/* Personality Card */}
-          <View style={[styles.statCard, styles.cardShadow, styles.personalityCard, styles.personalityCardSolid, styles.solidCard]}>
-            <Text style={styles.solidCardTitle}>{i18n.t('performance.personality')}</Text>
-            <View style={styles.solidCardValueContainer}>
-              <Text style={styles.solidCardValue}>{getPersonalityText(personality)}</Text>
-            </View>
-          </View>
-
-          {/* FormAI Logo Card */}
-          <View style={[styles.statCard, styles.cardShadow, styles.logoCard, styles.logoCardSolid, styles.solidCard]}>
-            <Text style={styles.logoCardTitle}>{i18n.t('performance.thankYou')}</Text>
-            <View style={styles.logoContainer}>
-              <FormAILogo
-                iconSize={32}
-                textStyle={styles.logoTextGray}
-              />
-            </View>
-          </View>
-        </View>
-
-        {/* Year Card - 35% width with vertical text */}
-        <View style={[styles.accuracyCard, styles.cardShadow, styles.yearCard]}>
-          <LinearGradient
-            colors={['#f6339a', '#fb2c36', '#ff6900', '#fe9a00']}
-            locations={[0, 0.5, 0.8, 1]}
-            style={styles.yearGradientFill}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-          >
-            <View style={styles.yearContainer}>
-              <View style={styles.verticalTextContainer}>
-                <Text 
-                  style={styles.verticalYearText}
-                  numberOfLines={1}
-                >
-                  {selectedYear === 'all' ? i18n.t('performance.timeRanges.allTime') : selectedYear}
-                </Text>
-              </View>
-            </View>
-          </LinearGradient>
-        </View>
-      </View>
-    </>
-  );
 
   // Render function for shareable content (includes overview title, logo, year)
   const renderShareableCards = () => (
@@ -428,8 +285,10 @@ export const Wrapped = forwardRef<any, WrappedProps>(({
   }));
   return (
     <View style={styles.container}>
-      {/* Visible Cards */}
-      {renderCards()}
+      {/* Visible Cards - Now showing shareable content with white background */}
+      <View style={styles.mainCardContainer}>
+        {renderShareableCards()}
+      </View>
 
       {/* Hidden white overlay used only for capture */}
       {showShareOverlay && (
@@ -450,13 +309,14 @@ const styles = StyleSheet.create({
   container: {
     marginBottom: 50,
   },
-  shareableTitle: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#000000',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
-    textAlign: 'center',
-    marginBottom: 16,
+  mainCardContainer: {
+    borderRadius: 20,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
+    overflow: 'visible',
   },
   shareOverlay: {
     position: 'absolute',
@@ -466,9 +326,8 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   shareableBackground: {
-    flex: 1,
     padding: 16,
-    borderRadius: 20,
+    borderRadius: 26,
     backgroundColor: '#ffffff',
   },
   statsRow: {
@@ -484,32 +343,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
     minHeight: 80,
-  },
-  statHeaderRow: {
-    width: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  statTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
-    flex: 1,
-    flexShrink: 0,
-  },
-  statValueContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  statValue: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
   },
   weightAccuracyRow: {
     flexDirection: 'row',
@@ -560,36 +393,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#FFFFFF',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
-  },
-  totalWeightHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  totalWeightTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
-    flex: 1,
-  },
-  totalWeightValueContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  totalWeightValue: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
-  },
-  totalWeightUnit: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
-    alignSelf: 'flex-start',
   },
   cardShadow: {
     shadowColor: '#000000',
@@ -720,11 +523,6 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
     textAlign: 'center',
   },
-  gradientFill: {
-    flex: 1,
-    borderRadius: 20,
-    padding: 16,
-  },
   yearGradientFill: {
     flex: 1,
     borderRadius: 20,
@@ -737,24 +535,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
     marginBottom: 16,
-  },
-  footerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 16,
-    paddingHorizontal: 4,
-  },
-  footerLogoText: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#000000',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
-  },
-  yearText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#666666',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
 });

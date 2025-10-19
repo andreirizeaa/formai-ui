@@ -88,8 +88,6 @@ export async function navigateToFailedLiftDate(assetId: string, liftId?: string)
       return;
     }
 
-    // For error cards, just navigate to home screen without setting any specific date
-    console.log('navigateToFailedLiftDate: Navigating to home screen for error card');
     navigate('MainTabs');
   } catch (error) {
     console.warn('Error navigating to failed lift date:', error);

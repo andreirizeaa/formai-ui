@@ -49,7 +49,6 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
       l => l.status === 'uploading' || l.status === 'processing'
     );
     if (anyInFlight) {
-      console.log('processQueue: Skipping - lift already in flight');
       return;
     }
 
@@ -61,11 +60,8 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
     const waitingLift = waiting[0];
 
     if (!waitingLift) {
-      console.log('processQueue: No waiting lifts found');
       return;
     }
-
-    console.log('processQueue: Processing waiting lift:', waitingLift.id);
 
     // Remove from queue if it has a queueId
     if (waitingLift.queueId) {
@@ -393,7 +389,6 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
 
   // one place to mark completion
   const markCompleted = (id: string, mapped: ILiftData) => {
-    console.log('markCompleted: Lift completed:', id);
     
     setAllLoadingLifts(prev => {
       const next = prev.map(l =>
@@ -416,7 +411,6 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
     });
     
     // Kick the queue immediately after completion
-    console.log('markCompleted: Triggering processQueue after completion');
     setTimeout(() => {
       processQueue();
     }, 100); // Small delay to ensure state is updated
@@ -1270,10 +1264,7 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
     const anyInFlight = allLoadingLifts.some(l => l.status === 'uploading' || l.status === 'processing');
     const hasWaiting = allLoadingLifts.some(l => l.status === 'waiting');
 
-    console.log('Auto-kicker: anyInFlight:', anyInFlight, 'hasWaiting:', hasWaiting);
-
     if (!anyInFlight && hasWaiting) {
-      console.log('Auto-kicker: Triggering processQueue');
       // Kick on next tick to avoid racing the state commit
       setTimeout(() => processQueue(), 0);
     }
@@ -1344,7 +1335,6 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
 
       // If we reach here, uploads should have been done by the modals
       // This is a fallback case that shouldn't normally happen
-      console.warn('processLiftUploads called without pre-uploaded content:', liftId);
       safeUpdateLift(liftId, l => ({ ...l, status: 'error', errorMessage: 'Upload process not handled correctly' }));
     } catch (error) {
       // Track error event
@@ -1365,10 +1355,7 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
       lift.status === 'uploading' || lift.status === 'processing'
     );
 
-    console.log('addLoadingLift: hasProcessingLift:', hasProcessingLift, 'liftId:', liftId);
-
     if (hasProcessingLift) {
-      console.log('addLoadingLift: Adding to queue - liftId:', liftId);
       
       // Add to queue and show waiting card - include ref to waiting card ID
       const queueId = await queueService.addToQueue({ ...liftData, ref: liftId } as any);
@@ -1417,7 +1404,6 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
 
       return liftId;
     } else {
-      console.log('addLoadingLift: Processing immediately - liftId:', liftId);
       
       // Process immediately
       const now = Date.now();
@@ -1658,7 +1644,6 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
   };
 
   const removeLift = (id: string) => {
-    console.log('removeLift: Removing lift:', id);
     
     // Clean up tracked errors for this lift
     const lift = allLoadingLifts.find(l => l.id === id);
@@ -1682,7 +1667,6 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
     setAllLoadingLifts(prev => prev.filter(lift => lift.id !== id));
     
     // Process queue after removing a lift
-    console.log('removeLift: Triggering processQueue after removal');
     setTimeout(() => {
       processQueue();
     }, 100);
@@ -1777,12 +1761,6 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
     const completed = allLoadingLifts.filter(l => l.status === 'completed');
     const errors = allLoadingLifts.filter(l => l.status === 'error');
     
-    console.log('=== QUEUE DEBUG STATE ===');
-    console.log('Waiting lifts:', waiting.length, waiting.map(l => ({ id: l.id, enqueuedAt: l.enqueuedAt })));
-    console.log('Processing lifts:', processing.length, processing.map(l => ({ id: l.id, status: l.status })));
-    console.log('Completed lifts:', completed.length);
-    console.log('Error lifts:', errors.length);
-    console.log('========================');
   }, [allLoadingLifts]);
 
   // Expose reset function globally for account deletion
