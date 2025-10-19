@@ -769,6 +769,7 @@ const pt = {
       weight: 'Peso',
       reps: 'Repetições',
       reviewFeedback: 'Revisar Feedback',
+      noFeedback: 'Sem Feedback',
       favourite: 'Favorito',
       manualDeleteLiftCardData: 'Excluir Levantamento',
       deleteLiftTitle: 'Excluir Levantamento',
@@ -943,6 +944,8 @@ const pt = {
       selectNewVideo: 'Novo Vídeo',
       duplicateVideo: 'Vídeo Duplicado',
       duplicateVideoMessage: 'Este vídeo já foi analisado. Por favor selecione um vídeo diferente.',
+      duplicateVideoProcessing: 'Vídeo em Processamento',
+      duplicateVideoProcessingMessage: 'Este vídeo está sendo processado atualmente. Por favor selecione um vídeo diferente.',
       selectDifferentVideo: 'Selecionar Vídeo Diferente',
       viewAnalysis: 'Ver Análise',
       tips: {

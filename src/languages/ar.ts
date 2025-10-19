@@ -768,6 +768,7 @@ const ar = {
       "weight": "الوزن",
       "reps": "العدّات",
       "reviewFeedback": "مراجعة الملاحظات",
+      "noFeedback": "لا توجد ملاحظات",
       "favourite": "مفضلة",
       "manualDeleteLiftCardData": "حذف الرفعة",
       "deleteLiftTitle": "حذف الرفعة",
@@ -941,6 +942,8 @@ const ar = {
       "selectNewVideo": "فيديو جديد",
       "duplicateVideo": "فيديو مكرر",
       "duplicateVideoMessage": "تم تحليل هذا الفيديو مسبقًا. يرجى اختيار فيديو مختلف.",
+      "duplicateVideoProcessing": "فيديو قيد المعالجة",
+      "duplicateVideoProcessingMessage": "هذا الفيديو قيد المعالجة حاليًا. يرجى اختيار فيديو مختلف.",
       "selectDifferentVideo": "اختر فيديو مختلف",
       "viewAnalysis": "عرض التحليل",
       "tips": {

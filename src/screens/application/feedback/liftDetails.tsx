@@ -150,6 +150,9 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
     onShowFeedbackSlideshow();
   };
 
+  // Check if feedback array is empty
+  const hasFeedback = currentLiftData.analysis.feedback && currentLiftData.analysis.feedback.length > 0;
+
   const handleDeleteLift = () => {
     hapticFeedback.selection();
     setShowDeleteModal(true);
@@ -560,7 +563,7 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
             <View style={[styles.infoCard, styles.accuracyCard]}>
               <Text style={styles.infoCardTitle}>{i18n.t('feedback.accuracy')}</Text>
               <Text style={styles.infoCardValue}>
-                {Math.round(currentLiftData.analysis.accuracy || 91)}%
+                {Math.round(currentLiftData.analysis.accuracy)}%
               </Text>
             </View>
           </View>
@@ -569,12 +572,13 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
           <View style={styles.feedbackButtonCard}>
             <View ref={reviewFeedbackRef}>
               <TouchableOpacity
-                style={styles.reviewFeedbackButton}
-                onPress={handleReviewFeedback}
-                activeOpacity={0.8}
+                style={[styles.reviewFeedbackButton, !hasFeedback && styles.reviewFeedbackButtonDisabled]}
+                onPress={hasFeedback ? handleReviewFeedback : undefined}
+                activeOpacity={hasFeedback ? 0.8 : 1}
+                disabled={!hasFeedback}
               >
-                <Text style={styles.reviewFeedbackButtonText}>
-                  {i18n.t('feedback.reviewFeedback')}
+                <Text style={[styles.reviewFeedbackButtonText, !hasFeedback && styles.reviewFeedbackButtonTextDisabled]}>
+                  {hasFeedback ? i18n.t('feedback.reviewFeedback') : i18n.t('feedback.noFeedback')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -1141,6 +1145,13 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#FFFFFF',
     fontFamily: 'SF Pro Text',
+  },
+  reviewFeedbackButtonDisabled: {
+    backgroundColor: '#8E8E93',
+    opacity: 0.6,
+  },
+  reviewFeedbackButtonTextDisabled: {
+    color: '#C7C7CC',
   },
   bottomContainer: {
     borderTopLeftRadius: 16,

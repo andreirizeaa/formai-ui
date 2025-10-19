@@ -769,6 +769,7 @@ const it = {
       weight: 'Peso',
       reps: 'Ripetizioni',
       reviewFeedback: 'Rivedi Feedback',
+      noFeedback: 'Nessun Feedback',
       favourite: 'Preferito',
       manualDeleteLiftCardData: 'Elimina Sollevamento',
       deleteLiftTitle: 'Elimina Sollevamento',
@@ -943,6 +944,8 @@ const it = {
       selectNewVideo: 'Nuovo Video',
       duplicateVideo: 'Video Duplicato',
       duplicateVideoMessage: 'Questo video è già stato analizzato. Seleziona un video diverso.',
+      duplicateVideoProcessing: 'Video in Elaborazione',
+      duplicateVideoProcessingMessage: 'Questo video è attualmente in elaborazione. Seleziona un video diverso.',
       selectDifferentVideo: 'Seleziona Video Diverso',
       viewAnalysis: 'Visualizza Analisi',
       tips: {

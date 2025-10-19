@@ -49,52 +49,31 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
       l => l.status === 'uploading' || l.status === 'processing'
     );
     if (anyInFlight) {
+      console.log('processQueue: Skipping - lift already in flight');
       return;
     }
 
-    // Try queue first
-    const nextItem = await queueService.getNextInQueue();
-
-    const refFromQueue =
-      (nextItem as any)?.ref ??
-      (nextItem as any)?.payload?.ref ??
-      null;
-
-    // Try to find a waiting lift that matches the queue ref
-    let waitingLift =
-      refFromQueue
-        ? latestLiftsRef.current.find(l => l.id === refFromQueue && l.status === 'waiting')
-        : undefined;
-
-    // 👉 Fallback: if queue is empty or ref didn't match, use the oldest waiting card (FIFO)
-    if (!waitingLift) {
-      const waiting = latestLiftsRef.current
-        .filter(l => l.status === 'waiting')
-        .sort((a, b) => (a.enqueuedAt ?? 0) - (b.enqueuedAt ?? 0)); // oldest first
-      waitingLift = waiting[0];
-    }
+    // Find the oldest waiting lift (FIFO)
+    const waiting = latestLiftsRef.current
+      .filter(l => l.status === 'waiting')
+      .sort((a, b) => (a.enqueuedAt ?? 0) - (b.enqueuedAt ?? 0)); // oldest first
+    
+    const waitingLift = waiting[0];
 
     if (!waitingLift) {
-      const waitingCount = latestLiftsRef.current.filter(l => l.status === 'waiting').length;
+      console.log('processQueue: No waiting lifts found');
       return;
     }
 
-    // Handle lock and removal separately
-    const nextId = (nextItem as any)?.id ?? null;
-    const waitingQueueId = waitingLift.queueId ?? null;
+    console.log('processQueue: Processing waiting lift:', waitingLift.id);
 
-    try {
-      // Remove the item we are actually processing from the queue list
-      if (waitingQueueId) {
-        await queueService.removeFromQueue(waitingQueueId);
+    // Remove from queue if it has a queueId
+    if (waitingLift.queueId) {
+      try {
+        await queueService.removeFromQueue(waitingLift.queueId);
+      } catch (error) {
+        console.warn('Failed to remove from queue:', error);
       }
-
-      // Independently clear the processing lock set by getNextInQueue()
-      if (nextId) {
-        await queueService.markProcessingComplete(nextId);
-      }
-    } catch (error) {
-      console.warn('Failed to reconcile queue (continuing anyway):', error);
     }
 
     const now = Date.now();
@@ -414,6 +393,8 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
 
   // one place to mark completion
   const markCompleted = (id: string, mapped: ILiftData) => {
+    console.log('markCompleted: Lift completed:', id);
+    
     setAllLoadingLifts(prev => {
       const next = prev.map(l =>
         l.id === id
@@ -434,10 +415,11 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
       return next;
     });
     
-    // Kick the queue on the next macrotask so React has time to commit
+    // Kick the queue immediately after completion
+    console.log('markCompleted: Triggering processQueue after completion');
     setTimeout(() => {
       processQueue();
-    }, 0);
+    }, 100); // Small delay to ensure state is updated
     
     // Invalidate LiftDataContext to fetch fresh data when lift completes
     try {
@@ -685,8 +667,6 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
       try {
         const liftId = p?.liftId;
         if (!liftId) return;
-        // If we already have a loading card for this final lift, map immediately from API
-        const local = latestLiftsRef.current.find(x => x.status !== 'completed');
         // Fetch the finished lift directly by id and map to final data
         const { data: row } = await supabase
           .from('lifts')
@@ -694,6 +674,12 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
           .eq('id', liftId)
           .maybeSingle();
         if (!row) return;
+        
+        // Find the matching loading card by assetId
+        const assetId: string | undefined = row?.asset_id;
+        if (!assetId) return;
+        const local = latestLiftsRef.current.find(x => x.assetId === assetId && x.status !== 'completed');
+        if (!local) return;
         // Check lift_failures before completing; API may succeed but result deemed invalid
         try {
           const uid = await getUserId();
@@ -704,16 +690,10 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
               
               // Track error event
               if (['NO_GYM_VIDEO_FOUND', 'NO_LIFT_FOUND', 'WRONG_MOVEMENT', 'ERROR_OCCURED'].includes(errorCode)) {
-                trackErrorOnce(local?.id || 'unknown', errorCode);
+                trackErrorOnce(local.id, errorCode);
               }
               
-              const assetId: string | undefined = (row as any)?.asset_id;
-              if (assetId) {
-                await applyFailureToLocalCard({ assetId, error: failure.error, stage: 'analyze' });
-              } else if (local) {
-                const message = mapJobErrorToUiMessage(failure.error);
-                safeUpdateLift(local.id, l => ({ ...l, status: 'error', failureStage: 'analyze', errorMessage: message }));
-              }
+              await applyFailureToLocalCard({ assetId, error: failure.error, stage: 'analyze' });
               return; // do not mark as completed
             }
           }
@@ -721,10 +701,8 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
         const mapped = await mapApiDataToFinalData(row);
         // Use upsertLift to ensure immediate update to LiftDataContext
         upsertLift(mapped);
-        // If there's a matching local loading lift by final id, complete it; otherwise just ensure list refresh
-        if (local) {
-          markCompleted(local.id, mapped);
-        }
+        // Complete the matching local loading lift
+        markCompleted(local.id, mapped);
         // Optimistically bump today's check-in and refresh check-ins cache
         try {
           const uid = await getUserId();
@@ -765,9 +743,8 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
           } catch {}
         }
 
-        const local = targetAssetId
-          ? latestLiftsRef.current.find(x => x.assetId === targetAssetId && x.status !== 'completed')
-          : latestLiftsRef.current.find(x => x.status !== 'completed');
+        if (!targetAssetId) return;
+        const local = latestLiftsRef.current.find(x => x.assetId === targetAssetId && x.status !== 'completed');
         if (!local) return;
 
         // Track error event
@@ -1293,7 +1270,10 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
     const anyInFlight = allLoadingLifts.some(l => l.status === 'uploading' || l.status === 'processing');
     const hasWaiting = allLoadingLifts.some(l => l.status === 'waiting');
 
+    console.log('Auto-kicker: anyInFlight:', anyInFlight, 'hasWaiting:', hasWaiting);
+
     if (!anyInFlight && hasWaiting) {
+      console.log('Auto-kicker: Triggering processQueue');
       // Kick on next tick to avoid racing the state commit
       setTimeout(() => processQueue(), 0);
     }
@@ -1385,7 +1365,11 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
       lift.status === 'uploading' || lift.status === 'processing'
     );
 
+    console.log('addLoadingLift: hasProcessingLift:', hasProcessingLift, 'liftId:', liftId);
+
     if (hasProcessingLift) {
+      console.log('addLoadingLift: Adding to queue - liftId:', liftId);
+      
       // Add to queue and show waiting card - include ref to waiting card ID
       const queueId = await queueService.addToQueue({ ...liftData, ref: liftId } as any);
 
@@ -1433,6 +1417,8 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
 
       return liftId;
     } else {
+      console.log('addLoadingLift: Processing immediately - liftId:', liftId);
+      
       // Process immediately
       const now = Date.now();
       const startProg = 0.02;
@@ -1672,6 +1658,8 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
   };
 
   const removeLift = (id: string) => {
+    console.log('removeLift: Removing lift:', id);
+    
     // Clean up tracked errors for this lift
     const lift = allLoadingLifts.find(l => l.id === id);
     if (lift) {
@@ -1694,7 +1682,10 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
     setAllLoadingLifts(prev => prev.filter(lift => lift.id !== id));
     
     // Process queue after removing a lift
-    processQueue();
+    console.log('removeLift: Triggering processQueue after removal');
+    setTimeout(() => {
+      processQueue();
+    }, 100);
   };
 
   const removeLoadingLiftByFinalId = (finalId: string) => {
@@ -1779,15 +1770,34 @@ export function LoadingLiftsProvider({ children }: LoadingLiftsProviderProps) {
     return null;
   }, [allLoadingLifts]);
 
+  // Debug function to log queue state
+  const debugQueueState = React.useCallback(() => {
+    const waiting = allLoadingLifts.filter(l => l.status === 'waiting');
+    const processing = allLoadingLifts.filter(l => l.status === 'processing' || l.status === 'uploading');
+    const completed = allLoadingLifts.filter(l => l.status === 'completed');
+    const errors = allLoadingLifts.filter(l => l.status === 'error');
+    
+    console.log('=== QUEUE DEBUG STATE ===');
+    console.log('Waiting lifts:', waiting.length, waiting.map(l => ({ id: l.id, enqueuedAt: l.enqueuedAt })));
+    console.log('Processing lifts:', processing.length, processing.map(l => ({ id: l.id, status: l.status })));
+    console.log('Completed lifts:', completed.length);
+    console.log('Error lifts:', errors.length);
+    console.log('========================');
+  }, [allLoadingLifts]);
+
   // Expose reset function globally for account deletion
   React.useEffect(() => {
     (global as any).resetLoadingLiftsContext = resetContext;
     (global as any).getLoadingLiftDate = getLoadingLiftDate;
+    (global as any).getLoadingLifts = () => allLoadingLifts;
+    (global as any).debugQueueState = debugQueueState;
     return () => {
       (global as any).resetLoadingLiftsContext = undefined;
       (global as any).getLoadingLiftDate = undefined;
+      (global as any).getLoadingLifts = undefined;
+      (global as any).debugQueueState = undefined;
     };
-  }, [resetContext, getLoadingLiftDate]);
+  }, [resetContext, getLoadingLiftDate, allLoadingLifts, debugQueueState]);
 
   return (
     <LoadingLiftsContext.Provider

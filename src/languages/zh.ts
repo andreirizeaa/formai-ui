@@ -769,6 +769,7 @@ const zh = {
       weight: '重量',
       reps: '重复次数',
       reviewFeedback: '查看反馈',
+      noFeedback: '无反馈',
       favourite: '收藏',
       manualDeleteLiftCardData: '删除举重',
       deleteLiftTitle: '删除举重',
@@ -943,6 +944,8 @@ const zh = {
       selectNewVideo: '新视频',
       duplicateVideo: '重复视频',
       duplicateVideoMessage: '此视频已被分析。请选择不同的视频。',
+      duplicateVideoProcessing: '视频处理中',
+      duplicateVideoProcessingMessage: '此视频正在处理中。请选择不同的视频。',
       selectDifferentVideo: '选择不同视频',
       viewAnalysis: '查看分析',
       tips: {

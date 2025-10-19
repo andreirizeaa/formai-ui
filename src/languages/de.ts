@@ -766,6 +766,7 @@ const de = {
       "weight": "Gewicht",
       "reps": "Wiederholungen",
       "reviewFeedback": "Feedback ansehen",
+      "noFeedback": "Kein Feedback",
       "favourite": "Favorit",
       "manualDeleteLiftCardData": "Lift löschen",
       "deleteLiftTitle": "Lift löschen",
@@ -939,6 +940,8 @@ const de = {
       "selectNewVideo": "Neues Video",
       "duplicateVideo": "Doppeltes Video",
       "duplicateVideoMessage": "Dieses Video wurde bereits analysiert. Bitte wähle ein anderes.",
+      "duplicateVideoProcessing": "Video wird verarbeitet",
+      "duplicateVideoProcessingMessage": "Dieses Video wird gerade verarbeitet. Bitte wähle ein anderes.",
       "selectDifferentVideo": "Anderes Video auswählen",
       "viewAnalysis": "Analyse ansehen",
       "tips": {

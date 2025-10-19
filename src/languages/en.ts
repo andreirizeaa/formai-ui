@@ -784,6 +784,7 @@ const en = {
       weight: 'Weight',
       reps: 'Reps',
       reviewFeedback: 'Review Feedback',
+      noFeedback: 'No Feedback',
       favourite: 'Favourite',
       manualDeleteLiftCardData: 'Delete Lift',
       deleteLiftTitle: 'Delete Lift',
@@ -967,6 +968,8 @@ const en = {
       selectNewVideo: 'New Video',
       duplicateVideo: 'Duplicate Video',
       duplicateVideoMessage: 'This video has already been analysed. Please select a different video.',
+      duplicateVideoProcessing: 'Video Being Processed',
+      duplicateVideoProcessingMessage: 'This video is currently being processed. Please select a different video.',
       selectDifferentVideo: 'Select Different Video',
       viewAnalysis: 'View Analysis',
       tips: {

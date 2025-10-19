@@ -767,6 +767,7 @@ const ro = {
       "weight": "Greutate",
       "reps": "Repetări",
       "reviewFeedback": "Vezi feedbackul",
+      "noFeedback": "Fără feedback",
       "favourite": "Favorit",
       "manualDeleteLiftCardData": "Șterge liftul",
       "deleteLiftTitle": "Ștergi liftul",
@@ -940,6 +941,8 @@ const ro = {
       "selectNewVideo": "Video nou",
       "duplicateVideo": "Video duplicat",
       "duplicateVideoMessage": "Acest video a fost deja analizat. Te rugăm să alegi altul.",
+      "duplicateVideoProcessing": "Video în Procesare",
+      "duplicateVideoProcessingMessage": "Acest video este în curs de procesare. Te rugăm să alegi altul.",
       "selectDifferentVideo": "Alege alt video",
       "viewAnalysis": "Vezi analiza",
       "tips": {

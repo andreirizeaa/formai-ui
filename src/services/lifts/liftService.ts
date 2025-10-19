@@ -311,6 +311,37 @@ export async function checkDuplicateAssetId(assetId: string): Promise<boolean> {
   }
 }
 
+export async function checkDuplicateAssetIdInMemory(assetId: string): Promise<boolean> {
+  try {
+    // Check if there's a global function to get loading lifts
+    const getLoadingLifts = (global as any).getLoadingLifts;
+    if (typeof getLoadingLifts === 'function') {
+      const loadingLifts = getLoadingLifts();
+      if (Array.isArray(loadingLifts)) {
+        return loadingLifts.some((lift: any) => lift.assetId === assetId);
+      }
+    }
+    return false;
+  } catch (error) {
+    return false;
+  }
+}
+
+export async function checkDuplicateAssetIdComprehensive(assetId: string): Promise<boolean> {
+  try {
+    // Check both database and memory
+    const [dbDuplicate, memoryDuplicate] = await Promise.all([
+      checkDuplicateAssetId(assetId),
+      checkDuplicateAssetIdInMemory(assetId)
+    ]);
+    
+    return dbDuplicate || memoryDuplicate;
+  } catch (error) {
+    // Fallback to database check only
+    return await checkDuplicateAssetId(assetId);
+  }
+}
+
 export async function searchLiftByAssetId(key: string, userId?: string): Promise<any | null> {
   if (!userId) return null;
   try {

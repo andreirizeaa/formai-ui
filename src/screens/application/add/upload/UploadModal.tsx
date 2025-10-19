@@ -20,7 +20,7 @@ import { useSelectedDate } from '../../../../context/SelectedDateContext';
 import { usePurchases } from '../../../../context/PurchasesContext';
 import { gymMovements, BodyPart } from '../../../../constants/gymMovements';
 import { X } from 'lucide-react-native';
-import { checkDuplicateAssetId } from '../../../../services/lifts/liftService';
+import { checkDuplicateAssetIdComprehensive, checkDuplicateAssetId, checkDuplicateAssetIdInMemory } from '../../../../services/lifts/liftService';
 import { searchLiftByAssetId } from '../../../../services/lifts/liftService';
 import { getUserId } from '../../../../services/storageService';
 import { extractObjectKeyFromUrl, signPath, ILiftData } from '../../../../context/LiftDataContext';
@@ -46,6 +46,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
   const [showWeightReps, setShowWeightReps] = useState(false);
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
   const [duplicateAssetId, setDuplicateAssetId] = useState<string>('');
+  const [isProcessingDuplicate, setIsProcessingDuplicate] = useState(false);
   const [showVideoTooLongModal, setShowVideoTooLongModal] = useState(false);
   const [showVideoTooShortModal, setShowVideoTooShortModal] = useState(false);
   
@@ -312,6 +313,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
       setShowVideoTooLongModal(false);
       setShowVideoTooShortModal(false);
       setDuplicateAssetId('');
+      setIsProcessingDuplicate(false);
       setIsUploading(false);
       setIsModalDisabled(false);
       setIsOpeningMediaLibrary(false);
@@ -347,7 +349,15 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
           assetId: selectedVideo.assetId || undefined, 
           uri: selectedVideo.uri 
         });
-        const isDuplicate = await checkDuplicateAssetId(baseAssetId);
+        
+        // Check both database and memory separately to determine the type of duplicate
+        const [dbDuplicate, memoryDuplicate] = await Promise.all([
+          checkDuplicateAssetId(baseAssetId),
+          checkDuplicateAssetIdInMemory(baseAssetId)
+        ]);
+        
+        const isDuplicate = dbDuplicate || memoryDuplicate;
+        const isProcessing = memoryDuplicate && !dbDuplicate;
         
         // Too long (> 60s)
         if (durationInSeconds !== undefined && durationInSeconds !== null && durationInSeconds > 60) {
@@ -366,6 +376,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
         if (isDuplicate) {
           hapticFeedback.error();
           setDuplicateAssetId(baseAssetId);
+          setIsProcessingDuplicate(isProcessing);
           setShowDuplicateModal(true);
           return;
         }
@@ -464,42 +475,21 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
     await openLiftDetailsForAssetId(duplicateAssetId);
   };
 
-  const handleSelectNewVideoForErrors = async () => {
-    hapticFeedback.selection();
+  const handleSelectNewVideoForErrors = () => {
+    // Close the duplicate modal first
+    setShowDuplicateModal(false);
     
-    // Check for media library permissions using robust method
-    const hasPermission = await checkMediaPermissionForUpload();
-    if (!hasPermission) {
-      return;
-    }
-    
-    // Directly open image picker without resetting state first
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: 'videos',
-        allowsEditing: true,
-        aspect: [16, 9],
-        quality: 0,
-        videoExportPreset: ImagePicker.VideoExportPreset.H264_1280x720,
-        videoQuality: ImagePicker.UIImagePickerControllerQualityType.Low,
-        preferredAssetRepresentationMode: ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible,
-      });
-
-      if (!result.canceled && result.assets?.[0]) {
-        const asset = result.assets[0];
-        // Reset state and set new video
-        setSelectedVideo(null);
-        setShowMovementSelection(false);
-        setShowWeightReps(false);
-        setSelectedMovement('');
-        setSearchQuery('');
-        setSelectedBodyPart('all');
-        setWeightReps(null);
-        setSelectedVideo(asset);
-      }
-    } catch (error) {
-      // Silent fail
-    }
+    // Reset all state to go back to the initial PracticesScreen
+    setSelectedVideo(null);
+    setShowMovementSelection(false);
+    setShowWeightReps(false);
+    setSelectedMovement('');
+    setSearchQuery('');
+    setSelectedBodyPart('all');
+    setFilteredMovements(gymMovements.map(m => m.name));
+    setWeightReps(null);
+    setDuplicateAssetId('');
+    setIsProcessingDuplicate(false);
   };
 
   const handleBack = () => {
@@ -528,7 +518,15 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
       assetId: selectedVideo.assetId || undefined, 
       uri: selectedVideo.uri 
     });
-    const isDuplicate = await checkDuplicateAssetId(baseAssetId);
+    
+    // Check both database and memory separately to determine the type of duplicate
+    const [dbDuplicate, memoryDuplicate] = await Promise.all([
+      checkDuplicateAssetId(baseAssetId),
+      checkDuplicateAssetIdInMemory(baseAssetId)
+    ]);
+    
+    const isDuplicate = dbDuplicate || memoryDuplicate;
+    const isProcessing = memoryDuplicate && !dbDuplicate;
     
     // Too long (> 60s)
     if (durationInSeconds !== undefined && durationInSeconds !== null && durationInSeconds > 60) {
@@ -546,6 +544,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
     if (isDuplicate) {
       hapticFeedback.error();
       setDuplicateAssetId(baseAssetId);
+      setIsProcessingDuplicate(isProcessing);
       setShowDuplicateModal(true);
       return false;
     }
@@ -726,6 +725,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
     setShowDuplicateModal(false);
     setShowVideoTooLongModal(false);
     setDuplicateAssetId('');
+    setIsProcessingDuplicate(false);
   };
 
   const handleClose = () => {
@@ -874,6 +874,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
         onClose={() => setShowDuplicateModal(false)}
         onViewAnalysis={handleDuplicateModalViewAnalysis}
         onSelectNewVideo={handleSelectNewVideoForErrors}
+        isProcessing={isProcessingDuplicate}
       />
 
       {/* Video Too Long Modal */}
