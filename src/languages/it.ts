@@ -35,7 +35,7 @@ const it = {
       growStrongerTogether: 'Diventiamo più forti insieme!',
       currentBalance: 'Saldo Attuale',
       shareNow: 'Condividi Ora',
-      sharePageTitle: 'Condividi FormAI',
+      sharePageTitle: 'Condividi Form AI',
       termsAndConditions: 'Termini di Utilizzo',
       privacyPolicy: 'Politica sulla Privacy',
       supportEmail: 'Email di Supporto',
@@ -84,7 +84,7 @@ const it = {
       failedToCopy: 'Impossibile copiare il codice promozionale negli appunti',
       failedToShare: 'Impossibile aprire la finestra di condivisione',
       shareMessage: 'Ciao! Scarica questa app e usa questo codice promozionale:',
-      shareTitle: 'Scarica FormAI!',
+      shareTitle: 'Scarica Form AI!',
     },
     personalDetails: {
       currentWeight: 'Peso attuale',
@@ -187,7 +187,7 @@ const it = {
       },
     },
     welcome: {
-      title: 'FormAI',
+      title: 'Form AI',
       subtitle: 'Forma perfetta, sempre',
       modal: {
         title: 'Benvenuto',
@@ -244,7 +244,7 @@ const it = {
       },
       discovery: {
         title: 'Dove hai sentito parlare di noi?',
-        subtitle: 'Aiutaci a capire come hai trovato FormAI',
+        subtitle: 'Aiutaci a capire come hai trovato Form AI',
         instagram: 'Instagram',
         tiktok: 'TikTok',
         facebook: 'Facebook',
@@ -351,7 +351,7 @@ const it = {
         title: 'Dacci una valutazione',
         subtitle: 'Aiutaci a migliorare condividendo la tua esperienza',
         skip: 'Salta',
-        middleText: 'FormAI è stato creato per gli amanti della palestra come te!',
+        middleText: 'Form AI è stato creato per gli amanti della palestra come te!',
       },
       referralCode: {
         title: 'Inserisci codice di riferimento (Opzionale)',
@@ -372,11 +372,11 @@ const it = {
         title: 'Hai tre volte meno probabilità di infortunarti con Form AI',
         withoutFormAI: 'Senza Form AI',
         withFormAI: 'Con Form AI',
-        description: 'FormAI rende facile perfezionare la tua forma e mantenerti responsabile.',
+        description: 'Form AI rende facile perfezionare la tua forma e mantenerti responsabile.',
       },
       notificationPermission: {
         title: 'Raggiungi i tuoi obiettivi con le notifiche',
-        dialogText: 'FormAI vorrebbe inviarti Notifiche',
+        dialogText: 'Form AI vorrebbe inviarti Notifiche',
         allow: 'Consenti Accesso Completo',
         dontAllow: 'Non Consentire',
       },
@@ -387,7 +387,7 @@ const it = {
         step2: 'Quasi pronto...',
       },
       freeTrial: {
-        title: 'Vogliamo che provi FormAI gratuitamente.',
+        title: 'Vogliamo che provi Form AI gratuitamente.',
         noPaymentDue: 'Nessun Pagamento Dovuto Ora',
         tryForFree: 'Prova per $0.00',
         pricing: 'Solo $39.99 all\'anno ($3.33/mese)',
@@ -400,7 +400,7 @@ const it = {
       },
       subscriptionSelection: {
         title: 'Inizia la tua prova GRATUITA di 3 giorni per continuare.',
-        titleMonthly: 'Sblocca FormAI per raggiungere i tuoi obiettivi più velocemente',
+        titleMonthly: 'Sblocca Form AI per raggiungere i tuoi obiettivi più velocemente',
         today: 'Oggi',
         todayDescription: 'Sblocca tutte le funzionalità dell\'app come l\'analisi della forma con IA e altro.',
         reminder: 'Tra 2 Giorni - Promemoria',
@@ -432,8 +432,8 @@ const it = {
       },
       cameraPermission: {
         title: 'Consenti accesso alla fotocamera',
-        subtitle: 'L\'accesso alla fotocamera è richiesto per FormAI.',
-        dialogText: 'FormAI vorrebbe accedere alla tua Fotocamera.',
+        subtitle: 'L\'accesso alla fotocamera è richiesto per Form AI.',
+        dialogText: 'Form AI vorrebbe accedere alla tua Fotocamera.',
         allow: 'Consenti Accesso Completo',
         dontAllow: 'Non Consentire',
         permissionRequired: 'Autorizzazione fotocamera richiesta',
@@ -444,7 +444,7 @@ const it = {
       },
       mediaLibraryPermission: {
         title: 'Consenti accesso completo alla tua libreria foto',
-        dialogText: 'FormAI vorrebbe accedere alla tua Libreria Foto.',
+        dialogText: 'Form AI vorrebbe accedere alla tua Libreria Foto.',
         allow: 'Consenti Accesso Completo',
         dontAllow: 'Non Consentire',
         permissionRequired: 'Autorizzazione foto richiesta',
@@ -557,7 +557,7 @@ const it = {
     },
     progress: {
       title: 'Il tuo viaggio inizia qui',
-      subtitle: 'Vedi come gli utenti migliorano la loro forma e prestazioni con FormAI',
+      subtitle: 'Vedi come gli utenti migliorano la loro forma e prestazioni con Form AI',
       chartTitle: 'Miglioramento del Punteggio di Forma nel Tempo',
       week: 'Settimana',
       score: 'Punteggio di Forma',
@@ -916,14 +916,14 @@ const it = {
       },
       completionModal: {
         title: 'Tutto fatto',
-        message: 'Sei pronto per usare FormAI. Controlla ogni giorno per mantenere viva la tua serie e rimanere costante. \\n\\nRicorda che puoi sempre riprodurre questo tutorial in qualsiasi momento attraverso il menu delle impostazioni.',
+        message: 'Sei pronto per usare Form AI. Controlla ogni giorno per mantenere viva la tua serie e rimanere costante. \\n\\nRicorda che puoi sempre riprodurre questo tutorial in qualsiasi momento attraverso il menu delle impostazioni.',
       },
     },
     upload: {
       permissionRequired: 'Permesso Richiesto',
       permissionMessage: 'Concedi il permesso per accedere alla tua libreria di foto.',
       mediaPermissionTitle: 'Consenti accesso completo alla tua libreria foto',
-      mediaPermissionDialogText: 'FormAI vorrebbe accedere alla tua Libreria Multimediale.',
+      mediaPermissionDialogText: 'Form AI vorrebbe accedere alla tua Libreria Multimediale.',
       mediaPermissionDetailedDescription: 'Form AI accede alla tua libreria foto in modo che tu possa caricare video per l\'analisi, salvare video registrati nell\'app nella tua libreria foto, cercare video precedentemente analizzati e prevenire caricamenti di video duplicati.',
       allow: 'Consenti Accesso Completo',
       dontAllow: 'Non Consentire',

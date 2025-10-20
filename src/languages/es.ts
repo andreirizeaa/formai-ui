@@ -36,7 +36,7 @@ const es = {
       growStrongerTogether: '¡Crecer más fuertes juntos!',
       currentBalance: 'Saldo Actual',
       shareNow: 'Compartir Ahora',
-      sharePageTitle: 'Compartir FormAI',
+      sharePageTitle: 'Compartir Form AI',
       termsAndConditions: 'Términos de Uso',
       privacyPolicy: 'Política de Privacidad',
       supportEmail: 'Email de Soporte',
@@ -85,7 +85,7 @@ const es = {
       failedToCopy: 'Error al copiar el código promocional al portapapeles',
       failedToShare: 'Error al abrir el diálogo de compartir',
       shareMessage: '¡Hola! Descarga esta aplicación y usa este código promocional:',
-      shareTitle: '¡Descarga FormAI!',
+      shareTitle: '¡Descarga Form AI!',
     },
     personalDetails: {
       currentWeight: 'Peso actual',
@@ -188,7 +188,7 @@ const es = {
       },
     },
     welcome: {
-      title: 'FormAI',
+      title: 'Form AI',
       subtitle: 'Forma perfecta, siempre',
       modal: {
         title: 'Bienvenido',
@@ -245,7 +245,7 @@ const es = {
       },
       discovery: {
         title: '¿Dónde escuchaste sobre nosotros?',
-        subtitle: 'Ayúdanos a entender cómo encontraste FormAI',
+        subtitle: 'Ayúdanos a entender cómo encontraste Form AI',
         instagram: 'Instagram',
         tiktok: 'TikTok',
         facebook: 'Facebook',
@@ -352,7 +352,7 @@ const es = {
         title: 'Danos una calificación',
         subtitle: 'Ayúdanos a mejorar compartiendo tu experiencia',
         skip: 'Omitir',
-        middleText: '¡FormAI fue hecho para amantes del gimnasio como tú!',
+        middleText: '¡Form AI fue hecho para amantes del gimnasio como tú!',
       },
       referralCode: {
         title: 'Ingresa código de referido (Opcional)',
@@ -373,11 +373,11 @@ const es = {
         title: 'Tienes tres veces menos probabilidad de lesionarte con Form AI',
         withoutFormAI: 'Sin Form AI',
         withFormAI: 'Con Form AI',
-        description: 'FormAI hace fácil perfeccionar tu forma y mantenerte responsable.',
+        description: 'Form AI hace fácil perfeccionar tu forma y mantenerte responsable.',
       },
       notificationPermission: {
         title: 'Alcanza tus objetivos con notificaciones',
-        dialogText: 'FormAI quisiera enviarte Notificaciones',
+        dialogText: 'Form AI quisiera enviarte Notificaciones',
         allow: 'Permitir',
         dontAllow: 'No Permitir',
       },
@@ -388,7 +388,7 @@ const es = {
         step2: 'Casi listo...',
       },
       freeTrial: {
-        title: 'Queremos que pruebes FormAI gratis.',
+        title: 'Queremos que pruebes Form AI gratis.',
         noPaymentDue: 'No hay Pago Requerido Ahora',
         tryForFree: 'Probar por $0.00',
         pricing: 'Solo $39.99 al año ($3.33/mes)',
@@ -401,7 +401,7 @@ const es = {
       },
       subscriptionSelection: {
         title: 'Inicia tu prueba GRATUITA de 3 días para continuar.',
-        titleMonthly: 'Desbloquea FormAI para alcanzar tus objetivos más rápido',
+        titleMonthly: 'Desbloquea Form AI para alcanzar tus objetivos más rápido',
         today: 'Hoy',
         todayDescription: 'Desbloquea todas las características de la aplicación como análisis de forma con IA y más.',
         reminder: 'En 2 Días - Recordatorio',
@@ -433,8 +433,8 @@ const es = {
       },
       cameraPermission: {
         title: 'Permitir acceso a la cámara',
-        subtitle: 'El acceso a la cámara es requerido para FormAI.',
-        dialogText: 'FormAI quisiera acceder a tu Cámara.',
+        subtitle: 'El acceso a la cámara es requerido para Form AI.',
+        dialogText: 'Form AI quisiera acceder a tu Cámara.',
         allow: 'Permitir',
         dontAllow: 'No Permitir',
         permissionRequired: 'Permiso de cámara requerido',
@@ -445,7 +445,7 @@ const es = {
       },
       mediaLibraryPermission: {
         title: 'Permitir acceso completo a tu biblioteca de fotos',
-        dialogText: 'FormAI quisiera acceder a tu Biblioteca de Fotos.',
+        dialogText: 'Form AI quisiera acceder a tu Biblioteca de Fotos.',
         allow: 'Permitir Acceso Completo',
         dontAllow: 'No Permitir',
         permissionRequired: 'Permiso de fotos requerido',
@@ -558,7 +558,7 @@ const es = {
     },
     progress: {
       title: 'Tu viaje comienza aquí',
-      subtitle: 'Ve cómo los usuarios mejoran su forma y rendimiento con FormAI',
+      subtitle: 'Ve cómo los usuarios mejoran su forma y rendimiento con Form AI',
       chartTitle: 'Mejora de Puntuación de Forma a lo Largo del Tiempo',
       week: 'Semana',
       score: 'Puntuación de Forma',
@@ -806,7 +806,7 @@ const es = {
       permissionRequired: 'Permiso Requerido',
       photoLibraryPermissionMessage: 'Se requiere acceso a la biblioteca de fotos para guardar videos en tu cámara.',
       downloadSuccess: 'Descarga Exitosa',
-      videoSavedToPhotos: 'El video ha sido guardado en tu app de Fotos en el álbum FormAI.',
+      videoSavedToPhotos: 'El video ha sido guardado en tu app de Fotos en el álbum Form AI.',
       downloadFailed: 'Descarga Fallida',
       videoNotAvailable: 'El video no está disponible para descarga.',
       downloadErrorMessage: 'Error al descargar el video. Por favor inténtalo de nuevo más tarde.',
@@ -930,14 +930,14 @@ const es = {
       },
       completionModal: {
         title: 'Todo listo',
-        message: 'Estás listo para usar FormAI. Revisa cada día para mantener tu racha viva y mantenerte consistente. \\n\\nRecuerda que siempre puedes repetir este tutorial en cualquier momento a través del menú de configuración.',
+        message: 'Estás listo para usar Form AI. Revisa cada día para mantener tu racha viva y mantenerte consistente. \\n\\nRecuerda que siempre puedes repetir este tutorial en cualquier momento a través del menú de configuración.',
       },
     },
     upload: {
       permissionRequired: 'Permiso Requerido',
       permissionMessage: 'Por favor otorga permiso para acceder a tu biblioteca de fotos.',
       mediaPermissionTitle: 'Permitir acceso completo a tu biblioteca de fotos',
-      mediaPermissionDialogText: 'FormAI quisiera acceder a tu Biblioteca de Medios.',
+      mediaPermissionDialogText: 'Form AI quisiera acceder a tu Biblioteca de Medios.',
       mediaPermissionDetailedDescription: 'Form AI accede a tu biblioteca de fotos para que puedas subir videos para análisis, guardar videos grabados en la aplicación en tu biblioteca de fotos, buscar videos previamente analizados y prevenir subidas de videos duplicados.',
       allow: 'Permitir Acceso Completo',
       dontAllow: 'No Permitir',

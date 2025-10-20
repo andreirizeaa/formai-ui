@@ -35,7 +35,7 @@ const pt = {
       growStrongerTogether: 'Cresçam mais fortes juntos!',
       currentBalance: 'Saldo Atual',
       shareNow: 'Compartilhar Agora',
-      sharePageTitle: 'Compartilhar FormAI',
+      sharePageTitle: 'Compartilhar Form AI',
       termsAndConditions: 'Termos de Uso',
       privacyPolicy: 'Política de Privacidade',
       supportEmail: 'Email de Suporte',
@@ -84,7 +84,7 @@ const pt = {
       failedToCopy: 'Falha ao copiar código promocional para a área de transferência',
       failedToShare: 'Falha ao abrir diálogo de compartilhamento',
       shareMessage: 'Oi! Baixe este app e use este código promocional:',
-      shareTitle: 'Baixe o FormAI!',
+      shareTitle: 'Baixe o Form AI!',
     },
     personalDetails: {
       currentWeight: 'Peso atual',
@@ -187,7 +187,7 @@ const pt = {
       },
     },
     welcome: {
-      title: 'FormAI',
+      title: 'Form AI',
       subtitle: 'Forma perfeita, sempre',
       modal: {
         title: 'Bem-vindo',
@@ -244,7 +244,7 @@ const pt = {
       },
       discovery: {
         title: 'Onde você ouviu falar sobre nós?',
-        subtitle: 'Nos ajude a entender como você encontrou o FormAI',
+        subtitle: 'Nos ajude a entender como você encontrou o Form AI',
         instagram: 'Instagram',
         tiktok: 'TikTok',
         facebook: 'Facebook',
@@ -351,7 +351,7 @@ const pt = {
         title: 'Nos dê uma avaliação',
         subtitle: 'Nos ajude a melhorar compartilhando sua experiência',
         skip: 'Pular',
-        middleText: 'FormAI foi feito para amantes da academia como você!',
+        middleText: 'Form AI foi feito para amantes da academia como você!',
       },
       referralCode: {
         title: 'Digite o código de indicação (Opcional)',
@@ -372,11 +372,11 @@ const pt = {
         title: 'Você tem três vezes menos chance de se lesionar com Form AI',
         withoutFormAI: 'Sem Form AI',
         withFormAI: 'Com Form AI',
-        description: 'FormAI torna fácil aperfeiçoar sua forma e te manter responsável.',
+        description: 'Form AI torna fácil aperfeiçoar sua forma e te manter responsável.',
       },
       notificationPermission: {
         title: 'Alcance seus objetivos com notificações',
-        dialogText: 'FormAI gostaria de te enviar Notificações',
+        dialogText: 'Form AI gostaria de te enviar Notificações',
         allow: 'Permitir Acesso Completo',
         dontAllow: 'Não Permitir',
       },
@@ -387,7 +387,7 @@ const pt = {
         step2: 'Quase pronto...',
       },
       freeTrial: {
-        title: 'Queremos que você experimente o FormAI gratuitamente.',
+        title: 'Queremos que você experimente o Form AI gratuitamente.',
         noPaymentDue: 'Nenhum Pagamento Devido Agora',
         tryForFree: 'Experimente por $0.00',
         pricing: 'Apenas $39.99 por ano ($3.33/mês)',
@@ -400,7 +400,7 @@ const pt = {
       },
       subscriptionSelection: {
         title: 'Inicie seu teste GRATUITO de 3 dias para continuar.',
-        titleMonthly: 'Desbloqueie o FormAI para alcançar seus objetivos mais rápido',
+        titleMonthly: 'Desbloqueie o Form AI para alcançar seus objetivos mais rápido',
         today: 'Hoje',
         todayDescription: 'Desbloqueie todas as funcionalidades do app como análise de forma com IA e mais.',
         reminder: 'Em 2 Dias - Lembrete',
@@ -432,8 +432,8 @@ const pt = {
       },
       cameraPermission: {
         title: 'Permitir acesso à câmera',
-        subtitle: 'Acesso à câmera é necessário para o FormAI.',
-        dialogText: 'FormAI gostaria de acessar sua Câmera.',
+        subtitle: 'Acesso à câmera é necessário para o Form AI.',
+        dialogText: 'Form AI gostaria de acessar sua Câmera.',
         allow: 'Permitir Acesso Completo',
         dontAllow: 'Não Permitir',
         permissionRequired: 'Permissão de câmera necessária',
@@ -444,7 +444,7 @@ const pt = {
       },
       mediaLibraryPermission: {
         title: 'Permitir acesso completo à sua biblioteca de fotos',
-        dialogText: 'FormAI gostaria de acessar sua Biblioteca de Fotos.',
+        dialogText: 'Form AI gostaria de acessar sua Biblioteca de Fotos.',
         allow: 'Permitir Acesso Completo',
         dontAllow: 'Não Permitir',
         permissionRequired: 'Permissão de fotos necessária',
@@ -557,7 +557,7 @@ const pt = {
     },
     progress: {
       title: 'Sua jornada começa aqui',
-      subtitle: 'Veja como os usuários melhoram sua forma e performance com FormAI',
+      subtitle: 'Veja como os usuários melhoram sua forma e performance com Form AI',
       chartTitle: 'Melhoria da Pontuação de Forma ao Longo do Tempo',
       week: 'Semana',
       score: 'Pontuação de Forma',
@@ -916,14 +916,14 @@ const pt = {
       },
       completionModal: {
         title: 'Tudo pronto',
-        message: 'Você está pronto para usar o FormAI. Verifique todos os dias para manter sua sequência viva e permanecer consistente. \\n\\nLembre-se que você sempre pode reproduzir este tutorial a qualquer momento através do menu de configurações.',
+        message: 'Você está pronto para usar o Form AI. Verifique todos os dias para manter sua sequência viva e permanecer consistente. \\n\\nLembre-se que você sempre pode reproduzir este tutorial a qualquer momento através do menu de configurações.',
       },
     },
     upload: {
       permissionRequired: 'Permissão Necessária',
       permissionMessage: 'Por favor conceda permissão para acessar sua biblioteca de fotos.',
       mediaPermissionTitle: 'Permitir acesso completo à sua biblioteca de fotos',
-      mediaPermissionDialogText: 'FormAI gostaria de acessar sua Biblioteca de Mídia.',
+      mediaPermissionDialogText: 'Form AI gostaria de acessar sua Biblioteca de Mídia.',
       mediaPermissionDetailedDescription: 'Form AI acessa sua biblioteca de fotos para que você possa fazer upload de vídeos para análise, salvar vídeos gravados no aplicativo em sua biblioteca de fotos, pesquisar vídeos previamente analisados e prevenir uploads de vídeos duplicados.',
       allow: 'Permitir Acesso Completo',
       dontAllow: 'Não Permitir',

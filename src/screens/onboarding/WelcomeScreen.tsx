@@ -61,7 +61,7 @@ export function WelcomeScreen({
     }).start();
   }, [fadeAnim]);
 
-  // Fade control for language modal
+  // Fade control for language modal - same pattern as PerformanceScreen
   useEffect(() => {
     if (showLanguageModal) {
       setLanguageShouldRender(true);

@@ -36,7 +36,7 @@ const ro = {
       "growStrongerTogether": "Deveniți mai puternici împreună!",
       "currentBalance": "Sold curent",
       "shareNow": "Distribuie acum",
-      "sharePageTitle": "Distribuie FormAI",
+      "sharePageTitle": "Distribuie Form AI",
       "termsAndConditions": "Termeni de utilizare",
       "privacyPolicy": "Politica de confidențialitate",
       "supportEmail": "E-mail suport",
@@ -85,7 +85,7 @@ const ro = {
       "failedToCopy": "Copierea codului promo a eșuat",
       "failedToShare": "Deschiderea ferestrei de partajare a eșuat",
       "shareMessage": "Hei! Descarcă aplicația și folosește acest cod promo:",
-      "shareTitle": "Descarcă FormAI!"
+      "shareTitle": "Descarcă Form AI!"
     },
     "personalDetails": {
       "currentWeight": "Greutate actuală",
@@ -188,7 +188,7 @@ const ro = {
       }
     },
     "welcome": {
-      "title": "FormAI",
+      "title": "Form AI",
       "subtitle": "Formă perfectă, mereu",
       "modal": {
         "title": "Bun venit",
@@ -245,7 +245,7 @@ const ro = {
       },
       "discovery": {
         "title": "De unde ai aflat de noi?",
-        "subtitle": "Ajută-ne să înțelegem cum ai descoperit FormAI",
+        "subtitle": "Ajută-ne să înțelegem cum ai descoperit Form AI",
         "instagram": "Instagram",
         "tiktok": "TikTok",
         "facebook": "Facebook",
@@ -352,7 +352,7 @@ const ro = {
         "title": "Oferă-ne o evaluare",
         "subtitle": "Ajută-ne să îmbunătățim experiența",
         "skip": "Sari peste",
-        "middleText": "FormAI este creat pentru pasionații de sală ca tine!"
+        "middleText": "Form AI este creat pentru pasionații de sală ca tine!"
       },
       "referralCode": {
         "title": "Introdu codul de recomandare (opțional)",
@@ -371,13 +371,13 @@ const ro = {
       },
       "trainSafer": {
         "title": "Ai de 3 ori mai puține șanse de accidentare cu Form AI",
-        "withoutFormAI": "Fără Form AI",
-        "withFormAI": "Cu Form AI",
-        "description": "FormAI te ajută să-ți perfecționezi forma și te menține consecvent."
+        "withoutForm AI": "Fără Form AI",
+        "withForm AI": "Cu Form AI",
+        "description": "Form AI te ajută să-ți perfecționezi forma și te menține consecvent."
       },
       "notificationPermission": {
         "title": "Atinge-ți obiectivele cu notificări",
-        "dialogText": "FormAI dorește să îți trimită notificări",
+        "dialogText": "Form AI dorește să îți trimită notificări",
         "allow": "Permite Acces Complet",
         "dontAllow": "Nu permite"
       },
@@ -388,7 +388,7 @@ const ro = {
         "step2": "Aproape gata..."
       },
       "freeTrial": {
-        "title": "Vrem să încerci FormAI gratuit.",
+        "title": "Vrem să încerci Form AI gratuit.",
         "noPaymentDue": "Nicio plată acum",
         "tryForFree": "Încearcă pentru 0,00 $",
         "pricing": "Doar 39,99 $ pe an (3,33 $/lună)"
@@ -401,7 +401,7 @@ const ro = {
       },
       "subscriptionSelection": {
         "title": "Începe perioada de probă GRATUITĂ de 3 zile pentru a continua.",
-        "titleMonthly": "Deblochează FormAI pentru a-ți atinge mai repede obiectivele",
+        "titleMonthly": "Deblochează Form AI pentru a-ți atinge mai repede obiectivele",
         "today": "Astăzi",
         "todayDescription": "Deblochează toate funcțiile aplicației, precum analiza AI a formei.",
         "reminder": "Peste 2 zile - Reminder",
@@ -433,8 +433,8 @@ const ro = {
       },
       "cameraPermission": {
         "title": "Permite accesul la cameră",
-        "subtitle": "Accesul la cameră este necesar pentru FormAI.",
-        "dialogText": "FormAI dorește acces la cameră.",
+        "subtitle": "Accesul la cameră este necesar pentru Form AI.",
+        "dialogText": "Form AI dorește acces la cameră.",
         "allow": "Permite Acces Complet",
         "dontAllow": "Nu permite",
         "permissionRequired": "Permisiune cameră necesară",
@@ -442,7 +442,7 @@ const ro = {
       },
       "mediaLibraryPermission": {
         "title": "Permite accesul complet la biblioteca ta de fotografii",
-        "dialogText": "FormAI dorește acces la biblioteca de fotos.",
+        "dialogText": "Form AI dorește acces la biblioteca de fotos.",
         "allow": "Permite Acces Complet",
         "dontAllow": "Nu permite",
         "permissionRequired": "Permisiune foto necesară",
@@ -482,7 +482,7 @@ const ro = {
       "costComparison": {
         "title": "Formă perfectă la o fracțiune din costul antrenorilor",
         "personalTrainer": "Antrenor personal",
-        "withFormAI": "Cu Form AI",
+        "withForm AI": "Cu Form AI",
         "costLess": "99% mai ieftin",
         "description": "Tehnica sigură și corectă nu ar trebui să coste o avere."
       },
@@ -555,7 +555,7 @@ const ro = {
     },
     "progress": {
       "title": "Călătoria ta începe aici",
-      "subtitle": "Vezi cum utilizatorii își îmbunătățesc forma și performanța cu FormAI",
+      "subtitle": "Vezi cum utilizatorii își îmbunătățesc forma și performanța cu Form AI",
       "chartTitle": "Îmbunătățirea scorului de formă în timp",
       "week": "Săptămâna",
       "score": "Scor formă",
@@ -914,14 +914,14 @@ const ro = {
       },
       "completionModal": {
         "title": "Totul este gata",
-        "message": "Ești pregătit să folosești FormAI. Revino zilnic pentru a-ți menține seria și consecvența.\n\nPoți reda oricând acest tutorial din setări."
+        "message": "Ești pregătit să folosești Form AI. Revino zilnic pentru a-ți menține seria și consecvența.\n\nPoți reda oricând acest tutorial din setări."
       }
     },
     "upload": {
       "permissionRequired": "Permisiune necesară",
       "permissionMessage": "Te rugăm să acorzi acces la biblioteca foto.",
       "mediaPermissionTitle": "Permite accesul complet la biblioteca ta de fotografii",
-      "mediaPermissionDialogText": "FormAI dorește acces la biblioteca media.",
+      "mediaPermissionDialogText": "Form AI dorește acces la biblioteca media.",
       "mediaPermissionDetailedDescription": "Form AI accesează biblioteca ta de fotografii pentru ca tu să poți încărca videoclipuri pentru analiză, să salvezi videoclipuri înregistrate în aplicație în biblioteca ta de fotografii, să cauți videoclipuri analizate anterior și să previ cărcarea de videoclipuri duplicate.",
       "allow": "Permite",
       "dontAllow": "Nu permite",

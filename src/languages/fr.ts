@@ -36,7 +36,7 @@ const fr = {
       "growStrongerTogether": "Devenez plus forts ensemble !",
       "currentBalance": "Solde actuel",
       "shareNow": "Partager maintenant",
-      "sharePageTitle": "Partager FormAI",
+      "sharePageTitle": "Partager Form AI",
       "termsAndConditions": "Conditions d’utilisation",
       "privacyPolicy": "Politique de confidentialité",
       "supportEmail": "E-mail d'assistance",
@@ -85,7 +85,7 @@ const fr = {
       "failedToCopy": "Échec de la copie du code promo",
       "failedToShare": "Échec de l’ouverture de la fenêtre de partage",
       "shareMessage": "Salut ! Télécharge cette app et utilise ce code promo :",
-      "shareTitle": "Téléchargez FormAI !"
+      "shareTitle": "Téléchargez Form AI !"
     },
     "personalDetails": {
       "currentWeight": "Poids actuel",
@@ -188,7 +188,7 @@ const fr = {
       }
     },
     "welcome": {
-      "title": "FormAI",
+      "title": "Form AI",
       "subtitle": "Une technique parfaite, toujours",
       "modal": {
         "title": "Bienvenue",
@@ -245,7 +245,7 @@ const fr = {
       },
       "discovery": {
         "title": "Comment nous avez-vous découverts ?",
-        "subtitle": "Aidez-nous à comprendre comment vous avez trouvé FormAI",
+        "subtitle": "Aidez-nous à comprendre comment vous avez trouvé Form AI",
         "instagram": "Instagram",
         "tiktok": "TikTok",
         "facebook": "Facebook",
@@ -352,7 +352,7 @@ const fr = {
         "title": "Donnez-nous une note",
         "subtitle": "Aidez-nous à nous améliorer",
         "skip": "Ignorer",
-        "middleText": "FormAI est fait pour les passionnés de salle comme vous !"
+        "middleText": "Form AI est fait pour les passionnés de salle comme vous !"
       },
       "referralCode": {
         "title": "Saisir un code de parrainage (optionnel)",
@@ -371,13 +371,13 @@ const fr = {
       },
       "trainSafer": {
         "title": "Vous avez 3 fois moins de risque de vous blesser avec Form AI",
-        "withoutFormAI": "Sans Form AI",
-        "withFormAI": "Avec Form AI",
-        "description": "FormAI facilite une technique parfaite et votre assiduité."
+        "withoutForm AI": "Sans Form AI",
+        "withForm AI": "Avec Form AI",
+        "description": "Form AI facilite une technique parfaite et votre assiduité."
       },
       "notificationPermission": {
         "title": "Atteignez vos objectifs avec les notifications",
-        "dialogText": "FormAI souhaite vous envoyer des notifications",
+        "dialogText": "Form AI souhaite vous envoyer des notifications",
         "allow": "Autoriser Accès Complet",
         "dontAllow": "Ne pas autoriser"
       },
@@ -388,7 +388,7 @@ const fr = {
         "step2": "Presque prêt…"
       },
       "freeTrial": {
-        "title": "Essayez FormAI gratuitement.",
+        "title": "Essayez Form AI gratuitement.",
         "noPaymentDue": "Aucun paiement maintenant",
         "tryForFree": "Essayer pour 0,00 $",
         "pricing": "Seulement 39,99 $ / an (3,33 $/mois)"
@@ -401,7 +401,7 @@ const fr = {
       },
       "subscriptionSelection": {
         "title": "Commencez votre essai GRATUIT de 3 jours pour continuer.",
-        "titleMonthly": "Débloquez FormAI pour atteindre vos objectifs plus vite",
+        "titleMonthly": "Débloquez Form AI pour atteindre vos objectifs plus vite",
         "today": "Aujourd’hui",
         "todayDescription": "Débloquez toutes les fonctionnalités comme l’analyse IA de la technique.",
         "reminder": "Dans 2 jours - Rappel",
@@ -433,8 +433,8 @@ const fr = {
       },
       "cameraPermission": {
         "title": "Autoriser l'accès à la caméra",
-        "subtitle": "L'accès caméra est requis pour FormAI.",
-        "dialogText": "FormAI souhaite accéder à votre caméra.",
+        "subtitle": "L'accès caméra est requis pour Form AI.",
+        "dialogText": "Form AI souhaite accéder à votre caméra.",
         "allow": "Autoriser Accès Complet",
         "dontAllow": "Ne pas autoriser",
         "permissionRequired": "Autorisation caméra requise",
@@ -442,7 +442,7 @@ const fr = {
       },
       "mediaLibraryPermission": {
         "title": "Autoriser l'accès complet à votre photothèque",
-        "dialogText": "FormAI souhaite accéder à votre photothèque.",
+        "dialogText": "Form AI souhaite accéder à votre photothèque.",
         "allow": "Autoriser Accès Complet",
         "dontAllow": "Ne pas autoriser",
         "permissionRequired": "Autorisation photos requise",
@@ -482,7 +482,7 @@ const fr = {
       "costComparison": {
         "title": "Une technique parfaite pour une fraction du coût d’un coach",
         "personalTrainer": "Coach personnel",
-        "withFormAI": "Avec Form AI",
+        "withForm AI": "Avec Form AI",
         "costLess": "99 % moins cher",
         "description": "S’entraîner en sécurité avec une technique parfaite ne devrait pas coûter une fortune."
       },
@@ -555,7 +555,7 @@ const fr = {
     },
     "progress": {
       "title": "Votre parcours commence ici",
-      "subtitle": "Voyez comment les utilisateurs améliorent leur technique et leurs performances avec FormAI",
+      "subtitle": "Voyez comment les utilisateurs améliorent leur technique et leurs performances avec Form AI",
       "chartTitle": "Amélioration du score de technique dans le temps",
       "week": "Semaine",
       "score": "Score de technique",
@@ -798,7 +798,7 @@ const fr = {
       "permissionRequired": "Permission Requise",
       "photoLibraryPermissionMessage": "L'accès à la bibliothèque de photos est requis pour sauvegarder les vidéos dans votre appareil photo.",
       "downloadSuccess": "Téléchargement Réussi",
-      "videoSavedToPhotos": "La vidéo a été sauvegardée dans votre app Photos dans l'album FormAI.",
+      "videoSavedToPhotos": "La vidéo a été sauvegardée dans votre app Photos dans l'album Form AI.",
       "downloadFailed": "Échec du Téléchargement",
       "videoNotAvailable": "La vidéo n'est pas disponible au téléchargement.",
       "downloadErrorMessage": "Échec du téléchargement de la vidéo. Veuillez réessayer plus tard."
@@ -922,14 +922,14 @@ const fr = {
       },
       "completionModal": {
         "title": "Tout est prêt",
-        "message": "Vous êtes prêt à utiliser FormAI. Revenez chaque jour pour garder votre série et rester constant.\n\nVous pouvez rejouer ce tutoriel à tout moment depuis les paramètres."
+        "message": "Vous êtes prêt à utiliser Form AI. Revenez chaque jour pour garder votre série et rester constant.\n\nVous pouvez rejouer ce tutoriel à tout moment depuis les paramètres."
       }
     },
     "upload": {
       "permissionRequired": "Autorisation requise",
       "permissionMessage": "Veuillez accorder l'accès à votre photothèque.",
       "mediaPermissionTitle": "Autoriser l'accès complet à votre photothèque",
-      "mediaPermissionDialogText": "FormAI souhaite accéder à votre médiathèque.",
+      "mediaPermissionDialogText": "Form AI souhaite accéder à votre médiathèque.",
       "mediaPermissionDetailedDescription": "Form AI accède à votre photothèque pour que vous puissiez télécharger des vidéos pour analyse, sauvegarder des vidéos enregistrées dans l'application dans votre photothèque, rechercher des vidéos précédemment analysées et empêcher les téléchargements de vidéos en double.",
       "allow": "Autoriser",
       "dontAllow": "Ne pas autoriser",

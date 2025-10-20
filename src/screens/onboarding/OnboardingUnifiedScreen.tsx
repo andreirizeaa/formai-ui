@@ -330,6 +330,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
   // Permission status states
   const [notificationPermissionStatus, setNotificationPermissionStatus] = useState<'granted' | 'denied' | 'undetermined'>('undetermined');
   const [mediaLibraryPermissionStatus, setMediaLibraryPermissionStatus] = useState<'granted' | 'denied' | 'limited' | 'undetermined'>('undetermined');
+  const [canAskNotificationAgain, setCanAskNotificationAgain] = useState(true);
 
   const steps: ReadonlyArray<StepConfig> = useMemo(() => {
     const baseSteps: StepConfig[] = [
@@ -567,8 +568,8 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       title: i18n.t('onboarding.referralCode.title'),
       subtitle: i18n.t('onboarding.referralCode.subtitle'),
     },
-    // Notification permission step - only show if undetermined (not asked yet this session)
-    ...(notificationPermissionStatus === 'undetermined' ? [{
+    // Notification permission step - only show if we can ask for permission again
+    ...(canAskNotificationAgain && notificationPermissionStatus !== 'granted' ? [{
       type: 'notificationPermission' as const,
       id: 'notificationPermission',
       title: i18n.t('onboarding.notificationPermission.title'),
@@ -593,7 +594,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
     }
 
     return baseSteps;
-  }, [i18n.locale, onboardingData.userId, notificationPermissionStatus, mediaLibraryPermissionStatus]);
+  }, [i18n.locale, onboardingData.userId, notificationPermissionStatus, mediaLibraryPermissionStatus, canAskNotificationAgain]);
 
   const totalSteps = steps.length;
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
@@ -613,6 +614,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
 
   // Loading states for permission requests
   const [notificationPermissionLoading, setNotificationPermissionLoading] = useState(false);
+  const [notificationDontAllowLoading, setNotificationDontAllowLoading] = useState(false);
   const [mediaLibraryPermissionLoading, setMediaLibraryPermissionLoading] = useState(false);
   const [mediaLibraryDontAllowLoading, setMediaLibraryDontAllowLoading] = useState(false);
 
@@ -641,6 +643,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
         // Check notification permission
         const notificationStatus = await Notifications.getPermissionsAsync();
         setNotificationPermissionStatus(notificationStatus.granted ? 'granted' : 'denied');
+        setCanAskNotificationAgain((notificationStatus as any)?.canAskAgain !== false);
 
         // Check media library permission
         const mediaLibraryStatus = await ImagePicker.getMediaLibraryPermissionsAsync();
@@ -663,16 +666,29 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
   useEffect(() => {
     if (!currentStep) return;
     
-    // If current step is notification permission but status is no longer undetermined, advance to next step
-    if (currentStep.type === 'notificationPermission' && notificationPermissionStatus !== 'undetermined') {
-      handleNext();
+    // If current step is notification permission and permission is granted or we can't ask again, advance to next step
+    if (currentStep.type === 'notificationPermission' && (notificationPermissionStatus === 'granted' || !canAskNotificationAgain)) {
+      // Use setTimeout to ensure state updates are processed before navigation
+      setTimeout(() => {
+        handleNext();
+      }, 100);
     }
     
     // If current step is media library permission but status is granted, advance to next step
     if (currentStep.type === 'mediaLibraryPermission' && mediaLibraryPermissionStatus === 'granted') {
-      handleNext();
+      setTimeout(() => {
+        handleNext();
+      }, 100);
     }
-  }, [notificationPermissionStatus, mediaLibraryPermissionStatus, currentStep]);
+  }, [notificationPermissionStatus, mediaLibraryPermissionStatus, currentStep, canAskNotificationAgain]);
+
+  // Reset loading states when moving to a new step
+  useEffect(() => {
+    if (currentStep?.type !== 'notificationPermission') {
+      setNotificationPermissionLoading(false);
+      setNotificationDontAllowLoading(false);
+    }
+  }, [currentStep]);
 
   // Helpers for measurements
   const isMetric = onboardingData.unitSystem === 'metric';
@@ -2213,81 +2229,52 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
           allowButtonText={i18n.t('onboarding.notificationPermission.allow')}
           dontAllowButtonText={i18n.t('onboarding.notificationPermission.dontAllow')}
           isLoading={notificationPermissionLoading}
+          isDontAllowLoading={notificationDontAllowLoading}
           onDontAllow={async () => {
-            setNotificationPermissionLoading(true);
+            setNotificationDontAllowLoading(true);
             
-            // Mirror the allow flow, but if we can't ask again and it's not granted, go next
-            const timeoutId = setTimeout(() => {
-              setNotificationPermissionLoading(false);
-              showAlert(
-                'Permission Timeout',
-                'The permission request is taking longer than expected. Please try again or enable permissions in Settings.',
-                undefined,
-                'ONBOARDING_NOTIFICATION_PERMISSION_TIMEOUT'
-              );
+            // Set 7-second timeout for loading icon
+            const loadingTimeout = setTimeout(() => {
+              setNotificationDontAllowLoading(false);
             }, 5000);
-
+            
             try {
               const result = await Notifications.requestPermissionsAsync();
-              clearTimeout(timeoutId);
               const granted = result.granted === true;
               const canAskAgain = (result as any)?.canAskAgain !== false ? true : false;
               setNotificationPermissionStatus(granted ? 'granted' : 'denied');
+              setCanAskNotificationAgain(canAskAgain);
               trackPermission('notifications', granted, 'notificationPermission');
 
-              if (!granted && canAskAgain === false) {
-                handleNext();
-              }
+              // Let the auto-advance logic handle navigation
             } catch (error) {
-              clearTimeout(timeoutId);
               trackPermission('notifications', false, 'notificationPermission', error instanceof Error ? error.message : 'Unknown error');
-              showAlert(
-                'Permission Error',
-                'Unable to request notification permissions. You can enable them later in settings.',
-                undefined,
-                'ONBOARDING_NOTIFICATION_PERMISSION_ERROR',
-                error
-              );
+              // Let the auto-advance logic handle navigation
             } finally {
-              setNotificationPermissionLoading(false);
+              clearTimeout(loadingTimeout);
             }
           }}
           onAllow={async () => {
             setNotificationPermissionLoading(true);
             
-            // Set up 5 second timeout
-            const timeoutId = setTimeout(() => {
+            // Set 7-second timeout for loading icon
+            const loadingTimeout = setTimeout(() => {
               setNotificationPermissionLoading(false);
-              showAlert(
-                'Permission Timeout',
-                'The permission request is taking longer than expected. Please try again or enable permissions in Settings.',
-                undefined,
-                'ONBOARDING_NOTIFICATION_PERMISSION_TIMEOUT'
-              );
             }, 5000);
             
             try {
               const result = await Notifications.requestPermissionsAsync();
-              clearTimeout(timeoutId);
               const granted = result.granted;
+              const canAskAgain = (result as any)?.canAskAgain !== false ? true : false;
               setNotificationPermissionStatus(granted ? 'granted' : 'denied');
+              setCanAskNotificationAgain(canAskAgain);
               trackPermission('notifications', granted, 'notificationPermission');
-              // Don't call handleNext() immediately - let the component re-render
-              // with updated steps array, then the user will proceed naturally
+              // Let the auto-advance logic handle navigation
             } catch (error) {
-              clearTimeout(timeoutId);
               trackPermission('notifications', false, 'notificationPermission', error instanceof Error ? error.message : 'Unknown error');
-              showAlert(
-                'Permission Error',
-                'Unable to request notification permissions. You can enable them later in settings.',
-                undefined,
-                'ONBOARDING_NOTIFICATION_PERMISSION_ERROR',
-                error
-              );
-              // Don't call handleNext() immediately - let the component re-render
-              // with updated steps array, then the user will proceed naturally
+              // Let the auto-advance logic handle navigation
             } finally {
-              setNotificationPermissionLoading(false);
+              clearTimeout(loadingTimeout);
             }
           }}
         />

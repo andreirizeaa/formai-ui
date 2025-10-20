@@ -36,7 +36,7 @@ const en = {
       growStrongerTogether: 'Grow stronger together!',
       currentBalance: 'Current Balance',
       shareNow: 'Share Now',
-      sharePageTitle: 'Share FormAI',
+      sharePageTitle: 'Share Form AI',
       termsAndConditions: 'Terms of Use',
       privacyPolicy: 'Privacy Policy',
       supportEmail: 'Support Email',
@@ -86,7 +86,7 @@ const en = {
       failedToCopy: 'Failed to copy promo code to clipboard',
       failedToShare: 'Failed to open share dialog',
       shareMessage: 'Hey! Download this app and use this promo code:',
-      shareTitle: 'Download FormAI!',
+      shareTitle: 'Download Form AI!',
     },
     personalDetails: {
       currentWeight: 'Current weight',
@@ -189,7 +189,7 @@ const en = {
       },
     },
     welcome: {
-      title: 'FormAI',
+      title: 'Form AI',
       subtitle: 'Perfect form, always',
       modal: {
         title: 'Welcome',
@@ -246,7 +246,7 @@ const en = {
       },
       discovery: {
         title: 'Where did you hear about us?',
-        subtitle: 'Help us understand how you found FormAI',
+        subtitle: 'Help us understand how you found Form AI',
         instagram: 'Instagram',
         tiktok: 'TikTok',
         facebook: 'Facebook',
@@ -353,7 +353,7 @@ const en = {
         title: 'Give us a rating',
         subtitle: 'Help us improve by sharing your experience',
         skip: 'Skip',
-        middleText: 'FormAI was made for gym lovers like you!',
+        middleText: 'Form AI was made for gym lovers like you!',
       },
       referralCode: {
         title: 'Enter referral code (Optional)',
@@ -374,11 +374,11 @@ const en = {
         title: 'You\'re three times less likely to get injured with Form AI',
         withoutFormAI: 'Without Form AI',
         withFormAI: 'With Form AI',
-        description: 'FormAI makes it easy to perfect your form and keep you accountable.',
+        description: 'Form AI makes it easy to perfect your form and keep you accountable.',
       },
       notificationPermission: {
         title: 'Reach your goals with notifications',
-        dialogText: 'FormAI would like to send you Notifications',
+        dialogText: 'Form AI would like to send you Notifications',
         allow: 'Allow',
         dontAllow: "Don't Allow",
       },
@@ -389,7 +389,7 @@ const en = {
         step2: 'Almost ready...',
       },
       freeTrial: {
-        title: 'We want you to try FormAI for free.',
+        title: 'We want you to try Form AI for free.',
         noPaymentDue: 'No Payment Due Now',
         tryForFree: 'Try for $0.00',
         pricing: 'Just $39.99 a year ($3.33/mo)',
@@ -402,7 +402,7 @@ const en = {
       },
       subscriptionSelection: {
         title: 'Start your 3-day FREE trial to continue.',
-        titleMonthly: 'Unlock FormAI to reach your goals faster',
+        titleMonthly: 'Unlock Form AI to reach your goals faster',
         today: 'Today',
         todayDescription: 'Unlock all the app\'s features like AI form analysis and more.',
         reminder: 'In 2 Days - Reminder',
@@ -434,8 +434,8 @@ const en = {
       },
       cameraPermission: {
         title: 'Allow camera access',
-        subtitle: 'Camera access is required for FormAI.',
-        dialogText: 'FormAI would like to access your Camera.',
+        subtitle: 'Camera access is required for Form AI.',
+        dialogText: 'Form AI would like to access your Camera.',
         allow: 'Allow',
         dontAllow: "Don't Allow",
         permissionRequired: 'Camera permission required',
@@ -446,7 +446,7 @@ const en = {
       },
       mediaLibraryPermission: {
         title: 'Allow full access to your photo library',
-        dialogText: 'FormAI would like to access your Photo Library.',
+        dialogText: 'Form AI would like to access your Photo Library.',
         allow: 'Allow Full Access',
         dontAllow: "Don't Allow",
         permissionRequired: 'Photos permission required',
@@ -562,7 +562,7 @@ const en = {
     },
     progress: {
       title: 'Your journey starts here',
-      subtitle: 'See how users improve their form and performance with FormAI',
+      subtitle: 'See how users improve their form and performance with Form AI',
       chartTitle: 'Form Score Improvement Over Time',
       week: 'Week',
       score: 'Form Score',
@@ -816,7 +816,7 @@ const en = {
       permissionRequired: 'Permission Required',
       photoLibraryPermissionMessage: 'Photo library access is required to save videos to your camera roll.',
       downloadSuccess: 'Download Successful',
-      videoSavedToPhotos: 'Video has been saved to your Photos app in the FormAI album.',
+      videoSavedToPhotos: 'Video has been saved to your Photos app in the Form AI album.',
       downloadFailed: 'Download Failed',
       videoNotAvailable: 'Video is not available for download.',
       downloadErrorMessage: 'Failed to download video. Please try again later.',
@@ -940,14 +940,14 @@ const en = {
       },
       completionModal: {
         title: 'All done',
-        message: 'You\'re ready to use FormAI. Check in every day to keep your streak alive and stay consistent. \n\nRemember you can always replay this tutorial at any time through the settings menu.',
+        message: 'You\'re ready to use Form AI. Check in every day to keep your streak alive and stay consistent. \n\nRemember you can always replay this tutorial at any time through the settings menu.',
       },
     },
     upload: {
       permissionRequired: 'Permission Required',
       permissionMessage: 'Please grant permission to access your photo library.',
       mediaPermissionTitle: 'Allow full access to your photo library',
-      mediaPermissionDialogText: 'FormAI would like to access your Media Library.',
+      mediaPermissionDialogText: 'Form AI would like to access your Media Library.',
       mediaPermissionDetailedDescription: 'Form AI accesses your photo library so you can upload videos for analysis, save videos recorded in the app to your photo library, search for previously analysed videos and to prevent duplicate video uploads.',
       allow: 'Allow Full Access',
       dontAllow: "Don't Allow",

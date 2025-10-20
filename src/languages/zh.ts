@@ -35,7 +35,7 @@ const zh = {
       growStrongerTogether: '一起变得更强！',
       currentBalance: '当前余额',
       shareNow: '立即分享',
-      sharePageTitle: '分享 FormAI',
+      sharePageTitle: '分享 Form AI',
       termsAndConditions: '使用条款',
       privacyPolicy: '隐私政策',
       supportEmail: '支持邮箱',
@@ -84,7 +84,7 @@ const zh = {
       failedToCopy: '无法将促销代码复制到剪贴板',
       failedToShare: '无法打开分享对话框',
       shareMessage: '嗨！下载这个应用并使用此促销代码：',
-      shareTitle: '下载 FormAI！',
+      shareTitle: '下载 Form AI！',
     },
     personalDetails: {
       currentWeight: '当前体重',
@@ -187,7 +187,7 @@ const zh = {
       },
     },
     welcome: {
-      title: 'FormAI',
+      title: 'Form AI',
       subtitle: '完美动作，始终如一',
       modal: {
         title: '欢迎',
@@ -244,7 +244,7 @@ const zh = {
       },
       discovery: {
         title: '您是从哪里了解到我们的？',
-        subtitle: '帮助我们了解您是如何找到 FormAI 的',
+        subtitle: '帮助我们了解您是如何找到 Form AI 的',
         instagram: 'Instagram',
         tiktok: 'TikTok',
         facebook: 'Facebook',
@@ -351,7 +351,7 @@ const zh = {
         title: '给我们评分',
         subtitle: '通过分享您的体验帮助我们改进',
         skip: '跳过',
-        middleText: 'FormAI 是为像您这样的健身爱好者而制作的！',
+        middleText: 'Form AI 是为像您这样的健身爱好者而制作的！',
       },
       referralCode: {
         title: '输入推荐码（可选）',
@@ -372,11 +372,11 @@ const zh = {
         title: '使用 Form AI 训练，你受伤的几率降低三倍',
         withoutFormAI: '没有 Form AI',
         withFormAI: '使用 Form AI',
-        description: 'FormAI 让完善您的动作变得容易，并让您保持负责任。',
+        description: 'Form AI 让完善您的动作变得容易，并让您保持负责任。',
       },
       notificationPermission: {
         title: '通过通知实现您的目标',
-        dialogText: 'FormAI 想要向您发送通知',
+        dialogText: 'Form AI 想要向您发送通知',
         allow: '允许',
         dontAllow: '不允许',
       },
@@ -387,7 +387,7 @@ const zh = {
         step2: '即将完成...',
       },
       freeTrial: {
-        title: '我们希望您免费试用 FormAI。',
+        title: '我们希望您免费试用 Form AI。',
         noPaymentDue: '现在无需付款',
         tryForFree: '免费试用 $0.00',
         pricing: '仅需每年 $39.99（$3.33/月）',
@@ -400,7 +400,7 @@ const zh = {
       },
       subscriptionSelection: {
         title: '开始您的3天免费试用以继续。',
-        titleMonthly: '解锁 FormAI 更快实现您的目标',
+        titleMonthly: '解锁 Form AI 更快实现您的目标',
         today: '今天',
         todayDescription: '解锁应用的所有功能，如AI动作分析等。',
         reminder: '2天后 - 提醒',
@@ -432,8 +432,8 @@ const zh = {
       },
       cameraPermission: {
         title: '允许摄像头访问',
-        subtitle: 'FormAI 需要摄像头访问权限。',
-        dialogText: 'FormAI 想要访问您的摄像头。',
+        subtitle: 'Form AI 需要摄像头访问权限。',
+        dialogText: 'Form AI 想要访问您的摄像头。',
         allow: '允许',
         dontAllow: '不允许',
         permissionRequired: '需要摄像头权限',
@@ -444,7 +444,7 @@ const zh = {
       },
       mediaLibraryPermission: {
         title: '允许完全访问您的照片库',
-        dialogText: 'FormAI 想要访问您的照片库。',
+        dialogText: 'Form AI 想要访问您的照片库。',
         allow: '允许完全访问',
         dontAllow: '不允许',
         permissionRequired: '需要照片权限',
@@ -557,7 +557,7 @@ const zh = {
     },
     progress: {
       title: '您的旅程从这里开始',
-      subtitle: '看看用户如何通过 FormAI 改善他们的动作和表现',
+      subtitle: '看看用户如何通过 Form AI 改善他们的动作和表现',
       chartTitle: '动作评分随时间改善',
       week: '周',
       score: '动作评分',
@@ -916,14 +916,14 @@ const zh = {
       },
       completionModal: {
         title: '全部完成',
-        message: '您已准备好使用FormAI。每天检查以保持您的连续记录并保持一致。\\n\\n记住您随时可以通过设置菜单重播此教程。',
+        message: '您已准备好使用Form AI。每天检查以保持您的连续记录并保持一致。\\n\\n记住您随时可以通过设置菜单重播此教程。',
       },
     },
     upload: {
       permissionRequired: '需要权限',
       permissionMessage: '请授予访问您照片库的权限。',
       mediaPermissionTitle: '允许完全访问您的照片库',
-      mediaPermissionDialogText: 'FormAI 想要访问您的媒体库。',
+      mediaPermissionDialogText: 'Form AI 想要访问您的媒体库。',
       mediaPermissionDetailedDescription: 'Form AI 访问您的照片库，以便您可以上传视频进行分析，将应用程序中录制的视频保存到您的照片库，搜索以前分析的视频并防止重复视频上传。',
       allow: '允许完全访问',
       dontAllow: '不允许',

@@ -36,7 +36,7 @@ const ar = {
       "growStrongerTogether": "لنصبح أقوى معًا!",
       "currentBalance": "الرصيد الحالي",
       "shareNow": "شارك الآن",
-      "sharePageTitle": "شارك FormAI",
+      "sharePageTitle": "شارك Form AI",
       "termsAndConditions": "شروط الاستخدام",
       "privacyPolicy": "سياسة الخصوصية",
       "supportEmail": "البريد الداعم",
@@ -85,7 +85,7 @@ const ar = {
       "failedToCopy": "فشل نسخ الرمز الترويجي",
       "failedToShare": "فشل فتح نافذة المشاركة",
       "shareMessage": "مرحبًا! حمّل هذا التطبيق واستخدم هذا الرمز:",
-      "shareTitle": "حمّل FormAI!"
+      "shareTitle": "حمّل Form AI!"
     },
     "personalDetails": {
       "currentWeight": "الوزن الحالي",
@@ -188,7 +188,7 @@ const ar = {
       }
     },
     "welcome": {
-      "title": "FormAI",
+      "title": "Form AI",
       "subtitle": "أداء مثالي دائمًا",
       "modal": {
         "title": "مرحبًا",
@@ -245,7 +245,7 @@ const ar = {
       },
       "discovery": {
         "title": "كيف سمعت عنا؟",
-        "subtitle": "ساعدنا على فهم كيفية عثورك على FormAI",
+        "subtitle": "ساعدنا على فهم كيفية عثورك على Form AI",
         "instagram": "إنستغرام",
         "tiktok": "تيك توك",
         "facebook": "فيسبوك",
@@ -352,7 +352,7 @@ const ar = {
         "title": "امنحنا تقييمًا",
         "subtitle": "ساعدنا على التحسن بمشاركة تجربتك",
         "skip": "تخطي",
-        "middleText": "تم إنشاء FormAI لعشّاق الجيم مثلك!"
+        "middleText": "تم إنشاء Form AI لعشّاق الجيم مثلك!"
       },
       "referralCode": {
         "title": "أدخل رمز الإحالة (اختياري)",
@@ -371,13 +371,13 @@ const ar = {
       },
       "trainSafer": {
         "title": "احتمال إصابتك أقل بثلاث مرات مع Form AI",
-        "withoutFormAI": "بدون Form AI",
-        "withFormAI": "مع Form AI",
-        "description": "يجعل FormAI تحسين الأداء سهلًا ويبقيك ملتزمًا."
+        "withoutForm AI": "بدون Form AI",
+        "withForm AI": "مع Form AI",
+        "description": "يجعل Form AI تحسين الأداء سهلًا ويبقيك ملتزمًا."
       },
       "notificationPermission": {
         "title": "بلّغ أهدافك مع الإشعارات",
-        "dialogText": "يريد FormAI إرسال إشعارات.",
+        "dialogText": "يريد Form AI إرسال إشعارات.",
         "allow": "السماح بالوصول الكامل",
         "dontAllow": "عدم السماح"
       },
@@ -388,7 +388,7 @@ const ar = {
         "step2": "اقتربنا من الانتهاء..."
       },
       "freeTrial": {
-        "title": "نريدك أن تجرب FormAI مجانًا.",
+        "title": "نريدك أن تجرب Form AI مجانًا.",
         "noPaymentDue": "لا يوجد دفع الآن",
         "tryForFree": "جرّب بـ 0.00$",
         "pricing": "فقط 39.99$ سنويًا (3.33$/شهريًا)"
@@ -401,7 +401,7 @@ const ar = {
       },
       "subscriptionSelection": {
         "title": "ابدأ تجربتك المجانية لمدة 3 أيام للمتابعة.",
-        "titleMonthly": "افتح FormAI لتصل لأهدافك أسرع",
+        "titleMonthly": "افتح Form AI لتصل لأهدافك أسرع",
         "today": "اليوم",
         "todayDescription": "افتح جميع ميزات التطبيق مثل تحليل الأداء بالذكاء الاصطناعي والمزيد.",
         "reminder": "بعد يومين - تذكير",
@@ -433,8 +433,8 @@ const ar = {
       },
       "cameraPermission": {
         "title": "السماح بالوصول للكاميرا",
-        "subtitle": "الوصول للكاميرا مطلوب لـ FormAI.",
-        "dialogText": "يريد FormAI الوصول إلى الكاميرا.",
+        "subtitle": "الوصول للكاميرا مطلوب لـ Form AI.",
+        "dialogText": "يريد Form AI الوصول إلى الكاميرا.",
         "allow": "السماح بالوصول الكامل",
         "dontAllow": "عدم السماح",
         "permissionRequired": "إذن الكاميرا مطلوب",
@@ -442,7 +442,7 @@ const ar = {
       },
       "mediaLibraryPermission": {
         "title": "السماح بالوصول الكامل إلى مكتبة الصور الخاصة بك",
-        "dialogText": "يريد FormAI الوصول إلى مكتبة الصور.",
+        "dialogText": "يريد Form AI الوصول إلى مكتبة الصور.",
         "allow": "السماح بالوصول الكامل",
         "dontAllow": "عدم السماح",
         "permissionRequired": "إذن الصور مطلوب",
@@ -482,7 +482,7 @@ const ar = {
       "costComparison": {
         "title": "أداء مثالي بجزء بسيط من تكلفة المدربين",
         "personalTrainer": "مدرب شخصي",
-        "withFormAI": "مع Form AI",
+        "withForm AI": "مع Form AI",
         "costLess": "أقل 99%",
         "description": "لا ينبغي أن يكلفك الأداء الآمن والمثالي ثروة."
       },
@@ -555,7 +555,7 @@ const ar = {
     },
     "progress": {
       "title": "رحلتك تبدأ هنا",
-      "subtitle": "شاهد كيف يحسن المستخدمون أداءهم مع FormAI",
+      "subtitle": "شاهد كيف يحسن المستخدمون أداءهم مع Form AI",
       "chartTitle": "تحسن درجة الأداء بمرور الوقت",
       "week": "الأسبوع",
       "score": "درجة الأداء",
@@ -915,14 +915,14 @@ const ar = {
       },
       "completionModal": {
         "title": "تم كل شيء",
-        "message": "أنت جاهز لاستخدام FormAI. تحقق يوميًا لتحافظ على سلسلة أيامك وتظل ملتزمًا.\n\nتذكر أنه يمكنك دائمًا إعادة تشغيل هذا الدليل من قائمة الإعدادات."
+        "message": "أنت جاهز لاستخدام Form AI. تحقق يوميًا لتحافظ على سلسلة أيامك وتظل ملتزمًا.\n\nتذكر أنه يمكنك دائمًا إعادة تشغيل هذا الدليل من قائمة الإعدادات."
       }
     },
     "upload": {
       "permissionRequired": "الإذن مطلوب",
       "permissionMessage": "يرجى منح الإذن للوصول إلى مكتبة الصور.",
       "mediaPermissionTitle": "السماح بالوصول الكامل إلى مكتبة الصور الخاصة بك",
-      "mediaPermissionDialogText": "يريد FormAI الوصول إلى مكتبة الوسائط.",
+      "mediaPermissionDialogText": "يريد Form AI الوصول إلى مكتبة الوسائط.",
       "mediaPermissionDetailedDescription": "يصل Form AI إلى مكتبة الصور الخاصة بك حتى تتمكن من تحميل مقاطع الفيديو للتحليل، وحفظ مقاطع الفيديو المسجلة في التطبيق في مكتبة الصور الخاصة بك، والبحث عن مقاطع الفيديو التي تم تحليلها مسبقاً ومنع تحميل مقاطع الفيديو المكررة.",
       "allow": "سماح",
       "dontAllow": "عدم السماح",
