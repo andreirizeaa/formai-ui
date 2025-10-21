@@ -99,7 +99,6 @@ export function PaymentScreen({ onComplete }: PaymentScreenProps) {
           product_id: eventInfo.params?.abandoned_product_id,
         });
 
-        console.log('reviewOverrideStatus', reviewOverrideStatus);
         
         if (!reviewOverrideStatus && referralCodeType !== 'discount_40') {
           ignoreNextDismissRef.current = true;
