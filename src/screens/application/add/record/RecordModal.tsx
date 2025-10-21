@@ -86,6 +86,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
   // Loading state for camera permission request
   const [cameraPermissionLoading, setCameraPermissionLoading] = useState(false);
   const [cameraDontAllowLoading, setCameraDontAllowLoading] = useState(false);
+  const [showCameraPermissionScreen, setShowCameraPermissionScreen] = useState(false);
 
   useEffect(() => {
     if (isRecording && recordingTime >= 60) {
@@ -95,8 +96,6 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
 
   useEffect(() => {
     if (isVisible) {
-      // reflect current permission state, don't request automatically
-      checkCameraPermission();
       setShowPractices(true);
       setShowVideoPreview(false);
       setShowMovementSelection(false);
@@ -112,6 +111,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
       setShowCamera(true);
       setShowCountdownModal(false);
       setShowVideoTooShortModal(false);
+      setShowCameraPermissionScreen(false);
       // reset any ongoing pre-countdown
       if (preCountdownIntervalRef.current) {
         clearInterval(preCountdownIntervalRef.current);
@@ -135,6 +135,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
       setWeightReps(null);
       setShowCountdownModal(false);
       setShowVideoTooShortModal(false);
+      setShowCameraPermissionScreen(false);
       if (preCountdownIntervalRef.current) {
         clearInterval(preCountdownIntervalRef.current);
         preCountdownIntervalRef.current = null;
@@ -146,9 +147,11 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
     }
   }, [isVisible]);
 
-  // keep permission in sync when the hook updates
+  // keep permission in sync when the hook updates - but don't automatically show permission screen
   useEffect(() => {
-    checkCameraPermission();
+    if (permission) {
+      setHasPermission(permission.granted);
+    }
   }, [permission]);
 
   // Check for no camera access when permission screen shows
@@ -220,6 +223,14 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
   const handleNext = async () => {
     hapticFeedback.selection();
     
+    // Check camera permission first
+    const hasPermission = checkCameraPermission();
+    if (!hasPermission) {
+      // Show permission screen
+      setShowCameraPermissionScreen(true);
+      return;
+    }
+    
     // Check media library permission for limited access
     try {
       const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -241,10 +252,12 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
 
   const checkCameraPermission = () => {
     try {
-      if (permission == null) return;
+      if (permission == null) return false;
       setHasPermission(permission.granted);
+      return permission.granted;
     } catch (e) {
       setHasPermission(false);
+      return false;
     }
   };
 
@@ -647,11 +660,12 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
     return null;
   }
 
-  if (hasPermission === false) {
-    if (!isVisible) {
-      return null;
-    }
+  if (!isVisible) {
+    return null;
+  }
 
+  // Show camera permission screen if needed
+  if (showCameraPermissionScreen) {
     return (
       <SafeAreaView
         style={[
@@ -664,6 +678,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
           <TouchableOpacity onPress={() => {
             if (isUploading || isModalDisabled) return;
             hapticFeedback.selection();
+            setShowCameraPermissionScreen(false);
             onClose();
           }} style={[styles.closeButton, (isUploading || isModalDisabled) && styles.closeButtonDisabled]}
           disabled={isUploading || isModalDisabled}>
@@ -675,27 +690,33 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
           title={i18n.t('onboarding.cameraPermission.title')}
           dialogText={i18n.t('onboarding.cameraPermission.dialogText')}
           fingerTranslateY={fingerTranslateY}
-          singleButton={true}
-          singleButtonText={i18n.t('onboarding.cameraPermission.allow')}
+          singleButton={false}
+          allowButtonText={i18n.t('onboarding.cameraPermission.allow')}
+          dontAllowButtonText={i18n.t('onboarding.cameraPermission.dontAllow')}
           isLoading={cameraPermissionLoading}
-          onSingleButtonPress={async () => {
+          onAllow={async () => {
             setCameraPermissionLoading(true);
             
             try {
               await requestCameraPermissionFromUser();
+              setShowCameraPermissionScreen(false);
             } finally {
               setCameraPermissionLoading(false);
             }
           }}
-          onAllow={() => {}}
-          onDontAllow={() => {}}
+          onDontAllow={async () => {
+            hapticFeedback.selection();
+            // Request permission and check response
+            const result = await requestPermission();
+            // If permission is denied, close the modal
+            if (!result.granted) {
+              setShowCameraPermissionScreen(false);
+              onClose();
+            }
+          }}
         />
       </SafeAreaView>
     );
-  }
-
-  if (!isVisible) {
-    return null;
   }
 
   return (

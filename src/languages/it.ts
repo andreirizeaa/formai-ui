@@ -377,7 +377,7 @@ const it = {
       notificationPermission: {
         title: 'Raggiungi i tuoi obiettivi con le notifiche',
         dialogText: 'Form AI vorrebbe inviarti Notifiche',
-        allow: 'Consenti Accesso Completo',
+        allow: 'Consenti Accesso',
         dontAllow: 'Non Consentire',
       },
       setupLoading: {
@@ -431,10 +431,10 @@ const it = {
         signInWithGoogle: 'Accedi con Google',
       },
       cameraPermission: {
-        title: 'Consenti accesso alla fotocamera',
+        title: 'Consenti accesso alla fotocamera per continuare',
         subtitle: 'L\'accesso alla fotocamera è richiesto per Form AI.',
         dialogText: 'Form AI vorrebbe accedere alla tua Fotocamera.',
-        allow: 'Consenti Accesso Completo',
+        allow: 'Consenti Accesso',
         dontAllow: 'Non Consentire',
         permissionRequired: 'Autorizzazione fotocamera richiesta',
         permissionRequiredMessage: 'L\'accesso alla fotocamera è richiesto per continuare. Puoi abilitarlo nelle Impostazioni.',
@@ -445,7 +445,7 @@ const it = {
       mediaLibraryPermission: {
         title: 'Consenti accesso completo alla tua libreria foto',
         dialogText: 'Form AI vorrebbe accedere alla tua Libreria Foto.',
-        allow: 'Consenti Accesso Completo',
+        allow: 'Consenti Accesso',
         dontAllow: 'Non Consentire',
         permissionRequired: 'Autorizzazione foto richiesta',
         permissionRequiredMessage: 'L\'accesso alle foto è richiesto per continuare. Puoi abilitarlo nelle Impostazioni.',
@@ -736,6 +736,12 @@ const it = {
         error: 'Errore',
         errorMessage: 'Impossibile selezionare il video. Riprova.',
       },
+      photoLibraryPermission: {
+        title: 'Accesso Completo Richiesto',
+        message: 'È richiesto l\'accesso completo alla libreria di foto per permetterti di cercare video precedentemente analizzati. Nota che la ricerca funzionerà solo per video analizzati dopo che l\'Accesso Completo è stato concesso alla tua libreria di foto.',
+        allow: 'Consenti',
+        cancel: 'Annulla',
+      },
     },
     liftCard: {
       accuracy: 'Accuratezza',
@@ -922,10 +928,10 @@ const it = {
     upload: {
       permissionRequired: 'Permesso Richiesto',
       permissionMessage: 'Concedi il permesso per accedere alla tua libreria di foto.',
-      mediaPermissionTitle: 'Consenti accesso completo alla tua libreria foto',
+      mediaPermissionTitle: 'Consenti accesso alla tua libreria foto per continuare',
       mediaPermissionDialogText: 'Form AI vorrebbe accedere alla tua Libreria Multimediale.',
       mediaPermissionDetailedDescription: 'Form AI accede alla tua libreria foto in modo che tu possa caricare video per l\'analisi, salvare video registrati nell\'app nella tua libreria foto, cercare video precedentemente analizzati e prevenire caricamenti di video duplicati.',
-      allow: 'Consenti Accesso Completo',
+      allow: 'Consenti Accesso',
       dontAllow: 'Non Consentire',
       videoTooLong: 'Video Troppo Lungo',
       videoTooLongMessage: 'Seleziona un video che sia sotto i 90 secondi.',

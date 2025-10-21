@@ -431,7 +431,7 @@ const zh = {
         signInWithGoogle: '使用 Google 登录',
       },
       cameraPermission: {
-        title: '允许摄像头访问',
+        title: '允许摄像头访问以继续',
         subtitle: 'Form AI 需要摄像头访问权限。',
         dialogText: 'Form AI 想要访问您的摄像头。',
         allow: '允许',
@@ -445,7 +445,7 @@ const zh = {
       mediaLibraryPermission: {
         title: '允许完全访问您的照片库',
         dialogText: 'Form AI 想要访问您的照片库。',
-        allow: '允许完全访问',
+        allow: '允许访问',
         dontAllow: '不允许',
         permissionRequired: '需要照片权限',
         permissionRequiredMessage: '需要照片访问权限才能继续。您可以在设置中启用它。',
@@ -736,6 +736,12 @@ const zh = {
         error: '错误',
         errorMessage: '选择视频失败。请重试。',
       },
+      photoLibraryPermission: {
+        title: '需要完全访问权限',
+        message: '需要完全访问照片库才能搜索之前分析的视频。请注意，搜索仅适用于在照片库获得完全访问权限后分析的视频。',
+        allow: '允许',
+        cancel: '取消',
+      },
     },
     liftCard: {
       accuracy: '准确性',
@@ -922,10 +928,10 @@ const zh = {
     upload: {
       permissionRequired: '需要权限',
       permissionMessage: '请授予访问您照片库的权限。',
-      mediaPermissionTitle: '允许完全访问您的照片库',
+      mediaPermissionTitle: '允许访问您的照片库以继续',
       mediaPermissionDialogText: 'Form AI 想要访问您的媒体库。',
       mediaPermissionDetailedDescription: 'Form AI 访问您的照片库，以便您可以上传视频进行分析，将应用程序中录制的视频保存到您的照片库，搜索以前分析的视频并防止重复视频上传。',
-      allow: '允许完全访问',
+      allow: '允许访问',
       dontAllow: '不允许',
       videoTooLong: '视频太长',
       videoTooLongMessage: '请选择90秒以下的视频。',

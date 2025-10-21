@@ -377,7 +377,7 @@ const pt = {
       notificationPermission: {
         title: 'Alcance seus objetivos com notificações',
         dialogText: 'Form AI gostaria de te enviar Notificações',
-        allow: 'Permitir Acesso Completo',
+        allow: 'Permitir Acesso',
         dontAllow: 'Não Permitir',
       },
       setupLoading: {
@@ -431,10 +431,10 @@ const pt = {
         signInWithGoogle: 'Entrar com Google',
       },
       cameraPermission: {
-        title: 'Permitir acesso à câmera',
+        title: 'Permitir acesso à câmera para continuar',
         subtitle: 'Acesso à câmera é necessário para o Form AI.',
         dialogText: 'Form AI gostaria de acessar sua Câmera.',
-        allow: 'Permitir Acesso Completo',
+        allow: 'Permitir Acesso',
         dontAllow: 'Não Permitir',
         permissionRequired: 'Permissão de câmera necessária',
         permissionRequiredMessage: 'Acesso à câmera é necessário para continuar. Você pode habilitá-lo nas Configurações.',
@@ -445,7 +445,7 @@ const pt = {
       mediaLibraryPermission: {
         title: 'Permitir acesso completo à sua biblioteca de fotos',
         dialogText: 'Form AI gostaria de acessar sua Biblioteca de Fotos.',
-        allow: 'Permitir Acesso Completo',
+        allow: 'Permitir Acesso',
         dontAllow: 'Não Permitir',
         permissionRequired: 'Permissão de fotos necessária',
         permissionRequiredMessage: 'Acesso às fotos é necessário para continuar. Você pode habilitá-lo nas Configurações.',
@@ -736,6 +736,12 @@ const pt = {
         error: 'Erro',
         errorMessage: 'Falha ao selecionar vídeo. Tente novamente.',
       },
+      photoLibraryPermission: {
+        title: 'Acesso Completo Necessário',
+        message: 'É necessário acesso completo à biblioteca de fotos para permitir que você procure vídeos previamente analisados. Observe que a busca funcionará apenas para vídeos analisados após o Acesso Completo ter sido concedido à sua biblioteca de fotos.',
+        allow: 'Permitir',
+        cancel: 'Cancelar',
+      },
     },
     liftCard: {
       accuracy: 'Precisão',
@@ -922,10 +928,10 @@ const pt = {
     upload: {
       permissionRequired: 'Permissão Necessária',
       permissionMessage: 'Por favor conceda permissão para acessar sua biblioteca de fotos.',
-      mediaPermissionTitle: 'Permitir acesso completo à sua biblioteca de fotos',
+      mediaPermissionTitle: 'Permitir acesso à sua biblioteca de fotos para continuar',
       mediaPermissionDialogText: 'Form AI gostaria de acessar sua Biblioteca de Mídia.',
       mediaPermissionDetailedDescription: 'Form AI acessa sua biblioteca de fotos para que você possa fazer upload de vídeos para análise, salvar vídeos gravados no aplicativo em sua biblioteca de fotos, pesquisar vídeos previamente analisados e prevenir uploads de vídeos duplicados.',
-      allow: 'Permitir Acesso Completo',
+      allow: 'Permitir Acesso',
       dontAllow: 'Não Permitir',
       videoTooLong: 'Vídeo Muito Longo',
       videoTooLongMessage: 'Por favor selecione um vídeo com menos de 90 segundos.',

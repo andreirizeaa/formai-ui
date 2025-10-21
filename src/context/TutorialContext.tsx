@@ -498,7 +498,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       title: i18n.t('tutorial.settingsSupportEmail.title'),
       description: i18n.t('tutorial.settingsSupportEmail.description'),
       targetId: 'settings_support_email',
-      tooltipPlacement: 'bottom',
+      tooltipPlacement: 'top',
       onNext: async () => {
         try {
           track('Tutorial', { step_index: 21, target_id: 'settings_support_email' });

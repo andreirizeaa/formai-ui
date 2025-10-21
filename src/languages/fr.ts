@@ -378,7 +378,7 @@ const fr = {
       "notificationPermission": {
         "title": "Atteignez vos objectifs avec les notifications",
         "dialogText": "Form AI souhaite vous envoyer des notifications",
-        "allow": "Autoriser Accès Complet",
+        "allow": "Autoriser Accès",
         "dontAllow": "Ne pas autoriser"
       },
       "setupLoading": {
@@ -432,10 +432,10 @@ const fr = {
         "signInWithGoogle": "Se connecter avec Google"
       },
       "cameraPermission": {
-        "title": "Autoriser l'accès à la caméra",
+        "title": "Autoriser l'accès à la caméra pour continuer",
         "subtitle": "L'accès caméra est requis pour Form AI.",
         "dialogText": "Form AI souhaite accéder à votre caméra.",
-        "allow": "Autoriser Accès Complet",
+        "allow": "Autoriser Accès",
         "dontAllow": "Ne pas autoriser",
         "permissionRequired": "Autorisation caméra requise",
         "permissionRequiredMessage": "L'accès caméra est requis pour continuer. Vous pouvez l'activer dans les Paramètres."
@@ -443,7 +443,7 @@ const fr = {
       "mediaLibraryPermission": {
         "title": "Autoriser l'accès complet à votre photothèque",
         "dialogText": "Form AI souhaite accéder à votre photothèque.",
-        "allow": "Autoriser Accès Complet",
+        "allow": "Autoriser Accès",
         "dontAllow": "Ne pas autoriser",
         "permissionRequired": "Autorisation photos requise",
         "permissionRequiredMessage": "L'accès aux photos est requis pour continuer. Vous pouvez l'activer dans les Paramètres.",
@@ -733,6 +733,12 @@ const fr = {
         "permissionMessage": "Veuillez autoriser l'accès à votre photothèque pour rechercher des vidéos.",
         "error": "Erreur",
         "errorMessage": "Échec de la sélection de la vidéo. Réessayez."
+      },
+      "photoLibraryPermission": {
+        "title": "Accès complet requis",
+        "message": "L'accès complet à la photothèque est requis pour vous permettre de rechercher des vidéos précédemment analysées. Veuillez noter que la recherche ne fonctionnera que pour les vidéos analysées après l'octroi de l'accès complet à votre photothèque.",
+        "allow": "Autoriser",
+        "cancel": "Annuler"
       }
     },
     "liftCard": {
@@ -928,7 +934,7 @@ const fr = {
     "upload": {
       "permissionRequired": "Autorisation requise",
       "permissionMessage": "Veuillez accorder l'accès à votre photothèque.",
-      "mediaPermissionTitle": "Autoriser l'accès complet à votre photothèque",
+      "mediaPermissionTitle": "Autoriser l'accès à votre photothèque pour continuer",
       "mediaPermissionDialogText": "Form AI souhaite accéder à votre médiathèque.",
       "mediaPermissionDetailedDescription": "Form AI accède à votre photothèque pour que vous puissiez télécharger des vidéos pour analyse, sauvegarder des vidéos enregistrées dans l'application dans votre photothèque, rechercher des vidéos précédemment analysées et empêcher les téléchargements de vidéos en double.",
       "allow": "Autoriser",

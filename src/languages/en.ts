@@ -433,7 +433,7 @@ const en = {
         signInWithGoogle: 'Sign in with Google',
       },
       cameraPermission: {
-        title: 'Allow camera access',
+        title: 'Allow camera access to continue',
         subtitle: 'Camera access is required for Form AI.',
         dialogText: 'Form AI would like to access your Camera.',
         allow: 'Allow',
@@ -447,7 +447,7 @@ const en = {
       mediaLibraryPermission: {
         title: 'Allow full access to your photo library',
         dialogText: 'Form AI would like to access your Photo Library.',
-        allow: 'Allow Full Access',
+        allow: 'Allow Access',
         dontAllow: "Don't Allow",
         permissionRequired: 'Photos permission required',
         permissionRequiredMessage: 'Photos access is required to continue. You can enable it in Settings.',
@@ -747,6 +747,12 @@ const en = {
         error: 'Error',
         errorMessage: 'Failed to select video. Please try again.',
       },
+      photoLibraryPermission: {
+        title: 'Full Access Required',
+        message: 'Full access to photo library is required to allow you to search for previously analysed videos. Please note the search will only work for videos analysed after Full Access was granted for your photo library.',
+        allow: 'Allow',
+        cancel: 'Cancel',
+      },
     },
     liftCard: {
       accuracy: 'Accuracy',
@@ -946,10 +952,10 @@ const en = {
     upload: {
       permissionRequired: 'Permission Required',
       permissionMessage: 'Please grant permission to access your photo library.',
-      mediaPermissionTitle: 'Allow full access to your photo library',
+      mediaPermissionTitle: 'Allow access to your photo library to continue',
       mediaPermissionDialogText: 'Form AI would like to access your Media Library.',
       mediaPermissionDetailedDescription: 'Form AI accesses your photo library so you can upload videos for analysis, save videos recorded in the app to your photo library, search for previously analysed videos and to prevent duplicate video uploads.',
-      allow: 'Allow Full Access',
+      allow: 'Allow Access',
       dontAllow: "Don't Allow",
       videoTooLong: 'Video Too Long',
       videoTooLongMessage: 'Please select a video that is under 90 seconds.',

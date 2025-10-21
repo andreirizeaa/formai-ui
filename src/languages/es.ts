@@ -432,7 +432,7 @@ const es = {
         signInWithGoogle: 'Iniciar sesión con Google',
       },
       cameraPermission: {
-        title: 'Permitir acceso a la cámara',
+        title: 'Permitir acceso a la cámara para continuar',
         subtitle: 'El acceso a la cámara es requerido para Form AI.',
         dialogText: 'Form AI quisiera acceder a tu Cámara.',
         allow: 'Permitir',
@@ -446,7 +446,7 @@ const es = {
       mediaLibraryPermission: {
         title: 'Permitir acceso completo a tu biblioteca de fotos',
         dialogText: 'Form AI quisiera acceder a tu Biblioteca de Fotos.',
-        allow: 'Permitir Acceso Completo',
+        allow: 'Permitir Acceso',
         dontAllow: 'No Permitir',
         permissionRequired: 'Permiso de fotos requerido',
         permissionRequiredMessage: 'Se requiere acceso a las fotos para continuar. Puedes habilitarlo en Configuración.',
@@ -742,6 +742,12 @@ const es = {
         error: 'Error',
         errorMessage: 'Error al seleccionar video. Por favor inténtalo de nuevo.',
       },
+      photoLibraryPermission: {
+        title: 'Acceso Completo Requerido',
+        message: 'Se requiere acceso completo a la biblioteca de fotos para permitirte buscar videos previamente analizados. Ten en cuenta que la búsqueda solo funcionará para videos analizados después de que se haya otorgado Acceso Completo a tu biblioteca de fotos.',
+        allow: 'Permitir',
+        cancel: 'Cancelar',
+      },
     },
     liftCard: {
       accuracy: 'Precisión',
@@ -936,10 +942,10 @@ const es = {
     upload: {
       permissionRequired: 'Permiso Requerido',
       permissionMessage: 'Por favor otorga permiso para acceder a tu biblioteca de fotos.',
-      mediaPermissionTitle: 'Permitir acceso completo a tu biblioteca de fotos',
+      mediaPermissionTitle: 'Permitir acceso a tu biblioteca de fotos para continuar',
       mediaPermissionDialogText: 'Form AI quisiera acceder a tu Biblioteca de Medios.',
       mediaPermissionDetailedDescription: 'Form AI accede a tu biblioteca de fotos para que puedas subir videos para análisis, guardar videos grabados en la aplicación en tu biblioteca de fotos, buscar videos previamente analizados y prevenir subidas de videos duplicados.',
-      allow: 'Permitir Acceso Completo',
+      allow: 'Permitir Acceso',
       dontAllow: 'No Permitir',
       videoTooLong: 'Video Muy Largo',
       videoTooLongMessage: 'Por favor selecciona un video que sea menor a 90 segundos.',

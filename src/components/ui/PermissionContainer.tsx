@@ -18,8 +18,6 @@ interface PermissionContainerProps {
   singleButton?: boolean;
   singleButtonText?: string;
   onSingleButtonPress?: () => void;
-  detailedDescription?: string;
-  showPhotoLibraryDescription?: boolean;
 }
 
 export function PermissionContainer({
@@ -36,8 +34,6 @@ export function PermissionContainer({
   singleButton = false,
   singleButtonText,
   onSingleButtonPress,
-  detailedDescription,
-  showPhotoLibraryDescription = false,
 }: PermissionContainerProps) {
   return (
     <View style={styles.permissionContainer}>
@@ -76,18 +72,6 @@ export function PermissionContainer({
               {dialogText}
             </Text>
             
-            {/* Detailed Description - shown inside dialog under main text */}
-            {(detailedDescription || showPhotoLibraryDescription) && (
-              <Text style={[
-                styles.detailedDescriptionText,
-                {
-                  color: appColors.onboarding.permission.textArea.text,
-                  fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
-                }
-              ]}>
-                {showPhotoLibraryDescription ? i18n.t('upload.mediaPermissionDetailedDescription') : detailedDescription}
-              </Text>
-            )}
           </View>
 
           {/* Buttons Container */}
@@ -300,19 +284,5 @@ const styles = StyleSheet.create({
   },
   pointingEmoji: {
     fontSize: 40,
-  },
-  detailedDescriptionContainer: {
-    marginTop: 16,
-    marginBottom: 40,
-    paddingHorizontal: 20,
-    maxWidth: 320,
-  },
-  detailedDescriptionText: {
-    fontSize: 14,
-    fontWeight: '400',
-    textAlign: 'center',
-    lineHeight: 18,
-    opacity: 0.8,
-    marginTop: 12,
   },
 });

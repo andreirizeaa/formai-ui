@@ -55,27 +55,35 @@ export function UserCheckInsProvider({ children }: UserCheckInsProviderProps) {
     retry: 2,
   });
 
-  // Helper to compute current streak from ISO date strings (UTC-based)
-  // Definition: length of the most recent consecutive sequence ending at the latest check-in date (≤ today)
+  // Helper to compute current active streak from ISO date strings (UTC-based)
+  // Definition: length of consecutive check-ins ending at today or yesterday (if today is missing)
   const computeCurrentStreak = React.useCallback((isoDates: string[]): number => {
     if (!isoDates?.length) return 0;
     const today = new Date().toISOString().slice(0, 10);
+    const yesterday = new Date();
+    yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+    const yesterdayStr = yesterday.toISOString().slice(0, 10);
     const set = new Set(isoDates);
 
-    // Find latest check-in date that is not in the future
-    const latest = isoDates
-      .filter(d => d <= today)
-      .sort((a, b) => (a < b ? 1 : -1))[0];
-    if (!latest) return 0;
+    // Check if there's a check-in today or yesterday
+    const hasToday = set.has(today);
+    const hasYesterday = set.has(yesterdayStr);
+    
+    // If neither today nor yesterday has a check-in, streak is 0
+    if (!hasToday && !hasYesterday) return 0;
 
+    // Start counting from today if it exists, otherwise from yesterday
+    let cursor = hasToday ? today : yesterdayStr;
     let streak = 0;
-    let cursor = latest;
+
+    // Count consecutive days backwards from the starting point
     while (set.has(cursor)) {
       streak += 1;
       const d = new Date(cursor);
       d.setUTCDate(d.getUTCDate() - 1);
       cursor = d.toISOString().slice(0, 10);
     }
+    
     return streak;
   }, []);
 
@@ -172,12 +180,17 @@ export function UserCheckInsProvider({ children }: UserCheckInsProviderProps) {
     });
   }, [data?.check_in_dates]);
 
+  // Compute current streak locally using our updated logic
+  const currentStreak = React.useMemo(() => {
+    return computeCurrentStreak(data?.check_in_dates || []);
+  }, [data?.check_in_dates, computeCurrentStreak]);
+
   const value: UserCheckInsContextType = {
     isLoading,
     error: error?.message || null,
     daysLogged,
     checkInDates: data?.check_in_dates || [],
-    currentStreak: (data?.current_streak || 0),
+    currentStreak,
     refetch: () => refetch(),
     invalidateAndRefetch,
     data,

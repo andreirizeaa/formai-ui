@@ -18,6 +18,8 @@ import { getUserId } from '../../../services/storageService';
 import { LoadingOverlay } from '../../../components/ui/overlays/LoadingOverlay';
 import { track } from '../../../services/analytics';
 import { showAlert } from '../../../services/alertService';
+import { PhotoLibraryPermissionModal } from '../../../components/ui/modals/PhotoLibraryPermissionModal';
+import { openAppSettings } from '../../../utils/openAppSettings';
 
 import i18n from '../../../utils/i18n';
 import { 
@@ -67,6 +69,7 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
   const [isDateRangeModalVisible, setIsDateRangeModalVisible] = useState(false);
   const [dateRange, setDateRange] = useState<DateRange>({ from: null, to: null });
   const [isSearching, setIsSearching] = useState(false);
+  const [showPhotoLibraryPermissionModal, setShowPhotoLibraryPermissionModal] = useState(false);
 
   // Track screen view on mount
   useEffect(() => {
@@ -286,10 +289,64 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
     onBack();
   }, [onBack]);
 
+  // Check photo library permission - only proceed with full access
+  const checkPhotoLibraryPermission = useCallback(async () => {
+    try {
+      const { status, accessPrivileges } = await ImagePicker.getMediaLibraryPermissionsAsync();
+      
+      // Only proceed if user has granted FULL access (all photos)
+      if (status === 'granted' && accessPrivileges === 'all') {
+        return true;
+      }
+      
+      // Show permission modal if not granted or limited access
+      setShowPhotoLibraryPermissionModal(true);
+      return false;
+    } catch (e) {
+      setShowPhotoLibraryPermissionModal(true);
+      return false;
+    }
+  }, []);
+
+  const handlePhotoLibraryPermissionAllow = useCallback(async () => {
+    hapticFeedback.selection();
+    setShowPhotoLibraryPermissionModal(false);
+    
+    try {
+      const result = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      // Check if full access granted (all photos) - ONLY proceed with full access
+      if (result.granted && result.accessPrivileges === 'all') {
+        hapticFeedback.success();
+        // Retry search after permission granted
+        setTimeout(() => {
+          handleSearchPress();
+        }, 100);
+      } else {
+        // Permission denied or limited access, open settings
+        openAppSettings();
+      }
+    } catch (e) {
+      // Silent fail
+    }
+  }, [handleSearchPress]);
+
+  const handlePhotoLibraryPermissionCancel = useCallback(() => {
+    hapticFeedback.selection();
+    setShowPhotoLibraryPermissionModal(false);
+  }, []);
+
   const handleSearchPress = useCallback(async () => {
     hapticFeedback.selection();
     // Track library screen clicks for search container
     track('Library screen clicks', { event: 'Search' });
+    
+    // Check permission first
+    const hasPermission = await checkPhotoLibraryPermission();
+    if (!hasPermission) {
+      return;
+    }
+    
     setIsSearching(true);
     
     // Add a small delay to show the loading icon before opening image picker
@@ -621,6 +678,13 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
         onDateRangeChange={setDateRange}
         onReset={handleResetDateRange}
         title={i18n.t('library.editDateRange')}
+      />
+
+      {/* Photo Library Permission Modal */}
+      <PhotoLibraryPermissionModal
+        isVisible={showPhotoLibraryPermissionModal}
+        onClose={handlePhotoLibraryPermissionCancel}
+        onAllow={handlePhotoLibraryPermissionAllow}
       />
       
       <LoadingOverlay visible={isSearching} />

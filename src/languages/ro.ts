@@ -378,7 +378,7 @@ const ro = {
       "notificationPermission": {
         "title": "Atinge-ți obiectivele cu notificări",
         "dialogText": "Form AI dorește să îți trimită notificări",
-        "allow": "Permite Acces Complet",
+        "allow": "Permite Acces",
         "dontAllow": "Nu permite"
       },
       "setupLoading": {
@@ -432,10 +432,10 @@ const ro = {
         "signInWithGoogle": "Autentificare cu Google"
       },
       "cameraPermission": {
-        "title": "Permite accesul la cameră",
+        "title": "Permite accesul la cameră pentru a continua",
         "subtitle": "Accesul la cameră este necesar pentru Form AI.",
         "dialogText": "Form AI dorește acces la cameră.",
-        "allow": "Permite Acces Complet",
+        "allow": "Permite Acces",
         "dontAllow": "Nu permite",
         "permissionRequired": "Permisiune cameră necesară",
         "permissionRequiredMessage": "Accesul la cameră este necesar pentru a continua. Îl poți activa în Setări."
@@ -443,7 +443,7 @@ const ro = {
       "mediaLibraryPermission": {
         "title": "Permite accesul complet la biblioteca ta de fotografii",
         "dialogText": "Form AI dorește acces la biblioteca de fotos.",
-        "allow": "Permite Acces Complet",
+        "allow": "Permite Acces",
         "dontAllow": "Nu permite",
         "permissionRequired": "Permisiune foto necesară",
         "permissionRequiredMessage": "Accesul la foto este necesar pentru a continua. Îl poți activa în Setări.",
@@ -733,6 +733,12 @@ const ro = {
         "permissionMessage": "Permite accesul la biblioteca foto pentru a căuta videoclipuri.",
         "error": "Eroare",
         "errorMessage": "Selectarea videoclipului a eșuat. Încearcă din nou."
+      },
+      "photoLibraryPermission": {
+        "title": "Acces complet necesar",
+        "message": "Accesul complet la biblioteca foto este necesar pentru a vă permite să căutați videoclipuri analizate anterior. Vă rugăm să rețineți că căutarea va funcționa doar pentru videoclipurile analizate după acordarea accesului complet la biblioteca foto.",
+        "allow": "Permite",
+        "cancel": "Anulează"
       }
     },
     "liftCard": {
@@ -920,7 +926,7 @@ const ro = {
     "upload": {
       "permissionRequired": "Permisiune necesară",
       "permissionMessage": "Te rugăm să acorzi acces la biblioteca foto.",
-      "mediaPermissionTitle": "Permite accesul complet la biblioteca ta de fotografii",
+      "mediaPermissionTitle": "Permite accesul la biblioteca ta de fotografii pentru a continua",
       "mediaPermissionDialogText": "Form AI dorește acces la biblioteca media.",
       "mediaPermissionDetailedDescription": "Form AI accesează biblioteca ta de fotografii pentru ca tu să poți încărca videoclipuri pentru analiză, să salvezi videoclipuri înregistrate în aplicație în biblioteca ta de fotografii, să cauți videoclipuri analizate anterior și să previ cărcarea de videoclipuri duplicate.",
       "allow": "Permite",

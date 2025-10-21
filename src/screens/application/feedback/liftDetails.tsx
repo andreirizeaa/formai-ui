@@ -19,7 +19,7 @@ import { useUserCheckIns } from '../../../context/UserCheckInsContext';
 import i18n from '../../../utils/i18n';
 import { VideoPlayerComponentProps, LiftDetailsProps } from '../../../types/Lifts';
 import { track } from '../../../services/analytics';
-import { PermissionContainer } from '../../../components/ui/PermissionContainer';
+import { PermissionRequiredModal } from '../../../components/ui/modals/PermissionRequiredModal';
 import { openAppSettings } from '../../../utils/openAppSettings';
 import * as MediaLibrary from 'expo-media-library';
 import { downloadVideoToLibrary } from '../../../services/downloadVideoService';
@@ -60,9 +60,8 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
   const [isUpdatingWeight, setIsUpdatingWeight] = useState(false);
   const [editWeight, setEditWeight] = useState('');
   const editWeightInputRef = useRef<TextInput>(null);
-  const [showMediaPermission, setShowMediaPermission] = useState(false);
-  const [hasMediaPermission, setHasMediaPermission] = useState<boolean | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [showPermissionRequiredModal, setShowPermissionRequiredModal] = useState(false);
   const [editWeightShouldRender, setEditWeightShouldRender] = useState(showEditWeightModal);
   const editWeightOpacity = useRef(new Animated.Value(0)).current;
   
@@ -309,62 +308,29 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
     }
   };
 
-  // Check media library permission
-  const checkMediaPermission = async () => {
-    try {
-      const { status } = await MediaLibrary.getPermissionsAsync();
-      setHasMediaPermission(status === 'granted');
-    } catch (e) {
-      setHasMediaPermission(false);
-    }
-  };
 
-  // Request media library permission
-  const requestMediaPermissionFromUser = async () => {
+  const handlePermissionRequiredAllow = async () => {
+    hapticFeedback.selection();
+    setShowPermissionRequiredModal(false);
+    
     try {
       const result = await MediaLibrary.requestPermissionsAsync();
       if (!result.granted && result.canAskAgain === false) {
+        // Permission denied permanently, open settings
         openAppSettings();
-        setHasMediaPermission(false);
-        return;
-      }
-      setHasMediaPermission(result.granted);
-      if (result.granted) {
-        setShowMediaPermission(false);
-        // Retry download after permission is granted
+      } else if (result.granted) {
+        // Permission granted, retry download
         handleDownload();
       }
     } catch (e) {
-      setHasMediaPermission(false);
+      // Silent fail
     }
   };
 
-  // Finger animation effect
-  useEffect(() => {
-    if (showMediaPermission) {
-      const startFingerAnimation = () => {
-        Animated.loop(
-          Animated.sequence([
-            Animated.timing(fingerTranslateY, {
-              toValue: -15,
-              duration: 600,
-              useNativeDriver: true,
-            }),
-            Animated.timing(fingerTranslateY, {
-              toValue: 0,
-              duration: 600,
-              useNativeDriver: true,
-            }),
-          ])
-        ).start();
-      };
-      
-      startFingerAnimation();
-    } else {
-      // Reset animation when not showing permission screen
-      fingerTranslateY.setValue(0);
-    }
-  }, [showMediaPermission, fingerTranslateY]);
+  const handlePermissionRequiredCancel = () => {
+    hapticFeedback.selection();
+    setShowPermissionRequiredModal(false);
+  };
 
   const handleDownload = async () => {
     hapticFeedback.selection();
@@ -374,14 +340,6 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
     setIsDownloading(true);
     
     try {
-      // Check permission first
-      await checkMediaPermission();
-      
-      if (hasMediaPermission === false) {
-        setShowMediaPermission(true);
-        return;
-      }
-      
       const success = await downloadVideoToLibrary({
         videoUrl: resolvedPoseUrl,
         onSuccess: () => {
@@ -391,7 +349,7 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
           // Video download failed
         },
         onPermissionRequired: () => {
-          setShowMediaPermission(true);
+          setShowPermissionRequiredModal(true);
         }
       });
     } finally {
@@ -440,29 +398,6 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
 
   // No chart data computed here; handled by SwipeableLiftDetailsGraphs
   
-  // Show permission screen if no media library permission
-  if (showMediaPermission) {
-    return (
-      <SafeAreaView
-        style={[
-          styles.container,
-          { backgroundColor: '#1d293d' }
-        ]}
-      >
-        <PermissionContainer
-          title={i18n.t('upload.permissionTitle')}
-          dialogText={i18n.t('upload.permissionMessage')}
-          fingerTranslateY={fingerTranslateY}
-          allowButtonText={i18n.t('upload.allow')}
-          dontAllowButtonText={i18n.t('upload.dontAllow')}
-          onDontAllow={() => {
-            // Don't allow just stays in this state
-          }}
-          onAllow={requestMediaPermissionFromUser}
-        />
-      </SafeAreaView>
-    );
-  }
   
   return (
     <View style={styles.container}>
@@ -757,6 +692,13 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
         </TouchableOpacity>
         </Animated.View>
       )}
+
+      {/* Permission Required Modal */}
+      <PermissionRequiredModal
+        isVisible={showPermissionRequiredModal}
+        onClose={handlePermissionRequiredCancel}
+        onAllow={handlePermissionRequiredAllow}
+      />
     </View>
   );
 }

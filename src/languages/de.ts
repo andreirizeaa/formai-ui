@@ -377,7 +377,7 @@ const de = {
       "notificationPermission": {
         "title": "Erreiche deine Ziele mit Benachrichtigungen",
         "dialogText": "Form AI möchte dir Benachrichtigungen senden",
-        "allow": "Vollzugriff Zulassen",
+        "allow": "Zugriff Zulassen",
         "dontAllow": "Nicht zulassen"
       },
       "setupLoading": {
@@ -431,10 +431,10 @@ const de = {
         "signInWithGoogle": "Mit Google anmelden"
       },
       "cameraPermission": {
-        "title": "Kamerazugriff erlauben",
+        "title": "Kamerazugriff erlauben um fortzufahren",
         "subtitle": "Kamerazugriff ist für Form AI erforderlich.",
         "dialogText": "Form AI möchte auf deine Kamera zugreifen.",
-        "allow": "Vollzugriff Zulassen",
+        "allow": "Zugriff Zulassen",
         "dontAllow": "Nicht zulassen",
         "permissionRequired": "Kameraberechtigung erforderlich",
         "permissionRequiredMessage": "Kamerazugriff ist erforderlich, um fortzufahren. Sie können ihn in den Einstellungen aktivieren."
@@ -442,7 +442,7 @@ const de = {
       "mediaLibraryPermission": {
         "title": "Vollzugriff auf deine Fotobibliothek erlauben",
         "dialogText": "Form AI möchte auf deine Fotobibliothek zugreifen.",
-        "allow": "Vollzugriff Zulassen",
+        "allow": "Zugriff Zulassen",
         "dontAllow": "Nicht zulassen",
         "permissionRequired": "Fotoberechtigung erforderlich",
         "permissionRequiredMessage": "Fotozugriff ist erforderlich, um fortzufahren. Sie können ihn in den Einstellungen aktivieren.",
@@ -732,6 +732,12 @@ const de = {
         "permissionMessage": "Bitte erlaube den Zugriff auf deine Fotomediathek, um Videos zu suchen.",
         "error": "Fehler",
         "errorMessage": "Video konnte nicht ausgewählt werden. Bitte erneut versuchen."
+      },
+      "photoLibraryPermission": {
+        "title": "Vollzugriff erforderlich",
+        "message": "Vollzugriff auf die Fotomediathek ist erforderlich, um nach zuvor analysierten Videos zu suchen. Beachte, dass die Suche nur für Videos funktioniert, die nach der Gewährung des Vollzugriffs analysiert wurden.",
+        "allow": "Erlauben",
+        "cancel": "Abbrechen"
       }
     },
     "liftCard": {
@@ -919,7 +925,7 @@ const de = {
     "upload": {
       "permissionRequired": "Berechtigung erforderlich",
       "permissionMessage": "Bitte erlaube den Zugriff auf deine Fotomediathek.",
-      "mediaPermissionTitle": "Vollzugriff auf deine Fotobibliothek erlauben",
+      "mediaPermissionTitle": "Zugriff auf deine Fotobibliothek erlauben um fortzufahren",
       "mediaPermissionDialogText": "Form AI möchte auf deine Medienbibliothek zugreifen.",
       "mediaPermissionDetailedDescription": "Form AI greift auf deine Fotobibliothek zu, damit du Videos für die Analyse hochladen, in der App aufgenommene Videos in deiner Fotobibliothek speichern, zuvor analysierte Videos suchen und doppelte Video-Uploads verhindern kannst.",
       "allow": "Zulassen",

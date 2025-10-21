@@ -293,12 +293,6 @@ interface ProgressTrackingStepConfig {
   subtitle?: string;
 }
 
-interface MediaLibraryPermissionStepConfig {
-  type: 'mediaLibraryPermission';
-  id: string;
-  title: string;
-  subtitle?: string;
-}
 
 type StepConfig =
   | OptionsStepConfig<keyof OnboardingData>
@@ -314,8 +308,7 @@ type StepConfig =
   | GymChallengeInfoStepConfig
   | NotificationPermissionStepConfig
   | CameraPermissionStepConfig
-  | ProgressTrackingStepConfig
-  | MediaLibraryPermissionStepConfig;
+  | ProgressTrackingStepConfig;
 
 export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
   const navigation = useNavigation();
@@ -329,7 +322,6 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
 
   // Permission status states
   const [notificationPermissionStatus, setNotificationPermissionStatus] = useState<'granted' | 'denied' | 'undetermined'>('undetermined');
-  const [mediaLibraryPermissionStatus, setMediaLibraryPermissionStatus] = useState<'granted' | 'denied' | 'limited' | 'undetermined'>('undetermined');
   const [canAskNotificationAgain, setCanAskNotificationAgain] = useState(true);
 
   const steps: ReadonlyArray<StepConfig> = useMemo(() => {
@@ -510,13 +502,6 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       id: 'costComparison',
       title: i18n.t('onboarding.costComparison.title'),
     },
-    // Media library permission step - only show if not granted
-    ...(mediaLibraryPermissionStatus !== 'granted' ? [{
-      type: 'mediaLibraryPermission' as const,
-      id: 'mediaLibraryPermission',
-      title: i18n.t('onboarding.mediaLibraryPermission.title'),
-      subtitle: '',
-    }] : []),
     {
       type: 'measurements',
       id: 'measurements',
@@ -594,7 +579,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
     }
 
     return baseSteps;
-  }, [i18n.locale, onboardingData.userId, notificationPermissionStatus, mediaLibraryPermissionStatus, canAskNotificationAgain]);
+  }, [i18n.locale, onboardingData.userId, notificationPermissionStatus, canAskNotificationAgain]);
 
   const totalSteps = steps.length;
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
@@ -615,8 +600,6 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
   // Loading states for permission requests
   const [notificationPermissionLoading, setNotificationPermissionLoading] = useState(false);
   const [notificationDontAllowLoading, setNotificationDontAllowLoading] = useState(false);
-  const [mediaLibraryPermissionLoading, setMediaLibraryPermissionLoading] = useState(false);
-  const [mediaLibraryDontAllowLoading, setMediaLibraryDontAllowLoading] = useState(false);
 
   // Animation values for info step
   const percentageBoxHeight = useMemo(() => new Animated.Value(0), []);
@@ -645,15 +628,6 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
         setNotificationPermissionStatus(notificationStatus.granted ? 'granted' : 'denied');
         setCanAskNotificationAgain((notificationStatus as any)?.canAskAgain !== false);
 
-        // Check media library permission
-        const mediaLibraryStatus = await ImagePicker.getMediaLibraryPermissionsAsync();
-        if (mediaLibraryStatus.granted && mediaLibraryStatus.accessPrivileges === 'all') {
-          setMediaLibraryPermissionStatus('granted');
-        } else if (mediaLibraryStatus.accessPrivileges === 'limited') {
-          setMediaLibraryPermissionStatus('limited');
-        } else {
-          setMediaLibraryPermissionStatus('denied');
-        }
       } catch (error) {
         console.warn('Error checking permissions:', error);
       }
@@ -674,13 +648,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       }, 100);
     }
     
-    // If current step is media library permission but status is granted, advance to next step
-    if (currentStep.type === 'mediaLibraryPermission' && mediaLibraryPermissionStatus === 'granted') {
-      setTimeout(() => {
-        handleNext();
-      }, 100);
-    }
-  }, [notificationPermissionStatus, mediaLibraryPermissionStatus, currentStep, canAskNotificationAgain]);
+  }, [notificationPermissionStatus, currentStep, canAskNotificationAgain]);
 
   // Reset loading states when moving to a new step
   useEffect(() => {
@@ -771,7 +739,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
   useEffect(() => {
     if (!currentStep) return;
     
-    if (currentStep.type === 'notificationPermission' || currentStep.type === 'cameraPermission' || currentStep.type === 'mediaLibraryPermission') {
+    if (currentStep.type === 'notificationPermission' || currentStep.type === 'cameraPermission') {
       const startFingerAnimation = () => {
         Animated.loop(
           Animated.sequence([
@@ -987,54 +955,6 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
     });
   }
 
-  // Media library permission request - requires FULL access, not limited
-  async function requestMediaLibraryPermissionAndProceed(onSuccess: () => void): Promise<void> {
-    try {
-      const current = await ImagePicker.getMediaLibraryPermissionsAsync();
-      
-      // Only proceed if user has granted FULL access (all photos)
-      if (current.granted && current.accessPrivileges === 'all') {
-        setMediaLibraryPermissionStatus('granted');
-        trackPermission('media_library', true, 'mediaLibraryPermission');
-        hapticFeedback.success();
-        onSuccess();
-        return;
-      }
-
-      // Request permission (even if limited, to give user chance to upgrade)
-      const result = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      
-      // Check if full access granted (all photos)
-      if (result.granted && result.accessPrivileges === 'all') {
-        setMediaLibraryPermissionStatus('granted');
-        trackPermission('media_library', true, 'mediaLibraryPermission');
-        hapticFeedback.success();
-        onSuccess();
-        return;
-      }
-
-      // Not full access (limited or denied) - track and open settings
-      trackPermission('media_library', false, 'mediaLibraryPermission');
-      hapticFeedback.selection();
-      
-      try {
-        await Linking.openSettings();
-      } catch (_) {
-        try {
-          await openAppSettings();
-        } catch (__) {
-          // Silent fail
-        }
-      }
-    } catch (error) {
-      trackPermission(
-        'media_library',
-        false,
-        'mediaLibraryPermission',
-        error instanceof Error ? error.message : 'Unknown error'
-      );
-    }
-  }
 
   // Robust camera permission request with pre-check and Settings fallback
   async function requestCameraPermissionAndProceed(onSuccess: () => void): Promise<void> {
@@ -1364,8 +1284,6 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
     nextDisabled = false; // always enabled for notification permission step
   } else if (currentStep.type === 'progressTracking') {
     nextDisabled = false; // always enabled for progress tracking step
-  } else if (currentStep.type === 'mediaLibraryPermission') {
-    nextDisabled = false; // always enabled for media library permission step
   } else if (currentStep.type === 'referral') {
     nextLoading = referralValidating || applyButtonLoading; // show loading while validating or applying
   } else if (currentStep.type === 'allDone') {
@@ -1386,8 +1304,8 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       nextTitle={nextLabel}
       nextDisabled={nextDisabled}
       nextLoading={nextLoading}
-      hideNextButton={currentStep.type === 'saveProgress' || currentStep.type === 'notificationPermission' || currentStep.type === 'cameraPermission' || currentStep.type === 'mediaLibraryPermission'}
-      hideTitle={currentStep.type === 'notificationPermission' || currentStep.type === 'cameraPermission' || currentStep.type === 'mediaLibraryPermission'}
+      hideNextButton={currentStep.type === 'saveProgress' || currentStep.type === 'notificationPermission' || currentStep.type === 'cameraPermission'}
+      hideTitle={currentStep.type === 'notificationPermission' || currentStep.type === 'cameraPermission'}
       
     >
       {currentStep.id === 'trainSafer' && (
@@ -2301,30 +2219,6 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
         />
       )}
 
-      {currentStep.type === 'mediaLibraryPermission' && (
-        <PermissionContainer
-          title={i18n.t('onboarding.mediaLibraryPermission.title')}
-          dialogText={i18n.t('onboarding.mediaLibraryPermission.dialogText')}
-          showPhotoLibraryDescription={true}
-          fingerTranslateY={fingerTranslateY}
-          singleButton={true}
-          singleButtonText={i18n.t('onboarding.mediaLibraryPermission.allow')}
-          isLoading={mediaLibraryPermissionLoading}
-          onSingleButtonPress={async () => {
-            setMediaLibraryPermissionLoading(true);
-            
-            try {
-              await requestMediaLibraryPermissionAndProceed(() => {
-                handleNext();
-              });
-            } finally {
-              setMediaLibraryPermissionLoading(false);
-            }
-          }}
-          onAllow={() => {}}
-          onDontAllow={() => {}}
-        />
-      )}
     </OnboardingLayout>
   );
 }

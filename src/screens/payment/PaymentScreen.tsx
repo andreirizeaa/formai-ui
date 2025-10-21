@@ -8,13 +8,14 @@ import { AccountLoadingScreen } from '../onboarding/AccountLoadingScreen';
 import { track } from '../../services/analytics';
 import { getReferralCodeType, getUserReferralCode } from '../../services/referralService';
 import { getUserId, setUserJustPaid } from '../../services/storageService';
+import { getReviewOverrideStatus } from '../../services/overrideService';
 import { appColors } from '../../constants/appColorScheme';
 
 interface PaymentScreenProps {
   onComplete: () => void;
 }
 
-type PlacementKey = 'default_trigger' | 'referral_trigger' | 'transaction_abandons';
+type PlacementKey = 'default_trigger' | 'transaction_abandons' | 'discount_30' | 'discount_40';
 
 export function PaymentScreen({ onComplete }: PaymentScreenProps) {
   const { registerPlacement } = usePlacement();
@@ -22,8 +23,9 @@ export function PaymentScreen({ onComplete }: PaymentScreenProps) {
   const { onboardingData } = useOnboarding();
 
   const [showAccountLoading, setShowAccountLoading] = useState(false);
-  const [referralCodeType, setReferralCodeType] = useState<'DISCOUNT' | 'SKIP_PAYWALL' | null>(null);
+  const [referralCodeType, setReferralCodeType] = useState<'SKIP_PAYWALL' | 'discount_30' | 'discount_40' | null>(null);
   const [isReferralCodeProcessed, setIsReferralCodeProcessed] = useState(false);
+  const [reviewOverrideStatus, setReviewOverrideStatus] = useState<boolean>(false);
 
   // Prevent loops: ignore the next paywall dismiss that we know we triggered ourselves
   const ignoreNextDismissRef = useRef(false);
@@ -36,7 +38,9 @@ export function PaymentScreen({ onComplete }: PaymentScreenProps) {
       try {
         hapticFeedback.selection();
         const computed: PlacementKey =
-          referralCodeType === 'DISCOUNT' ? 'referral_trigger' : 'default_trigger';
+          referralCodeType === 'discount_30' ? 'discount_30' :
+          referralCodeType === 'discount_40' ? 'discount_40' :
+          'default_trigger';
         const placement = override ?? computed;
 
         // Optionally avoid immediate re-opens of the same placement
@@ -95,17 +99,18 @@ export function PaymentScreen({ onComplete }: PaymentScreenProps) {
           product_id: eventInfo.params?.abandoned_product_id,
         });
 
-        // We’re about to call dismiss() ourselves — ignore the next dismiss callback
-        ignoreNextDismissRef.current = true;
+        console.log('reviewOverrideStatus', reviewOverrideStatus);
+        
+        if (!reviewOverrideStatus && referralCodeType !== 'discount_40') {
+          ignoreNextDismissRef.current = true;
 
-        try {
-          await SuperwallExpoModule.dismiss();
-        } catch {
-          // even if dismiss fails, try to show the abandon placement
+          try {
+            await SuperwallExpoModule.dismiss();
+          } catch {
+          }
+
+          await showPlacement('transaction_abandons');
         }
-
-        // Now explicitly show the transaction_abandons placement
-        await showPlacement('transaction_abandons');
       }
     },
   });
@@ -124,6 +129,7 @@ export function PaymentScreen({ onComplete }: PaymentScreenProps) {
             if (result.referralCode) referralCode = result.referralCode;
           }
         }
+
 
         if (referralCode) {
           const typeResult = await getReferralCodeType(referralCode);
@@ -148,6 +154,23 @@ export function PaymentScreen({ onComplete }: PaymentScreenProps) {
   useEffect(() => {
     if (isReferralCodeProcessed) showPlacement();
   }, [isReferralCodeProcessed, showPlacement]);
+
+  useEffect(() => {
+    const fetchOverrideStatus = async () => {
+      try {
+        const result = await getReviewOverrideStatus();
+        if (result.status !== undefined) {
+          setReviewOverrideStatus(result.status);
+        }
+      } catch (error) {
+        console.error('Failed to fetch review override status:', error);
+        // Default to false if there's an error
+        setReviewOverrideStatus(false);
+      }
+    };
+
+    fetchOverrideStatus();
+  }, []);
 
   if (showAccountLoading) {
     return (
