@@ -365,7 +365,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
         }
 
         // Too short (< 3s)
-        if (durationInSeconds !== undefined && durationInSeconds !== null && durationInSeconds < 3) {
+        if (durationInSeconds !== undefined && durationInSeconds !== null && durationInSeconds < 2) {
           hapticFeedback.error();
           setShowVideoTooShortModal(true);
           return;
@@ -495,8 +495,8 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
       setShowVideoTooLongModal(true);
       return false;
     }
-    // Too short (< 3s)
-    if (durationInSeconds !== undefined && durationInSeconds !== null && durationInSeconds < 3) {
+    // Too short (< 2s)
+    if (durationInSeconds !== undefined && durationInSeconds !== null && durationInSeconds < 2) {
       hapticFeedback.error();
       setShowVideoTooShortModal(true);
       return false;

@@ -74,11 +74,13 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
   const [showVideoTooShortModal, setShowVideoTooShortModal] = useState(false);
 
   // Countdown state
-  const [countdownSetting, setCountdownSetting] = useState<number>(5); // default 5s
+  const [countdownSetting, setCountdownSetting] = useState<number>(0); // default 0s
   const [showCountdownModal, setShowCountdownModal] = useState(false);
   const [isPreCountdown, setIsPreCountdown] = useState(false);
   const [preCountdownValue, setPreCountdownValue] = useState<number>(0);
   const preCountdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const recordingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const actualRecordingDurationRef = useRef<number>(0);
 
   // Animation value for finger icon
   const fingerTranslateY = useMemo(() => new Animated.Value(0), []);
@@ -197,17 +199,17 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
   }, [hasPermission, isVisible, fingerTranslateY]);
 
   useEffect(() => {
-    let interval: ReturnType<typeof setInterval>;
     if (isRecording) {
-      interval = setInterval(() => {
+      recordingIntervalRef.current = setInterval(() => {
         setRecordingTime(prev => prev + 1);
+        actualRecordingDurationRef.current += 1;
       }, 1000);
-    } else {
-      setRecordingTime(0);
     }
+    // Don't reset recordingTime here - it's needed for duration validation
     return () => {
-      if (interval) {
-        clearInterval(interval);
+      if (recordingIntervalRef.current) {
+        clearInterval(recordingIntervalRef.current);
+        recordingIntervalRef.current = null;
       }
     };
   }, [isRecording]);
@@ -231,21 +233,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
       return;
     }
     
-    // Check media library permission for limited access
-    try {
-      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      
-      if (permissionResult.status !== 'granted') {
-        return;
-      }
-
-      if (permissionResult.accessPrivileges === 'limited') {
-        return;
-      }
-    } catch (error) {
-      // Silent fail
-    }
-    
+    // Proceed to camera - no media library permission needed for recording
     setShowPractices(false);
     setShowCamera(true);
   };
@@ -290,6 +278,8 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
     try {
       hapticFeedback.selection();
       setIsRecording(true);
+      setRecordingTime(0); // Reset timer when starting new recording
+      actualRecordingDurationRef.current = 0; // Reset ref when starting new recording
 
       cameraRef.current.startRecording({
         fileType: Platform.OS === 'ios' ? 'mov' : 'mp4',
@@ -298,15 +288,16 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
           const uri = path.startsWith('file://') ? path : `file://${path}`;
           
           // Check video duration before showing preview
-          const durationInSeconds = recordingTime;
+          const durationInSeconds = actualRecordingDurationRef.current;
           
           // Too short (< 3s)
-          if (durationInSeconds < 3) {
+          if (durationInSeconds < 2) {
+            setRecordingTime(0);
             hapticFeedback.error();
             setShowVideoTooShortModal(true);
             return;
           }
-          
+          setRecordingTime(0);
           setRecordedVideoUri(uri);
           setShowVideoPreview(true);
           try {
@@ -384,6 +375,12 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
       return;
     }
 
+    // Immediately stop the recording timer
+    if (recordingIntervalRef.current) {
+      clearInterval(recordingIntervalRef.current);
+      recordingIntervalRef.current = null;
+    }
+
     try {
       cameraRef.current.stopRecording();
       hapticFeedback.success();
@@ -397,7 +394,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
       );
     } finally {
       setIsRecording(false);
-      setRecordingTime(0);
+      // Don't reset recordingTime here - it's needed for duration validation
       setIsCameraReady(false);
       setCameraKey(prevKey => prevKey + 1);
     }
@@ -439,8 +436,8 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
   const validateVideoBeforeContinue = async (): Promise<boolean> => {
     if (!recordedVideoUri) return false;
 
-    // Check video duration
-    const durationInSeconds = recordingTime;
+    // Check video duration using ref for accuracy
+    const durationInSeconds = actualRecordingDurationRef.current;
     
     // Too short (< 3s)
     if (durationInSeconds < 3) {
