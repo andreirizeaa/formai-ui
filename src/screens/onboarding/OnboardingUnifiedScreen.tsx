@@ -815,7 +815,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
   setCurrentStepSelection(null);
 }, [currentStepIndex]);
 
-  // Auto-select second option for options steps
+  // Auto-select default options only for language and units steps
   useEffect(() => {
     if (!currentStep) return;
     
@@ -823,17 +823,24 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       const step = currentStep as OptionsStepConfig<keyof OnboardingData>;
       const currentValue = onboardingData[step.preferenceKey as keyof OnboardingData] as any;
       
-      // Only auto-select if no value is currently set
-      if (currentValue === null || currentValue === undefined || currentValue === '') {
-        // Select the second option (index 1) if it exists
-        if (step.options.length > 1) {
-          const secondOption = step.options[1];
-          updateOnboardingData(step.preferenceKey as any, secondOption.value);
-          setCurrentStepSelection(secondOption.value);
-          
-          // Handle language change if it's the language step
-          if (step.preferenceKey === 'language' && typeof secondOption.value === 'string') {
-            setLanguage(secondOption.value);
+      // Only auto-select if no value is currently set and it's language or units step
+      if ((currentValue === null || currentValue === undefined || currentValue === '') && 
+          (step.preferenceKey === 'language' || step.preferenceKey === 'unitSystem')) {
+        
+        if (step.preferenceKey === 'language') {
+          // Select English (first option) for language
+          const englishOption = step.options.find(option => option.value === 'en');
+          if (englishOption && typeof englishOption.value === 'string') {
+            updateOnboardingData(step.preferenceKey as any, englishOption.value);
+            setCurrentStepSelection(englishOption.value);
+            setLanguage(englishOption.value);
+          }
+        } else if (step.preferenceKey === 'unitSystem') {
+          // Select metric (first option) for units
+          const metricOption = step.options.find(option => option.value === 'metric');
+          if (metricOption) {
+            updateOnboardingData(step.preferenceKey as any, metricOption.value);
+            setCurrentStepSelection(metricOption.value);
           }
         }
       }
