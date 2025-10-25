@@ -8,6 +8,14 @@ const supabase = createClient(
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
 )
 
+// --- Random delay between 3 and 31 minutes ---
+async function randomDelay() {
+  const delayMinutes = Math.floor(Math.random() * (31 - 3 + 1)) + 3 // 3–31 minutes
+  const delayMs = delayMinutes * 60 * 1000
+  console.log(`Delaying execution by ${delayMinutes} minutes...`)
+  await new Promise((resolve) => setTimeout(resolve, delayMs))
+}
+
 // --- Inline helper for sending Expo push ---
 async function sendExpoPush(
   to: string,
@@ -60,6 +68,9 @@ function formatDate(date: Date): string {
 
 Deno.serve(async () => {
   try {
+    // 🕒 Wait a random time before executing main logic
+    await randomDelay()
+
     // Get today's and yesterday's dates
     const today = new Date()
     const yesterday = new Date(today)
