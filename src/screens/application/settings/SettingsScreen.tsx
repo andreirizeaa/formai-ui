@@ -490,7 +490,20 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
         await StoreReview.requestReview();
       } else {
         // Fallback: open app store page
-        await StoreReview.requestReview();
+        const appStoreUrl = 'https://apps.apple.com/us/app/form-ai-train-safer-now/id6749869538';
+        const canOpen = await Linking.canOpenURL(appStoreUrl);
+        
+        if (canOpen) {
+          await Linking.openURL(appStoreUrl);
+        } else {
+          showAlert(
+            'Error', 
+            'Unable to open the app store. Please try again later.',
+            undefined,
+            'SETTINGS_APP_STORE_ERROR',
+            new Error('Cannot open App Store URL')
+          );
+        }
       }
     } catch (error) {
       showAlert(
@@ -500,18 +513,6 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
         'SETTINGS_APP_STORE_ERROR',
         error
       );
-      // Still try to open the store as fallback
-      try {
-        await StoreReview.requestReview();
-      } catch (fallbackError) {
-        showAlert(
-          'Error', 
-          'Unable to open the app store. Please try again later.',
-          undefined,
-          'SETTINGS_APP_STORE_FALLBACK_ERROR',
-          fallbackError
-        );
-      }
     }
   };
 
@@ -787,7 +788,8 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
           </TouchableOpacity>
         </View>
         
-        {/* First Card */}
+        {/* Account */}
+        <Text style={styles.sectionTitle}>{i18n.t('settings.cardAccount')}</Text>
         <View style={styles.card} ref={settingsFirstCardRef}>
           <SettingsOption
             icon={<IdCard size={iconSize} color={iconColor} />}
@@ -846,20 +848,14 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
           />
         </View> */}
 
-        {/* Fourth Card */}
+        {/* Support */}
+        <Text style={styles.sectionTitle}>{i18n.t('settings.cardSupport')}</Text>
         <View style={styles.card}>
           <SettingsOption
             ref={settingsSupportEmailRef}
             icon={<MailPlus size={iconSize} color={iconColor} />}
             title={i18n.t('settings.supportEmail')}
             onPress={handleSupportEmailPress}
-          />
-          <View style={styles.separator} />
-          <SettingsOption
-            icon={<School2 size={iconSize} color={iconColor} />}
-            title={i18n.t('settings.replayTutorial')}
-            onPress={handleShowTutorialPress}
-            isLoading={isReplayingTutorial}
           />
           <View style={styles.separator} />
           <SettingsOption
@@ -902,30 +898,32 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
           </TouchableOpacity>
           <View style={styles.separator} />
           <SettingsOption
+            icon={<School2 size={iconSize} color={iconColor} />}
+            title={i18n.t('settings.replayTutorial')}
+            onPress={handleShowTutorialPress}
+            isLoading={isReplayingTutorial}
+          />
+          <View style={styles.separator} />
+          <SettingsOption
             icon={<Star size={iconSize} color={iconColor} />}
             title={i18n.t('settings.leaveRating')}
             onPress={handleLeaveRatingPress}
           />
-          <View style={styles.separator} />
           {/* Only show notifications option if user hasn't granted permission */}
           {!hasNotificationPermission && (
             <>
+              <View style={styles.separator} />
               <SettingsOption
                 icon={<BellRing size={iconSize} color={iconColor} />}
                 title={i18n.t('settings.turnOnNotifications')}
                 onPress={handleTurnOnNotificationsPress}
               />
-              <View style={styles.separator} />
             </>
           )}
-          <SettingsOption
-            icon={<UserMinus size={iconSize} color={iconColor} />}
-            title={i18n.t('settings.deleteAccount')}
-            onPress={handleDeleteAccountPress}
-          />
         </View>
 
-        {/* Fifth Card - Legal */}
+        {/* Legal */}
+        <Text style={styles.sectionTitle}>{i18n.t('settings.cardLegal')}</Text>
         <View style={styles.card}>
           <SettingsOption
             icon={<FileText size={iconSize} color={iconColor} />}
@@ -940,13 +938,20 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
           />
         </View>
 
-        {/* Sixth Card - Logout */}
+        {/* Account Actions */}
+        <Text style={styles.sectionTitle}>{i18n.t('settings.cardAccountActions')}</Text>
         <View style={styles.card}>
           <SettingsOption
             icon={<LogOut size={iconSize} color={iconColor} />}
             title={i18n.t('settings.logout')}
             onPress={handleLogoutPress}
             isLoading={isLoggingOut}
+          />
+          <View style={styles.separator} />
+          <SettingsOption
+            icon={<UserMinus size={iconSize} color={iconColor} />}
+            title={i18n.t('settings.deleteAccount')}
+            onPress={handleDeleteAccountPress}
           />
         </View>
 
@@ -1021,6 +1026,14 @@ const styles = StyleSheet.create({
     textAlign: 'left',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
     marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#8E8E93',
+    textAlign: 'left',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
+    marginBottom: 12,
   },
   card: {
     backgroundColor: '#FFFFFF',
@@ -1106,7 +1119,7 @@ const styles = StyleSheet.create({
   },
   profileSubtitleText: {
     fontSize: 14,
-    fontWeight: '400',
+    fontWeight: '500',
     color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
     marginTop: 2,

@@ -31,6 +31,10 @@ const ro = {
       "appTheme": "Temă aplicație",
       "appIcon": "Personalizează Icona Aplicație",
       "appIconTitle": "Icona Aplicație",
+      "cardAccount": "Cont",
+      "cardSupport": "Asistență",
+      "cardLegal": "Legal",
+      "cardAccountActions": "Acțiuni Cont",
       "whyLowQualityVideos": "De ce au videoclipurile o calitate scăzută?",
       "referFriends": "Recomandă prietenilor",
       "growStrongerTogether": "Deveniți mai puternici împreună!",
@@ -349,7 +353,7 @@ const ro = {
         }
       },
       "rating": {
-        "title": "Oferă-ne o evaluare",
+        "title": "Ești în locul potrivit",
         "subtitle": "Ajută-ne să îmbunătățim experiența",
         "skip": "Sari peste",
         "middleText": "Form AI este creat pentru pasionații de sală ca tine!"
@@ -480,7 +484,7 @@ const ro = {
         }
       },
       "costComparison": {
-        "title": "Formă perfectă la o fracțiune din costul antrenorilor",
+        "title": "Formă perfectă la o fracțiune din cost",
         "personalTrainer": "Antrenor personal",
         "withForm AI": "Cu Form AI",
         "costLess": "99% mai ieftin",

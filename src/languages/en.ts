@@ -31,6 +31,10 @@ const en = {
         appTheme: 'App theme',
         appIcon: 'Customise App Icon',
         appIconTitle: 'App Icon',
+        cardAccount: 'Account',
+        cardSupport: 'Support',
+        cardLegal: 'Legal',
+        cardAccountActions: 'Account Actions',
         whyLowQualityVideos: 'Why are my videos low quality?',
       referFriends: 'Refer Friends',
       growStrongerTogether: 'Grow stronger together!',
@@ -350,7 +354,7 @@ const en = {
         },
       },
       rating: {
-        title: 'Give us a rating',
+        title: "You're in the right place",
         subtitle: 'Help us improve by sharing your experience',
         skip: 'Skip',
         middleText: 'Form AI was made for gym lovers like you!',
@@ -485,7 +489,7 @@ const en = {
         },
       },
       costComparison: {
-        title: 'Perfect form at a fraction of the cost using Form AI vs trainers',
+        title: 'Perfect form at a fraction of the cost',
         personalTrainer: 'Personal trainer',
         withFormAI: 'With Form AI',
         costLess: '99% Less',

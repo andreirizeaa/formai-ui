@@ -30,6 +30,10 @@ const zh = {
       units: '更改单位',
         appIcon: '自定义应用图标',
         appIconTitle: '应用图标',
+      cardAccount: '账户',
+      cardSupport: '支持',
+      cardLegal: '法律',
+      cardAccountActions: '账户操作',
       whyLowQualityVideos: '为什么我的视频质量很低？',
       referFriends: '推荐朋友',
       growStrongerTogether: '一起变得更强！',
@@ -348,7 +352,7 @@ const zh = {
         },
       },
       rating: {
-        title: '给我们评分',
+        title: "你找对地方了",
         subtitle: '通过分享您的体验帮助我们改进',
         skip: '跳过',
         middleText: 'Form AI 是为像您这样的健身爱好者而制作的！',
@@ -482,7 +486,7 @@ const zh = {
         },
       },
       costComparison: {
-        title: '使用 Form AI 与教练相比，以极少的成本获得完美动作',
+        title: '以极少的成本获得完美动作',
         personalTrainer: '私人教练',
         withFormAI: '使用 Form AI',
         costLess: '少99%',

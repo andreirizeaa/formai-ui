@@ -199,7 +199,7 @@ export function PersonalDetailsScreen({
           </View>
 
           {/* Video Quality Card */}
-          <View style={styles.card}>
+          <View style={[styles.card, styles.videoQualityCard]}>
             <PersonalDetailOption
               title={i18n.t('personalDetails.videoQuality')}
               value={videoQuality}
@@ -260,16 +260,25 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: '#FFFFFF',
+    borderWidth: 0.5,
+    borderColor: '#f0f0f0',
     borderRadius: 18,
     paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: '#E5E5EA',
+    paddingVertical: 8,
     marginBottom: 16,
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   optionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 18,
+    paddingVertical: 4,
   },
   textContainer: {
     flex: 1,
@@ -290,8 +299,8 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
   iconContainer: {
-    width: 24,
-    height: 24,
+    width: 36,
+    height: 36,
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 12,
@@ -299,6 +308,10 @@ const styles = StyleSheet.create({
   separator: {
     height: 1,
     backgroundColor: '#E5E5EA',
+    marginVertical: 4,
+  },
+  videoQualityCard: {
+    paddingVertical: 16,
   },
   versionContainer: {
     alignItems: 'center',

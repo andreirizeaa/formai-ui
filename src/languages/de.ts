@@ -30,6 +30,10 @@ const de = {
       "appTheme": "App-Design",
       "appIcon": "App-Symbol anpassen",
       "appIconTitle": "App-Symbol",
+      "cardAccount": "Konto",
+      "cardSupport": "Support",
+      "cardLegal": "Rechtliches",
+      "cardAccountActions": "Kontoaktionen",
       "whyLowQualityVideos": "Warum ist die Videoqualität niedrig?",
       "referFriends": "Freunde einladen",
       "growStrongerTogether": "Gemeinsam stärker werden!",
@@ -348,7 +352,7 @@ const de = {
         }
       },
       "rating": {
-        "title": "Gib uns eine Bewertung",
+        "title": "Du bist am richtigen Ort",
         "subtitle": "Hilf uns durch dein Feedback",
         "skip": "Überspringen",
         "middleText": "Form AI wurde für Gym-Fans wie dich gemacht!"
@@ -479,7 +483,7 @@ const de = {
         }
       },
       "costComparison": {
-        "title": "Perfekte Form zu einem Bruchteil der Kosten eines Trainers",
+        "title": "Perfekte Form zu einem Bruchteil der Kosten",
         "personalTrainer": "Personal Trainer",
         "withForm AI": "Mit Form AI",
         "costLess": "99 % günstiger",

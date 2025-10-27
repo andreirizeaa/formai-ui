@@ -31,6 +31,10 @@ const ar = {
       "appTheme": "سمة التطبيق",
       "appIcon": "تخصيص أيقونة التطبيق",
       "appIconTitle": "أيقونة التطبيق",
+      "cardAccount": "حساب",
+      "cardSupport": "الدعم",
+      "cardLegal": "قانوني",
+      "cardAccountActions": "إجراءات الحساب",
       "whyLowQualityVideos": "لماذا جودة الفيديو منخفضة؟",
       "referFriends": "دعوة الأصدقاء",
       "growStrongerTogether": "لنصبح أقوى معًا!",
@@ -349,7 +353,7 @@ const ar = {
         }
       },
       "rating": {
-        "title": "امنحنا تقييمًا",
+        "title": "أنت في المكان الصحيح",
         "subtitle": "ساعدنا على التحسن بمشاركة تجربتك",
         "skip": "تخطي",
         "middleText": "تم إنشاء Form AI لعشّاق الجيم مثلك!"
@@ -480,7 +484,7 @@ const ar = {
         }
       },
       "costComparison": {
-        "title": "أداء مثالي بجزء بسيط من تكلفة المدربين",
+        "title": "أداء مثالي بجزء بسيط من التكلفة",
         "personalTrainer": "مدرب شخصي",
         "withForm AI": "مع Form AI",
         "costLess": "أقل 99%",

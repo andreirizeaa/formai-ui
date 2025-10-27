@@ -241,6 +241,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
   },
   saveButtonContainer: {
+    marginTop: 16,
     paddingHorizontal: 20,
     paddingBottom: 20,
   },

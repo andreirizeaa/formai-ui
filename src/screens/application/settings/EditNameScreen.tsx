@@ -168,8 +168,6 @@ export function EditNameScreen({ onBack }: EditNameScreenProps) {
                    <TextInput
                      ref={inputRef}
                      style={styles.searchInput}
-                     placeholder={i18n.t('settings.enterName') || 'Enter name'}
-                     placeholderTextColor="#8E8E93"
                      value={name}
                      onChangeText={setName}
                      autoCorrect={false}

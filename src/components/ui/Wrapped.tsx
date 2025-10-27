@@ -167,10 +167,12 @@ export const Wrapped = forwardRef<any, WrappedProps>(({
       <View style={[styles.statCard, styles.cardShadow, styles.favouriteExerciseCard, styles.solidCard]}>
         <Text style={styles.solidCardTitle}>{i18n.t('performance.favouriteExercise')}</Text>
         <View style={styles.solidCardValueContainer}>
-          <Text style={styles.solidCardValue}>
-            {filteredMetrics.favouriteLift || i18n.t('performance.noData')}
-          </Text>
-          {filteredMetrics.favouriteLift && <Crown width={24} height={24} color="#FFFFFF" style={{ marginLeft: 8 }} />}
+          <View style={styles.favouriteExerciseValueWrapper}>
+            <Text style={styles.solidCardValue}>
+              {filteredMetrics.favouriteLift || i18n.t('performance.noData')}
+            </Text>
+          </View>
+          {filteredMetrics.favouriteLift && <Crown width={24} height={24} color="#FFFFFF" style={{ marginLeft: 8, flexShrink: 0 }} />}
         </View>
       </View>
       </View>
@@ -329,6 +331,8 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 26,
     backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#f0f0f0',
   },
   statsRow: {
     flexDirection: 'row',
@@ -489,6 +493,11 @@ const styles = StyleSheet.create({
     width: '100%',
     justifyContent: 'center',
     alignItems: 'flex-start',
+  },
+  favouriteExerciseValueWrapper: {
+    flexBasis: '70%',
+    flexGrow: 0,
+    flexShrink: 1,
   },
   logoText: {
     color: '#000000',

@@ -26,6 +26,7 @@ import { useUserDetails } from './src/context/UserDetailsContext';
 import { useLiftData } from './src/context/LiftDataContext';
 import { useUserCheckIns } from './src/context/UserCheckInsContext';
 import { showAlert } from './src/services/alertService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type AppRoute = 'SPLASH' | 'ONBOARDING_WELCOME' | 'ONBOARDING_PAYMENT' | 'ACCOUNT_LOADING' | 'MAIN';
 

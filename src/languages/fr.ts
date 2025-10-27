@@ -31,6 +31,10 @@ const fr = {
       "appTheme": "Thème de l'app",
       "appIcon": "Personnaliser Icône App",
       "appIconTitle": "Icône App",
+      "cardAccount": "Compte",
+      "cardSupport": "Support",
+      "cardLegal": "Légal",
+      "cardAccountActions": "Actions du Compte",
       "whyLowQualityVideos": "Pourquoi mes vidéos sont-elles de faible qualité ?",
       "referFriends": "Parrainer des amis",
       "growStrongerTogether": "Devenez plus forts ensemble !",
@@ -349,7 +353,7 @@ const fr = {
         }
       },
       "rating": {
-        "title": "Donnez-nous une note",
+        "title": "Vous êtes au bon endroit",
         "subtitle": "Aidez-nous à nous améliorer",
         "skip": "Ignorer",
         "middleText": "Form AI est fait pour les passionnés de salle comme vous !"
@@ -480,7 +484,7 @@ const fr = {
         }
       },
       "costComparison": {
-        "title": "Une technique parfaite pour une fraction du coût d’un coach",
+        "title": "Une technique parfaite pour une fraction du coût",
         "personalTrainer": "Coach personnel",
         "withForm AI": "Avec Form AI",
         "costLess": "99 % moins cher",

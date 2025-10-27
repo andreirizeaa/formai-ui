@@ -38,6 +38,7 @@ import { fetchUserById } from '../../services/userService';
 import { registerAndSaveExpoPushToken } from '../../services/push';
 import { usePurchases } from '../../context/PurchasesContext';
 import { supabase } from '../../lib/supabase';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface OnboardingUnifiedScreenProps {}
 
@@ -346,6 +347,11 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       ],
     },
     {
+      type: 'rating',
+      id: 'rating',
+      title: i18n.t('onboarding.rating.title'),
+    },
+    {
       type: 'options',
       id: 'gender',
       title: i18n.t('onboarding.gender.title'),
@@ -541,12 +547,6 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
         { value: 'other', label: i18n.t('onboarding.discovery.other'), icon: <BookCopy size={iconSize} color={iconColor} /> },
       ],
     },
-    // {
-    //   type: 'rating',
-    //   id: 'rating',
-    //   title: i18n.t('onboarding.rating.title'),
-    //   subtitle: i18n.t('onboarding.rating.subtitle'),
-    // },
     {
       type: 'referral',
       id: 'referralCode',
@@ -605,12 +605,30 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
   const percentageBoxHeight = useMemo(() => new Animated.Value(0), []);
   const formaiBoxHeight = useMemo(() => new Animated.Value(0), []);
   
+  // Animation values for bar opacity
+  const percentageBoxOpacity = useMemo(() => new Animated.Value(0), []);
+  const formaiBoxOpacity = useMemo(() => new Animated.Value(0), []);
+  
+  // Animation values for text inside the bars
+  const percentageTextOpacity = useMemo(() => new Animated.Value(0), []);
+  const formaiTextOpacity = useMemo(() => new Animated.Value(0), []);
+  
+  // Animation value for description text
+  const descriptionOpacity = useMemo(() => new Animated.Value(0), []);
+  
+  // Animation value for graph subtitle
+  const graphSubtitleOpacity = useMemo(() => new Animated.Value(0), []);
+  
   // Animation value for finger icon
   const fingerTranslateY = useMemo(() => new Animated.Value(0), []);
   
   // State for confetti animation delay
   const [showConfetti, setShowConfetti] = useState(false);
   const [showAllDoneConfetti, setShowAllDoneConfetti] = useState(false);
+
+  // State for rating delay
+  const [ratingButtonDisabled, setRatingButtonDisabled] = useState(false);
+  const ratingTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Sync onboarding language with current language from AsyncStorage
   useEffect(() => {
@@ -715,25 +733,73 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
     if (!currentStep) return;
     
     if (currentStep.id === 'trainSafer' || currentStep.id === 'costComparison') {
-      // Animate boxes growing from 0 height
-      Animated.parallel([
-        Animated.timing(percentageBoxHeight, {
-          toValue: 150,
-          duration: 400,
-          useNativeDriver: false,
-        }),
-        Animated.timing(formaiBoxHeight, {
-          toValue: 50,
-          duration: 400,
-          useNativeDriver: false,
-        }),
-      ]).start();
+      // Reset all animation values
+      percentageBoxHeight.setValue(0);
+      formaiBoxHeight.setValue(0);
+      percentageBoxOpacity.setValue(0);
+      formaiBoxOpacity.setValue(0);
+      percentageTextOpacity.setValue(0);
+      formaiTextOpacity.setValue(0);
+      descriptionOpacity.setValue(0);
+      
+      // Start animation sequence after 50ms delay
+      setTimeout(() => {
+        // Step 1: Animate boxes growing from 0 height with opacity
+        Animated.parallel([
+          Animated.timing(percentageBoxHeight, {
+            toValue: 150,
+            duration: 600,
+            useNativeDriver: false,
+          }),
+          Animated.timing(formaiBoxHeight, {
+            toValue: 50,
+            duration: 600,
+            useNativeDriver: false,
+          }),
+          Animated.timing(percentageBoxOpacity, {
+            toValue: 1,
+            duration: 600,
+            useNativeDriver: false,
+          }),
+          Animated.timing(formaiBoxOpacity, {
+            toValue: 1,
+            duration: 600,
+            useNativeDriver: false,
+          }),
+        ]).start(() => {
+          // Step 2: After containers animate, show the text values
+          Animated.parallel([
+            Animated.timing(percentageTextOpacity, {
+              toValue: 1,
+              duration: 300,
+              useNativeDriver: true,
+            }),
+            Animated.timing(formaiTextOpacity, {
+              toValue: 1,
+              duration: 300,
+              useNativeDriver: true,
+            }),
+          ]).start(() => {
+            // Step 3: After text values appear, animate description
+            Animated.timing(descriptionOpacity, {
+              toValue: 1,
+              duration: 400,
+              useNativeDriver: true,
+            }).start();
+          });
+        });
+      }, 50);
     } else {
       // Reset animation values when leaving info step
       percentageBoxHeight.setValue(0);
       formaiBoxHeight.setValue(0);
+      percentageBoxOpacity.setValue(0);
+      formaiBoxOpacity.setValue(0);
+      percentageTextOpacity.setValue(0);
+      formaiTextOpacity.setValue(0);
+      descriptionOpacity.setValue(0);
     }
-  }, [currentStep, percentageBoxHeight, formaiBoxHeight]);
+  }, [currentStep, percentageBoxHeight, formaiBoxHeight, percentageBoxOpacity, formaiBoxOpacity, percentageTextOpacity, formaiTextOpacity, descriptionOpacity]);
 
   // Finger animation effect
   useEffect(() => {
@@ -763,6 +829,27 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       fingerTranslateY.setValue(0);
     }
   }, [currentStep, fingerTranslateY]);
+
+  // Graph subtitle animation effect
+  useEffect(() => {
+    if (!currentStep) return;
+    
+    if (currentStep.type === 'graph') {
+      // Reset and animate subtitle with delay
+      graphSubtitleOpacity.setValue(0);
+      
+      setTimeout(() => {
+        Animated.timing(graphSubtitleOpacity, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: true,
+        }).start();
+      }, 800); // Delay to show after graph animation starts
+    } else {
+      // Reset when leaving graph step
+      graphSubtitleOpacity.setValue(0);
+    }
+  }, [currentStep, graphSubtitleOpacity]);
 
   useEffect(() => {
     if (!currentStep) return;
@@ -799,6 +886,48 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
     }
   }, [currentStep]);
 
+  // Rating step delay effect - disable button for 3 seconds
+  useEffect(() => {
+    if (!currentStep || currentStep.type !== 'rating') {
+      return;
+    }
+
+    const checkAndApplyDelay = async () => {
+      try {
+        // Check if we've already shown the delay in this session
+        const delayShown = await AsyncStorage.getItem('rating_delay_shown');
+        
+        if (!delayShown) {
+          // Mark that we've shown the delay
+          await AsyncStorage.setItem('rating_delay_shown', 'true');
+          
+          // Disable the button
+          setRatingButtonDisabled(true);
+          
+          // Enable the button after 3 seconds
+          ratingTimerRef.current = setTimeout(() => {
+            setRatingButtonDisabled(false);
+          }, 1500);
+        } else {
+          // Already shown, keep button enabled
+          setRatingButtonDisabled(false);
+        }
+      } catch (error) {
+        // If there's an error, just enable the button
+        setRatingButtonDisabled(false);
+      }
+    };
+
+    checkAndApplyDelay();
+
+    // Cleanup function to clear timer if component unmounts
+    return () => {
+      if (ratingTimerRef.current) {
+        clearTimeout(ratingTimerRef.current);
+        ratingTimerRef.current = null;
+      }
+    };
+  }, [currentStep]);
 
   // Analytics tracking
   useEffect(() => {
@@ -1280,7 +1409,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
   } else if (currentStep.type === 'measurements') {
     nextDisabled = !onboardingData.metricHeight || !onboardingData.metricWeight;
   } else if (currentStep.type === 'rating') {
-    nextDisabled = false; // enable default next for rating step
+    nextDisabled = ratingButtonDisabled; // disable for 3 seconds, then enable
   } else if (currentStep.type === 'info') {
     nextDisabled = false; // always enabled for info step
   } else if (currentStep.type === 'gymChallengeInfo') {
@@ -1297,8 +1426,8 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
     nextDisabled = false; // always enabled for allDone step
   }
 
-  const nextHandler = currentStep.type === 'rating' ? handleRateFormAI : handleNext;
-  const nextLabel = currentStep.type === 'rating' ? 'Rate FormAI' : i18n.t('next');
+  const nextHandler = handleNext;
+  const nextLabel = i18n.t('next');
 
   return (
     <OnboardingLayout
@@ -1330,11 +1459,11 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                   <View style={styles.whiteBoxContainer}>
                     <Text style={[styles.sectionTitle, { color: appColors.onboarding.comparison.sectionTitle }]}>
                       {i18n.t('onboarding.trainSafer.withoutFormAI')}
-                    </Text>
-                        <Animated.View style={[styles.percentageBox, { backgroundColor: appColors.onboarding.comparison.percentageBox.background, height: percentageBoxHeight }]}>
-                        <Text style={[styles.percentageText, { color: appColors.onboarding.comparison.percentageBox.text }]}>
+                      </Text>
+                        <Animated.View style={[styles.percentageBox, { backgroundColor: appColors.onboarding.comparison.percentageBox.background, height: percentageBoxHeight, opacity: percentageBoxOpacity }]}>
+                        <Animated.Text style={[styles.percentageText, { color: appColors.onboarding.comparison.percentageBox.text, opacity: percentageTextOpacity }]}>
                           60%
-                        </Text>
+                        </Animated.Text>
                       </Animated.View>
                   </View>
                 </View>
@@ -1345,18 +1474,18 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                     <Text style={[styles.sectionTitle, { color: appColors.onboarding.comparison.sectionTitle }]}>
                       {i18n.t('onboarding.trainSafer.withFormAI')}
                     </Text>
-                        <Animated.View style={[styles.formaiBox, { backgroundColor: appColors.onboarding.comparison.formaiBox.background, height: formaiBoxHeight }]}>
-                        <Text style={[styles.formaiText, { color: appColors.onboarding.comparison.formaiBox.text }]}>
+                        <Animated.View style={[styles.formaiBox, { backgroundColor: appColors.onboarding.comparison.formaiBox.background, height: formaiBoxHeight, opacity: formaiBoxOpacity }]}>
+                        <Animated.Text style={[styles.formaiText, { color: appColors.onboarding.comparison.formaiBox.text, opacity: formaiTextOpacity }]}>
                           3x less
-                        </Text>
+                        </Animated.Text>
                       </Animated.View>
                   </View>
                 </View>
               </View>
 
-            <Text style={[styles.description, { color: appColors.onboarding.comparison.description }]}>
+            <Animated.Text style={[styles.description, { color: appColors.onboarding.comparison.description, opacity: descriptionOpacity }]}>
               {i18n.t('onboarding.trainSafer.description')}
-            </Text>
+            </Animated.Text>
           </LinearGradient>
         </View>
       )}
@@ -1377,10 +1506,10 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                     <Text style={[styles.sectionTitle, { color: appColors.onboarding.comparison.sectionTitle }]}>
                       {i18n.t('onboarding.costComparison.personalTrainer')}
                     </Text>
-                        <Animated.View style={[styles.percentageBox, { backgroundColor: appColors.onboarding.comparison.percentageBox.background, height: percentageBoxHeight }]}>
-                        <Text style={[styles.percentageText, { color: appColors.onboarding.comparison.percentageBox.text }]}>
+                        <Animated.View style={[styles.percentageBox, { backgroundColor: appColors.onboarding.comparison.percentageBox.background, height: percentageBoxHeight, opacity: percentageBoxOpacity }]}>
+                        <Animated.Text style={[styles.percentageText, { color: appColors.onboarding.comparison.percentageBox.text, opacity: percentageTextOpacity }]}>
                           $5000+/yr
-                        </Text>
+                        </Animated.Text>
                       </Animated.View>
                   </View>
                 </View>
@@ -1390,20 +1519,39 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                   <View style={styles.whiteBoxContainer}>
                     <Text style={[styles.sectionTitle, { color: appColors.onboarding.comparison.sectionTitle }]}>
                       {i18n.t('onboarding.costComparison.withFormAI')}
-                    </Text>
-                        <Animated.View style={[styles.formaiBox, { backgroundColor: appColors.onboarding.comparison.formaiBox.background, height: formaiBoxHeight }]}>
-                        <Text style={[styles.formaiText, { color: appColors.onboarding.comparison.formaiBox.text }]}>
+                      </Text>
+                        <Animated.View style={[styles.formaiBox, { backgroundColor: appColors.onboarding.comparison.formaiBox.background, height: formaiBoxHeight, opacity: formaiBoxOpacity }]}>
+                        <Animated.Text style={[styles.formaiText, { color: appColors.onboarding.comparison.formaiBox.text, opacity: formaiTextOpacity }]}>
                           {i18n.t('onboarding.costComparison.costLess')}
-                        </Text>
+                        </Animated.Text>
                       </Animated.View>
                   </View>
                 </View>
               </View>
 
-            <Text style={[styles.description, { color: appColors.onboarding.comparison.description }]}>
+            <Animated.Text style={[styles.description, { color: appColors.onboarding.comparison.description, opacity: descriptionOpacity }]}>
               {i18n.t('onboarding.costComparison.description')}
-            </Text>
+            </Animated.Text>
           </LinearGradient>
+          
+          {/* Source text */}
+          <View style={styles.sourceContainer}>
+            <TouchableOpacity 
+              onPress={async () => {
+                hapticFeedback.selection();
+                try {
+                  await Linking.openURL('https://www.thumbtack.com/p/personal-trainer-cost');
+                } catch (error) {
+                  console.warn('Failed to open source link:', error);
+                }
+              }}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.sourceText, { color: appColors.onboarding.comparison.source.text }]}>
+                Source
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
 
@@ -1604,9 +1752,9 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
               bezier
               style={styles.chart}
             />
-            <Text style={[styles.graphSubtitle, { color: appColors.onboarding.graph.subtitle }]}>
+            <Animated.Text style={[styles.graphSubtitle, { color: appColors.onboarding.graph.subtitle, opacity: graphSubtitleOpacity }]}>
               {i18n.t('onboarding.potentialGraph.subtitle')}
-            </Text>
+            </Animated.Text>
           </LinearGradient>
         </AnimatedGraphContainer>
       )}
@@ -1616,13 +1764,13 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
           <FlatList
             data={(currentStep as OptionsStepConfig<keyof OnboardingData>).options}
             keyExtractor={item => String(item.value)}
-            renderItem={({ item }) => {
+            renderItem={({ item, index }) => {
               const selectedValue = onboardingData['language'] as any;
               return (
                 <AnimatedOptionButton
                   onPress={() => handleSelectOptionStep(item.value)}
                   isSelected={selectedValue === item.value}
-                  delay={0}
+                  delay={index * 100}
                   hasIcon={!!(item.icon || item.iconImage)}
                 >
                   <View style={currentStep.id === 'language' || currentStep.id === 'units' || currentStep.id === 'gender' || currentStep.id === 'ageRange' ? styles.optionContentRowCentered : styles.optionContentRow}>
@@ -1921,107 +2069,203 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
 
 
       {currentStep.type === 'rating' && (
-        <View style={styles.ratingContainer}> 
-          <View style={styles.lottieContainer}>
-            <LottieView
-              source={require('../../../assets/animations/star-rating.json')}
-              autoPlay
-              loop={false}
-              style={{ width: 320, height: 300 }}
-            />
+        <ScrollView 
+          style={styles.ratingContainer}
+          contentContainerStyle={styles.ratingContentContainer}
+          showsVerticalScrollIndicator={false}
+          bounces
+          alwaysBounceVertical={false}
+          onScrollBeginDrag={() => {
+            // Enable button immediately when user starts scrolling
+            if (ratingTimerRef.current) {
+              clearTimeout(ratingTimerRef.current);
+              ratingTimerRef.current = null;
+            }
+            setRatingButtonDisabled(false);
+          }}
+        >
+          {/* Rating Card */}
+          <View style={styles.ratingCard}>
+            {/* Left Feather */}
+            <View style={styles.featherContainer}>
+              <Image
+                source={require('../../../assets/ratings/award-feather-left.svg')}
+                style={styles.featherIcon}
+                contentFit="contain"
+              />
+            </View>
+
+            {/* Center Content */}
+            <View style={styles.ratingCenter}>
+              <Image
+                source={require('../../../assets/ratings/5-stars.svg')}
+                style={styles.starsIcon}
+                contentFit="contain"
+              />
+            </View>
+
+            {/* Right Feather */}
+            <View style={styles.featherContainer}>
+              <Image
+                source={require('../../../assets/ratings/award-feather-right.svg')}
+                style={styles.featherIcon}
+                contentFit="contain"
+              />
+            </View>
           </View>
-          <View style={{ alignItems: 'center', justifyContent: 'center', marginBottom: 20, marginTop: -80 }}>
-            <Text style={{ fontSize: 24, fontWeight: '500', textAlign: 'center', width: '80%', color: '#000000' }}>
+
+          <View style={styles.ratingMiddleTextContainer}>
+            <Text style={styles.ratingMiddleText}>
               {i18n.t('onboarding.rating.middleText')}
             </Text>
           </View>
+
+          {/* Overlapping Profile Images */}
+          <View style={styles.profileImagesContainer}>
+            <View style={[styles.profileImageWrapper, { zIndex: 0 }]}>
+              <Image
+                source={require('../../../assets/ratings/arian.png')}
+                style={styles.profileImageCircle}
+                contentFit="cover"
+              />
+            </View>
+            <View style={[styles.profileImageWrapper, { zIndex: 1, marginLeft: -14 }]}>
+              <Image 
+                source={require('../../../assets/ratings/catie.png')}
+                style={styles.profileImageCircle}
+                contentFit="cover"
+              />
+            </View>
+            <View style={[styles.profileImageWrapper, { zIndex: 2, marginLeft: -14 }]}>
+              <Image
+                source={require('../../../assets/ratings/amit.png')}
+                style={styles.profileImageCircle}
+                contentFit="cover"
+              />
+            </View>
+            <View style={[styles.profileImageWrapper, { zIndex: 3, marginLeft: -14 }]}>
+              <Image
+                source={require('../../../assets/ratings/sami.png')}
+                style={styles.profileImageCircle}
+                contentFit="cover"
+              />
+            </View>
+          </View>
           
-          {/* Testimonial Cards in ScrollView */}
-          <ScrollView 
-            style={styles.testimonialsScrollView}
-            contentContainerStyle={styles.testimonialsContentContainer}
-            showsVerticalScrollIndicator={false}
-            bounces
-            alwaysBounceVertical={false}
-          >
-            <View style={[
-              styles.testimonialBox, 
-              { 
-                backgroundColor: 'rgba(226, 232, 240, 0.6)',
-              }
-            ]}>
-              <View style={styles.testimonialHeader}>
-                <Image 
-                  source={{ uri: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face' }}
-                  style={styles.profileImage as any}
-                />
+          {/* Testimonial Cards */}
+            <AnimatedInfoCard delay={50}>
+            <View style={styles.testimonialBoxOuter}>
+              <LinearGradient
+                colors={['#e2e8f0', '#f5f3ff']}
+                locations={[0, 0.3]}
+                style={styles.testimonialGradient}
+                start={{ x: 0.6, y: 0 }}
+                end={{ x: 0, y: 1 }}
+              >
+                <View style={styles.testimonialHeader}>
+                <View style={styles.testimonialProfileImageWrapper}>
+                  <Image 
+                    source={require('../../../assets/ratings/catie.png')}
+                    style={styles.profileImageInner}
+                    contentFit="cover"
+                  />
+                </View>
                 <View style={styles.userInfo}>
                   <View style={styles.nameStarsRow}>
                                     <Text style={[styles.userName, { color: '#000000' }]}>
-                  Sarah Johnson
+                  Catie Mc Nama
                 </Text>
-                    <Text style={styles.userStars}>⭐⭐⭐⭐⭐</Text>
+                    <Image
+                      source={require('../../../assets/ratings/5-stars.svg')}
+                      style={styles.testimonialStarsIcon}
+                      contentFit="contain"
+                    />
                   </View>
                 </View>
               </View>
               <Text style={[styles.testimonialText, { color: '#000000' }]}>
-                "I lost 12 lbs in 6 weeks! The form corrections helped me avoid injury and I finally feel confident in the gym. Best investment I've made for my fitness!"
+              As a gym girl that also dances I love this app. It lets me push harder in the gym without the fear of injuring myself and not being able to compete.
               </Text>
+              </LinearGradient>
             </View>
+            </AnimatedInfoCard>
 
             {/* Second Testimonial */}
-            <View style={[
-              styles.testimonialBox, 
-              { 
-                backgroundColor: 'rgba(226, 232, 240, 0.6)',
-              }
-            ]}>
-              <View style={styles.testimonialHeader}>
-                <Image 
-                  source={{ uri: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face' }}
-                  style={styles.profileImage as any}
-                />
+            <AnimatedInfoCard delay={100}>
+            <View style={styles.testimonialBoxOuter}>
+              <LinearGradient
+                colors={['#e2e8f0', '#f5f3ff']}
+                locations={[0, 0.3]}
+                style={styles.testimonialGradient}
+                start={{ x: 0.6, y: 0 }}
+                end={{ x: 0, y: 1 }}
+              >
+                <View style={styles.testimonialHeader}>
+                <View style={styles.testimonialProfileImageWrapper}>
+                  <Image 
+                    source={require('../../../assets/ratings/kiril.png')}
+                    style={styles.profileImageInner}
+                    contentFit="cover"
+                  />
+                </View>
                 <View style={styles.userInfo}>
                   <View style={styles.nameStarsRow}>
                                     <Text style={[styles.userName, { color: '#000000' }]}>
-                  Mike Chen
+                  Kiril D
                 </Text>
-                    <Text style={styles.userStars}>⭐⭐⭐⭐⭐</Text>
+                    <Image
+                      source={require('../../../assets/ratings/5-stars.svg')}
+                      style={styles.testimonialStarsIcon}
+                      contentFit="contain"
+                    />
                   </View>
                 </View>
               </View>
               <Text style={[styles.testimonialText, { color: '#000000' }]}>
-                "Perfect form coaching! I increased my deadlift by 40lbs safely. The real-time feedback is incredible and prevented me from making costly mistakes."
+                Trying to get back into a sustainable routine is so much easier and motivating with Form AI. Really helped me understand my technique and make it engaging while saving $$$ on a personal trainer.
               </Text>
+              </LinearGradient>
             </View>
+            </AnimatedInfoCard>
 
             {/* Third Testimonial */}
-            <View style={[
-              styles.testimonialBox, 
-              { 
-                backgroundColor: 'rgba(226, 232, 240, 0.6)',
-              }
-            ]}>
-              <View style={styles.testimonialHeader}>
-                <Image 
-                  source={{ uri: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face' }}
-                  style={styles.profileImage as any}
-                />
+            <AnimatedInfoCard delay={200}>
+            <View style={[styles.testimonialBoxOuter, { marginBottom: 20 }]}>
+              <LinearGradient
+                colors={['#e2e8f0', '#f5f3ff']}
+                locations={[0, 0.3]}
+                style={styles.testimonialGradient}
+                start={{ x: 0.6, y: 0 }}
+                end={{ x: 0, y: 1 }}
+              >
+                <View style={styles.testimonialHeader}>
+                <View style={styles.testimonialProfileImageWrapper}>
+                  <Image 
+                    source={require('../../../assets/ratings/sami.png')}
+                    style={styles.profileImageInner}
+                    contentFit="cover"
+                  />
+                </View>
                 <View style={styles.userInfo}>
                   <View style={styles.nameStarsRow}>
                                     <Text style={[styles.userName, { color: '#000000' }]}>
-                  Emma Rodriguez
+                  Sami Syed
                 </Text>
-                    <Text style={styles.userStars}>⭐⭐⭐⭐⭐</Text>
+                    <Image
+                      source={require('../../../assets/ratings/5-stars.svg')}
+                      style={styles.testimonialStarsIcon}
+                      contentFit="contain"
+                    />
                   </View>
                 </View>
               </View>
               <Text style={[styles.testimonialText, { color: '#000000' }]}>
-                "Game changer for beginners! I went from being intimidated by the gym to crushing my workouts with confidence. Worth every penny!"
+                Simple way to actually understand how to improve form in the gym. Use it daily now, I've noticed I'm much more aware of my technique.
               </Text>
+              </LinearGradient>
             </View>
-          </ScrollView>
-        </View>
+            </AnimatedInfoCard>
+        </ScrollView>
       )}
 
       {currentStep.type === 'referral' && (
@@ -2033,7 +2277,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                 placeholder={i18n.t('onboarding.referralCode.placeholder')}
                 placeholderTextColor="#8E8E93"
                 value={referralCode}
-                onChangeText={(text) => setReferralCode(text.toUpperCase())}
+                onChangeText={(text) => setReferralCode(text.replace(/\s/g, '').toUpperCase())}
                 autoCapitalize="characters"
                 autoCorrect={false}
                 keyboardType="ascii-capable"
@@ -2321,8 +2565,85 @@ const styles = StyleSheet.create({
   },
   // Rating styles
   ratingContainer: {
-    flex: 1,
-    paddingVertical: 20,
+    flexGrow: 1,
+  },
+  ratingContentContainer: {
+    paddingTop: 0,
+    paddingBottom: 20,
+    paddingHorizontal: 2,
+    gap: 12,
+  },
+  ratingCard: {
+    width: '100%',
+    minHeight: 90,
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
+    borderRadius: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    marginBottom: 20,
+  },
+  featherContainer: {
+    flex: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  featherIcon: {
+    width: 40,
+    height: 60,
+  },
+  ratingCenter: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    flex: 2,
+    marginBottom: 5,
+  },
+  ratingNumber: {
+    marginTop: 2,
+    fontSize: 26,
+    fontWeight: '700',
+    color: '#000000',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
+  },
+  starsIcon: {
+    width: 140,
+    height: 33,
+  },
+  ratingMiddleTextContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+    marginTop: 8,
+  },
+  ratingMiddleText: {
+    fontSize: 28,
+    fontWeight: '700',
+    textAlign: 'center',
+    width: '80%',
+    color: '#000000',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
+  profileImagesContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
+  profileImageWrapper: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    overflow: 'hidden',
+    backgroundColor: '#FFFFFF',
+  },
+  profileImageCircle: {
+    width: '100%',
+    height: '100%',
   },
   lottieContainer: {
     alignItems: 'center',
@@ -2396,54 +2717,55 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   // Testimonial styles
-  testimonialBox: {
-    marginTop: 20,
-    padding: 20,
-    borderRadius: 15,
-    shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+  testimonialBoxOuter: {
+    marginTop: 4,
+    borderRadius: 22,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#f0f0f0',
+  },
+  testimonialGradient: {
+    flex: 1,
+    borderRadius: 20,
+    padding: 16,
   },
   testimonialHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 10,
   },
-  profileImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+  testimonialProfileImageWrapper: {
+    width: 46,
+    height: 46,
+    borderRadius: 22,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    overflow: 'hidden',
+    backgroundColor: '#FFFFFF',
     marginRight: 10,
+  },
+  profileImageInner: {
+    width: '100%',
+    height: '100%',
   },
   userInfo: {
     flex: 1,
   },
   userName: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 17,
+    fontWeight: '700',
   },
   userStars: {
     fontSize: 14,
     color: '#FFD700', // Gold color for stars
   },
+  testimonialStarsIcon: {
+    width: 85,
+    height: 24,
+  },
   testimonialText: {
-    fontSize: 15,
-    lineHeight: 22,
-  },
-  testimonialsScrollView: {
-    flexGrow: 1,
-    marginBottom: -22,
-  },
-  testimonialsContentContainer: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    paddingVertical: 20,
-    gap: 12,
+    fontSize: 17,
+    lineHeight: 23,
   },
   nameStarsRow: {
     flexDirection: 'row',
@@ -2536,6 +2858,7 @@ const styles = StyleSheet.create({
     backgroundColor: appColors.onboarding.comparison.whiteBox.background,
     borderRadius: 18,
     padding: 0,
+    overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -2569,9 +2892,13 @@ const styles = StyleSheet.create({
   percentageBox: {
     width: 125,
     height: 150,
-    borderRadius: 18,
-    justifyContent: 'center',
+    borderTopLeftRadius: 18,
+    borderTopRightRadius: 18,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+    justifyContent: 'flex-end',
     alignItems: 'center',
+    paddingBottom: 16,
     margin: 0,
     marginTop: 'auto',
     marginBottom: -2,
@@ -2579,12 +2906,15 @@ const styles = StyleSheet.create({
   },
   percentageText: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: '700',
   },
   formaiBox: {
     width: 125,
     height: 50,
-    borderRadius: 18,
+    borderTopLeftRadius: 18,
+    borderTopRightRadius: 18,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
     justifyContent: 'center',
     alignItems: 'center',
     margin: 0,
@@ -2602,6 +2932,18 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: 24,
+  },
+  sourceContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 8,
+  },
+  sourceText: {
+    fontSize: 14,
+    fontWeight: '500',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+    textAlign: 'center',
+    textDecorationLine: 'underline',
   },
   // Perfect form goal message styles
   perfectFormGoalMessageContainer: {

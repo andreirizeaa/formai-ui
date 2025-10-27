@@ -30,6 +30,10 @@ const it = {
       units: 'Cambia Unità',
         appIcon: 'Personalizza Icona App',
         appIconTitle: 'Icona App',
+      cardAccount: 'Account',
+      cardSupport: 'Supporto',
+      cardLegal: 'Legale',
+      cardAccountActions: 'Azioni Account',
       whyLowQualityVideos: 'Perché i miei video hanno bassa qualità?',
       referFriends: 'Invita Amici',
       growStrongerTogether: 'Diventiamo più forti insieme!',
@@ -348,7 +352,7 @@ const it = {
         },
       },
       rating: {
-        title: 'Dacci una valutazione',
+        title: "Sei nel posto giusto",
         subtitle: 'Aiutaci a migliorare condividendo la tua esperienza',
         skip: 'Salta',
         middleText: 'Form AI è stato creato per gli amanti della palestra come te!',
@@ -482,7 +486,7 @@ const it = {
         },
       },
       costComparison: {
-        title: 'Forma perfetta a una frazione del costo usando Form AI vs allenatori',
+        title: 'Forma perfetta a una frazione del costo',
         personalTrainer: 'Personal trainer',
         withFormAI: 'Con Form AI',
         costLess: '99% Meno',

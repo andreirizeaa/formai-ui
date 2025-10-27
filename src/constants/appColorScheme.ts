@@ -73,6 +73,9 @@ export const appColors = {
         text: '#FFFFFF',
       },
       description: '#000000',
+      source: {
+        text: '#8E8E93',
+      },
     },
     
     // Gym challenge info colors

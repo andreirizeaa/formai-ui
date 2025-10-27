@@ -30,6 +30,10 @@ const pt = {
       units: 'Alterar Unidades',
         appIcon: 'Personalizar Ícone do App',
         appIconTitle: 'Ícone do App',
+      cardAccount: 'Conta',
+      cardSupport: 'Suporte',
+      cardLegal: 'Legal',
+      cardAccountActions: 'Ações da Conta',
       whyLowQualityVideos: 'Por que meus vídeos têm baixa qualidade?',
       referFriends: 'Indicar Amigos',
       growStrongerTogether: 'Cresçam mais fortes juntos!',
@@ -348,7 +352,7 @@ const pt = {
         },
       },
       rating: {
-        title: 'Nos dê uma avaliação',
+        title: "Você está no lugar certo",
         subtitle: 'Nos ajude a melhorar compartilhando sua experiência',
         skip: 'Pular',
         middleText: 'Form AI foi feito para amantes da academia como você!',
@@ -482,7 +486,7 @@ const pt = {
         },
       },
       costComparison: {
-        title: 'Forma perfeita por uma fração do custo usando Form AI vs personal trainers',
+        title: 'Forma perfeita por uma fração do custo',
         personalTrainer: 'Personal trainer',
         withFormAI: 'Com Form AI',
         costLess: '99% Menos',
