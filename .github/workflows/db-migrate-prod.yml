@@ -1,0 +1,21 @@
+name: DB Migrations (Prod only, gated)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  migrate_prod:
+    runs-on: ubuntu-latest
+    environment: prod       # triggers the approval gate + uses env secrets
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Apply migrations to PROD
+        run: |
+          supabase db push \
+            --db-url "${{ secrets.PROD_DB_URL }}" \
+            --non-interactive
