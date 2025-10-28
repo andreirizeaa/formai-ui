@@ -15,12 +15,11 @@ jobs:
         with:
           version: latest
 
+      - name: Login to Supabase
+        run: supabase login --token "${{ secrets.PROD_SUPABASE_ACCESS_TOKEN }}"
+
       - name: Link to Prod
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.PROD_SUPABASE_ACCESS_TOKEN }}
-        run: |
-          supabase link --project-ref "${{ secrets.PROD_PROJECT_REF }}"
+        run: supabase link --project-ref "${{ secrets.PROD_PROJECT_REF }}"
 
       - name: Apply migrations to PROD
-        run: |
-          supabase db push
+        run: supabase db push
