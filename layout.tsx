@@ -16,7 +16,7 @@ import { MainAppLayout } from './src/components/layout/MainAppLayout';
 import { UserCheckInsProvider } from './src/context/UserCheckInsContext';
 import { SelectedDateProvider } from './src/context/SelectedDateContext';
 import { supabase, setGlobalAuthErrorHandler } from './src/lib/supabase';
-import { getUserId, removeUserId } from './src/services/storageService';
+import { getUserId, removeUserId, setUserId } from './src/services/storageService';
 import { handleAuthError } from './src/services/authErrorService';
 import { AccountLoadingScreen } from './src/screens/onboarding/AccountLoadingScreen';
 import { fetchUserById, requiresOnboarding } from './src/services/userService';

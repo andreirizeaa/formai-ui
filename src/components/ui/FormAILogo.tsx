@@ -1,18 +1,29 @@
-import React from 'react';
-import { View, Text, StyleSheet, Platform } from 'react-native';
 import { Image } from 'expo-image';
+import React from 'react';
+import { Platform, StyleSheet, Text, View } from 'react-native';
 
 interface FormAILogoProps {
   containerStyle?: any;
   iconSize?: number;
   textStyle?: any;
+  variant?: 'default' | 'white';
 }
 
-export function FormAILogo({ containerStyle, iconSize = 40, textStyle }: FormAILogoProps) {
+export function FormAILogo({
+  containerStyle,
+  iconSize = 40,
+  textStyle,
+  variant = 'default',
+}: FormAILogoProps) {
+  const iconSource =
+    variant === 'white'
+      ? require('../../../assets/white-dumbell.svg')
+      : require('../../../assets/dumbel.svg');
+
   return (
     <View style={[styles.container, containerStyle]}>
       <Image
-        source={require('../../../assets/dumbel.svg')}
+        source={iconSource}
         style={{ width: iconSize, height: iconSize }}
         contentFit="contain"
       />

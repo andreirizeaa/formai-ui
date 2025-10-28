@@ -1,49 +1,48 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { useCameraPermissions } from 'expo-camera';
+import * as MediaLibrary from 'expo-media-library';
+import { ChevronLeft, Timer, TimerOff, X } from 'lucide-react-native';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Platform,
+  Animated,
   Keyboard,
   Modal,
-  Animated,
-  Alert,
+  Platform,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   Camera,
   useCameraDevice,
-  type VideoFile,
   useCameraFormat,
+  type VideoFile,
 } from 'react-native-vision-camera';
-import Ionicons from '@expo/vector-icons/Ionicons';
-import i18n from '../../../../utils/i18n';
-import { hapticFeedback } from '../../../../utils/haptic';
-import { generateVideoThumbnail } from '../../../../utils/generateVideoThumbnail';
-import { getStableAssetId } from '../../../../utils/getStableAssetId';
-import {
-  uploadLiftVideo,
-  uploadLiftThumbnail,
-} from '../../../../services/lifts/VideoUploadService';
-import { openAppSettings } from '../../../../utils/openAppSettings';
-import { VideoPreviewScreen } from '../common/VideoPreviewScreen';
-import { MovementSelectionScreen } from '../common/MovementSelectionScreen';
-import { PracticesScreen } from '../common/PracticesScreen';
-import { WeightRepsScreen } from '../common/WeightRepsScreen';
-import { useLoadingLifts } from '../../../../context/LoadingLiftsContext';
-import { useSelectedDate } from '../../../../context/SelectedDateContext';
-import { usePurchases } from '../../../../context/PurchasesContext';
-import { gymMovements, BodyPart } from '../../../../constants/gymMovements';
-import { useCameraPermissions } from 'expo-camera';
-import { ChevronLeft, X, Timer, TimerOff } from 'lucide-react-native';
-import * as MediaLibrary from 'expo-media-library';
-import * as ImagePicker from 'expo-image-picker';
-import { checkDuplicateAssetId } from '../../../../services/lifts/liftService';
-import { getUserId } from '../../../../services/storageService';
+import { FormAILogo } from '../../../../components/ui/FormAILogo';
 import { PermissionContainer } from '../../../../components/ui/PermissionContainer';
 import { VideoTooShortModal } from '../../../../components/ui/modals/VideoTooShortModal';
+import { BodyPart, gymMovements } from '../../../../constants/gymMovements';
+import { useLoadingLifts } from '../../../../context/LoadingLiftsContext';
+import { usePurchases } from '../../../../context/PurchasesContext';
+import { useSelectedDate } from '../../../../context/SelectedDateContext';
 import { showAlert } from '../../../../services/alertService';
+import {
+  uploadLiftThumbnail,
+  uploadLiftVideo,
+} from '../../../../services/lifts/VideoUploadService';
+import { checkDuplicateAssetId } from '../../../../services/lifts/liftService';
+import { getUserId } from '../../../../services/storageService';
+import { generateVideoThumbnail } from '../../../../utils/generateVideoThumbnail';
+import { getStableAssetId } from '../../../../utils/getStableAssetId';
+import { hapticFeedback } from '../../../../utils/haptic';
+import i18n from '../../../../utils/i18n';
+import { openAppSettings } from '../../../../utils/openAppSettings';
+import { MovementSelectionScreen } from '../common/MovementSelectionScreen';
+import { PracticesScreen } from '../common/PracticesScreen';
+import { VideoPreviewScreen } from '../common/VideoPreviewScreen';
+import { WeightRepsScreen } from '../common/WeightRepsScreen';
 
 interface RecordModalProps {
   isVisible: boolean;
@@ -84,7 +83,15 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
   const cameraRef = useRef<Camera>(null);
   const [cameraFacing, setCameraFacing] = useState<'back' | 'front'>('back');
   const [isTorchOn, setIsTorchOn] = useState(false);
-  const device = useCameraDevice(cameraFacing);
+  const [zoom, setZoom] = useState(1);
+  const device = useCameraDevice(
+    cameraFacing,
+    cameraFacing === 'back'
+      ? {
+          physicalDevices: ['ultra-wide-angle-camera', 'wide-angle-camera', 'telephoto-camera'],
+        }
+      : undefined
+  );
   const [permission, requestPermission] = useCameraPermissions();
   const format = useCameraFormat(device, [
     { videoResolution: { width: 1280, height: 720 } },
@@ -145,6 +152,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
       }
       setIsPreCountdown(false);
       setPreCountdownValue(0);
+      setZoom(toDeviceZoom(1));
     } else {
       // Reset states when modal becomes invisible
       setIsRecording(false);
@@ -168,6 +176,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
       }
       setIsPreCountdown(false);
       setPreCountdownValue(0);
+      setZoom(toDeviceZoom(1));
       setIsUploading(false);
       setIsModalDisabled(false);
     }
@@ -238,12 +247,69 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
     };
   }, [isRecording]);
 
+  useEffect(() => {
+    // Reset zoom when camera facing changes
+    setZoom(toDeviceZoom(1));
+  }, [cameraFacing]);
+
+  // Clamp zoom to device's supported range when device changes, defaulting to 1x display
+  useEffect(() => {
+    if (!device) return;
+    setZoom((prev) => {
+      // If this is the first time device is available or zoom is at default, set to 1x display
+      const deviceZoom1x = toDeviceZoom(1);
+      if (prev === 1) {
+        return deviceZoom1x;
+      }
+      // ensure current zoom is valid for the new device
+      return Math.min(device.maxZoom, Math.max(device.minZoom, prev));
+    });
+  }, [device]);
+
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     const currentTime = `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
     const maxTime = '1:00'; // 60 seconds maximum
     return `${currentTime} / ${maxTime}`;
+  };
+
+  // Presets we want to show in UI (display zooms)
+  const DISPLAY_PRESETS = [0.5, 1, 2, 3];
+  const ZOOM_EPSILON = 0.2;
+
+  const clamp = (val: number, min: number, max: number) => Math.min(max, Math.max(min, val));
+
+  // Does this device combo include an ultra-wide camera?
+  const hasUltraWide = !!device?.physicalDevices?.includes('ultra-wide-angle-camera');
+
+  // The display zoom value that corresponds to device.minZoom
+  const minDisplayX = hasUltraWide ? 0.5 : 1;
+
+  // Convert a UI "display zoom" (e.g., 0.5×/1×/2×) to a VisionCamera device zoom value
+  const toDeviceZoom = (displayX: number) => {
+    if (!device) return displayX;
+    const base = (displayX / minDisplayX) * device.minZoom;
+    return clamp(base, device.minZoom, device.maxZoom);
+  };
+
+  // Convert a VisionCamera zoom value back to UI "display zoom" for labeling/active state
+  const fromDeviceZoom = (z: number) => {
+    if (!device) return z;
+    return (z / device.minZoom) * minDisplayX;
+  };
+
+  // Which preset "display zooms" are feasible on this device?
+  const getSupportedDisplayPresets = () => {
+    if (!device) return [];
+    // Max display zoom we can label given the device range
+    const maxDisplayX = fromDeviceZoom(device.maxZoom);
+    const minDisplayXAvail = fromDeviceZoom(device.minZoom); // will be 0.5 or 1 depending on lenses
+
+    return DISPLAY_PRESETS.filter((x) => {
+      // allow a bit of wiggle room
+      return x >= minDisplayXAvail - ZOOM_EPSILON && x <= maxDisplayX + ZOOM_EPSILON;
+    });
   };
 
   const handleNext = async () => {
@@ -901,21 +967,14 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
                 video={true}
                 audio={false}
                 torch={isTorchOn ? 'on' : 'off'}
+                enableZoomGesture={true}
+                zoom={zoom}
                 onInitialized={() => setIsCameraReady(true)}
               />
             )}
 
             {/* Camera Overlay - positioned absolutely on top */}
             <View style={styles.cameraOverlay}>
-              {/* Timer Pill */}
-              <View style={styles.timerContainer}>
-                <View style={[styles.timerPill, isRecording && styles.timerPillRecording]}>
-                  <Text style={[styles.timerText, isRecording && styles.timerTextRecording]}>
-                    {formatTime(recordingTime)}
-                  </Text>
-                </View>
-              </View>
-
               {/* Top Controls */}
               <View style={styles.topControls}>
                 <TouchableOpacity
@@ -930,6 +989,15 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
                 >
                   <ChevronLeft size={24} color="#ffffff" />
                 </TouchableOpacity>
+
+                <View style={styles.logoPill}>
+                  <FormAILogo
+                    iconSize={24}
+                    textStyle={{ color: '#FFFFFF', fontSize: 24 }}
+                    variant="white"
+                  />
+                </View>
+
                 <TouchableOpacity
                   onPress={() => {
                     hapticFeedback.selection();
@@ -990,6 +1058,48 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
               {/* Bottom Controls */}
               <View style={styles.bottomControls}>
                 <View style={styles.controlsContainer}>
+                  {/* Zoom Level Buttons - shown when not recording */}
+                  {!isRecording && (
+                    <View style={styles.zoomControlsContainer}>
+                      {getSupportedDisplayPresets().map((displayX) => {
+                        // active if the current device zoom maps ~to this display zoom
+                        const currentDisplayX = fromDeviceZoom(zoom);
+                        const isActive = Math.abs(currentDisplayX - displayX) < 0.06;
+                        const displayText = isActive
+                          ? displayX === 1
+                            ? '1x'
+                            : displayX === 0.5
+                              ? '.5x'
+                              : `${displayX}x`
+                          : displayX === 0.5
+                            ? '.5'
+                            : displayX.toString();
+
+                        return (
+                          <TouchableOpacity
+                            key={displayX}
+                            style={[styles.zoomButton, isActive && styles.zoomButtonActive]}
+                            onPress={() => {
+                              hapticFeedback.selection();
+                              setZoom(toDeviceZoom(displayX));
+                            }}
+                            disabled={isRecording}
+                            activeOpacity={0.8}
+                          >
+                            <Text style={styles.zoomButtonText}>{displayText}</Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  )}
+
+                  {/* Timer Pill - shown when recording, appears above record button */}
+                  {isRecording && (
+                    <View style={styles.timerPillRecording}>
+                      <Text style={styles.timerTextRecording}>{formatTime(recordingTime)}</Text>
+                    </View>
+                  )}
+
                   {/* Record/Stop Button */}
                   <TouchableOpacity
                     style={[styles.recordButton, isRecording && styles.stopButton]}
@@ -1115,7 +1225,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
       <VideoTooShortModal
         isVisible={showVideoTooShortModal}
         onClose={() => setShowVideoTooShortModal(false)}
-        onSelectNewVideo={handleSelectNewVideo}
+        onSelectNewVideo={() => setShowVideoTooShortModal(false)}
       />
     </>
   );
@@ -1146,6 +1256,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     zIndex: 10,
+    pointerEvents: 'box-none',
   },
   topControls: {
     flexDirection: 'row',
@@ -1154,6 +1265,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 24,
     zIndex: 10,
+    pointerEvents: 'box-none',
+  },
+  logoPill: {
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    borderRadius: 16,
+    height: 44,
+    minWidth: 120,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 6,
   },
   closeButton: {
     width: 44,
@@ -1192,9 +1314,35 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'flex-end',
     paddingBottom: 40,
+    pointerEvents: 'box-none',
   },
   controlsContainer: {
     alignItems: 'center',
+  },
+  zoomControlsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 20,
+  },
+  zoomButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  zoomButtonActive: {
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    borderColor: '#FFFFFF',
+  },
+  zoomButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
   },
   recordButton: {
     width: 80,
@@ -1235,24 +1383,26 @@ const styles = StyleSheet.create({
     right: 0,
     alignItems: 'center',
     zIndex: 1,
+    pointerEvents: 'box-none',
   },
-  timerPill: {
-    backgroundColor: 'white',
-    borderRadius: 20,
-    paddingHorizontal: 40,
-    paddingVertical: 6,
-    marginTop: 20,
-  },
-  timerText: {
-    color: 'black',
-    fontSize: 18,
-    fontWeight: '700',
+  timerPillContainer: {
+    alignItems: 'center',
   },
   timerPillRecording: {
     backgroundColor: '#FF3B30',
+    borderRadius: 16,
+    height: 36,
+    width: 110,
+    marginTop: 16,
+    marginBottom: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   timerTextRecording: {
     color: 'white',
+    fontSize: 16,
+    fontWeight: '700',
+    letterSpacing: 0.7,
   },
   cornerGuides: {
     position: 'absolute',
@@ -1315,6 +1465,7 @@ const styles = StyleSheet.create({
     top: 80,
     display: 'flex',
     gap: 12,
+    pointerEvents: 'box-none',
   },
   toggleButton: {
     width: 44,
@@ -1392,6 +1543,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     alignItems: 'center',
     justifyContent: 'center',
+    pointerEvents: 'box-none',
   },
   preCountdownText: {
     color: '#FFFFFF',
