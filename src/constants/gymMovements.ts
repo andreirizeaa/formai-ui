@@ -396,7 +396,7 @@ export const gymMovements = [
   // -------------------
 ] as const;
 
-export type GymMovement = typeof gymMovements[number];
+export type GymMovement = (typeof gymMovements)[number];
 
 // Added 'core' so we can properly tag ab/oblique/posterior core work.
 export type BodyPart = 'all' | 'chest' | 'back' | 'shoulders' | 'arms' | 'legs' | 'core';

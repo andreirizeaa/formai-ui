@@ -38,50 +38,48 @@ export function OnboardingLayout({
   hideBackButton = false,
   hideTitle = false,
 }: OnboardingLayoutProps) {
-  
   return (
-    <SafeAreaView 
-      style={[
-        styles.container, 
-        { backgroundColor: appColors.general.background }
-      ]}
-    >
+    <SafeAreaView style={[styles.container, { backgroundColor: appColors.general.background }]}>
       <View style={{ flex: 1 }}>
         {/* Header with back button and progress bar */}
         <View style={styles.header}>
           {!hideBackButton && (
-            <BackButton onPress={() => {
-              hapticFeedback.selection();
-              onBack();
-            }} />
+            <BackButton
+              onPress={() => {
+                hapticFeedback.selection();
+                onBack();
+              }}
+            />
           )}
-          <View style={[styles.progressContainer, hideBackButton && styles.progressContainerFullWidth]}>
+          <View
+            style={[styles.progressContainer, hideBackButton && styles.progressContainerFullWidth]}
+          >
             <ProgressBar currentStep={currentStep} totalSteps={totalSteps} />
           </View>
         </View>
-        
+
         {/* Integrated Header Content */}
         {!hideTitle && (
           <View style={styles.headerContent}>
-            <Text 
+            <Text
               style={[
-                styles.title, 
-                { 
+                styles.title,
+                {
                   color: appColors.general.title,
-                  fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto'
-                }
+                  fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
+                },
               ]}
             >
               {title}
             </Text>
             {subtitle && (
-              <Text 
+              <Text
                 style={[
-                  styles.subtitle, 
-                  { 
+                  styles.subtitle,
+                  {
                     color: appColors.general.subtitle,
-                    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
-                  }
+                    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+                  },
                 ]}
               >
                 {subtitle}
@@ -92,15 +90,13 @@ export function OnboardingLayout({
 
         {/* Content area with vertical centering */}
         <View style={styles.contentWrapper}>
-          <View style={styles.centeredContent}>
-            {children}
-          </View>
+          <View style={styles.centeredContent}>{children}</View>
         </View>
 
         {/* Bottom Next button */}
         {!hideNextButton ? (
           <View style={styles.bottomBar}>
-            <NextButton 
+            <NextButton
               title={nextTitle}
               onPress={onNext}
               disabled={nextDisabled}
@@ -163,7 +159,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     marginBottom: -32,
     paddingTop: 4,
-        backgroundColor: appColors.general.background,
+    backgroundColor: appColors.general.background,
     borderTopLeftRadius: 0,
     borderTopRightRadius: 0,
     borderTopWidth: 0.7,

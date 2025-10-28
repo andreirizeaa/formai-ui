@@ -22,12 +22,12 @@ import { PhotoLibraryPermissionModal } from '../../../components/ui/modals/Photo
 import { openAppSettings } from '../../../utils/openAppSettings';
 
 import i18n from '../../../utils/i18n';
-import { 
-  ClockArrowDown, 
-  ClockArrowUp, 
-  SlidersHorizontal, 
-  Pencil, 
-  X, 
+import {
+  ClockArrowDown,
+  ClockArrowUp,
+  SlidersHorizontal,
+  Pencil,
+  X,
   Search,
 } from 'lucide-react-native';
 
@@ -60,9 +60,11 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
   const route = useRoute<LibraryRouteProp>();
   const { liftData, toggleFavourite, refreshLifts } = useLiftData();
   const { loadingLifts } = useLoadingLifts();
-  
+
   const [sortOption, setSortOption] = useState<SortOption>('newest');
-  const [filterOption, setFilterOption] = useState<FilterOption>(route.params?.selectedFilters || []);
+  const [filterOption, setFilterOption] = useState<FilterOption>(
+    route.params?.selectedFilters || []
+  );
   const [activeTab, setActiveTab] = useState<TabOption>('all');
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showPopupModal, setShowPopupModal] = useState(false);
@@ -84,16 +86,16 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
     // Default to today's date a year ago to today
     const today = new Date();
     const oneYearAgo = new Date(today.getFullYear() - 1, today.getMonth(), 1);
-    
+
     setDateRange({
       from: {
         month: oneYearAgo.getMonth() + 1,
-        year: oneYearAgo.getFullYear()
+        year: oneYearAgo.getFullYear(),
       },
       to: {
         month: today.getMonth() + 1,
-        year: today.getFullYear()
-      }
+        year: today.getFullYear(),
+      },
     });
   }, []);
 
@@ -135,7 +137,7 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
     const fromDate = new Date(dateRange.from.year, dateRange.from.month - 1, 1);
     const toDate = new Date(dateRange.to.year, dateRange.to.month, 0); // Last day of the month
 
-    return liftData.filter(lift => {
+    return liftData.filter((lift) => {
       const [day, month, year] = lift.liftDate.split('-').map(Number);
       const liftDate = new Date(year, month - 1, day);
       return liftDate >= fromDate && liftDate <= toDate;
@@ -154,14 +156,12 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
 
     // Apply tab filter (All vs Favourites) - only for final lifts
     if (activeTab === 'favourites') {
-      filtered = filtered.filter(lift => lift.isFavourite);
+      filtered = filtered.filter((lift) => lift.isFavourite);
     }
 
     // Apply movement type filter - only for final lifts
     if (filterOption.length > 0) {
-      filtered = filtered.filter(lift => 
-        lift.liftType && filterOption.includes(lift.liftType)
-      );
+      filtered = filtered.filter((lift) => lift.liftType && filterOption.includes(lift.liftType));
     }
 
     // Apply sort - use a more efficient sort
@@ -203,7 +203,7 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
     hapticFeedback.selection();
     // Track library screen clicks for no lifts card
     track('Library screen clicks', { event: 'No lifts card' });
-    
+
     // If there are completed lifts but none match the current filters, open the filter modal
     const totalLifts = liftData.length;
     if (totalLifts > 0 && filteredAndSortedLifts.length === 0) {
@@ -271,18 +271,21 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
     setActiveTab(tab);
   }, []);
 
-  const handleLiftPress = useCallback((liftId: string) => {
-    hapticFeedback.selection();
-    // Track library screen clicks for lift card
-    track('Library screen clicks', { event: 'Lift card' });
-    const lift = filteredAndSortedLifts.find(l => l.id === liftId);
-    if (lift) {
-      // Navigate to lift details for completed lifts
-      navigation.navigate('LiftDetails', { 
-        liftData: lift,
-      });
-    }
-  }, [navigation, filteredAndSortedLifts]);
+  const handleLiftPress = useCallback(
+    (liftId: string) => {
+      hapticFeedback.selection();
+      // Track library screen clicks for lift card
+      track('Library screen clicks', { event: 'Lift card' });
+      const lift = filteredAndSortedLifts.find((l) => l.id === liftId);
+      if (lift) {
+        // Navigate to lift details for completed lifts
+        navigation.navigate('LiftDetails', {
+          liftData: lift,
+        });
+      }
+    },
+    [navigation, filteredAndSortedLifts]
+  );
 
   const handleBackPress = useCallback(() => {
     hapticFeedback.selection();
@@ -293,12 +296,12 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
   const checkPhotoLibraryPermission = useCallback(async () => {
     try {
       const { status, accessPrivileges } = await ImagePicker.getMediaLibraryPermissionsAsync();
-      
+
       // Only proceed if user has granted FULL access (all photos)
       if (status === 'granted' && accessPrivileges === 'all') {
         return true;
       }
-      
+
       // Show permission modal if not granted or limited access
       setShowPhotoLibraryPermissionModal(true);
       return false;
@@ -311,10 +314,10 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
   const handlePhotoLibraryPermissionAllow = useCallback(async () => {
     hapticFeedback.selection();
     setShowPhotoLibraryPermissionModal(false);
-    
+
     try {
       const result = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      
+
       // Check if full access granted (all photos) - ONLY proceed with full access
       if (result.granted && result.accessPrivileges === 'all') {
         hapticFeedback.success();
@@ -340,18 +343,18 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
     hapticFeedback.selection();
     // Track library screen clicks for search container
     track('Library screen clicks', { event: 'Search' });
-    
+
     // Check permission first
     const hasPermission = await checkPhotoLibraryPermission();
     if (!hasPermission) {
       return;
     }
-    
+
     setIsSearching(true);
-    
+
     // Add a small delay to show the loading icon before opening image picker
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: 'videos',
@@ -369,12 +372,12 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
         // Extract the base asset ID (remove /L0/001 suffix if present)
         const fullAssetId = asset.assetId;
         const baseAssetId = fullAssetId.split('/')[0];
-        
+
         // Get userId for the search
         const userId = await getUserId();
         if (!userId) {
           showAlert(
-            i18n.t('library.searchAnalysis.error'), 
+            i18n.t('library.searchAnalysis.error'),
             i18n.t('library.searchAnalysis.errorMessage'),
             undefined,
             'LIBRARY_SEARCH_NO_USER_ID'
@@ -382,10 +385,10 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
           setIsSearching(false);
           return;
         }
-        
+
         // Search for the lift by asset ID
         const foundLift = await searchLiftByAssetId(baseAssetId, userId);
-        
+
         if (foundLift) {
           // Check if we're on the favourites tab and the lift is not favourited
           if (activeTab === 'favourites' && !foundLift.isFavourite) {
@@ -394,7 +397,7 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
               i18n.t('library.searchAnalysis.analysisFound'),
               i18n.t('library.searchAnalysis.analysisFoundNotFavourited'),
               () => {
-                navigation.navigate('LiftDetails', { 
+                navigation.navigate('LiftDetails', {
                   liftData: foundLift,
                 });
               },
@@ -402,14 +405,14 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
             );
           } else {
             // Navigate to the lift details page normally
-            navigation.navigate('LiftDetails', { 
+            navigation.navigate('LiftDetails', {
               liftData: foundLift,
             });
           }
         } else {
           // Check video duration to determine if we should show the Analyse button
           let durationInSeconds = asset.duration;
-          
+
           // Handle different duration formats
           if (typeof asset.duration === 'number') {
             // If duration is in milliseconds, convert to seconds
@@ -419,7 +422,11 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
           }
 
           // Show alert with Analyse button if video is under 90 seconds
-          if (durationInSeconds !== undefined && durationInSeconds !== null && durationInSeconds <= 90) {
+          if (
+            durationInSeconds !== undefined &&
+            durationInSeconds !== null &&
+            durationInSeconds <= 90
+          ) {
             showAlert(
               i18n.t('library.searchAnalysis.noAnalysisFound'),
               i18n.t('library.searchAnalysis.noAnalysisFoundMessage'),
@@ -452,7 +459,7 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
         );
       } else {
         showAlert(
-          i18n.t('library.searchAnalysis.error'), 
+          i18n.t('library.searchAnalysis.error'),
           i18n.t('library.searchAnalysis.errorMessage'),
           undefined,
           'LIBRARY_SEARCH_GENERAL_ERROR'
@@ -461,24 +468,22 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
     }
   }, [navigation, activeTab]);
 
-
-
   const handleResetDateRange = useCallback(() => {
     hapticFeedback.success();
     const today = new Date();
     const oneYearAgo = new Date(today.getFullYear() - 1, today.getMonth(), 1);
-    
+
     setDateRange({
       from: {
         month: oneYearAgo.getMonth() + 1,
-        year: oneYearAgo.getFullYear()
+        year: oneYearAgo.getFullYear(),
       },
       to: {
         month: today.getMonth() + 1,
-        year: today.getFullYear()
-      }
+        year: today.getFullYear(),
+      },
     });
-    
+
     setIsDateRangeModalVisible(false);
   }, []);
 
@@ -487,31 +492,29 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
     setIsDateRangeModalVisible(false);
   }, []);
 
-
-
   // Memoize the lift count to prevent unnecessary re-renders
   const liftCount = useMemo(() => filteredAndSortedLifts.length, [filteredAndSortedLifts.length]);
 
   // Render function for FlashList
-  const renderLiftItem = useCallback(({ item }: { item: any }) => (
-    <LiftCard 
-      lift={item} 
-      onPress={handleLiftPress}
-      showDate={true} // show date pill for all completed lifts
-    />
-  ), [handleLiftPress]);
+  const renderLiftItem = useCallback(
+    ({ item }: { item: any }) => (
+      <LiftCard
+        lift={item}
+        onPress={handleLiftPress}
+        showDate={true} // show date pill for all completed lifts
+      />
+    ),
+    [handleLiftPress]
+  );
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-      
+
       {/* Header */}
       <View style={styles.header}>
-        <Pressable 
-          style={({ pressed }) => [
-            styles.backButton,
-            { opacity: pressed ? 0.7 : 1 }
-          ]} 
+        <Pressable
+          style={({ pressed }) => [styles.backButton, { opacity: pressed ? 0.7 : 1 }]}
           onPress={handleBackPress}
         >
           <X size={24} color="#000000" />
@@ -524,9 +527,9 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
       <View style={styles.tabsContainer}>
         <Pressable
           style={({ pressed }) => [
-            styles.tab, 
+            styles.tab,
             activeTab === 'all' && styles.tabActive,
-            { opacity: pressed ? 0.7 : 1 }
+            { opacity: pressed ? 0.7 : 1 },
           ]}
           onPress={() => handleTabPress('all')}
         >
@@ -536,9 +539,9 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
         </Pressable>
         <Pressable
           style={({ pressed }) => [
-            styles.tab, 
+            styles.tab,
             activeTab === 'favourites' && styles.tabActive,
-            { opacity: pressed ? 0.7 : 1 }
+            { opacity: pressed ? 0.7 : 1 },
           ]}
           onPress={() => handleTabPress('favourites')}
         >
@@ -557,23 +560,17 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
             </Text>
           </View>
         </View>
-        
+
         <View style={styles.controlsRightContainer}>
-          <Pressable 
-            style={({ pressed }) => [
-              styles.searchPill,
-              { opacity: pressed ? 0.7 : 1 }
-            ]} 
+          <Pressable
+            style={({ pressed }) => [styles.searchPill, { opacity: pressed ? 0.7 : 1 }]}
             onPress={handleSearchPress}
           >
             <Search size={17} color="#000000" />
             <Text style={styles.searchPillText}>{i18n.t('library.search')}</Text>
           </Pressable>
-          <Pressable 
-            style={({ pressed }) => [
-              styles.controlButton,
-              { opacity: pressed ? 0.7 : 1 }
-            ]} 
+          <Pressable
+            style={({ pressed }) => [styles.controlButton, { opacity: pressed ? 0.7 : 1 }]}
             onPress={handleSortPress}
           >
             {sortOption === 'newest' ? (
@@ -583,11 +580,8 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
             )}
           </Pressable>
 
-          <Pressable 
-            style={({ pressed }) => [
-              styles.controlButton,
-              { opacity: pressed ? 0.7 : 1 }
-            ]} 
+          <Pressable
+            style={({ pressed }) => [styles.controlButton, { opacity: pressed ? 0.7 : 1 }]}
             onPress={handleFilterPress}
           >
             <SlidersHorizontal size={17} color="#000000" />
@@ -612,15 +606,18 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
             lift={null}
             isNoLiftsCard={true}
             noLiftsTitle={
-              liftData.length === 0 ? i18n.t('library.noLiftsAnalysed') : 
-              activeTab === 'favourites' ? i18n.t('library.noFavouriteLifts') : i18n.t('library.noLiftsFound')
+              liftData.length === 0
+                ? i18n.t('library.noLiftsAnalysed')
+                : activeTab === 'favourites'
+                  ? i18n.t('library.noFavouriteLifts')
+                  : i18n.t('library.noLiftsFound')
             }
             noLiftsSubtitle={
               liftData.length === 0
                 ? i18n.t('library.startAnalysingWorkout')
                 : activeTab === 'favourites'
-                ? i18n.t('library.markLiftsAsFavourites')
-                : i18n.t('library.tryAdjustingFilters')
+                  ? i18n.t('library.markLiftsAsFavourites')
+                  : i18n.t('library.tryAdjustingFilters')
             }
             onNoLiftsPress={handleEmptyCardPress}
           />
@@ -629,27 +626,18 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
 
       {/* Popup Modal */}
       {showPopupModal && (
-        <Pressable 
-          style={styles.popupOverlay} 
-          onPress={handlePopupModalClose}
-        >
+        <Pressable style={styles.popupOverlay} onPress={handlePopupModalClose}>
           <View style={styles.popupContainer}>
-            <Pressable 
-              style={({ pressed }) => [
-                styles.popupOption,
-                { opacity: pressed ? 0.7 : 1 }
-              ]} 
+            <Pressable
+              style={({ pressed }) => [styles.popupOption, { opacity: pressed ? 0.7 : 1 }]}
               onPress={handleDateRangePress}
             >
               <Text style={styles.popupOptionText}>{dateRangeText}</Text>
               <Pencil size={20} color="#000000" />
             </Pressable>
             <View style={styles.popupDivider} />
-            <Pressable 
-              style={({ pressed }) => [
-                styles.popupOption,
-                { opacity: pressed ? 0.7 : 1 }
-              ]} 
+            <Pressable
+              style={({ pressed }) => [styles.popupOption, { opacity: pressed ? 0.7 : 1 }]}
               onPress={handleMovementFilterPress}
             >
               <Text style={styles.popupOptionText}>{filterPillText}</Text>
@@ -686,7 +674,7 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
         onClose={handlePhotoLibraryPermissionCancel}
         onAllow={handlePhotoLibraryPermissionAllow}
       />
-      
+
       <LoadingOverlay visible={isSearching} />
     </SafeAreaView>
   );
@@ -903,4 +891,4 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 1,
   },
-}); 
+});

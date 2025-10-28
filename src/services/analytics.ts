@@ -5,7 +5,7 @@ let mixpanel: Mixpanel | null = null;
 export async function initAnalytics() {
   try {
     const projectToken = process.env.EXPO_PUBLIC_MIXPANEL_PROJECT_TOKEN!;
-    
+
     if (!projectToken) {
       return;
     }
@@ -13,8 +13,7 @@ export async function initAnalytics() {
     mixpanel = new Mixpanel(projectToken, trackAutomaticEvents);
     await mixpanel.init();
     mixpanel.setServerURL('https://api-eu.mixpanel.com');
-  } catch (error) {
-  }
+  } catch (error) {}
 }
 
 export function track(event: string, props: Record<string, any> = {}) {
@@ -27,8 +26,7 @@ export function track(event: string, props: Record<string, any> = {}) {
       });
     }
     mixpanel?.flush();
-  } catch (error) {
-  }
+  } catch (error) {}
 }
 
 export function identify(userId: string) {
@@ -37,8 +35,7 @@ export function identify(userId: string) {
       mixpanel.identify(userId);
       mixpanel.alias(userId, userId); // Links anonymous history to this user
     }
-  } catch (error) {
-  }
+  } catch (error) {}
 }
 
 export function setUserProperties(properties: Record<string, any>) {
@@ -46,8 +43,7 @@ export function setUserProperties(properties: Record<string, any>) {
     if (mixpanel) {
       mixpanel.getPeople().set(properties);
     }
-  } catch (error) {
-  }
+  } catch (error) {}
 }
 
 export function flush() {
@@ -55,6 +51,5 @@ export function flush() {
     if (mixpanel) {
       mixpanel.flush();
     }
-  } catch (error) {
-  }
+  } catch (error) {}
 }

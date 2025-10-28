@@ -20,12 +20,12 @@ export function initializeSyncService(client: any) {
 // Start the background sync service
 export function startSyncService() {
   if (isRunning) return;
-  
+
   isRunning = true;
-  
+
   // Initial sync
   performSync();
-  
+
   // Set up interval for regular syncing
   syncIntervalId = setInterval(() => {
     performSync();
@@ -38,9 +38,9 @@ export function startSyncService() {
 // Stop the background sync service
 export function stopSyncService() {
   if (!isRunning) return;
-  
+
   isRunning = false;
-  
+
   if (syncIntervalId) {
     clearInterval(syncIntervalId);
     syncIntervalId = null;
@@ -75,11 +75,11 @@ async function performSync(): Promise<void> {
       // User Check-ins
       queryClient.invalidateQueries({ queryKey: ['userCheckIns', currentUserId] }),
       queryClient.refetchQueries({ queryKey: ['userCheckIns', currentUserId] }),
-      
+
       // Lift Data
       queryClient.invalidateQueries({ queryKey: ['lifts-by-user', currentUserId] }),
       queryClient.refetchQueries({ queryKey: ['lifts-by-user', currentUserId] }),
-      
+
       // User Details
       queryClient.invalidateQueries({ queryKey: ['user-details', currentUserId] }),
       queryClient.refetchQueries({ queryKey: ['user-details', currentUserId] }),
@@ -87,7 +87,6 @@ async function performSync(): Promise<void> {
 
     // Update last sync time
     await updateLastSyncTime();
-    
   } catch (error) {
     // Silently handle errors to avoid disrupting user experience
   }
@@ -108,8 +107,7 @@ async function updateLastSyncTime(): Promise<void> {
   try {
     const now = new Date();
     await AsyncStorage.setItem(LAST_SYNC_KEY, now.toISOString());
-  } catch (error) {
-  }
+  } catch (error) {}
 }
 
 // Get last sync time from AsyncStorage
@@ -130,12 +128,12 @@ export async function getFormattedLastSyncTime(): Promise<string | null> {
   const lastSync = await getLastSyncTime();
   if (!lastSync) return null;
 
-  const timeString = lastSync.toLocaleTimeString([], { 
-    hour: 'numeric', 
+  const timeString = lastSync.toLocaleTimeString([], {
+    hour: 'numeric',
     minute: '2-digit',
-    hour12: true 
+    hour12: true,
   });
-  
+
   // Ensure AM/PM are uppercase
   return timeString.replace(/\b(am|pm)\b/gi, (match) => match.toUpperCase());
 }
@@ -145,12 +143,12 @@ async function resetSuperwallStatus(): Promise<void> {
   try {
     // Complete Superwall refresh flow: reset → identify
     await SuperwallExpoModule.reset();
-    
+
     const userId = await getUserId();
     if (userId) {
       await SuperwallExpoModule.identify(userId);
     }
-    
+
     // Note: Superwall handles purchase restoration automatically
     // when users interact with paywalls, no manual restore needed
   } catch (error) {

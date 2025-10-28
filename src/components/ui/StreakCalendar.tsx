@@ -26,13 +26,13 @@ interface DayData {
 }
 
 // Current week component for streak calendar
-function CurrentWeek({ 
-  days, 
-  onPressDay, 
-  circleRadius = 18, 
-  iconSize = 14 
-}: { 
-  days: DayData[]; 
+function CurrentWeek({
+  days,
+  onPressDay,
+  circleRadius = 18,
+  iconSize = 14,
+}: {
+  days: DayData[];
   onPressDay: (d: DayData) => void;
   circleRadius?: number;
   iconSize?: number;
@@ -48,12 +48,7 @@ function CurrentWeek({
           disabled={day.isFuture}
         >
           <Text
-            style={[
-              styles.dayName,
-              day.hasStreak
-                ? styles.streakDayText
-                : styles.defaultDayText,
-            ]}
+            style={[styles.dayName, day.hasStreak ? styles.streakDayText : styles.defaultDayText]}
           >
             {day.dayName}
           </Text>
@@ -68,9 +63,7 @@ function CurrentWeek({
               },
             ]}
           >
-            {day.hasStreak && (
-              <Check size={iconSize} color="#FFFFFF" />
-            )}
+            {day.hasStreak && <Check size={iconSize} color="#FFFFFF" />}
           </View>
         </TouchableOpacity>
       ))}
@@ -78,25 +71,31 @@ function CurrentWeek({
   );
 }
 
-export function StreakCalendar({ onDateSelect, circleRadius = 18, iconSize = 14 }: StreakCalendarProps) {
+export function StreakCalendar({
+  onDateSelect,
+  circleRadius = 18,
+  iconSize = 14,
+}: StreakCalendarProps) {
   const { daysLogged } = useUserCheckIns();
 
   // Convert daysLogged to a Set for faster lookup
   const streakDaysSet = useMemo(() => {
-    return new Set(daysLogged.map(dateStr => {
-      // Convert string date to Date object and then to date string for comparison
-      const [day, month, year] = dateStr.split('-');
-      const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-      return date.toDateString();
-    }));
+    return new Set(
+      daysLogged.map((dateStr) => {
+        // Convert string date to Date object and then to date string for comparison
+        const [day, month, year] = dateStr.split('-');
+        const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+        return date.toDateString();
+      })
+    );
   }, [daysLogged]);
 
   // Get current week (last week in BASE_WEEKS)
   const currentWeek = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
-    return BASE_WEEKS[BASE_WEEKS.length - 1].map(date => {
+
+    return BASE_WEEKS[BASE_WEEKS.length - 1].map((date) => {
       const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, etc.
       const dayNames = [
         i18n.t('days.sunday'),
@@ -112,7 +111,7 @@ export function StreakCalendar({ onDateSelect, circleRadius = 18, iconSize = 14 
       const isActive = false;
       const hasStreak = streakDaysSet.has(date.toDateString());
       const isFuture = date > today;
-      
+
       return {
         date,
         dayName,

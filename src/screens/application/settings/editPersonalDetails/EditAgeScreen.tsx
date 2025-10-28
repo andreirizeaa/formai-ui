@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Platform,
+  TouchableOpacity,
+  StatusBar,
+  ActivityIndicator,
+} from 'react-native';
 import i18n from '../../../../utils/i18n';
 import { hapticFeedback } from '../../../../utils/haptic';
 import { useUserDetails } from '../../../../context/UserDetailsContext';
@@ -34,7 +42,7 @@ export function EditAgeScreen({ onBack, currentValue, onSave }: EditAgeScreenPro
         setSelectedAgeRange(currentValue);
         return;
       }
-      
+
       // If it's a date, calculate age and determine range
       const age = calculateAgeFromDate(currentValue);
       if (age !== null) {
@@ -47,7 +55,7 @@ export function EditAgeScreen({ onBack, currentValue, onSave }: EditAgeScreenPro
   const calculateAgeFromDate = (dateString: string): number | null => {
     try {
       let date: Date;
-      
+
       // Try different date formats
       if (dateString.includes('-')) {
         // YYYY-MM-DD or DD-MM-YYYY format
@@ -66,15 +74,15 @@ export function EditAgeScreen({ onBack, currentValue, onSave }: EditAgeScreenPro
       } else {
         return null;
       }
-      
+
       const today = new Date();
       let age = today.getFullYear() - date.getFullYear();
       const monthDiff = today.getMonth() - date.getMonth();
-      
+
       if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < date.getDate())) {
         age--;
       }
-      
+
       return age;
     } catch (error) {
       return null;
@@ -110,7 +118,7 @@ export function EditAgeScreen({ onBack, currentValue, onSave }: EditAgeScreenPro
     // Track library screen clicks for save
     track('Library screen clicks', { event: 'Save new age range' });
     setIsSaving(true);
-    
+
     try {
       // Save the age range to the age_range field
       await editUserDetails({ age_range: selectedAgeRange });
@@ -120,27 +128,26 @@ export function EditAgeScreen({ onBack, currentValue, onSave }: EditAgeScreenPro
       onSave(selectedAgeRange);
     } catch (e) {
       hapticFeedback.error();
-        showAlert(
-          i18n.t('settings.editFailed.age'), 
-          i18n.t('settings.editFailed.message'), 
-          () => {
-            hapticFeedback.selection();
-            onBack();
-          },
-          'EDIT_AGE_FAILED'
-        );
+      showAlert(
+        i18n.t('settings.editFailed.age'),
+        i18n.t('settings.editFailed.message'),
+        () => {
+          hapticFeedback.selection();
+          onBack();
+        },
+        'EDIT_AGE_FAILED'
+      );
     }
     setIsSaving(false);
   };
-
 
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton} 
+        <TouchableOpacity
+          style={styles.backButton}
           onPress={() => {
             hapticFeedback.selection();
             onBack();
@@ -163,16 +170,22 @@ export function EditAgeScreen({ onBack, currentValue, onSave }: EditAgeScreenPro
               delay={index * 100}
               style={[
                 styles.ageRangeButton,
-                selectedAgeRange === ageRange.value ? styles.selectedAgeRangeButton : styles.unselectedAgeRangeButton
+                selectedAgeRange === ageRange.value
+                  ? styles.selectedAgeRangeButton
+                  : styles.unselectedAgeRangeButton,
               ]}
             >
-              <Text style={[
-                styles.ageRangeText,
-                selectedAgeRange === ageRange.value ? styles.selectedAgeRangeText : styles.unselectedAgeRangeText,
-                {
-                  fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
-                },
-              ]}>
+              <Text
+                style={[
+                  styles.ageRangeText,
+                  selectedAgeRange === ageRange.value
+                    ? styles.selectedAgeRangeText
+                    : styles.unselectedAgeRangeText,
+                  {
+                    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+                  },
+                ]}
+              >
                 {ageRange.label}
               </Text>
             </AnimatedOptionButton>
@@ -182,7 +195,12 @@ export function EditAgeScreen({ onBack, currentValue, onSave }: EditAgeScreenPro
 
       {/* Save Button */}
       <View style={styles.bottomContainer}>
-        <TouchableOpacity style={[styles.saveButton, isSaving && { opacity: 0.7 }]} onPress={handleSave} activeOpacity={0.8} disabled={isSaving}>
+        <TouchableOpacity
+          style={[styles.saveButton, isSaving && { opacity: 0.7 }]}
+          onPress={handleSave}
+          activeOpacity={0.8}
+          disabled={isSaving}
+        >
           {isSaving ? (
             <ActivityIndicator color="#FFFFFF" />
           ) : (
@@ -278,4 +296,4 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
-}); 
+});

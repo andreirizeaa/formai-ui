@@ -24,7 +24,7 @@ export function ShareScreen({ onBack }: ShareScreenProps) {
       setTimeout(() => setIsCopied(false), 2000); // Reset copied state after 2 seconds
     } catch (error) {
       showAlert(
-        'Error', 
+        'Error',
         'Failed to copy to clipboard. Please try again.',
         undefined,
         'SHARE_FAILED_TO_COPY_CLIPBOARD',
@@ -37,14 +37,14 @@ export function ShareScreen({ onBack }: ShareScreenProps) {
     try {
       hapticFeedback.selection();
       const shareMessage = `${i18n.t('share.shareMessage')} ${promoCode}\n`;
-      
+
       await Share.share({
         message: shareMessage,
         title: i18n.t('share.shareTitle'),
       });
     } catch (error) {
       showAlert(
-        'Error', 
+        'Error',
         'Failed to share. Please try again.',
         undefined,
         'SHARE_FAILED_TO_SHARE',
@@ -57,8 +57,8 @@ export function ShareScreen({ onBack }: ShareScreenProps) {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton} 
+        <TouchableOpacity
+          style={styles.backButton}
           onPress={() => {
             hapticFeedback.selection();
             onBack();
@@ -73,13 +73,13 @@ export function ShareScreen({ onBack }: ShareScreenProps) {
       {/* Content */}
       <View style={styles.content}>
         <View style={styles.imageCard}>
-          <Image 
+          <Image
             source={require('../../../../assets/refer-friends-group.png')}
             style={styles.referImage}
           />
         </View>
         <Text style={styles.contentTitle}>{i18n.t('share.empowerYourFriends')}</Text>
-        
+
         {/* Promo Code Section */}
         <View style={styles.promoCodeContainer}>
           <View style={styles.promoCodeRow}>
@@ -87,10 +87,7 @@ export function ShareScreen({ onBack }: ShareScreenProps) {
               <Text style={styles.promoCodeLabel}>{i18n.t('share.yourPersonalPromoCode')}</Text>
               <Text style={styles.promoCode}>{promoCode}</Text>
             </View>
-            <TouchableOpacity 
-              style={styles.copyButton}
-              onPress={handleCopyPromoCode}
-            >
+            <TouchableOpacity style={styles.copyButton} onPress={handleCopyPromoCode}>
               {isCopied ? (
                 <CircleCheck width={28} height={28} color="#000000" />
               ) : (
@@ -99,13 +96,9 @@ export function ShareScreen({ onBack }: ShareScreenProps) {
             </TouchableOpacity>
           </View>
         </View>
-        
+
         {/* Share Button */}
-        <TouchableOpacity 
-          style={styles.shareButton}
-          onPress={handleShare}
-          activeOpacity={0.7}
-        >
+        <TouchableOpacity style={styles.shareButton} onPress={handleShare} activeOpacity={0.7}>
           <Text style={styles.shareButtonText}>{i18n.t('share.share')}</Text>
         </TouchableOpacity>
 
@@ -237,8 +230,7 @@ const styles = StyleSheet.create({
     color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
-  copyButton: {
-  },
+  copyButton: {},
   shareButton: {
     backgroundColor: '#000000',
     borderRadius: 28,
@@ -317,4 +309,4 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
     flex: 1,
   },
-}); 
+});

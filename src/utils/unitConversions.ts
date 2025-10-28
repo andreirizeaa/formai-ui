@@ -47,10 +47,10 @@ export function feetInchesToCm(feet: number, inches: number): number {
 export function parseWeightToMetric(weightString: string): number {
   const weightMatch = weightString.match(/(\d+(?:\.\d+)?)\s*(kg|lbs)/);
   if (!weightMatch) return 70; // Default 70kg
-  
+
   const [, number, unit] = weightMatch;
   const weight = parseFloat(number);
-  
+
   return unit === 'kg' ? weight : lbsToKg(weight);
 }
 
@@ -61,7 +61,7 @@ export function parseHeightToMetric(heightString: string): number {
   if (cmMatch) {
     return Math.round(parseFloat(cmMatch[1]));
   }
-  
+
   // Handle imperial format (e.g., "5' 7"")
   const feetMatch = heightString.match(/(\d+)'/);
   const inchesMatch = heightString.match(/(\d+)"/);
@@ -70,15 +70,12 @@ export function parseHeightToMetric(heightString: string): number {
     const inches = parseInt(inchesMatch[1]);
     return feetInchesToCm(feet, inches);
   }
-  
+
   return 170; // Default 170cm
 }
 
 // Format metric weight for display
-export function formatWeightForDisplay(
-  kg: number,
-  unitSystem: 'metric' | 'imperial'
-): string {
+export function formatWeightForDisplay(kg: number, unitSystem: 'metric' | 'imperial'): string {
   if (unitSystem === 'metric') {
     return `${Number(kg.toFixed(1))} kg`;
   } else {
@@ -115,4 +112,4 @@ export function convertMetricWeightToImperial(kg: number): number {
 // Convert metric height to imperial for display/input
 export function convertMetricHeightToImperial(cm: number): { feet: number; inches: number } {
   return cmToFeetInches(cm);
-} 
+}

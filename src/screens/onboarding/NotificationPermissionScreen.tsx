@@ -11,7 +11,10 @@ interface NotificationPermissionScreenProps {
   onBack: () => void;
 }
 
-export function NotificationPermissionScreen({ onNext, onBack }: NotificationPermissionScreenProps) {
+export function NotificationPermissionScreen({
+  onNext,
+  onBack,
+}: NotificationPermissionScreenProps) {
   const handleAllowNotifications = async () => {
     hapticFeedback.selection();
     try {
@@ -74,92 +77,106 @@ export function NotificationPermissionScreen({ onNext, onBack }: NotificationPer
     >
       <View style={styles.container}>
         {/* iOS-style Notification Permission Dialog */}
-        <View style={[
-          styles.dialog,
-          {
-            backgroundColor: '#FFFFFF',
-            shadowColor: '#000000',
-          }
-        ]}>
-          {/* Text Area */}
-          <View style={[
-            styles.textArea,
+        <View
+          style={[
+            styles.dialog,
             {
-              backgroundColor: '#F0F0F0',
-            }
-          ]}>
-            <Text style={[
-              styles.dialogText,
+              backgroundColor: '#FFFFFF',
+              shadowColor: '#000000',
+            },
+          ]}
+        >
+          {/* Text Area */}
+          <View
+            style={[
+              styles.textArea,
               {
-                color: '#000000',
-                fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
-              }
-            ]}>
+                backgroundColor: '#F0F0F0',
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.dialogText,
+                {
+                  color: '#000000',
+                  fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+                },
+              ]}
+            >
               {i18n.t('onboarding.notificationPermission.dialogText')}
             </Text>
           </View>
-          
+
           {/* Buttons Container */}
-          <View style={[
-            styles.buttonContainer,
-            {
-              borderTopColor: '#E5E5EA',
-              borderTopWidth: 1,
-            }
-          ]}>
+          <View
+            style={[
+              styles.buttonContainer,
+              {
+                borderTopColor: '#E5E5EA',
+                borderTopWidth: 1,
+              },
+            ]}
+          >
             <TouchableOpacity
               style={[
                 styles.button,
                 styles.dontAllowButton,
                 {
                   backgroundColor: '#F0F0F0',
-                }
+                },
               ]}
               onPress={handleDontAllow}
               activeOpacity={0.7}
             >
-              <Text style={[
-                styles.buttonText,
-                {
-                  color: '#000000',
-                  fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
-                }
-              ]}>
+              <Text
+                style={[
+                  styles.buttonText,
+                  {
+                    color: '#000000',
+                    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+                  },
+                ]}
+              >
                 {i18n.t('onboarding.notificationPermission.dontAllow')}
               </Text>
             </TouchableOpacity>
-            
-            <View style={[
-              styles.buttonDivider,
-              {
-                backgroundColor: '#FFFFFF',
-              }
-            ]} />
-            
+
+            <View
+              style={[
+                styles.buttonDivider,
+                {
+                  backgroundColor: '#FFFFFF',
+                },
+              ]}
+            />
+
             <TouchableOpacity
               style={[
                 styles.button,
                 styles.allowButton,
                 {
                   backgroundColor: '#000000',
-                }
+                },
               ]}
               onPress={handleAllowNotifications}
               activeOpacity={0.8}
             >
-              <Text style={[
-                styles.buttonText,
-                {
-                  color: '#FFFFFF',
-                  fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
-                }
-              ]}>
+              <Text
+                style={[
+                  styles.buttonText,
+                  {
+                    color: '#FFFFFF',
+                    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+                  },
+                ]}
+              >
                 {i18n.t('onboarding.notificationPermission.allow')}
               </Text>
             </TouchableOpacity>
           </View>
         </View>
-        
+
         {/* Upwards pointing finger emoji */}
         <Text style={styles.pointingEmoji}>👆</Text>
       </View>
@@ -225,4 +242,4 @@ const styles = StyleSheet.create({
     marginTop: 20,
     marginLeft: '55%',
   },
-}); 
+});

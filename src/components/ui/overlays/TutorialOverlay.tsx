@@ -1,5 +1,15 @@
 import React from 'react';
-import { Modal, View, Text, TouchableOpacity, StyleSheet, Platform, Dimensions, ActivityIndicator, Animated } from 'react-native';
+import {
+  Modal,
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Platform,
+  Dimensions,
+  ActivityIndicator,
+  Animated,
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LottieView from 'lottie-react-native';
 import { useTutorial } from '../../../context/TutorialContext';
@@ -13,15 +23,29 @@ import i18n from '../../../utils/i18n';
 import { track } from '../../../services/analytics';
 
 export function TutorialOverlay() {
-  const { isActive, isTransitioning, isProcessingStep, steps, currentStepIndex, currentRect, next, stop, setCurrentStepIndex, setCurrentRect } = useTutorial();
+  const {
+    isActive,
+    isTransitioning,
+    isProcessingStep,
+    steps,
+    currentStepIndex,
+    currentRect,
+    next,
+    stop,
+    setCurrentStepIndex,
+    setCurrentRect,
+  } = useTutorial();
   const { updateUserDetails, refetchUserDetails } = useUserDetails();
   const { currentLanguage } = useLanguage();
-  
+
   // existing debounce (keep as-is if you like)
   const [shouldRender, setShouldRender] = React.useState(false);
   React.useEffect(() => {
     const t = setTimeout(() => setShouldRender(true), 100);
-    return () => { clearTimeout(t); setShouldRender(false); };
+    return () => {
+      clearTimeout(t);
+      setShouldRender(false);
+    };
   }, [currentStepIndex, currentRect]);
 
   // NEW: 100ms "position ready" gate
@@ -54,7 +78,15 @@ export function TutorialOverlay() {
       overlayOpacity.stopAnimation();
       overlayOpacity.setValue(0);
     }
-  }, [isActive, isTransitioning, currentRect, shouldRender, positionReady, currentStepIndex, overlayOpacity]);
+  }, [
+    isActive,
+    isTransitioning,
+    currentRect,
+    shouldRender,
+    positionReady,
+    currentStepIndex,
+    overlayOpacity,
+  ]);
 
   // guard now also requires positionReady
   if (!isActive || isTransitioning || !currentRect || !positionReady) return null;
@@ -67,7 +99,7 @@ export function TutorialOverlay() {
   // Get current step
   const step = isActive && steps[currentStepIndex] ? steps[currentStepIndex] : undefined;
   if (!step) return null; // Safety check
-  
+
   const hasNext = currentStepIndex < steps.length - 1;
   const isAddButtonStep = step.id === 'add_button';
 
@@ -86,7 +118,7 @@ export function TutorialOverlay() {
   // Special case for library screen step: show tooltip in center without highlight
   const isLibraryScreenStep = step?.id === 'library_screen';
   const shouldForceRender = isReviewFeedbackStep && currentRect;
-  
+
   if (!shouldRender && !shouldForceRender) return null;
 
   return (
@@ -94,163 +126,169 @@ export function TutorialOverlay() {
     <Modal visible transparent animationType="none">
       <View style={styles.overlay} pointerEvents="box-none">
         {/* Fade ONLY this inner layer so layout tree/positions stay identical */}
-        <Animated.View style={[StyleSheet.absoluteFill, { opacity: overlayOpacity }]} pointerEvents="box-none">
-        {/* Dim with cut-out around the target (skip for final modal) */}
-        {highlight && !isLibraryScreenStep && (
-          <Svg style={styles.mask} pointerEvents="none">
-            <Path
-              fill="rgba(0,0,0,0.45)"
-              fillRule="evenodd"
-              d={`M0 0 H${screenW} V${screenH} H0 Z M${highlight.x + 12} ${highlight.y} Q${highlight.x} ${highlight.y} ${highlight.x} ${highlight.y + 12} L${highlight.x} ${highlight.y + highlight.h - 12} Q${highlight.x} ${highlight.y + highlight.h} ${highlight.x + 12} ${highlight.y + highlight.h} L${highlight.x + highlight.w - 12} ${highlight.y + highlight.h} Q${highlight.x + highlight.w} ${highlight.y + highlight.h} ${highlight.x + highlight.w} ${highlight.y + highlight.h - 12} L${highlight.x + highlight.w} ${highlight.y + 12} Q${highlight.x + highlight.w} ${highlight.y} ${highlight.x + highlight.w - 12} ${highlight.y} Z`}
-            />
-            <Rect
-              x={highlight.x}
-              y={highlight.y}
-              width={highlight.w}
-              height={highlight.h}
-              rx={12}
-              ry={12}
-              stroke="#FFFFFF"
-              strokeWidth={2}
-              fill="transparent"
-            />
-          </Svg>
-        )}
-
-        {/* Step number badge */}
-        {highlight && !isLibraryScreenStep && (
-          <View style={[styles.stepBadge, { top: highlight.y - 12, left: highlight.x - 12 }]}>
-            <Text style={styles.stepBadgeText}>{currentStepIndex + 1}</Text>
-          </View>
-        )}
-
-        {/* Tooltip (unchanged positioning logic) */}
-        <View
+        <Animated.View
+          style={[StyleSheet.absoluteFill, { opacity: overlayOpacity }]}
           pointerEvents="box-none"
-          style={[
-            styles.tooltipContainer,
-            isLibraryScreenStep
-              ? {
-                  top: '50%',
-                  left: 16,
-                  right: 16,
-                  transform: [{ translateY: -100 }],
-                }
-              : step.tooltipPlacement === 'inside-bottom'
-              ? { top: currentRect ? currentRect.y + currentRect.height - 200 : undefined }
-              : step.tooltipPlacement === 'bottom'
-              ? { top: currentRect ? currentRect.y + currentRect.height + 20 : 40 }
-              : { top: currentRect ? currentRect.y - 25 : 40 },
-          ]}
-          onLayout={(event) => {
-            if (isLibraryScreenStep) return;
-            const tooltipHeight = event.nativeEvent.layout.height;
-            if (step.tooltipPlacement !== 'bottom' && step.tooltipPlacement !== 'inside-bottom' && currentRect) {
-              const newTop = currentRect.y - tooltipHeight - 25;
-
-              // Preserve your special-casing
-              if (step.id === 'feedback_tips') {
-                event.target.setNativeProps?.({
-                  style: { top: Math.max(10, newTop), bottom: undefined },
-                });
-              } else if (newTop < 40) {
-                event.target.setNativeProps?.({
-                  style: { top: currentRect.y + currentRect.height + 25, bottom: undefined },
-                });
-              } else {
-                event.target.setNativeProps?.({
-                  style: { top: newTop, bottom: undefined },
-                });
-              }
-            }
-          }}
         >
-          <View style={styles.titleRow}>
-            <Text style={styles.title}>{step.title}</Text>
-            <View style={styles.rightContainer}>
-              <View style={styles.stepPill}>
-                <Text style={styles.stepPillText}>
-                  {currentStepIndex + 1} / {steps.length}
-                </Text>
+          {/* Dim with cut-out around the target (skip for final modal) */}
+          {highlight && !isLibraryScreenStep && (
+            <Svg style={styles.mask} pointerEvents="none">
+              <Path
+                fill="rgba(0,0,0,0.45)"
+                fillRule="evenodd"
+                d={`M0 0 H${screenW} V${screenH} H0 Z M${highlight.x + 12} ${highlight.y} Q${highlight.x} ${highlight.y} ${highlight.x} ${highlight.y + 12} L${highlight.x} ${highlight.y + highlight.h - 12} Q${highlight.x} ${highlight.y + highlight.h} ${highlight.x + 12} ${highlight.y + highlight.h} L${highlight.x + highlight.w - 12} ${highlight.y + highlight.h} Q${highlight.x + highlight.w} ${highlight.y + highlight.h} ${highlight.x + highlight.w} ${highlight.y + highlight.h - 12} L${highlight.x + highlight.w} ${highlight.y + 12} Q${highlight.x + highlight.w} ${highlight.y} ${highlight.x + highlight.w - 12} ${highlight.y} Z`}
+              />
+              <Rect
+                x={highlight.x}
+                y={highlight.y}
+                width={highlight.w}
+                height={highlight.h}
+                rx={12}
+                ry={12}
+                stroke="#FFFFFF"
+                strokeWidth={2}
+                fill="transparent"
+              />
+            </Svg>
+          )}
+
+          {/* Step number badge */}
+          {highlight && !isLibraryScreenStep && (
+            <View style={[styles.stepBadge, { top: highlight.y - 12, left: highlight.x - 12 }]}>
+              <Text style={styles.stepBadgeText}>{currentStepIndex + 1}</Text>
+            </View>
+          )}
+
+          {/* Tooltip (unchanged positioning logic) */}
+          <View
+            pointerEvents="box-none"
+            style={[
+              styles.tooltipContainer,
+              isLibraryScreenStep
+                ? {
+                    top: '50%',
+                    left: 16,
+                    right: 16,
+                    transform: [{ translateY: -100 }],
+                  }
+                : step.tooltipPlacement === 'inside-bottom'
+                  ? { top: currentRect ? currentRect.y + currentRect.height - 200 : undefined }
+                  : step.tooltipPlacement === 'bottom'
+                    ? { top: currentRect ? currentRect.y + currentRect.height + 20 : 40 }
+                    : { top: currentRect ? currentRect.y - 25 : 40 },
+            ]}
+            onLayout={(event) => {
+              if (isLibraryScreenStep) return;
+              const tooltipHeight = event.nativeEvent.layout.height;
+              if (
+                step.tooltipPlacement !== 'bottom' &&
+                step.tooltipPlacement !== 'inside-bottom' &&
+                currentRect
+              ) {
+                const newTop = currentRect.y - tooltipHeight - 25;
+
+                // Preserve your special-casing
+                if (step.id === 'feedback_tips') {
+                  event.target.setNativeProps?.({
+                    style: { top: Math.max(10, newTop), bottom: undefined },
+                  });
+                } else if (newTop < 40) {
+                  event.target.setNativeProps?.({
+                    style: { top: currentRect.y + currentRect.height + 25, bottom: undefined },
+                  });
+                } else {
+                  event.target.setNativeProps?.({
+                    style: { top: newTop, bottom: undefined },
+                  });
+                }
+              }
+            }}
+          >
+            <View style={styles.titleRow}>
+              <Text style={styles.title}>{step.title}</Text>
+              <View style={styles.rightContainer}>
+                <View style={styles.stepPill}>
+                  <Text style={styles.stepPillText}>
+                    {currentStepIndex + 1} / {steps.length}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.skipIconContainer}
+                  onPress={async () => {
+                    hapticFeedback.selection();
+                    // Track tutorial skip
+                    track('Tutorials', { data: 'skipped' });
+                    try {
+                      // Use the new finish and restore data function to restore user's data
+                      if (global.finishTutorialAndRestoreData) {
+                        await global.finishTutorialAndRestoreData();
+                      } else {
+                        // Fallback to regular stop if new function not available
+                        await stop();
+                      }
+                    } catch (error) {
+                      showAlert(
+                        'Error',
+                        'An error occurred while skipping the tutorial. Please try again.',
+                        undefined,
+                        'TUTORIAL_OVERLAY_SKIP_ERROR',
+                        error
+                      );
+                    }
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <SkipForward size={16} color="#000000" />
+                </TouchableOpacity>
               </View>
-              <TouchableOpacity
-                style={styles.skipIconContainer}
-                onPress={async () => {
-                  hapticFeedback.selection();
-                  // Track tutorial skip
-                  track('Tutorials', { data: 'skipped' });
-                  try {
-                    // Use the new finish and restore data function to restore user's data
-                    if (global.finishTutorialAndRestoreData) {
-                      await global.finishTutorialAndRestoreData();
-                    } else {
-                      // Fallback to regular stop if new function not available
-                      await stop();
-                    }
-                  } catch (error) {
-                    showAlert(
-                      'Error', 
-                      'An error occurred while skipping the tutorial. Please try again.',
-                      undefined,
-                      'TUTORIAL_OVERLAY_SKIP_ERROR',
-                      error
-                    );
-                  }
-                }}
-                activeOpacity={0.7}
-              >
-                <SkipForward size={16} color="#000000" />
-              </TouchableOpacity>
             </View>
-          </View>
-          <Text style={styles.description}>{step.description}</Text>
-          
-          {isAddButtonStep ? (
-            // Single button layout for add_button tutorial
-            <View>
-              <TouchableOpacity
-                style={styles.navButtonPrimaryFullWidth}
-                onPress={() => {
-                  hapticFeedback.selection();
-                  next();
-                }}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.navButtonPrimaryText}>{i18n.t('tutorial.buttons.next')}</Text>
-              </TouchableOpacity>
-              
-              {/* Skip guide hyperlink */}
-              <TouchableOpacity
-                style={styles.skipGuideButton}
-                onPress={async () => {
-                  hapticFeedback.selection();
-                  // Track tutorial skip
-                  track('Tutorials', { data: 'skipped' });
-                  try {
-                    // Use the new finish and restore data function to restore user's data
-                    if (global.finishTutorialAndRestoreData) {
-                      await global.finishTutorialAndRestoreData();
-                    } else {
-                      // Fallback to regular stop if new function not available
-                      await stop();
+            <Text style={styles.description}>{step.description}</Text>
+
+            {isAddButtonStep ? (
+              // Single button layout for add_button tutorial
+              <View>
+                <TouchableOpacity
+                  style={styles.navButtonPrimaryFullWidth}
+                  onPress={() => {
+                    hapticFeedback.selection();
+                    next();
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.navButtonPrimaryText}>{i18n.t('tutorial.buttons.next')}</Text>
+                </TouchableOpacity>
+
+                {/* Skip guide hyperlink */}
+                <TouchableOpacity
+                  style={styles.skipGuideButton}
+                  onPress={async () => {
+                    hapticFeedback.selection();
+                    // Track tutorial skip
+                    track('Tutorials', { data: 'skipped' });
+                    try {
+                      // Use the new finish and restore data function to restore user's data
+                      if (global.finishTutorialAndRestoreData) {
+                        await global.finishTutorialAndRestoreData();
+                      } else {
+                        // Fallback to regular stop if new function not available
+                        await stop();
+                      }
+                    } catch (error) {
+                      showAlert(
+                        'Error',
+                        'An error occurred while skipping the tutorial. Please try again.',
+                        undefined,
+                        'TUTORIAL_OVERLAY_SKIP_ERROR',
+                        error
+                      );
                     }
-                  } catch (error) {
-                    showAlert(
-                      'Error', 
-                      'An error occurred while skipping the tutorial. Please try again.',
-                      undefined,
-                      'TUTORIAL_OVERLAY_SKIP_ERROR',
-                      error
-                    );
-                  }
-                }}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.skipGuideText}>{i18n.t('tutorial.buttons.skipGuide')}</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            step.id === 'settings_support_email' && isProcessingStep ? (
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.skipGuideText}>{i18n.t('tutorial.buttons.skipGuide')}</Text>
+                </TouchableOpacity>
+              </View>
+            ) : step.id === 'settings_support_email' && isProcessingStep ? (
               <TouchableOpacity
                 style={[styles.navButtonPrimaryFullWidth, styles.navButtonDisabled]}
                 onPress={() => {}}
@@ -270,12 +308,15 @@ export function TutorialOverlay() {
                 activeOpacity={0.8}
               >
                 <Text style={styles.navButtonPrimaryText}>
-                  {step.id === 'settings_support_email' ? i18n.t('tutorial.buttons.complete') : hasNext ? i18n.t('tutorial.buttons.next') : i18n.t('tutorial.buttons.complete')}
+                  {step.id === 'settings_support_email'
+                    ? i18n.t('tutorial.buttons.complete')
+                    : hasNext
+                      ? i18n.t('tutorial.buttons.next')
+                      : i18n.t('tutorial.buttons.complete')}
                 </Text>
               </TouchableOpacity>
-            )
             )}
-        </View>
+          </View>
         </Animated.View>
       </View>
     </Modal>
@@ -297,7 +338,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#FFFFFF',
     backgroundColor: 'rgba(255,255,255,0.08)',
-},
+  },
   stepBadge: {
     position: 'absolute',
     top: -12,
@@ -438,5 +479,3 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
   },
 });
-
-

@@ -1,5 +1,13 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal, Animated, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Modal,
+  Animated,
+  ActivityIndicator,
+} from 'react-native';
 import i18n from '../../../utils/i18n';
 import { hapticFeedback } from '../../../utils/haptic';
 import { X } from 'lucide-react-native';
@@ -11,10 +19,10 @@ interface PhotoLibraryPermissionModalProps {
   onAllow: () => void;
 }
 
-export function PhotoLibraryPermissionModal({ 
-  isVisible, 
-  onClose, 
-  onAllow 
+export function PhotoLibraryPermissionModal({
+  isVisible,
+  onClose,
+  onAllow,
 }: PhotoLibraryPermissionModalProps) {
   const [shouldRender, setShouldRender] = React.useState(isVisible);
   const [isLoading, setIsLoading] = React.useState(false);
@@ -27,9 +35,11 @@ export function PhotoLibraryPermissionModal({
       Animated.timing(fadeOpacity, { toValue: 1, duration: 100, useNativeDriver: true }).start();
       return;
     }
-    Animated.timing(fadeOpacity, { toValue: 0, duration: 100, useNativeDriver: true }).start(({ finished }) => {
-      if (finished) setShouldRender(false);
-    });
+    Animated.timing(fadeOpacity, { toValue: 0, duration: 100, useNativeDriver: true }).start(
+      ({ finished }) => {
+        if (finished) setShouldRender(false);
+      }
+    );
   }, [isVisible, fadeOpacity]);
 
   // Track when modal appears
@@ -44,8 +54,8 @@ export function PhotoLibraryPermissionModal({
     setIsLoading(true);
     onClose();
     setTimeout(() => {
-      try { 
-        onAllow(); 
+      try {
+        onAllow();
         setIsLoading(false);
       } catch (_) {
         setIsLoading(false);
@@ -59,64 +69,49 @@ export function PhotoLibraryPermissionModal({
   };
 
   return (
-    <Modal
-      visible={shouldRender}
-      transparent
-      onRequestClose={handleCancel}
-    >
+    <Modal visible={shouldRender} transparent onRequestClose={handleCancel}>
       <Animated.View style={{ flex: 1, opacity: fadeOpacity }}>
-        <TouchableOpacity 
-          style={styles.overlay} 
-          activeOpacity={1} 
-          onPress={handleCancel}
-        >
-          <TouchableOpacity 
-            style={styles.modalContainer} 
-            activeOpacity={1} 
+        <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={handleCancel}>
+          <TouchableOpacity
+            style={styles.modalContainer}
+            activeOpacity={1}
             onPress={(e) => e.stopPropagation()}
           >
-          {/* Close button */}
-          <TouchableOpacity 
-            style={styles.closeButton} 
-            onPress={handleCancel}
-          >
-            <X size={20} color="#000000" />
-          </TouchableOpacity>
-
-          {/* Title */}
-          <Text style={styles.title}>
-            {i18n.t('library.photoLibraryPermission.title')}
-          </Text>
-
-          {/* Message */}
-          <Text style={styles.message}>
-            {i18n.t('library.photoLibraryPermission.message')}
-          </Text>
-
-          {/* Action buttons */}
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity 
-              style={[styles.button, styles.buttonOutlined]} 
-              onPress={handleCancel}
-            >
-              <Text style={styles.buttonOutlinedText}>
-                {i18n.t('library.photoLibraryPermission.cancel')}
-              </Text>
+            {/* Close button */}
+            <TouchableOpacity style={styles.closeButton} onPress={handleCancel}>
+              <X size={20} color="#000000" />
             </TouchableOpacity>
-            <TouchableOpacity 
-              style={[styles.button, styles.buttonPrimary]} 
-              onPress={handleAllow}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
-              ) : (
-                <Text style={styles.buttonPrimaryText}>
-                  {i18n.t('library.photoLibraryPermission.allow')}
+
+            {/* Title */}
+            <Text style={styles.title}>{i18n.t('library.photoLibraryPermission.title')}</Text>
+
+            {/* Message */}
+            <Text style={styles.message}>{i18n.t('library.photoLibraryPermission.message')}</Text>
+
+            {/* Action buttons */}
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                style={[styles.button, styles.buttonOutlined]}
+                onPress={handleCancel}
+              >
+                <Text style={styles.buttonOutlinedText}>
+                  {i18n.t('library.photoLibraryPermission.cancel')}
                 </Text>
-              )}
-            </TouchableOpacity>
-          </View>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.button, styles.buttonPrimary]}
+                onPress={handleAllow}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.buttonPrimaryText}>
+                    {i18n.t('library.photoLibraryPermission.allow')}
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </View>
           </TouchableOpacity>
         </TouchableOpacity>
       </Animated.View>

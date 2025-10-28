@@ -15,7 +15,7 @@ const supportEmail = 'support@useformai.com';
 export async function openEmailComposer(options: EmailOptions): Promise<void> {
   try {
     const isAvailable = await MailComposer.isAvailableAsync();
-    
+
     if (!isAvailable) {
       showAlert('Email Not Available', 'No email app is available on this device.');
       return;
@@ -25,7 +25,7 @@ export async function openEmailComposer(options: EmailOptions): Promise<void> {
   } catch (error) {
     console.error('Error opening email composer:', error);
     showAlert(
-      'Error', 
+      'Error',
       'Failed to open email composer. Please try again.',
       undefined,
       'EMAIL_SERVICE_FAILED_TO_OPEN_COMPOSER',
@@ -36,7 +36,7 @@ export async function openEmailComposer(options: EmailOptions): Promise<void> {
 
 export async function openSupportEmail(): Promise<void> {
   const userId = await getUserId();
-  
+
   const options: EmailOptions = {
     recipients: [supportEmail],
     subject: 'FormAI Support Request',
@@ -111,7 +111,8 @@ I recently cancelled my subscription and wanted to provide feedback:
 export async function openDeletionFeedbackEmail(): Promise<void> {
   const userId = await getUserId();
 
-  const metadata = userId ? `
+  const metadata = userId
+    ? `
 
               Meta data (Please do not remove this as it will help us identify your account)
 
@@ -119,7 +120,8 @@ export async function openDeletionFeedbackEmail(): Promise<void> {
               - Device Version: ${Platform.Version}
               - App Version: ${Constants.expoConfig?.version}
               - User ID: ${userId}
-          ` : '';
+          `
+    : '';
 
   const options: EmailOptions = {
     recipients: [supportEmail],

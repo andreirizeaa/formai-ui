@@ -1,6 +1,11 @@
 import { API_CONFIG } from '../../lib/api';
 import { getUserId } from '../storageService';
-import { LoadingLiftData, AnalyzeLiftPayload, AnalyzeLiftResponse, RetryStage } from '../../types/Lifts';
+import {
+  LoadingLiftData,
+  AnalyzeLiftPayload,
+  AnalyzeLiftResponse,
+  RetryStage,
+} from '../../types/Lifts';
 import { ILiftData } from '../../context/LiftDataContext';
 import { supabase } from '../../lib/supabase';
 import { emitLiftDeleted } from './liftEvents';
@@ -14,14 +19,15 @@ function mergeSignals(a?: AbortSignal, b?: AbortSignal) {
     if (s.aborted) return ctrl.abort();
     s.addEventListener('abort', () => ctrl.abort(), { once: true });
   };
-  relay(a); relay(b);
+  relay(a);
+  relay(b);
   return ctrl.signal;
 }
 
 // Helper: fetch with timeout and external abort signal
 async function fetchWithTimeout(
-  input: RequestInfo, 
-  init: RequestInit = {}, 
+  input: RequestInfo,
+  init: RequestInit = {},
   timeoutMs = 15000,
   externalSignal?: AbortSignal
 ) {
@@ -41,7 +47,10 @@ function isSupabaseStorageUrl(url: string): boolean {
   if (!url || typeof url !== 'string') return false;
   try {
     const u = new URL(url);
-    return Boolean((u.protocol === 'http:' || u.protocol === 'https:') && u.pathname.includes('/storage/v1/object/'));
+    return Boolean(
+      (u.protocol === 'http:' || u.protocol === 'https:') &&
+        u.pathname.includes('/storage/v1/object/')
+    );
   } catch (_) {
     return false;
   }
@@ -83,7 +92,9 @@ async function listAllObjectsUnderPrefix(bucket: string, prefix: string): Promis
     // current may be '' which lists bucket root
     // eslint-disable-next-line no-constant-condition
     while (true) {
-      const { data, error } = await supabase.storage.from(bucket).list(current, { limit: pageSize, offset });
+      const { data, error } = await supabase.storage
+        .from(bucket)
+        .list(current, { limit: pageSize, offset });
       if (error) break;
       const items = data || [];
       if (!items.length) break;
@@ -110,7 +121,7 @@ async function deleteStoragePrefix(bucket: string, prefix: string): Promise<void
     const chunk = keys.slice(i, i + chunkSize);
     // remove expects object paths relative to bucket
     // Ensure no leading slash
-    const toRemove = chunk.map(k => k.replace(/^\/+/, ''));
+    const toRemove = chunk.map((k) => k.replace(/^\/+/, ''));
     // eslint-disable-next-line no-await-in-loop
     await supabase.storage.from(bucket).remove(toRemove);
   }
@@ -121,7 +132,11 @@ async function deleteStorageByUrl(url: string, alreadyHandledPrefix?: string): P
   const parsed = parseStorageUrl(url);
   if (!parsed) return true;
   const { bucket, objectPath } = parsed;
-  if (bucket === 'lifts' && alreadyHandledPrefix && objectPath.startsWith(alreadyHandledPrefix.replace(/\/+$/, '/') )) {
+  if (
+    bucket === 'lifts' &&
+    alreadyHandledPrefix &&
+    objectPath.startsWith(alreadyHandledPrefix.replace(/\/+$/, '/'))
+  ) {
     // Already deleted by prefix operation
     return true;
   }
@@ -134,7 +149,12 @@ function extractScreenshotUrlsFromAnalysis(analysis: any): string[] {
   if (!analysis || typeof analysis !== 'object') return urls;
   const feedback = Array.isArray(analysis?.feedback) ? analysis.feedback : [];
   for (const entry of feedback) {
-    if (entry && typeof entry === 'object' && typeof entry.imageURL === 'string' && entry.imageURL) {
+    if (
+      entry &&
+      typeof entry === 'object' &&
+      typeof entry.imageURL === 'string' &&
+      entry.imageURL
+    ) {
       urls.push(entry.imageURL);
     }
   }
@@ -142,8 +162,8 @@ function extractScreenshotUrlsFromAnalysis(analysis: any): string[] {
 }
 
 export async function analyzeLift(
-  userId: string, 
-  liftData: LoadingLiftData, 
+  userId: string,
+  liftData: LoadingLiftData,
   retryStage?: RetryStage,
   opts?: { signal?: AbortSignal }
 ): Promise<AnalyzeLiftResponse & { transient?: boolean }> {
@@ -166,16 +186,19 @@ export async function analyzeLift(
     ...(retryStage && { stage: retryStage }),
   };
   try {
-    const response = await fetchWithTimeout(`${API_CONFIG.baseURL}/lifts/analyse`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        // Idempotency key to prevent duplicate server calls
-        'Idempotency-Key': liftData.id,
+    const response = await fetchWithTimeout(
+      `${API_CONFIG.baseURL}/lifts/analyse`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // Idempotency key to prevent duplicate server calls
+          'Idempotency-Key': liftData.id,
+        },
+        body: JSON.stringify(payload),
       },
-      body: JSON.stringify(payload),
-    }, 300000, // 5 minute timeout for analysis
-    opts?.signal // Pass through external abort signal
+      300000, // 5 minute timeout for analysis
+      opts?.signal // Pass through external abort signal
     );
 
     if (!response.ok) {
@@ -187,7 +210,7 @@ export async function analyzeLift(
       // server died mid-response, or empty body
       return { success: false, data: null, error: 'BAD_JSON', transient: false };
     }
-    
+
     // Handle success cases - either with data or with assetId for polling
     if (json.success) {
       return json; // Return the full response including assetId if present
@@ -197,8 +220,10 @@ export async function analyzeLift(
     return { success: false, data: null, error: json.error || 'EMPTY_DATA', transient: false };
   } catch (e: any) {
     // Distinguish abort/timeout vs other network errors (both should be transient)
-    const msg = (e && e.name === 'AbortError') ? 'TIMEOUT' : 'NETWORK_ERROR';
-    const isTransient = e?.name === 'AbortError' || /network|timeout|connection|abort|fetch|ECONN|ENET|EAI/i.test(String(e?.message || e || ''));
+    const msg = e && e.name === 'AbortError' ? 'TIMEOUT' : 'NETWORK_ERROR';
+    const isTransient =
+      e?.name === 'AbortError' ||
+      /network|timeout|connection|abort|fetch|ECONN|ENET|EAI/i.test(String(e?.message || e || ''));
     return { success: false, data: null, error: msg, transient: isTransient };
   }
 }
@@ -265,22 +290,16 @@ export async function deleteLiftCardData(
     }
 
     // 3) Best-effort DB cleanup (idempotent)
-    await supabase
-      .from('lifts')
-      .delete()
-      .eq('id', liftId)
-      .eq('user_id', userId);
+    await supabase.from('lifts').delete().eq('id', liftId).eq('user_id', userId);
 
     // 4) Remove any recorded failures by lift_id or asset_id (if provided)
     const orParts: string[] = [`lift_id.eq.${liftId}`];
     if (opts?.assetId) orParts.push(`asset_id.eq.${opts.assetId}`);
-    await supabase
-      .from('lift_failures')
-      .delete()
-      .eq('user_id', userId)
-      .or(orParts.join(','));
+    await supabase.from('lift_failures').delete().eq('user_id', userId).or(orParts.join(','));
 
-    try { emitLiftDeleted(liftId); } catch (_) {}
+    try {
+      emitLiftDeleted(liftId);
+    } catch (_) {}
     return true;
   } catch (_) {
     return false;
@@ -290,7 +309,7 @@ export async function deleteLiftCardData(
 export async function checkDuplicateAssetId(assetId: string): Promise<boolean> {
   const userId = await getUserId();
   if (!userId) return false;
-  
+
   try {
     // The function now supports both native asset IDs and hash-based IDs
     // Both are stored in the same asset_id column, so the query remains the same
@@ -300,11 +319,11 @@ export async function checkDuplicateAssetId(assetId: string): Promise<boolean> {
       .eq('user_id', userId)
       .eq('asset_id', assetId)
       .limit(1);
-    
+
     if (error) {
       return false;
     }
-    
+
     return data && data.length > 0;
   } catch (error) {
     return false;
@@ -332,9 +351,9 @@ export async function checkDuplicateAssetIdComprehensive(assetId: string): Promi
     // Check both database and memory
     const [dbDuplicate, memoryDuplicate] = await Promise.all([
       checkDuplicateAssetId(assetId),
-      checkDuplicateAssetIdInMemory(assetId)
+      checkDuplicateAssetIdInMemory(assetId),
     ]);
-    
+
     return dbDuplicate || memoryDuplicate;
   } catch (error) {
     // Fallback to database check only
@@ -347,7 +366,9 @@ export async function searchLiftByAssetId(key: string, userId?: string): Promise
   try {
     const { data, error } = await supabase
       .from('lifts')
-      .select('id,user_id,is_favourite,lift_type,lift_date,lift_time,metric_weight,reps,thumbnail_url,analysis,asset_id,pose_video_url,raw_video_url')
+      .select(
+        'id,user_id,is_favourite,lift_type,lift_date,lift_time,metric_weight,reps,thumbnail_url,analysis,asset_id,pose_video_url,raw_video_url'
+      )
       .eq('user_id', userId)
       .eq('asset_id', key)
       .maybeSingle();
@@ -362,7 +383,9 @@ export async function lookupLift(key: string, userId: string): Promise<any | nul
   try {
     const { data, error } = await supabase
       .from('lifts')
-      .select('id,user_id,is_favourite,lift_type,lift_date,lift_time,metric_weight,reps,thumbnail_url,analysis,asset_id,pose_video_url,raw_video_url')
+      .select(
+        'id,user_id,is_favourite,lift_type,lift_date,lift_time,metric_weight,reps,thumbnail_url,analysis,asset_id,pose_video_url,raw_video_url'
+      )
       .eq('user_id', userId)
       .eq('asset_id', key)
       .maybeSingle();
@@ -373,7 +396,11 @@ export async function lookupLift(key: string, userId: string): Promise<any | nul
   }
 }
 
-export async function updateLiftWeight(liftId: string, metricWeight: number, unitSystem: 'metric' | 'imperial'): Promise<{ success: boolean; error?: string }> {
+export async function updateLiftWeight(
+  liftId: string,
+  metricWeight: number,
+  unitSystem: 'metric' | 'imperial'
+): Promise<{ success: boolean; error?: string }> {
   const userId = await getUserId();
   if (!userId) return { success: false, error: 'NO_USER_ID' };
 
@@ -402,9 +429,11 @@ export async function updateLiftWeight(liftId: string, metricWeight: number, uni
   }
 }
 
-
-
-export async function findLiftFailure(params: { userId: string; liftId?: string; assetId?: string }): Promise<{ id: string; error: string; assetId?: string } | null> {
+export async function findLiftFailure(params: {
+  userId: string;
+  liftId?: string;
+  assetId?: string;
+}): Promise<{ id: string; error: string; assetId?: string } | null> {
   try {
     const { userId, liftId, assetId } = params;
     let q = supabase
@@ -427,7 +456,11 @@ export async function findLiftFailure(params: { userId: string; liftId?: string;
     if (error) return null;
     const row = Array.isArray(data) ? data[0] : null;
     if (!row) return null;
-    return { id: row.id as string, error: String(row.error), assetId: (row as any)?.asset_id ? String((row as any).asset_id) : undefined };
+    return {
+      id: row.id as string,
+      error: String(row.error),
+      assetId: (row as any)?.asset_id ? String((row as any).asset_id) : undefined,
+    };
   } catch {
     return null;
   }

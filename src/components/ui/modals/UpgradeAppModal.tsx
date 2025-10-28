@@ -18,7 +18,6 @@ export function UpgradeAppModal({ isVisible, onClose, versionCheckResult }: Upgr
   // Lottie animation ref
   const confettiRef = useRef<LottieView>(null);
 
-
   // Start confetti animation when modal becomes visible
   useEffect(() => {
     if (isVisible && confettiRef.current) {
@@ -26,7 +25,7 @@ export function UpgradeAppModal({ isVisible, onClose, versionCheckResult }: Upgr
       const timer = setTimeout(() => {
         confettiRef.current?.play();
       }, 500);
-      
+
       return () => clearTimeout(timer);
     }
   }, [isVisible]);
@@ -34,21 +33,21 @@ export function UpgradeAppModal({ isVisible, onClose, versionCheckResult }: Upgr
   const handleUpdatePress = async () => {
     try {
       hapticFeedback.selection();
-      
+
       // Track the update button click
-      track('Update app button clicked', { 
+      track('Update app button clicked', {
         event: 'Update App',
         forceUpdate: versionCheckResult?.forceUpdate || false,
         forceShow: versionCheckResult?.forceShow || false,
         currentVersion: versionCheckResult?.currentVersion || 'unknown',
-        latestVersion: versionCheckResult?.latestVersion || 'unknown'
+        latestVersion: versionCheckResult?.latestVersion || 'unknown',
       });
-      
+
       onClose();
-      
+
       const appStoreUrl = 'https://apps.apple.com/us/app/form-ai-train-safer-now/id6749869538';
       const canOpen = await Linking.canOpenURL(appStoreUrl);
-      
+
       if (canOpen) {
         await Linking.openURL(appStoreUrl);
       }
@@ -128,7 +127,9 @@ export function UpgradeAppModal({ isVisible, onClose, versionCheckResult }: Upgr
           {/* Bottom Button */}
           <View style={styles.bottomControls}>
             <TouchableOpacity onPress={handleUpdatePress} style={styles.updateButton}>
-              <Text style={styles.updateButtonText}>{i18n.t('welcome.modal.upgrade.updateButton')}</Text>
+              <Text style={styles.updateButtonText}>
+                {i18n.t('welcome.modal.upgrade.updateButton')}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>

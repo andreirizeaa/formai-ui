@@ -1,13 +1,31 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, Keyboard, Modal, Animated, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Platform,
+  Keyboard,
+  Modal,
+  Animated,
+  Alert,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Camera, useCameraDevice, type VideoFile, useCameraFormat } from 'react-native-vision-camera';
+import {
+  Camera,
+  useCameraDevice,
+  type VideoFile,
+  useCameraFormat,
+} from 'react-native-vision-camera';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import i18n from '../../../../utils/i18n';
 import { hapticFeedback } from '../../../../utils/haptic';
 import { generateVideoThumbnail } from '../../../../utils/generateVideoThumbnail';
 import { getStableAssetId } from '../../../../utils/getStableAssetId';
-import { uploadLiftVideo, uploadLiftThumbnail } from '../../../../services/lifts/VideoUploadService';
+import {
+  uploadLiftVideo,
+  uploadLiftThumbnail,
+} from '../../../../services/lifts/VideoUploadService';
 import { openAppSettings } from '../../../../utils/openAppSettings';
 import { VideoPreviewScreen } from '../common/VideoPreviewScreen';
 import { MovementSelectionScreen } from '../common/MovementSelectionScreen';
@@ -46,10 +64,16 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
   const [selectedMovement, setSelectedMovement] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedBodyPart, setSelectedBodyPart] = useState<BodyPart>('all');
-  const [filteredMovements, setFilteredMovements] = useState<string[]>(gymMovements.map(m => m.name));
-  
+  const [filteredMovements, setFilteredMovements] = useState<string[]>(
+    gymMovements.map((m) => m.name)
+  );
+
   // Weight and reps state
-  const [weightReps, setWeightReps] = useState<{ weight: number; unit: 'kg' | 'lbs'; reps: number } | null>(null);
+  const [weightReps, setWeightReps] = useState<{
+    weight: number;
+    unit: 'kg' | 'lbs';
+    reps: number;
+  } | null>(null);
 
   // Loading state for video upload
   const [isUploading, setIsUploading] = useState(false);
@@ -107,7 +131,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
       setSelectedMovement('');
       setSearchQuery('');
       setSelectedBodyPart('all');
-      setFilteredMovements(gymMovements.map(m => m.name));
+      setFilteredMovements(gymMovements.map((m) => m.name));
       setWeightReps(null);
       setIsCameraReady(false);
       setShowCamera(true);
@@ -133,7 +157,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
       setSelectedMovement('');
       setSearchQuery('');
       setSelectedBodyPart('all');
-      setFilteredMovements(gymMovements.map(m => m.name));
+      setFilteredMovements(gymMovements.map((m) => m.name));
       setWeightReps(null);
       setShowCountdownModal(false);
       setShowVideoTooShortModal(false);
@@ -159,7 +183,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
   // Check for no camera access when permission screen shows
   useEffect(() => {
     if (hasPermission !== false || !isVisible) return;
-    
+
     const checkCameraAccess = async () => {
       try {
         // Silent check - no alert needed
@@ -167,7 +191,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
         // Silently fail
       }
     };
-    
+
     checkCameraAccess();
   }, [hasPermission, isVisible, permission]);
 
@@ -190,7 +214,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
           ])
         ).start();
       };
-      
+
       startFingerAnimation();
     } else {
       // Reset animation when not showing permission screen
@@ -201,7 +225,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
   useEffect(() => {
     if (isRecording) {
       recordingIntervalRef.current = setInterval(() => {
-        setRecordingTime(prev => prev + 1);
+        setRecordingTime((prev) => prev + 1);
         actualRecordingDurationRef.current += 1;
       }, 1000);
     }
@@ -224,7 +248,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
 
   const handleNext = async () => {
     hapticFeedback.selection();
-    
+
     // Check camera permission first
     const hasPermission = checkCameraPermission();
     if (!hasPermission) {
@@ -232,7 +256,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
       setShowCameraPermissionScreen(true);
       return;
     }
-    
+
     // Proceed to camera - no media library permission needed for recording
     setShowPractices(false);
     setShowCamera(true);
@@ -252,18 +276,18 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
   const requestCameraPermissionFromUser = async () => {
     try {
       const result = await requestPermission();
-      
+
       if (!result.granted && result.canAskAgain === false) {
         hapticFeedback.selection();
         openAppSettings();
         setHasPermission(false);
         return;
       }
-      
+
       if (result.granted) {
         hapticFeedback.success();
       }
-      
+
       setHasPermission(result.granted);
     } catch (e) {
       setHasPermission(false);
@@ -283,13 +307,13 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
 
       cameraRef.current.startRecording({
         fileType: Platform.OS === 'ios' ? 'mov' : 'mp4',
-        onRecordingFinished: async(video: VideoFile) => {
+        onRecordingFinished: async (video: VideoFile) => {
           const path = video.path as string;
           const uri = path.startsWith('file://') ? path : `file://${path}`;
-          
+
           // Check video duration before showing preview
           const durationInSeconds = actualRecordingDurationRef.current;
-          
+
           // Too short (< 3s)
           if (durationInSeconds < 2) {
             setRecordingTime(0);
@@ -310,9 +334,9 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
             // Failed to save video to media library
           }
         },
-        onRecordingError: error => {
+        onRecordingError: (error) => {
           showAlert(
-            i18n.t('upload.error'), 
+            i18n.t('upload.error'),
             i18n.t('upload.recordingFailed'),
             undefined,
             'RECORD_RECORDING_FAILED',
@@ -324,7 +348,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
     } catch (error) {
       setIsRecording(false);
       showAlert(
-        i18n.t('upload.error'), 
+        i18n.t('upload.error'),
         i18n.t('upload.failedToStartRecording'),
         undefined,
         'RECORD_FAILED_TO_START_RECORDING',
@@ -353,7 +377,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
     setIsPreCountdown(true);
     setPreCountdownValue(countdownSetting);
     preCountdownIntervalRef.current = setInterval(() => {
-      setPreCountdownValue(prev => {
+      setPreCountdownValue((prev) => {
         if (prev <= 1) {
           // start recording when about to hit 0
           if (preCountdownIntervalRef.current) {
@@ -386,7 +410,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
       hapticFeedback.success();
     } catch (e) {
       showAlert(
-        i18n.t('upload.error'), 
+        i18n.t('upload.error'),
         i18n.t('upload.failedToFinishRecording'),
         undefined,
         'RECORD_FAILED_TO_FINISH_RECORDING',
@@ -396,7 +420,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
       setIsRecording(false);
       // Don't reset recordingTime here - it's needed for duration validation
       setIsCameraReady(false);
-      setCameraKey(prevKey => prevKey + 1);
+      setCameraKey((prevKey) => prevKey + 1);
     }
   };
 
@@ -411,7 +435,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
 
   const handleSelectNewVideo = async () => {
     hapticFeedback.selection();
-    
+
     // Reset all recording-related state
     setShowVideoPreview(false);
     setRecordedVideoUri(null);
@@ -422,13 +446,13 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
     setSelectedBodyPart('all');
     setWeightReps(null);
     setShowVideoTooShortModal(false);
-  
+
     // 1) unmount camera
     setShowCamera(false);
 
     // 2) on next tick, bump key & remount
     setTimeout(() => {
-      setCameraKey(k => k + 1);
+      setCameraKey((k) => k + 1);
       setShowCamera(true);
     }, 50);
   };
@@ -438,7 +462,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
 
     // Check video duration using ref for accuracy
     const durationInSeconds = actualRecordingDurationRef.current;
-    
+
     // Too short (< 3s)
     if (durationInSeconds < 3) {
       hapticFeedback.error();
@@ -449,7 +473,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
     // Check for duplicate video using stable asset ID
     const baseAssetId = await getStableAssetId({ uri: recordedVideoUri });
     const isDuplicate = await checkDuplicateAssetId(baseAssetId);
-    
+
     if (isDuplicate) {
       hapticFeedback.error();
       showAlert(
@@ -469,13 +493,13 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
 
   const handleContinue = async () => {
     hapticFeedback.selection();
-    
+
     // Validate video before proceeding
     const isValid = await validateVideoBeforeContinue();
     if (!isValid) {
       return; // Don't proceed if validation fails
     }
-    
+
     setShowVideoPreview(false);
     setShowMovementSelection(true);
   };
@@ -507,24 +531,28 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
 
   const getDateAndTime = () => {
     const now = new Date();
-  
+
     // 📅 Date (YYYY-MM-DD) - Use selected date from calendar
-    const date = selectedDate.toISOString().split("T")[0];
-  
+    const date = selectedDate.toISOString().split('T')[0];
+
     // ⏰ Time (hh:mm AM/PM) - Use current time
     let hours = now.getHours();
-    const minutes = now.getMinutes().toString().padStart(2, "0");
-  
-    const ampm = hours >= 12 ? "PM" : "AM";
+    const minutes = now.getMinutes().toString().padStart(2, '0');
+
+    const ampm = hours >= 12 ? 'PM' : 'AM';
     hours = hours % 12;
     hours = hours ? hours : 12; // 0 -> 12
-  
+
     const time = `${hours}:${minutes} ${ampm}`;
-  
+
     return { date, time };
   };
 
-  const handleFinalCompleteClicked = async (data: { weight: number; unit: 'kg' | 'lbs'; reps: number }) => {
+  const handleFinalCompleteClicked = async (data: {
+    weight: number;
+    unit: 'kg' | 'lbs';
+    reps: number;
+  }) => {
     if (!recordedVideoUri || isUploading) return;
 
     setIsUploading(true);
@@ -549,7 +577,13 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
       const liftId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
       // Upload video and thumbnail using VideoUploadService
-      const { publicUrl: videoUrl } = await uploadLiftVideo(userId, liftId, videoUri, recordedAssetId, hasHdVideos);
+      const { publicUrl: videoUrl } = await uploadLiftVideo(
+        userId,
+        liftId,
+        videoUri,
+        recordedAssetId,
+        hasHdVideos
+      );
       const { publicUrl: thumbUrl } = await uploadLiftThumbnail(userId, liftId, thumbnailUri);
 
       // Create the loading lift with uploaded URLs
@@ -600,20 +634,20 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
 
   const filterMovements = (searchText: string, bodyPart: BodyPart) => {
     let filtered = [...gymMovements];
-    
+
     // Filter by body part
     if (bodyPart !== 'all') {
-      filtered = filtered.filter(movement => movement.bodyPart === bodyPart);
+      filtered = filtered.filter((movement) => movement.bodyPart === bodyPart);
     }
-    
+
     // Filter by search text
     if (searchText.trim()) {
-      filtered = filtered.filter(movement =>
+      filtered = filtered.filter((movement) =>
         movement.name.toLowerCase().includes(searchText.toLowerCase())
       );
     }
-    
-    setFilteredMovements(filtered.map(m => m.name));
+
+    setFilteredMovements(filtered.map((m) => m.name));
   };
 
   const handleClearSearch = () => {
@@ -664,21 +698,22 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
   // Show camera permission screen if needed
   if (showCameraPermissionScreen) {
     return (
-      <SafeAreaView
-        style={[
-          styles.container,
-          { backgroundColor: '#ffffff' }
-        ]}
-      >
+      <SafeAreaView style={[styles.container, { backgroundColor: '#ffffff' }]}>
         {/* Close Button */}
         <View style={styles.permissionTopControls}>
-          <TouchableOpacity onPress={() => {
-            if (isUploading || isModalDisabled) return;
-            hapticFeedback.selection();
-            setShowCameraPermissionScreen(false);
-            onClose();
-          }} style={[styles.closeButton, (isUploading || isModalDisabled) && styles.closeButtonDisabled]}
-          disabled={isUploading || isModalDisabled}>
+          <TouchableOpacity
+            onPress={() => {
+              if (isUploading || isModalDisabled) return;
+              hapticFeedback.selection();
+              setShowCameraPermissionScreen(false);
+              onClose();
+            }}
+            style={[
+              styles.closeButton,
+              (isUploading || isModalDisabled) && styles.closeButtonDisabled,
+            ]}
+            disabled={isUploading || isModalDisabled}
+          >
             <X width={24} height={24} color={'#000000'} />
           </TouchableOpacity>
         </View>
@@ -693,7 +728,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
           isLoading={cameraPermissionLoading}
           onAllow={async () => {
             setCameraPermissionLoading(true);
-            
+
             try {
               await requestCameraPermissionFromUser();
               setShowCameraPermissionScreen(false);
@@ -726,12 +761,18 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
             <View style={styles.titleContainer}>
               <Text style={styles.title}>{i18n.t('add.recordVideo')}</Text>
             </View>
-            <TouchableOpacity onPress={() => {
-              if (isUploading || isModalDisabled) return;
-              hapticFeedback.selection();
-              onClose();
-            }} style={[styles.closeButton, (isUploading || isModalDisabled) && styles.closeButtonDisabled]}
-            disabled={isUploading || isModalDisabled}>
+            <TouchableOpacity
+              onPress={() => {
+                if (isUploading || isModalDisabled) return;
+                hapticFeedback.selection();
+                onClose();
+              }}
+              style={[
+                styles.closeButton,
+                (isUploading || isModalDisabled) && styles.closeButtonDisabled,
+              ]}
+              disabled={isUploading || isModalDisabled}
+            >
               <X width={24} height={24} color="#000000" />
             </TouchableOpacity>
           </View>
@@ -741,10 +782,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
             <PracticesScreen
               onNext={handleNext}
               buttonText={i18n.t('next')}
-              tips={[
-                i18n.t('add.recordingTips.0'),
-                i18n.t('add.recordingTips.1')
-              ]}
+              tips={[i18n.t('add.recordingTips.0'), i18n.t('add.recordingTips.1')]}
             />
           </View>
         </SafeAreaView>
@@ -756,8 +794,14 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
             <View style={styles.titleContainer}>
               <Text style={styles.title}>{i18n.t('add.recordVideo')}</Text>
             </View>
-            <TouchableOpacity onPress={handleClose} style={[styles.closeButton, (isUploading || isModalDisabled) && styles.closeButtonDisabled]}
-              disabled={isUploading || isModalDisabled}>
+            <TouchableOpacity
+              onPress={handleClose}
+              style={[
+                styles.closeButton,
+                (isUploading || isModalDisabled) && styles.closeButtonDisabled,
+              ]}
+              disabled={isUploading || isModalDisabled}
+            >
               <X width={24} height={24} color="#000000" />
             </TouchableOpacity>
           </View>
@@ -773,7 +817,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
             />
           </View>
         </SafeAreaView>
-              ) : showMovementSelection ? (
+      ) : showMovementSelection ? (
         // Movement Selection Content
         <SafeAreaView style={styles.container}>
           {/* Close Button and Title */}
@@ -781,8 +825,14 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
             <View style={styles.titleContainer}>
               <Text style={styles.title}>{i18n.t('add.recordVideo')}</Text>
             </View>
-            <TouchableOpacity onPress={handleClose} style={[styles.closeButton, (isUploading || isModalDisabled) && styles.closeButtonDisabled]}
-              disabled={isUploading || isModalDisabled}>
+            <TouchableOpacity
+              onPress={handleClose}
+              style={[
+                styles.closeButton,
+                (isUploading || isModalDisabled) && styles.closeButtonDisabled,
+              ]}
+              disabled={isUploading || isModalDisabled}
+            >
               <X width={24} height={24} color="#000000" />
             </TouchableOpacity>
           </View>
@@ -804,7 +854,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
             />
           </View>
         </SafeAreaView>
-              ) : showWeightReps ? (
+      ) : showWeightReps ? (
         // Weight and Reps Content
         <SafeAreaView style={styles.container}>
           {/* Close Button and Title */}
@@ -812,8 +862,14 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
             <View style={styles.titleContainer}>
               <Text style={styles.title}>{i18n.t('add.recordVideo')}</Text>
             </View>
-            <TouchableOpacity onPress={handleClose} style={[styles.closeButton, (isUploading || isModalDisabled) && styles.closeButtonDisabled]}
-              disabled={isUploading || isModalDisabled}>
+            <TouchableOpacity
+              onPress={handleClose}
+              style={[
+                styles.closeButton,
+                (isUploading || isModalDisabled) && styles.closeButtonDisabled,
+              ]}
+              disabled={isUploading || isModalDisabled}
+            >
               <X width={24} height={24} color="#000000" />
             </TouchableOpacity>
           </View>
@@ -848,37 +904,41 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
                 onInitialized={() => setIsCameraReady(true)}
               />
             )}
-            
+
             {/* Camera Overlay - positioned absolutely on top */}
             <View style={styles.cameraOverlay}>
               {/* Timer Pill */}
               <View style={styles.timerContainer}>
-                <View style={[
-                  styles.timerPill,
-                  isRecording && styles.timerPillRecording
-                ]}>
-                  <Text style={[
-                    styles.timerText,
-                    isRecording && styles.timerTextRecording
-                  ]}>{formatTime(recordingTime)}</Text>
+                <View style={[styles.timerPill, isRecording && styles.timerPillRecording]}>
+                  <Text style={[styles.timerText, isRecording && styles.timerTextRecording]}>
+                    {formatTime(recordingTime)}
+                  </Text>
                 </View>
               </View>
 
               {/* Top Controls */}
               <View style={styles.topControls}>
-                <TouchableOpacity onPress={() => {
-                  hapticFeedback.selection();
-                  cancelPreCountdown();
-                  setShowCamera(false);
-                  setShowPractices(true);
-                }} style={styles.backButtonCamera} disabled={isRecording || isUploading || isModalDisabled}>
-                  <ChevronLeft size={24} color="#ffffff"/>
+                <TouchableOpacity
+                  onPress={() => {
+                    hapticFeedback.selection();
+                    cancelPreCountdown();
+                    setShowCamera(false);
+                    setShowPractices(true);
+                  }}
+                  style={styles.backButtonCamera}
+                  disabled={isRecording || isUploading || isModalDisabled}
+                >
+                  <ChevronLeft size={24} color="#ffffff" />
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => {
-                  hapticFeedback.selection();
-                  cancelPreCountdown();
-                  onClose();
-                }} style={styles.closeButtonCamera} disabled={isRecording || isUploading || isModalDisabled}>
+                <TouchableOpacity
+                  onPress={() => {
+                    hapticFeedback.selection();
+                    cancelPreCountdown();
+                    onClose();
+                  }}
+                  style={styles.closeButtonCamera}
+                  disabled={isRecording || isUploading || isModalDisabled}
+                >
                   <X width={24} height={24} color="#ffffff" />
                 </TouchableOpacity>
               </View>
@@ -889,7 +949,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
                   accessibilityLabel={i18n.t('upload.accessibility.flipCamera')}
                   onPress={() => {
                     hapticFeedback.selection();
-                    setCameraFacing(prev => (prev === 'back' ? 'front' : 'back'));
+                    setCameraFacing((prev) => (prev === 'back' ? 'front' : 'back'));
                   }}
                   style={styles.toggleButton}
                 >
@@ -899,7 +959,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
                   accessibilityLabel={i18n.t('upload.accessibility.toggleTorch')}
                   onPress={() => {
                     hapticFeedback.selection();
-                    setIsTorchOn(v => !v);
+                    setIsTorchOn((v) => !v);
                   }}
                   style={styles.toggleButton}
                 >
@@ -926,17 +986,13 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
                   )}
                 </TouchableOpacity>
               </View>
-          
 
               {/* Bottom Controls */}
               <View style={styles.bottomControls}>
                 <View style={styles.controlsContainer}>
                   {/* Record/Stop Button */}
                   <TouchableOpacity
-                    style={[
-                      styles.recordButton,
-                      isRecording && styles.stopButton
-                    ]}
+                    style={[styles.recordButton, isRecording && styles.stopButton]}
                     onPress={handleButtonPress}
                     activeOpacity={0.8}
                   >
@@ -970,7 +1026,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
                   <TouchableOpacity
                     style={styles.modalContainerSmall}
                     activeOpacity={1}
-                    onPress={e => e.stopPropagation()}
+                    onPress={(e) => e.stopPropagation()}
                   >
                     <TouchableOpacity
                       style={styles.modalCloseButton}
@@ -995,10 +1051,14 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
                         }}
                         activeOpacity={0.8}
                       >
-                        <Text style={[
-                          styles.modalButtonText,
-                          countdownSetting === 0 && { color: '#FFFFFF' }
-                        ]}>{i18n.t('add.countdown.off')}</Text>
+                        <Text
+                          style={[
+                            styles.modalButtonText,
+                            countdownSetting === 0 && { color: '#FFFFFF' },
+                          ]}
+                        >
+                          {i18n.t('add.countdown.off')}
+                        </Text>
                       </TouchableOpacity>
                       <TouchableOpacity
                         style={[
@@ -1012,10 +1072,14 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
                         }}
                         activeOpacity={0.8}
                       >
-                        <Text style={[
-                          styles.modalButtonText,
-                          countdownSetting === 5 && { color: '#FFFFFF' }
-                        ]}>{i18n.t('add.countdown.fiveSeconds')}</Text>
+                        <Text
+                          style={[
+                            styles.modalButtonText,
+                            countdownSetting === 5 && { color: '#FFFFFF' },
+                          ]}
+                        >
+                          {i18n.t('add.countdown.fiveSeconds')}
+                        </Text>
                       </TouchableOpacity>
                       <TouchableOpacity
                         style={[
@@ -1029,10 +1093,14 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
                         }}
                         activeOpacity={0.8}
                       >
-                        <Text style={[
-                          styles.modalButtonText,
-                          countdownSetting === 10 && { color: '#FFFFFF' }
-                        ]}>{i18n.t('add.countdown.tenSeconds')}</Text>
+                        <Text
+                          style={[
+                            styles.modalButtonText,
+                            countdownSetting === 10 && { color: '#FFFFFF' },
+                          ]}
+                        >
+                          {i18n.t('add.countdown.tenSeconds')}
+                        </Text>
                       </TouchableOpacity>
                     </View>
                   </TouchableOpacity>
@@ -1124,7 +1192,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'flex-end',
     paddingBottom: 40,
-    
   },
   controlsContainer: {
     alignItems: 'center',
@@ -1390,10 +1457,10 @@ const styles = StyleSheet.create({
   },
   modalButtonActive: {
     backgroundColor: '#000000',
-},
+  },
   modalButtonText: {
     fontSize: 18,
     fontWeight: '800',
     color: '#000000',
   },
-}); 
+});

@@ -28,11 +28,7 @@ export function SelectedDateProvider({ children }: SelectedDateProviderProps) {
     setSelectedDate,
   };
 
-  return (
-    <SelectedDateContext.Provider value={value}>
-      {children}
-    </SelectedDateContext.Provider>
-  );
+  return <SelectedDateContext.Provider value={value}>{children}</SelectedDateContext.Provider>;
 }
 
 export function useSelectedDate() {

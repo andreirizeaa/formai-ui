@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, Platform, ScrollView, Animated, PanResponder, useWindowDimensions } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  Text,
+  Platform,
+  ScrollView,
+  Animated,
+  PanResponder,
+  useWindowDimensions,
+} from 'react-native';
 import { Image as RNImage } from 'react-native';
 import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -13,11 +23,11 @@ import LottieView from 'lottie-react-native';
 import { useUserDetails } from '../../../context/UserDetailsContext';
 import * as StoreReview from 'expo-store-review';
 import { editUserDetails } from '../../../services/userService';
-import ReanimatedAnimated, { 
-  useSharedValue, 
-  useAnimatedStyle, 
-  withSpring, 
-  withDelay 
+import ReanimatedAnimated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withDelay,
 } from 'react-native-reanimated';
 import { track } from '../../../services/analytics';
 
@@ -31,16 +41,18 @@ function useRemoteImageRatio(uri?: string) {
 
     RNImage.getSize(
       uri,
-      (w, h) => { 
-        if (!cancelled) setRatio(w / h); 
+      (w, h) => {
+        if (!cancelled) setRatio(w / h);
       },
-      () => { 
+      () => {
         // Ignore errors - fallback to default height
         if (!cancelled) setRatio(null);
       }
     );
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [uri]);
 
   return ratio;
@@ -59,7 +71,7 @@ function AnimatedHowItWorksItem({ children, delay }: AnimatedHowItWorksItemProps
   React.useEffect(() => {
     // If delay is 0, don't animate - show immediately
     if (delay === 0) return;
-    
+
     // Animate in with a staggered delay
     translateY.value = withDelay(
       delay,
@@ -69,7 +81,7 @@ function AnimatedHowItWorksItem({ children, delay }: AnimatedHowItWorksItemProps
         mass: 0.6,
       })
     );
-    
+
     opacity.value = withDelay(
       delay,
       withSpring(1, {
@@ -86,11 +98,7 @@ function AnimatedHowItWorksItem({ children, delay }: AnimatedHowItWorksItemProps
     };
   });
 
-  return (
-    <ReanimatedAnimated.View style={animatedStyle}>
-      {children}
-    </ReanimatedAnimated.View>
-  );
+  return <ReanimatedAnimated.View style={animatedStyle}>{children}</ReanimatedAnimated.View>;
 }
 
 // Animated component for list items (issues/tips)
@@ -106,7 +114,7 @@ function AnimatedListItem({ children, delay }: AnimatedListItemProps) {
   React.useEffect(() => {
     // If delay is 0, don't animate - show immediately
     if (delay === 0) return;
-    
+
     // Animate in with a staggered delay
     translateY.value = withDelay(
       delay,
@@ -116,7 +124,7 @@ function AnimatedListItem({ children, delay }: AnimatedListItemProps) {
         mass: 0.6,
       })
     );
-    
+
     opacity.value = withDelay(
       delay,
       withSpring(1, {
@@ -133,11 +141,7 @@ function AnimatedListItem({ children, delay }: AnimatedListItemProps) {
     };
   });
 
-  return (
-    <ReanimatedAnimated.View style={animatedStyle}>
-      {children}
-    </ReanimatedAnimated.View>
-  );
+  return <ReanimatedAnimated.View style={animatedStyle}>{children}</ReanimatedAnimated.View>;
 }
 
 // Animated component for feedback image
@@ -155,7 +159,7 @@ function AnimatedFeedbackImage({ children, delay, feedbackIndex }: AnimatedFeedb
     // Reset to initial state first
     translateY.value = 120;
     opacity.value = 0;
-    
+
     // Animate in with the specified delay (slower animation)
     translateY.value = withDelay(
       delay,
@@ -165,7 +169,7 @@ function AnimatedFeedbackImage({ children, delay, feedbackIndex }: AnimatedFeedb
         mass: 1.0, // Increased mass for slower animation
       })
     );
-    
+
     opacity.value = withDelay(
       delay,
       withSpring(1, {
@@ -182,11 +186,7 @@ function AnimatedFeedbackImage({ children, delay, feedbackIndex }: AnimatedFeedb
     };
   });
 
-  return (
-    <ReanimatedAnimated.View style={animatedStyle}>
-      {children}
-    </ReanimatedAnimated.View>
-  );
+  return <ReanimatedAnimated.View style={animatedStyle}>{children}</ReanimatedAnimated.View>;
 }
 
 interface FeedbackSlideshowProps {
@@ -208,9 +208,16 @@ interface FeedbackSlideshowProps {
 
 type ScreenMode = 'howItWorks' | 'feedback' | 'accuracyScore';
 
-export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigateToHome, liftData }: FeedbackSlideshowProps) {
+export function FeedbackSlideshow({
+  onClose,
+  onNavigateToLiftDetails,
+  onNavigateToHome,
+  liftData,
+}: FeedbackSlideshowProps) {
   const [currentFeedbackIndex, setCurrentFeedbackIndex] = useState(0);
-  const [currentPageType, setCurrentPageType] = useState<'image' | 'flaws' | 'improvement'>('image');
+  const [currentPageType, setCurrentPageType] = useState<'image' | 'flaws' | 'improvement'>(
+    'image'
+  );
   const [isBottomExpanded, setIsBottomExpanded] = useState(false);
   const [screenMode, setScreenMode] = useState<ScreenMode>('howItWorks');
   const { userDetails, updateHasRated } = useUserDetails();
@@ -270,11 +277,10 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
     interactingWithBottomScrollRef.current = false;
   }, []);
 
-  
   // Setup slide animation and pan responder for bottom drawer
   const slideAnim = React.useRef(new Animated.Value(390)).current; // start collapsed (panel mostly hidden, only header showing)
   const currentSlidePosition = React.useRef(390); // track current position for pan responder
-  
+
   // Tap toggle for bottom container
   const toggleBottomContainer = React.useCallback(() => {
     hapticFeedback.selection();
@@ -312,7 +318,7 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
       currentSlidePosition.current = 0;
     });
   }, [slideAnim]);
-  
+
   const panResponder = React.useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => {
@@ -403,7 +409,7 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
       },
     })
   ).current;
-  
+
   // Tutorial targets for the feedback slideshow
   const { ref: feedbackSlideshowRef } = useTutorialTarget('feedback_slideshow');
   const { ref: issuesRef } = useTutorialTarget('feedback_issues');
@@ -446,7 +452,9 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
   const handleViewFeedback = () => {
     hapticFeedback.selection();
     // Check if accuracy score is 100% - if so, skip feedback and go directly to accuracy score
-    const accuracyScore = Math.round(liftData?.analysis?.accuracyScore || liftData?.analysis?.accuracy || 0);
+    const accuracyScore = Math.round(
+      liftData?.analysis?.accuracyScore || liftData?.analysis?.accuracy || 0
+    );
     if (accuracyScore >= 100) {
       setScreenMode('accuracyScore');
     } else {
@@ -454,10 +462,10 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
     }
   };
 
-  const handleExitToLiftDetails = async() => {
+  const handleExitToLiftDetails = async () => {
     hapticFeedback.selection();
     if (!userDetails?.hasRated) {
-      if ( await StoreReview.isAvailableAsync){
+      if (await StoreReview.isAvailableAsync) {
         await StoreReview.requestReview();
         updateHasRated(true);
         editUserDetails({ has_rated: true });
@@ -501,7 +509,7 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
         // Already expanded, no animation needed
       }
     };
-    
+
     global.navigateToTips = () => {
       if (currentPageType === 'flaws') {
         setCurrentPageType('improvement');
@@ -509,7 +517,7 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
         // Already expanded, no animation needed
       }
     };
-    
+
     global.navigateToImage = () => {
       if (currentPageType === 'flaws') {
         setCurrentPageType('image');
@@ -523,11 +531,11 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
         });
       }
     };
-    
+
     global.navigateToHowItWorksStep = () => {
       setScreenMode('howItWorks');
     };
-    
+
     global.navigateToFeedbackPage = () => {
       setScreenMode('feedback');
       // Notify tutorial that the component is ready to continue
@@ -536,7 +544,7 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
         if (global.onFeedbackPageReady) global.onFeedbackPageReady();
       }, 800);
     };
-    
+
     const previousNavigateToHome = (global as any).navigateToHome;
     (global as any).navigateToHome = () => {
       if (onNavigateToHome) {
@@ -550,7 +558,7 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
       }
       if (onClose) onClose();
     };
-    
+
     return () => {
       delete global.navigateToIssues;
       delete global.navigateToTips;
@@ -601,11 +609,11 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
         }).start(() => {
           currentSlidePosition.current = 390;
         });
-              } else {
-          // We're on the last feedback item's improvement page, show accuracy score page
-          hapticFeedback.success();
-          setScreenMode('accuracyScore');
-        }
+      } else {
+        // We're on the last feedback item's improvement page, show accuracy score page
+        hapticFeedback.success();
+        setScreenMode('accuracyScore');
+      }
     }
   };
 
@@ -660,7 +668,7 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
     if (!liftData?.analysis?.feedback) return 0;
     const totalFeedbackItems = liftData.analysis.feedback.length;
     const totalPages = totalFeedbackItems * 3;
-    return (currentFeedbackIndex * 3 + getPageTypeIndex(currentPageType)) + 1;
+    return currentFeedbackIndex * 3 + getPageTypeIndex(currentPageType) + 1;
   };
 
   const getTotalPages = () => {
@@ -670,9 +678,12 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
 
   const getPageTypeIndex = (pageType: 'image' | 'flaws' | 'improvement') => {
     switch (pageType) {
-      case 'image': return 0;
-      case 'flaws': return 1;
-      case 'improvement': return 2;
+      case 'image':
+        return 0;
+      case 'flaws':
+        return 1;
+      case 'improvement':
+        return 2;
     }
   };
 
@@ -691,17 +702,18 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
     const isIssues = currentPageType === 'flaws';
     const listRaw = isIssues ? feedbackItem.flaws : feedbackItem.improvement;
     const items: string[] = Array.isArray(listRaw)
-      ? listRaw as unknown as string[]
+      ? (listRaw as unknown as string[])
       : typeof listRaw === 'string'
-        ? (listRaw as string).split(/\n+/).map(s => s.trim()).filter(Boolean)
+        ? (listRaw as string)
+            .split(/\n+/)
+            .map((s) => s.trim())
+            .filter(Boolean)
         : [];
 
     return (
       <View style={styles.bottomContentContainer} ref={isIssues ? issuesRef : tipsRef}>
-        <Text style={styles.bottomContentTitle}>
-          {isIssues ? 'Issues' : 'Tips'}
-        </Text>
-        <ScrollView 
+        <Text style={styles.bottomContentTitle}>{isIssues ? 'Issues' : 'Tips'}</Text>
+        <ScrollView
           style={styles.scrollContainer}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContentContainer}
@@ -715,8 +727,8 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
             {items.map((text, idx) => {
               // Add 500ms delay for issues to let container slide up first
               const baseDelay = isIssues ? 250 : 0;
-              const itemDelay = baseDelay + (idx * 100);
-              
+              const itemDelay = baseDelay + idx * 100;
+
               return (
                 <AnimatedListItem key={`${isIssues ? 'issue' : 'tip'}-${idx}`} delay={itemDelay}>
                   <View style={styles.listItem}>
@@ -732,7 +744,9 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
             })}
             {items.length === 0 && (
               <AnimatedListItem delay={isIssues ? 500 : 0}>
-                <Text style={styles.bottomContentText}>No {isIssues ? 'issues' : 'tips'} provided.</Text>
+                <Text style={styles.bottomContentText}>
+                  No {isIssues ? 'issues' : 'tips'} provided.
+                </Text>
               </AnimatedListItem>
             )}
           </View>
@@ -742,11 +756,10 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
   };
 
   const feedbackItem = getCurrentFeedbackItem();
-  
+
   // Get image URI and aspect ratio
-  const imageUri = feedbackItem && typeof feedbackItem.imageURL === 'string' 
-    ? feedbackItem.imageURL 
-    : undefined;
+  const imageUri =
+    feedbackItem && typeof feedbackItem.imageURL === 'string' ? feedbackItem.imageURL : undefined;
   const imageRatio = useRemoteImageRatio(imageUri);
 
   // Render How It Works screen
@@ -757,10 +770,7 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
           {/* Header */}
           <View style={styles.header}>
             <Text style={styles.title}>{i18n.t('feedback.howItWorks')}</Text>
-            <TouchableOpacity 
-              style={styles.closeButton} 
-              onPress={handleClose}
-            >
+            <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
               <X size={24} color="#000000" />
             </TouchableOpacity>
           </View>
@@ -775,9 +785,7 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
                       <Text style={styles.howItWorksNumber}>1</Text>
                     </View>
                     <View style={styles.howItWorksContent}>
-                      <Text style={styles.howItWorksText}>
-                        {i18n.t('feedback.step1')}
-                      </Text>
+                      <Text style={styles.howItWorksText}>{i18n.t('feedback.step1')}</Text>
                     </View>
                   </View>
                 </AnimatedHowItWorksItem>
@@ -788,9 +796,7 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
                       <Text style={styles.howItWorksNumber}>2</Text>
                     </View>
                     <View style={styles.howItWorksContent}>
-                      <Text style={styles.howItWorksText}>
-                        {i18n.t('feedback.step2')}
-                      </Text>
+                      <Text style={styles.howItWorksText}>{i18n.t('feedback.step2')}</Text>
                     </View>
                   </View>
                 </AnimatedHowItWorksItem>
@@ -801,9 +807,7 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
                       <Text style={styles.howItWorksNumber}>3</Text>
                     </View>
                     <View style={styles.howItWorksContent}>
-                      <Text style={styles.howItWorksText}>
-                        {i18n.t('feedback.step3')}
-                      </Text>
+                      <Text style={styles.howItWorksText}>{i18n.t('feedback.step3')}</Text>
                     </View>
                   </View>
                 </AnimatedHowItWorksItem>
@@ -814,9 +818,7 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
                       <Text style={styles.howItWorksNumber}>4</Text>
                     </View>
                     <View style={styles.howItWorksContent}>
-                      <Text style={styles.howItWorksText}>
-                        {i18n.t('feedback.step4')}
-                      </Text>
+                      <Text style={styles.howItWorksText}>{i18n.t('feedback.step4')}</Text>
                     </View>
                   </View>
                 </AnimatedHowItWorksItem>
@@ -831,9 +833,7 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
               onPress={handleViewFeedback}
               activeOpacity={0.8}
             >
-              <Text style={styles.viewFeedbackButtonText}>
-                {i18n.t('feedback.viewFeedback')}
-              </Text>
+              <Text style={styles.viewFeedbackButtonText}>{i18n.t('feedback.viewFeedback')}</Text>
             </TouchableOpacity>
           </View>
         </SafeAreaView>
@@ -843,18 +843,17 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
 
   // Render Accuracy Score screen
   if (screenMode === 'accuracyScore') {
-    const accuracyScore = Math.round(liftData?.analysis?.accuracyScore || liftData?.analysis?.accuracy || 85); // Round to 0dp, default to 85 if not provided
-    
+    const accuracyScore = Math.round(
+      liftData?.analysis?.accuracyScore || liftData?.analysis?.accuracy || 85
+    ); // Round to 0dp, default to 85 if not provided
+
     return (
       <View style={styles.container}>
         <SafeAreaView style={styles.safeArea}>
           {/* Header */}
           <View style={styles.header}>
             <Text style={styles.title}>Analysis Complete</Text>
-            <TouchableOpacity 
-              style={styles.closeButton} 
-              onPress={handleClose}
-            >
+            <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
               <X size={24} color="#000000" />
             </TouchableOpacity>
           </View>
@@ -901,10 +900,7 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>{getPageTitle()}</Text>
-          <TouchableOpacity 
-            style={styles.closeButton} 
-            onPress={handleClose}
-          >
+          <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
             <X size={24} color="#000000" />
           </TouchableOpacity>
         </View>
@@ -914,12 +910,14 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
           {feedbackItem && (
             <AnimatedFeedbackImage delay={0} feedbackIndex={currentFeedbackIndex}>
               <View style={styles.imageContainer} ref={feedbackSlideshowRef}>
-                <Image 
+                <Image
                   source={imageUri ? { uri: imageUri } : feedbackItem.imageURL}
                   style={[
                     styles.feedbackImage,
                     { width: '100%' },
-                    imageRatio ? { aspectRatio: imageRatio, maxHeight: screenHeight * 0.5 } : { height: 220 }
+                    imageRatio
+                      ? { aspectRatio: imageRatio, maxHeight: screenHeight * 0.5 }
+                      : { height: 220 },
                   ]}
                   contentFit="contain"
                 />
@@ -929,7 +927,7 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
         </View>
 
         {/* Bottom Navigation Section - Overlays on top */}
-        <Animated.View 
+        <Animated.View
           {...panResponder.panHandlers}
           style={[
             styles.bottomNavigationSection,
@@ -939,22 +937,23 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
           ]}
         >
           {/* Top Line when expanded on issues/tips */}
-          {((currentPageType === 'flaws' || currentPageType === 'improvement') && isBottomExpanded) && (
-            <TouchableOpacity 
-              style={styles.topMinusIcon} 
-              activeOpacity={0.8} 
-              onPress={toggleBottomContainer}
-              hitSlop={{ top: 12, bottom: 12, left: 24, right: 24 }}
-            >
-              <View style={styles.topLine} />
-            </TouchableOpacity>
-          )}
+          {(currentPageType === 'flaws' || currentPageType === 'improvement') &&
+            isBottomExpanded && (
+              <TouchableOpacity
+                style={styles.topMinusIcon}
+                activeOpacity={0.8}
+                onPress={toggleBottomContainer}
+                hitSlop={{ top: 12, bottom: 12, left: 24, right: 24 }}
+              >
+                <View style={styles.topLine} />
+              </TouchableOpacity>
+            )}
 
           {/* Bottom Content - Above navigation when expanded */}
           {getBottomContent()}
 
           {/* Navigation Row - Only show when fully expanded or collapsed, not in intermediate state */}
-          <Animated.View 
+          <Animated.View
             style={[
               styles.navigationRow,
               {
@@ -966,7 +965,7 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
             ]}
           >
             {/* Left Chevron */}
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.bottomChevron}
               onPress={handleLeftChevron}
               activeOpacity={0.7}
@@ -977,16 +976,17 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
             {/* Center Column - Page Indicator and Expand/Collapse */}
             <View style={styles.centerColumn}>
               {/* Tappable line above page indicator when collapsed on issues/tips */}
-              {((currentPageType === 'flaws' || currentPageType === 'improvement') && !isBottomExpanded) && (
-                <TouchableOpacity 
-                  style={styles.expandCollapseButton} 
-                  activeOpacity={0.8} 
-                  onPress={toggleBottomContainer}
-                  hitSlop={{ top: 12, bottom: 12, left: 24, right: 24 }}
-                >
-                  <View style={styles.topLine} />
-                </TouchableOpacity>
-              )}
+              {(currentPageType === 'flaws' || currentPageType === 'improvement') &&
+                !isBottomExpanded && (
+                  <TouchableOpacity
+                    style={styles.expandCollapseButton}
+                    activeOpacity={0.8}
+                    onPress={toggleBottomContainer}
+                    hitSlop={{ top: 12, bottom: 12, left: 24, right: 24 }}
+                  >
+                    <View style={styles.topLine} />
+                  </TouchableOpacity>
+                )}
               {/* Page Indicator */}
               <View style={styles.bottomPageIndicator}>
                 <Text style={styles.bottomPageIndicatorText}>
@@ -1001,7 +1001,7 @@ export function FeedbackSlideshow({ onClose, onNavigateToLiftDetails, onNavigate
                 transform: [{ scale: rightChevronPulse }],
               }}
             >
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.bottomChevron}
                 onPress={handleRightChevron}
                 activeOpacity={0.7}
@@ -1069,7 +1069,7 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     paddingHorizontal: 20,
     paddingTop: 10,
-    marginBottom: 40
+    marginBottom: 40,
   },
   topMinusIcon: {
     alignItems: 'center',
@@ -1306,4 +1306,4 @@ const styles = StyleSheet.create({
   exitButton: {
     width: '100%',
   },
-}); 
+});

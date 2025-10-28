@@ -1,5 +1,16 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal, ScrollView, Platform, ActivityIndicator, Alert, Animated } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Modal,
+  ScrollView,
+  Platform,
+  ActivityIndicator,
+  Alert,
+  Animated,
+} from 'react-native';
 import i18n from '../../../utils/i18n';
 import { LANGUAGES } from '../../../constants/languages';
 import { hapticFeedback } from '../../../utils/haptic';
@@ -29,22 +40,24 @@ export function LanguageModal({ isVisible, onClose }: LanguageModalProps) {
       Animated.timing(fadeOpacity, { toValue: 1, duration: 100, useNativeDriver: true }).start();
       return;
     }
-    Animated.timing(fadeOpacity, { toValue: 0, duration: 100, useNativeDriver: true }).start(({ finished }) => {
-      if (finished) setShouldRender(false);
-    });
+    Animated.timing(fadeOpacity, { toValue: 0, duration: 100, useNativeDriver: true }).start(
+      ({ finished }) => {
+        if (finished) setShouldRender(false);
+      }
+    );
   }, [isVisible, fadeOpacity]);
   const handleLanguageSelect = async (languageCode: string) => {
     if (savingCode) return;
     hapticFeedback.selection();
-    
+
     // Store the previous language to restore on error
     const previousLanguage = currentLanguage;
-    
+
     // Immediately update UI to show new selection
     setLanguage(languageCode);
     setPendingCode(languageCode);
     setSavingCode(languageCode);
-    
+
     try {
       await editUserDetails({ language: languageCode });
       await refetchUserDetails();
@@ -54,10 +67,14 @@ export function LanguageModal({ isVisible, onClose }: LanguageModalProps) {
       // Restore previous language on error
       setLanguage(previousLanguage);
       hapticFeedback.error();
-      showAlert(i18n.t('settings.editFailed.language'), i18n.t('settings.editFailed.message'), () => {
-        hapticFeedback.selection();
-        onClose();
-      });
+      showAlert(
+        i18n.t('settings.editFailed.language'),
+        i18n.t('settings.editFailed.message'),
+        () => {
+          hapticFeedback.selection();
+          onClose();
+        }
+      );
     } finally {
       setSavingCode(null);
       setPendingCode(null);
@@ -65,88 +82,84 @@ export function LanguageModal({ isVisible, onClose }: LanguageModalProps) {
   };
 
   return (
-    <Modal
-      visible={shouldRender}
-      transparent
-      onRequestClose={onClose}
-    >
+    <Modal visible={shouldRender} transparent onRequestClose={onClose}>
       <Animated.View style={{ flex: 1, opacity: fadeOpacity }}>
-        <TouchableOpacity 
-          style={styles.overlay} 
-          activeOpacity={1} 
-          onPress={onClose}
-        >
-          <TouchableOpacity 
-            style={styles.modalContainer} 
-            activeOpacity={1} 
+        <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={onClose}>
+          <TouchableOpacity
+            style={styles.modalContainer}
+            activeOpacity={1}
             onPress={(e) => e.stopPropagation()}
           >
-          {/* Close button */}
-          <TouchableOpacity 
-            style={styles.closeButton} 
-            onPress={() => {
-              hapticFeedback.selection();
-              onClose();
-            }}
-          >
-            <X width={20} height={20} color="#000000" />
-          </TouchableOpacity>
+            {/* Close button */}
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => {
+                hapticFeedback.selection();
+                onClose();
+              }}
+            >
+              <X width={20} height={20} color="#000000" />
+            </TouchableOpacity>
 
-          {/* Title */}
-          <Text style={styles.title}>{i18n.t('settings.selectLanguage')}</Text>
+            {/* Title */}
+            <Text style={styles.title}>{i18n.t('settings.selectLanguage')}</Text>
 
-          {/* Language options */}
-          <ScrollView 
-            style={styles.scrollView}
-            contentContainerStyle={styles.scrollContentContainer}
-            showsVerticalScrollIndicator={true}
-            persistentScrollbar={true}
-            scrollIndicatorInsets={{ right: 1 }}
-            indicatorStyle="black"
-            bounces={true}
-            alwaysBounceVertical={false}
-            nestedScrollEnabled={true}
-            fadingEdgeLength={Platform.OS === 'android' ? 50 : 0}
-          >
-            {LANGUAGES.map((language) => {
-              const isSelected = (currentLanguage === language.code) || (pendingCode === language.code);
-              const isSavingThis = savingCode === language.code;
-              return (
-                <TouchableOpacity
-                  key={language.code}
-                  style={[
-                    styles.languageButton,
-                    {
-                      backgroundColor: isSelected ? '#000000' : '#F0F0F0',
-                    }
-                  ]}
-                  onPress={() => handleLanguageSelect(language.code)}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.languageContent}>
-                    <Text 
-                      style={[
-                        styles.languageName,
-                        { 
-                          color: isSelected ? '#FFFFFF' : '#000000',
-                          fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
-                        }
-                      ]}
-                    >
-                      {language.nativeName}
-                    </Text>
-                    <View style={styles.flagContainer}>
-                      {isSavingThis ? (
-                        <ActivityIndicator size="small" color={isSelected ? '#FFFFFF' : '#000000'} />
-                      ) : (
-                        <Text style={styles.flag}>{language.flag}</Text>
-                      )}
+            {/* Language options */}
+            <ScrollView
+              style={styles.scrollView}
+              contentContainerStyle={styles.scrollContentContainer}
+              showsVerticalScrollIndicator={true}
+              persistentScrollbar={true}
+              scrollIndicatorInsets={{ right: 1 }}
+              indicatorStyle="black"
+              bounces={true}
+              alwaysBounceVertical={false}
+              nestedScrollEnabled={true}
+              fadingEdgeLength={Platform.OS === 'android' ? 50 : 0}
+            >
+              {LANGUAGES.map((language) => {
+                const isSelected =
+                  currentLanguage === language.code || pendingCode === language.code;
+                const isSavingThis = savingCode === language.code;
+                return (
+                  <TouchableOpacity
+                    key={language.code}
+                    style={[
+                      styles.languageButton,
+                      {
+                        backgroundColor: isSelected ? '#000000' : '#F0F0F0',
+                      },
+                    ]}
+                    onPress={() => handleLanguageSelect(language.code)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.languageContent}>
+                      <Text
+                        style={[
+                          styles.languageName,
+                          {
+                            color: isSelected ? '#FFFFFF' : '#000000',
+                            fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+                          },
+                        ]}
+                      >
+                        {language.nativeName}
+                      </Text>
+                      <View style={styles.flagContainer}>
+                        {isSavingThis ? (
+                          <ActivityIndicator
+                            size="small"
+                            color={isSelected ? '#FFFFFF' : '#000000'}
+                          />
+                        ) : (
+                          <Text style={styles.flag}>{language.flag}</Text>
+                        )}
+                      </View>
                     </View>
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
           </TouchableOpacity>
         </TouchableOpacity>
       </Animated.View>
@@ -229,4 +242,4 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '800',
   },
-}); 
+});

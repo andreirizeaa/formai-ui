@@ -1,12 +1,12 @@
 import React, { useEffect } from 'react';
 import { TouchableOpacity, View, Text, StyleSheet, Platform } from 'react-native';
-import Animated, { 
-  useSharedValue, 
-  useAnimatedStyle, 
-  withSpring, 
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
   withDelay,
   runOnJS,
-  withSequence
+  withSequence,
 } from 'react-native-reanimated';
 import { appColors } from '../../../constants/appColorScheme';
 
@@ -29,7 +29,7 @@ export function AnimatedOptionButton({
   style,
   activeOpacity = 0.7,
   hasIcon = false, // Default to false
-  disabled = false // Default to false
+  disabled = false, // Default to false
 }: AnimatedOptionButtonProps) {
   const translateY = useSharedValue(delay === 0 ? 0 : 30);
   const opacity = useSharedValue(delay === 0 ? 1 : 0);
@@ -38,7 +38,7 @@ export function AnimatedOptionButton({
   useEffect(() => {
     // If delay is 0, don't animate - show immediately
     if (delay === 0) return;
-    
+
     // Animate in with a staggered delay
     translateY.value = withDelay(
       delay,
@@ -48,7 +48,7 @@ export function AnimatedOptionButton({
         mass: 0.6,
       })
     );
-    
+
     opacity.value = withDelay(
       delay,
       withSpring(1, {
@@ -60,10 +60,7 @@ export function AnimatedOptionButton({
 
   const animatedStyle = useAnimatedStyle(() => {
     return {
-      transform: [
-        { translateY: translateY.value },
-        { scale: scale.value }
-      ],
+      transform: [{ translateY: translateY.value }, { scale: scale.value }],
       opacity: opacity.value,
     };
   });
@@ -71,10 +68,10 @@ export function AnimatedOptionButton({
   const handlePress = () => {
     // Don't handle press if disabled
     if (disabled) return;
-    
+
     // Call the original onPress function immediately to update selection state
     onPress();
-    
+
     // Bounce animation: scale down to 0.95, then back to 1 (slightly faster)
     scale.value = withSequence(
       withSpring(0.95, {
@@ -101,7 +98,7 @@ export function AnimatedOptionButton({
               : appColors.onboarding.button.inactive.background,
             paddingVertical: hasIcon ? 14 : 22, // Conditional padding
           },
-          style
+          style,
         ]}
         onPress={handlePress}
         activeOpacity={disabled ? 1 : activeOpacity}
@@ -119,4 +116,4 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     paddingHorizontal: 24,
   },
-}); 
+});

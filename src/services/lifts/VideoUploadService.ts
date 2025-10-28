@@ -55,26 +55,31 @@ function contentTypeForImageExt(ext: string): string {
   }
 }
 
-export async function uploadLiftVideo(userId: string, liftId: string, fileUri: string, assetId?: string, hasHdVideos?: boolean): Promise<{ publicUrl: string; path: string }> {
+export async function uploadLiftVideo(
+  userId: string,
+  liftId: string,
+  fileUri: string,
+  assetId?: string,
+  hasHdVideos?: boolean
+): Promise<{ publicUrl: string; path: string }> {
   let uploadUri = fileUri;
 
   // Only compress video if user doesn't have HD videos entitlement
   if (!hasHdVideos) {
     try {
       // Compress video to reduce size (works on iOS and Android)
-      const compressedPath = await VideoCompressor.compress(
-        fileUri,
-        {
-          compressionMethod: 'manual',
-          // 540p target at ~0.6 Mbps
-          bitrate: 600_000,
-          maxSize: 540,
-          // Always allow compression (0 disables threshold)
-          minimumFileSizeForCompress: 0,
-        }
-      );
+      const compressedPath = await VideoCompressor.compress(fileUri, {
+        compressionMethod: 'manual',
+        // 540p target at ~0.6 Mbps
+        bitrate: 600_000,
+        maxSize: 540,
+        // Always allow compression (0 disables threshold)
+        minimumFileSizeForCompress: 0,
+      });
 
-      uploadUri = compressedPath.startsWith('file://') ? compressedPath : `file://${compressedPath}`;
+      uploadUri = compressedPath.startsWith('file://')
+        ? compressedPath
+        : `file://${compressedPath}`;
 
       // Validate compressed file; if missing/empty, fall back to original URI
       try {
@@ -116,14 +121,20 @@ export async function uploadLiftVideo(userId: string, liftId: string, fileUri: s
   });
 
   if (result.status < 200 || result.status >= 300) {
-    throw new Error(`Video upload failed with status ${result.status}: ${result.body?.slice(0, 200)}`);
+    throw new Error(
+      `Video upload failed with status ${result.status}: ${result.body?.slice(0, 200)}`
+    );
   }
 
   const { data } = supabase.storage.from('lifts').getPublicUrl(path);
   return { publicUrl: data.publicUrl, path };
 }
 
-export async function uploadLiftThumbnail(userId: string, liftId: string, fileUri: string): Promise<{ publicUrl: string; path: string }> {
+export async function uploadLiftThumbnail(
+  userId: string,
+  liftId: string,
+  fileUri: string
+): Promise<{ publicUrl: string; path: string }> {
   const ext = inferImageExtensionFromUri(fileUri);
   const contentType = contentTypeForImageExt(ext);
   const fileName = `${Date.now()}.${ext}`;
@@ -133,9 +144,13 @@ export async function uploadLiftThumbnail(userId: string, liftId: string, fileUr
   let uploadUri = fileUri;
   if (fileUri.startsWith('data:image/')) {
     const tmpPath = `${FileSystem.cacheDirectory}${fileName}`;
-    await FileSystem.writeAsStringAsync(tmpPath, fileUri.replace(/^data:image\/(png|jpe?g);base64,/, ''), {
-      encoding: FileSystem.EncodingType.Base64,
-    });
+    await FileSystem.writeAsStringAsync(
+      tmpPath,
+      fileUri.replace(/^data:image\/(png|jpe?g);base64,/, ''),
+      {
+        encoding: FileSystem.EncodingType.Base64,
+      }
+    );
     uploadUri = tmpPath;
   }
 
@@ -156,7 +171,9 @@ export async function uploadLiftThumbnail(userId: string, liftId: string, fileUr
   });
 
   if (result.status < 200 || result.status >= 300) {
-    throw new Error(`Thumbnail upload failed with status ${result.status}: ${result.body?.slice(0, 200)}`);
+    throw new Error(
+      `Thumbnail upload failed with status ${result.status}: ${result.body?.slice(0, 200)}`
+    );
   }
 
   const { data } = supabase.storage.from('lifts').getPublicUrl(path);
@@ -170,12 +187,12 @@ export async function listUserVideoPaths(userId: string): Promise<string[]> {
       .from('lifts')
       .list(userId, {
         limit: 1000,
-        sortBy: { column: 'created_at', order: 'desc' }
+        sortBy: { column: 'created_at', order: 'desc' },
       });
 
     if (liftFoldersError) {
       showAlert(
-        'Error', 
+        'Error',
         'Unable to access your videos. Please try again.',
         undefined,
         'VIDEO_UPLOAD_SERVICE_LIFT_FOLDERS_ERROR'
@@ -197,12 +214,12 @@ export async function listUserVideoPaths(userId: string): Promise<string[]> {
             .from('lifts')
             .list(`${userId}/${liftFolder.name}/videos`, {
               limit: 1000,
-              sortBy: { column: 'created_at', order: 'desc' }
+              sortBy: { column: 'created_at', order: 'desc' },
             });
 
           if (videosError) {
             showAlert(
-              'Error', 
+              'Error',
               'Unable to access your videos. Please try again.',
               undefined,
               'VIDEO_UPLOAD_SERVICE_VIDEOS_ERROR'
@@ -211,15 +228,16 @@ export async function listUserVideoPaths(userId: string): Promise<string[]> {
           }
 
           // Add assetIds (filename without extension) for this lift
-          const liftAssetIds = videos?.map(file => {
-            const lastDotIndex = file.name.lastIndexOf('.');
-            return lastDotIndex > 0 ? file.name.substring(0, lastDotIndex) : file.name;
-          }) || [];
+          const liftAssetIds =
+            videos?.map((file) => {
+              const lastDotIndex = file.name.lastIndexOf('.');
+              return lastDotIndex > 0 ? file.name.substring(0, lastDotIndex) : file.name;
+            }) || [];
 
           allAssetIds.push(...liftAssetIds);
         } catch (error) {
           showAlert(
-            'Error', 
+            'Error',
             'Unable to process your videos. Please try again.',
             undefined,
             'VIDEO_UPLOAD_SERVICE_PROCESS_ERROR',
@@ -233,7 +251,7 @@ export async function listUserVideoPaths(userId: string): Promise<string[]> {
     return allAssetIds;
   } catch (error) {
     showAlert(
-      'Error', 
+      'Error',
       'Unable to access your videos. Please try again.',
       undefined,
       'VIDEO_UPLOAD_SERVICE_GENERAL_ERROR',
@@ -242,5 +260,3 @@ export async function listUserVideoPaths(userId: string): Promise<string[]> {
     return [];
   }
 }
-
-

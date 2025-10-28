@@ -27,12 +27,12 @@ interface PersonalDetailOptionProps {
 
 function PersonalDetailOption({ title, value, onPress }: PersonalDetailOptionProps) {
   return (
-    <TouchableOpacity 
-      style={styles.optionRow} 
+    <TouchableOpacity
+      style={styles.optionRow}
       onPress={() => {
         hapticFeedback.selection();
         onPress?.();
-      }} 
+      }}
       activeOpacity={0.7}
       disabled={!onPress}
     >
@@ -57,11 +57,14 @@ function translatePersonalDataValue(key: string, value: string): string {
       const weightMatch = value.match(/(\d+(?:\.\d+)?)\s*(kg|lbs)/);
       if (weightMatch) {
         const [, number, unit] = weightMatch;
-        const translatedUnit = unit === 'kg' ? i18n.t('onboarding.measurements.kg') : i18n.t('onboarding.measurements.lbs');
+        const translatedUnit =
+          unit === 'kg'
+            ? i18n.t('onboarding.measurements.kg')
+            : i18n.t('onboarding.measurements.lbs');
         return `${number} ${translatedUnit}`;
       }
       return value;
-      
+
     case 'height':
       // Handle both metric and imperial height formats
       if (value.includes('cm')) {
@@ -75,11 +78,11 @@ function translatePersonalDataValue(key: string, value: string): string {
         return value;
       }
       return value;
-      
+
     case 'ageRange':
       // Age range is already in the correct format (e.g., "18-24")
       return value;
-      
+
     case 'gender':
       // Translate gender values
       const genderTranslations = {
@@ -87,29 +90,31 @@ function translatePersonalDataValue(key: string, value: string): string {
         'female': i18n.t('personalDetails.female'),
       };
       return genderTranslations[value as keyof typeof genderTranslations] || value;
-      
+
     default:
       return value;
   }
 }
 
-export function PersonalDetailsScreen({ 
-  onBack, 
-  onEditCurrentWeight, 
-  onEditHeight, 
-  onEditAgeRange, 
-  onEditGender
+export function PersonalDetailsScreen({
+  onBack,
+  onEditCurrentWeight,
+  onEditHeight,
+  onEditAgeRange,
+  onEditGender,
 }: PersonalDetailsScreenProps) {
   const { userDetails, getWeightDisplay, getHeightDisplay, getAgeRangeDisplay } = useUserDetails();
   const { hasHdVideos } = usePurchases();
   const { registerPlacement } = usePlacement();
-  
+
   // Track screen view on mount
   useEffect(() => {
     track('Screen viewed', { screen_name: 'Personal Details' });
   }, []);
-  
-  const videoQuality = hasHdVideos ? i18n.t('personalDetails.highDefinition') : i18n.t('personalDetails.low');
+
+  const videoQuality = hasHdVideos
+    ? i18n.t('personalDetails.highDefinition')
+    : i18n.t('personalDetails.low');
 
   const handleEditCurrentWeight = () => {
     onEditCurrentWeight(getWeightDisplay());
@@ -132,16 +137,16 @@ export function PersonalDetailsScreen({
     try {
       // Track paywall shown
       track('Low quality paywall shown', { source: 'personal_details' });
-      
+
       await registerPlacement({
         placement: 'hd_video_trigger',
       });
-      
+
       // Track paywall completion
       track('Low quality paywall complete', { source: 'personal_details' });
     } catch (error) {
       showAlert(
-        'Error', 
+        'Error',
         'Unable to access premium features. Please try again.',
         undefined,
         'PERSONAL_DETAILS_PREMIUM_FEATURES_ERROR',
@@ -155,8 +160,8 @@ export function PersonalDetailsScreen({
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton} 
+        <TouchableOpacity
+          style={styles.backButton}
           onPress={() => {
             hapticFeedback.selection();
             onBack();
@@ -203,18 +208,20 @@ export function PersonalDetailsScreen({
             <PersonalDetailOption
               title={i18n.t('personalDetails.videoQuality')}
               value={videoQuality}
-              onPress={!hasHdVideos ? () => {
-                handleHdVideoPress();
-              } : undefined}
+              onPress={
+                !hasHdVideos
+                  ? () => {
+                      handleHdVideoPress();
+                    }
+                  : undefined
+              }
             />
           </View>
         </View>
 
         {/* Version Text - Fixed at bottom */}
         <View style={styles.versionContainer}>
-          <Text style={styles.versionText}>
-            Version {Constants.expoConfig?.version}
-          </Text>
+          <Text style={styles.versionText}>Version {Constants.expoConfig?.version}</Text>
         </View>
       </View>
     </SafeAreaView>
@@ -323,4 +330,4 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
     fontWeight: '400',
   },
-}); 
+});

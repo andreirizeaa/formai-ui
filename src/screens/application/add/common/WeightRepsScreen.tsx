@@ -1,5 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, TextInput, Keyboard, KeyboardAvoidingView, TouchableWithoutFeedback, Animated, Easing, ActivityIndicator, Modal } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Platform,
+  TouchableOpacity,
+  StatusBar,
+  TextInput,
+  Keyboard,
+  KeyboardAvoidingView,
+  TouchableWithoutFeedback,
+  Animated,
+  Easing,
+  ActivityIndicator,
+  Modal,
+} from 'react-native';
 import { LoadingOverlay } from '../../../../components/ui/overlays/LoadingOverlay';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { hapticFeedback } from '../../../../utils/haptic';
@@ -33,15 +48,18 @@ export function WeightRepsScreen({
   const [infoModalVisible, setInfoModalVisible] = useState(false);
   const [infoShouldRender, setInfoShouldRender] = useState(false);
   const infoOpacity = useRef(new Animated.Value(0)).current;
-  const [infoModalContent, setInfoModalContent] = useState<{ title: string; message: string }>({ title: '', message: '' });
+  const [infoModalContent, setInfoModalContent] = useState<{ title: string; message: string }>({
+    title: '',
+    message: '',
+  });
   const [showRepsCapMessage, setShowRepsCapMessage] = useState(false);
   const { userDetails } = useUserDetails();
   const unit: WeightUnit = userDetails?.unitSystem === 'imperial' ? 'lbs' : 'kg';
-  
+
   // Use props for weight and reps, with fallback to empty strings
   const weight = weightReps?.weight?.toString() || '';
   const reps = weightReps?.reps && weightReps.reps > 0 ? weightReps.reps.toString() : '';
-  
+
   const weightInputRef = useRef<TextInput>(null);
   const repsInputRef = useRef<TextInput>(null);
   const accessoryBottom = useRef(new Animated.Value(0)).current;
@@ -60,50 +78,51 @@ export function WeightRepsScreen({
 
   // Animate accessory with keyboard height
   useEffect(() => {
-    const showSub = Platform.OS === 'ios'
-      ? Keyboard.addListener('keyboardWillShow', e => {
-          const height = e.endCoordinates?.height ?? 0;
-          Animated.timing(accessoryBottom, {
-            toValue: Math.max(height - insets.bottom + GAP_ADJUSTMENT, 0),
-            duration: e.duration ?? 250,
-            easing: Easing.out(Easing.ease),
-            useNativeDriver: false,
-          }).start();
-        })
-      : Keyboard.addListener('keyboardDidShow', e => {
-          const height = e.endCoordinates?.height ?? 0;
-          Animated.timing(accessoryBottom, {
-            toValue: Math.max(height + GAP_ADJUSTMENT, 0),
-            duration: 250,
-            easing: Easing.out(Easing.ease),
-            useNativeDriver: false,
-          }).start();
-        });
+    const showSub =
+      Platform.OS === 'ios'
+        ? Keyboard.addListener('keyboardWillShow', (e) => {
+            const height = e.endCoordinates?.height ?? 0;
+            Animated.timing(accessoryBottom, {
+              toValue: Math.max(height - insets.bottom + GAP_ADJUSTMENT, 0),
+              duration: e.duration ?? 250,
+              easing: Easing.out(Easing.ease),
+              useNativeDriver: false,
+            }).start();
+          })
+        : Keyboard.addListener('keyboardDidShow', (e) => {
+            const height = e.endCoordinates?.height ?? 0;
+            Animated.timing(accessoryBottom, {
+              toValue: Math.max(height + GAP_ADJUSTMENT, 0),
+              duration: 250,
+              easing: Easing.out(Easing.ease),
+              useNativeDriver: false,
+            }).start();
+          });
 
-    const hideSub = Platform.OS === 'ios'
-      ? Keyboard.addListener('keyboardWillHide', e => {
-          Animated.timing(accessoryBottom, {
-            toValue: 0,
-            duration: e.duration ?? 200,
-            easing: Easing.out(Easing.ease),
-            useNativeDriver: false,
-          }).start();
-        })
-      : Keyboard.addListener('keyboardDidHide', () => {
-          Animated.timing(accessoryBottom, {
-            toValue: 0,
-            duration: 200,
-            easing: Easing.out(Easing.ease),
-            useNativeDriver: false,
-          }).start();
-        });
+    const hideSub =
+      Platform.OS === 'ios'
+        ? Keyboard.addListener('keyboardWillHide', (e) => {
+            Animated.timing(accessoryBottom, {
+              toValue: 0,
+              duration: e.duration ?? 200,
+              easing: Easing.out(Easing.ease),
+              useNativeDriver: false,
+            }).start();
+          })
+        : Keyboard.addListener('keyboardDidHide', () => {
+            Animated.timing(accessoryBottom, {
+              toValue: 0,
+              duration: 200,
+              easing: Easing.out(Easing.ease),
+              useNativeDriver: false,
+            }).start();
+          });
 
     return () => {
       showSub.remove();
       hideSub.remove();
     };
   }, [accessoryBottom, insets.bottom]);
-
 
   const handleBack = () => {
     hapticFeedback.selection();
@@ -116,12 +135,12 @@ export function WeightRepsScreen({
     hapticFeedback.selection();
     const metricWeight = weightReps?.weight || 0;
     const repsValue = weightReps?.reps || 0;
-    
+
     if (metricWeight > 0 && repsValue > 0) {
       onUpload({
         weight: metricWeight,
         unit,
-        reps: repsValue
+        reps: repsValue,
       });
     }
   };
@@ -158,19 +177,19 @@ export function WeightRepsScreen({
   // Info modal handlers
   const openInfoModal = (type: 'weight' | 'reps') => {
     hapticFeedback.selection();
-    
+
     // Track add analysis clicks for info modals
     track('Add analysis', { event: `${type === 'weight' ? 'Weight' : 'Reps'} info` });
-    
+
     if (type === 'weight') {
       setInfoModalContent({
         title: i18n.t('tutorial.weightRepsInfo.weight.title'),
-        message: i18n.t('tutorial.weightRepsInfo.weight.message')
+        message: i18n.t('tutorial.weightRepsInfo.weight.message'),
       });
     } else {
       setInfoModalContent({
         title: i18n.t('tutorial.weightRepsInfo.reps.title'),
-        message: i18n.t('tutorial.weightRepsInfo.reps.message')
+        message: i18n.t('tutorial.weightRepsInfo.reps.message'),
       });
     }
     setInfoModalVisible(true);
@@ -188,9 +207,11 @@ export function WeightRepsScreen({
       Animated.timing(infoOpacity, { toValue: 1, duration: 100, useNativeDriver: true }).start();
       return;
     }
-    Animated.timing(infoOpacity, { toValue: 0, duration: 100, useNativeDriver: true }).start(({ finished }) => {
-      if (finished) setInfoShouldRender(false);
-    });
+    Animated.timing(infoOpacity, { toValue: 0, duration: 100, useNativeDriver: true }).start(
+      ({ finished }) => {
+        if (finished) setInfoShouldRender(false);
+      }
+    );
   }, [infoModalVisible, infoOpacity]);
 
   const isWeightValid = weightReps?.weight && weightReps.weight > 0;
@@ -201,7 +222,6 @@ export function WeightRepsScreen({
     onDisabledStateChange?.(isLoading);
   }, [isLoading, onDisabledStateChange]);
 
-  
   const isKeyboardButtonDisabled = () => {
     if (isLoading) return true;
     if (focusedInput === 'weight') {
@@ -215,8 +235,8 @@ export function WeightRepsScreen({
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-      
-      <KeyboardAvoidingView 
+
+      <KeyboardAvoidingView
         style={styles.keyboardAvoidingView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
@@ -226,10 +246,10 @@ export function WeightRepsScreen({
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>{i18n.t('add.weight')}</Text>
-                <TouchableOpacity 
-                  onPress={() => openInfoModal('weight')} 
-                  activeOpacity={0.7} 
-                  accessibilityRole="button" 
+                <TouchableOpacity
+                  onPress={() => openInfoModal('weight')}
+                  activeOpacity={0.7}
+                  accessibilityRole="button"
                   accessibilityLabel={i18n.t('add.showWeightInformation')}
                   style={styles.sectionTitleIcon}
                 >
@@ -252,7 +272,7 @@ export function WeightRepsScreen({
                     onChange({
                       weight: weightValue,
                       unit,
-                      reps: weightReps?.reps || 0
+                      reps: weightReps?.reps || 0,
                     });
                   }}
                   placeholder="1"
@@ -278,17 +298,19 @@ export function WeightRepsScreen({
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>{i18n.t('add.reps')}</Text>
-                <TouchableOpacity 
-                  onPress={() => openInfoModal('reps')} 
-                  activeOpacity={0.7} 
-                  accessibilityRole="button" 
+                <TouchableOpacity
+                  onPress={() => openInfoModal('reps')}
+                  activeOpacity={0.7}
+                  accessibilityRole="button"
                   accessibilityLabel={i18n.t('add.showRepsInformation')}
                   style={styles.sectionTitleIcon}
                 >
                   <CircleQuestionMark width={20} height={20} color="#000000" />
                 </TouchableOpacity>
               </View>
-              <View style={[styles.inputContainer, !isWeightValid && styles.inputContainerDisabled]}>
+              <View
+                style={[styles.inputContainer, !isWeightValid && styles.inputContainerDisabled]}
+              >
                 <TextInput
                   ref={repsInputRef}
                   style={[styles.input, !isWeightValid && styles.inputDisabled]}
@@ -306,11 +328,11 @@ export function WeightRepsScreen({
                     onChange({
                       weight: weightReps?.weight || 0,
                       unit,
-                      reps: cappedReps
+                      reps: cappedReps,
                     });
                   }}
                   placeholder="1"
-                  placeholderTextColor={isWeightValid ? "#8E8E93" : "#C7C7CC"}
+                  placeholderTextColor={isWeightValid ? '#8E8E93' : '#C7C7CC'}
                   keyboardType="numeric"
                   onSubmitEditing={isLoading ? () => {} : handleRepsSubmit}
                   blurOnSubmit={false}
@@ -325,7 +347,7 @@ export function WeightRepsScreen({
                     if (!isLoading) setFocusedInput(null);
                   }}
                   editable={!!isWeightValid && !isLoading}
-                  pointerEvents={isLoading ? 'none' : (isWeightValid ? 'auto' : 'none')}
+                  pointerEvents={isLoading ? 'none' : isWeightValid ? 'auto' : 'none'}
                 />
               </View>
               {showRepsCapMessage && (
@@ -334,11 +356,10 @@ export function WeightRepsScreen({
             </View>
           </View>
         </TouchableWithoutFeedback>
-
       </KeyboardAvoidingView>
       {/* Custom Keyboard Accessory View (outside KAV to avoid overlap) - hide during tutorial */}
       {focusedInput && !isTutorialActive && (
-        <Animated.View style={[styles.keyboardAccessoryView, { bottom: accessoryBottom }]}> 
+        <Animated.View style={[styles.keyboardAccessoryView, { bottom: accessoryBottom }]}>
           <View style={styles.keyboardRow}>
             <TouchableOpacity
               style={[styles.keyboardBackButton, isLoading && styles.keyboardBackButtonDisabled]}
@@ -349,7 +370,10 @@ export function WeightRepsScreen({
               <Text style={styles.keyboardBackButtonText}>{i18n.t('add.back')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.keyboardPrimaryButton, isKeyboardButtonDisabled() && styles.keyboardPrimaryButtonDisabled]}
+              style={[
+                styles.keyboardPrimaryButton,
+                isKeyboardButtonDisabled() && styles.keyboardPrimaryButtonDisabled,
+              ]}
               onPress={isLoading ? undefined : handleKeyboardButtonPress}
               disabled={isKeyboardButtonDisabled()}
               activeOpacity={isLoading ? 1 : 0.7}
@@ -357,7 +381,12 @@ export function WeightRepsScreen({
               {isLoading ? (
                 <ActivityIndicator size="small" color="#FFFFFF" />
               ) : (
-                <Text style={[styles.keyboardPrimaryButtonText, isKeyboardButtonDisabled() && styles.keyboardPrimaryButtonTextDisabled]}>
+                <Text
+                  style={[
+                    styles.keyboardPrimaryButtonText,
+                    isKeyboardButtonDisabled() && styles.keyboardPrimaryButtonTextDisabled,
+                  ]}
+                >
                   {focusedInput === 'weight' ? i18n.t('add.next') : i18n.t('add.complete')}
                 </Text>
               )}
@@ -370,18 +399,18 @@ export function WeightRepsScreen({
       <LoadingOverlay visible={isLoading} />
 
       {/* Info Modal */}
-      <Modal
-        visible={infoShouldRender}
-        transparent
-        onRequestClose={closeInfoModal}
-      >
+      <Modal visible={infoShouldRender} transparent onRequestClose={closeInfoModal}>
         <Animated.View style={{ flex: 1, opacity: infoOpacity }}>
           <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={closeInfoModal}>
-            <TouchableOpacity style={styles.infoModalContainer} activeOpacity={1} onPress={(e) => e.stopPropagation()}>
+            <TouchableOpacity
+              style={styles.infoModalContainer}
+              activeOpacity={1}
+              onPress={(e) => e.stopPropagation()}
+            >
               <Text style={styles.infoTitle}>{infoModalContent.title}</Text>
               <Text style={styles.infoMessage}>{infoModalContent.message}</Text>
-              <TouchableOpacity 
-                style={styles.closeButton} 
+              <TouchableOpacity
+                style={styles.closeButton}
                 onPress={closeInfoModal}
                 activeOpacity={0.8}
               >
@@ -445,7 +474,6 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
     textAlign: 'center',
     height: 60,
-    
   },
   unitText: {
     fontSize: 18,
@@ -653,4 +681,4 @@ const styles = StyleSheet.create({
     marginTop: 8,
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
-}); 
+});

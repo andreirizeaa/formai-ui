@@ -4,7 +4,11 @@ import { supabase } from '../../lib/supabase';
 
 const API = API_CONFIG.baseURL;
 
-export async function deleteLiftFailure(userId: string, liftId: string, assetId: string): Promise<boolean> {
+export async function deleteLiftFailure(
+  userId: string,
+  liftId: string,
+  assetId: string
+): Promise<boolean> {
   try {
     const { error } = await supabase
       .from('lift_failures')
@@ -12,7 +16,7 @@ export async function deleteLiftFailure(userId: string, liftId: string, assetId:
       .eq('user_id', userId)
       .eq('lift_id', liftId)
       .eq('asset_id', assetId);
-    
+
     return !error;
   } catch (_) {
     return false;
@@ -20,8 +24,8 @@ export async function deleteLiftFailure(userId: string, liftId: string, assetId:
 }
 
 export async function enqueueLiftAnalysis(body: {
-  userId: string; 
-  liftId: string; 
+  userId: string;
+  liftId: string;
   lift: any;
   hasHdVideos?: boolean;
   userData: {
@@ -37,15 +41,18 @@ export async function enqueueLiftAnalysis(body: {
 
   const res = await fetch(`${API}/lifts/analyse`, {
     method: 'POST',
-    headers: {'Content-Type':'application/json'},
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
   if (!res.ok) {
-    const t = await res.text().catch(()=>"");
+    const t = await res.text().catch(() => '');
     throw new Error(`enqueue failed (${res.status}): ${t}`);
   }
   const j = await res.json();
-  return { job_id: j.job_id ?? body.lift.assetId ?? body.liftId, lift_id: j.lift_id ?? body.liftId };
+  return {
+    job_id: j.job_id ?? body.lift.assetId ?? body.liftId,
+    lift_id: j.lift_id ?? body.liftId,
+  };
 }
 
 export async function getJobStatus(jobId: string, userId: string, liftId: string) {

@@ -25,16 +25,18 @@ export function AddOptions({ isVisible, onUploadPress, onRecordPress, onClose }:
       Animated.timing(fadeOpacity, { toValue: 1, duration: 100, useNativeDriver: true }).start();
       return;
     }
-    Animated.timing(fadeOpacity, { toValue: 0, duration: 100, useNativeDriver: true }).start(({ finished }) => {
-      if (finished) setShouldRender(false);
-    });
+    Animated.timing(fadeOpacity, { toValue: 0, duration: 100, useNativeDriver: true }).start(
+      ({ finished }) => {
+        if (finished) setShouldRender(false);
+      }
+    );
   }, [isVisible, fadeOpacity]);
 
   if (!shouldRender) return null;
 
   return (
-    <Animated.View style={[styles.overlay, { opacity: fadeOpacity }] }>
-      <TouchableOpacity 
+    <Animated.View style={[styles.overlay, { opacity: fadeOpacity }]}>
+      <TouchableOpacity
         style={styles.darkOverlay}
         onPress={() => {
           onClose();
@@ -42,38 +44,38 @@ export function AddOptions({ isVisible, onUploadPress, onRecordPress, onClose }:
         activeOpacity={1}
       >
         <View style={styles.cardsContainer}>
-            {/* Upload Video Card */}
-            <TouchableOpacity 
-              ref={uploadButtonRef}
-              style={styles.card} 
-              onPress={() => {
-                hapticFeedback.selection();
-                // Track add analysis clicks for upload
-                track('Add analysis', { event: 'Upload' });
-                onUploadPress();
-              }}
-            >
-              <View style={styles.iconContainer}>
-                <Upload width={32} height={32} color="currentColor" />
-              </View>
-              <Text style={styles.cardTitle}>{i18n.t('add.uploadVideo')}</Text>
-            </TouchableOpacity>
+          {/* Upload Video Card */}
+          <TouchableOpacity
+            ref={uploadButtonRef}
+            style={styles.card}
+            onPress={() => {
+              hapticFeedback.selection();
+              // Track add analysis clicks for upload
+              track('Add analysis', { event: 'Upload' });
+              onUploadPress();
+            }}
+          >
+            <View style={styles.iconContainer}>
+              <Upload width={32} height={32} color="currentColor" />
+            </View>
+            <Text style={styles.cardTitle}>{i18n.t('add.uploadVideo')}</Text>
+          </TouchableOpacity>
 
-            {/* Record Video Card */}
-            <TouchableOpacity 
-              style={styles.card} 
-              onPress={() => {
-                hapticFeedback.selection();
-                // Track add analysis clicks for record
-                track('Add analysis', { event: 'Record' });
-                onRecordPress();
-              }}
-            >
-              <View style={styles.iconContainer}>
-                <Video width={32} height={32} color="currentColor" />
-              </View>
-              <Text style={styles.cardTitle}>{i18n.t('add.recordVideo')}</Text>
-            </TouchableOpacity>
+          {/* Record Video Card */}
+          <TouchableOpacity
+            style={styles.card}
+            onPress={() => {
+              hapticFeedback.selection();
+              // Track add analysis clicks for record
+              track('Add analysis', { event: 'Record' });
+              onRecordPress();
+            }}
+          >
+            <View style={styles.iconContainer}>
+              <Video width={32} height={32} color="currentColor" />
+            </View>
+            <Text style={styles.cardTitle}>{i18n.t('add.recordVideo')}</Text>
+          </TouchableOpacity>
         </View>
       </TouchableOpacity>
     </Animated.View>
@@ -126,4 +128,4 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
-}); 
+});

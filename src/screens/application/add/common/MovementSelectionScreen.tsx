@@ -1,5 +1,13 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Platform } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  TextInput,
+  Platform,
+} from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import i18n from '../../../../utils/i18n';
 import { useTutorialTarget } from '../../../../context/TutorialContext';
@@ -35,7 +43,7 @@ export function MovementSelectionScreen({
   onBack,
   onUpload,
   onClose,
-  title = "Upload Video"
+  title = 'Upload Video',
 }: MovementSelectionScreenProps) {
   const { ref: continueButtonRef } = useTutorialTarget('movement_selection_continue');
   // Variable-width segmented control with animated background
@@ -69,29 +77,24 @@ export function MovementSelectionScreen({
       width: indicatorW.value,
     };
   });
-  
+
   return (
     <>
       {/* Content */}
       <View style={styles.content}>
         <View style={styles.movementSelectionContainer}>
           <Text style={styles.movementSelectionTitle}>{i18n.t('add.whatExercise')}</Text>
-          
+
           {/* Body Part Segmented Control */}
           <View style={styles.segmentedWrapper}>
-            <View style={styles.segmented}
-            >
+            <View style={styles.segmented}>
               <Animated.View style={[styles.segmentBackground, animatedBackgroundStyle]} />
               {segments.map((segment) => {
                 const active = selectedBodyPart === segment.value;
                 return (
                   <TouchableOpacity
                     key={segment.value}
-                    style={[
-                      styles.segment,
-                      styles.segmentTouchable,
-                      { flex: segment.flex },
-                    ]}
+                    style={[styles.segment, styles.segmentTouchable, { flex: segment.flex }]}
                     activeOpacity={0.9}
                     onLayout={(e) => {
                       const { x, width } = e.nativeEvent.layout;
@@ -117,7 +120,7 @@ export function MovementSelectionScreen({
               })}
             </View>
           </View>
-          
+
           <View style={styles.searchInputContainer}>
             <TextInput
               ref={continueButtonRef}
@@ -146,24 +149,30 @@ export function MovementSelectionScreen({
               </TouchableOpacity>
             )}
           </View>
-          
-          <ScrollView style={styles.movementsList} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+
+          <ScrollView
+            style={styles.movementsList}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
             {filteredMovements.length > 0 ? (
               filteredMovements.map((movement, index) => (
                 <TouchableOpacity
                   key={index}
                   style={[
                     styles.movementItem,
-                    selectedMovement === movement && styles.movementItemSelected
+                    selectedMovement === movement && styles.movementItemSelected,
                   ]}
                   onPress={() => onMovementSelect(movement)}
                   activeOpacity={0.7}
                   delayPressIn={0}
                 >
-                  <Text style={[
-                    styles.movementItemText,
-                    selectedMovement === movement && styles.movementItemTextSelected
-                  ]}>
+                  <Text
+                    style={[
+                      styles.movementItemText,
+                      selectedMovement === movement && styles.movementItemTextSelected,
+                    ]}
+                  >
                     {movement}
                   </Text>
                   {selectedMovement === movement && (
@@ -177,17 +186,19 @@ export function MovementSelectionScreen({
               <TouchableOpacity
                 style={[
                   styles.movementItem,
-                  selectedMovement === searchQuery.trim() && styles.movementItemSelected
+                  selectedMovement === searchQuery.trim() && styles.movementItemSelected,
                 ]}
                 onPress={() => onMovementSelect(searchQuery.trim())}
                 activeOpacity={0.7}
                 delayPressIn={0}
               >
-                <Text style={[
-                  styles.movementItemText,
-                  styles.customMovementText,
-                  selectedMovement === searchQuery.trim() && styles.movementItemTextSelected
-                ]}>
+                <Text
+                  style={[
+                    styles.movementItemText,
+                    styles.customMovementText,
+                    selectedMovement === searchQuery.trim() && styles.movementItemTextSelected,
+                  ]}
+                >
                   {i18n.t('add.useCustomMovement')} {searchQuery.trim()}?
                 </Text>
                 {selectedMovement === searchQuery.trim() && (
@@ -204,8 +215,8 @@ export function MovementSelectionScreen({
       {/* Bottom Buttons */}
       <View style={styles.bottomControls}>
         <View style={styles.buttonStack}>
-          <TouchableOpacity 
-            style={styles.backButton} 
+          <TouchableOpacity
+            style={styles.backButton}
             onPress={() => {
               // Track add analysis clicks for back to preview screen
               track('Add analysis', { event: 'Back to preview screen' });
@@ -225,7 +236,12 @@ export function MovementSelectionScreen({
             }}
             disabled={!selectedMovement}
           >
-            <Text style={[styles.uploadButtonText, !selectedMovement && styles.uploadButtonTextDisabled]}>
+            <Text
+              style={[
+                styles.uploadButtonText,
+                !selectedMovement && styles.uploadButtonTextDisabled,
+              ]}
+            >
               {i18n.t('add.continue')}
             </Text>
           </TouchableOpacity>
@@ -239,7 +255,6 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: 20,
-
   },
   movementSelectionContainer: {
     flex: 1,
@@ -418,4 +433,4 @@ const styles = StyleSheet.create({
   segmentTouchable: {
     zIndex: 1,
   },
-}); 
+});

@@ -29,12 +29,12 @@ export function TutorialAllDoneModal({ isVisible, onComplete }: TutorialAllDoneM
     hapticFeedback.success();
     onComplete();
   };
-  
+
   if (!isVisible) return null;
 
   return (
-    <Modal 
-      visible={isVisible} 
+    <Modal
+      visible={isVisible}
       transparent
       animationType="fade"
       statusBarTranslucent
@@ -51,18 +51,13 @@ export function TutorialAllDoneModal({ isVisible, onComplete }: TutorialAllDoneM
             style={{ width: screenWidth, height: screenHeight * 1.35 }}
           />
         </View>
-        <View style={[
-          styles.modalContainer,
-          { backgroundColor: '#FFFFFF' }
-        ]}>
-          <Text style={[
-            styles.title,
-            { color: '#000000' }
-          ]}>{i18n.t('tutorial.completionModal.title')}</Text>
-          <Text style={[
-            styles.message,
-            { color: '#000000' }
-          ]}>{i18n.t('tutorial.completionModal.message')}</Text>
+        <View style={[styles.modalContainer, { backgroundColor: '#FFFFFF' }]}>
+          <Text style={[styles.title, { color: '#000000' }]}>
+            {i18n.t('tutorial.completionModal.title')}
+          </Text>
+          <Text style={[styles.message, { color: '#000000' }]}>
+            {i18n.t('tutorial.completionModal.message')}
+          </Text>
 
           <View style={styles.footer}>
             <OrangeGradientButton
@@ -121,5 +116,3 @@ const styles = StyleSheet.create({
     zIndex: 0,
   },
 });
-
-

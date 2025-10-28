@@ -45,12 +45,12 @@ const lineChartConfig = {
 };
 
 // === knobs you actually care about ===
-const DESIRED_BAR_PX = 4;   // exact bar thickness you want
-const DESIRED_GAP_PX = 10;    // exact gap you want between bars
+const DESIRED_BAR_PX = 4; // exact bar thickness you want
+const DESIRED_GAP_PX = 10; // exact gap you want between bars
 
 // === derived values ===
-const SLOT_PX = DESIRED_BAR_PX + DESIRED_GAP_PX;             // per-rep slot
-const BAR_PERCENT = DESIRED_BAR_PX / SLOT_PX;                // chart-kit expects this
+const SLOT_PX = DESIRED_BAR_PX + DESIRED_GAP_PX; // per-rep slot
+const BAR_PERCENT = DESIRED_BAR_PX / SLOT_PX; // chart-kit expects this
 
 const barChartConfig = {
   backgroundColor: '#FFFFFF',
@@ -65,137 +65,183 @@ const barChartConfig = {
   decimalPlaces: 0,
   color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
   labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-  barPercentage: BAR_PERCENT,     // ← the important bit
+  barPercentage: BAR_PERCENT, // ← the important bit
 };
 
 type CardKind = 'line' | 'bar';
 
-export function SwipeableLiftDetailsGraphs({ data, formGraphRef, depthGraphRef }: SwipeableLiftDetailsGraphsProps) {
+export function SwipeableLiftDetailsGraphs({
+  data,
+  formGraphRef,
+  depthGraphRef,
+}: SwipeableLiftDetailsGraphsProps) {
   const repsCount = useMemo(() => Math.max(1, Number(data?.reps || 0)), [data?.reps]);
-  const labels = useMemo(() => Array.from({ length: repsCount }, (_, i) => String(i + 1)), [repsCount]);
-  
+  const labels = useMemo(
+    () => Array.from({ length: repsCount }, (_, i) => String(i + 1)),
+    [repsCount]
+  );
+
   // IMPORTANT: don't cap width at 1.5×; that re-introduces big slots.
   // Let the chart expand so slot == bar+gap exactly.
   const dynamicChartWidth = useMemo(() => {
     const padding = 80; // labels/margins
-    const needed = (repsCount * SLOT_PX) + padding;
+    const needed = repsCount * SLOT_PX + padding;
     return Math.max(CARD_WIDTH, needed);
   }, [repsCount]);
 
   const lineValues = useMemo(() => {
-    const arr = Array.isArray(data?.analysis?.lineGraphValues) ? data!.analysis!.lineGraphValues! : [];
+    const arr = Array.isArray(data?.analysis?.lineGraphValues)
+      ? data!.analysis!.lineGraphValues!
+      : [];
     if (arr.length >= repsCount) return arr.slice(0, repsCount);
     return [...arr, ...Array(repsCount - arr.length).fill(0)];
   }, [data?.analysis?.lineGraphValues, repsCount]);
 
   const barValues = useMemo(() => {
-    const arr = Array.isArray(data?.analysis?.barChartValues) ? data!.analysis!.barChartValues! : [];
+    const arr = Array.isArray(data?.analysis?.barChartValues)
+      ? data!.analysis!.barChartValues!
+      : [];
     if (arr.length >= repsCount) return arr.slice(0, repsCount);
     return [...arr, ...Array(repsCount - arr.length).fill(0)];
   }, [data?.analysis?.barChartValues, repsCount]);
 
-  const lineChartData = useMemo(() => ({
-    labels,
-    datasets: [
-      { data: lineValues, color: () => `#000000`, strokeWidth: 2 },
-    ],
-  }), [labels, lineValues]);
+  const lineChartData = useMemo(
+    () => ({
+      labels,
+      datasets: [{ data: lineValues, color: () => `#000000`, strokeWidth: 2 }],
+    }),
+    [labels, lineValues]
+  );
 
-  const barChartData = useMemo(() => ({
-    labels,
-    datasets: [
-      { data: barValues },
-    ],
-  }), [labels, barValues]);
+  const barChartData = useMemo(
+    () => ({
+      labels,
+      datasets: [{ data: barValues }],
+    }),
+    [labels, barValues]
+  );
 
   const cards: CardKind[] = useMemo(() => ['line', 'bar'], []);
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const listRef = useRef<FlashList<CardKind>>(null);
 
-  const shouldRenderIndex = useCallback((index: number) => Math.abs(index - currentIndex) <= 1, [currentIndex]);
+  const shouldRenderIndex = useCallback(
+    (index: number) => Math.abs(index - currentIndex) <= 1,
+    [currentIndex]
+  );
 
-  const onViewableItemsChanged = useCallback(({ viewableItems }: any) => {
-    if (viewableItems && viewableItems.length > 0) {
-      const firstVisibleIndex = viewableItems[0]?.index ?? 0;
-      if (firstVisibleIndex !== currentIndex) {
-        // Track lift details clicks for card swipe
-        track('Lift details clicks', { event: 'Card swipe' });
-        setCurrentIndex(firstVisibleIndex);
+  const onViewableItemsChanged = useCallback(
+    ({ viewableItems }: any) => {
+      if (viewableItems && viewableItems.length > 0) {
+        const firstVisibleIndex = viewableItems[0]?.index ?? 0;
+        if (firstVisibleIndex !== currentIndex) {
+          // Track lift details clicks for card swipe
+          track('Lift details clicks', { event: 'Card swipe' });
+          setCurrentIndex(firstVisibleIndex);
+        }
       }
-    }
-  }, [currentIndex]);
+    },
+    [currentIndex]
+  );
 
   const viewabilityConfig = useRef({
     itemVisiblePercentThreshold: 50,
     minimumViewTime: 0,
   }).current;
 
-  const renderItem = useCallback(({ item, index }: ListRenderItemInfo<CardKind>) => {
-    const shouldRender = shouldRenderIndex(index);
-    const isFirstCard = index === 0;
-    const isSecondCard = index === 1;
-    return (
-      <View style={{ width: ITEM_WIDTH, alignItems: 'center' }}>
-        <View
-          ref={isFirstCard ? formGraphRef : isSecondCard ? depthGraphRef : undefined}
-          style={[styles.card, styles.bottomCard]}
-          renderToHardwareTextureAndroid
-          shouldRasterizeIOS
-        >
-          <Text style={styles.cardTitle}>
-            {item === 'line' ? i18n.t('feedback.formAccuracyAcrossReps') : i18n.t('feedback.rangeOfMotionAcrossReps')}
-          </Text>
-          <View style={styles.chartContainer}>
-            {item === 'line' ? (
-              shouldRender ? (
-                <LineChart
-                  data={lineChartData}
-                  width={CARD_WIDTH}
+  const renderItem = useCallback(
+    ({ item, index }: ListRenderItemInfo<CardKind>) => {
+      const shouldRender = shouldRenderIndex(index);
+      const isFirstCard = index === 0;
+      const isSecondCard = index === 1;
+      return (
+        <View style={{ width: ITEM_WIDTH, alignItems: 'center' }}>
+          <View
+            ref={isFirstCard ? formGraphRef : isSecondCard ? depthGraphRef : undefined}
+            style={[styles.card, styles.bottomCard]}
+            renderToHardwareTextureAndroid
+            shouldRasterizeIOS
+          >
+            <Text style={styles.cardTitle}>
+              {item === 'line'
+                ? i18n.t('feedback.formAccuracyAcrossReps')
+                : i18n.t('feedback.rangeOfMotionAcrossReps')}
+            </Text>
+            <View style={styles.chartContainer}>
+              {item === 'line' ? (
+                shouldRender ? (
+                  <LineChart
+                    data={lineChartData}
+                    width={CARD_WIDTH}
+                    height={150}
+                    xLabelsOffset={-4}
+                    chartConfig={lineChartConfig}
+                    bezier
+                    withShadow
+                    style={styles.chart}
+                    withVerticalLines={false}
+                    withInnerLines={false}
+                    yAxisLabel=""
+                    yAxisSuffix="%"
+                    xAxisLabel=""
+                  />
+                ) : (
+                  <View
+                    style={[
+                      styles.chart,
+                      {
+                        width: CARD_WIDTH,
+                        height: 150,
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                      },
+                    ]}
+                  >
+                    <Text style={{ color: '#8E8E93' }}>
+                      {i18n.t('performance.chartTitles.loading')}
+                    </Text>
+                  </View>
+                )
+              ) : shouldRender ? (
+                <BarChart
+                  data={barChartData}
+                  width={dynamicChartWidth}
                   height={150}
-                  xLabelsOffset={-4}
-                  chartConfig={lineChartConfig}
-                  bezier
-                  withShadow
-                  style={styles.chart}
-                  withVerticalLines={false}
-                  withInnerLines={false}
+                  fromZero
                   yAxisLabel=""
+                  chartConfig={barChartConfig}
                   yAxisSuffix="%"
-                  xAxisLabel=""
+                  yAxisInterval={10}
+                  style={styles.chart}
+                  xLabelsOffset={-4}
+                  withInnerLines={false}
                 />
               ) : (
-                <View style={[styles.chart, { width: CARD_WIDTH, height: 150, justifyContent: 'center', alignItems: 'center' }]}>
-                  <Text style={{ color: '#8E8E93' }}>{i18n.t('performance.chartTitles.loading')}</Text>
+                <View
+                  style={[
+                    styles.chart,
+                    {
+                      width: dynamicChartWidth,
+                      height: 160,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    },
+                  ]}
+                >
+                  <Text style={{ color: '#8E8E93' }}>
+                    {i18n.t('performance.chartTitles.loading')}
+                  </Text>
                 </View>
-              )
-            ) : (
-                shouldRender ? (
-                  <BarChart
-                    data={barChartData}
-                    width={dynamicChartWidth}
-                    height={150}
-                    fromZero
-                    yAxisLabel=""
-                    chartConfig={barChartConfig}
-                    yAxisSuffix="%"
-                    yAxisInterval={10}
-                    style={styles.chart}
-                    xLabelsOffset={-4}
-                    withInnerLines={false}
-                  />
-              ) : (
-                <View style={[styles.chart, { width: dynamicChartWidth, height: 160, justifyContent: 'center', alignItems: 'center' }]}>
-                  <Text style={{ color: '#8E8E93' }}>{i18n.t('performance.chartTitles.loading')}</Text>
-                </View>
-              )
-            )}
+              )}
+            </View>
           </View>
         </View>
-      </View>
-    );
-  }, [formGraphRef, depthGraphRef, shouldRenderIndex, lineChartData, barChartData]);
-  
+      );
+    },
+    [formGraphRef, depthGraphRef, shouldRenderIndex, lineChartData, barChartData]
+  );
+
   // Expose global setter to allow tutorial to jump to a specific card
   useEffect(() => {
     global.setLiftDetailsGraphsIndex = (index: number) => {
@@ -205,7 +251,11 @@ export function SwipeableLiftDetailsGraphs({ data, formGraphRef, depthGraphRef }
         listRef.current?.scrollToIndex({ index: clamped, animated: true });
       } catch (_) {}
     };
-    return () => { try { delete global.setLiftDetailsGraphsIndex; } catch {} };
+    return () => {
+      try {
+        delete global.setLiftDetailsGraphsIndex;
+      } catch {}
+    };
   }, [cards.length]);
 
   return (
@@ -329,5 +379,3 @@ const styles = StyleSheet.create({
 });
 
 export default SwipeableLiftDetailsGraphs;
-
-

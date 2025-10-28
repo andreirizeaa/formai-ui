@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import i18n from '../../utils/i18n';
 import { hapticFeedback } from '../../utils/haptic';
 import { useTutorialTarget, useTutorial } from '../../context/TutorialContext';
-import { ChartNoAxesColumn, House, Settings, Plus} from 'lucide-react-native';
+import { ChartNoAxesColumn, House, Settings, Plus } from 'lucide-react-native';
 
 interface BottomNavigationBarProps {
   activeTab: 'home' | 'progress' | 'settings';
@@ -20,20 +20,20 @@ interface TabIconProps {
 
 function TabIcon({ name, isActive, size = 26 }: TabIconProps) {
   const color = isActive ? '#000000' : '#8E8E93';
-  
+
   const icons = {
     home: <House size={size} color={color} />,
-    progress: <ChartNoAxesColumn size={size} color={color}/>,
+    progress: <ChartNoAxesColumn size={size} color={color} />,
     settings: <Settings size={size} color={color} />,
   };
 
   return icons[name];
 }
 
-export function BottomNavigationBar({ 
-  activeTab, 
-  onTabPress, 
-  onAddPress 
+export function BottomNavigationBar({
+  activeTab,
+  onTabPress,
+  onAddPress,
 }: BottomNavigationBarProps) {
   const insets = useSafeAreaInsets();
   const { currentStepIndex } = useTutorial();
@@ -44,7 +44,7 @@ export function BottomNavigationBar({
     <View style={styles.container}>
       {/* Top separator line */}
       <View style={styles.separator} />
-      
+
       {/* Navigation bar */}
       <View style={[styles.navigationBar, { paddingBottom: insets.bottom + 8 }]}>
         {/* Left side - Tabs */}
@@ -59,10 +59,7 @@ export function BottomNavigationBar({
             activeOpacity={0.7}
           >
             <TabIcon name="home" isActive={activeTab === 'home'} />
-            <Text style={[
-              styles.tabText,
-              { color: activeTab === 'home' ? '#000000' : '#8E8E93' }
-            ]}>
+            <Text style={[styles.tabText, { color: activeTab === 'home' ? '#000000' : '#8E8E93' }]}>
               {i18n.t('tabs.home')}
             </Text>
           </TouchableOpacity>
@@ -78,10 +75,9 @@ export function BottomNavigationBar({
             activeOpacity={0.7}
           >
             <TabIcon name="progress" isActive={activeTab === 'progress'} />
-            <Text style={[
-              styles.tabText,
-              { color: activeTab === 'progress' ? '#000000' : '#8E8E93' }
-            ]}>
+            <Text
+              style={[styles.tabText, { color: activeTab === 'progress' ? '#000000' : '#8E8E93' }]}
+            >
               {i18n.t('tabs.progress')}
             </Text>
           </TouchableOpacity>
@@ -96,10 +92,9 @@ export function BottomNavigationBar({
             activeOpacity={0.7}
           >
             <TabIcon name="settings" isActive={activeTab === 'settings'} />
-            <Text style={[
-              styles.tabText,
-              { color: activeTab === 'settings' ? '#000000' : '#8E8E93' }
-            ]}>
+            <Text
+              style={[styles.tabText, { color: activeTab === 'settings' ? '#000000' : '#8E8E93' }]}
+            >
               {i18n.t('tabs.settings')}
             </Text>
           </TouchableOpacity>
@@ -194,4 +189,4 @@ const styles = StyleSheet.create({
     includeFontPadding: false,
     lineHeight: 50,
   },
-}); 
+});

@@ -26,18 +26,19 @@ export function CreateAccountScreen({ onNext, onBack }: CreateAccountScreenProps
   const { onboardingData, updateOnboardingData } = useOnboarding();
   const { logIn } = usePurchases();
   const [isSigningIn, setIsSigningIn] = React.useState(false);
-  
+
   const isExpoGo = Constants.appOwnership === 'expo';
 
   React.useEffect(() => {
     if (!isExpoGo) {
-      import('@react-native-google-signin/google-signin').then(({ GoogleSignin }) => {
-        GoogleSignin.configure({
-          scopes: ['email', 'profile'],
-          iosClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID!,
-        });
-      }).catch(error => {
-      });
+      import('@react-native-google-signin/google-signin')
+        .then(({ GoogleSignin }) => {
+          GoogleSignin.configure({
+            scopes: ['email', 'profile'],
+            iosClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID!,
+          });
+        })
+        .catch((error) => {});
     }
   }, [isExpoGo]);
 
@@ -51,7 +52,7 @@ export function CreateAccountScreen({ onNext, onBack }: CreateAccountScreenProps
       await GoogleSignin.hasPlayServices();
       setIsSigningIn(true);
       const userInfo = await GoogleSignin.signIn();
-      
+
       if (userInfo.idToken) {
         const { data, error } = await supabase.auth.signInWithIdToken({
           provider: 'google',
@@ -59,7 +60,7 @@ export function CreateAccountScreen({ onNext, onBack }: CreateAccountScreenProps
         });
         if (error) {
           showAlert(
-            'Sign In Error', 
+            'Sign In Error',
             'Unable to sign in with Google. Please try again.',
             undefined,
             'CREATE_ACCOUNT_GOOGLE_SIGN_IN_ERROR'
@@ -72,7 +73,7 @@ export function CreateAccountScreen({ onNext, onBack }: CreateAccountScreenProps
               handleNewAccount(data);
             } catch (persistError) {
               showAlert(
-                'Error', 
+                'Error',
                 'An error occurred while setting up your account. Please try again.',
                 undefined,
                 'CREATE_ACCOUNT_GOOGLE_SETUP_ERROR',
@@ -100,16 +101,16 @@ export function CreateAccountScreen({ onNext, onBack }: CreateAccountScreenProps
           AppleAuthentication.AppleAuthenticationScope.EMAIL,
         ],
       });
-      
+
       if (credential.identityToken) {
         const { error, data } = await supabase.auth.signInWithIdToken({
           provider: 'apple',
           token: credential.identityToken,
         });
-        
+
         if (error) {
           showAlert(
-            'Sign In Error', 
+            'Sign In Error',
             'Unable to sign in with Apple. Please try again.',
             undefined,
             'CREATE_ACCOUNT_APPLE_SIGN_IN_ERROR'
@@ -122,7 +123,7 @@ export function CreateAccountScreen({ onNext, onBack }: CreateAccountScreenProps
               handleNewAccount(data);
             } catch (persistError) {
               showAlert(
-                'Error', 
+                'Error',
                 'An error occurred while setting up your account. Please try again.',
                 undefined,
                 'CREATE_ACCOUNT_APPLE_SETUP_ERROR',
@@ -170,24 +171,24 @@ export function CreateAccountScreen({ onNext, onBack }: CreateAccountScreenProps
 
   const handleNewAccount = async (data: any) => {
     const signInMethod = data.user?.app_metadata?.provider || 'apple';
-    
+
     if (data.user?.id) {
       // Navigate to loading screen immediately
       onNext();
-      
+
       // Check if user already exists in the database
       const { user: existingUser } = await fetchUserById(data.user.id);
-      
+
       if (existingUser) {
         // User already exists, just log them in and navigate to main app
         await logIn(data.user.id);
-        
+
         // Track sign in completion for existing user
         track('Sign In Completed', {
           signin_method: signInMethod,
           user_id: data.user.id,
         });
-        
+
         try {
           // Register Expo push token for existing user
           await registerAndSaveExpoPushToken(data.user.id);
@@ -195,7 +196,7 @@ export function CreateAccountScreen({ onNext, onBack }: CreateAccountScreenProps
           // AccountLoading screen will handle next navigation
         } catch (error) {
           showAlert(
-            'Error', 
+            'Error',
             'An error occurred while signing in. Please try again.',
             undefined,
             'CREATE_ACCOUNT_EXISTING_USER_ERROR',
@@ -205,7 +206,7 @@ export function CreateAccountScreen({ onNext, onBack }: CreateAccountScreenProps
         }
         return;
       }
-      
+
       // New user - proceed with onboarding setup
       const profilePicture: string | null =
         (data?.user?.user_metadata?.avatar_url as string | undefined) ??
@@ -226,7 +227,7 @@ export function CreateAccountScreen({ onNext, onBack }: CreateAccountScreenProps
       updateOnboardingData('walkthroughCompleted', false);
       updateOnboardingData('userId', data.user.id);
       updateOnboardingData('profilePicture', profilePicture);
-      
+
       await logIn(data.user.id);
 
       // Track signup completion
@@ -244,7 +245,7 @@ export function CreateAccountScreen({ onNext, onBack }: CreateAccountScreenProps
         // AccountLoading screen will handle next navigation
       } catch (persistError) {
         showAlert(
-          'Error', 
+          'Error',
           'An error occurred while setting up your account. Please try again.',
           undefined,
           'CREATE_ACCOUNT_GENERAL_SETUP_ERROR',
@@ -255,7 +256,7 @@ export function CreateAccountScreen({ onNext, onBack }: CreateAccountScreenProps
     } else {
       setIsSigningIn(false);
     }
-  }
+  };
 
   return (
     <View style={styles.container}>
@@ -266,23 +267,25 @@ export function CreateAccountScreen({ onNext, onBack }: CreateAccountScreenProps
           <TouchableOpacity
             style={[
               styles.appleButton,
-              { backgroundColor: appColors.onboarding.signIn.appleButton.background }
+              { backgroundColor: appColors.onboarding.signIn.appleButton.background },
             ]}
             onPress={handleAppleSignIn}
             activeOpacity={0.8}
           >
             <View style={styles.buttonContent}>
-              <Image 
+              <Image
                 source={require('../../../assets/icons/apple.png')}
                 style={[
                   styles.appleIcon,
-                  { tintColor: appColors.onboarding.signIn.appleButton.iconTint }
+                  { tintColor: appColors.onboarding.signIn.appleButton.iconTint },
                 ]}
               />
-              <Text style={[
-                styles.appleButtonText,
-                { color: appColors.onboarding.signIn.appleButton.text }
-              ]}>
+              <Text
+                style={[
+                  styles.appleButtonText,
+                  { color: appColors.onboarding.signIn.appleButton.text },
+                ]}
+              >
                 {i18n.t('onboarding.createAccount.signInWithApple')}
               </Text>
             </View>
@@ -292,31 +295,36 @@ export function CreateAccountScreen({ onNext, onBack }: CreateAccountScreenProps
           <TouchableOpacity
             style={[
               styles.googleButton,
-              { 
+              {
                 backgroundColor: appColors.onboarding.signIn.googleButton.background,
                 borderColor: appColors.onboarding.signIn.googleButton.border,
                 borderWidth: 1,
-              }
+              },
             ]}
-            onPress={isExpoGo ? () => {
-              hapticFeedback.selection();
-            } : handleGoogleSignIn}
+            onPress={
+              isExpoGo
+                ? () => {
+                    hapticFeedback.selection();
+                  }
+                : handleGoogleSignIn
+            }
             activeOpacity={0.8}
           >
             <View style={styles.buttonContent}>
-              <Image 
+              <Image
                 source={require('../../../assets/icons/google.png')}
                 style={styles.googleIcon}
               />
-              <Text style={[
-                styles.googleButtonText,
-                { color: appColors.onboarding.signIn.googleButton.text }
-              ]}>
+              <Text
+                style={[
+                  styles.googleButtonText,
+                  { color: appColors.onboarding.signIn.googleButton.text },
+                ]}
+              >
                 {i18n.t('onboarding.createAccount.signInWithGoogle')}
               </Text>
             </View>
           </TouchableOpacity>
-
         </View>
 
         {/* Terms and Privacy Policy */}
@@ -339,7 +347,7 @@ export function CreateAccountScreen({ onNext, onBack }: CreateAccountScreenProps
           </TouchableOpacity>
         </View>
       </View>
-      
+
       <LoadingOverlay visible={isSigningIn} />
     </View>
   );
@@ -419,4 +427,4 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
     textDecorationLine: 'underline',
   },
-}); 
+});

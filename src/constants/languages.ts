@@ -55,4 +55,4 @@ export const LANGUAGES: Language[] = [
     nativeName: 'العربية ',
     flag: '🇸🇦',
   },
-]; 
+];

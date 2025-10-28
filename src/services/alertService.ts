@@ -3,7 +3,7 @@ import { track } from './analytics';
 import { hapticFeedback } from '../utils/haptic';
 
 export function showAlert(
-  title: string, 
+  title: string,
   message?: string,
   onPress?: () => void,
   errorId?: string,
@@ -14,10 +14,9 @@ export function showAlert(
   if (errorId) {
     track('Errors', {
       type: errorId,
-      details: errorDetails ? JSON.stringify(errorDetails) : undefined
+      details: errorDetails ? JSON.stringify(errorDetails) : undefined,
     });
   }
   hapticFeedback.error();
   Alert.alert(title, message, [{ text: buttonText || 'OK', onPress }]);
 }
-

@@ -31,14 +31,14 @@ export function WelcomeModal({ isVisible, onGetStarted }: WelcomeModalProps) {
     hapticFeedback.success();
     onGetStarted();
   };
-  
+
   if (!isVisible) {
     return null;
   }
 
   return (
-    <Modal 
-      visible={isVisible} 
+    <Modal
+      visible={isVisible}
       transparent
       animationType="fade"
       statusBarTranslucent
@@ -56,19 +56,11 @@ export function WelcomeModal({ isVisible, onGetStarted }: WelcomeModalProps) {
             style={{ width: 700, height: 700 }}
           />
         </View>
-        <View style={[
-          styles.modalContainer,
-          { backgroundColor: '#FFFFFF' }
-        ]}>
-          
-          <Text style={[
-            styles.title,
-            { color: '#000000' }
-          ]}>{i18n.t('welcome.modal.title')}</Text>
-          <Text style={[
-            styles.message,
-            { color: '#000000' }
-          ]}>{i18n.t('welcome.modal.message')}</Text>
+        <View style={[styles.modalContainer, { backgroundColor: '#FFFFFF' }]}>
+          <Text style={[styles.title, { color: '#000000' }]}>{i18n.t('welcome.modal.title')}</Text>
+          <Text style={[styles.message, { color: '#000000' }]}>
+            {i18n.t('welcome.modal.message')}
+          </Text>
 
           <View style={styles.footer}>
             <OrangeGradientButton
@@ -147,5 +139,3 @@ const styles = StyleSheet.create({
     zIndex: 0,
   },
 });
-
-

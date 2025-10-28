@@ -1,5 +1,16 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, Modal, Dimensions, InteractionManager, Animated, RefreshControl } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Platform,
+  TouchableOpacity,
+  Modal,
+  Dimensions,
+  InteractionManager,
+  Animated,
+  RefreshControl,
+} from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
 import { Image } from 'expo-image';
 import { SwipeableLineGraphCard } from '../../../components/ui/swipeables/SwipeableLineGraphCard';
@@ -32,16 +43,16 @@ function WrappedYearCards({ liftData, onYearPress }: WrappedYearCardsProps) {
   // Extract unique years from lift data
   const availableYears = useMemo(() => {
     const currentYear = new Date().getFullYear().toString();
-    
+
     if (!liftData || !Array.isArray(liftData) || liftData.length === 0) {
       return [currentYear];
     }
-    
+
     const years = new Set<string>();
     // Always include current year
     years.add(currentYear);
-    
-    liftData.forEach(lift => {
+
+    liftData.forEach((lift) => {
       // Extract year from DD-MM-YYYY format
       const year = lift.liftDate.split('-')[2];
       if (year) {
@@ -72,7 +83,7 @@ function WrappedYearCards({ liftData, onYearPress }: WrappedYearCardsProps) {
 
       {/* Year Options */}
       {availableYears.map((year, index) => {
-        const yearLifts = liftData.filter(lift => lift.liftDate.split('-')[2] === year);
+        const yearLifts = liftData.filter((lift) => lift.liftDate.split('-')[2] === year);
         return (
           <View key={year}>
             <View style={styles.separator} />
@@ -98,18 +109,19 @@ function WrappedYearCards({ liftData, onYearPress }: WrappedYearCardsProps) {
   );
 }
 
-
-
 export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProps) {
   const { liftData, invalidateAndRefetch } = useLiftData();
   const { userDetails } = useUserDetails();
   const { currentStreak } = useUserCheckIns();
   const [infoModalVisible, setInfoModalVisible] = useState(false);
-  const [infoModalContent, setInfoModalContent] = useState<{ title: string; message: string }>({ title: '', message: '' });
+  const [infoModalContent, setInfoModalContent] = useState<{ title: string; message: string }>({
+    title: '',
+    message: '',
+  });
   const [infoShouldRender, setInfoShouldRender] = useState(false);
   const infoOpacity = useRef(new Animated.Value(0)).current;
   const [isRefreshing, setIsRefreshing] = useState(false);
-  
+
   // Drive fade-in/out and mount/unmount for info modal
   useEffect(() => {
     if (infoModalVisible) {
@@ -118,16 +130,18 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
       Animated.timing(infoOpacity, { toValue: 1, duration: 100, useNativeDriver: true }).start();
       return;
     }
-    Animated.timing(infoOpacity, { toValue: 0, duration: 100, useNativeDriver: true }).start(({ finished }) => {
-      if (finished) setInfoShouldRender(false);
-    });
+    Animated.timing(infoOpacity, { toValue: 0, duration: 100, useNativeDriver: true }).start(
+      ({ finished }) => {
+        if (finished) setInfoShouldRender(false);
+      }
+    );
   }, [infoModalVisible, infoOpacity]);
-  
+
   // Track screen view on mount
   useEffect(() => {
     track('Screen viewed', { screen_name: 'Progress' });
   }, []);
-  
+
   // Tutorial target registration
   const { ref: performanceMetricsRef } = useTutorialTarget('performance_metrics');
   const { ref: performanceOverWeightRef } = useTutorialTarget('performance_over_weight');
@@ -137,9 +151,16 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
   React.useEffect(() => {
     (global as any).scrollToPerformanceOverWeight = () => {
       try {
-        (performanceOverWeightRef as any)?.current?.measure?.((x: number, y: number, w: number, h: number, pageX: number, pageY: number) => {
-          try { (scrollRef as any)?.current?.scrollTo({ y: Math.max(0, pageY - 120), animated: true }); } catch {}
-        });
+        (performanceOverWeightRef as any)?.current?.measure?.(
+          (x: number, y: number, w: number, h: number, pageX: number, pageY: number) => {
+            try {
+              (scrollRef as any)?.current?.scrollTo({
+                y: Math.max(0, pageY - 120),
+                animated: true,
+              });
+            } catch {}
+          }
+        );
       } catch {}
     };
     // Removed scrollToPerformanceOverTime in favor of scrollToPerformanceBottom
@@ -155,25 +176,37 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
         setTimeout(() => {
           try {
             InteractionManager.runAfterInteractions(() => {
-              try { (global as any).remeasureTutorialTarget?.(); } catch {}
+              try {
+                (global as any).remeasureTutorialTarget?.();
+              } catch {}
             });
           } catch {
-            try { (global as any).remeasureTutorialTarget?.(); } catch {}
+            try {
+              (global as any).remeasureTutorialTarget?.();
+            } catch {}
           }
         }, 700);
       } catch {}
     };
     (global as any).scrollToPerformanceTop = () => {
-      try { (scrollRef as any)?.current?.scrollTo({ y: 0, animated: true }); } catch {}
+      try {
+        (scrollRef as any)?.current?.scrollTo({ y: 0, animated: true });
+      } catch {}
     };
     return () => {
-      try { delete (global as any).scrollToPerformanceOverWeight; } catch {}
+      try {
+        delete (global as any).scrollToPerformanceOverWeight;
+      } catch {}
       // Removed cleanup for scrollToPerformanceOverTime
-      try { delete (global as any).scrollToPerformanceBottom; } catch {}
-      try { delete (global as any).scrollToPerformanceTop; } catch {}
+      try {
+        delete (global as any).scrollToPerformanceBottom;
+      } catch {}
+      try {
+        delete (global as any).scrollToPerformanceTop;
+      } catch {}
     };
   }, [performanceOverWeightRef, performanceOverTimeRef]);
-  
+
   // Scroll ref for gesture coordination
   const scrollRef = useRef(null);
   const streakCardRef = useRef<any>(null);
@@ -231,7 +264,14 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
 
   // UPDATED: extract from several plausible fields and parse robustly
   function getLiftDate(l: any): Date | null {
-    const candidates = [l?.liftDate, l?.date, l?.performedAt, l?.createdAt, l?.updatedAt, l?.timestamp];
+    const candidates = [
+      l?.liftDate,
+      l?.date,
+      l?.performedAt,
+      l?.createdAt,
+      l?.updatedAt,
+      l?.timestamp,
+    ];
     for (const c of candidates) {
       const d = parseAnyDate(c);
       if (d) return d;
@@ -250,7 +290,7 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
       l?.name,
       l?.type,
     ];
-    const type = candidates.find(v => typeof v === 'string' && v.trim().length > 0);
+    const type = candidates.find((v) => typeof v === 'string' && v.trim().length > 0);
     return type ? String(type) : null;
   }
 
@@ -281,23 +321,23 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
 
     const perTypePercents: number[] = [];
 
-    byType.forEach(entries => {
+    byType.forEach((entries) => {
       if (!entries || entries.length < 2) return; // need earliest & latest
 
       entries.sort((a, b) => a.t - b.t);
       const first = entries[0].acc;
-      const last  = entries[entries.length - 1].acc;
+      const last = entries[entries.length - 1].acc;
 
       let pct: number;
       if (last >= first) {
         // Improvement relative to headroom up to 100 => capped at +100%
         const denom = Math.max(1, 100 - first); // avoid /0 at first=100
-        pct = ((last - first) / denom) * 100;   // 0..100
+        pct = ((last - first) / denom) * 100; // 0..100
         pct = Math.min(100, Math.max(0, pct));
       } else {
         // Decline relative to room to 0 => capped at -100%
-        const denom = Math.max(1, first);       // avoid /0 at first=0
-        pct = ((last - first) / denom) * 100;   // -100..0
+        const denom = Math.max(1, first); // avoid /0 at first=0
+        pct = ((last - first) / denom) * 100; // -100..0
         pct = Math.max(-100, Math.min(0, pct));
       }
 
@@ -308,19 +348,37 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
     return perTypePercents.reduce((s, v) => s + v, 0) / perTypePercents.length; // signed %, [-100,+100]
   }
 
-  const { averageAccuracy, improvementValue, accuracyColor, improvementColor, isImprovementNegative, totalVideos, totalReps, totalWeightMoved, favouriteLift } = useMemo(() => {
+  const {
+    averageAccuracy,
+    improvementValue,
+    accuracyColor,
+    improvementColor,
+    isImprovementNegative,
+    totalVideos,
+    totalReps,
+    totalWeightMoved,
+    favouriteLift,
+  } = useMemo(() => {
     const validAccuracies = stableLiftData
-      .map(l => (typeof (l as any)?.analysis?.accuracy === 'number' ? (l as any).analysis.accuracy as number : null))
+      .map((l) =>
+        typeof (l as any)?.analysis?.accuracy === 'number'
+          ? ((l as any).analysis.accuracy as number)
+          : null
+      )
       .filter((v): v is number => typeof v === 'number');
 
-    const averageAccuracyRaw = validAccuracies.length > 0
-      ? Math.round(validAccuracies.reduce((s, v) => s + v, 0) / validAccuracies.length)
-      : 0;
+    const averageAccuracyRaw =
+      validAccuracies.length > 0
+        ? Math.round(validAccuracies.reduce((s, v) => s + v, 0) / validAccuracies.length)
+        : 0;
 
-    const accColor = averageAccuracyRaw > 80 ? '#00a63e' : averageAccuracyRaw < 50 ? '#fb2c36' : '#fe9a00';
+    const accColor =
+      averageAccuracyRaw > 80 ? '#00a63e' : averageAccuracyRaw < 50 ? '#fb2c36' : '#fe9a00';
 
     // NEW: bounded % improvement (signed) averaged across lift types
-    const improvementRaw = Math.round(calculateBoundedPctImprovementFirstToLastAvg(stableLiftData as any));
+    const improvementRaw = Math.round(
+      calculateBoundedPctImprovementFirstToLastAvg(stableLiftData as any)
+    );
     const isNegative = improvementRaw < 0;
     const impColor = isNegative ? '#fb2c36' : '#00a63e';
 
@@ -330,12 +388,12 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
     const weightMoved = stableLiftData.reduce((sum, lift) => {
       const weight = lift.metricWeight || 0;
       const reps = lift.reps || 0;
-      return sum + (weight * reps);
+      return sum + weight * reps;
     }, 0);
 
     // Calculate favourite lift (most frequent lift type)
     const liftTypeCounts = new Map<string, number>();
-    stableLiftData.forEach(lift => {
+    stableLiftData.forEach((lift) => {
       const liftType = getLiftType(lift);
       if (liftType) {
         liftTypeCounts.set(liftType, (liftTypeCounts.get(liftType) || 0) + 1);
@@ -364,11 +422,19 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
     };
   }, [stableLiftData]);
 
-
   // Info handlers
-  const openInfoModal = (key: 'accuracyPerWeight' | 'accuracyOverTime' | 'accuracy' | 'improvement' | 'videos' | 'reps' | 'totalWeight') => {
+  const openInfoModal = (
+    key:
+      | 'accuracyPerWeight'
+      | 'accuracyOverTime'
+      | 'accuracy'
+      | 'improvement'
+      | 'videos'
+      | 'reps'
+      | 'totalWeight'
+  ) => {
     hapticFeedback.selection();
-    
+
     // Track progress screen clicks only for the metric cards (not the chart cards)
     switch (key) {
       case 'accuracy':
@@ -388,7 +454,7 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
         break;
       // Note: accuracyPerWeight and accuracyOverTime are now tracked in SwipeableLineGraphCard
     }
-    
+
     let title = '';
     let message = '';
     switch (key) {
@@ -454,27 +520,40 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
         nestedScrollEnabled
         directionalLockEnabled
         contentInsetAdjustmentBehavior="automatic"
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefreshing}
-            onRefresh={handleRefresh}
-          />
-        }
-        onLayout={(e) => { try { viewHeightRef.current = e.nativeEvent.layout.height; } catch {} }}
-        onContentSizeChange={(w, h) => { try { contentHeightRef.current = h; } catch {} }}
-        onScroll={(e) => { try { currentScrollYRef.current = e.nativeEvent.contentOffset.y; } catch {} }}
+        refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />}
+        onLayout={(e) => {
+          try {
+            viewHeightRef.current = e.nativeEvent.layout.height;
+          } catch {}
+        }}
+        onContentSizeChange={(w, h) => {
+          try {
+            contentHeightRef.current = h;
+          } catch {}
+        }}
+        onScroll={(e) => {
+          try {
+            currentScrollYRef.current = e.nativeEvent.contentOffset.y;
+          } catch {}
+        }}
         scrollEventThrottle={16}
       >
         <View style={styles.content}>
           <Text style={styles.title}>{i18n.t('performance.title')}</Text>
-          
+
           {/* Metric Cards Row: Accuracy | Improvement */}
           <View style={styles.metricsRow} ref={performanceMetricsRef}>
             {/* Accuracy Card */}
             <View style={styles.metricCard}>
               <View style={styles.metricHeaderRow}>
                 <Text style={styles.metricTitle}>{i18n.t('performance.accuracy')}</Text>
-                <TouchableOpacity onPress={() => openInfoModal('accuracy')} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Show accuracy information" style={styles.metricTitleIcon}>
+                <TouchableOpacity
+                  onPress={() => openInfoModal('accuracy')}
+                  activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel="Show accuracy information"
+                  style={styles.metricTitleIcon}
+                >
                   <CircleQuestionMark width={20} height={20} color="#000000" />
                 </TouchableOpacity>
               </View>
@@ -499,7 +578,13 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
             <View style={styles.metricCard}>
               <View style={styles.metricHeaderRow}>
                 <Text style={styles.metricTitle}>{i18n.t('performance.trend')}</Text>
-                <TouchableOpacity onPress={() => openInfoModal('improvement')} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Show improvement information" style={styles.metricTitleIcon}>
+                <TouchableOpacity
+                  onPress={() => openInfoModal('improvement')}
+                  activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel="Show improvement information"
+                  style={styles.metricTitleIcon}
+                >
                   <CircleQuestionMark width={20} height={20} color="#000000" />
                 </TouchableOpacity>
               </View>
@@ -520,9 +605,9 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
               </View>
             </View>
           </View>
-          
+
           {/* Performance Cards */}
-          <SwipeableLineGraphCard 
+          <SwipeableLineGraphCard
             ref={performanceOverWeightRef}
             cardData={stableLiftData}
             onTriggerAddOptions={onTriggerAddOptions}
@@ -534,7 +619,7 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
           />
 
           {/* Accuracy Over Time Cards */}
-          <SwipeableLineGraphCard 
+          <SwipeableLineGraphCard
             ref={performanceOverTimeRef}
             cardData={stableLiftData}
             hasNoLifts={stableLiftData.length === 0}
@@ -545,7 +630,15 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
           />
 
           {/* Streak Calendar Card */}
-          <View style={styles.streakCardContainer} ref={streakCardRef} onLayout={(e) => { try { streakTopYRef.current = e.nativeEvent.layout.y; } catch {} }}>
+          <View
+            style={styles.streakCardContainer}
+            ref={streakCardRef}
+            onLayout={(e) => {
+              try {
+                streakTopYRef.current = e.nativeEvent.layout.y;
+              } catch {}
+            }}
+          >
             <View style={styles.streakCard}>
               {/* Streak Badge */}
               <View style={styles.streakBadgeContainer}>
@@ -558,7 +651,7 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
                   <Text style={styles.streakBadgeText}>{currentStreak}</Text>
                 </View>
               </View>
-              
+
               {/* Calendar */}
               <View style={styles.streakCalendarWrapper}>
                 <StreakCalendar />
@@ -588,8 +681,8 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
 
           {/* Metrics Feedback Card */}
           <View style={styles.metricsFeedbackCard}>
-            <TouchableOpacity 
-              style={styles.metricsFeedbackRow} 
+            <TouchableOpacity
+              style={styles.metricsFeedbackRow}
               onPress={handleMetricsFeedbackPress}
               activeOpacity={0.7}
             >
@@ -610,18 +703,18 @@ export function PerformanceScreen({ onTriggerAddOptions }: PerformanceScreenProp
       </ScrollView>
 
       {/* Info Modal */}
-      <Modal
-        visible={infoShouldRender}
-        transparent
-        onRequestClose={closeInfoModal}
-      >
+      <Modal visible={infoShouldRender} transparent onRequestClose={closeInfoModal}>
         <Animated.View style={{ flex: 1, opacity: infoOpacity }}>
           <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={closeInfoModal}>
-            <TouchableOpacity style={styles.infoModalContainer} activeOpacity={1} onPress={(e) => e.stopPropagation()}>
+            <TouchableOpacity
+              style={styles.infoModalContainer}
+              activeOpacity={1}
+              onPress={(e) => e.stopPropagation()}
+            >
               <Text style={styles.infoTitle}>{infoModalContent.title}</Text>
               <Text style={styles.infoMessage}>{infoModalContent.message}</Text>
-              <TouchableOpacity 
-                style={styles.closeButton} 
+              <TouchableOpacity
+                style={styles.closeButton}
                 onPress={closeInfoModal}
                 activeOpacity={0.8}
               >
@@ -696,8 +789,7 @@ const styles = StyleSheet.create({
   performanceCardContent: {
     alignItems: 'center',
   },
-  performanceCardHeader: {
-  },
+  performanceCardHeader: {},
   performanceCardLabel: {
     fontSize: 16,
     fontWeight: '500',
@@ -909,8 +1001,7 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
     marginTop: 2,
   },
-  wrappedSection: {
-  },
+  wrappedSection: {},
   wrappedTitle: {
     fontSize: 22,
     fontWeight: '800',
@@ -1011,4 +1102,4 @@ const styles = StyleSheet.create({
     marginLeft: 5,
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
   },
-}); 
+});

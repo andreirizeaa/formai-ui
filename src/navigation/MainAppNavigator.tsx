@@ -40,7 +40,11 @@ import { extractObjectKeyFromUrl, signPath } from '../context/LiftDataContext';
 import { useUserDetails } from '../context/UserDetailsContext';
 import { getUserJustPaid, clearUserJustPaid } from '../services/storageService';
 import { UpgradeAppModal } from '../components/ui/modals/UpgradeAppModal';
-import { checkAppVersion, forceCheckAppVersion, VersionCheckResult } from '../services/appVersionService';
+import {
+  checkAppVersion,
+  forceCheckAppVersion,
+  VersionCheckResult,
+} from '../services/appVersionService';
 import { TranslucentStatusBar } from '../components/ui/TranslucentStatusBar';
 
 // Types for navigation
@@ -102,9 +106,9 @@ declare global {
 function HomeScreenWrapper() {
   const navigation = useNavigation<MainStackNavigationProp>();
   const { getLiftById, isLiftDataLoaded } = useLiftData();
-  
+
   const handleShowFeedback = (liftData: ILiftData) => {
-    navigation.navigate('LiftDetails', { 
+    navigation.navigate('LiftDetails', {
       liftData: liftData,
     });
   };
@@ -141,7 +145,7 @@ function HomeScreenWrapper() {
   // Navigation is now handled by the centralized navigation service
 
   return (
-    <HomeScreen 
+    <HomeScreen
       onShowFeedback={handleShowFeedback}
       onShowFeedbackSlideshow={handleShowFeedbackSlideshow}
       onShowLibrary={handleShowLibrary}
@@ -154,7 +158,7 @@ function HomeScreenWrapper() {
 
 function SettingsScreenWrapper({ onLogout }: { onLogout?: () => void }) {
   const navigation = useNavigation<MainStackNavigationProp>();
-  
+
   const handlePersonalDetailsPress = () => {
     navigation.navigate('PersonalDetails');
   };
@@ -180,7 +184,7 @@ function SettingsScreenWrapper({ onLogout }: { onLogout?: () => void }) {
   };
 
   return (
-    <SettingsScreen 
+    <SettingsScreen
       onPersonalDetailsPress={handlePersonalDetailsPress}
       onUnitsPress={handleUnitsPress}
       onLanguagePress={handleLanguagePress}
@@ -201,17 +205,13 @@ function PerformanceScreenWrapper() {
     }
   };
 
-  return (
-    <PerformanceScreen 
-      onTriggerAddOptions={handleTriggerAddOptions}
-    />
-  );
+  return <PerformanceScreen onTriggerAddOptions={handleTriggerAddOptions} />;
 }
 
 function PersonalDetailsScreenWrapper() {
   const navigation = useNavigation<MainStackNavigationProp>();
   const { userDetails, getWeightDisplay, getHeightDisplay, getAgeRangeDisplay } = useUserDetails();
-  
+
   // Temporarily neutralize global navigateToHome while this screen is mounted
   React.useEffect(() => {
     const previousNavigateToHome = (global as any).navigateToHome;
@@ -222,11 +222,13 @@ function PersonalDetailsScreenWrapper() {
       } else if ((global as any).__navigateToHomeBase) {
         (global as any).navigateToHome = (global as any).__navigateToHomeBase;
       } else {
-        try { delete (global as any).navigateToHome; } catch {}
+        try {
+          delete (global as any).navigateToHome;
+        } catch {}
       }
     };
   }, []);
-  
+
   const handleBack = () => {
     navigation.goBack();
   };
@@ -260,7 +262,7 @@ function PersonalDetailsScreenWrapper() {
 
 function EditUnitsScreenWrapper() {
   const navigation = useNavigation<MainStackNavigationProp>();
-  
+
   // Temporarily neutralize global navigateToHome while this screen is mounted
   React.useEffect(() => {
     const previousNavigateToHome = (global as any).navigateToHome;
@@ -271,25 +273,23 @@ function EditUnitsScreenWrapper() {
       } else if ((global as any).__navigateToHomeBase) {
         (global as any).navigateToHome = (global as any).__navigateToHomeBase;
       } else {
-        try { delete (global as any).navigateToHome; } catch {}
+        try {
+          delete (global as any).navigateToHome;
+        } catch {}
       }
     };
   }, []);
-  
+
   const handleBack = () => {
     navigation.goBack();
   };
 
-  return (
-    <EditUnitsScreen
-      onBack={handleBack}
-    />
-  );
+  return <EditUnitsScreen onBack={handleBack} />;
 }
 
 function EditLanguageScreenWrapper() {
   const navigation = useNavigation<MainStackNavigationProp>();
-  
+
   // Temporarily neutralize global navigateToHome while this screen is mounted
   React.useEffect(() => {
     const previousNavigateToHome = (global as any).navigateToHome;
@@ -300,20 +300,18 @@ function EditLanguageScreenWrapper() {
       } else if ((global as any).__navigateToHomeBase) {
         (global as any).navigateToHome = (global as any).__navigateToHomeBase;
       } else {
-        try { delete (global as any).navigateToHome; } catch {}
+        try {
+          delete (global as any).navigateToHome;
+        } catch {}
       }
     };
   }, []);
-  
+
   const handleBack = () => {
     navigation.goBack();
   };
 
-  return (
-    <EditLanguageScreen
-      onBack={handleBack}
-    />
-  );
+  return <EditLanguageScreen onBack={handleBack} />;
 }
 
 function EditNameScreenWrapper() {
@@ -321,11 +319,7 @@ function EditNameScreenWrapper() {
   const handleBack = () => {
     navigation.goBack();
   };
-  return (
-    <EditNameScreen
-      onBack={handleBack}
-    />
-  );
+  return <EditNameScreen onBack={handleBack} />;
 }
 
 function AppIconScreenWrapper() {
@@ -333,16 +327,12 @@ function AppIconScreenWrapper() {
   const handleBack = () => {
     navigation.goBack();
   };
-  return (
-    <AppIconScreen
-      onBack={handleBack}
-    />
-  );
+  return <AppIconScreen onBack={handleBack} />;
 }
 
 function ShareScreenWrapper() {
   const navigation = useNavigation<MainStackNavigationProp>();
-  
+
   const handleBack = () => {
     navigation.goBack();
   };
@@ -354,7 +344,7 @@ function EditCurrentWeightScreenWrapper() {
   const navigation = useNavigation<MainStackNavigationProp>();
   const route = useRoute<RouteProp<MainStackParamList, 'EditCurrentWeight'>>();
   const { updateWeight } = useUserDetails();
-  
+
   const handleBack = () => {
     navigation.goBack();
   };
@@ -372,7 +362,7 @@ function EditCurrentWeightScreenWrapper() {
   };
 
   return (
-    <EditCurrentWeightScreen 
+    <EditCurrentWeightScreen
       onBack={handleBack}
       currentValue={route.params.currentValue}
       onSave={handleSave}
@@ -384,7 +374,7 @@ function EditHeightScreenWrapper() {
   const navigation = useNavigation<MainStackNavigationProp>();
   const route = useRoute<RouteProp<MainStackParamList, 'EditHeight'>>();
   const { updateHeight } = useUserDetails();
-  
+
   const handleBack = () => {
     navigation.goBack();
   };
@@ -392,7 +382,7 @@ function EditHeightScreenWrapper() {
   const handleSave = (newValue: string) => {
     // Parse the height string to get the metric value for storage
     let heightCm: number;
-    
+
     if (newValue.includes('cm')) {
       const heightMatch = newValue.match(/(\d+)\s*cm/);
       if (heightMatch) {
@@ -412,13 +402,13 @@ function EditHeightScreenWrapper() {
         heightCm = 170; // Default
       }
     }
-    
+
     updateHeight(heightCm);
     navigation.goBack();
   };
 
   return (
-    <EditHeightScreen 
+    <EditHeightScreen
       onBack={handleBack}
       currentValue={route.params.currentValue}
       onSave={handleSave}
@@ -430,7 +420,7 @@ function EditAgeScreenWrapper() {
   const navigation = useNavigation<MainStackNavigationProp>();
   const route = useRoute<RouteProp<MainStackParamList, 'EditAge'>>();
   const { updateUserDetails } = useUserDetails();
-  
+
   const handleBack = () => {
     navigation.goBack();
   };
@@ -442,7 +432,7 @@ function EditAgeScreenWrapper() {
   };
 
   return (
-    <EditAgeScreen 
+    <EditAgeScreen
       onBack={handleBack}
       currentValue={route.params.currentValue}
       onSave={handleSave}
@@ -454,7 +444,7 @@ function EditGenderScreenWrapper() {
   const navigation = useNavigation<MainStackNavigationProp>();
   const route = useRoute<RouteProp<MainStackParamList, 'EditGender'>>();
   const { updateUserDetails } = useUserDetails();
-  
+
   const handleBack = () => {
     navigation.goBack();
   };
@@ -465,7 +455,7 @@ function EditGenderScreenWrapper() {
   };
 
   return (
-    <EditGenderScreen 
+    <EditGenderScreen
       onBack={handleBack}
       currentValue={route.params.currentValue}
       onSave={handleSave}
@@ -475,22 +465,17 @@ function EditGenderScreenWrapper() {
 
 function RecordModalWrapper() {
   const navigation = useNavigation<MainStackNavigationProp>();
-  
+
   const handleClose = () => {
     navigation.goBack();
   };
 
-  return (
-    <RecordModal
-      isVisible={true}
-      onClose={handleClose}
-    />
-  );
+  return <RecordModal isVisible={true} onClose={handleClose} />;
 }
 
 function UploadModalWrapper() {
   const navigation = useNavigation<MainStackNavigationProp>();
-  
+
   const handleClose = () => {
     // Check if upload modal was opened from library search
     if (global.uploadFromLibrarySearch) {
@@ -507,18 +492,13 @@ function UploadModalWrapper() {
     }
   };
 
-  return (
-    <UploadModal
-      isVisible={true}
-      onClose={handleClose}
-    />
-  );
+  return <UploadModal isVisible={true} onClose={handleClose} />;
 }
 
 function LiftDetailsWrapper() {
   const navigation = useNavigation<MainStackNavigationProp>();
   const route = useRoute<RouteProp<MainStackParamList, 'LiftDetails'>>();
-  
+
   const handleClose = () => {
     navigation.goBack();
   };
@@ -536,7 +516,7 @@ function LiftDetailsWrapper() {
   // Expose functions globally for tutorial
   React.useEffect(() => {
     global.openFeedbackSlideshow = handleShowFeedbackSlideshow;
-    
+
     return () => {
       delete global.openFeedbackSlideshow;
     };
@@ -554,7 +534,7 @@ function LiftDetailsWrapper() {
 function FeedbackSlideshowWrapper() {
   const navigation = useNavigation<MainStackNavigationProp>();
   const route = useRoute<RouteProp<MainStackParamList, 'FeedbackSlideshow'>>();
-  
+
   const handleClose = () => {
     // Go back to LiftDetails
     navigation.goBack();
@@ -580,17 +560,19 @@ function FeedbackSlideshowWrapper() {
   };
 
   // Transform the liftData to match the expected format
-  const transformedLiftData = route.params?.liftData ? {
-    analysis: {
-      feedback: route.params.liftData.analysis.feedback.map(item => ({
-        imageURL: item.imageURL,
-        flaws: item.flaws,
-        improvement: item.improvement
-      })),
-      accuracy: route.params.liftData.analysis.accuracy,
-      accuracyScore: route.params.liftData.analysis.accuracy
-    }
-  } : undefined;
+  const transformedLiftData = route.params?.liftData
+    ? {
+        analysis: {
+          feedback: route.params.liftData.analysis.feedback.map((item) => ({
+            imageURL: item.imageURL,
+            flaws: item.flaws,
+            improvement: item.improvement,
+          })),
+          accuracy: route.params.liftData.analysis.accuracy,
+          accuracyScore: route.params.liftData.analysis.accuracy,
+        },
+      }
+    : undefined;
 
   return (
     <FeedbackSlideshow
@@ -602,12 +584,10 @@ function FeedbackSlideshowWrapper() {
   );
 }
 
-
-
 function LibraryScreenWrapperWithProps() {
   const navigation = useNavigation<MainStackNavigationProp>();
   const route = useRoute<RouteProp<MainStackParamList, 'Library'>>();
-  
+
   const handleBack = () => {
     navigation.goBack();
   };
@@ -630,18 +610,13 @@ function LibraryScreenWrapperWithProps() {
     }
   };
 
-  return (
-    <LibraryScreen 
-      onBack={handleBack} 
-      onTriggerAddOptions={handleTriggerAddOptions}
-    />
-  );
+  return <LibraryScreen onBack={handleBack} onTriggerAddOptions={handleTriggerAddOptions} />;
 }
 
 function UpgradeAppModalWrapper() {
   const navigation = useNavigation<MainStackNavigationProp>();
   const route = useRoute<RouteProp<MainStackParamList, 'UpgradeAppModal'>>();
-  
+
   const handleClose = () => {
     // Only allow closing if it's not a force update
     if (!route.params.versionCheckResult.forceUpdate) {
@@ -661,24 +636,27 @@ function UpgradeAppModalWrapper() {
 function WrappedDetailsScreenWrapper() {
   const navigation = useNavigation<MainStackNavigationProp>();
   const route = useRoute<RouteProp<MainStackParamList, 'WrappedDetails'>>();
-  
+
   const handleClose = () => {
     navigation.goBack();
   };
 
-  return (
-    <WrappedDetailsScreen
-      selectedYear={route.params.selectedYear}
-      onClose={handleClose}
-    />
-  );
+  return <WrappedDetailsScreen selectedYear={route.params.selectedYear} onClose={handleClose} />;
 }
 
 // Main tabs navigator with custom bottom navigation
-function MainTabsNavigator({ onLogout, onAddPress }: { onLogout?: () => void; onAddPress?: () => boolean | void }) {
+function MainTabsNavigator({
+  onLogout,
+  onAddPress,
+}: {
+  onLogout?: () => void;
+  onAddPress?: () => boolean | void;
+}) {
   const [activeTab, setActiveTab] = React.useState<'home' | 'progress' | 'settings'>('home');
   const [showAddOptions, setShowAddOptions] = React.useState(false);
-  const [versionCheckResult, setVersionCheckResult] = React.useState<VersionCheckResult | null>(null);
+  const [versionCheckResult, setVersionCheckResult] = React.useState<VersionCheckResult | null>(
+    null
+  );
   const [showUpgradeAppModal, setShowUpgradeAppModal] = React.useState(false);
   const navigation = useNavigation<MainStackNavigationProp>();
 
@@ -690,7 +668,7 @@ function MainTabsNavigator({ onLogout, onAddPress }: { onLogout?: () => void; on
     // Force check app version when add button is pressed (bypasses 24-hour check)
     const result = await forceCheckAppVersion();
     setVersionCheckResult(result);
-    
+
     if (result?.shouldShowModal) {
       setShowUpgradeAppModal(true);
       return; // Don't show add options if upgrade modal should be shown
@@ -742,11 +720,11 @@ function MainTabsNavigator({ onLogout, onAddPress }: { onLogout?: () => void; on
     try {
       const result = await checkAppVersion();
       setVersionCheckResult(result);
-      
+
       if (result.shouldShowModal) {
         setShowUpgradeAppModal(true);
       }
-      
+
       return result;
     } catch (error) {
       console.error('Error checking app version:', error);
@@ -765,7 +743,7 @@ function MainTabsNavigator({ onLogout, onAddPress }: { onLogout?: () => void; on
       const timer = setTimeout(() => {
         navigation.navigate('UpgradeAppModal', { versionCheckResult });
       }, 3000);
-      
+
       return () => clearTimeout(timer);
     }
   }, [showUpgradeAppModal, versionCheckResult, navigation]);
@@ -845,10 +823,8 @@ function MainTabsNavigator({ onLogout, onAddPress }: { onLogout?: () => void; on
         {/* Global translucent status bar overlay, positioned outside SafeAreaView so it sits at the true top */}
         <TranslucentStatusBar tint="light" />
         <SafeAreaView style={styles.safeArea} edges={['bottom']}>
-          <View style={styles.content}>
-            {renderScreenContent()}
-          </View>
-          
+          <View style={styles.content}>{renderScreenContent()}</View>
+
           <BottomNavigationBar
             activeTab={activeTab}
             onTabPress={handleTabPress}
@@ -868,7 +844,13 @@ function MainTabsNavigator({ onLogout, onAddPress }: { onLogout?: () => void; on
 }
 
 // Main stack navigator
-export function MainAppNavigator({ onLogout, onAddPress }: { onLogout?: () => void; onAddPress?: () => boolean | void }) {
+export function MainAppNavigator({
+  onLogout,
+  onAddPress,
+}: {
+  onLogout?: () => void;
+  onAddPress?: () => boolean | void;
+}) {
   return (
     <NavigationContainer
       ref={navigationRef}
@@ -877,7 +859,7 @@ export function MainAppNavigator({ onLogout, onAddPress }: { onLogout?: () => vo
         eventBus.emit(AppEvents.NavReady);
 
         // Wait a bit for contexts to be fully loaded before handling pending navigation
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await new Promise((resolve) => setTimeout(resolve, 200));
 
         // Handle any pending navigation from notifications
         if ((global as any).pendingLiftId) {
@@ -900,150 +882,149 @@ export function MainAppNavigator({ onLogout, onAddPress }: { onLogout?: () => vo
         await handleColdStartNotificationIfAny();
       }}
     >
-        <Stack.Navigator
-          initialRouteName="MainTabs"
-          screenOptions={{
-            headerShown: false,
+      <Stack.Navigator
+        initialRouteName="MainTabs"
+        screenOptions={{
+          headerShown: false,
+        }}
+      >
+        <Stack.Screen name="MainTabs">
+          {() => <MainTabsNavigator onLogout={onLogout} onAddPress={onAddPress} />}
+        </Stack.Screen>
+        <Stack.Screen
+          name="PersonalDetails"
+          component={PersonalDetailsScreenWrapper}
+          options={{
+            presentation: 'card',
           }}
-        >
-          <Stack.Screen name="MainTabs">
-            {() => <MainTabsNavigator onLogout={onLogout} onAddPress={onAddPress} />}
-          </Stack.Screen>
-          <Stack.Screen 
-            name="PersonalDetails" 
-            component={PersonalDetailsScreenWrapper}
-            options={{
-              presentation: 'card',
-            }}
-          />
-          <Stack.Screen 
-            name="EditUnits" 
-            component={EditUnitsScreenWrapper}
-            options={{
-              presentation: 'card',
-            }}
-          />
-          <Stack.Screen 
-            name="EditLanguage" 
-            component={EditLanguageScreenWrapper}
-            options={{
-              presentation: 'card',
-            }}
-          />
-          <Stack.Screen 
-            name="EditName" 
-            component={EditNameScreenWrapper}
-            options={{
-              presentation: 'card',
-              
-            }}
-          />
-          <Stack.Screen 
-            name="AppIcon" 
-            component={AppIconScreenWrapper}
-            options={{
-              presentation: 'card',
-            }}
-          />
-          <Stack.Screen 
-            name="Share" 
-            component={ShareScreenWrapper}
-            options={{
-              presentation: 'card',
-            }}
-          />
-          <Stack.Screen 
-            name="EditCurrentWeight" 
-            component={EditCurrentWeightScreenWrapper}
-            options={{
-              presentation: 'card',
-            }}
-          />
-          <Stack.Screen 
-            name="EditHeight" 
-            component={EditHeightScreenWrapper}
-            options={{
-              presentation: 'card',
-            }}
-          />
-          <Stack.Screen 
-            name="EditAge" 
-            component={EditAgeScreenWrapper}
-            options={{
-              presentation: 'card',
-            }}
-          />
-          <Stack.Screen 
-            name="EditGender" 
-            component={EditGenderScreenWrapper}
-            options={{
-              presentation: 'card',
-            }}
-          />
-          <Stack.Screen 
-            name="RecordModal" 
-            component={RecordModalWrapper}
-            options={{
-              presentation: 'card',
-              animation: 'slide_from_bottom',
-              animationDuration: 300,
-            }}
-          />
-          <Stack.Screen 
-            name="UploadModal" 
-            component={UploadModalWrapper}
-            options={{
-              presentation: 'card',
-              animation: 'slide_from_bottom',
-              animationDuration: 300,
-            }}
-          />
-          <Stack.Screen 
-            name="UpgradeAppModal" 
-            component={UpgradeAppModalWrapper}
-            options={{
-              presentation: 'card',
-              animation: 'slide_from_bottom',
-              animationDuration: 300,
-            }}
-          />
-          <Stack.Screen 
-            name="LiftDetails" 
-            component={LiftDetailsWrapper}
-            options={{
-              presentation: 'card',
-            }}
-          />
-          <Stack.Screen 
-            name="FeedbackSlideshow" 
-            component={FeedbackSlideshowWrapper}
-            options={{
-              presentation: 'card',
-              freezeOnBlur: true, 
-            }}
-          />
+        />
+        <Stack.Screen
+          name="EditUnits"
+          component={EditUnitsScreenWrapper}
+          options={{
+            presentation: 'card',
+          }}
+        />
+        <Stack.Screen
+          name="EditLanguage"
+          component={EditLanguageScreenWrapper}
+          options={{
+            presentation: 'card',
+          }}
+        />
+        <Stack.Screen
+          name="EditName"
+          component={EditNameScreenWrapper}
+          options={{
+            presentation: 'card',
+          }}
+        />
+        <Stack.Screen
+          name="AppIcon"
+          component={AppIconScreenWrapper}
+          options={{
+            presentation: 'card',
+          }}
+        />
+        <Stack.Screen
+          name="Share"
+          component={ShareScreenWrapper}
+          options={{
+            presentation: 'card',
+          }}
+        />
+        <Stack.Screen
+          name="EditCurrentWeight"
+          component={EditCurrentWeightScreenWrapper}
+          options={{
+            presentation: 'card',
+          }}
+        />
+        <Stack.Screen
+          name="EditHeight"
+          component={EditHeightScreenWrapper}
+          options={{
+            presentation: 'card',
+          }}
+        />
+        <Stack.Screen
+          name="EditAge"
+          component={EditAgeScreenWrapper}
+          options={{
+            presentation: 'card',
+          }}
+        />
+        <Stack.Screen
+          name="EditGender"
+          component={EditGenderScreenWrapper}
+          options={{
+            presentation: 'card',
+          }}
+        />
+        <Stack.Screen
+          name="RecordModal"
+          component={RecordModalWrapper}
+          options={{
+            presentation: 'card',
+            animation: 'slide_from_bottom',
+            animationDuration: 300,
+          }}
+        />
+        <Stack.Screen
+          name="UploadModal"
+          component={UploadModalWrapper}
+          options={{
+            presentation: 'card',
+            animation: 'slide_from_bottom',
+            animationDuration: 300,
+          }}
+        />
+        <Stack.Screen
+          name="UpgradeAppModal"
+          component={UpgradeAppModalWrapper}
+          options={{
+            presentation: 'card',
+            animation: 'slide_from_bottom',
+            animationDuration: 300,
+          }}
+        />
+        <Stack.Screen
+          name="LiftDetails"
+          component={LiftDetailsWrapper}
+          options={{
+            presentation: 'card',
+          }}
+        />
+        <Stack.Screen
+          name="FeedbackSlideshow"
+          component={FeedbackSlideshowWrapper}
+          options={{
+            presentation: 'card',
+            freezeOnBlur: true,
+          }}
+        />
 
-          <Stack.Screen 
-            name="Library" 
-            component={LibraryScreenWrapperWithProps}
-            options={{
-              presentation: 'card',
-              freezeOnBlur: true, 
-              animation: 'slide_from_bottom',
-              animationDuration: 350,
-            }}
-          />
-          <Stack.Screen 
-            name="WrappedDetails" 
-            component={WrappedDetailsScreenWrapper}
-            options={{
-              presentation: 'card',
-              animation: 'slide_from_bottom',
-              animationDuration: 300,
-            }}
-          />
-        </Stack.Navigator>
-      </NavigationContainer>
+        <Stack.Screen
+          name="Library"
+          component={LibraryScreenWrapperWithProps}
+          options={{
+            presentation: 'card',
+            freezeOnBlur: true,
+            animation: 'slide_from_bottom',
+            animationDuration: 350,
+          }}
+        />
+        <Stack.Screen
+          name="WrappedDetails"
+          component={WrappedDetailsScreenWrapper}
+          options={{
+            presentation: 'card',
+            animation: 'slide_from_bottom',
+            animationDuration: 300,
+          }}
+        />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
 
@@ -1058,4 +1039,4 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingBottom: 100,
   },
-}); 
+});

@@ -1,5 +1,14 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, ActivityIndicator, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Platform,
+  TouchableOpacity,
+  StatusBar,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import i18n from '../../../utils/i18n';
 import { hapticFeedback } from '../../../utils/haptic';
@@ -45,10 +54,15 @@ export function EditUnitsScreen({ onBack }: EditUnitsScreenProps) {
     } catch (e) {
       hapticFeedback.error();
       setSelectedUnit(userDetails?.unitSystem ?? 'metric');
-      showAlert(i18n.t('settings.editFailed.unitSystem'), i18n.t('settings.editFailed.message'), () => {
-        hapticFeedback.selection();
-        onBack();
-      }, 'Units edit failed');
+      showAlert(
+        i18n.t('settings.editFailed.unitSystem'),
+        i18n.t('settings.editFailed.message'),
+        () => {
+          hapticFeedback.selection();
+          onBack();
+        },
+        'Units edit failed'
+      );
     }
     setIsSaving(false);
   };
@@ -58,8 +72,8 @@ export function EditUnitsScreen({ onBack }: EditUnitsScreenProps) {
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton} 
+        <TouchableOpacity
+          style={styles.backButton}
           onPress={() => {
             hapticFeedback.selection();
             onBack();
@@ -81,11 +95,11 @@ export function EditUnitsScreen({ onBack }: EditUnitsScreenProps) {
             onPress={() => handleUnitSelect('metric')}
             style={[
               styles.unitButton,
-              selectedUnit === 'metric' ? styles.selectedUnitButton : styles.unselectedUnitButton
+              selectedUnit === 'metric' ? styles.selectedUnitButton : styles.unselectedUnitButton,
             ]}
           >
             <View style={styles.unitContent}>
-              <Text 
+              <Text
                 style={[
                   styles.unitName,
                   selectedUnit === 'metric' ? styles.selectedUnitName : styles.unselectedUnitName,
@@ -93,10 +107,12 @@ export function EditUnitsScreen({ onBack }: EditUnitsScreenProps) {
               >
                 {i18n.t('onboarding.units.metric')}
               </Text>
-              <Text 
+              <Text
                 style={[
                   styles.unitDescription,
-                  selectedUnit === 'metric' ? styles.selectedUnitDescription : styles.unselectedUnitDescription
+                  selectedUnit === 'metric'
+                    ? styles.selectedUnitDescription
+                    : styles.unselectedUnitDescription,
                 ]}
               >
                 {i18n.t('onboarding.units.metricDescription')}
@@ -110,11 +126,11 @@ export function EditUnitsScreen({ onBack }: EditUnitsScreenProps) {
             onPress={() => handleUnitSelect('imperial')}
             style={[
               styles.unitButton,
-              selectedUnit === 'imperial' ? styles.selectedUnitButton : styles.unselectedUnitButton
+              selectedUnit === 'imperial' ? styles.selectedUnitButton : styles.unselectedUnitButton,
             ]}
           >
             <View style={styles.unitContent}>
-              <Text 
+              <Text
                 style={[
                   styles.unitName,
                   selectedUnit === 'imperial' ? styles.selectedUnitName : styles.unselectedUnitName,
@@ -122,10 +138,12 @@ export function EditUnitsScreen({ onBack }: EditUnitsScreenProps) {
               >
                 {i18n.t('onboarding.units.imperial')}
               </Text>
-              <Text 
+              <Text
                 style={[
                   styles.unitDescription,
-                  selectedUnit === 'imperial' ? styles.selectedUnitDescription : styles.unselectedUnitDescription
+                  selectedUnit === 'imperial'
+                    ? styles.selectedUnitDescription
+                    : styles.unselectedUnitDescription,
                 ]}
               >
                 {i18n.t('onboarding.units.imperialDescription')}

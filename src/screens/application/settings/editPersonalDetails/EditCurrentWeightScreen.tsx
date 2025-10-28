@@ -1,14 +1,23 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, ActivityIndicator, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Platform,
+  TouchableOpacity,
+  StatusBar,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import i18n from '../../../../utils/i18n';
 import { hapticFeedback } from '../../../../utils/haptic';
 import { useUserDetails } from '../../../../context/UserDetailsContext';
 import { editUserDetails } from '../../../../services/userService';
-import { 
-  parseWeightToMetric, 
-  convertMetricWeightToImperial, 
-  convertImperialWeightToMetric 
+import {
+  parseWeightToMetric,
+  convertMetricWeightToImperial,
+  convertImperialWeightToMetric,
 } from '../../../../utils/unitConversions';
 import { ChevronLeft } from 'lucide-react-native';
 import { track } from '../../../../services/analytics';
@@ -20,7 +29,11 @@ interface EditCurrentWeightScreenProps {
   onSave: (newValue: string) => void;
 }
 
-export function EditCurrentWeightScreen({ onBack, currentValue, onSave }: EditCurrentWeightScreenProps) {
+export function EditCurrentWeightScreen({
+  onBack,
+  currentValue,
+  onSave,
+}: EditCurrentWeightScreenProps) {
   const { userDetails, refetchUserDetails } = useUserDetails();
   const unitSystem = userDetails?.unitSystem ?? 'metric';
   const isMetric = unitSystem === 'metric';
@@ -58,7 +71,7 @@ export function EditCurrentWeightScreen({ onBack, currentValue, onSave }: EditCu
 
     const weightKg = parseWeightToMetric(currentValue);
     const imperialWeight = convertMetricWeightToImperial(weightKg);
-    
+
     // Always round to 1 decimal place for both metric and imperial
     const initialValue = Number((isMetric ? weightKg : imperialWeight).toFixed(1));
     setSelectedWeight(initialValue);
@@ -104,9 +117,14 @@ export function EditCurrentWeightScreen({ onBack, currentValue, onSave }: EditCu
       onSave(displayValue);
     } catch (e) {
       hapticFeedback.error();
-      showAlert(i18n.t('settings.editFailed.currentWeight'), i18n.t('settings.editFailed.message'), () => {
-        hapticFeedback.selection();
-      }, 'Current weight edit failed');
+      showAlert(
+        i18n.t('settings.editFailed.currentWeight'),
+        i18n.t('settings.editFailed.message'),
+        () => {
+          hapticFeedback.selection();
+        },
+        'Current weight edit failed'
+      );
     } finally {
       setIsSaving(false);
     }
@@ -117,8 +135,8 @@ export function EditCurrentWeightScreen({ onBack, currentValue, onSave }: EditCu
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton} 
+        <TouchableOpacity
+          style={styles.backButton}
           onPress={() => {
             hapticFeedback.selection();
             onBack();
@@ -133,15 +151,16 @@ export function EditCurrentWeightScreen({ onBack, currentValue, onSave }: EditCu
       {/* Content */}
       <View style={styles.content}>
         <View style={styles.pickerContainer}>
-          <Text style={styles.pickerLabel}>
-            {i18n.t('personalDetails.weight')}
-          </Text>
+          <Text style={styles.pickerLabel}>{i18n.t('personalDetails.weight')}</Text>
           <View style={styles.pickerWrapper}>
             <Picker
               selectedValue={(() => {
                 const base = isMetric ? 40 : 88;
                 const len = weightOptions.length;
-                const idx = Math.max(0, Math.min(len - 1, Math.round((selectedWeight - base) * 10)));
+                const idx = Math.max(
+                  0,
+                  Math.min(len - 1, Math.round((selectedWeight - base) * 10))
+                );
                 return middleRepeatIndex * len + idx;
               })()}
               onValueChange={handleWeightChange}
@@ -149,12 +168,15 @@ export function EditCurrentWeightScreen({ onBack, currentValue, onSave }: EditCu
               itemStyle={Platform.OS === 'ios' ? { color: '#000000', fontSize: 16 } : undefined}
               dropdownIconColor="#000000"
             >
-              {Array.from({ length: repeats * weightOptions.length }, (_, i) => weightOptions[i % weightOptions.length]).map((weight, index) => (
-                <Picker.Item 
-                  key={`w-${index}`} 
-                  label={`${weight.toFixed(1)} ${isMetric ? 'kg' : 'lbs'}`} 
-                  value={index} 
-                  color="#000000" 
+              {Array.from(
+                { length: repeats * weightOptions.length },
+                (_, i) => weightOptions[i % weightOptions.length]
+              ).map((weight, index) => (
+                <Picker.Item
+                  key={`w-${index}`}
+                  label={`${weight.toFixed(1)} ${isMetric ? 'kg' : 'lbs'}`}
+                  value={index}
+                  color="#000000"
                 />
               ))}
             </Picker>
@@ -260,4 +282,4 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
-}); 
+});

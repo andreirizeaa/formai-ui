@@ -15,24 +15,24 @@ export interface AuthErrorInfo {
 export function analyzeAuthError(error: any): AuthErrorInfo {
   const errorMessage = error?.message || 'Unknown authentication error';
   const errorCode = error?.code || '';
-  
+
   // Check for refresh token errors
-  const isRefreshTokenError = 
+  const isRefreshTokenError =
     errorMessage.includes('Invalid Refresh Token') ||
     errorMessage.includes('Refresh Token Not Found') ||
     errorMessage.includes('refresh_token_not_found') ||
     errorCode === 'refresh_token_not_found';
-  
+
   // Check for session expired errors
-  const isSessionExpired = 
+  const isSessionExpired =
     errorMessage.includes('session_not_found') ||
     errorMessage.includes('Session not found') ||
     errorMessage.includes('invalid_grant') ||
     errorCode === 'session_not_found';
-  
+
   // Determine if we should redirect to sign in
-  const shouldRedirectToSignIn = 
-    isRefreshTokenError || 
+  const shouldRedirectToSignIn =
+    isRefreshTokenError ||
     isSessionExpired ||
     errorMessage.includes('invalid_token') ||
     errorMessage.includes('token_expired');
@@ -50,11 +50,11 @@ export function analyzeAuthError(error: any): AuthErrorInfo {
  */
 export async function handleAuthError(
   supabaseClient: SupabaseClient,
-  error: any, 
+  error: any,
   onRedirectToSignIn?: () => void
 ): Promise<void> {
   const errorInfo = analyzeAuthError(error);
-  
+
   // Track the error for analytics
   track('Authentication Error', {
     error_message: errorInfo.errorMessage,
@@ -95,12 +95,12 @@ export async function withAuthErrorHandling<T>(
     return await operation();
   } catch (error) {
     const errorInfo = analyzeAuthError(error);
-    
+
     if (errorInfo.shouldRedirectToSignIn) {
       await handleAuthError(supabaseClient, error, onRedirectToSignIn);
       return null;
     }
-    
+
     // Re-throw non-auth errors
     throw error;
   }

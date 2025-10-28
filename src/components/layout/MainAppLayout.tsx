@@ -34,7 +34,9 @@ function MainAppLayoutInner({ onLogout, isAppVisible = false }: MainAppLayoutPro
   const [showWelcome, setShowWelcome] = React.useState(false);
   const [showPaymentScreen, setShowPaymentScreen] = React.useState(false);
   const [isVersionCheckCleared, setIsVersionCheckCleared] = React.useState(false);
-  const [previousSubscriptionStatus, setPreviousSubscriptionStatus] = React.useState<boolean | null>(null);
+  const [previousSubscriptionStatus, setPreviousSubscriptionStatus] = React.useState<
+    boolean | null
+  >(null);
 
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
 
@@ -49,7 +51,7 @@ function MainAppLayoutInner({ onLogout, isAppVisible = false }: MainAppLayoutPro
         setIsVersionCheckCleared(true);
       }
     };
-    
+
     clearVersionCheckTime();
   }, []);
 
@@ -90,7 +92,6 @@ function MainAppLayoutInner({ onLogout, isAppVisible = false }: MainAppLayoutPro
     setPreviousSubscriptionStatus(hasSubscription);
   }, [hasSubscription, customerInfo, previousSubscriptionStatus]);
 
-
   // 🔄 Refresh subscription status when app becomes active
   React.useEffect(() => {
     const handleAppStateChange = async (nextAppState: AppStateStatus) => {
@@ -125,7 +126,7 @@ function MainAppLayoutInner({ onLogout, isAppVisible = false }: MainAppLayoutPro
       setShowPaymentScreen(true);
       return true;
     }
-    
+
     // If we have subscription, do background sync to ensure it's still valid
     // This runs in the background without blocking the UI
     syncPurchases()
@@ -134,10 +135,10 @@ function MainAppLayoutInner({ onLogout, isAppVisible = false }: MainAppLayoutPro
         // After background sync, check if subscription status changed
         // If it changed to false, we'll catch it in the subscription change listener
       })
-      .catch(error => {
+      .catch((error) => {
         // Silent fail - not critical if background sync fails
       });
-    
+
     return false;
   };
 
@@ -175,4 +176,4 @@ function MainAppLayoutInner({ onLogout, isAppVisible = false }: MainAppLayoutPro
       <TutorialLiftSeeder />
     </>
   );
-} 
+}

@@ -66,12 +66,13 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
   // Function to get onboarding progress percentage
   const getOnboardingProgress = (): number => {
     const fields = Object.keys(onboardingData);
-    
-    const completedFields = fields.filter(field => 
-      onboardingData[field as keyof OnboardingData] !== null && 
-      onboardingData[field as keyof OnboardingData] !== undefined
+
+    const completedFields = fields.filter(
+      (field) =>
+        onboardingData[field as keyof OnboardingData] !== null &&
+        onboardingData[field as keyof OnboardingData] !== undefined
     );
-    
+
     return Math.round((completedFields.length / fields.length) * 100);
   };
 
@@ -98,4 +99,4 @@ export function useOnboarding() {
     throw new Error('useOnboarding must be used within an OnboardingProvider');
   }
   return context;
-} 
+}

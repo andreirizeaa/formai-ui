@@ -8,11 +8,7 @@ interface FormAILogoProps {
   textStyle?: any;
 }
 
-export function FormAILogo({ 
-  containerStyle,
-  iconSize = 40,
-  textStyle
-}: FormAILogoProps) {
+export function FormAILogo({ containerStyle, iconSize = 40, textStyle }: FormAILogoProps) {
   return (
     <View style={[styles.container, containerStyle]}>
       <Image
@@ -20,9 +16,7 @@ export function FormAILogo({
         style={{ width: iconSize, height: iconSize }}
         contentFit="contain"
       />
-      <Text style={[styles.title, textStyle]}>
-        Form AI
-      </Text>
+      <Text style={[styles.title, textStyle]}>Form AI</Text>
     </View>
   );
 }

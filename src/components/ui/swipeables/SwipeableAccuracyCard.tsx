@@ -10,7 +10,7 @@ import { track } from '../../../services/analytics';
 
 // Use integer dimensions for precise snapping
 const SCREEN_WIDTH = Math.round(Dimensions.get('window').width);
-const ITEM_WIDTH = SCREEN_WIDTH;                 // page width = screen width
+const ITEM_WIDTH = SCREEN_WIDTH; // page width = screen width
 const CARD_WIDTH = Math.round(SCREEN_WIDTH * 0.9);
 const CARD_HEIGHT = 160;
 
@@ -35,7 +35,7 @@ export function SwipeableAccuracyCard({
   const { addLift, formatDateForLift } = useLiftData();
   const { purgeAllLoadingLifts } = useLoadingLifts();
   const { selectedDate } = useSelectedDate();
-  
+
   // Create a ref to control the list
   const listRef = useRef<FlashList<AccuracyCardData> | null>(null);
 
@@ -49,7 +49,7 @@ export function SwipeableAccuracyCard({
 
   // Compute a stable fingerprint for the values so FlashList knows to update
   const dataVersion = React.useMemo(
-    () => cardData.map(c => `${c.label}:${c.percentage}`).join('|'),
+    () => cardData.map((c) => `${c.label}:${c.percentage}`).join('|'),
     [cardData]
   );
 
@@ -59,24 +59,32 @@ export function SwipeableAccuracyCard({
     [localIndex]
   );
 
-
   // Update local index smoothly while dragging (NO parent calls here)
-  const onScroll = useCallback((e: any) => {
-    const x = e?.nativeEvent?.contentOffset?.x || 0;
-    const idx = Math.max(0, Math.min(Math.floor((x + ITEM_WIDTH / 2) / ITEM_WIDTH), (cardData.length || 1) - 1));
-    if (idx !== localIndex) setLocalIndex(idx);
-  }, [localIndex, cardData.length]);
+  const onScroll = useCallback(
+    (e: any) => {
+      const x = e?.nativeEvent?.contentOffset?.x || 0;
+      const idx = Math.max(
+        0,
+        Math.min(Math.floor((x + ITEM_WIDTH / 2) / ITEM_WIDTH), (cardData.length || 1) - 1)
+      );
+      if (idx !== localIndex) setLocalIndex(idx);
+    },
+    [localIndex, cardData.length]
+  );
 
   // Only tell parent when momentum ends (commit)
-  const onMomentumScrollEnd = useCallback((e: any) => {
-    const x = e?.nativeEvent?.contentOffset?.x || 0;
-    const idx = Math.max(0, Math.min(Math.round(x / ITEM_WIDTH), (cardData.length || 1) - 1));
-    if (idx !== currentCardIndex) {
-      // Track home screen clicks for accuracy card swipe
-      track('Home screen clicks', { event: 'Accuracy card swipe' });
-      onCardIndexChange(idx);
-    }
-  }, [currentCardIndex, cardData.length, onCardIndexChange]);
+  const onMomentumScrollEnd = useCallback(
+    (e: any) => {
+      const x = e?.nativeEvent?.contentOffset?.x || 0;
+      const idx = Math.max(0, Math.min(Math.round(x / ITEM_WIDTH), (cardData.length || 1) - 1));
+      if (idx !== currentCardIndex) {
+        // Track home screen clicks for accuracy card swipe
+        track('Home screen clicks', { event: 'Accuracy card swipe' });
+        onCardIndexChange(idx);
+      }
+    },
+    [currentCardIndex, cardData.length, onCardIndexChange]
+  );
 
   // Keep the list in sync if the parent changes currentCardIndex
   useEffect(() => {
@@ -86,7 +94,7 @@ export function SwipeableAccuracyCard({
 
   const handleAddTestLift = () => {
     hapticFeedback.selection();
-    
+
     // Random movement selection
     const movements = [
       'Barbell Front Squat',
@@ -103,38 +111,39 @@ export function SwipeableAccuracyCard({
       'Shoulder Press',
       'Bicep Curls',
       'Tricep Dips',
-      'Leg Press'
+      'Leg Press',
     ];
 
     // Add 1000 test lifts
     for (let i = 0; i < 1000; i++) {
       const randomMovement = movements[Math.floor(Math.random() * movements.length)];
-      
+
       // Random accuracy between 60-95%
       const randomAccuracy = Math.floor(Math.random() * 36) + 60;
-      
+
       // Random reps between 1-12
       const randomReps = Math.floor(Math.random() * 12) + 1;
-      
+
       // Random weight between 1-500
       const randomWeight = Math.floor(Math.random() * 500) + 1;
-      
+
       // Generate random line graph values based on reps
-      const randomLineGraphValues = Array.from({ length: randomReps }, () => 
-        Math.floor(Math.random() * 36) + 60
+      const randomLineGraphValues = Array.from(
+        { length: randomReps },
+        () => Math.floor(Math.random() * 36) + 60
       );
-      
+
       // Random time between 8 AM and 10 PM
       const randomHour = Math.floor(Math.random() * 14) + 8;
       const randomMinute = Math.floor(Math.random() * 60);
       const randomTime = `${randomHour > 12 ? randomHour - 12 : randomHour}:${randomMinute.toString().padStart(2, '0')} ${randomHour >= 12 ? 'PM' : 'AM'}`;
-      
+
       // Generate random date within the last 30 days
       const today = new Date();
       const randomDaysAgo = Math.floor(Math.random() * 30);
       const randomDate = new Date(today);
       randomDate.setDate(today.getDate() - randomDaysAgo);
-      
+
       const id = `demo-${today.getTime()}-${i}-${Math.random().toString(36).substr(2, 9)}`;
 
       addLift({
@@ -156,19 +165,19 @@ export function SwipeableAccuracyCard({
             {
               imageURL: require('../../../../assets/tutorial/formai-example-feedback.png'),
               flaws: [
-                "Right knee is caving inward compared to the left, showing knee valgus.",
-                "Right ankle angle suggests the heel may be lifting more than the left.",
-                "Torso is leaning forward excessively, which stresses the lower back.",
-                "Barbell path is slightly forward of mid-foot, reducing lifting efficiency.",
-                "Hip angle indicates possible butt wink or pelvic tuck at the bottom."
+                'Right knee is caving inward compared to the left, showing knee valgus.',
+                'Right ankle angle suggests the heel may be lifting more than the left.',
+                'Torso is leaning forward excessively, which stresses the lower back.',
+                'Barbell path is slightly forward of mid-foot, reducing lifting efficiency.',
+                'Hip angle indicates possible butt wink or pelvic tuck at the bottom.',
               ],
               improvement: [
                 "Actively push knees out and think 'spread the floor' with your feet to prevent valgus.",
-                "Improve ankle dorsiflexion with stretches and banded mobilizations to keep heels grounded.",
-                "Brace your core harder using the Valsalva maneuver to maintain an upright torso.",
-                "Keep the bar over mid-foot and adjust grip width to tighten the upper back.",
-                "Strengthen glutes and hamstrings with RDLs, hip thrusts, and pause squats to control hip position.",
-                "Consider weightlifting shoes with a heel lift if ankle mobility limits squat depth."
+                'Improve ankle dorsiflexion with stretches and banded mobilizations to keep heels grounded.',
+                'Brace your core harder using the Valsalva maneuver to maintain an upright torso.',
+                'Keep the bar over mid-foot and adjust grip width to tighten the upper back.',
+                'Strengthen glutes and hamstrings with RDLs, hip thrusts, and pause squats to control hip position.',
+                'Consider weightlifting shoes with a heel lift if ankle mobility limits squat depth.',
               ],
             },
           ],
@@ -179,7 +188,7 @@ export function SwipeableAccuracyCard({
 
   const handlePruneLifts = () => {
     hapticFeedback.selection();
-    
+
     // Purge all loading lifts from memory and AsyncStorage
     purgeAllLoadingLifts();
   };
@@ -193,13 +202,11 @@ export function SwipeableAccuracyCard({
           horizontal
           showsHorizontalScrollIndicator={false}
           pagingEnabled
-
           // same snap config as LineGraph
           snapToInterval={ITEM_WIDTH}
           snapToAlignment="start"
           decelerationRate="fast"
-          disableIntervalMomentum   // ← helps remove the "pause then snap" on iOS
-
+          disableIntervalMomentum // ← helps remove the "pause then snap" on iOS
           // ✅ Exact layout (no guessing)
           overrideItemLayout={(layout, index) => {
             layout.size = ITEM_WIDTH;
@@ -208,10 +215,16 @@ export function SwipeableAccuracyCard({
           }}
           estimatedItemSize={ITEM_WIDTH}
           estimatedListSize={{ width: SCREEN_WIDTH, height: CARD_HEIGHT }}
-
           keyExtractor={(item, i) => `${item.label}-${item.percentage}-${i}`}
           renderItem={({ item, index }) => (
-            <View style={{ width: ITEM_WIDTH, height: CARD_HEIGHT, justifyContent: 'center', alignItems: 'center' }}>
+            <View
+              style={{
+                width: ITEM_WIDTH,
+                height: CARD_HEIGHT,
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}
+            >
               <View style={styles.accuracyCard} renderToHardwareTextureAndroid shouldRasterizeIOS>
                 <View style={styles.accuracyCardContent}>
                   <View style={styles.accuracyCardLeftSection}>
@@ -239,14 +252,12 @@ export function SwipeableAccuracyCard({
               </View>
             </View>
           )}
-
           removeClippedSubviews
           nestedScrollEnabled
           contentInsetAdjustmentBehavior="never"
           onScroll={onScroll}
           scrollEventThrottle={16}
           onMomentumScrollEnd={onMomentumScrollEnd}
-
           // re-render items when these change (dots + lazy window + data version)
           extraData={{ localIndex, len: cardData.length, ver: dataVersion }}
         />
@@ -264,7 +275,6 @@ export function SwipeableAccuracyCard({
           />
         ))}
       </View>
-
     </View>
   );
 }
@@ -282,8 +292,8 @@ const styles = StyleSheet.create({
     // 🚫 no paddingBottom / marginBottom here
   },
   cardWrapper: {
-    width: ITEM_WIDTH,                 // ✅ each page = screen width
-    height: CARD_HEIGHT,               // <-- clamp
+    width: ITEM_WIDTH, // ✅ each page = screen width
+    height: CARD_HEIGHT, // <-- clamp
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -295,8 +305,8 @@ const styles = StyleSheet.create({
     padding: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    width: CARD_WIDTH,                 // ✅ narrower card = gap at edges
-    height: CARD_HEIGHT,               // <-- fixed, no auto growth
+    width: CARD_WIDTH, // ✅ narrower card = gap at edges
+    height: CARD_HEIGHT, // <-- fixed, no auto growth
   },
   accuracyCardContent: {
     flexDirection: 'row',

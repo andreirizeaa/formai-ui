@@ -1,5 +1,13 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal, ActivityIndicator, Animated } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Modal,
+  ActivityIndicator,
+  Animated,
+} from 'react-native';
 import i18n from '../../../utils/i18n';
 import { hapticFeedback } from '../../../utils/haptic';
 import { X } from 'lucide-react-native';
@@ -21,9 +29,11 @@ export function LogoutModal({ isVisible, onClose, onConfirm }: LogoutModalProps)
       Animated.timing(fadeOpacity, { toValue: 1, duration: 100, useNativeDriver: true }).start();
       return;
     }
-    Animated.timing(fadeOpacity, { toValue: 0, duration: 100, useNativeDriver: true }).start(({ finished }) => {
-      if (finished) setShouldRender(false);
-    });
+    Animated.timing(fadeOpacity, { toValue: 0, duration: 100, useNativeDriver: true }).start(
+      ({ finished }) => {
+        if (finished) setShouldRender(false);
+      }
+    );
   }, [isVisible, fadeOpacity]);
 
   const handleLogout = async () => {
@@ -33,59 +43,51 @@ export function LogoutModal({ isVisible, onClose, onConfirm }: LogoutModalProps)
   };
 
   return (
-    <Modal
-      visible={shouldRender}
-      transparent
-      onRequestClose={onClose}
-    >
+    <Modal visible={shouldRender} transparent onRequestClose={onClose}>
       <Animated.View style={{ flex: 1, opacity: fadeOpacity }}>
-        <TouchableOpacity 
-          style={styles.overlay} 
-          activeOpacity={1} 
-          onPress={onClose}
-        >
-          <TouchableOpacity 
-            style={styles.modalContainer} 
-            activeOpacity={1} 
+        <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={onClose}>
+          <TouchableOpacity
+            style={styles.modalContainer}
+            activeOpacity={1}
             onPress={(e) => e.stopPropagation()}
           >
-          {/* Close button */}
-          <TouchableOpacity 
-            style={styles.closeButton} 
-            onPress={() => {
-              hapticFeedback.selection();
-              onClose();
-            }}
-          >
-            <X size={20} color="#000000" />
-          </TouchableOpacity>
-
-          {/* Title */}
-          <Text style={styles.title}>{i18n.t('settings.logoutTitle')}</Text>
-
-          {/* Message */}
-          <Text style={styles.message}>{i18n.t('settings.logoutMessage')}</Text>
-
-          {/* Action buttons */}
-          <View style={styles.buttonContainer}>
+            {/* Close button */}
             <TouchableOpacity
-              style={[styles.button, styles.buttonOutlined]}
+              style={styles.closeButton}
               onPress={() => {
                 hapticFeedback.selection();
                 onClose();
               }}
             >
-              <Text style={styles.buttonOutlinedText}>{i18n.t('settings.no')}</Text>
+              <X size={20} color="#000000" />
             </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.button, styles.buttonPrimary]}
-              onPress={handleLogout}
-            >
-              <Text style={styles.buttonPrimaryText}>{i18n.t('settings.yes')}</Text>
-            </TouchableOpacity>
-          </View>
+
+            {/* Title */}
+            <Text style={styles.title}>{i18n.t('settings.logoutTitle')}</Text>
+
+            {/* Message */}
+            <Text style={styles.message}>{i18n.t('settings.logoutMessage')}</Text>
+
+            {/* Action buttons */}
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                style={[styles.button, styles.buttonOutlined]}
+                onPress={() => {
+                  hapticFeedback.selection();
+                  onClose();
+                }}
+              >
+                <Text style={styles.buttonOutlinedText}>{i18n.t('settings.no')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.button, styles.buttonPrimary]}
+                onPress={handleLogout}
+              >
+                <Text style={styles.buttonPrimaryText}>{i18n.t('settings.yes')}</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
         </TouchableOpacity>
-      </TouchableOpacity>
       </Animated.View>
     </Modal>
   );
@@ -171,4 +173,4 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#FFFFFF',
   },
-}); 
+});

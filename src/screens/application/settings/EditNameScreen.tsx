@@ -147,9 +147,7 @@ export function EditNameScreen({ onBack }: EditNameScreenProps) {
         >
           <ChevronLeft width={24} height={24} color="#000000" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>
-          {i18n.t('settings.editName') || 'Edit name'}
-        </Text>
+        <Text style={styles.headerTitle}>{i18n.t('settings.editName') || 'Edit name'}</Text>
         <View style={styles.placeholder} />
       </View>
 
@@ -161,47 +159,45 @@ export function EditNameScreen({ onBack }: EditNameScreenProps) {
         {/* Input */}
         <View style={styles.content}>
           <View style={styles.searchInputContainer}>
-             <View style={styles.inputBackground}>
-               <View style={{ width: '100%' }}>
-                 <Text style={styles.pickerLabel}>{i18n.t('settings.enterName')}</Text>
-                 <View style={styles.inputContainer}>
-                   <TextInput
-                     ref={inputRef}
-                     style={styles.searchInput}
-                     value={name}
-                     onChangeText={setName}
-                     autoCorrect={false}
-                     autoCapitalize="words"
-                     onFocus={() => setIsInputFocused(true)}
-                     onBlur={() => setIsInputFocused(false)}
-                     // Keep keyboard interaction clean; no horizontal motion
-                     textContentType="none"
-                     autoComplete="off"
-                   />
-                   {name.length > 0 && (
-                     <TouchableOpacity
-                       style={styles.clearButton}
-                       onPress={() => {
-                         hapticFeedback.selection();
-                         setName('');
-                       }}
-                       activeOpacity={0.7}
-                     >
-                       <X width={20} height={20} color="#8E8E93" />
-                     </TouchableOpacity>
-                   )}
-                 </View>
-               </View>
-             </View>
+            <View style={styles.inputBackground}>
+              <View style={{ width: '100%' }}>
+                <Text style={styles.pickerLabel}>{i18n.t('settings.enterName')}</Text>
+                <View style={styles.inputContainer}>
+                  <TextInput
+                    ref={inputRef}
+                    style={styles.searchInput}
+                    value={name}
+                    onChangeText={setName}
+                    autoCorrect={false}
+                    autoCapitalize="words"
+                    onFocus={() => setIsInputFocused(true)}
+                    onBlur={() => setIsInputFocused(false)}
+                    // Keep keyboard interaction clean; no horizontal motion
+                    textContentType="none"
+                    autoComplete="off"
+                  />
+                  {name.length > 0 && (
+                    <TouchableOpacity
+                      style={styles.clearButton}
+                      onPress={() => {
+                        hapticFeedback.selection();
+                        setName('');
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <X width={20} height={20} color="#8E8E93" />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
+            </View>
           </View>
         </View>
       </KeyboardAvoidingView>
 
       {/* Keyboard Accessory - shown only when focused, animates with keyboard height */}
       {isInputFocused && (
-        <Animated.View
-          style={[styles.keyboardAccessoryView, { bottom: accessoryBottom }]}
-        >
+        <Animated.View style={[styles.keyboardAccessoryView, { bottom: accessoryBottom }]}>
           <TouchableOpacity
             style={[styles.saveButton, isSaving && { opacity: 0.7 }]}
             onPress={handleSave}

@@ -20,7 +20,7 @@ const i18n = new I18n({
   ro,
   de,
   fr,
-  ar
+  ar,
 });
 
 // Initialize i18n with fallback
@@ -31,12 +31,12 @@ async function initializeLanguage() {
   try {
     // First try to get saved language from AsyncStorage
     const savedLanguage = await getSelectedLanguage();
-    
+
     if (savedLanguage) {
       i18n.locale = savedLanguage;
       return;
     }
-    
+
     // Fallback to device language
     const deviceLanguage = Localization.getLocales()[0]?.languageCode || 'en';
     i18n.locale = deviceLanguage;
@@ -55,4 +55,4 @@ export function setLanguage(language: string) {
   i18n.locale = language;
 }
 
-export default i18n; 
+export default i18n;

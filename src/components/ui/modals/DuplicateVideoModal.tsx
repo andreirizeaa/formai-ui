@@ -1,5 +1,13 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal, ActivityIndicator, Animated } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Modal,
+  ActivityIndicator,
+  Animated,
+} from 'react-native';
 import i18n from '../../../utils/i18n';
 import { hapticFeedback } from '../../../utils/haptic';
 import { X } from 'lucide-react-native';
@@ -13,12 +21,12 @@ interface DuplicateVideoModalProps {
   isProcessing?: boolean; // New prop to distinguish between completed and processing duplicates
 }
 
-export function DuplicateVideoModal({ 
-  isVisible, 
-  onClose, 
-  onViewAnalysis, 
+export function DuplicateVideoModal({
+  isVisible,
+  onClose,
+  onViewAnalysis,
   onSelectNewVideo,
-  isProcessing = false
+  isProcessing = false,
 }: DuplicateVideoModalProps) {
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
   const [shouldRender, setShouldRender] = React.useState(isVisible);
@@ -38,9 +46,11 @@ export function DuplicateVideoModal({
       Animated.timing(fadeOpacity, { toValue: 1, duration: 100, useNativeDriver: true }).start();
       return;
     }
-    Animated.timing(fadeOpacity, { toValue: 0, duration: 100, useNativeDriver: true }).start(({ finished }) => {
-      if (finished) setShouldRender(false);
-    });
+    Animated.timing(fadeOpacity, { toValue: 0, duration: 100, useNativeDriver: true }).start(
+      ({ finished }) => {
+        if (finished) setShouldRender(false);
+      }
+    );
   }, [isVisible, fadeOpacity]);
 
   const handleViewAnalysis = async () => {
@@ -61,8 +71,8 @@ export function DuplicateVideoModal({
     track('Add analysis', { event: 'Duplicate, select new' });
     onClose();
     // Call onSelectNewVideo immediately after closing the modal
-    try { 
-      await onSelectNewVideo(); 
+    try {
+      await onSelectNewVideo();
     } catch (_) {}
   };
 
@@ -80,85 +90,72 @@ export function DuplicateVideoModal({
   }, [isVisible]);
 
   return (
-    <Modal
-      visible={shouldRender}
-      transparent
-      onRequestClose={handleClose}
-    >
+    <Modal visible={shouldRender} transparent onRequestClose={handleClose}>
       <Animated.View style={{ flex: 1, opacity: fadeOpacity }}>
-        <TouchableOpacity 
-          style={styles.overlay} 
-          activeOpacity={1} 
-          onPress={handleClose}
-        >
-          <TouchableOpacity 
-            style={styles.modalContainer} 
-            activeOpacity={1} 
+        <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={handleClose}>
+          <TouchableOpacity
+            style={styles.modalContainer}
+            activeOpacity={1}
             onPress={(e) => e.stopPropagation()}
           >
-          {/* Close button */}
-          <TouchableOpacity 
-            style={styles.closeButton} 
-            onPress={handleClose}
-          >
-            <X size={20} color="#000000" />
-          </TouchableOpacity>
+            {/* Close button */}
+            <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
+              <X size={20} color="#000000" />
+            </TouchableOpacity>
 
-          {/* Title */}
-          <Text style={styles.title}>
-            {isProcessing ? i18n.t('upload.duplicateVideoProcessing') : i18n.t('upload.duplicateVideo')}
-          </Text>
+            {/* Title */}
+            <Text style={styles.title}>
+              {isProcessing
+                ? i18n.t('upload.duplicateVideoProcessing')
+                : i18n.t('upload.duplicateVideo')}
+            </Text>
 
-          {/* Message */}
-          <Text style={styles.message}>
-            {isProcessing ? i18n.t('upload.duplicateVideoProcessingMessage') : i18n.t('upload.duplicateVideoMessage')}
-          </Text>
+            {/* Message */}
+            <Text style={styles.message}>
+              {isProcessing
+                ? i18n.t('upload.duplicateVideoProcessingMessage')
+                : i18n.t('upload.duplicateVideoMessage')}
+            </Text>
 
-          {/* Action buttons */}
-          <View style={styles.buttonContainer}>
-            {isProcessing ? (
-              // For processing duplicates, only show "Select New Video" button (full width)
-              <TouchableOpacity 
-                style={[styles.button, styles.buttonPrimary, styles.buttonFullWidth]} 
-                onPress={handleSelectNewVideo}
-              >
-                <Text style={styles.buttonPrimaryText}>
-                  {i18n.t('upload.selectNewVideo')}
-                </Text>
-              </TouchableOpacity>
-            ) : (
-              // For completed duplicates, show both buttons
-              <>
-                <TouchableOpacity 
-                  style={[styles.button, styles.buttonOutlined]} 
+            {/* Action buttons */}
+            <View style={styles.buttonContainer}>
+              {isProcessing ? (
+                // For processing duplicates, only show "Select New Video" button (full width)
+                <TouchableOpacity
+                  style={[styles.button, styles.buttonPrimary, styles.buttonFullWidth]}
                   onPress={handleSelectNewVideo}
                 >
-                  <Text style={styles.buttonOutlinedText}>
-                    {i18n.t('upload.selectNewVideo')}
-                  </Text>
+                  <Text style={styles.buttonPrimaryText}>{i18n.t('upload.selectNewVideo')}</Text>
                 </TouchableOpacity>
-                <TouchableOpacity 
-                  style={[
-                    styles.button, 
-                    styles.buttonPrimary,
-                    isLoadingAnalysis && styles.buttonDisabled
-                  ]} 
-                  onPress={handleViewAnalysis}
-                  disabled={isLoadingAnalysis}
-                >
-                  {isLoadingAnalysis ? (
-                    <ActivityIndicator size="small" color="#FFFFFF" />
-                  ) : (
-                    <Text style={styles.buttonPrimaryText}>
-                      {i18n.t('upload.viewAnalysis')}
-                    </Text>
-                  )}
-                </TouchableOpacity>
-              </>
-            )}
-          </View>
+              ) : (
+                // For completed duplicates, show both buttons
+                <>
+                  <TouchableOpacity
+                    style={[styles.button, styles.buttonOutlined]}
+                    onPress={handleSelectNewVideo}
+                  >
+                    <Text style={styles.buttonOutlinedText}>{i18n.t('upload.selectNewVideo')}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.button,
+                      styles.buttonPrimary,
+                      isLoadingAnalysis && styles.buttonDisabled,
+                    ]}
+                    onPress={handleViewAnalysis}
+                    disabled={isLoadingAnalysis}
+                  >
+                    {isLoadingAnalysis ? (
+                      <ActivityIndicator size="small" color="#FFFFFF" />
+                    ) : (
+                      <Text style={styles.buttonPrimaryText}>{i18n.t('upload.viewAnalysis')}</Text>
+                    )}
+                  </TouchableOpacity>
+                </>
+              )}
+            </View>
+          </TouchableOpacity>
         </TouchableOpacity>
-      </TouchableOpacity>
       </Animated.View>
     </Modal>
   );

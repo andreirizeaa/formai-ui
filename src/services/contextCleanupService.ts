@@ -21,9 +21,12 @@ export function registerContextResetters(resetters: {
   resetOnboardingContext?: () => void;
 }) {
   if (resetters.resetLiftDataContext) resetLiftDataContext = resetters.resetLiftDataContext;
-  if (resetters.resetUserDetailsContext) resetUserDetailsContext = resetters.resetUserDetailsContext;
-  if (resetters.resetUserCheckInsContext) resetUserCheckInsContext = resetters.resetUserCheckInsContext;
-  if (resetters.resetLoadingLiftsContext) resetLoadingLiftsContext = resetters.resetLoadingLiftsContext;
+  if (resetters.resetUserDetailsContext)
+    resetUserDetailsContext = resetters.resetUserDetailsContext;
+  if (resetters.resetUserCheckInsContext)
+    resetUserCheckInsContext = resetters.resetUserCheckInsContext;
+  if (resetters.resetLoadingLiftsContext)
+    resetLoadingLiftsContext = resetters.resetLoadingLiftsContext;
   if (resetters.resetTutorialContext) resetTutorialContext = resetters.resetTutorialContext;
   if (resetters.resetOnboardingContext) resetOnboardingContext = resetters.resetOnboardingContext;
 }
@@ -35,13 +38,12 @@ export async function clearAllContextData(queryClient: QueryClient): Promise<voi
   try {
     // Clear all React Query cache
     await queryClient.clear();
-    
+
     // Clear loading lifts from storage
     await clearAllLoadingLifts();
-    
+
     // Clear all AsyncStorage data
     await clearAllUserData();
-    
   } catch (error) {
     throw error;
   }
@@ -50,17 +52,20 @@ export async function clearAllContextData(queryClient: QueryClient): Promise<voi
 /**
  * Clears user-specific data from contexts without clearing everything
  */
-export async function clearUserSpecificData(queryClient: QueryClient, userId: string): Promise<void> {
+export async function clearUserSpecificData(
+  queryClient: QueryClient,
+  userId: string
+): Promise<void> {
   try {
     // Clear ALL queries to prevent any cached data from persisting
     await queryClient.clear();
-    
+
     // Invalidate all queries to ensure fresh data on next fetch
     await queryClient.invalidateQueries();
-    
+
     // Reset all queries to their initial state
     await queryClient.resetQueries();
-    
+
     // Reset all context states to their initial values using global functions
     try {
       (global as any).resetLiftDataContext?.();
@@ -69,18 +74,16 @@ export async function clearUserSpecificData(queryClient: QueryClient, userId: st
       (global as any).resetLoadingLiftsContext?.();
       (global as any).resetTutorialContext?.();
       (global as any).resetOnboardingContext?.();
-    } catch (contextError) {
-    }
-    
+    } catch (contextError) {}
+
     // Clear loading lifts from storage
     await clearAllLoadingLifts();
-    
+
     // Clear all AsyncStorage data
     await clearAllUserData();
-    
   } catch (error) {
     showAlert(
-      'Error', 
+      'Error',
       'An error occurred while clearing your data. Please try again.',
       undefined,
       'CONTEXT_CLEANUP_SERVICE_ERROR',

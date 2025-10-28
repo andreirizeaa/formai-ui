@@ -29,7 +29,7 @@ export async function validateReferralCode(code: string): Promise<ReferralValida
     if (!code || code.trim().length === 0) {
       return {
         isValid: false,
-        error: 'Referral code is required'
+        error: 'Referral code is required',
       };
     }
 
@@ -44,7 +44,7 @@ export async function validateReferralCode(code: string): Promise<ReferralValida
         // No rows returned
         return {
           isValid: false,
-          error: 'Referral code not found'
+          error: 'Referral code not found',
         };
       }
       throw error;
@@ -53,7 +53,7 @@ export async function validateReferralCode(code: string): Promise<ReferralValida
     if (!data) {
       return {
         isValid: false,
-        error: 'Referral code not found'
+        error: 'Referral code not found',
       };
     }
 
@@ -62,14 +62,14 @@ export async function validateReferralCode(code: string): Promise<ReferralValida
       'SKIP_PAYWALL': 'SKIP_PAYWALL',
       'discount_30': 'discount_30',
       'discount_40': 'discount_40',
-      'DISCOUNT': 'discount_30' // Default discount to 30% for legacy codes
+      'DISCOUNT': 'discount_30', // Default discount to 30% for legacy codes
     };
 
     const mappedType = typeMapping[data.type];
     if (!mappedType) {
       return {
         isValid: false,
-        error: 'Invalid referral code type'
+        error: 'Invalid referral code type',
       };
     }
 
@@ -78,24 +78,25 @@ export async function validateReferralCode(code: string): Promise<ReferralValida
       referral_code: data.referral_code,
       type: mappedType,
       inserted_at: data.inserted_at,
-      updated_at: data.updated_at
+      updated_at: data.updated_at,
     };
 
     return {
       isValid: true,
-      referralCode
+      referralCode,
     };
-
   } catch (error) {
     return {
       isValid: false,
-      error: 'Failed to validate referral code'
+      error: 'Failed to validate referral code',
     };
   }
 }
 
 // Updated to support new referral code types: SKIP_PAYWALL, discount_30, discount_40
-export async function getReferralCodeType(code: string): Promise<{ type?: 'SKIP_PAYWALL' | 'discount_30' | 'discount_40'; error?: string }> {
+export async function getReferralCodeType(
+  code: string
+): Promise<{ type?: 'SKIP_PAYWALL' | 'discount_30' | 'discount_40'; error?: string }> {
   try {
     const { data, error } = await supabase
       .from('referral_codes')
@@ -103,7 +104,8 @@ export async function getReferralCodeType(code: string): Promise<{ type?: 'SKIP_
       .eq('referral_code', code)
       .single();
 
-    if (error && error.code === 'PGRST116') { // No rows found
+    if (error && error.code === 'PGRST116') {
+      // No rows found
       return { error: 'Referral code not found' };
     } else if (error) {
       return { error: error.message };
@@ -116,7 +118,7 @@ export async function getReferralCodeType(code: string): Promise<{ type?: 'SKIP_
         'discount_30': 'discount_30',
         'discount_40': 'discount_40',
       };
-      
+
       const mappedType = typeMapping[data.type];
       if (mappedType) {
         return { type: mappedType };
@@ -131,7 +133,9 @@ export async function getReferralCodeType(code: string): Promise<{ type?: 'SKIP_
   }
 }
 
-export async function getUserReferralCode(userId: string): Promise<{ referralCode?: string; error?: string }> {
+export async function getUserReferralCode(
+  userId: string
+): Promise<{ referralCode?: string; error?: string }> {
   try {
     const { data, error } = await supabase
       .from('user_info')

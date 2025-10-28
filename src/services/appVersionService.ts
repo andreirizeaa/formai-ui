@@ -54,11 +54,11 @@ async function setLastVersionCheckTime(): Promise<void> {
 async function shouldCheckVersion(): Promise<boolean> {
   try {
     const lastCheckTime = await getLastVersionCheckTime();
-    
+
     if (!lastCheckTime) {
       return true;
     }
-    
+
     const timeSinceLastCheck = Date.now() - lastCheckTime;
     return timeSinceLastCheck >= VERSION_CHECK_INTERVAL;
   } catch (error) {
@@ -74,17 +74,17 @@ async function shouldCheckVersion(): Promise<boolean> {
 function compareVersions(version1: string, version2: string): number {
   const v1Parts = version1.split('.').map(Number);
   const v2Parts = version2.split('.').map(Number);
-  
+
   // Ensure both arrays have the same length by padding with zeros
   const maxLength = Math.max(v1Parts.length, v2Parts.length);
   while (v1Parts.length < maxLength) v1Parts.push(0);
   while (v2Parts.length < maxLength) v2Parts.push(0);
-  
+
   for (let i = 0; i < maxLength; i++) {
     if (v1Parts[i] > v2Parts[i]) return 1;
     if (v1Parts[i] < v2Parts[i]) return -1;
   }
-  
+
   return 0;
 }
 
@@ -94,11 +94,11 @@ function compareVersions(version1: string, version2: string): number {
 function isPatchVersionDifference(version1: string, version2: string): boolean {
   const v1Parts = version1.split('.').map(Number);
   const v2Parts = version2.split('.').map(Number);
-  
+
   // Ensure both arrays have at least 3 parts
   while (v1Parts.length < 3) v1Parts.push(0);
   while (v2Parts.length < 3) v2Parts.push(0);
-  
+
   // Check if major and minor versions are the same
   return v1Parts[0] === v2Parts[0] && v1Parts[1] === v2Parts[1] && v1Parts[2] !== v2Parts[2];
 }
@@ -143,7 +143,7 @@ function getCurrentAppVersion(): string {
 export async function createDefaultAppVersion(): Promise<AppVersion | null> {
   try {
     const currentVersion = getCurrentAppVersion();
-    
+
     const { data, error } = await supabase
       .from('app_versions')
       .insert({
@@ -171,7 +171,7 @@ export async function createDefaultAppVersion(): Promise<AppVersion | null> {
  */
 export async function checkAppVersion(): Promise<VersionCheckResult> {
   const currentVersion = getCurrentAppVersion();
-  
+
   // Default result
   const defaultResult: VersionCheckResult = {
     shouldShowModal: false,
@@ -185,14 +185,14 @@ export async function checkAppVersion(): Promise<VersionCheckResult> {
   try {
     // Check if we should perform a version check based on time
     const shouldCheck = await shouldCheckVersion();
-    
+
     if (!shouldCheck) {
       return defaultResult;
     }
 
     // Fetch latest version from database
     const latestVersionData = await fetchLatestAppVersion();
-    
+
     if (!latestVersionData) {
       return defaultResult;
     }
@@ -231,7 +231,7 @@ export async function checkAppVersion(): Promise<VersionCheckResult> {
 
     // Compare versions
     const versionComparison = compareVersions(latestVersion, currentVersion);
-    
+
     // If current version is newer or same, don't show modal
     if (versionComparison <= 0) {
       return {
@@ -246,7 +246,7 @@ export async function checkAppVersion(): Promise<VersionCheckResult> {
 
     // If versions are different, check if it's only a patch difference
     const isPatchDiff = isPatchVersionDifference(currentVersion, latestVersion);
-    
+
     if (isPatchDiff) {
       // Don't show modal for patch version differences
       return {
@@ -268,7 +268,6 @@ export async function checkAppVersion(): Promise<VersionCheckResult> {
       currentVersion,
       whatsNew,
     };
-
   } catch (error) {
     return defaultResult;
   }
@@ -280,7 +279,7 @@ export async function checkAppVersion(): Promise<VersionCheckResult> {
  */
 export async function forceCheckAppVersion(): Promise<VersionCheckResult> {
   const currentVersion = getCurrentAppVersion();
-  
+
   // Default result
   const defaultResult: VersionCheckResult = {
     shouldShowModal: false,
@@ -294,7 +293,7 @@ export async function forceCheckAppVersion(): Promise<VersionCheckResult> {
   try {
     // Fetch latest version from database
     const latestVersionData = await fetchLatestAppVersion();
-    
+
     if (!latestVersionData) {
       return defaultResult;
     }
@@ -333,7 +332,7 @@ export async function forceCheckAppVersion(): Promise<VersionCheckResult> {
 
     // Compare versions
     const versionComparison = compareVersions(latestVersion, currentVersion);
-    
+
     // If current version is newer or same, don't show modal
     if (versionComparison <= 0) {
       return {
@@ -348,7 +347,7 @@ export async function forceCheckAppVersion(): Promise<VersionCheckResult> {
 
     // If versions are different, check if it's only a patch difference
     const isPatchDiff = isPatchVersionDifference(currentVersion, latestVersion);
-    
+
     if (isPatchDiff) {
       // Don't show modal for patch version differences
       return {
@@ -370,7 +369,6 @@ export async function forceCheckAppVersion(): Promise<VersionCheckResult> {
       currentVersion,
       whatsNew,
     };
-
   } catch (error) {
     return defaultResult;
   }

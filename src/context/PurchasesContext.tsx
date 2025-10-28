@@ -27,7 +27,14 @@ interface PurchasesContextValue {
   refreshOfferings: () => Promise<void>;
   refreshCustomerInfo: () => Promise<void>;
   syncPurchases: () => Promise<void>;
-  purchasePackage: (pkg: PurchasesPackage) => Promise<{type: "purchased"} | {type: "cancelled"} | {type: "pending"} | {type: "failed", error?: string}>;
+  purchasePackage: (
+    pkg: PurchasesPackage
+  ) => Promise<
+    | { type: 'purchased' }
+    | { type: 'cancelled' }
+    | { type: 'pending' }
+    | { type: 'failed'; error?: string }
+  >;
   restorePurchases: () => Promise<CustomerInfo | null>;
 }
 
@@ -52,7 +59,7 @@ export function PurchasesProvider({ children, onSubscriptionUpdate }: PurchasesP
     if (!offerings?.all) return [];
     // Get packages from all offerings (default + add-ons)
     const allPackages: PurchasesPackage[] = [];
-    Object.values(offerings.all).forEach(offering => {
+    Object.values(offerings.all).forEach((offering) => {
       allPackages.push(...offering.availablePackages);
     });
     return allPackages;
@@ -71,31 +78,31 @@ export function PurchasesProvider({ children, onSubscriptionUpdate }: PurchasesP
   // Check for any active subscription entitlements
   const hasSubscription = useMemo(() => {
     if (!customerInfo || !offerings) return false;
-  
+
     const allOfferings = offerings?.all;
     if (!allOfferings) return false;
-  
+
     // Collect all product identifiers (monthly, annual, packages) from *all* offerings
     const productIds: string[] = [];
-  
-    Object.values(allOfferings).forEach(offering => {
+
+    Object.values(allOfferings).forEach((offering) => {
       if (offering?.monthly?.product?.identifier) {
         productIds.push(offering.monthly.product.identifier);
       }
-  
+
       if (offering?.annual?.product?.identifier) {
         productIds.push(offering.annual.product.identifier);
       }
-  
+
       if (Array.isArray(offering?.availablePackages)) {
-        offering.availablePackages.forEach(pkg => {
+        offering.availablePackages.forEach((pkg) => {
           if (pkg.product?.identifier) {
             productIds.push(pkg.product.identifier);
           }
         });
       }
     });
-  
+
     // Map product ID → entitlement ID
     const productEntitlementMap: Record<string, string> = {};
     if (customerInfo.entitlements?.all) {
@@ -107,18 +114,16 @@ export function PurchasesProvider({ children, onSubscriptionUpdate }: PurchasesP
         }
       );
     }
-  
+
     // Find entitlements corresponding to the product IDs
     const entitlementIds = productIds
-      .map(productId => productEntitlementMap[productId])
+      .map((productId) => productEntitlementMap[productId])
       .filter(Boolean);
-  
+
     // Check if any of those entitlements are active
     const activeEntitlements = Object.keys(customerInfo.entitlements.active || {});
-  
-    return entitlementIds.some(entitlementId =>
-      activeEntitlements.includes(entitlementId)
-    );
+
+    return entitlementIds.some((entitlementId) => activeEntitlements.includes(entitlementId));
   }, [customerInfo, offerings]);
 
   // Check specifically for HD videos entitlement
@@ -144,7 +149,7 @@ export function PurchasesProvider({ children, onSubscriptionUpdate }: PurchasesP
       try {
         Purchases.setLogLevel(LOG_LEVEL.WARN);
         if (Platform.OS === 'ios') {
-          Purchases.configure({ apiKey: 'appl_GUYEEZQfOpAHzaNTEHKrIuRLGuY'});
+          Purchases.configure({ apiKey: 'appl_GUYEEZQfOpAHzaNTEHKrIuRLGuY' });
         }
         // else if (Platform.OS === 'android') {
         //   Purchases.configure({ apiKey: 'your_android_api_key' });
@@ -202,10 +207,10 @@ export function PurchasesProvider({ children, onSubscriptionUpdate }: PurchasesP
     try {
       // Sync purchases with RevenueCat servers
       await Purchases.syncPurchases();
-      
+
       // Refresh customer info after sync to get the latest data
       await refreshCustomerInfo();
-      
+
       // Also refresh offerings to ensure we have the latest data
       await refreshOfferings();
     } catch (error) {
@@ -222,7 +227,7 @@ export function PurchasesProvider({ children, onSubscriptionUpdate }: PurchasesP
     const { customerInfo } = await Purchases.purchasePackage(pkg);
     setCustomerInfo(customerInfo);
     await refreshOfferings();
-    return {type: "purchased" as const};
+    return { type: 'purchased' as const };
   }
 
   async function restorePurchases() {
@@ -277,11 +282,7 @@ export function PurchasesProvider({ children, onSubscriptionUpdate }: PurchasesP
     restorePurchases,
   };
 
-  return (
-    <PurchasesContext.Provider value={value}>
-      {children}
-    </PurchasesContext.Provider>
-  );
+  return <PurchasesContext.Provider value={value}>{children}</PurchasesContext.Provider>;
 }
 
 export function usePurchases() {

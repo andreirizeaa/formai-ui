@@ -14,23 +14,15 @@ export function NextButton({ title, onPress, disabled = false, loading = false }
 
   return (
     <TouchableOpacity
-      style={[
-        styles.button,
-        isButtonDisabled && styles.buttonDisabled
-      ]}
+      style={[styles.button, isButtonDisabled && styles.buttonDisabled]}
       onPress={onPress}
       disabled={isButtonDisabled}
       activeOpacity={0.8}
     >
       {loading ? (
-        <ActivityIndicator 
-          size="small" 
-          color="#FFFFFF" 
-        />
+        <ActivityIndicator size="small" color="#FFFFFF" />
       ) : (
-        <Text style={styles.buttonText}>
-          {title}
-        </Text>
+        <Text style={styles.buttonText}>{title}</Text>
       )}
     </TouchableOpacity>
   );
@@ -56,4 +48,4 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
-}); 
+});

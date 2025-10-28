@@ -36,9 +36,7 @@ export function OrangeGradientButton({
         end={{ x: 1, y: 0 }}
       >
         {children || (
-          <Text style={[styles.text, textStyle, disabled && styles.disabledText]}>
-            {title}
-          </Text>
+          <Text style={[styles.text, textStyle, disabled && styles.disabledText]}>{title}</Text>
         )}
       </LinearGradient>
     </TouchableOpacity>

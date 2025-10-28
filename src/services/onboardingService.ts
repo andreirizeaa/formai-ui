@@ -14,7 +14,10 @@ function isoDateOrNull(value?: string | null): string | null {
   return m?.[1] ?? null;
 }
 
-function buildOnboardingPayload(input: OnboardingData): { info: Record<string, any>; onboarding: Record<string, any> } {
+function buildOnboardingPayload(input: OnboardingData): {
+  info: Record<string, any>;
+  onboarding: Record<string, any>;
+} {
   if (!input?.userId || !input.userId.trim()) throw new Error('userId is required');
   const userId = input.userId.trim();
   const info: Record<string, any> = { user_id: userId };
@@ -71,7 +74,7 @@ async function upsertWithRetry(
     const { error } = await supabase.from(table).upsert(payload, { onConflict: 'user_id' });
     if (!error) return;
     lastError = error.message;
-    if (i < attempts) await new Promise(r => setTimeout(r, delayMs));
+    if (i < attempts) await new Promise((r) => setTimeout(r, delayMs));
   }
   throw new Error(lastError || 'Database error');
 }

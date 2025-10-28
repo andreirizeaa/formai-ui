@@ -109,7 +109,7 @@ export async function openLiftById(liftId: string) {
     if (currentRoute?.name !== 'MainTabs') {
       navigate('MainTabs');
       // Add a small delay to let the navigation complete
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
     }
 
     // Try to get lift from context first (will be implemented by context)
@@ -124,7 +124,9 @@ export async function openLiftById(liftId: string) {
     // Fallback: fetch the lift by id from Supabase
     const { data, error } = await supabase
       .from('lifts')
-      .select('id, is_favourite, lift_type, lift_date, lift_time, metric_weight, reps, raw_video_url, pose_video_url, thumbnail_url, analysis')
+      .select(
+        'id, is_favourite, lift_type, lift_date, lift_time, metric_weight, reps, raw_video_url, pose_video_url, thumbnail_url, analysis'
+      )
       .eq('id', liftId)
       .maybeSingle();
 
@@ -172,8 +174,12 @@ export async function openLiftById(liftId: string) {
       thumbnailURL: thumbnailURL || data.thumbnail_url,
       analysis: {
         accuracy: Number(data.analysis?.accuracy ?? 0),
-        lineGraphValues: Array.isArray(data.analysis?.lineGraphValues) ? data.analysis.lineGraphValues : [],
-        barChartValues: Array.isArray(data.analysis?.barChartValues) ? data.analysis.barChartValues : [],
+        lineGraphValues: Array.isArray(data.analysis?.lineGraphValues)
+          ? data.analysis.lineGraphValues
+          : [],
+        barChartValues: Array.isArray(data.analysis?.barChartValues)
+          ? data.analysis.barChartValues
+          : [],
         feedback: signedFeedback,
       },
     };

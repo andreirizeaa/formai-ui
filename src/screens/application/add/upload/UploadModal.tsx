@@ -1,5 +1,15 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, Keyboard, Linking, Animated, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Platform,
+  Keyboard,
+  Linking,
+  Animated,
+  Alert,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -8,7 +18,10 @@ import i18n from '../../../../utils/i18n';
 import { hapticFeedback } from '../../../../utils/haptic';
 import { generateVideoThumbnail } from '../../../../utils/generateVideoThumbnail';
 import { getStableAssetId } from '../../../../utils/getStableAssetId';
-import { uploadLiftVideo, uploadLiftThumbnail } from '../../../../services/lifts/VideoUploadService';
+import {
+  uploadLiftVideo,
+  uploadLiftThumbnail,
+} from '../../../../services/lifts/VideoUploadService';
 import { enqueueLiftAnalysis } from '../../../../services/lifts/liftApi';
 import { openAppSettings } from '../../../../utils/openAppSettings';
 import { VideoPreviewScreen } from '../common/VideoPreviewScreen';
@@ -20,7 +33,11 @@ import { useSelectedDate } from '../../../../context/SelectedDateContext';
 import { usePurchases } from '../../../../context/PurchasesContext';
 import { gymMovements, BodyPart } from '../../../../constants/gymMovements';
 import { X } from 'lucide-react-native';
-import { checkDuplicateAssetIdComprehensive, checkDuplicateAssetId, checkDuplicateAssetIdInMemory } from '../../../../services/lifts/liftService';
+import {
+  checkDuplicateAssetIdComprehensive,
+  checkDuplicateAssetId,
+  checkDuplicateAssetIdInMemory,
+} from '../../../../services/lifts/liftService';
 import { searchLiftByAssetId } from '../../../../services/lifts/liftService';
 import { getUserId } from '../../../../services/storageService';
 import { extractObjectKeyFromUrl, signPath, ILiftData } from '../../../../context/LiftDataContext';
@@ -49,13 +66,13 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
   const [isProcessingDuplicate, setIsProcessingDuplicate] = useState(false);
   const [showVideoTooLongModal, setShowVideoTooLongModal] = useState(false);
   const [showVideoTooShortModal, setShowVideoTooShortModal] = useState(false);
-  
+
   // Media library permission state
   const [hasMediaPermission, setHasMediaPermission] = useState<boolean | null>(null);
   const [showMediaPermission, setShowMediaPermission] = useState(false);
   const [mediaPermissionLoading, setMediaPermissionLoading] = useState(false);
   const [mediaDontAllowLoading, setMediaDontAllowLoading] = useState(false);
-  
+
   // Animation value for finger icon
   const fingerTranslateY = useMemo(() => new Animated.Value(0), []);
 
@@ -63,7 +80,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
   const checkMediaPermission = async () => {
     try {
       const { status, accessPrivileges } = await ImagePicker.getMediaLibraryPermissionsAsync();
-      
+
       if (status === 'denied') {
         // User has explicitly denied access - show permission screen
         setHasMediaPermission(false);
@@ -87,7 +104,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
   const requestMediaPermissionFromUser = async () => {
     try {
       const current = await ImagePicker.getMediaLibraryPermissionsAsync();
-      
+
       // Only proceed if user has granted FULL access (all photos)
       if (current.granted && current.accessPrivileges === 'all') {
         hapticFeedback.success();
@@ -98,7 +115,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
 
       // Request permission
       const result = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      
+
       // Check if full access granted (all photos) - ONLY proceed with full access
       if (result.granted && result.accessPrivileges === 'all') {
         hapticFeedback.success();
@@ -126,11 +143,10 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
     }
   };
 
-
   // Check for limited or no photo access when permission screen shows
   useEffect(() => {
     if (!showMediaPermission || !isVisible) return;
-    
+
     const checkMediaAccess = async () => {
       try {
         const current = await ImagePicker.getMediaLibraryPermissionsAsync();
@@ -139,7 +155,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
         // Silently fail
       }
     };
-    
+
     checkMediaAccess();
   }, [showMediaPermission, isVisible]);
 
@@ -162,14 +178,14 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
           ])
         ).start();
       };
-      
+
       startFingerAnimation();
     } else {
       // Reset animation when not showing permission screen
       fingerTranslateY.setValue(0);
     }
   }, [showMediaPermission, isVisible, fingerTranslateY]);
-  
+
   async function formatDateForLift(date: Date): Promise<string> {
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -193,10 +209,16 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
         signPath(poseKey),
       ]);
 
-      const rawFeedback: Array<{ imageURL: any; flaws: any; improvement: any }> = Array.isArray(row.analysis?.feedback) ? row.analysis.feedback : [];
+      const rawFeedback: Array<{ imageURL: any; flaws: any; improvement: any }> = Array.isArray(
+        row.analysis?.feedback
+      )
+        ? row.analysis.feedback
+        : [];
       const signedFeedback = await Promise.all(
         rawFeedback.map(async (f) => {
-          const feedbackKey = await extractObjectKeyFromUrl(typeof f.imageURL === 'string' ? f.imageURL : undefined);
+          const feedbackKey = await extractObjectKeyFromUrl(
+            typeof f.imageURL === 'string' ? f.imageURL : undefined
+          );
           const signedUrl = await signPath(feedbackKey);
           return { ...f, imageURL: signedUrl ?? f.imageURL };
         })
@@ -215,8 +237,12 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
         thumbnailURL,
         analysis: {
           accuracy: Number(row.analysis?.accuracy ?? 0),
-          lineGraphValues: Array.isArray(row.analysis?.lineGraphValues) ? row.analysis.lineGraphValues : [],
-          barChartValues: Array.isArray(row.analysis?.barChartValues) ? row.analysis.barChartValues : [],
+          lineGraphValues: Array.isArray(row.analysis?.lineGraphValues)
+            ? row.analysis.lineGraphValues
+            : [],
+          barChartValues: Array.isArray(row.analysis?.barChartValues)
+            ? row.analysis.barChartValues
+            : [],
           feedback: signedFeedback,
         },
       };
@@ -230,7 +256,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
       // No-op on failure
     }
   }
-  
+
   // Tutorial global functions
   React.useEffect(() => {
     global.tutorialUpload = {
@@ -272,7 +298,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
         onClose();
       },
     };
-    
+
     return () => {
       if (global.tutorialUpload) {
         delete global.tutorialUpload;
@@ -284,16 +310,19 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
   const [selectedMovement, setSelectedMovement] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedBodyPart, setSelectedBodyPart] = useState<BodyPart>('all');
-  const [filteredMovements, setFilteredMovements] = useState(gymMovements.map(m => m.name));
-  
+  const [filteredMovements, setFilteredMovements] = useState(gymMovements.map((m) => m.name));
+
   // Weight and reps state
-  const [weightReps, setWeightReps] = useState<{ weight: number; unit: 'kg' | 'lbs'; reps: number } | null>(null);
+  const [weightReps, setWeightReps] = useState<{
+    weight: number;
+    unit: 'kg' | 'lbs';
+    reps: number;
+  } | null>(null);
 
   // Loading state for video upload
   const [isUploading, setIsUploading] = useState(false);
   const [isModalDisabled, setIsModalDisabled] = useState(false);
   const [isOpeningMediaLibrary, setIsOpeningMediaLibrary] = useState(false);
-
 
   // Reset states when modal becomes invisible
   useEffect(() => {
@@ -304,7 +333,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
       setSelectedMovement('');
       setSearchQuery('');
       setSelectedBodyPart('all');
-      setFilteredMovements(gymMovements.map(m => m.name));
+      setFilteredMovements(gymMovements.map((m) => m.name));
       setWeightReps(null);
       setShowDuplicateModal(false);
       setShowVideoTooLongModal(false);
@@ -333,7 +362,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
       const validateVideo = async () => {
         // Check if video duration boundaries
         let durationInSeconds = selectedVideo.duration;
-        
+
         // Handle different duration formats
         if (typeof selectedVideo.duration === 'number') {
           // If duration is in milliseconds, convert to seconds
@@ -343,34 +372,42 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
         }
 
         // Check for duplicate video using stable asset ID
-        const baseAssetId = await getStableAssetId({ 
-          assetId: selectedVideo.assetId || undefined, 
-          uri: selectedVideo.uri 
+        const baseAssetId = await getStableAssetId({
+          assetId: selectedVideo.assetId || undefined,
+          uri: selectedVideo.uri,
         });
-        
+
         // Check both database and memory separately to determine the type of duplicate
         const [dbDuplicate, memoryDuplicate] = await Promise.all([
           checkDuplicateAssetId(baseAssetId),
-          checkDuplicateAssetIdInMemory(baseAssetId)
+          checkDuplicateAssetIdInMemory(baseAssetId),
         ]);
-        
+
         const isDuplicate = dbDuplicate || memoryDuplicate;
         const isProcessing = memoryDuplicate && !dbDuplicate;
-        
+
         // Too long (> 60s)
-        if (durationInSeconds !== undefined && durationInSeconds !== null && durationInSeconds > 60) {
+        if (
+          durationInSeconds !== undefined &&
+          durationInSeconds !== null &&
+          durationInSeconds > 60
+        ) {
           hapticFeedback.error();
           setShowVideoTooLongModal(true);
           return;
         }
 
         // Too short (< 3s)
-        if (durationInSeconds !== undefined && durationInSeconds !== null && durationInSeconds < 2) {
+        if (
+          durationInSeconds !== undefined &&
+          durationInSeconds !== null &&
+          durationInSeconds < 2
+        ) {
           hapticFeedback.error();
           setShowVideoTooShortModal(true);
           return;
         }
-        
+
         if (isDuplicate) {
           hapticFeedback.error();
           setDuplicateAssetId(baseAssetId);
@@ -384,12 +421,10 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
     }
   }, [selectedVideo, showMovementSelection, showWeightReps]);
 
-
-
   const handleUploadPress = async () => {
     // Selection haptic feedback
     hapticFeedback.selection();
-    
+
     // Check for media library permissions first - only block if denied
     const hasPermission = await checkMediaPermission();
     if (!hasPermission) {
@@ -397,10 +432,10 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
       setShowMediaPermission(true);
       return;
     }
-    
+
     // Set loading state for media library opening
     setIsOpeningMediaLibrary(true);
-    
+
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: 'videos',
@@ -410,7 +445,8 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
         // iOS: transcode to 720p H.264 to reduce size; no effect on Android
         videoExportPreset: ImagePicker.VideoExportPreset.H264_1280x720,
         videoQuality: ImagePicker.UIImagePickerControllerQualityType.Medium,
-        preferredAssetRepresentationMode: ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible,
+        preferredAssetRepresentationMode:
+          ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible,
       });
 
       if (result.canceled) {
@@ -418,7 +454,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
       }
 
       const asset = result.assets[0];
-      
+
       if (asset) {
         // Immediately set the video as selected to show preview
         setSelectedVideo(asset);
@@ -431,7 +467,6 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
     }
   };
 
-
   const handleDuplicateModalViewAnalysis = async () => {
     await openLiftDetailsForAssetId(duplicateAssetId);
   };
@@ -439,7 +474,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
   const handleSelectNewVideoForErrors = () => {
     // Close the duplicate modal first
     setShowDuplicateModal(false);
-    
+
     // Reset all state to go back to the initial PracticesScreen
     setSelectedVideo(null);
     setShowMovementSelection(false);
@@ -447,7 +482,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
     setSelectedMovement('');
     setSearchQuery('');
     setSelectedBodyPart('all');
-    setFilteredMovements(gymMovements.map(m => m.name));
+    setFilteredMovements(gymMovements.map((m) => m.name));
     setWeightReps(null);
     setDuplicateAssetId('');
     setIsProcessingDuplicate(false);
@@ -456,7 +491,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
   const handleBack = () => {
     // Selection haptic feedback
     hapticFeedback.selection();
-    
+
     setShowMovementSelection(false);
   };
 
@@ -465,7 +500,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
 
     // Check if video duration is available and under 60 seconds
     let durationInSeconds = selectedVideo.duration;
-    
+
     // Handle different duration formats
     if (typeof selectedVideo.duration === 'number') {
       // If duration is in milliseconds, convert to seconds
@@ -475,20 +510,20 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
     }
 
     // Check for duplicate video using stable asset ID
-    const baseAssetId = await getStableAssetId({ 
-      assetId: selectedVideo.assetId || undefined, 
-      uri: selectedVideo.uri 
+    const baseAssetId = await getStableAssetId({
+      assetId: selectedVideo.assetId || undefined,
+      uri: selectedVideo.uri,
     });
-    
+
     // Check both database and memory separately to determine the type of duplicate
     const [dbDuplicate, memoryDuplicate] = await Promise.all([
       checkDuplicateAssetId(baseAssetId),
-      checkDuplicateAssetIdInMemory(baseAssetId)
+      checkDuplicateAssetIdInMemory(baseAssetId),
     ]);
-    
+
     const isDuplicate = dbDuplicate || memoryDuplicate;
     const isProcessing = memoryDuplicate && !dbDuplicate;
-    
+
     // Too long (> 60s)
     if (durationInSeconds !== undefined && durationInSeconds !== null && durationInSeconds > 60) {
       hapticFeedback.error();
@@ -501,7 +536,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
       setShowVideoTooShortModal(true);
       return false;
     }
-    
+
     if (isDuplicate) {
       hapticFeedback.error();
       setDuplicateAssetId(baseAssetId);
@@ -516,13 +551,13 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
   const handleContinue = async () => {
     // Selection haptic feedback
     hapticFeedback.selection();
-    
+
     // Validate video before proceeding
     const isValid = await validateVideoBeforeContinue();
     if (!isValid) {
       return; // Don't proceed if validation fails
     }
-    
+
     // Proceed to movement selection
     setShowMovementSelection(true);
   };
@@ -547,24 +582,28 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
 
   const getDateAndTime = () => {
     const now = new Date();
-  
+
     // 📅 Date (YYYY-MM-DD) - Use selected date from calendar
-    const date = selectedDate.toISOString().split("T")[0];
-  
+    const date = selectedDate.toISOString().split('T')[0];
+
     // ⏰ Time (hh:mm AM/PM) - Use current time
     let hours = now.getHours();
-    const minutes = now.getMinutes().toString().padStart(2, "0");
-  
-    const ampm = hours >= 12 ? "PM" : "AM";
+    const minutes = now.getMinutes().toString().padStart(2, '0');
+
+    const ampm = hours >= 12 ? 'PM' : 'AM';
     hours = hours % 12;
     hours = hours ? hours : 12; // 0 -> 12
-  
+
     const time = `${hours}:${minutes} ${ampm}`;
-  
+
     return { date, time };
   };
 
-  const handleFinalCompleteClicked = async (data: { weight: number; unit: 'kg' | 'lbs'; reps: number }) => {
+  const handleFinalCompleteClicked = async (data: {
+    weight: number;
+    unit: 'kg' | 'lbs';
+    reps: number;
+  }) => {
     if (!selectedVideo?.uri || isUploading) return;
 
     setIsUploading(true);
@@ -575,7 +614,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
       // Generate stable asset ID using the selected video
       const baseAssetId = await getStableAssetId({
         assetId: selectedVideo.assetId || undefined,
-        uri: selectedVideo.uri
+        uri: selectedVideo.uri,
       });
       const thumbnailUri = await generateVideoThumbnail(videoUri);
 
@@ -601,7 +640,13 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
       const liftId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
       // Upload video and thumbnail using VideoUploadService
-      const { publicUrl: videoUrl } = await uploadLiftVideo(userId, liftId, videoUri, baseAssetId, hasHdVideos);
+      const { publicUrl: videoUrl } = await uploadLiftVideo(
+        userId,
+        liftId,
+        videoUri,
+        baseAssetId,
+        hasHdVideos
+      );
       const { publicUrl: thumbUrl } = await uploadLiftThumbnail(userId, liftId, thumbnailUri);
 
       // Create the loading lift with uploaded URLs
@@ -652,20 +697,20 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
 
   const filterMovements = (searchText: string, bodyPart: BodyPart) => {
     let filtered = [...gymMovements];
-    
+
     // Filter by body part
     if (bodyPart !== 'all') {
-      filtered = filtered.filter(movement => movement.bodyPart === bodyPart);
+      filtered = filtered.filter((movement) => movement.bodyPart === bodyPart);
     }
-    
+
     // Filter by search text
     if (searchText.trim()) {
-      filtered = filtered.filter(movement =>
+      filtered = filtered.filter((movement) =>
         movement.name.toLowerCase().includes(searchText.toLowerCase())
       );
     }
-    
-    setFilteredMovements(filtered.map(m => m.name));
+
+    setFilteredMovements(filtered.map((m) => m.name));
   };
 
   const handleClearSearch = () => {
@@ -681,7 +726,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
     setSelectedMovement('');
     setSearchQuery('');
     setSelectedBodyPart('all');
-    setFilteredMovements(gymMovements.map(m => m.name));
+    setFilteredMovements(gymMovements.map((m) => m.name));
     setWeightReps(null);
     setShowDuplicateModal(false);
     setShowVideoTooLongModal(false);
@@ -707,20 +752,21 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
   // Show permission screen if no media library permission
   if (showMediaPermission && isVisible) {
     return (
-      <SafeAreaView
-        style={[
-          styles.container,
-          { backgroundColor: '#ffffff' }
-        ]}
-      >
+      <SafeAreaView style={[styles.container, { backgroundColor: '#ffffff' }]}>
         {/* Close Button */}
         <View style={styles.permissionTopControls}>
-          <TouchableOpacity onPress={() => {
-            if (isUploading || isModalDisabled) return;
-            hapticFeedback.selection();
-            onClose();
-          }} style={[styles.closeButton, (isUploading || isModalDisabled) && styles.closeButtonDisabled]}
-          disabled={isUploading || isModalDisabled}>
+          <TouchableOpacity
+            onPress={() => {
+              if (isUploading || isModalDisabled) return;
+              hapticFeedback.selection();
+              onClose();
+            }}
+            style={[
+              styles.closeButton,
+              (isUploading || isModalDisabled) && styles.closeButtonDisabled,
+            ]}
+            disabled={isUploading || isModalDisabled}
+          >
             <X width={24} height={24} color={'#000000'} />
           </TouchableOpacity>
         </View>
@@ -735,7 +781,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
           isLoading={mediaPermissionLoading}
           onAllow={async () => {
             setMediaPermissionLoading(true);
-            
+
             try {
               await requestMediaPermissionFromUser();
             } finally {
@@ -769,12 +815,18 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
         <View style={styles.titleContainer}>
           <Text style={styles.title}>{i18n.t('add.uploadVideo')}</Text>
         </View>
-        <TouchableOpacity onPress={() => {
-          if (isUploading || isModalDisabled) return;
-          hapticFeedback.selection();
-          onClose();
-        }} style={[styles.closeButton, (isUploading || isModalDisabled) && styles.closeButtonDisabled]}
-        disabled={isUploading || isModalDisabled}>
+        <TouchableOpacity
+          onPress={() => {
+            if (isUploading || isModalDisabled) return;
+            hapticFeedback.selection();
+            onClose();
+          }}
+          style={[
+            styles.closeButton,
+            (isUploading || isModalDisabled) && styles.closeButtonDisabled,
+          ]}
+          disabled={isUploading || isModalDisabled}
+        >
           <X width={24} height={24} color="#000000" />
         </TouchableOpacity>
       </View>
@@ -786,10 +838,7 @@ export function UploadModal({ isVisible, onClose }: UploadModalProps) {
           <PracticesScreen
             onUpload={handleUploadPress}
             buttonText={i18n.t('upload.uploadVideo')}
-            tips={[
-              i18n.t('upload.tips.goodLighting'),
-              i18n.t('upload.tips.sideView')
-            ]}
+            tips={[i18n.t('upload.tips.goodLighting'), i18n.t('upload.tips.sideView')]}
             isLoading={isOpeningMediaLibrary}
           />
         ) : showMovementSelection ? (
@@ -960,4 +1009,4 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 10,
   },
-}); 
+});

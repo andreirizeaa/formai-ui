@@ -44,7 +44,7 @@ export interface BaseLiftData {
 
 export interface LoadingLiftData {
   id: string;
-  assetId?: string;          // Caller-provided correlation id; never override
+  assetId?: string; // Caller-provided correlation id; never override
   videoLink?: string;
   thumbnailUri?: string;
   uploadedVideoUrl?: string; // set after client upload
@@ -67,18 +67,18 @@ export interface LoadingLiftData {
   errorMessage?: string;
   failureStage?: 'upload_video' | 'upload_thumbnail' | 'analyze';
   finalData?: ILiftData;
-  
+
   // Queue management
-  queueId?: string | null;   // ID of the queue entry for reliable removal
-  enqueuedAt?: number;       // Timestamp when added to queue for FIFO ordering
-  
+  queueId?: string | null; // ID of the queue entry for reliable removal
+  enqueuedAt?: number; // Timestamp when added to queue for FIFO ordering
+
   // Rich error metadata for retry/deletion support
   errorCode?: string | null;
-  firstFailedAt?: number;   // Date.now() when first error occurred
-  lastTriedAt?: number;     // Date.now() whenever (re)enqueue attempted
-  retryCount?: number;      // increment on each retry attempt
-  errorTracked?: boolean;   // prevent duplicate analytics tracking
-  
+  firstFailedAt?: number; // Date.now() when first error occurred
+  lastTriedAt?: number; // Date.now() whenever (re)enqueue attempted
+  retryCount?: number; // increment on each retry attempt
+  errorTracked?: boolean; // prevent duplicate analytics tracking
+
   // Legacy fields for backward compatibility
   sourceVideoUri?: string;
   sourceThumbnailUri?: string;
@@ -98,11 +98,12 @@ export interface ILiftData extends BaseLiftData {
   };
 }
 
-
 export interface LoadingLiftsContextType {
   loadingLifts: LoadingLiftData[];
   completedLifts: ILiftData[];
-  addLoadingLift: (liftData: Omit<LoadingLiftData, 'id' | 'isComplete' | 'status'>) => Promise<string>;
+  addLoadingLift: (
+    liftData: Omit<LoadingLiftData, 'id' | 'isComplete' | 'status'>
+  ) => Promise<string>;
   completeLift: (id: string, analysisData?: ILiftData) => void;
   removeLift: (id: string) => void;
   removeCompletedLift: (id: string) => void;
@@ -179,5 +180,3 @@ export interface LiftDetailsProps {
   onShowFeedbackSlideshow: () => void;
   liftData: ILiftData;
 }
-
-

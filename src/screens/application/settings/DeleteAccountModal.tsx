@@ -1,5 +1,13 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal, ActivityIndicator, Animated } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Modal,
+  ActivityIndicator,
+  Animated,
+} from 'react-native';
 import i18n from '../../../utils/i18n';
 import { hapticFeedback } from '../../../utils/haptic';
 import { X } from 'lucide-react-native';
@@ -34,9 +42,11 @@ export function DeleteAccountModal({ isVisible, onClose, onConfirm }: DeleteAcco
       Animated.timing(fadeOpacity, { toValue: 1, duration: 100, useNativeDriver: true }).start();
       return;
     }
-    Animated.timing(fadeOpacity, { toValue: 0, duration: 100, useNativeDriver: true }).start(({ finished }) => {
-      if (finished) setShouldRender(false);
-    });
+    Animated.timing(fadeOpacity, { toValue: 0, duration: 100, useNativeDriver: true }).start(
+      ({ finished }) => {
+        if (finished) setShouldRender(false);
+      }
+    );
   }, [isVisible, fadeOpacity]);
 
   // Handle initial 1-second delay when user acknowledges (before final delete button)
@@ -62,103 +72,98 @@ export function DeleteAccountModal({ isVisible, onClose, onConfirm }: DeleteAcco
       hapticFeedback.success();
     } catch {
       hapticFeedback.error();
-    } 
-    finally {
+    } finally {
       setIsDeleting(false);
     }
   };
 
   return (
-    <Modal
-      visible={shouldRender}
-      transparent
-      onRequestClose={onClose}
-    >
+    <Modal visible={shouldRender} transparent onRequestClose={onClose}>
       <Animated.View style={{ flex: 1, opacity: fadeOpacity }}>
-        <TouchableOpacity 
-          style={styles.overlay} 
-          activeOpacity={1} 
-          onPress={onClose}
-        >
-          <TouchableOpacity 
-            style={styles.modalContainer} 
-            activeOpacity={1} 
+        <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={onClose}>
+          <TouchableOpacity
+            style={styles.modalContainer}
+            activeOpacity={1}
             onPress={(e) => e.stopPropagation()}
           >
-          {/* Close button */}
-          <TouchableOpacity 
-            style={styles.closeButton} 
-            onPress={() => {
-              hapticFeedback.selection();
-              onClose();
-            }}
-          >
-            <X size={20} color="#000000" />
-          </TouchableOpacity>
+            {/* Close button */}
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => {
+                hapticFeedback.selection();
+                onClose();
+              }}
+            >
+              <X size={20} color="#000000" />
+            </TouchableOpacity>
 
-          <View style={styles.contentContainer}>
-            {/* Title */}
-            <Text style={styles.title}>{i18n.t('settings.deleteAccountTitle')}</Text>
+            <View style={styles.contentContainer}>
+              {/* Title */}
+              <Text style={styles.title}>{i18n.t('settings.deleteAccountTitle')}</Text>
 
-            {/* Message */}
+              {/* Message */}
+              {isAcknowledgementStep ? (
+                <Text style={styles.message}>
+                  {i18n.t('settings.deleteAccountSubscriptionWarning')}
+                </Text>
+              ) : (
+                <Text style={styles.message}>{i18n.t('settings.deleteAccountMessage')}</Text>
+              )}
+            </View>
+
+            {/* Action buttons - stick to bottom */}
             {isAcknowledgementStep ? (
-              <Text style={styles.message}>
-                {i18n.t('settings.deleteAccountSubscriptionWarning')}
-              </Text>
+              <View style={styles.acknowledgeContainer}>
+                <TouchableOpacity
+                  style={[
+                    styles.acknowledgeButton,
+                    hasAcknowledged && styles.deleteButton,
+                    hasAcknowledged && isInitialDelay && styles.disabledButton,
+                  ]}
+                  onPress={hasAcknowledged ? handleDelete : handleAcknowledge}
+                  activeOpacity={0.8}
+                  disabled={isDeleting || (hasAcknowledged && isInitialDelay)}
+                >
+                  {hasAcknowledged && isDeleting ? (
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                  ) : (
+                    <Text
+                      style={[
+                        styles.acknowledgeButtonText,
+                        hasAcknowledged && styles.deleteButtonText,
+                      ]}
+                    >
+                      {hasAcknowledged
+                        ? i18n.t('settings.deleteAccountButton')
+                        : i18n.t('settings.iAcknowledge')}
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              </View>
             ) : (
-              <Text style={styles.message}>{i18n.t('settings.deleteAccountMessage')}</Text>
+              <View style={styles.buttonContainer}>
+                <TouchableOpacity
+                  style={[styles.button, styles.buttonOutlined]}
+                  onPress={() => {
+                    hapticFeedback.selection();
+                    onClose();
+                  }}
+                >
+                  <Text style={styles.buttonOutlinedText}>{i18n.t('settings.no')}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.button, styles.buttonPrimary]}
+                  onPress={() => {
+                    hapticFeedback.selection();
+                    setIsAcknowledgementStep(true);
+                  }}
+                >
+                  <Text style={styles.buttonPrimaryText}>{i18n.t('settings.yes')}</Text>
+                </TouchableOpacity>
+              </View>
             )}
-          </View>
-
-          {/* Action buttons - stick to bottom */}
-          {isAcknowledgementStep ? (
-            <View style={styles.acknowledgeContainer}>
-              <TouchableOpacity 
-                style={[
-                  styles.acknowledgeButton,
-                  hasAcknowledged && styles.deleteButton,
-                  hasAcknowledged && isInitialDelay && styles.disabledButton
-                ]}
-                onPress={hasAcknowledged ? handleDelete : handleAcknowledge}
-                activeOpacity={0.8}
-                disabled={isDeleting || (hasAcknowledged && isInitialDelay)}
-              >
-                {hasAcknowledged && isDeleting ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" />
-                ) : (
-                  <Text style={[
-                    styles.acknowledgeButtonText,
-                    hasAcknowledged && styles.deleteButtonText
-                  ]}>
-                    {hasAcknowledged ? i18n.t('settings.deleteAccountButton') : i18n.t('settings.iAcknowledge')}
-                  </Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <View style={styles.buttonContainer}>
-              <TouchableOpacity 
-                style={[styles.button, styles.buttonOutlined]} 
-                onPress={() => {
-                  hapticFeedback.selection();
-                  onClose();
-                }}
-              >
-                <Text style={styles.buttonOutlinedText}>{i18n.t('settings.no')}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.button, styles.buttonPrimary]} 
-                onPress={() => {
-                  hapticFeedback.selection();
-                  setIsAcknowledgementStep(true);
-                }}
-              >
-                <Text style={styles.buttonPrimaryText}>{i18n.t('settings.yes')}</Text>
-              </TouchableOpacity>
-            </View>
-          )}
+          </TouchableOpacity>
         </TouchableOpacity>
-      </TouchableOpacity>
       </Animated.View>
     </Modal>
   );
@@ -275,4 +280,4 @@ const styles = StyleSheet.create({
   disabledButton: {
     opacity: 0.5,
   },
-}); 
+});

@@ -9,23 +9,23 @@ export const appColors = {
     // Background colors
     background: '#FFFFFF',
     darkBackground: '#1d293d', // Keep for specific elements that need dark background
-    
+
     // Text colors
     title: '#000000',
     subtitle: '#8E8E93',
-    
+
     // Container colors
     container: {
       background: '#FFFFFF',
       cardBackground: '#F0F0F0',
     },
-    
+
     // Border colors
     border: {
       light: '#E5E5EA',
       medium: '#D1D1D6',
     },
-    
+
     // Shadow colors
     shadow: {
       light: 'rgba(0, 0, 0, 0.1)',
@@ -50,7 +50,7 @@ export const appColors = {
         iconColor: '#000000',
       },
     },
-    
+
     // Comparison container colors
     comparison: {
       gradient: {
@@ -77,7 +77,7 @@ export const appColors = {
         text: '#8E8E93',
       },
     },
-    
+
     // Gym challenge info colors
     gymChallengeInfo: {
       gradient: {
@@ -97,14 +97,14 @@ export const appColors = {
         text: '#000000',
       },
     },
-    
+
     // Perfect form goal message colors
     perfectFormGoalMessage: {
       title: '#000000',
       highlightedText: '#fe9a00',
       subtitle: '#8E8E93',
     },
-    
+
     // Graph colors
     graph: {
       gradient: {
@@ -124,7 +124,7 @@ export const appColors = {
         trophyBorder: '#FFFFFF',
       },
     },
-    
+
     // Permission container colors
     permission: {
       title: '#000000',
@@ -151,7 +151,7 @@ export const appColors = {
         divider: '#FFFFFF',
       },
     },
-    
+
     // Measurements colors
     measurements: {
       pickerLabel: '#000000',
@@ -161,7 +161,7 @@ export const appColors = {
         dropdownIcon: '#000000',
       },
     },
-    
+
     // All done screen colors
     allDone: {
       allDoneText: '#000000',
@@ -169,7 +169,7 @@ export const appColors = {
       privacyText: '#000000',
       checkmarkColor: '#34C759',
     },
-    
+
     // Sign-in screens colors
     signIn: {
       background: '#FFFFFF',
@@ -196,7 +196,7 @@ export const appColors = {
         indicator: '#FFFFFF',
       },
     },
-    
+
     // Welcome screen colors
     welcome: {
       background: '#FFFFFF',

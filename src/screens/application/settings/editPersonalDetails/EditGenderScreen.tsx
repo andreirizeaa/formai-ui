@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Platform,
+  TouchableOpacity,
+  StatusBar,
+  ActivityIndicator,
+} from 'react-native';
 import { useUserDetails } from '../../../../context/UserDetailsContext';
 import { editUserDetails } from '../../../../services/userService';
 import { hapticFeedback } from '../../../../utils/haptic';
@@ -39,10 +47,15 @@ export function EditGenderScreen({ onBack, currentValue, onSave }: EditGenderScr
     } catch (e) {
       hapticFeedback.error();
       setSelectedGender(currentValue);
-      showAlert(i18n.t('settings.editFailed.gender'), i18n.t('settings.editFailed.message'), () => {
-        hapticFeedback.selection();
-        onBack();
-      }, 'Gender edit failed');
+      showAlert(
+        i18n.t('settings.editFailed.gender'),
+        i18n.t('settings.editFailed.message'),
+        () => {
+          hapticFeedback.selection();
+          onBack();
+        },
+        'Gender edit failed'
+      );
     }
     setIsSaving(false);
   };
@@ -52,8 +65,8 @@ export function EditGenderScreen({ onBack, currentValue, onSave }: EditGenderScr
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton} 
+        <TouchableOpacity
+          style={styles.backButton}
           onPress={() => {
             hapticFeedback.selection();
             onBack();
@@ -69,7 +82,7 @@ export function EditGenderScreen({ onBack, currentValue, onSave }: EditGenderScr
       <View style={styles.content}>
         {/* Title */}
         <Text style={styles.title}>{i18n.t('onboarding.gender.title')}</Text>
-        
+
         {/* Gender Selection Buttons */}
         <View style={styles.optionsContainer}>
           <AnimatedOptionButton
@@ -77,7 +90,9 @@ export function EditGenderScreen({ onBack, currentValue, onSave }: EditGenderScr
             delay={0}
             style={[
               styles.genderButton,
-              selectedGender === 'male' ? styles.selectedGenderButton : styles.unselectedGenderButton
+              selectedGender === 'male'
+                ? styles.selectedGenderButton
+                : styles.unselectedGenderButton,
             ]}
             onPress={() => {
               hapticFeedback.selection();
@@ -99,7 +114,9 @@ export function EditGenderScreen({ onBack, currentValue, onSave }: EditGenderScr
             delay={100}
             style={[
               styles.genderButton,
-              selectedGender === 'female' ? styles.selectedGenderButton : styles.unselectedGenderButton
+              selectedGender === 'female'
+                ? styles.selectedGenderButton
+                : styles.unselectedGenderButton,
             ]}
             onPress={() => {
               hapticFeedback.selection();
@@ -109,7 +126,9 @@ export function EditGenderScreen({ onBack, currentValue, onSave }: EditGenderScr
             <Text
               style={[
                 styles.optionText,
-                selectedGender === 'female' ? styles.selectedOptionText : styles.unselectedOptionText,
+                selectedGender === 'female'
+                  ? styles.selectedOptionText
+                  : styles.unselectedOptionText,
               ]}
             >
               {i18n.t('onboarding.gender.female')}
@@ -120,7 +139,12 @@ export function EditGenderScreen({ onBack, currentValue, onSave }: EditGenderScr
 
       {/* Next Button */}
       <View style={styles.bottomContainer}>
-        <TouchableOpacity style={[styles.nextButton, isSaving && { opacity: 0.7 }]} onPress={handleNext} activeOpacity={0.8} disabled={isSaving}>
+        <TouchableOpacity
+          style={[styles.nextButton, isSaving && { opacity: 0.7 }]}
+          onPress={handleNext}
+          activeOpacity={0.8}
+          disabled={isSaving}
+        >
           {isSaving ? (
             <ActivityIndicator color="#FFFFFF" />
           ) : (
@@ -222,4 +246,4 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
-}); 
+});

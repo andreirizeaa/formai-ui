@@ -23,7 +23,9 @@ export function PaymentScreen({ onComplete }: PaymentScreenProps) {
   const { onboardingData } = useOnboarding();
 
   const [showAccountLoading, setShowAccountLoading] = useState(false);
-  const [referralCodeType, setReferralCodeType] = useState<'SKIP_PAYWALL' | 'discount_30' | 'discount_40' | null>(null);
+  const [referralCodeType, setReferralCodeType] = useState<
+    'SKIP_PAYWALL' | 'discount_30' | 'discount_40' | null
+  >(null);
   const [isReferralCodeProcessed, setIsReferralCodeProcessed] = useState(false);
   const [reviewOverrideStatus, setReviewOverrideStatus] = useState<boolean>(false);
 
@@ -38,9 +40,11 @@ export function PaymentScreen({ onComplete }: PaymentScreenProps) {
       try {
         hapticFeedback.selection();
         const computed: PlacementKey =
-          referralCodeType === 'discount_30' ? 'discount_30' :
-          referralCodeType === 'discount_40' ? 'discount_40' :
-          'default_trigger';
+          referralCodeType === 'discount_30'
+            ? 'discount_30'
+            : referralCodeType === 'discount_40'
+              ? 'discount_40'
+              : 'default_trigger';
         const placement = override ?? computed;
 
         // Optionally avoid immediate re-opens of the same placement
@@ -99,14 +103,12 @@ export function PaymentScreen({ onComplete }: PaymentScreenProps) {
           product_id: eventInfo.params?.abandoned_product_id,
         });
 
-        
         if (!reviewOverrideStatus && referralCodeType !== 'discount_40') {
           ignoreNextDismissRef.current = true;
 
           try {
             await SuperwallExpoModule.dismiss();
-          } catch {
-          }
+          } catch {}
 
           await showPlacement('transaction_abandons');
         }
@@ -128,7 +130,6 @@ export function PaymentScreen({ onComplete }: PaymentScreenProps) {
             if (result.referralCode) referralCode = result.referralCode;
           }
         }
-
 
         if (referralCode) {
           const typeResult = await getReferralCodeType(referralCode);

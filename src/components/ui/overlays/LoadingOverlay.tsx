@@ -9,17 +9,10 @@ export function LoadingOverlay({ visible }: LoadingOverlayProps) {
   if (!visible) return null;
 
   return (
-    <Modal
-      transparent
-      visible={visible}
-      animationType="fade"
-    >
+    <Modal transparent visible={visible} animationType="fade">
       <View style={styles.overlay}>
         <View style={[styles.container, { backgroundColor: 'rgba(50, 50, 50, 0.95)' }]}>
-          <ActivityIndicator 
-            size="large" 
-            color="#FFFFFF"
-          />
+          <ActivityIndicator size="large" color="#FFFFFF" />
         </View>
       </View>
     </Modal>
@@ -44,4 +37,4 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 2,
   },
-}); 
+});

@@ -29,7 +29,7 @@ export async function generateVideoThumbnail(
       quality: options.quality ?? 0.8, // Default quality 80%
       headers: options.headers,
     });
-    
+
     return uri;
   } catch (error) {
     throw new Error(`Failed to generate thumbnail for video: ${videoUri}`);
@@ -52,7 +52,7 @@ export async function generateVideoThumbnailWithMetadata(
       quality: options.quality ?? 0.8, // Default quality 80%
       headers: options.headers,
     });
-    
+
     return {
       uri: result.uri,
       width: result.width,
@@ -60,7 +60,7 @@ export async function generateVideoThumbnailWithMetadata(
     };
   } catch (error) {
     showAlert(
-      'Error', 
+      'Error',
       'Unable to generate video thumbnail. Please try again.',
       undefined,
       'GENERATE_VIDEO_THUMBNAIL_ERROR',
@@ -68,4 +68,4 @@ export async function generateVideoThumbnailWithMetadata(
     );
     throw new Error(`Failed to generate thumbnail for video: ${videoUri}`);
   }
-} 
+}

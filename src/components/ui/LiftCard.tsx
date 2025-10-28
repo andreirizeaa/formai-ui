@@ -12,16 +12,16 @@ import Animated, {
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle } from 'react-native-svg';
-import AnimatedReanimated, { 
-  useSharedValue as useSharedValue2, 
-  useAnimatedStyle as useAnimatedStyle2, 
+import AnimatedReanimated, {
+  useSharedValue as useSharedValue2,
+  useAnimatedStyle as useAnimatedStyle2,
   useAnimatedProps,
   useDerivedValue,
   withRepeat,
   withTiming as withTiming2,
   withSequence,
   interpolate,
-  Easing as Easing2
+  Easing as Easing2,
 } from 'react-native-reanimated';
 
 const AnimatedCircle = AnimatedReanimated.createAnimatedComponent(Circle);
@@ -61,7 +61,7 @@ const CIRC = 2 * Math.PI * R;
 // ---------- unified component ----------
 interface LiftCardProps {
   lift: LiftLike | null;
-  showDate?: boolean;          // final view option
+  showDate?: boolean; // final view option
   onPress?: (id: string) => void;
   isNoLiftsCard?: boolean;
   noLiftsTitle?: string;
@@ -69,17 +69,17 @@ interface LiftCardProps {
   onNoLiftsPress?: () => void;
 }
 
-export const LiftCard = memo(function LiftCard({ 
-  lift, 
-  onPress, 
-  showDate = false, 
-  isNoLiftsCard = false, 
-  noLiftsTitle, 
-  noLiftsSubtitle, 
-  onNoLiftsPress 
+export const LiftCard = memo(function LiftCard({
+  lift,
+  onPress,
+  showDate = false,
+  isNoLiftsCard = false,
+  noLiftsTitle,
+  noLiftsSubtitle,
+  onNoLiftsPress,
 }: LiftCardProps) {
   const translateX = useSharedValue(0);
-  const panStartX  = useSharedValue(0);
+  const panStartX = useSharedValue(0);
   const swipeWidth = useSharedValue(0);
   const loadingProgress = useSharedValue(0);
   const waitingSpinnerAnim = useSharedValue2(0);
@@ -100,40 +100,53 @@ export const LiftCard = memo(function LiftCard({
   const animDur = 420; // slower overall for more obvious fade
 
   const { removeLift: removeFinalLift, formatDateForLift, refreshLifts } = useLiftData();
-  const { retryLift, removeLift: removeLoadingLift, updateLiftProgress, removeLoadingLiftByFinalId } = useLoadingLifts();
+  const {
+    retryLift,
+    removeLift: removeLoadingLift,
+    updateLiftProgress,
+    removeLoadingLiftByFinalId,
+  } = useLoadingLifts();
   const { userDetails } = useUserDetails();
   const { invalidateAndRefetch: invalidateUserCheckIns, optimisticRemoveToday } = useUserCheckIns();
   const { ref: homeFirstLiftCardRef } = useTutorialTarget('home_first_lift_card');
 
   // derived flags
-  const isLoading = lift && isLoadingLift(lift) && lift.status !== 'completed' && lift.status !== 'waiting';
+  const isLoading =
+    lift && isLoadingLift(lift) && lift.status !== 'completed' && lift.status !== 'waiting';
   const isWaiting = lift && isLoadingLift(lift) && lift.status === 'waiting';
-  const isError   = lift && isLoadingLift(lift) && lift.status === 'error';
-  const isFinal   = !lift || !isLoadingLift(lift) || (isLoadingLift(lift) && lift.status === 'completed');
+  const isError = lift && isLoadingLift(lift) && lift.status === 'error';
+  const isFinal =
+    !lift || !isLoadingLift(lift) || (isLoadingLift(lift) && lift.status === 'completed');
 
   // map final view data
-  const finalView: ILiftData | null = !lift || !isLoadingLift(lift)
-    ? (lift as ILiftData)
-    : hasFinalData(lift)
-      ? lift.finalData
-      : null;
+  const finalView: ILiftData | null =
+    !lift || !isLoadingLift(lift)
+      ? (lift as ILiftData)
+      : hasFinalData(lift)
+        ? lift.finalData
+        : null;
 
   // compute current phase (keep loading until we actually have final data)
   type Phase = 'loading' | 'waiting' | 'error' | 'final';
   const currentPhase: Phase =
-    (lift && isLoadingLift(lift) && lift.status === 'error')
+    lift && isLoadingLift(lift) && lift.status === 'error'
       ? 'error'
-      : (lift && isLoadingLift(lift) && lift.status === 'waiting')
-      ? 'waiting'
-      : (finalView ? 'final' : 'loading');
+      : lift && isLoadingLift(lift) && lift.status === 'waiting'
+        ? 'waiting'
+        : finalView
+          ? 'final'
+          : 'loading';
 
   const phaseRef = useRef<Phase>(currentPhase);
 
   // pick one source for the left image (final wins, then loading local, then loading uploaded, else placeholder)
   const finalThumb = finalView?.thumbnailURL;
-  const loadingThumb = lift && isLoadingLift(lift) 
-    ? (lift as LoadingLiftData).thumbnailUri || (lift as LoadingLiftData).sourceThumbnailUri || (lift as LoadingLiftData).uploadedThumbnailUrl
-    : undefined;
+  const loadingThumb =
+    lift && isLoadingLift(lift)
+      ? (lift as LoadingLiftData).thumbnailUri ||
+        (lift as LoadingLiftData).sourceThumbnailUri ||
+        (lift as LoadingLiftData).uploadedThumbnailUrl
+      : undefined;
   const thumbUri = finalThumb || loadingThumb || null;
 
   // Reset visual state when item ID changes (prevents flash to previous card)
@@ -144,8 +157,8 @@ export const LiftCard = memo(function LiftCard({
       // Hard reset any visual memory from previous item
       setPrevPhase(null);
       phaseRef.current = currentPhase;
-      crossfade.value = 1;           // current fully visible, no fade
-      loadingProgress.value = 0.02;  // progress reset
+      crossfade.value = 1; // current fully visible, no fade
+      loadingProgress.value = 0.02; // progress reset
 
       // Clear tracked errors for new lift
       trackedErrorsRef.current.clear();
@@ -190,7 +203,9 @@ export const LiftCard = memo(function LiftCard({
       // If no uploaded thumbnail yet, keep the local one we already set
     })();
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [
     // Recompute when ID or thumbnail inputs change
     lift && isLoadingLift(lift) ? (lift as LoadingLiftData).id : 'final',
@@ -215,7 +230,7 @@ export const LiftCard = memo(function LiftCard({
   const pan = Gesture.Pan()
     .activeOffsetX([-10, 10])
     .failOffsetY([-5, 5])
-    .enabled(!deleteLoading && !isLoading && !isError && !isWaiting)  // disable swipe on uploading/processing/error/waiting
+    .enabled(!deleteLoading && !isLoading && !isError && !isWaiting) // disable swipe on uploading/processing/error/waiting
     .onBegin(() => {
       'worklet';
       panStartX.value = translateX.value;
@@ -245,7 +260,7 @@ export const LiftCard = memo(function LiftCard({
     'worklet';
     return { transform: [{ translateX: translateX.value }] };
   });
-  
+
   // Spinner around the trash icon during swipe
   const deleteSpinnerStyle = useAnimatedStyle(() => {
     'worklet';
@@ -337,11 +352,25 @@ export const LiftCard = memo(function LiftCard({
       setDeleting(false);
       setDeleteLoading(false);
     }
-  }, [deleting, deleteLoading, lift, removeFinalLift, removeLoadingLift, removeLoadingLiftByFinalId, refreshLifts, invalidateUserCheckIns, loadingProgress, translateX]);
+  }, [
+    deleting,
+    deleteLoading,
+    lift,
+    removeFinalLift,
+    removeLoadingLift,
+    removeLoadingLiftByFinalId,
+    refreshLifts,
+    invalidateUserCheckIns,
+    loadingProgress,
+    translateX,
+  ]);
 
-  useEffect(() => () => { 
-    if (autoResetTimeoutRef.current) clearTimeout(autoResetTimeoutRef.current);
-  }, []);
+  useEffect(
+    () => () => {
+      if (autoResetTimeoutRef.current) clearTimeout(autoResetTimeoutRef.current);
+    },
+    []
+  );
 
   useEffect(() => {
     // Disable crossfade: instantly switch content
@@ -375,7 +404,7 @@ export const LiftCard = memo(function LiftCard({
   const SLOW_OUT_GAMMA = 6; // bigger = slower fade-out at the start
   const prevLayerStyle = useAnimatedStyle(() => {
     'worklet';
-    const t = crossfade.value;          // 0 → 1
+    const t = crossfade.value; // 0 → 1
     const slowOut = 1 - Math.pow(t, SLOW_OUT_GAMMA);
     return {
       opacity: prevPhase ? slowOut : 0, // prev fades OUT slower
@@ -386,9 +415,9 @@ export const LiftCard = memo(function LiftCard({
   const currLayerStyle = useAnimatedStyle(() => {
     'worklet';
     const t = prevPhase ? crossfade.value : 1;
-    const fastIn = Math.pow(t, SLOW_OUT_GAMMA);   // quicker in
-    return { 
-      opacity: prevPhase ? fastIn : 1 
+    const fastIn = Math.pow(t, SLOW_OUT_GAMMA); // quicker in
+    return {
+      opacity: prevPhase ? fastIn : 1,
     };
   });
 
@@ -400,7 +429,7 @@ export const LiftCard = memo(function LiftCard({
   const line3Anim = useSharedValue2(0);
   const targetProgress = useSharedValue2(0.02);
   const progressRender = useSharedValue2(0.02);
-  
+
   const animatedProgressProps = useAnimatedProps(() => {
     'worklet';
     return { strokeDashoffset: CIRC * (1 - progressRender.value) };
@@ -408,7 +437,7 @@ export const LiftCard = memo(function LiftCard({
 
   const animatedWaitingSpinnerProps = useAnimatedProps(() => {
     'worklet';
-    return { 
+    return {
       strokeDashoffset: CIRC * (1 - waitingSpinnerAnim.value),
     };
   });
@@ -420,7 +449,7 @@ export const LiftCard = memo(function LiftCard({
       transform: [{ scale: interpolate(line1Anim.value, [0, 1], [0.95, 1.05]) }],
     };
   });
-  
+
   const animatedLine2Style = useAnimatedStyle2(() => {
     'worklet';
     return {
@@ -428,7 +457,7 @@ export const LiftCard = memo(function LiftCard({
       transform: [{ scale: interpolate(line2Anim.value, [0, 1], [0.95, 1.05]) }],
     };
   });
-  
+
   const animatedLine3Style = useAnimatedStyle2(() => {
     'worklet';
     return {
@@ -464,14 +493,46 @@ export const LiftCard = memo(function LiftCard({
           );
           // Also animate the lines for waiting cards
           pulseAnim.value = withRepeat(withTiming2(1, { duration: 1500 }), -1, true);
-          line1Anim.value = withRepeat(withSequence(withTiming2(1, { duration: 800 }), withTiming2(0.3, { duration: 800 })), -1, true);
-          line2Anim.value = withRepeat(withSequence(withTiming2(0.3, { duration: 400 }), withTiming2(1, { duration: 800 }), withTiming2(0.3, { duration: 400 })), -1, true);
-          line3Anim.value = withRepeat(withSequence(withTiming2(0.3, { duration: 800 }), withTiming2(1, { duration: 800 })), -1, true);
+          line1Anim.value = withRepeat(
+            withSequence(withTiming2(1, { duration: 800 }), withTiming2(0.3, { duration: 800 })),
+            -1,
+            true
+          );
+          line2Anim.value = withRepeat(
+            withSequence(
+              withTiming2(0.3, { duration: 400 }),
+              withTiming2(1, { duration: 800 }),
+              withTiming2(0.3, { duration: 400 })
+            ),
+            -1,
+            true
+          );
+          line3Anim.value = withRepeat(
+            withSequence(withTiming2(0.3, { duration: 800 }), withTiming2(1, { duration: 800 })),
+            -1,
+            true
+          );
         } else {
           pulseAnim.value = withRepeat(withTiming2(1, { duration: 1500 }), -1, true);
-          line1Anim.value = withRepeat(withSequence(withTiming2(1, { duration: 800 }), withTiming2(0.3, { duration: 800 })), -1, true);
-          line2Anim.value = withRepeat(withSequence(withTiming2(0.3, { duration: 400 }), withTiming2(1, { duration: 800 }), withTiming2(0.3, { duration: 400 })), -1, true);
-          line3Anim.value = withRepeat(withSequence(withTiming2(0.3, { duration: 800 }), withTiming2(1, { duration: 800 })), -1, true);
+          line1Anim.value = withRepeat(
+            withSequence(withTiming2(1, { duration: 800 }), withTiming2(0.3, { duration: 800 })),
+            -1,
+            true
+          );
+          line2Anim.value = withRepeat(
+            withSequence(
+              withTiming2(0.3, { duration: 400 }),
+              withTiming2(1, { duration: 800 }),
+              withTiming2(0.3, { duration: 400 })
+            ),
+            -1,
+            true
+          );
+          line3Anim.value = withRepeat(
+            withSequence(withTiming2(0.3, { duration: 800 }), withTiming2(1, { duration: 800 })),
+            -1,
+            true
+          );
         }
       }
     } catch (error) {
@@ -493,11 +554,12 @@ export const LiftCard = memo(function LiftCard({
     if (!lift || !isLoadingLift(lift)) return;
 
     const simStartAt = (lift as any).simStartAt ?? Date.now();
-    const simDurationMs = (lift as any).simDurationMs ?? (((lift.videoDurationSec || 10) * 2) + 20) * 1000;
+    const simDurationMs =
+      (lift as any).simDurationMs ?? ((lift.videoDurationSec || 10) * 2 + 20) * 1000;
     const base = Math.max(0.02, lift.uiProgress || 0.02);
 
     // Initialize progress values
-    const start = (lift.uiProgress && lift.uiProgress > 0) ? lift.uiProgress : base;
+    const start = lift.uiProgress && lift.uiProgress > 0 ? lift.uiProgress : base;
     targetProgress.value = start;
     progressRender.value = start;
     setProgressPercentage(Math.round(start * 100));
@@ -515,7 +577,7 @@ export const LiftCard = memo(function LiftCard({
             targetProgress.value = prog;
             progressRender.value = prog;
             const pct = Math.round(prog * 100);
-            setProgressPercentage(prev => (pct > prev ? pct : prev));
+            setProgressPercentage((prev) => (pct > prev ? pct : prev));
             if (Math.abs((lift.uiProgress || 0) - prog) > 0.02) {
               updateLiftProgress(lift.id, prog);
             }
@@ -543,8 +605,14 @@ export const LiftCard = memo(function LiftCard({
       updateLiftProgress(lift.id, 1);
     }
 
-    return () => { if (raf) cancelAnimationFrame(raf); };
-  }, [lift && isLoadingLift(lift) ? `${lift.id}-${lift.status}-${lift.uiProgress}-${(lift as any).simStartAt}-${(lift as any).simDurationMs}` : 'final']);
+    return () => {
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, [
+    lift && isLoadingLift(lift)
+      ? `${lift.id}-${lift.status}-${lift.uiProgress}-${(lift as any).simStartAt}-${(lift as any).simDurationMs}`
+      : 'final',
+  ]);
 
   // helpers
   const formatLiftDate = (dateString: string) => {
@@ -575,7 +643,8 @@ export const LiftCard = memo(function LiftCard({
       if (!failureStage) {
         // Determine stage from error message if failureStage is not available
         if (errorMessage?.includes('Failed to upload')) return 0.02; // Start from beginning for upload errors
-        if (errorMessage?.includes('Missing assetId') || errorMessage?.includes('No userId')) return 0.02;
+        if (errorMessage?.includes('Missing assetId') || errorMessage?.includes('No userId'))
+          return 0.02;
         return 0.4; // Default to analysis stage for unknown errors
       }
 
@@ -614,7 +683,7 @@ export const LiftCard = memo(function LiftCard({
   const STROKE = 7; // Match the loading progress circle stroke width
   const SMALL_CIRCLE_SIZE = 44; // Smaller size for trash icon spinner
   const SMALL_STROKE = 3; // Smaller stroke for trash icon spinner
-  
+
   const circleBaseStyle = {
     width: CIRCLE_SIZE,
     height: CIRCLE_SIZE,
@@ -624,7 +693,7 @@ export const LiftCard = memo(function LiftCard({
     justifyContent: 'center',
     alignItems: 'center',
   } as const;
-  
+
   const smallCircleBaseStyle = {
     width: SMALL_CIRCLE_SIZE,
     height: SMALL_CIRCLE_SIZE,
@@ -634,7 +703,7 @@ export const LiftCard = memo(function LiftCard({
     justifyContent: 'center',
     alignItems: 'center',
   } as const;
-  
+
   const progressBaseStyle = {
     position: 'absolute' as const,
     top: -STROKE,
@@ -647,7 +716,7 @@ export const LiftCard = memo(function LiftCard({
     borderTopColor: 'transparent',
     borderLeftColor: 'transparent',
   };
-  
+
   const smallProgressBaseStyle = {
     position: 'absolute' as const,
     top: -SMALL_STROKE,
@@ -664,11 +733,8 @@ export const LiftCard = memo(function LiftCard({
   // Render no lifts card if isNoLiftsCard is true
   if (isNoLiftsCard) {
     return (
-      <Pressable 
-        style={({ pressed }) => [
-          styles.noLiftsCard,
-          { opacity: pressed ? 0.7 : 1 }
-        ]}
+      <Pressable
+        style={({ pressed }) => [styles.noLiftsCard, { opacity: pressed ? 0.7 : 1 }]}
         onPress={onNoLiftsPress}
       >
         <View style={styles.noLiftsContent}>
@@ -690,18 +756,29 @@ export const LiftCard = memo(function LiftCard({
       return (
         <View style={styles.liftContent}>
           <View style={styles.topRow}>
-            <Text style={styles.liftName} numberOfLines={1}>Queued...</Text>
+            <Text style={styles.liftName} numberOfLines={1}>
+              Queued...
+            </Text>
           </View>
 
           <View style={styles.placeholderLines}>
-            <AnimatedReanimated.View style={[styles.placeholderLine, styles.placeholderLine1, animatedLine1Style]} />
-            <AnimatedReanimated.View style={[styles.placeholderLine, styles.placeholderLine2, animatedLine2Style]} />
-            <AnimatedReanimated.View style={[styles.placeholderLine, styles.placeholderLine3, animatedLine3Style]} />
+            <AnimatedReanimated.View
+              style={[styles.placeholderLine, styles.placeholderLine1, animatedLine1Style]}
+            />
+            <AnimatedReanimated.View
+              style={[styles.placeholderLine, styles.placeholderLine2, animatedLine2Style]}
+            />
+            <AnimatedReanimated.View
+              style={[styles.placeholderLine, styles.placeholderLine3, animatedLine3Style]}
+            />
           </View>
 
           <View style={styles.bottomRow}>
-            <Pressable 
-              style={({ pressed }) => [styles.cancelButton, { opacity: (pressed || deleteLoading) ? 0.7 : 1 }]}
+            <Pressable
+              style={({ pressed }) => [
+                styles.cancelButton,
+                { opacity: pressed || deleteLoading ? 0.7 : 1 },
+              ]}
               onPress={handleDelete}
               disabled={deleteLoading}
             >
@@ -720,13 +797,21 @@ export const LiftCard = memo(function LiftCard({
       return (
         <View style={styles.liftContent}>
           <View style={styles.topRow}>
-            <Text style={styles.liftName} numberOfLines={1}>{getStatusText()}</Text>
+            <Text style={styles.liftName} numberOfLines={1}>
+              {getStatusText()}
+            </Text>
           </View>
 
           <View style={styles.placeholderLines}>
-            <AnimatedReanimated.View style={[styles.placeholderLine, styles.placeholderLine1, animatedLine1Style]} />
-            <AnimatedReanimated.View style={[styles.placeholderLine, styles.placeholderLine2, animatedLine2Style]} />
-            <AnimatedReanimated.View style={[styles.placeholderLine, styles.placeholderLine3, animatedLine3Style]} />
+            <AnimatedReanimated.View
+              style={[styles.placeholderLine, styles.placeholderLine1, animatedLine1Style]}
+            />
+            <AnimatedReanimated.View
+              style={[styles.placeholderLine, styles.placeholderLine2, animatedLine2Style]}
+            />
+            <AnimatedReanimated.View
+              style={[styles.placeholderLine, styles.placeholderLine3, animatedLine3Style]}
+            />
           </View>
           <View style={styles.bottomRow}>
             <Text style={styles.notificationText}>{i18n.t('loadingLift.notifyWhenDone')}</Text>
@@ -744,41 +829,52 @@ export const LiftCard = memo(function LiftCard({
                 {(lift as LoadingLiftData).errorMessage === 'No lift found'
                   ? i18n.t('loadingLift.noLiftFound.title')
                   : (lift as LoadingLiftData).errorMessage === 'Lift mismatch'
-                  ? i18n.t('loadingLift.liftMismatch.title')
-                  : i18n.t('loadingLift.errorOccurred')}
+                    ? i18n.t('loadingLift.liftMismatch.title')
+                    : i18n.t('loadingLift.errorOccurred')}
               </Text>
               {(lift as LoadingLiftData).errorMessage === 'No lift found' && (
                 <Text style={styles.errorSubtitle} numberOfLines={2}>
                   {i18n.t('loadingLift.noLiftFound.subtitle')}
                 </Text>
               )}
-              {(lift as LoadingLiftData).errorMessage === 'Lift mismatch' && (lift as LoadingLiftData).movementType && (
-                <Text style={styles.errorSubtitle} numberOfLines={2}>
-                  {i18n.t('loadingLift.liftMismatch.detectedMovement', { movement: (lift as LoadingLiftData).movementType })}
-                </Text>
-              )}
+              {(lift as LoadingLiftData).errorMessage === 'Lift mismatch' &&
+                (lift as LoadingLiftData).movementType && (
+                  <Text style={styles.errorSubtitle} numberOfLines={2}>
+                    {i18n.t('loadingLift.liftMismatch.detectedMovement', {
+                      movement: (lift as LoadingLiftData).movementType,
+                    })}
+                  </Text>
+                )}
             </View>
-            {(lift as LoadingLiftData).errorMessage !== 'No lift found' && (lift as LoadingLiftData).errorMessage !== 'Lift mismatch' && (
-              <Pressable 
-                style={({ pressed }) => [styles.deleteButton, { opacity: (pressed || deleteLoading) ? 0.7 : 1 }]}
-                onPress={handleDelete}
-                disabled={deleteLoading}
-              >
-                <View style={styles.deleteButtonCircle}>
-                  {deleteLoading ? (
-                    <ActivityIndicator size="small" color="#D70015" />
-                  ) : (
-                    <Trash2 size={16} color="#D70015" />
-                  )}
-                </View>
-              </Pressable>
-            )}
+            {(lift as LoadingLiftData).errorMessage !== 'No lift found' &&
+              (lift as LoadingLiftData).errorMessage !== 'Lift mismatch' && (
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.deleteButton,
+                    { opacity: pressed || deleteLoading ? 0.7 : 1 },
+                  ]}
+                  onPress={handleDelete}
+                  disabled={deleteLoading}
+                >
+                  <View style={styles.deleteButtonCircle}>
+                    {deleteLoading ? (
+                      <ActivityIndicator size="small" color="#D70015" />
+                    ) : (
+                      <Trash2 size={16} color="#D70015" />
+                    )}
+                  </View>
+                </Pressable>
+              )}
           </View>
 
           <View style={styles.middleRow}>
-            {(lift as LoadingLiftData).errorMessage === 'No lift found' || (lift as LoadingLiftData).errorMessage === 'Lift mismatch' ? (
-              <Pressable 
-                style={({ pressed }) => [styles.deleteErrorButton, { opacity: (pressed || deleteLoading) ? 0.7 : 1 }]}
+            {(lift as LoadingLiftData).errorMessage === 'No lift found' ||
+            (lift as LoadingLiftData).errorMessage === 'Lift mismatch' ? (
+              <Pressable
+                style={({ pressed }) => [
+                  styles.deleteErrorButton,
+                  { opacity: pressed || deleteLoading ? 0.7 : 1 },
+                ]}
                 onPress={handleDelete}
                 disabled={deleteLoading}
               >
@@ -789,7 +885,7 @@ export const LiftCard = memo(function LiftCard({
                 )}
               </Pressable>
             ) : (
-              <Pressable 
+              <Pressable
                 style={({ pressed }) => [styles.retryButton, { opacity: pressed ? 0.7 : 1 }]}
                 onPress={handleRetry}
               >
@@ -812,10 +908,16 @@ export const LiftCard = memo(function LiftCard({
       >
         <View style={styles.liftContent}>
           <View style={styles.topRow}>
-            <Text style={styles.liftName} numberOfLines={1}>{finalView?.liftType}</Text>
+            <Text style={styles.liftName} numberOfLines={1}>
+              {finalView?.liftType}
+            </Text>
             <View style={styles.timePill}>
               <Text style={styles.timeValue}>
-                {finalView ? (showDate ? formatLiftDate(finalView.liftDate) : finalView.liftTime) : ''}
+                {finalView
+                  ? showDate
+                    ? formatLiftDate(finalView.liftDate)
+                    : finalView.liftTime
+                  : ''}
               </Text>
             </View>
           </View>
@@ -823,7 +925,9 @@ export const LiftCard = memo(function LiftCard({
           <View style={styles.middleRow}>
             <Target size={20} color="#000" />
             <View style={styles.accuracyContainer}>
-              <Text style={styles.accuracyValue}>{Math.round(finalView?.analysis.accuracy || 0)}%</Text>
+              <Text style={styles.accuracyValue}>
+                {Math.round(finalView?.analysis.accuracy || 0)}%
+              </Text>
               <Text style={styles.accuracyText}> {i18n.t('feedback.accuracy')}</Text>
             </View>
           </View>
@@ -833,9 +937,9 @@ export const LiftCard = memo(function LiftCard({
               <Weight size={16} color="#000000" />
               <Text style={styles.bottomRowText}>
                 {finalView
-                  ? (userDetails?.unitSystem === 'imperial'
-                      ? `${Math.round(finalView.metricWeight * 2.20462)} lbs`
-                      : `${finalView.metricWeight} kg`)
+                  ? userDetails?.unitSystem === 'imperial'
+                    ? `${Math.round(finalView.metricWeight * 2.20462)} lbs`
+                    : `${finalView.metricWeight} kg`
                   : ''}
               </Text>
             </View>
@@ -854,14 +958,16 @@ export const LiftCard = memo(function LiftCard({
   return (
     <View
       style={styles.wrapper}
-      onLayout={(e) => { swipeWidth.value = e.nativeEvent.layout.width; }}
+      onLayout={(e) => {
+        swipeWidth.value = e.nativeEvent.layout.width;
+      }}
     >
       {/* delete background behind swipe */}
       <View style={styles.deleteBackground}>
-        <Pressable 
-          onPress={handleDelete} 
+        <Pressable
+          onPress={handleDelete}
           disabled={deleteLoading}
-          style={({ pressed }) => ({ opacity: (pressed || deleteLoading) ? 0.8 : 1 })}
+          style={({ pressed }) => ({ opacity: pressed || deleteLoading ? 0.8 : 1 })}
         >
           <View style={smallCircleBaseStyle}>
             {deleteLoading ? (
@@ -892,7 +998,11 @@ export const LiftCard = memo(function LiftCard({
                 {/* LEFT: one persistent thumbnail */}
                 <View style={styles.thumbContainer}>
                   <Image
-                    source={typeof resolvedThumb === 'number' ? resolvedThumb : { uri: resolvedThumb || '' }}
+                    source={
+                      typeof resolvedThumb === 'number'
+                        ? resolvedThumb
+                        : { uri: resolvedThumb || '' }
+                    }
                     style={styles.thumbnail}
                     transition={isLoadingLift(lift) ? 0 : 150}
                     contentFit="cover"
@@ -904,7 +1014,14 @@ export const LiftCard = memo(function LiftCard({
                     <BlurView intensity={30} style={styles.blurOverlay}>
                       <View style={styles.progressContainer}>
                         <Svg width={80} height={80} style={styles.progressSvg}>
-                          <Circle cx={40} cy={40} r={R} stroke="rgba(255,255,255,0.35)" strokeWidth={7} fill="transparent" />
+                          <Circle
+                            cx={40}
+                            cy={40}
+                            r={R}
+                            stroke="rgba(255,255,255,0.35)"
+                            strokeWidth={7}
+                            fill="transparent"
+                          />
                           <AnimatedCircle
                             cx={40}
                             cy={40}
@@ -939,9 +1056,7 @@ export const LiftCard = memo(function LiftCard({
 
                 {/* RIGHT: crossfade the content only */}
                 <View style={styles.rightPane}>
-                  <View style={styles.crossfadeRight}>
-                    {renderPhaseContent(currentPhase)}
-                  </View>
+                  <View style={styles.crossfadeRight}>{renderPhaseContent(currentPhase)}</View>
                 </View>
               </View>
               {/* /CONTENT REGION */}
@@ -957,14 +1072,28 @@ export const LiftCard = memo(function LiftCard({
 const styles = StyleSheet.create({
   wrapper: { marginBottom: 16 },
   deleteBackground: {
-    position: 'absolute', top: 2, bottom: 2, left: 26, right: 26,
-    backgroundColor: '#fb2c36', borderRadius: 16, justifyContent: 'center',
-    alignItems: 'flex-end', paddingRight: 24,
+    position: 'absolute',
+    top: 2,
+    bottom: 2,
+    left: 26,
+    right: 26,
+    backgroundColor: '#fb2c36',
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+    paddingRight: 24,
   },
   cardShadow: {
-    width: '100%', alignSelf: 'stretch', borderRadius: 18, backgroundColor: 'transparent',
-    paddingHorizontal: 20, shadowColor: '#000000', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1, shadowRadius: 2, elevation: 2,
+    width: '100%',
+    alignSelf: 'stretch',
+    borderRadius: 18,
+    backgroundColor: 'transparent',
+    paddingHorizontal: 20,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   cardInner: { borderRadius: 18, overflow: 'hidden' },
   cardGradient: { flex: 1, borderRadius: 18 },
@@ -973,8 +1102,12 @@ const styles = StyleSheet.create({
 
   // left thumbnail region
   thumbContainer: {
-    width: '30%', height: '100%', overflow: 'hidden',
-    borderTopLeftRadius: 18, borderBottomLeftRadius: 18, position: 'relative',
+    width: '30%',
+    height: '100%',
+    overflow: 'hidden',
+    borderTopLeftRadius: 18,
+    borderBottomLeftRadius: 18,
+    position: 'relative',
   },
   thumbnail: { width: '100%', height: '100%' },
 
@@ -982,80 +1115,175 @@ const styles = StyleSheet.create({
   liftContent: { flex: 1, padding: 16, justifyContent: 'space-between' },
   topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   liftName: {
-    fontSize: 18, fontWeight: '700', color: '#000',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto', flex: 1, marginRight: 8,
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#000',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+    flex: 1,
+    marginRight: 8,
   },
-  timePill: { backgroundColor: '#ffffff', borderRadius: 18, paddingHorizontal: 6, paddingVertical: 4 },
+  timePill: {
+    backgroundColor: '#ffffff',
+    borderRadius: 18,
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+  },
   timeValue: { color: '#000000', fontSize: 14, fontWeight: '600' },
-  middleRow: { marginTop: -4, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' },
+  middleRow: {
+    marginTop: -4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+  },
   accuracyContainer: { flexDirection: 'row', alignItems: 'baseline', marginLeft: 8 },
   accuracyValue: {
-    fontSize: 20, fontWeight: '800', color: '#000000',
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
   accuracyText: {
-    fontSize: 20, color: '#000000', fontWeight: '800',
+    fontSize: 20,
+    color: '#000000',
+    fontWeight: '800',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
   bottomRow: { flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center', gap: 10 },
   bottomRowItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   bottomRowText: {
-    fontSize: 14, color: '#000000', fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto', fontWeight: '600',
+    fontSize: 14,
+    color: '#000000',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+    fontWeight: '600',
   },
 
   // loading bits
   blurOverlay: {
-    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.25)'
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.25)',
   },
   progressContainer: { justifyContent: 'center', alignItems: 'center', position: 'relative' },
   progressSvg: { position: 'absolute', width: 80, height: 80 },
-  progressTextContainer: { position: 'absolute', width: 80, height: 80, justifyContent: 'center', alignItems: 'center' },
+  progressTextContainer: {
+    position: 'absolute',
+    width: 80,
+    height: 80,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   progressText: {
-    fontSize: 18, fontWeight: '800', color: '#FFFFFF',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto', textAlign: 'center',
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+    textAlign: 'center',
   },
   waitingSpinnerContainer: { justifyContent: 'center', alignItems: 'center' },
   placeholderLines: { marginBottom: 8, marginTop: 8, width: '100%' },
   placeholderLine: { height: 6, backgroundColor: '#71717b', borderRadius: 3, marginBottom: 6 },
-  placeholderLine1: { width: '80%' }, placeholderLine2: { width: '60%' }, placeholderLine3: { width: '40%' },
-  notificationText: { fontSize: 14, fontWeight: '500', color: '#8E8E93', fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto' },
+  placeholderLine1: { width: '80%' },
+  placeholderLine2: { width: '60%' },
+  placeholderLine3: { width: '40%' },
+  notificationText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#8E8E93',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
 
   // error state bits
   errorMessageContainer: { flex: 1, marginRight: 8, flexShrink: 1 },
   errorTitle: {
-    fontSize: 18, fontWeight: '700', color: '#D70015',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto', marginTop: 0, marginBottom: 0,
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#D70015',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+    marginTop: 0,
+    marginBottom: 0,
   },
   errorSubtitle: {
-    fontSize: 14, fontWeight: '500', color: '#8E8E93',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto', marginTop: 2, marginBottom: 4, flexShrink: 1, flexWrap: 'wrap',
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#8E8E93',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+    marginTop: 2,
+    marginBottom: 4,
+    flexShrink: 1,
+    flexWrap: 'wrap',
   },
   retryButton: {
-    backgroundColor: 'transparent', borderWidth: 1, borderColor: '#000000',
-    paddingHorizontal: 16, paddingVertical: 8, borderRadius: 18, alignSelf: 'flex-start',
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#000000',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 18,
+    alignSelf: 'flex-start',
   },
-  retryButtonText: { color: '#000000', fontSize: 14, fontWeight: '700', fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto' },
+  retryButtonText: {
+    color: '#000000',
+    fontSize: 14,
+    fontWeight: '700',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
   deleteErrorButton: {
-    backgroundColor: 'transparent', borderWidth: 1, borderColor: '#D70015',
-    paddingHorizontal: 16, paddingVertical: 8, borderRadius: 18, alignSelf: 'flex-start', minWidth: 80, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#D70015',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 18,
+    alignSelf: 'flex-start',
+    minWidth: 80,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  deleteErrorButtonText: { color: '#D70015', fontSize: 14, fontWeight: '700', fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto' },
+  deleteErrorButtonText: {
+    color: '#D70015',
+    fontSize: 14,
+    fontWeight: '700',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
   deleteButton: { padding: 4 },
   deleteButtonCircle: {
-    width: 28, height: 28, borderRadius: 14, backgroundColor: 'transparent',
-    borderWidth: 1, borderColor: '#D70015', justifyContent: 'center', alignItems: 'center',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#D70015',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   waitingSubtitle: {
-    fontSize: 14, fontWeight: '500', color: '#8E8E93',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto', flex: 1,
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#8E8E93',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+    flex: 1,
   },
   cancelButton: {
-    backgroundColor: 'transparent', borderWidth: 1, borderColor: '#000000',
-    paddingHorizontal: 16, paddingVertical: 8, borderRadius: 18, alignSelf: 'flex-start',
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#000000',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 18,
+    alignSelf: 'flex-start',
   },
-  cancelButtonText: { color: '#000000', fontSize: 14, fontWeight: '700', fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto' },
-  
+  cancelButtonText: {
+    color: '#000000',
+    fontSize: 14,
+    fontWeight: '700',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
+
   // no lifts card styles
   noLiftsCard: {
     backgroundColor: '#FFFFFF',
@@ -1094,7 +1322,7 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
     textAlign: 'center',
   },
-  
+
   // right pane styles
   rightPane: {
     flex: 1,
@@ -1109,7 +1337,10 @@ const styles = StyleSheet.create({
     zIndex: 0,
   },
   improvementText: {
-    fontSize: 14, color: '#000000', fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto', fontWeight: '600',
+    fontSize: 14,
+    color: '#000000',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+    fontWeight: '600',
     maxWidth: 100,
   },
 });

@@ -3,7 +3,7 @@ import { getUserId } from './storageService';
 import { withAuthErrorHandling } from './authErrorService';
 
 export interface UserRow {
-	id: string;
+  id: string;
   onboarding_completed: boolean;
 }
 
@@ -24,33 +24,38 @@ export interface UserDetailsRow {
 }
 
 export interface UserFetchResult {
-	user: UserRow | null;
-	error?: string;
+  user: UserRow | null;
+  error?: string;
 }
 
 export async function fetchUserById(userId: string): Promise<UserFetchResult> {
-	const result = await withAuthErrorHandling(supabase, async () => {
-		try {
-			const { data, error } = await supabase
-				.from('user_onboarding')
-				.select('user_id, onboarding_completed')
-				.eq('user_id', userId)
-				.maybeSingle();
-			if (error) return { user: null, error: error.message };
-			if (!data) return { user: null };
-			return { user: { id: (data as any).user_id, onboarding_completed: Boolean((data as any).onboarding_completed) } };
-		} catch (e: any) {
-			return { user: null, error: e?.message ?? 'Unknown error' };
-		}
-	});
-	
-	return result || { user: null, error: 'Authentication error' };
+  const result = await withAuthErrorHandling(supabase, async () => {
+    try {
+      const { data, error } = await supabase
+        .from('user_onboarding')
+        .select('user_id, onboarding_completed')
+        .eq('user_id', userId)
+        .maybeSingle();
+      if (error) return { user: null, error: error.message };
+      if (!data) return { user: null };
+      return {
+        user: {
+          id: (data as any).user_id,
+          onboarding_completed: Boolean((data as any).onboarding_completed),
+        },
+      };
+    } catch (e: any) {
+      return { user: null, error: e?.message ?? 'Unknown error' };
+    }
+  });
+
+  return result || { user: null, error: 'Authentication error' };
 }
 
 export function requiresOnboarding(user: UserRow | null): boolean {
-	if (!user) return false;
-	return !user.onboarding_completed;
-} 
+  if (!user) return false;
+  return !user.onboarding_completed;
+}
 
 // --- Edit user details API ---
 
@@ -91,7 +96,8 @@ export async function editUserDetails(
       if (req.gender != null) payload.gender = req.gender;
       if (req.language != null) payload.language = req.language;
       if (req.unit_system != null) payload.unit_system = req.unit_system;
-      if (req.walkthrough_completed != null) payload.walkthrough_completed = req.walkthrough_completed;
+      if (req.walkthrough_completed != null)
+        payload.walkthrough_completed = req.walkthrough_completed;
       return payload;
     }
 
@@ -120,7 +126,9 @@ export async function editUserDetails(
     // Then fetch the updated row explicitly (more reliable across PostgREST modes)
     const { data: updated, error: selErr } = await supabase
       .from('user_info')
-      .select('user_id, metric_height, metric_weight, age_range, gender, language, unit_system, walkthrough_completed')
+      .select(
+        'user_id, metric_height, metric_weight, age_range, gender, language, unit_system, walkthrough_completed'
+      )
       .eq('user_id', userId)
       .maybeSingle();
     if (selErr) throw new Error(selErr.message);
@@ -134,7 +142,8 @@ export async function editUserDetails(
       else if (field === 'gender') updatedFields.gender = (updated as any).gender;
       else if (field === 'language') updatedFields.language = (updated as any).language;
       else if (field === 'unit_system') updatedFields.unit_system = (updated as any).unit_system;
-      else if (field === 'walkthrough_completed') updatedFields.walkthrough_completed = (updated as any).walkthrough_completed;
+      else if (field === 'walkthrough_completed')
+        updatedFields.walkthrough_completed = (updated as any).walkthrough_completed;
     }
     return {
       success: true,
@@ -147,7 +156,7 @@ export async function editUserDetails(
   if (!result) {
     throw new Error('Authentication error - please sign in again');
   }
-  
+
   return result;
 }
 
@@ -157,7 +166,9 @@ export async function fetchUserDetailsById(userId: string): Promise<UserDetailsR
     const [userInfoRes, usersRes] = await Promise.all([
       supabase
         .from('user_info')
-        .select('user_id, unit_system, metric_height, metric_weight, age_range, gender, language, walkthrough_completed, has_rated, created_at')
+        .select(
+          'user_id, unit_system, metric_height, metric_weight, age_range, gender, language, walkthrough_completed, has_rated, created_at'
+        )
         .eq('user_id', userId)
         .maybeSingle(),
       supabase
@@ -192,7 +203,7 @@ export async function fetchUserDetailsById(userId: string): Promise<UserDetailsR
       created_at: (data as any).created_at ?? null,
     };
   });
-  
+
   return result || null;
 }
 
@@ -217,7 +228,8 @@ export async function editUserAccount(
 
     const updatePayload: Record<string, any> = {};
     if (partial.full_name !== undefined) updatePayload.full_name = partial.full_name;
-    if (partial.profile_picture !== undefined) updatePayload.profile_picture = partial.profile_picture;
+    if (partial.profile_picture !== undefined)
+      updatePayload.profile_picture = partial.profile_picture;
     if (!Object.keys(updatePayload).length) throw new Error('No valid fields to update');
 
     // Ensure users row exists
@@ -249,5 +261,3 @@ export async function editUserAccount(
   }
   return result;
 }
-
-

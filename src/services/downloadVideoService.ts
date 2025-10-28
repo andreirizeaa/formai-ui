@@ -18,18 +18,18 @@ export async function downloadVideoToLibrary({
   videoUrl,
   onSuccess,
   onError,
-  onPermissionRequired
+  onPermissionRequired,
 }: DownloadVideoOptions): Promise<boolean> {
   try {
     // Track download attempt
-    track('Video download attempted', { 
+    track('Video download attempted', {
       hasVideoUrl: !!videoUrl,
-      videoUrlType: typeof videoUrl 
+      videoUrlType: typeof videoUrl,
     });
 
     // 1) Request media library permissions
     const perm = await MediaLibrary.requestPermissionsAsync();
-    
+
     if (!perm.granted) {
       if (onPermissionRequired) {
         onPermissionRequired();
@@ -60,7 +60,7 @@ export async function downloadVideoToLibrary({
 
     // 3) Get signed URL for download
     let downloadUrl = videoUrl as string;
-    
+
     if (typeof videoUrl === 'string') {
       try {
         // Try to get a fresh signed URL
@@ -75,7 +75,6 @@ export async function downloadVideoToLibrary({
         // Failed to get signed URL, using original
       }
     }
-
 
     // 4) Download the video file
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -100,31 +99,32 @@ export async function downloadVideoToLibrary({
     // 6) Verify the downloaded file
     const info = await FileSystem.getInfoAsync(finalUri, { size: true });
     if (!info.exists || !('size' in info) || !info.size || info.size < 1024) {
-      throw new Error(`Downloaded file is invalid or too small (${('size' in info ? info.size : 0)} bytes)`);
+      throw new Error(
+        `Downloaded file is invalid or too small (${'size' in info ? info.size : 0} bytes)`
+      );
     }
-
 
     // Additional validation: Check file format and provide detailed info
     try {
       const fileContent = await FileSystem.readAsStringAsync(finalUri, {
         encoding: FileSystem.EncodingType.Base64,
-        length: 200 // Read first 200 characters for better detection
+        length: 200, // Read first 200 characters for better detection
       });
-      
+
       // Decode base64 to check actual file headers
       const buffer = Buffer.from(fileContent.slice(0, 100), 'base64');
       const header = buffer.toString('binary', 0, 20);
-      
-      
+
       // Check for common video file signatures
       const isMP4 = header.includes('ftyp') || header.includes('moov');
       const isAVI = header.includes('RIFF');
       const isMOV = header.includes('moov');
-      
+
       if (isAVI) {
-        throw new Error('Video is in AVI format which is not supported by iOS Photos app. Please convert to MP4 format on the server side.');
+        throw new Error(
+          'Video is in AVI format which is not supported by iOS Photos app. Please convert to MP4 format on the server side.'
+        );
       }
-      
     } catch (validationError) {
       // Could not validate file content
     }
@@ -138,15 +138,19 @@ export async function downloadVideoToLibrary({
         // Fallback to saveToLibraryAsync
         await MediaLibrary.saveToLibraryAsync(finalUri);
       } catch (saveError) {
-        
         // Check if this is likely an AVI format issue
-        const isAVIError = (createError instanceof Error && createError.message.includes('3302')) || 
-                          (saveError instanceof Error && saveError.message.includes('3302'));
-        
+        const isAVIError =
+          (createError instanceof Error && createError.message.includes('3302')) ||
+          (saveError instanceof Error && saveError.message.includes('3302'));
+
         if (isAVIError) {
-          throw new Error('This video format is not supported by iOS Photos app. The video appears to be in AVI format, which needs to be converted to MP4 format on the server side.');
+          throw new Error(
+            'This video format is not supported by iOS Photos app. The video appears to be in AVI format, which needs to be converted to MP4 format on the server side.'
+          );
         } else {
-          throw new Error(`Failed to save video to photo library. createAssetAsync: ${createError instanceof Error ? createError.message : String(createError)}, saveToLibraryAsync: ${saveError instanceof Error ? saveError.message : String(saveError)}`);
+          throw new Error(
+            `Failed to save video to photo library. createAssetAsync: ${createError instanceof Error ? createError.message : String(createError)}, saveToLibraryAsync: ${saveError instanceof Error ? saveError.message : String(saveError)}`
+          );
         }
       }
     }
@@ -175,19 +179,17 @@ export async function downloadVideoToLibrary({
     hapticFeedback.success();
     onSuccess?.();
 
-    track('Video download success', { 
+    track('Video download success', {
       fileSize: 'size' in info ? info.size : 0,
-      finalUri: finalUri 
+      finalUri: finalUri,
     });
 
     return true;
-
   } catch (error) {
-    
     // Track error for analytics
-    track('Video download failed', { 
+    track('Video download failed', {
       error: error instanceof Error ? error.message : String(error),
-      videoUrl: typeof videoUrl === 'string' ? videoUrl : 'unknown'
+      videoUrl: typeof videoUrl === 'string' ? videoUrl : 'unknown',
     });
 
     // Show user-friendly error
@@ -232,9 +234,9 @@ export async function getVideoFileInfo(videoUrl: string): Promise<{
   try {
     const info = await FileSystem.getInfoAsync(videoUrl, { size: true });
     return {
-      size: ('size' in info && info.size) ? info.size : 0,
+      size: 'size' in info && info.size ? info.size : 0,
       exists: info.exists ?? false,
-      uri: videoUrl
+      uri: videoUrl,
     };
   } catch (error) {
     return null;

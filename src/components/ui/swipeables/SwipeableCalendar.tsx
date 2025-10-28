@@ -10,7 +10,7 @@ import i18n from '../../../utils/i18n';
 
 const { width: RAW_W } = Dimensions.get('window');
 const SCREEN_WIDTH = Math.round(RAW_W);
-const ITEM_WIDTH = SCREEN_WIDTH;           // page width
+const ITEM_WIDTH = SCREEN_WIDTH; // page width
 const WEEK_HEIGHT = 80;
 const WEEK_WIDTH = Math.round(SCREEN_WIDTH * 0.95);
 
@@ -33,12 +33,20 @@ interface DayData {
 }
 
 // CircularProgress component
-const CircularProgress = ({ percentage, size = 36, strokeWidth = 2 }: { percentage: number; size?: number; strokeWidth?: number }) => {
+const CircularProgress = ({
+  percentage,
+  size = 36,
+  strokeWidth = 2,
+}: {
+  percentage: number;
+  size?: number;
+  strokeWidth?: number;
+}) => {
   const radius = (size - strokeWidth) / 2;
   const circumference = radius * 2 * Math.PI;
   const strokeDasharray = circumference;
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
-  
+
   return (
     <Svg width={size} height={size} style={{ position: 'absolute' }}>
       {/* Progress circle only - no background circle */}
@@ -59,95 +67,98 @@ const CircularProgress = ({ percentage, size = 36, strokeWidth = 2 }: { percenta
 };
 
 // Memoized WeekPage Component with lazy rendering
-const WeekPage = React.memo(function WeekPage({
-  days,
-  onPressDay,
-  shouldRender,
-}: {
-  days: DayData[];
-  onPressDay: (d: DayData) => void;
-  shouldRender: boolean;
-}) {
-  return (
-    <View 
-      style={styles.weekPage} 
-      renderToHardwareTextureAndroid
-      shouldRasterizeIOS
-    >
-      <View style={styles.weekContent}>
-        {days.map((day, i) => (
-          <TouchableOpacity
-            key={`${day.date.toISOString()}-${i}`}
-            style={styles.dayContainer}
-            onPress={() => !day.isFuture && onPressDay(day)}
-            activeOpacity={day.isFuture ? 1 : 0.7}
-            disabled={day.isFuture}
-          >
-            <View style={[
-              styles.dayWrapper,
-              day.isActive && styles.selectedDayWrapper,
-              day.isToday && !day.isActive && styles.todayWrapper
-            ]}>
-              {/* Day acronym above the circle */}
-              <Text
-                style={[
-                  styles.dayAcronym,
-                  day.isActive
-                    ? styles.activeDayAcronym
-                    : styles.inactiveDayAcronym,
-                ]}
-              >
-                {day.dayName}
-              </Text>
-              
+const WeekPage = React.memo(
+  function WeekPage({
+    days,
+    onPressDay,
+    shouldRender,
+  }: {
+    days: DayData[];
+    onPressDay: (d: DayData) => void;
+    shouldRender: boolean;
+  }) {
+    return (
+      <View style={styles.weekPage} renderToHardwareTextureAndroid shouldRasterizeIOS>
+        <View style={styles.weekContent}>
+          {days.map((day, i) => (
+            <TouchableOpacity
+              key={`${day.date.toISOString()}-${i}`}
+              style={styles.dayContainer}
+              onPress={() => !day.isFuture && onPressDay(day)}
+              activeOpacity={day.isFuture ? 1 : 0.7}
+              disabled={day.isFuture}
+            >
               <View
                 style={[
-                  styles.dayCircle,
-                  // Hide entire day circle background when has lifts or for future dates
-                  day.dailyAccuracy > 0 || day.isFuture
-                    ? styles.transparentCircle
-                    : day.isActive
-                    ? day.dailyAccuracy === 0 
-                      ? styles.inactiveDayCircle
-                      : styles.selectedCircle
-                    : styles.inactiveDayCircle,
+                  styles.dayWrapper,
+                  day.isActive && styles.selectedDayWrapper,
+                  day.isToday && !day.isActive && styles.todayWrapper,
                 ]}
               >
-                {/* Circular progress indicator for days with lifts - only render when visible AND needed */}
-                {shouldRender && day.dailyAccuracy > 0 && (
-                  <CircularProgress percentage={day.dailyAccuracy} size={36} strokeWidth={2} />
-                )}
-                {/* Day number inside the circle */}
+                {/* Day acronym above the circle */}
                 <Text
                   style={[
-                    styles.dayNumber,
-                    day.isActive 
-                      ? styles.activeDayText 
-                      : day.isFuture
-                      ? styles.inactiveDayText
-                      : styles.pastDayText,
+                    styles.dayAcronym,
+                    day.isActive ? styles.activeDayAcronym : styles.inactiveDayAcronym,
                   ]}
                 >
-                  {day.dayNumber}
+                  {day.dayName}
                 </Text>
+
+                <View
+                  style={[
+                    styles.dayCircle,
+                    // Hide entire day circle background when has lifts or for future dates
+                    day.dailyAccuracy > 0 || day.isFuture
+                      ? styles.transparentCircle
+                      : day.isActive
+                        ? day.dailyAccuracy === 0
+                          ? styles.inactiveDayCircle
+                          : styles.selectedCircle
+                        : styles.inactiveDayCircle,
+                  ]}
+                >
+                  {/* Circular progress indicator for days with lifts - only render when visible AND needed */}
+                  {shouldRender && day.dailyAccuracy > 0 && (
+                    <CircularProgress percentage={day.dailyAccuracy} size={36} strokeWidth={2} />
+                  )}
+                  {/* Day number inside the circle */}
+                  <Text
+                    style={[
+                      styles.dayNumber,
+                      day.isActive
+                        ? styles.activeDayText
+                        : day.isFuture
+                          ? styles.inactiveDayText
+                          : styles.pastDayText,
+                    ]}
+                  >
+                    {day.dayNumber}
+                  </Text>
+                </View>
               </View>
-            </View>
-          </TouchableOpacity>
-        ))}
+            </TouchableOpacity>
+          ))}
+        </View>
       </View>
-    </View>
-  );
-}, (a, b) =>
-  a.shouldRender === b.shouldRender &&
-  a.days.length === b.days.length &&
-  a.days.every((day, i) => 
-    day.date.toISOString() === b.days[i]?.date.toISOString() &&
-    day.isActive === b.days[i]?.isActive &&
-    day.dailyAccuracy === b.days[i]?.dailyAccuracy
-  )
+    );
+  },
+  (a, b) =>
+    a.shouldRender === b.shouldRender &&
+    a.days.length === b.days.length &&
+    a.days.every(
+      (day, i) =>
+        day.date.toISOString() === b.days[i]?.date.toISOString() &&
+        day.isActive === b.days[i]?.isActive &&
+        day.dailyAccuracy === b.days[i]?.dailyAccuracy
+    )
 );
 
-export function SwipeableCalendar({ onDateSelect, onSwipe, initialSelectedDate }: SwipeableCalendarProps) {
+export function SwipeableCalendar({
+  onDateSelect,
+  onSwipe,
+  initialSelectedDate,
+}: SwipeableCalendarProps) {
   // hooks (unchanged)
   const { selectedDate, setSelectedDate } = useSelectedDate();
   const { daysLogged } = useUserCheckIns();
@@ -164,7 +175,7 @@ export function SwipeableCalendar({ onDateSelect, onSwipe, initialSelectedDate }
     const seedDate = initialSelectedDate ?? selectedDate;
     const t = seedDate.toDateString();
     for (let i = 0; i < BASE_WEEKS.length; i++) {
-      if (BASE_WEEKS[i].some(d => d.toDateString() === t)) {
+      if (BASE_WEEKS[i].some((d) => d.toDateString() === t)) {
         initialIndexRef.current = i;
         break;
       }
@@ -234,14 +245,14 @@ export function SwipeableCalendar({ onDateSelect, onSwipe, initialSelectedDate }
   );
 
   const weeks: DayData[][] = useMemo(
-    () => BASE_WEEKS.map(dates => generateWeekData(dates)),
+    () => BASE_WEEKS.map((dates) => generateWeekData(dates)),
     [generateWeekData]
   );
 
   const getWeekIndexForDate = useCallback((targetDate: Date) => {
     const t = targetDate.toDateString();
     for (let i = 0; i < BASE_WEEKS.length; i++) {
-      if (BASE_WEEKS[i].some(d => d.toDateString() === t)) return i;
+      if (BASE_WEEKS[i].some((d) => d.toDateString() === t)) return i;
     }
     return BASE_WEEKS.length - 1;
   }, []);
@@ -249,8 +260,8 @@ export function SwipeableCalendar({ onDateSelect, onSwipe, initialSelectedDate }
   // When the selected date changes externally, compute the week index
   useEffect(() => {
     const idx = Math.max(0, Math.min(weeks.length - 1, getWeekIndexForDate(selectedDate)));
-    setCurrentWeekIndex(idx);        // committed index
-    setLocalIndex(idx);              // keep local window in sync
+    setCurrentWeekIndex(idx); // committed index
+    setLocalIndex(idx); // keep local window in sync
   }, [selectedDate, getWeekIndexForDate, weeks.length]);
 
   // later changes (e.g., tapping a date or external selectedDate updates)
@@ -284,26 +295,32 @@ export function SwipeableCalendar({ onDateSelect, onSwipe, initialSelectedDate }
   );
 
   // Follow finger smoothly — local only
-  const onScroll = useCallback((e: any) => {
-    const x = e?.nativeEvent?.contentOffset?.x || 0;
-    const idx = Math.max(
-      0,
-      Math.min(Math.floor((x + ITEM_WIDTH / 2) / ITEM_WIDTH), weeks.length - 1)
-    );
-    if (idx !== localIndex) setLocalIndex(idx);
-  }, [localIndex, weeks.length]);
+  const onScroll = useCallback(
+    (e: any) => {
+      const x = e?.nativeEvent?.contentOffset?.x || 0;
+      const idx = Math.max(
+        0,
+        Math.min(Math.floor((x + ITEM_WIDTH / 2) / ITEM_WIDTH), weeks.length - 1)
+      );
+      if (idx !== localIndex) setLocalIndex(idx);
+    },
+    [localIndex, weeks.length]
+  );
 
   // Commit page on settle
-  const onMomentumScrollEnd = useCallback((e: any) => {
-    const x = e?.nativeEvent?.contentOffset?.x ?? 0;
-    const idx = Math.max(0, Math.min(Math.round(x / ITEM_WIDTH), weeks.length - 1));
-    if (idx !== currentWeekIndex) {
-      setCurrentWeekIndex(idx);
-      // Track calendar swipe
-      onSwipe?.();
-    }
-    if (idx !== localIndex) setLocalIndex(idx);
-  }, [weeks.length, currentWeekIndex, localIndex, onSwipe]);
+  const onMomentumScrollEnd = useCallback(
+    (e: any) => {
+      const x = e?.nativeEvent?.contentOffset?.x ?? 0;
+      const idx = Math.max(0, Math.min(Math.round(x / ITEM_WIDTH), weeks.length - 1));
+      if (idx !== currentWeekIndex) {
+        setCurrentWeekIndex(idx);
+        // Track calendar swipe
+        onSwipe?.();
+      }
+      if (idx !== localIndex) setLocalIndex(idx);
+    },
+    [weeks.length, currentWeekIndex, localIndex, onSwipe]
+  );
 
   const renderItem = useCallback(
     ({ item, index }: { item: DayData[]; index: number }) => (
@@ -332,7 +349,6 @@ export function SwipeableCalendar({ onDateSelect, onSwipe, initialSelectedDate }
         decelerationRate="fast"
         disableIntervalMomentum
         contentInsetAdjustmentBehavior="never"
-
         // exact layout (size + offset) so FlashList never guesses
         overrideItemLayout={(layout, index) => {
           layout.size = ITEM_WIDTH;
@@ -341,20 +357,16 @@ export function SwipeableCalendar({ onDateSelect, onSwipe, initialSelectedDate }
         }}
         estimatedItemSize={ITEM_WIDTH}
         estimatedListSize={{ width: SCREEN_WIDTH, height: WEEK_HEIGHT }}
-
         keyExtractor={(_, i) => `week-${i}`}
         renderItem={renderItem}
         removeClippedSubviews
         nestedScrollEnabled
-
         // smooth UI updates while dragging; no parent/committed state churn
         onScroll={onScroll}
         scrollEventThrottle={16}
         onMomentumScrollEnd={onMomentumScrollEnd}
-
         // re-render cells when selection/logs or local window change
         extraData={{ selectedDate, daysLogged, localIndex }}
-
         initialScrollIndex={initialIndexRef.current}
       />
     </View>
@@ -454,4 +466,4 @@ const styles = StyleSheet.create({
     color: '#000000',
     fontWeight: '600',
   },
-}); 
+});

@@ -50,7 +50,7 @@ class QueueService {
   }
 
   private notifyListeners() {
-    this.listeners.forEach(listener => listener());
+    this.listeners.forEach((listener) => listener());
   }
 
   subscribe(listener: () => void) {
@@ -58,9 +58,13 @@ class QueueService {
     return () => this.listeners.delete(listener);
   }
 
-  async addToQueue(liftData: Omit<LoadingLiftData, 'id' | 'isComplete' | 'status' | 'pipelineStage'> & { ref?: string }): Promise<string> {
+  async addToQueue(
+    liftData: Omit<LoadingLiftData, 'id' | 'isComplete' | 'status' | 'pipelineStage'> & {
+      ref?: string;
+    }
+  ): Promise<string> {
     const queueId = `queue-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    
+
     const queueItem: QueueItem = {
       id: queueId,
       liftData: liftData,
@@ -77,15 +81,17 @@ class QueueService {
   }
 
   async removeFromQueue(queueId: string) {
-    this.queueState.items = this.queueState.items.filter(item => item.id !== queueId);
+    this.queueState.items = this.queueState.items.filter((item) => item.id !== queueId);
     await this.saveToStorage();
     this.notifyListeners();
   }
 
   async getNextInQueue(): Promise<QueueItem | null> {
     // Reset processing flag if the referenced item no longer exists
-    if (this.queueState.currentProcessingId && 
-        !this.queueState.items.find(i => i.id === this.queueState.currentProcessingId)) {
+    if (
+      this.queueState.currentProcessingId &&
+      !this.queueState.items.find((i) => i.id === this.queueState.currentProcessingId)
+    ) {
       this.queueState.currentProcessingId = null;
       await this.saveToStorage();
     }
@@ -94,8 +100,7 @@ class QueueService {
       return null; // Something is already processing
     }
 
-    const nextItem = this.queueState.items
-      .sort((a, b) => a.priority - b.priority)[0];
+    const nextItem = this.queueState.items.sort((a, b) => a.priority - b.priority)[0];
 
     if (nextItem) {
       this.queueState.currentProcessingId = nextItem.id;
@@ -127,7 +132,7 @@ class QueueService {
   }
 
   getWaitingItems(): QueueItem[] {
-    return this.queueState.items.filter(item => item.id !== this.queueState.currentProcessingId);
+    return this.queueState.items.filter((item) => item.id !== this.queueState.currentProcessingId);
   }
 
   getCurrentProcessingId(): string | null {

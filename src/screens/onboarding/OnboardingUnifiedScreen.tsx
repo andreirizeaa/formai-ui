@@ -1,10 +1,24 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Platform, TouchableOpacity, TextInput, FlatList, Animated, Alert, ActivityIndicator, Keyboard, Linking } from 'react-native';
-import ReanimatedAnimated, { 
-  useSharedValue, 
-  useAnimatedStyle, 
-  withSpring, 
-  withDelay 
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Platform,
+  TouchableOpacity,
+  TextInput,
+  FlatList,
+  Animated,
+  Alert,
+  ActivityIndicator,
+  Keyboard,
+  Linking,
+} from 'react-native';
+import ReanimatedAnimated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withDelay,
 } from 'react-native-reanimated';
 import { Image } from 'expo-image';
 import { showAlert } from '../../services/alertService';
@@ -28,7 +42,41 @@ import { appColors } from '../../constants/appColorScheme';
 import { CreateAccountScreen } from '../auth/CreateAccountScreen';
 import { PermissionContainer } from '../../components/ui/PermissionContainer';
 import LottieView from 'lottie-react-native';
-import { BicepsFlexed, User, ShieldPlus, Bike, HeartPulse, AudioWaveform, ChartNoAxesColumnDecreasing, BookCopy, ShieldOff, BatteryLow, Ellipsis, Sprout, Shrub, TreePine, ChartNoAxesCombined, Hospital, Dumbbell, ShieldCheck, ChartNoAxesColumnIncreasing, ClockArrowUp, BatteryWarning, BatteryMedium, BatteryFull, PartyPopper, Weight, Scale, TrendingUp, ThumbsUp, ThumbsDown, Users, CircleCheck, Trophy, X } from 'lucide-react-native';
+import {
+  BicepsFlexed,
+  User,
+  ShieldPlus,
+  Bike,
+  HeartPulse,
+  AudioWaveform,
+  ChartNoAxesColumnDecreasing,
+  BookCopy,
+  ShieldOff,
+  BatteryLow,
+  Ellipsis,
+  Sprout,
+  Shrub,
+  TreePine,
+  ChartNoAxesCombined,
+  Hospital,
+  Dumbbell,
+  ShieldCheck,
+  ChartNoAxesColumnIncreasing,
+  ClockArrowUp,
+  BatteryWarning,
+  BatteryMedium,
+  BatteryFull,
+  PartyPopper,
+  Weight,
+  Scale,
+  TrendingUp,
+  ThumbsUp,
+  ThumbsDown,
+  Users,
+  CircleCheck,
+  Trophy,
+  X,
+} from 'lucide-react-native';
 import { LineChart } from 'react-native-chart-kit';
 import { SingleDotIcon, SixDotsIcon, ThreeDotsIcon } from '../../components/icons/icons';
 import { Line } from 'react-native-svg';
@@ -54,7 +102,7 @@ function AnimatedInfoCard({ children, delay }: AnimatedInfoCardProps) {
   useEffect(() => {
     // If delay is 0, don't animate - show immediately
     if (delay === 0) return;
-    
+
     // Animate in with a staggered delay
     translateY.value = withDelay(
       delay,
@@ -64,7 +112,7 @@ function AnimatedInfoCard({ children, delay }: AnimatedInfoCardProps) {
         mass: 0.6,
       })
     );
-    
+
     opacity.value = withDelay(
       delay,
       withSpring(1, {
@@ -81,11 +129,7 @@ function AnimatedInfoCard({ children, delay }: AnimatedInfoCardProps) {
     };
   });
 
-  return (
-    <ReanimatedAnimated.View style={animatedStyle}>
-      {children}
-    </ReanimatedAnimated.View>
-  );
+  return <ReanimatedAnimated.View style={animatedStyle}>{children}</ReanimatedAnimated.View>;
 }
 
 function AnimatedProgressTrackingImage() {
@@ -102,7 +146,7 @@ function AnimatedProgressTrackingImage() {
         mass: 0.8,
       })
     );
-    
+
     opacity.value = withDelay(
       100,
       withSpring(1, {
@@ -147,7 +191,7 @@ function AnimatedGraphContainer({ children }: { children: React.ReactNode }) {
         mass: 0.6,
       })
     );
-    
+
     opacity.value = withDelay(
       200,
       withSpring(1, {
@@ -168,10 +212,7 @@ function AnimatedGraphContainer({ children }: { children: React.ReactNode }) {
 
   const animatedStyle = useAnimatedStyle(() => {
     return {
-      transform: [
-        { translateY: translateY.value },
-        { scale: scale.value }
-      ],
+      transform: [{ translateY: translateY.value }, { scale: scale.value }],
       opacity: opacity.value,
     };
   });
@@ -208,7 +249,6 @@ interface MeasurementsStepConfig {
   title: string;
   subtitle?: string;
 }
-
 
 interface RatingStepConfig {
   type: 'rating';
@@ -294,7 +334,6 @@ interface ProgressTrackingStepConfig {
   subtitle?: string;
 }
 
-
 type StepConfig =
   | OptionsStepConfig<keyof OnboardingData>
   | MeasurementsStepConfig
@@ -322,250 +361,456 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
   const iconColor = appColors.onboarding.button.inactive.iconColor;
 
   // Permission status states
-  const [notificationPermissionStatus, setNotificationPermissionStatus] = useState<'granted' | 'denied' | 'undetermined'>('undetermined');
+  const [notificationPermissionStatus, setNotificationPermissionStatus] = useState<
+    'granted' | 'denied' | 'undetermined'
+  >('undetermined');
   const [canAskNotificationAgain, setCanAskNotificationAgain] = useState(true);
 
   const steps: ReadonlyArray<StepConfig> = useMemo(() => {
     const baseSteps: StepConfig[] = [
-    {
-      type: 'options',
-      id: 'language',
-      title: i18n.t('onboarding.language.title'),
-      subtitle: i18n.t('onboarding.language.subtitle'),
-      preferenceKey: 'language',
-      options: LANGUAGES.map(lang => ({ value: lang.code, label: `${lang.nativeName} ${lang.flag}` })),
-    },
-    {
-      type: 'options',
-      id: 'units',
-      title: i18n.t('onboarding.units.title'),
-      subtitle: i18n.t('onboarding.units.subtitle'),
-      preferenceKey: 'unitSystem',
-      options: [
-        { value: 'metric', label: i18n.t('onboarding.units.metric'), description: i18n.t('onboarding.units.metricDescription') },
-        { value: 'imperial', label: i18n.t('onboarding.units.imperial'), description: i18n.t('onboarding.units.imperialDescription') },
-      ],
-    },
-    {
-      type: 'rating',
-      id: 'rating',
-      title: i18n.t('onboarding.rating.title'),
-    },
-    {
-      type: 'options',
-      id: 'gender',
-      title: i18n.t('onboarding.gender.title'),
-      subtitle: i18n.t('onboarding.gender.subtitle'),
-      preferenceKey: 'gender',
-      options: [
-        { value: 'male', label: i18n.t('onboarding.gender.male') },
-        { value: 'female', label: i18n.t('onboarding.gender.female') },
-      ],
-    },
-    {
-      type: 'options',
-      id: 'trainingReason',
-      title: i18n.t('onboarding.trainingReason.title'),
-      subtitle: i18n.t('onboarding.trainingReason.subtitle'),
-      preferenceKey: 'trainingReason',
-      options: [
-        { value: 'build_strength', label: i18n.t('onboarding.trainingReason.buildStrength'), icon: <BicepsFlexed size={iconSize} color={iconColor} /> },
-        { value: 'improve_physique', label: i18n.t('onboarding.trainingReason.improvePhysique'), icon: <User size={iconSize} color={iconColor} /> },
-        { value: 'prevent_injury', label: i18n.t('onboarding.trainingReason.preventInjury'), icon: <ShieldPlus size={iconSize} color={iconColor} /> },
-        { value: 'train_for_sport', label: i18n.t('onboarding.trainingReason.trainForSport'), icon: <Bike size={iconSize} color={iconColor} /> },
-        { value: 'stay_active_healthy', label: i18n.t('onboarding.trainingReason.stayActiveHealthy'), icon: <HeartPulse size={iconSize} color={iconColor} /> },
-      ],
-    },
-    {
-      type: 'injuryChanceInfo',
-      id: 'trainSafer',
-      title: i18n.t('onboarding.trainSafer.title'),
-    },
-    {
-      type: 'options',
-      id: 'gymChallenge',
-      title: i18n.t('onboarding.gymChallenge.title'),
-      subtitle: i18n.t('onboarding.gymChallenge.subtitle'),
-      preferenceKey: 'gymChallenge',
-      options: [
-        { value: 'unsure_form', label: i18n.t('onboarding.gymChallenge.unsureForm'), icon: <AudioWaveform size={iconSize} color={iconColor} /> },
-        { value: 'no_results', label: i18n.t('onboarding.gymChallenge.noResults'), icon: <ChartNoAxesColumnDecreasing size={iconSize} color={iconColor} /> },
-        { value: 'worried_injury', label: i18n.t('onboarding.gymChallenge.worriedInjury'), icon: <ShieldOff size={iconSize} color={iconColor} /> },
-        { value: 'struggling_motivation', label: i18n.t('onboarding.gymChallenge.strugglingMotivation'), icon: <BatteryLow size={iconSize} color={iconColor} /> },
-        { value: 'other', label: i18n.t('onboarding.gymChallenge.other'), icon: <Ellipsis size={iconSize} color={iconColor} /> },
-      ],
-    },
-    {
-      type: 'gymChallengeInfo',
-      id: 'gymChallengeInfo',
-      title: '',
-      subtitle: '',
-    },
-    {
-      type: 'options',
-      id: 'workouts',
-      title: i18n.t('onboarding.workouts.title'),
-      subtitle: i18n.t('onboarding.workouts.subtitle'),
-      preferenceKey: 'workoutsPerWeek',
-      options: [
-        { value: '0-2', label: i18n.t('onboarding.workouts.zeroToTwo'), description: i18n.t('onboarding.workouts.zeroToTwoDescription'), icon: <SingleDotIcon height={iconSize} width={iconSize} color={iconColor} /> },
-        { value: '3-5', label: i18n.t('onboarding.workouts.threeToFive'), description: i18n.t('onboarding.workouts.threeToFiveDescription'), icon: <ThreeDotsIcon height={iconSize} width={iconSize} color={iconColor} /> },
-        { value: '6+', label: i18n.t('onboarding.workouts.SixPlus'), description: i18n.t('onboarding.workouts.SixPlusDescription'), icon: <SixDotsIcon height={iconSize} width={iconSize} color={iconColor} /> },
-      ],
-    },
-    {
-      type: 'options',
-      id: 'lifterType',
-      title: i18n.t('onboarding.lifterType.title'),
-      subtitle: i18n.t('onboarding.lifterType.subtitle'),
-      preferenceKey: 'lifterType',
-      options: [
-        { value: 'beginner', label: i18n.t('onboarding.lifterType.beginner'), icon: <Sprout size={iconSize} color={iconColor} /> },
-        { value: 'intermediate', label: i18n.t('onboarding.lifterType.intermediate'), icon: <Shrub size={iconSize} color={iconColor} /> },
-        { value: 'advanced', label: i18n.t('onboarding.lifterType.advanced'), icon: <TreePine size={iconSize} color={iconColor} /> },
-        { value: 'returning_after_break', label: i18n.t('onboarding.lifterType.returningAfterBreak'), icon: <ChartNoAxesCombined size={iconSize} color={iconColor} /> },
-        { value: 'injury_rehab', label: i18n.t('onboarding.lifterType.injuryRehab'), icon: <Hospital size={iconSize} color={iconColor} /> },
-      ],
-    },
-    {
-      type: 'progressTracking',
-      id: 'progressTracking',
-      title: i18n.t('onboarding.progressTracking.title'),
-      subtitle: i18n.t('onboarding.progressTracking.subtitle'),
-    },
-    {
-      type: 'options',
-      id: 'perfectFormGoal',
-      title: i18n.t('onboarding.perfectFormGoal.title'),
-      subtitle: i18n.t('onboarding.perfectFormGoal.subtitle'),
-      preferenceKey: 'perfectFormGoal',
-      options: [
-        { value: 'lift_heavier_safely', label: i18n.t('onboarding.perfectFormGoal.liftHeavierSafely'), icon: <Dumbbell size={iconSize} color={iconColor} /> },
-        { value: 'build_muscle_efficiently', label: i18n.t('onboarding.perfectFormGoal.buildMuscleEfficiently'), icon: <BicepsFlexed size={iconSize} color={iconColor} /> },
-        { value: 'avoid_injuries', label: i18n.t('onboarding.perfectFormGoal.avoidInjuries'), icon: <ShieldCheck size={iconSize} color={iconColor} /> },
-        { value: 'boost_confidence', label: i18n.t('onboarding.perfectFormGoal.boostConfidence'), icon: <ChartNoAxesColumnIncreasing size={iconSize} color={iconColor} /> },
-        { value: 'train_longer_without_setbacks', label: i18n.t('onboarding.perfectFormGoal.trainLongerWithoutSetbacks'), icon: <ClockArrowUp size={iconSize} color={iconColor} /> },
-      ],
-    },
-    {
-      type: 'perfectFormGoalMessage',
-      id: 'perfectFormGoalMessage',
-      title: '',
-      subtitle: '',
-    },
-    // {
-    //   type: 'cameraPermission',
-    //   id: 'cameraPermission',
-    //   title: i18n.t('onboarding.cameraPermission.title'),
-    //   subtitle: '',
-    // },
-    {
-      type: 'options',
-      id: 'formConfidence',
-      title: i18n.t('onboarding.formConfidence.title'),
-      subtitle: i18n.t('onboarding.formConfidence.subtitle'),
-      preferenceKey: 'formConfidence',
-      options: [
-        { value: '0-25', label: i18n.t('onboarding.formConfidence.zeroToTwentyFive'), icon: <BatteryWarning size={iconSize} color={iconColor} /> },
-        { value: '25-50', label: i18n.t('onboarding.formConfidence.twentyFiveToFifty'), icon: <BatteryLow size={iconSize} color={iconColor} /> },
-        { value: '50-75', label: i18n.t('onboarding.formConfidence.fiftyToSeventyFive'), icon: <BatteryMedium size={iconSize} color={iconColor} /> },
-        { value: '75-100', label: i18n.t('onboarding.formConfidence.seventyFiveToHundred'), icon: <BatteryFull size={iconSize} color={iconColor} /> },
-      ],
-    },
-    {
-      type: 'options',
-      id: 'threeMonthGoal',
-      title: i18n.t('onboarding.threeMonthGoal.title'),
-      subtitle: i18n.t('onboarding.threeMonthGoal.subtitle'),
-      preferenceKey: 'threeMonthGoal',
-      options: [
-        { value: 'lifting_heavier', label: i18n.t('onboarding.threeMonthGoal.liftingHeavier'), icon: <Weight size={iconSize} color={iconColor} /> },
-        { value: 'looking_leaner', label: i18n.t('onboarding.threeMonthGoal.lookingLeaner'), icon: <Scale size={iconSize} color={iconColor} /> },
-        { value: 'feeling_stronger_injury_free', label: i18n.t('onboarding.threeMonthGoal.feelingStrongerInjuryFree'), icon: <BicepsFlexed size={iconSize} color={iconColor} /> },
-        { value: 'more_consistent', label: i18n.t('onboarding.threeMonthGoal.moreConsistent'), icon: <TrendingUp size={iconSize} color={iconColor} /> },
-        { value: 'more_confident', label: i18n.t('onboarding.threeMonthGoal.moreConfident'), icon: <PartyPopper size={iconSize} color={iconColor} /> },
-      ],
-    },
-    {
-      type: 'graph',
-      id: 'potentialGraph',
-      title: i18n.t('onboarding.potentialGraph.title'),
-      subtitle: '',
-    },
-    {
-      type: 'options',
-      id: 'personalTrainer',
-      title: i18n.t('onboarding.personalTrainer.title'),
-      subtitle: i18n.t('onboarding.personalTrainer.subtitle'),
-      preferenceKey: 'hasPersonalTrainer',
-      options: [
-        { value: true, label: i18n.t('onboarding.personalTrainer.yes'), icon: <ThumbsUp size={iconSize} color={iconColor} /> },
-        { value: false, label: i18n.t('onboarding.personalTrainer.no'), icon: <ThumbsDown size={iconSize} color={iconColor} /> },
-      ],
-    },
-    {
-      type: 'injuryChanceInfo',
-      id: 'costComparison',
-      title: i18n.t('onboarding.costComparison.title'),
-    },
-    {
-      type: 'measurements',
-      id: 'measurements',
-      title: i18n.t('onboarding.measurements.title'),
-      subtitle: i18n.t('onboarding.measurements.subtitle'),
-    },
-    {
-      type: 'options',
-      id: 'ageRange',
-      title: i18n.t('onboarding.ageRange.title'),
-      subtitle: i18n.t('onboarding.ageRange.subtitle'),
-      preferenceKey: 'ageRange',
-      options: [
-        { value: '18-24', label: i18n.t('onboarding.ageRange.ageRanges.18-24') },
-        { value: '25-34', label: i18n.t('onboarding.ageRange.ageRanges.25-34') },
-        { value: '35-44', label: i18n.t('onboarding.ageRange.ageRanges.35-44') },
-        { value: '45-54', label: i18n.t('onboarding.ageRange.ageRanges.45-54') },
-        { value: '55-64', label: i18n.t('onboarding.ageRange.ageRanges.55-64') },
-        { value: '65+', label: i18n.t('onboarding.ageRange.ageRanges.65+') },
-      ],
-    },
-    {
-      type: 'options',
-      id: 'discoverySource',
-      title: i18n.t('onboarding.discovery.title'),
-      subtitle: i18n.t('onboarding.discovery.subtitle'),
-      preferenceKey: 'discoverySource',
-      options: [
-        { value: 'instagram', label: i18n.t('onboarding.discovery.instagram'), iconHeight: 30, iconWidth: 30 , iconImage: require('../../../assets/icons/instagram.png') },
-        { value: 'tiktok', label: i18n.t('onboarding.discovery.tiktok'), iconHeight: 30, iconWidth: 30 , iconImage: require('../../../assets/icons/tiktok.png') },
-        { value: 'facebook', label: i18n.t('onboarding.discovery.facebook'), iconHeight: 30, iconWidth: 30 , iconImage: require('../../../assets/icons/facebook.png') },
-        { value: 'twitter', label: i18n.t('onboarding.discovery.twitter'), iconHeight: 30, iconWidth: 30 , iconImage: require('../../../assets/icons/x.png') },
-        { value: 'google', label: i18n.t('onboarding.discovery.google'), iconHeight: 30, iconWidth: 30 , iconImage: require('../../../assets/icons/google.png') },
-        { value: 'appStore', label: i18n.t('onboarding.discovery.appStore'), iconHeight: 30, iconWidth: 30 , iconImage: require('../../../assets/icons/appstore.png') },
-        { value: 'playStore', label: i18n.t('onboarding.discovery.playStore'), iconHeight: 30, iconWidth: 30 , iconImage: require('../../../assets/icons/playstore.png') },
-        { value: 'friends', label: i18n.t('onboarding.discovery.friends'), icon: <Users size={iconSize} color={iconColor} /> },
-        { value: 'other', label: i18n.t('onboarding.discovery.other'), icon: <BookCopy size={iconSize} color={iconColor} /> },
-      ],
-    },
-    {
-      type: 'referral',
-      id: 'referralCode',
-      title: i18n.t('onboarding.referralCode.title'),
-      subtitle: i18n.t('onboarding.referralCode.subtitle'),
-    },
-    // Notification permission step - only show if we can ask for permission again
-    ...(canAskNotificationAgain && notificationPermissionStatus !== 'granted' ? [{
-      type: 'notificationPermission' as const,
-      id: 'notificationPermission',
-      title: i18n.t('onboarding.notificationPermission.title'),
-      subtitle: '',
-    }] : []),
-    {
-      type: 'allDone',
-      id: 'allDone',
-      title: i18n.t('onboarding.allDone.title'),
-      subtitle: '',
-    },
+      {
+        type: 'options',
+        id: 'language',
+        title: i18n.t('onboarding.language.title'),
+        subtitle: i18n.t('onboarding.language.subtitle'),
+        preferenceKey: 'language',
+        options: LANGUAGES.map((lang) => ({
+          value: lang.code,
+          label: `${lang.nativeName} ${lang.flag}`,
+        })),
+      },
+      {
+        type: 'options',
+        id: 'units',
+        title: i18n.t('onboarding.units.title'),
+        subtitle: i18n.t('onboarding.units.subtitle'),
+        preferenceKey: 'unitSystem',
+        options: [
+          {
+            value: 'metric',
+            label: i18n.t('onboarding.units.metric'),
+            description: i18n.t('onboarding.units.metricDescription'),
+          },
+          {
+            value: 'imperial',
+            label: i18n.t('onboarding.units.imperial'),
+            description: i18n.t('onboarding.units.imperialDescription'),
+          },
+        ],
+      },
+      {
+        type: 'rating',
+        id: 'rating',
+        title: i18n.t('onboarding.rating.title'),
+      },
+      {
+        type: 'options',
+        id: 'gender',
+        title: i18n.t('onboarding.gender.title'),
+        subtitle: i18n.t('onboarding.gender.subtitle'),
+        preferenceKey: 'gender',
+        options: [
+          { value: 'male', label: i18n.t('onboarding.gender.male') },
+          { value: 'female', label: i18n.t('onboarding.gender.female') },
+        ],
+      },
+      {
+        type: 'options',
+        id: 'trainingReason',
+        title: i18n.t('onboarding.trainingReason.title'),
+        subtitle: i18n.t('onboarding.trainingReason.subtitle'),
+        preferenceKey: 'trainingReason',
+        options: [
+          {
+            value: 'build_strength',
+            label: i18n.t('onboarding.trainingReason.buildStrength'),
+            icon: <BicepsFlexed size={iconSize} color={iconColor} />,
+          },
+          {
+            value: 'improve_physique',
+            label: i18n.t('onboarding.trainingReason.improvePhysique'),
+            icon: <User size={iconSize} color={iconColor} />,
+          },
+          {
+            value: 'prevent_injury',
+            label: i18n.t('onboarding.trainingReason.preventInjury'),
+            icon: <ShieldPlus size={iconSize} color={iconColor} />,
+          },
+          {
+            value: 'train_for_sport',
+            label: i18n.t('onboarding.trainingReason.trainForSport'),
+            icon: <Bike size={iconSize} color={iconColor} />,
+          },
+          {
+            value: 'stay_active_healthy',
+            label: i18n.t('onboarding.trainingReason.stayActiveHealthy'),
+            icon: <HeartPulse size={iconSize} color={iconColor} />,
+          },
+        ],
+      },
+      {
+        type: 'injuryChanceInfo',
+        id: 'trainSafer',
+        title: i18n.t('onboarding.trainSafer.title'),
+      },
+      {
+        type: 'options',
+        id: 'gymChallenge',
+        title: i18n.t('onboarding.gymChallenge.title'),
+        subtitle: i18n.t('onboarding.gymChallenge.subtitle'),
+        preferenceKey: 'gymChallenge',
+        options: [
+          {
+            value: 'unsure_form',
+            label: i18n.t('onboarding.gymChallenge.unsureForm'),
+            icon: <AudioWaveform size={iconSize} color={iconColor} />,
+          },
+          {
+            value: 'no_results',
+            label: i18n.t('onboarding.gymChallenge.noResults'),
+            icon: <ChartNoAxesColumnDecreasing size={iconSize} color={iconColor} />,
+          },
+          {
+            value: 'worried_injury',
+            label: i18n.t('onboarding.gymChallenge.worriedInjury'),
+            icon: <ShieldOff size={iconSize} color={iconColor} />,
+          },
+          {
+            value: 'struggling_motivation',
+            label: i18n.t('onboarding.gymChallenge.strugglingMotivation'),
+            icon: <BatteryLow size={iconSize} color={iconColor} />,
+          },
+          {
+            value: 'other',
+            label: i18n.t('onboarding.gymChallenge.other'),
+            icon: <Ellipsis size={iconSize} color={iconColor} />,
+          },
+        ],
+      },
+      {
+        type: 'gymChallengeInfo',
+        id: 'gymChallengeInfo',
+        title: '',
+        subtitle: '',
+      },
+      {
+        type: 'options',
+        id: 'workouts',
+        title: i18n.t('onboarding.workouts.title'),
+        subtitle: i18n.t('onboarding.workouts.subtitle'),
+        preferenceKey: 'workoutsPerWeek',
+        options: [
+          {
+            value: '0-2',
+            label: i18n.t('onboarding.workouts.zeroToTwo'),
+            description: i18n.t('onboarding.workouts.zeroToTwoDescription'),
+            icon: <SingleDotIcon height={iconSize} width={iconSize} color={iconColor} />,
+          },
+          {
+            value: '3-5',
+            label: i18n.t('onboarding.workouts.threeToFive'),
+            description: i18n.t('onboarding.workouts.threeToFiveDescription'),
+            icon: <ThreeDotsIcon height={iconSize} width={iconSize} color={iconColor} />,
+          },
+          {
+            value: '6+',
+            label: i18n.t('onboarding.workouts.SixPlus'),
+            description: i18n.t('onboarding.workouts.SixPlusDescription'),
+            icon: <SixDotsIcon height={iconSize} width={iconSize} color={iconColor} />,
+          },
+        ],
+      },
+      {
+        type: 'options',
+        id: 'lifterType',
+        title: i18n.t('onboarding.lifterType.title'),
+        subtitle: i18n.t('onboarding.lifterType.subtitle'),
+        preferenceKey: 'lifterType',
+        options: [
+          {
+            value: 'beginner',
+            label: i18n.t('onboarding.lifterType.beginner'),
+            icon: <Sprout size={iconSize} color={iconColor} />,
+          },
+          {
+            value: 'intermediate',
+            label: i18n.t('onboarding.lifterType.intermediate'),
+            icon: <Shrub size={iconSize} color={iconColor} />,
+          },
+          {
+            value: 'advanced',
+            label: i18n.t('onboarding.lifterType.advanced'),
+            icon: <TreePine size={iconSize} color={iconColor} />,
+          },
+          {
+            value: 'returning_after_break',
+            label: i18n.t('onboarding.lifterType.returningAfterBreak'),
+            icon: <ChartNoAxesCombined size={iconSize} color={iconColor} />,
+          },
+          {
+            value: 'injury_rehab',
+            label: i18n.t('onboarding.lifterType.injuryRehab'),
+            icon: <Hospital size={iconSize} color={iconColor} />,
+          },
+        ],
+      },
+      {
+        type: 'progressTracking',
+        id: 'progressTracking',
+        title: i18n.t('onboarding.progressTracking.title'),
+        subtitle: i18n.t('onboarding.progressTracking.subtitle'),
+      },
+      {
+        type: 'options',
+        id: 'perfectFormGoal',
+        title: i18n.t('onboarding.perfectFormGoal.title'),
+        subtitle: i18n.t('onboarding.perfectFormGoal.subtitle'),
+        preferenceKey: 'perfectFormGoal',
+        options: [
+          {
+            value: 'lift_heavier_safely',
+            label: i18n.t('onboarding.perfectFormGoal.liftHeavierSafely'),
+            icon: <Dumbbell size={iconSize} color={iconColor} />,
+          },
+          {
+            value: 'build_muscle_efficiently',
+            label: i18n.t('onboarding.perfectFormGoal.buildMuscleEfficiently'),
+            icon: <BicepsFlexed size={iconSize} color={iconColor} />,
+          },
+          {
+            value: 'avoid_injuries',
+            label: i18n.t('onboarding.perfectFormGoal.avoidInjuries'),
+            icon: <ShieldCheck size={iconSize} color={iconColor} />,
+          },
+          {
+            value: 'boost_confidence',
+            label: i18n.t('onboarding.perfectFormGoal.boostConfidence'),
+            icon: <ChartNoAxesColumnIncreasing size={iconSize} color={iconColor} />,
+          },
+          {
+            value: 'train_longer_without_setbacks',
+            label: i18n.t('onboarding.perfectFormGoal.trainLongerWithoutSetbacks'),
+            icon: <ClockArrowUp size={iconSize} color={iconColor} />,
+          },
+        ],
+      },
+      {
+        type: 'perfectFormGoalMessage',
+        id: 'perfectFormGoalMessage',
+        title: '',
+        subtitle: '',
+      },
+      // {
+      //   type: 'cameraPermission',
+      //   id: 'cameraPermission',
+      //   title: i18n.t('onboarding.cameraPermission.title'),
+      //   subtitle: '',
+      // },
+      {
+        type: 'options',
+        id: 'formConfidence',
+        title: i18n.t('onboarding.formConfidence.title'),
+        subtitle: i18n.t('onboarding.formConfidence.subtitle'),
+        preferenceKey: 'formConfidence',
+        options: [
+          {
+            value: '0-25',
+            label: i18n.t('onboarding.formConfidence.zeroToTwentyFive'),
+            icon: <BatteryWarning size={iconSize} color={iconColor} />,
+          },
+          {
+            value: '25-50',
+            label: i18n.t('onboarding.formConfidence.twentyFiveToFifty'),
+            icon: <BatteryLow size={iconSize} color={iconColor} />,
+          },
+          {
+            value: '50-75',
+            label: i18n.t('onboarding.formConfidence.fiftyToSeventyFive'),
+            icon: <BatteryMedium size={iconSize} color={iconColor} />,
+          },
+          {
+            value: '75-100',
+            label: i18n.t('onboarding.formConfidence.seventyFiveToHundred'),
+            icon: <BatteryFull size={iconSize} color={iconColor} />,
+          },
+        ],
+      },
+      {
+        type: 'options',
+        id: 'threeMonthGoal',
+        title: i18n.t('onboarding.threeMonthGoal.title'),
+        subtitle: i18n.t('onboarding.threeMonthGoal.subtitle'),
+        preferenceKey: 'threeMonthGoal',
+        options: [
+          {
+            value: 'lifting_heavier',
+            label: i18n.t('onboarding.threeMonthGoal.liftingHeavier'),
+            icon: <Weight size={iconSize} color={iconColor} />,
+          },
+          {
+            value: 'looking_leaner',
+            label: i18n.t('onboarding.threeMonthGoal.lookingLeaner'),
+            icon: <Scale size={iconSize} color={iconColor} />,
+          },
+          {
+            value: 'feeling_stronger_injury_free',
+            label: i18n.t('onboarding.threeMonthGoal.feelingStrongerInjuryFree'),
+            icon: <BicepsFlexed size={iconSize} color={iconColor} />,
+          },
+          {
+            value: 'more_consistent',
+            label: i18n.t('onboarding.threeMonthGoal.moreConsistent'),
+            icon: <TrendingUp size={iconSize} color={iconColor} />,
+          },
+          {
+            value: 'more_confident',
+            label: i18n.t('onboarding.threeMonthGoal.moreConfident'),
+            icon: <PartyPopper size={iconSize} color={iconColor} />,
+          },
+        ],
+      },
+      {
+        type: 'graph',
+        id: 'potentialGraph',
+        title: i18n.t('onboarding.potentialGraph.title'),
+        subtitle: '',
+      },
+      {
+        type: 'options',
+        id: 'personalTrainer',
+        title: i18n.t('onboarding.personalTrainer.title'),
+        subtitle: i18n.t('onboarding.personalTrainer.subtitle'),
+        preferenceKey: 'hasPersonalTrainer',
+        options: [
+          {
+            value: true,
+            label: i18n.t('onboarding.personalTrainer.yes'),
+            icon: <ThumbsUp size={iconSize} color={iconColor} />,
+          },
+          {
+            value: false,
+            label: i18n.t('onboarding.personalTrainer.no'),
+            icon: <ThumbsDown size={iconSize} color={iconColor} />,
+          },
+        ],
+      },
+      {
+        type: 'injuryChanceInfo',
+        id: 'costComparison',
+        title: i18n.t('onboarding.costComparison.title'),
+      },
+      {
+        type: 'measurements',
+        id: 'measurements',
+        title: i18n.t('onboarding.measurements.title'),
+        subtitle: i18n.t('onboarding.measurements.subtitle'),
+      },
+      {
+        type: 'options',
+        id: 'ageRange',
+        title: i18n.t('onboarding.ageRange.title'),
+        subtitle: i18n.t('onboarding.ageRange.subtitle'),
+        preferenceKey: 'ageRange',
+        options: [
+          { value: '18-24', label: i18n.t('onboarding.ageRange.ageRanges.18-24') },
+          { value: '25-34', label: i18n.t('onboarding.ageRange.ageRanges.25-34') },
+          { value: '35-44', label: i18n.t('onboarding.ageRange.ageRanges.35-44') },
+          { value: '45-54', label: i18n.t('onboarding.ageRange.ageRanges.45-54') },
+          { value: '55-64', label: i18n.t('onboarding.ageRange.ageRanges.55-64') },
+          { value: '65+', label: i18n.t('onboarding.ageRange.ageRanges.65+') },
+        ],
+      },
+      {
+        type: 'options',
+        id: 'discoverySource',
+        title: i18n.t('onboarding.discovery.title'),
+        subtitle: i18n.t('onboarding.discovery.subtitle'),
+        preferenceKey: 'discoverySource',
+        options: [
+          {
+            value: 'instagram',
+            label: i18n.t('onboarding.discovery.instagram'),
+            iconHeight: 30,
+            iconWidth: 30,
+            iconImage: require('../../../assets/icons/instagram.png'),
+          },
+          {
+            value: 'tiktok',
+            label: i18n.t('onboarding.discovery.tiktok'),
+            iconHeight: 30,
+            iconWidth: 30,
+            iconImage: require('../../../assets/icons/tiktok.png'),
+          },
+          {
+            value: 'facebook',
+            label: i18n.t('onboarding.discovery.facebook'),
+            iconHeight: 30,
+            iconWidth: 30,
+            iconImage: require('../../../assets/icons/facebook.png'),
+          },
+          {
+            value: 'twitter',
+            label: i18n.t('onboarding.discovery.twitter'),
+            iconHeight: 30,
+            iconWidth: 30,
+            iconImage: require('../../../assets/icons/x.png'),
+          },
+          {
+            value: 'google',
+            label: i18n.t('onboarding.discovery.google'),
+            iconHeight: 30,
+            iconWidth: 30,
+            iconImage: require('../../../assets/icons/google.png'),
+          },
+          {
+            value: 'appStore',
+            label: i18n.t('onboarding.discovery.appStore'),
+            iconHeight: 30,
+            iconWidth: 30,
+            iconImage: require('../../../assets/icons/appstore.png'),
+          },
+          {
+            value: 'playStore',
+            label: i18n.t('onboarding.discovery.playStore'),
+            iconHeight: 30,
+            iconWidth: 30,
+            iconImage: require('../../../assets/icons/playstore.png'),
+          },
+          {
+            value: 'friends',
+            label: i18n.t('onboarding.discovery.friends'),
+            icon: <Users size={iconSize} color={iconColor} />,
+          },
+          {
+            value: 'other',
+            label: i18n.t('onboarding.discovery.other'),
+            icon: <BookCopy size={iconSize} color={iconColor} />,
+          },
+        ],
+      },
+      {
+        type: 'referral',
+        id: 'referralCode',
+        title: i18n.t('onboarding.referralCode.title'),
+        subtitle: i18n.t('onboarding.referralCode.subtitle'),
+      },
+      // Notification permission step - only show if we can ask for permission again
+      ...(canAskNotificationAgain && notificationPermissionStatus !== 'granted'
+        ? [
+            {
+              type: 'notificationPermission' as const,
+              id: 'notificationPermission',
+              title: i18n.t('onboarding.notificationPermission.title'),
+              subtitle: '',
+            },
+          ]
+        : []),
+      {
+        type: 'allDone',
+        id: 'allDone',
+        title: i18n.t('onboarding.allDone.title'),
+        subtitle: '',
+      },
     ];
 
     // Only add saveProgress step if userId is null (user hasn't signed in yet)
@@ -604,24 +849,24 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
   // Animation values for info step
   const percentageBoxHeight = useMemo(() => new Animated.Value(0), []);
   const formaiBoxHeight = useMemo(() => new Animated.Value(0), []);
-  
+
   // Animation values for bar opacity
   const percentageBoxOpacity = useMemo(() => new Animated.Value(0), []);
   const formaiBoxOpacity = useMemo(() => new Animated.Value(0), []);
-  
+
   // Animation values for text inside the bars
   const percentageTextOpacity = useMemo(() => new Animated.Value(0), []);
   const formaiTextOpacity = useMemo(() => new Animated.Value(0), []);
-  
+
   // Animation value for description text
   const descriptionOpacity = useMemo(() => new Animated.Value(0), []);
-  
+
   // Animation value for graph subtitle
   const graphSubtitleOpacity = useMemo(() => new Animated.Value(0), []);
-  
+
   // Animation value for finger icon
   const fingerTranslateY = useMemo(() => new Animated.Value(0), []);
-  
+
   // State for confetti animation delay
   const [showConfetti, setShowConfetti] = useState(false);
   const [showAllDoneConfetti, setShowAllDoneConfetti] = useState(false);
@@ -645,7 +890,6 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
         const notificationStatus = await Notifications.getPermissionsAsync();
         setNotificationPermissionStatus(notificationStatus.granted ? 'granted' : 'denied');
         setCanAskNotificationAgain((notificationStatus as any)?.canAskAgain !== false);
-
       } catch (error) {
         console.warn('Error checking permissions:', error);
       }
@@ -657,15 +901,17 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
   // Auto-advance when permission status changes and current step becomes invalid
   useEffect(() => {
     if (!currentStep) return;
-    
+
     // If current step is notification permission and permission is granted or we can't ask again, advance to next step
-    if (currentStep.type === 'notificationPermission' && (notificationPermissionStatus === 'granted' || !canAskNotificationAgain)) {
+    if (
+      currentStep.type === 'notificationPermission' &&
+      (notificationPermissionStatus === 'granted' || !canAskNotificationAgain)
+    ) {
       // Use setTimeout to ensure state updates are processed before navigation
       setTimeout(() => {
         handleNext();
       }, 100);
     }
-    
   }, [notificationPermissionStatus, currentStep, canAskNotificationAgain]);
 
   // Reset loading states when moving to a new step
@@ -690,7 +936,8 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
   const middleRepeatIndex = Math.floor(repeats / 2);
 
   function getCurrentHeight() {
-    if (!onboardingData.metricHeight) return isMetric ? 170 : { feet: 5, inches: 7, totalInches: 67 };
+    if (!onboardingData.metricHeight)
+      return isMetric ? 170 : { feet: 5, inches: 7, totalInches: 67 };
     if (isMetric) return onboardingData.metricHeight;
     const totalInches = Math.round(onboardingData.metricHeight / 2.54);
     const feet = Math.floor(totalInches / 12);
@@ -728,10 +975,9 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
     updateOnboardingData('metricWeight', isMetric ? weight : weight * 0.453592);
   }
 
-
   useEffect(() => {
     if (!currentStep) return;
-    
+
     if (currentStep.id === 'trainSafer' || currentStep.id === 'costComparison') {
       // Reset all animation values
       percentageBoxHeight.setValue(0);
@@ -741,7 +987,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       percentageTextOpacity.setValue(0);
       formaiTextOpacity.setValue(0);
       descriptionOpacity.setValue(0);
-      
+
       // Start animation sequence after 50ms delay
       setTimeout(() => {
         // Step 1: Animate boxes growing from 0 height with opacity
@@ -799,12 +1045,21 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       formaiTextOpacity.setValue(0);
       descriptionOpacity.setValue(0);
     }
-  }, [currentStep, percentageBoxHeight, formaiBoxHeight, percentageBoxOpacity, formaiBoxOpacity, percentageTextOpacity, formaiTextOpacity, descriptionOpacity]);
+  }, [
+    currentStep,
+    percentageBoxHeight,
+    formaiBoxHeight,
+    percentageBoxOpacity,
+    formaiBoxOpacity,
+    percentageTextOpacity,
+    formaiTextOpacity,
+    descriptionOpacity,
+  ]);
 
   // Finger animation effect
   useEffect(() => {
     if (!currentStep) return;
-    
+
     if (currentStep.type === 'notificationPermission' || currentStep.type === 'cameraPermission') {
       const startFingerAnimation = () => {
         Animated.loop(
@@ -822,7 +1077,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
           ])
         ).start();
       };
-      
+
       startFingerAnimation();
     } else {
       // Reset animation when leaving permission steps
@@ -833,11 +1088,11 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
   // Graph subtitle animation effect
   useEffect(() => {
     if (!currentStep) return;
-    
+
     if (currentStep.type === 'graph') {
       // Reset and animate subtitle with delay
       graphSubtitleOpacity.setValue(0);
-      
+
       setTimeout(() => {
         Animated.timing(graphSubtitleOpacity, {
           toValue: 1,
@@ -853,7 +1108,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
 
   useEffect(() => {
     if (!currentStep) return;
-    
+
     if (currentStep.type === 'allDone') {
       hapticFeedback.success();
     }
@@ -862,22 +1117,22 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
   // Confetti animation delay effect
   useEffect(() => {
     if (!currentStep) return;
-    
+
     if (currentStep.type === 'perfectFormGoalMessage') {
       // Reset confetti state when entering the step
       setShowConfetti(false);
-      
+
       // Start confetti animation instantly when screen shows
       setShowConfetti(true);
     } else if (currentStep.type === 'allDone') {
       // Reset allDone confetti state when entering the step
       setShowAllDoneConfetti(false);
-      
+
       // Start confetti animation after 100ms delay
       const timer = setTimeout(() => {
         setShowAllDoneConfetti(true);
       }, 100);
-      
+
       return () => clearTimeout(timer);
     } else {
       // Hide confetti when leaving the steps
@@ -896,14 +1151,14 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       try {
         // Check if we've already shown the delay in this session
         const delayShown = await AsyncStorage.getItem('rating_delay_shown');
-        
+
         if (!delayShown) {
           // Mark that we've shown the delay
           await AsyncStorage.setItem('rating_delay_shown', 'true');
-          
+
           // Disable the button
           setRatingButtonDisabled(true);
-          
+
           // Enable the button after 3 seconds
           ratingTimerRef.current = setTimeout(() => {
             setRatingButtonDisabled(false);
@@ -934,31 +1189,32 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
     // Track onboarding start on component mount
     track('Onboarding Started', {
       session_id: sessionId,
-      total_steps: totalSteps
+      total_steps: totalSteps,
     });
   }, [sessionId, totalSteps]);
 
   // Reset selection tracking when moving to a new step
   useEffect(() => {
-  // Clear the selection when moving to a new step
-  setCurrentStepSelection(null);
-}, [currentStepIndex]);
+    // Clear the selection when moving to a new step
+    setCurrentStepSelection(null);
+  }, [currentStepIndex]);
 
   // Auto-select default options only for language and units steps
   useEffect(() => {
     if (!currentStep) return;
-    
+
     if (currentStep.type === 'options') {
       const step = currentStep as OptionsStepConfig<keyof OnboardingData>;
       const currentValue = onboardingData[step.preferenceKey as keyof OnboardingData] as any;
-      
+
       // Only auto-select if no value is currently set and it's language or units step
-      if ((currentValue === null || currentValue === undefined || currentValue === '') && 
-          (step.preferenceKey === 'language' || step.preferenceKey === 'unitSystem')) {
-        
+      if (
+        (currentValue === null || currentValue === undefined || currentValue === '') &&
+        (step.preferenceKey === 'language' || step.preferenceKey === 'unitSystem')
+      ) {
         if (step.preferenceKey === 'language') {
           // Select English (first option) for language
-          const englishOption = step.options.find(option => option.value === 'en');
+          const englishOption = step.options.find((option) => option.value === 'en');
           if (englishOption && typeof englishOption.value === 'string') {
             updateOnboardingData(step.preferenceKey as any, englishOption.value);
             setCurrentStepSelection(englishOption.value);
@@ -966,7 +1222,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
           }
         } else if (step.preferenceKey === 'unitSystem') {
           // Select metric (first option) for units
-          const metricOption = step.options.find(option => option.value === 'metric');
+          const metricOption = step.options.find((option) => option.value === 'metric');
           if (metricOption) {
             updateOnboardingData(step.preferenceKey as any, metricOption.value);
             setCurrentStepSelection(metricOption.value);
@@ -975,8 +1231,6 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       }
     }
   }, [currentStepIndex, currentStep, onboardingData, updateOnboardingData, setLanguage]);
-
-
 
   function getPerfectFormGoalMessage() {
     const goal = onboardingData.perfectFormGoal;
@@ -988,7 +1242,9 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
         };
       case 'build_muscle_efficiently':
         return {
-          highlighted: i18n.t('onboarding.perfectFormGoalMessage.highlighted.buildMuscleEfficiently'),
+          highlighted: i18n.t(
+            'onboarding.perfectFormGoalMessage.highlighted.buildMuscleEfficiently'
+          ),
           rest: i18n.t('onboarding.perfectFormGoalMessage.restRealistic'),
         };
       case 'avoid_injuries':
@@ -1003,7 +1259,9 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
         };
       case 'train_longer_without_setbacks':
         return {
-          highlighted: i18n.t('onboarding.perfectFormGoalMessage.highlighted.trainLongerWithoutSetbacks'),
+          highlighted: i18n.t(
+            'onboarding.perfectFormGoalMessage.highlighted.trainLongerWithoutSetbacks'
+          ),
           rest: i18n.t('onboarding.perfectFormGoalMessage.restNormal'),
         };
       default:
@@ -1021,37 +1279,49 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
         return {
           headline: i18n.t('onboarding.gymChallengeInfo.noResults.headline'),
           message: i18n.t('onboarding.gymChallengeInfo.noResults.message'),
-          howWeGetYouThere: i18n.t('onboarding.gymChallengeInfo.noResults.howWeGetYouThere') as string[],
+          howWeGetYouThere: i18n.t(
+            'onboarding.gymChallengeInfo.noResults.howWeGetYouThere'
+          ) as string[],
         };
       case 'unsure_form':
         return {
           headline: i18n.t('onboarding.gymChallengeInfo.unsureForm.headline'),
           message: i18n.t('onboarding.gymChallengeInfo.unsureForm.message'),
-          howWeGetYouThere: i18n.t('onboarding.gymChallengeInfo.unsureForm.howWeGetYouThere') as string[],
+          howWeGetYouThere: i18n.t(
+            'onboarding.gymChallengeInfo.unsureForm.howWeGetYouThere'
+          ) as string[],
         };
       case 'worried_injury':
         return {
           headline: i18n.t('onboarding.gymChallengeInfo.worriedInjury.headline'),
           message: i18n.t('onboarding.gymChallengeInfo.worriedInjury.message'),
-          howWeGetYouThere: i18n.t('onboarding.gymChallengeInfo.worriedInjury.howWeGetYouThere') as string[],
+          howWeGetYouThere: i18n.t(
+            'onboarding.gymChallengeInfo.worriedInjury.howWeGetYouThere'
+          ) as string[],
         };
       case 'struggling_motivation':
         return {
           headline: i18n.t('onboarding.gymChallengeInfo.strugglingMotivation.headline'),
           message: i18n.t('onboarding.gymChallengeInfo.strugglingMotivation.message'),
-          howWeGetYouThere: i18n.t('onboarding.gymChallengeInfo.strugglingMotivation.howWeGetYouThere') as string[],
+          howWeGetYouThere: i18n.t(
+            'onboarding.gymChallengeInfo.strugglingMotivation.howWeGetYouThere'
+          ) as string[],
         };
       case 'other':
         return {
           headline: i18n.t('onboarding.gymChallengeInfo.other.headline'),
           message: i18n.t('onboarding.gymChallengeInfo.other.message'),
-          howWeGetYouThere: i18n.t('onboarding.gymChallengeInfo.other.howWeGetYouThere') as string[],
+          howWeGetYouThere: i18n.t(
+            'onboarding.gymChallengeInfo.other.howWeGetYouThere'
+          ) as string[],
         };
       default:
         return {
           headline: i18n.t('onboarding.gymChallengeInfo.other.headline'),
           message: i18n.t('onboarding.gymChallengeInfo.other.message'),
-          howWeGetYouThere: i18n.t('onboarding.gymChallengeInfo.other.howWeGetYouThere') as string[],
+          howWeGetYouThere: i18n.t(
+            'onboarding.gymChallengeInfo.other.howWeGetYouThere'
+          ) as string[],
         };
     }
   }
@@ -1090,7 +1360,6 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       error: error || null,
     });
   }
-
 
   // Robust camera permission request with pre-check and Settings fallback
   async function requestCameraPermissionAndProceed(onSuccess: () => void): Promise<void> {
@@ -1147,7 +1416,6 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
     }
   }
 
-
   async function handleRateFormAI() {
     hapticFeedback.selection();
     try {
@@ -1167,18 +1435,18 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
 
   async function handleApplyReferralCode() {
     if (!referralCode.trim()) return;
-    
+
     setApplyButtonLoading(true);
     setReferralError(false);
-    
+
     try {
-        const result = await validateReferralCode(referralCode.trim().toUpperCase());
-      
+      const result = await validateReferralCode(referralCode.trim().toUpperCase());
+
       if (result.isValid && result.referralCode) {
         // Valid referral code found - update context and navigate to next step
         hapticFeedback.success();
         updateOnboardingData('referralCode', referralCode.trim().toUpperCase());
-        
+
         // Track successful referral code entry
         track('Onboarding Referral Code Entered', {
           session_id: sessionId,
@@ -1187,13 +1455,16 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
           referral_code: referralCode.trim().toUpperCase(),
           success: true,
         });
-        
+
         // Navigate to next step
-        setCurrentStepIndex(i => i + 1);
+        setCurrentStepIndex((i) => i + 1);
       } else {
         // Invalid referral code - show alert and reset state
         hapticFeedback.error();
-        Alert.alert('Invalid Referral Code', 'The referral code you entered is not valid. Please check and try again.');
+        Alert.alert(
+          'Invalid Referral Code',
+          'The referral code you entered is not valid. Please check and try again.'
+        );
         setReferralError(true);
       }
     } catch (error) {
@@ -1208,11 +1479,14 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
   async function handleDirectAccountCreation() {
     // Navigate to AccountLoading screen immediately to show loading state
     navigation.navigate('AccountLoading' as never);
-    
+
     try {
       // Get the current user from Supabase auth
-      const { data: { user }, error } = await supabase.auth.getUser();
-      
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
+
       if (error || !user?.id) {
         showAlert('Error', 'Unable to get user information. Please try again.');
         return;
@@ -1223,20 +1497,20 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       if (existingUser) {
         // User already exists, just log them in and navigate to main app
         await logIn(user.id);
-        
+
         // Track sign in completion for existing user
         track('Sign In Completed', {
           signin_method: 'onboarding_completion',
           user_id: user.id,
         });
-        
+
         try {
           // Register Expo push token for existing user
           await registerAndSaveExpoPushToken(user.id);
           // AccountLoading screen will handle the next navigation via its onComplete
         } catch (error) {
           showAlert(
-            'Error', 
+            'Error',
             'An error occurred while signing in. Please try again.',
             undefined,
             'ONBOARDING_EXISTING_USER_ERROR',
@@ -1245,10 +1519,10 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
         }
         return;
       }
-      
+
       // New user - proceed with onboarding setup
       const signInMethod = user?.app_metadata?.provider || 'onboarding_completion';
-      
+
       const profilePicture: string | null =
         (user?.user_metadata?.avatar_url as string | undefined) ??
         (user?.user_metadata?.picture as string | undefined) ??
@@ -1268,7 +1542,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       updateOnboardingData('walkthroughCompleted', false);
       updateOnboardingData('userId', user.id);
       updateOnboardingData('profilePicture', profilePicture);
-      
+
       await logIn(user.id);
 
       // Track signup completion
@@ -1285,7 +1559,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
         // AccountLoading screen will handle the next navigation via its onComplete
       } catch (persistError) {
         showAlert(
-          'Error', 
+          'Error',
           'An error occurred while setting up your account. Please try again.',
           undefined,
           'ONBOARDING_DIRECT_ACCOUNT_CREATION_ERROR',
@@ -1294,7 +1568,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       }
     } catch (error) {
       showAlert(
-        'Error', 
+        'Error',
         'An error occurred while creating your account. Please try again.',
         undefined,
         'ONBOARDING_DIRECT_ACCOUNT_CREATION_ERROR',
@@ -1310,7 +1584,9 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
     const getSelectedValueForStep = () => {
       if (currentStep.type === 'options') {
         // Use the current selection if available, otherwise fall back to saved data
-        return currentStepSelection !== null ? currentStepSelection : onboardingData[(currentStep as OptionsStepConfig<keyof OnboardingData>).preferenceKey];
+        return currentStepSelection !== null
+          ? currentStepSelection
+          : onboardingData[(currentStep as OptionsStepConfig<keyof OnboardingData>).preferenceKey];
       } else if (currentStep.type === 'measurements') {
         if (currentStep.id === 'height') {
           return onboardingData.metricHeight;
@@ -1341,7 +1617,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
     }
 
     track('Onboarding Step Completed', trackingData);
-   
+
     // Track referral step skipped (no code applied)
     if (currentStep.type === 'referral' && !onboardingData.referralCode) {
       track('Onboarding Referral Code Skipped', {
@@ -1352,13 +1628,13 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
         success: true,
       });
     }
-    
+
     if (!isLast) {
       hapticFeedback.selection();
-      setCurrentStepIndex(i => i + 1);
+      setCurrentStepIndex((i) => i + 1);
       return;
     }
-    
+
     // Track onboarding completion
     track('Onboarding Completed', {
       session_id: sessionId,
@@ -1387,7 +1663,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
 
   function handleBack() {
     if (currentStepIndex > 0) {
-      setCurrentStepIndex(i => i - 1);
+      setCurrentStepIndex((i) => i - 1);
       return;
     }
     // Navigate back to previous screen in stack
@@ -1440,50 +1716,104 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       nextTitle={nextLabel}
       nextDisabled={nextDisabled}
       nextLoading={nextLoading}
-      hideNextButton={currentStep.type === 'saveProgress' || currentStep.type === 'notificationPermission' || currentStep.type === 'cameraPermission'}
-      hideTitle={currentStep.type === 'notificationPermission' || currentStep.type === 'cameraPermission'}
-      
+      hideNextButton={
+        currentStep.type === 'saveProgress' ||
+        currentStep.type === 'notificationPermission' ||
+        currentStep.type === 'cameraPermission'
+      }
+      hideTitle={
+        currentStep.type === 'notificationPermission' || currentStep.type === 'cameraPermission'
+      }
     >
       {currentStep.id === 'trainSafer' && (
         <View style={styles.infoStepContainer}>
           <LinearGradient
-              colors={appColors.onboarding.comparison.gradient.colors}
-              locations={appColors.onboarding.comparison.gradient.locations}
-              start={appColors.onboarding.comparison.gradient.start}
-              end={appColors.onboarding.comparison.gradient.end}
-              style={styles.comparisonCard}
+            colors={appColors.onboarding.comparison.gradient.colors}
+            locations={appColors.onboarding.comparison.gradient.locations}
+            start={appColors.onboarding.comparison.gradient.start}
+            end={appColors.onboarding.comparison.gradient.end}
+            style={styles.comparisonCard}
           >
-              <View style={styles.comparisonRow}>
-                {/* Without FormAI */}
-                <View style={styles.comparisonSection}>
-                  <View style={styles.whiteBoxContainer}>
-                    <Text style={[styles.sectionTitle, { color: appColors.onboarding.comparison.sectionTitle }]}>
-                      {i18n.t('onboarding.trainSafer.withoutFormAI')}
-                      </Text>
-                        <Animated.View style={[styles.percentageBox, { backgroundColor: appColors.onboarding.comparison.percentageBox.background, height: percentageBoxHeight, opacity: percentageBoxOpacity }]}>
-                        <Animated.Text style={[styles.percentageText, { color: appColors.onboarding.comparison.percentageBox.text, opacity: percentageTextOpacity }]}>
-                          60%
-                        </Animated.Text>
-                      </Animated.View>
-                  </View>
-                </View>
-
-                {/* With FormAI */}
-                <View style={styles.comparisonSection}>
-                  <View style={styles.whiteBoxContainer}>
-                    <Text style={[styles.sectionTitle, { color: appColors.onboarding.comparison.sectionTitle }]}>
-                      {i18n.t('onboarding.trainSafer.withFormAI')}
-                    </Text>
-                        <Animated.View style={[styles.formaiBox, { backgroundColor: appColors.onboarding.comparison.formaiBox.background, height: formaiBoxHeight, opacity: formaiBoxOpacity }]}>
-                        <Animated.Text style={[styles.formaiText, { color: appColors.onboarding.comparison.formaiBox.text, opacity: formaiTextOpacity }]}>
-                          3x less
-                        </Animated.Text>
-                      </Animated.View>
-                  </View>
+            <View style={styles.comparisonRow}>
+              {/* Without FormAI */}
+              <View style={styles.comparisonSection}>
+                <View style={styles.whiteBoxContainer}>
+                  <Text
+                    style={[
+                      styles.sectionTitle,
+                      { color: appColors.onboarding.comparison.sectionTitle },
+                    ]}
+                  >
+                    {i18n.t('onboarding.trainSafer.withoutFormAI')}
+                  </Text>
+                  <Animated.View
+                    style={[
+                      styles.percentageBox,
+                      {
+                        backgroundColor: appColors.onboarding.comparison.percentageBox.background,
+                        height: percentageBoxHeight,
+                        opacity: percentageBoxOpacity,
+                      },
+                    ]}
+                  >
+                    <Animated.Text
+                      style={[
+                        styles.percentageText,
+                        {
+                          color: appColors.onboarding.comparison.percentageBox.text,
+                          opacity: percentageTextOpacity,
+                        },
+                      ]}
+                    >
+                      60%
+                    </Animated.Text>
+                  </Animated.View>
                 </View>
               </View>
 
-            <Animated.Text style={[styles.description, { color: appColors.onboarding.comparison.description, opacity: descriptionOpacity }]}>
+              {/* With FormAI */}
+              <View style={styles.comparisonSection}>
+                <View style={styles.whiteBoxContainer}>
+                  <Text
+                    style={[
+                      styles.sectionTitle,
+                      { color: appColors.onboarding.comparison.sectionTitle },
+                    ]}
+                  >
+                    {i18n.t('onboarding.trainSafer.withFormAI')}
+                  </Text>
+                  <Animated.View
+                    style={[
+                      styles.formaiBox,
+                      {
+                        backgroundColor: appColors.onboarding.comparison.formaiBox.background,
+                        height: formaiBoxHeight,
+                        opacity: formaiBoxOpacity,
+                      },
+                    ]}
+                  >
+                    <Animated.Text
+                      style={[
+                        styles.formaiText,
+                        {
+                          color: appColors.onboarding.comparison.formaiBox.text,
+                          opacity: formaiTextOpacity,
+                        },
+                      ]}
+                    >
+                      3x less
+                    </Animated.Text>
+                  </Animated.View>
+                </View>
+              </View>
+            </View>
+
+            <Animated.Text
+              style={[
+                styles.description,
+                { color: appColors.onboarding.comparison.description, opacity: descriptionOpacity },
+              ]}
+            >
               {i18n.t('onboarding.trainSafer.description')}
             </Animated.Text>
           </LinearGradient>
@@ -1499,44 +1829,93 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
             end={appColors.onboarding.comparison.gradient.end}
             style={styles.comparisonCard}
           >
-              <View style={styles.comparisonRow}>
-                {/* Personal Trainer */}
-                <View style={styles.comparisonSection}>
-                  <View style={styles.whiteBoxContainer}>
-                    <Text style={[styles.sectionTitle, { color: appColors.onboarding.comparison.sectionTitle }]}>
-                      {i18n.t('onboarding.costComparison.personalTrainer')}
-                    </Text>
-                        <Animated.View style={[styles.percentageBox, { backgroundColor: appColors.onboarding.comparison.percentageBox.background, height: percentageBoxHeight, opacity: percentageBoxOpacity }]}>
-                        <Animated.Text style={[styles.percentageText, { color: appColors.onboarding.comparison.percentageBox.text, opacity: percentageTextOpacity }]}>
-                          $5000+/yr
-                        </Animated.Text>
-                      </Animated.View>
-                  </View>
-                </View>
-
-                {/* With FormAI */}
-                <View style={styles.comparisonSection}>
-                  <View style={styles.whiteBoxContainer}>
-                    <Text style={[styles.sectionTitle, { color: appColors.onboarding.comparison.sectionTitle }]}>
-                      {i18n.t('onboarding.costComparison.withFormAI')}
-                      </Text>
-                        <Animated.View style={[styles.formaiBox, { backgroundColor: appColors.onboarding.comparison.formaiBox.background, height: formaiBoxHeight, opacity: formaiBoxOpacity }]}>
-                        <Animated.Text style={[styles.formaiText, { color: appColors.onboarding.comparison.formaiBox.text, opacity: formaiTextOpacity }]}>
-                          {i18n.t('onboarding.costComparison.costLess')}
-                        </Animated.Text>
-                      </Animated.View>
-                  </View>
+            <View style={styles.comparisonRow}>
+              {/* Personal Trainer */}
+              <View style={styles.comparisonSection}>
+                <View style={styles.whiteBoxContainer}>
+                  <Text
+                    style={[
+                      styles.sectionTitle,
+                      { color: appColors.onboarding.comparison.sectionTitle },
+                    ]}
+                  >
+                    {i18n.t('onboarding.costComparison.personalTrainer')}
+                  </Text>
+                  <Animated.View
+                    style={[
+                      styles.percentageBox,
+                      {
+                        backgroundColor: appColors.onboarding.comparison.percentageBox.background,
+                        height: percentageBoxHeight,
+                        opacity: percentageBoxOpacity,
+                      },
+                    ]}
+                  >
+                    <Animated.Text
+                      style={[
+                        styles.percentageText,
+                        {
+                          color: appColors.onboarding.comparison.percentageBox.text,
+                          opacity: percentageTextOpacity,
+                        },
+                      ]}
+                    >
+                      $5000+/yr
+                    </Animated.Text>
+                  </Animated.View>
                 </View>
               </View>
 
-            <Animated.Text style={[styles.description, { color: appColors.onboarding.comparison.description, opacity: descriptionOpacity }]}>
+              {/* With FormAI */}
+              <View style={styles.comparisonSection}>
+                <View style={styles.whiteBoxContainer}>
+                  <Text
+                    style={[
+                      styles.sectionTitle,
+                      { color: appColors.onboarding.comparison.sectionTitle },
+                    ]}
+                  >
+                    {i18n.t('onboarding.costComparison.withFormAI')}
+                  </Text>
+                  <Animated.View
+                    style={[
+                      styles.formaiBox,
+                      {
+                        backgroundColor: appColors.onboarding.comparison.formaiBox.background,
+                        height: formaiBoxHeight,
+                        opacity: formaiBoxOpacity,
+                      },
+                    ]}
+                  >
+                    <Animated.Text
+                      style={[
+                        styles.formaiText,
+                        {
+                          color: appColors.onboarding.comparison.formaiBox.text,
+                          opacity: formaiTextOpacity,
+                        },
+                      ]}
+                    >
+                      {i18n.t('onboarding.costComparison.costLess')}
+                    </Animated.Text>
+                  </Animated.View>
+                </View>
+              </View>
+            </View>
+
+            <Animated.Text
+              style={[
+                styles.description,
+                { color: appColors.onboarding.comparison.description, opacity: descriptionOpacity },
+              ]}
+            >
               {i18n.t('onboarding.costComparison.description')}
             </Animated.Text>
           </LinearGradient>
-          
+
           {/* Source text */}
           <View style={styles.sourceContainer}>
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={async () => {
                 hapticFeedback.selection();
                 try {
@@ -1547,7 +1926,9 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
               }}
               activeOpacity={0.7}
             >
-              <Text style={[styles.sourceText, { color: appColors.onboarding.comparison.source.text }]}>
+              <Text
+                style={[styles.sourceText, { color: appColors.onboarding.comparison.source.text }]}
+              >
                 Source
               </Text>
             </TouchableOpacity>
@@ -1571,13 +1952,28 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
           )}
 
           <View style={styles.perfectFormGoalMessageContent}>
-            <Text style={[styles.perfectFormGoalMessageTitle, { color: appColors.onboarding.perfectFormGoalMessage.title }]}>
-              <Text style={[styles.highlightedText, { color: appColors.onboarding.perfectFormGoalMessage.highlightedText }]}>
+            <Text
+              style={[
+                styles.perfectFormGoalMessageTitle,
+                { color: appColors.onboarding.perfectFormGoalMessage.title },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.highlightedText,
+                  { color: appColors.onboarding.perfectFormGoalMessage.highlightedText },
+                ]}
+              >
                 {getPerfectFormGoalMessage().highlighted}
               </Text>
               {getPerfectFormGoalMessage().rest}
             </Text>
-            <Text style={[styles.perfectFormGoalMessageSubtitle, { color: appColors.onboarding.perfectFormGoalMessage.subtitle }]}>
+            <Text
+              style={[
+                styles.perfectFormGoalMessageSubtitle,
+                { color: appColors.onboarding.perfectFormGoalMessage.subtitle },
+              ]}
+            >
               {i18n.t('onboarding.perfectFormGoalMessage.subtitle')}
             </Text>
           </View>
@@ -1585,7 +1981,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
       )}
 
       {currentStep.type === 'gymChallengeInfo' && (
-        <ScrollView 
+        <ScrollView
           style={styles.gymChallengeInfoContainer}
           contentContainerStyle={styles.gymChallengeInfoContent}
           showsVerticalScrollIndicator={false}
@@ -1600,33 +1996,68 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
             end={appColors.onboarding.gymChallengeInfo.gradient.end}
             style={styles.gymChallengeInfoCard}
           >
-            <Text style={[styles.gymChallengeInfoHeadline, { color: appColors.onboarding.gymChallengeInfo.headline }]}>
+            <Text
+              style={[
+                styles.gymChallengeInfoHeadline,
+                { color: appColors.onboarding.gymChallengeInfo.headline },
+              ]}
+            >
               {getGymChallengeInfo().headline}
             </Text>
-            <Text style={[styles.gymChallengeInfoMessage, { color: appColors.onboarding.gymChallengeInfo.message }]}>
+            <Text
+              style={[
+                styles.gymChallengeInfoMessage,
+                { color: appColors.onboarding.gymChallengeInfo.message },
+              ]}
+            >
               {getGymChallengeInfo().message}
             </Text>
           </LinearGradient>
 
           {/* How we get you there section */}
-          <Text style={[styles.howWeGetYouThereTitle, { color: appColors.onboarding.gymChallengeInfo.howWeGetYouThereTitle }]}>
+          <Text
+            style={[
+              styles.howWeGetYouThereTitle,
+              { color: appColors.onboarding.gymChallengeInfo.howWeGetYouThereTitle },
+            ]}
+          >
             {i18n.t('onboarding.gymChallengeInfo.howWeGetYouThereTitle')}:
           </Text>
 
           {/* How we get you there items */}
           {getGymChallengeInfo().howWeGetYouThere.map((item: string, index: number) => (
             <AnimatedInfoCard key={index} delay={index * 100}>
-              <View style={[styles.howWeGetYouThereCard, { 
-                backgroundColor: appColors.onboarding.gymChallengeInfo.card.background,
-                borderColor: appColors.onboarding.gymChallengeInfo.card.border,
-                borderWidth: 1,
-              }]}>
-                <View style={[styles.howWeGetYouThereIcon, { backgroundColor: appColors.onboarding.gymChallengeInfo.card.iconBackground }]}>
-                  <Text style={[styles.howWeGetYouThereNumber, { color: appColors.onboarding.gymChallengeInfo.card.iconText }]}>
+              <View
+                style={[
+                  styles.howWeGetYouThereCard,
+                  {
+                    backgroundColor: appColors.onboarding.gymChallengeInfo.card.background,
+                    borderColor: appColors.onboarding.gymChallengeInfo.card.border,
+                    borderWidth: 1,
+                  },
+                ]}
+              >
+                <View
+                  style={[
+                    styles.howWeGetYouThereIcon,
+                    { backgroundColor: appColors.onboarding.gymChallengeInfo.card.iconBackground },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.howWeGetYouThereNumber,
+                      { color: appColors.onboarding.gymChallengeInfo.card.iconText },
+                    ]}
+                  >
                     {index + 1}
                   </Text>
                 </View>
-                <Text style={[styles.howWeGetYouThereItem, { color: appColors.onboarding.gymChallengeInfo.card.text }]}>
+                <Text
+                  style={[
+                    styles.howWeGetYouThereItem,
+                    { color: appColors.onboarding.gymChallengeInfo.card.text },
+                  ]}
+                >
                   {item}
                 </Text>
               </View>
@@ -1650,40 +2081,40 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
               </Text>
             </View>
             <LineChart
-                data={{
-                    labels: [
-                      i18n.t('onboarding.potentialGraph.dayLabels.day3'), 
-                      '', 
-                      i18n.t('onboarding.potentialGraph.dayLabels.day14'), 
-                      '', 
-                      i18n.t('onboarding.potentialGraph.dayLabels.day30')
-                    ],
-                    datasets: [
-                      {
-                        key: 'main-dataset',
-                        data: [20, 25, 30, 58, 85],
-                        color: () => '#000000',
-                        strokeWidth: 3,
-                      },
-                      {
-                        key: 'transparent-start',
-                        data: [10],
-                        withDots: false,
-                        color: () => 'transparent',
-                        strokeWidth: 0,
-                      },
-                      {
-                        key: 'transparent-end',
-                        data: [81],
-                        withDots: false,
-                        color: () => 'transparent',
-                        strokeWidth: 0,
-                      },
-                    ],
-                  }}
-                  fromZero={false}
-                              width={400}
-                height={200}
+              data={{
+                labels: [
+                  i18n.t('onboarding.potentialGraph.dayLabels.day3'),
+                  '',
+                  i18n.t('onboarding.potentialGraph.dayLabels.day14'),
+                  '',
+                  i18n.t('onboarding.potentialGraph.dayLabels.day30'),
+                ],
+                datasets: [
+                  {
+                    key: 'main-dataset',
+                    data: [20, 25, 30, 58, 85],
+                    color: () => '#000000',
+                    strokeWidth: 3,
+                  },
+                  {
+                    key: 'transparent-start',
+                    data: [10],
+                    withDots: false,
+                    color: () => 'transparent',
+                    strokeWidth: 0,
+                  },
+                  {
+                    key: 'transparent-end',
+                    data: [81],
+                    withDots: false,
+                    color: () => 'transparent',
+                    strokeWidth: 0,
+                  },
+                ],
+              }}
+              fromZero={false}
+              width={400}
+              height={200}
               withHorizontalLabels={false}
               withInnerLines={false}
               withOuterLines={false}
@@ -1691,7 +2122,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                 backgroundGradientFrom: appColors.onboarding.graph.chart.background,
                 backgroundGradientTo: appColors.onboarding.graph.chart.background,
                 backgroundGradientFromOpacity: 0,
-                backgroundGradientToOpacity: 0,  
+                backgroundGradientToOpacity: 0,
                 decimalPlaces: 0,
                 color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
                 labelColor: () => appColors.onboarding.graph.chart.labelColor,
@@ -1715,14 +2146,14 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                 fillShadowGradientFrom: '#ffb86a',
                 fillShadowGradientTo: '#e2e8f0',
               }}
-              decorator={({ width, height }: { width: number, height: number }) => {
+              decorator={({ width, height }: { width: number; height: number }) => {
                 const lineWidth = width * 0.7; // 70% of chart width
                 const startX = (width - lineWidth) / 2; // center horizontally
                 return (
                   <Line
                     key="decorator-line"
                     x1={startX}
-                    y1={height - 34}   // increased bottom margin
+                    y1={height - 34} // increased bottom margin
                     x2={startX + lineWidth}
                     y2={height - 34}
                     stroke="black"
@@ -1734,14 +2165,19 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                 // Check if this is the last data point (index 4 for the 5th data point)
                 if (index === 4) {
                   return (
-                    <View 
+                    <View
                       key={`trophy-dot-${index}`}
                       style={[styles.customTrophyDot, { left: x - 18, top: y - 18 }]}
                     >
-                      <View style={[styles.trophyDotBackground, { 
-                        backgroundColor: appColors.onboarding.graph.chart.trophyBackground,
-                        borderColor: appColors.onboarding.graph.chart.trophyBorder 
-                      }]}>
+                      <View
+                        style={[
+                          styles.trophyDotBackground,
+                          {
+                            backgroundColor: appColors.onboarding.graph.chart.trophyBackground,
+                            borderColor: appColors.onboarding.graph.chart.trophyBorder,
+                          },
+                        ]}
+                      >
                         <Trophy size={20} color="#FFFFFF" />
                       </View>
                     </View>
@@ -1752,18 +2188,23 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
               bezier
               style={styles.chart}
             />
-            <Animated.Text style={[styles.graphSubtitle, { color: appColors.onboarding.graph.subtitle, opacity: graphSubtitleOpacity }]}>
+            <Animated.Text
+              style={[
+                styles.graphSubtitle,
+                { color: appColors.onboarding.graph.subtitle, opacity: graphSubtitleOpacity },
+              ]}
+            >
               {i18n.t('onboarding.potentialGraph.subtitle')}
             </Animated.Text>
           </LinearGradient>
         </AnimatedGraphContainer>
       )}
 
-      {currentStep.type === 'options' && (
-        currentStep.id === 'language' ? (
+      {currentStep.type === 'options' &&
+        (currentStep.id === 'language' ? (
           <FlatList
             data={(currentStep as OptionsStepConfig<keyof OnboardingData>).options}
-            keyExtractor={item => String(item.value)}
+            keyExtractor={(item) => String(item.value)}
             renderItem={({ item, index }) => {
               const selectedValue = onboardingData['language'] as any;
               return (
@@ -1773,50 +2214,78 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                   delay={index * 100}
                   hasIcon={!!(item.icon || item.iconImage)}
                 >
-                  <View style={currentStep.id === 'language' || currentStep.id === 'units' || currentStep.id === 'gender' || currentStep.id === 'ageRange' ? styles.optionContentRowCentered : styles.optionContentRow}>
+                  <View
+                    style={
+                      currentStep.id === 'language' ||
+                      currentStep.id === 'units' ||
+                      currentStep.id === 'gender' ||
+                      currentStep.id === 'ageRange'
+                        ? styles.optionContentRowCentered
+                        : styles.optionContentRow
+                    }
+                  >
                     {item.icon ? (
-                      <View style={[
-                        styles.optionIconContainer,
-                        { 
-                          backgroundColor: selectedValue === item.value 
-                            ? appColors.onboarding.button.active.iconBackground 
-                            : appColors.onboarding.button.inactive.iconBackground 
-                        }
-                      ]}>
+                      <View
+                        style={[
+                          styles.optionIconContainer,
+                          {
+                            backgroundColor:
+                              selectedValue === item.value
+                                ? appColors.onboarding.button.active.iconBackground
+                                : appColors.onboarding.button.inactive.iconBackground,
+                          },
+                        ]}
+                      >
                         {React.cloneElement(item.icon as React.ReactElement<any>, {
-                          color: selectedValue === item.value 
-                            ? appColors.onboarding.button.active.iconColor 
-                            : appColors.onboarding.button.inactive.iconColor
+                          color:
+                            selectedValue === item.value
+                              ? appColors.onboarding.button.active.iconColor
+                              : appColors.onboarding.button.inactive.iconColor,
                         })}
                       </View>
                     ) : item.iconImage ? (
-                      <View style={[
-                        styles.optionIconContainer,
-                        { 
-                          backgroundColor: selectedValue === item.value 
-                            ? appColors.onboarding.button.active.iconBackground 
-                            : appColors.onboarding.button.inactive.iconBackground 
-                        }
-                      ]}>
-                        <Image 
-                          source={item.iconImage} 
-                          style={[
-                            styles.optionIconImage,
-                            item.iconWidth ? { width: item.iconWidth } : undefined,
-                            item.iconHeight ? { height: item.iconHeight } : undefined
-                          ] as any} 
-                          contentFit="contain" 
+                      <View
+                        style={[
+                          styles.optionIconContainer,
+                          {
+                            backgroundColor:
+                              selectedValue === item.value
+                                ? appColors.onboarding.button.active.iconBackground
+                                : appColors.onboarding.button.inactive.iconBackground,
+                          },
+                        ]}
+                      >
+                        <Image
+                          source={item.iconImage}
+                          style={
+                            [
+                              styles.optionIconImage,
+                              item.iconWidth ? { width: item.iconWidth } : undefined,
+                              item.iconHeight ? { height: item.iconHeight } : undefined,
+                            ] as any
+                          }
+                          contentFit="contain"
                         />
                       </View>
                     ) : null}
-                    <View style={currentStep.id === 'language' || currentStep.id === 'units' || currentStep.id === 'gender' || currentStep.id === 'ageRange' ? styles.optionTextContainerCentered : styles.optionTextContainer}>
+                    <View
+                      style={
+                        currentStep.id === 'language' ||
+                        currentStep.id === 'units' ||
+                        currentStep.id === 'gender' ||
+                        currentStep.id === 'ageRange'
+                          ? styles.optionTextContainerCentered
+                          : styles.optionTextContainer
+                      }
+                    >
                       <Text
                         style={[
                           styles.optionLabel,
                           {
-                            color: selectedValue === item.value 
-                              ? appColors.onboarding.button.active.text 
-                              : appColors.onboarding.button.inactive.text,
+                            color:
+                              selectedValue === item.value
+                                ? appColors.onboarding.button.active.text
+                                : appColors.onboarding.button.inactive.text,
                             fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
                           },
                         ]}
@@ -1849,93 +2318,125 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
             alwaysBounceVertical={false}
             nestedScrollEnabled
           >
-            {(currentStep as OptionsStepConfig<keyof OnboardingData>).options.map((option, index) => {
-              const step = currentStep as OptionsStepConfig<keyof OnboardingData>;
-              const selectedValue = onboardingData[step.preferenceKey as keyof OnboardingData] as any;
-              return (
-                <AnimatedOptionButton
-                  key={String(option.value)}
-                  onPress={() => handleSelectOptionStep(option.value)}
-                  isSelected={selectedValue === option.value}
-                  delay={index * 100}
-                  style={option.description ? styles.optionWithDescription : undefined}
-                  hasIcon={!!(option.icon || option.iconImage)}
-                >
-                  <View style={currentStep.id === 'language' || currentStep.id === 'units' || currentStep.id === 'gender' || currentStep.id === 'ageRange' ? styles.optionContentRowCentered : styles.optionContentRow}>
-                    {option.icon ? (
-                      <View style={[
-                        styles.optionIconContainer,
-                        { 
-                          backgroundColor: selectedValue === option.value 
-                            ? appColors.onboarding.button.active.iconBackground 
-                            : appColors.onboarding.button.inactive.iconBackground 
-                        }
-                      ]}>
-                        {React.cloneElement(option.icon as React.ReactElement<any>, {
-                          color: selectedValue === option.value 
-                            ? appColors.onboarding.button.active.iconColor 
-                            : appColors.onboarding.button.inactive.iconColor
-                        })}
-                      </View>
-                    ) : option.iconImage ? (
-                      <View style={[
-                        styles.optionIconContainer,
-                        { 
-                          backgroundColor: selectedValue === option.value 
-                            ? appColors.onboarding.button.active.iconBackground 
-                            : appColors.onboarding.button.inactive.iconBackground 
-                        }
-                      ]}>
-                        <Image 
-                          source={option.iconImage} 
+            {(currentStep as OptionsStepConfig<keyof OnboardingData>).options.map(
+              (option, index) => {
+                const step = currentStep as OptionsStepConfig<keyof OnboardingData>;
+                const selectedValue = onboardingData[
+                  step.preferenceKey as keyof OnboardingData
+                ] as any;
+                return (
+                  <AnimatedOptionButton
+                    key={String(option.value)}
+                    onPress={() => handleSelectOptionStep(option.value)}
+                    isSelected={selectedValue === option.value}
+                    delay={index * 100}
+                    style={option.description ? styles.optionWithDescription : undefined}
+                    hasIcon={!!(option.icon || option.iconImage)}
+                  >
+                    <View
+                      style={
+                        currentStep.id === 'language' ||
+                        currentStep.id === 'units' ||
+                        currentStep.id === 'gender' ||
+                        currentStep.id === 'ageRange'
+                          ? styles.optionContentRowCentered
+                          : styles.optionContentRow
+                      }
+                    >
+                      {option.icon ? (
+                        <View
                           style={[
-                            styles.optionIconImage,
-                            option.iconWidth ? { width: option.iconWidth } : undefined,
-                            option.iconHeight ? { height: option.iconHeight } : undefined
-                          ] as any} 
-                          contentFit="contain" 
-                        />
-                      </View>
-                    ) : null}
-                    <View style={currentStep.id === 'language' || currentStep.id === 'units' || currentStep.id === 'gender' || currentStep.id === 'ageRange' ? styles.optionTextContainerCentered : styles.optionTextContainer}>
-                      <Text
-                        style={[
-                          styles.optionLabel,
-                          {
-                            color: selectedValue === option.value 
-                              ? appColors.onboarding.button.active.text 
-                              : appColors.onboarding.button.inactive.text,
-                            fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
-                          },
-                        ]}
-                      >
-                        {option.label}
-                      </Text>
-                      {option.description ? (
-                        <Text
-                          style={[
-                            styles.optionDescription,
-                            { 
-                              color: selectedValue === option.value 
-                                ? appColors.onboarding.button.active.text 
-                                : appColors.onboarding.button.inactive.text 
+                            styles.optionIconContainer,
+                            {
+                              backgroundColor:
+                                selectedValue === option.value
+                                  ? appColors.onboarding.button.active.iconBackground
+                                  : appColors.onboarding.button.inactive.iconBackground,
                             },
                           ]}
                         >
-                          {option.description}
-                        </Text>
+                          {React.cloneElement(option.icon as React.ReactElement<any>, {
+                            color:
+                              selectedValue === option.value
+                                ? appColors.onboarding.button.active.iconColor
+                                : appColors.onboarding.button.inactive.iconColor,
+                          })}
+                        </View>
+                      ) : option.iconImage ? (
+                        <View
+                          style={[
+                            styles.optionIconContainer,
+                            {
+                              backgroundColor:
+                                selectedValue === option.value
+                                  ? appColors.onboarding.button.active.iconBackground
+                                  : appColors.onboarding.button.inactive.iconBackground,
+                            },
+                          ]}
+                        >
+                          <Image
+                            source={option.iconImage}
+                            style={
+                              [
+                                styles.optionIconImage,
+                                option.iconWidth ? { width: option.iconWidth } : undefined,
+                                option.iconHeight ? { height: option.iconHeight } : undefined,
+                              ] as any
+                            }
+                            contentFit="contain"
+                          />
+                        </View>
                       ) : null}
+                      <View
+                        style={
+                          currentStep.id === 'language' ||
+                          currentStep.id === 'units' ||
+                          currentStep.id === 'gender' ||
+                          currentStep.id === 'ageRange'
+                            ? styles.optionTextContainerCentered
+                            : styles.optionTextContainer
+                        }
+                      >
+                        <Text
+                          style={[
+                            styles.optionLabel,
+                            {
+                              color:
+                                selectedValue === option.value
+                                  ? appColors.onboarding.button.active.text
+                                  : appColors.onboarding.button.inactive.text,
+                              fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+                            },
+                          ]}
+                        >
+                          {option.label}
+                        </Text>
+                        {option.description ? (
+                          <Text
+                            style={[
+                              styles.optionDescription,
+                              {
+                                color:
+                                  selectedValue === option.value
+                                    ? appColors.onboarding.button.active.text
+                                    : appColors.onboarding.button.inactive.text,
+                              },
+                            ]}
+                          >
+                            {option.description}
+                          </Text>
+                        ) : null}
+                      </View>
                     </View>
-                  </View>
-                </AnimatedOptionButton>
-              );
-            })}
+                  </AnimatedOptionButton>
+                );
+              }
+            )}
           </ScrollView>
-        )
-      )}
+        ))}
 
       {currentStep.type === 'measurements' && (
-        <ScrollView 
+        <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.measurementsContentContainer}
           showsVerticalScrollIndicator={false}
@@ -1944,86 +2445,136 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
         >
           <View style={styles.measurementsRow}>
             <View style={styles.measurePickerSection}>
-              <Text style={[styles.pickerLabel, { color: appColors.onboarding.measurements.pickerLabel }]}>
+              <Text
+                style={[
+                  styles.pickerLabel,
+                  { color: appColors.onboarding.measurements.pickerLabel },
+                ]}
+              >
                 {i18n.t('onboarding.measurements.height')}
               </Text>
-              <View style={styles.pickerWrapper}> 
+              <View style={styles.pickerWrapper}>
                 {isMetric ? (
                   <Picker
-                    selectedValue={
-                      (() => {
-                        const current = getCurrentHeight() as number;
-                        const base = 100;
-                        const len = heightOptions.length;
-                        const idx = Math.max(0, Math.min(len - 1, current - base));
-                        return middleRepeatIndex * len + idx;
-                      })()
-                    }
-                    onValueChange={value => {
+                    selectedValue={(() => {
+                      const current = getCurrentHeight() as number;
+                      const base = 100;
+                      const len = heightOptions.length;
+                      const idx = Math.max(0, Math.min(len - 1, current - base));
+                      return middleRepeatIndex * len + idx;
+                    })()}
+                    onValueChange={(value) => {
                       const len = heightOptions.length;
                       const optionIndex = Number(value) % len;
                       const selected = heightOptions[optionIndex];
                       handleHeightSelect(selected);
                     }}
-                    style={[styles.picker, { color: appColors.onboarding.measurements.picker.text }]}
-                    itemStyle={Platform.OS === 'ios' ? { color: appColors.onboarding.measurements.picker.itemText, fontSize: 14 } : undefined}
+                    style={[
+                      styles.picker,
+                      { color: appColors.onboarding.measurements.picker.text },
+                    ]}
+                    itemStyle={
+                      Platform.OS === 'ios'
+                        ? { color: appColors.onboarding.measurements.picker.itemText, fontSize: 14 }
+                        : undefined
+                    }
                     dropdownIconColor={appColors.onboarding.measurements.picker.dropdownIcon}
                   >
-                    {Array.from({ length: repeats * heightOptions.length }, (_, i) => heightOptions[i % heightOptions.length]).map((height, index) => (
-                      <Picker.Item key={`h-${index}`} label={`${height} ${i18n.t('onboarding.measurements.cm')}`} value={index} color={appColors.onboarding.measurements.picker.itemText}/>
+                    {Array.from(
+                      { length: repeats * heightOptions.length },
+                      (_, i) => heightOptions[i % heightOptions.length]
+                    ).map((height, index) => (
+                      <Picker.Item
+                        key={`h-${index}`}
+                        label={`${height} ${i18n.t('onboarding.measurements.cm')}`}
+                        value={index}
+                        color={appColors.onboarding.measurements.picker.itemText}
+                      />
                     ))}
                   </Picker>
                 ) : (
                   <View style={styles.imperialPickersContainer}>
                     <View style={styles.imperialPickerWrapper}>
                       <Picker
-                        selectedValue={
-                          (() => {
-                            const { feet } = getCurrentHeight() as { feet: number; inches: number };
-                            const base = 1;
-                            const len = feetOptions.length;
-                            const idx = Math.max(0, Math.min(len - 1, feet - base));
-                            return middleRepeatIndex * len + idx;
-                          })()
-                        }
-                        onValueChange={value => {
+                        selectedValue={(() => {
+                          const { feet } = getCurrentHeight() as { feet: number; inches: number };
+                          const base = 1;
+                          const len = feetOptions.length;
+                          const idx = Math.max(0, Math.min(len - 1, feet - base));
+                          return middleRepeatIndex * len + idx;
+                        })()}
+                        onValueChange={(value) => {
                           const len = feetOptions.length;
                           const optionIndex = Number(value) % len;
                           const selected = feetOptions[optionIndex];
                           handleFeetSelect(selected);
                         }}
-                        style={[styles.imperialPicker, { color: appColors.onboarding.measurements.picker.text }]}
-                        itemStyle={Platform.OS === 'ios' ? { color: appColors.onboarding.measurements.picker.itemText, fontSize: 14 } : undefined}
+                        style={[
+                          styles.imperialPicker,
+                          { color: appColors.onboarding.measurements.picker.text },
+                        ]}
+                        itemStyle={
+                          Platform.OS === 'ios'
+                            ? {
+                                color: appColors.onboarding.measurements.picker.itemText,
+                                fontSize: 14,
+                              }
+                            : undefined
+                        }
                         dropdownIconColor={appColors.onboarding.measurements.picker.dropdownIcon}
                       >
-                        {Array.from({ length: repeats * feetOptions.length }, (_, i) => feetOptions[i % feetOptions.length]).map((feet, index) => (
-                          <Picker.Item key={`f-${index}`} label={`${feet} ft`} value={index} color={appColors.onboarding.measurements.picker.itemText} />
+                        {Array.from(
+                          { length: repeats * feetOptions.length },
+                          (_, i) => feetOptions[i % feetOptions.length]
+                        ).map((feet, index) => (
+                          <Picker.Item
+                            key={`f-${index}`}
+                            label={`${feet} ft`}
+                            value={index}
+                            color={appColors.onboarding.measurements.picker.itemText}
+                          />
                         ))}
                       </Picker>
                     </View>
                     <View style={styles.imperialPickerWrapper}>
                       <Picker
-                        selectedValue={
-                          (() => {
-                            const { inches } = getCurrentHeight() as { feet: number; inches: number };
-                            const base = 0;
-                            const len = inchesOptions.length;
-                            const idx = Math.max(0, Math.min(len - 1, inches - base));
-                            return middleRepeatIndex * len + idx;
-                          })()
-                        }
-                        onValueChange={value => {
+                        selectedValue={(() => {
+                          const { inches } = getCurrentHeight() as { feet: number; inches: number };
+                          const base = 0;
+                          const len = inchesOptions.length;
+                          const idx = Math.max(0, Math.min(len - 1, inches - base));
+                          return middleRepeatIndex * len + idx;
+                        })()}
+                        onValueChange={(value) => {
                           const len = inchesOptions.length;
                           const optionIndex = Number(value) % len;
                           const selected = inchesOptions[optionIndex];
                           handleInchesSelect(selected);
                         }}
-                        style={[styles.imperialPicker, { color: appColors.onboarding.measurements.picker.text }]}
-                        itemStyle={Platform.OS === 'ios' ? { color: appColors.onboarding.measurements.picker.itemText, fontSize: 14 } : undefined}
+                        style={[
+                          styles.imperialPicker,
+                          { color: appColors.onboarding.measurements.picker.text },
+                        ]}
+                        itemStyle={
+                          Platform.OS === 'ios'
+                            ? {
+                                color: appColors.onboarding.measurements.picker.itemText,
+                                fontSize: 14,
+                              }
+                            : undefined
+                        }
                         dropdownIconColor={appColors.onboarding.measurements.picker.dropdownIcon}
                       >
-                        {Array.from({ length: repeats * inchesOptions.length }, (_, i) => inchesOptions[i % inchesOptions.length]).map((inches, index) => (
-                          <Picker.Item key={`i-${index}`} label={`${inches} in`} value={index} color={appColors.onboarding.measurements.picker.itemText} />
+                        {Array.from(
+                          { length: repeats * inchesOptions.length },
+                          (_, i) => inchesOptions[i % inchesOptions.length]
+                        ).map((inches, index) => (
+                          <Picker.Item
+                            key={`i-${index}`}
+                            label={`${inches} in`}
+                            value={index}
+                            color={appColors.onboarding.measurements.picker.itemText}
+                          />
                         ))}
                       </Picker>
                     </View>
@@ -2033,32 +2584,47 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
             </View>
 
             <View style={styles.measurePickerSection}>
-              <Text style={[styles.pickerLabel, { color: appColors.onboarding.measurements.pickerLabel }]}>
+              <Text
+                style={[
+                  styles.pickerLabel,
+                  { color: appColors.onboarding.measurements.pickerLabel },
+                ]}
+              >
                 {i18n.t('onboarding.measurements.weight')}
               </Text>
               <View style={styles.pickerWrapper}>
                 <Picker
-                  selectedValue={
-                    (() => {
-                      const current = getCurrentWeight();
-                      const base = isMetric ? 40 : 90;
-                      const len = weightOptions.length;
-                      const idx = Math.max(0, Math.min(len - 1, Math.round(current) - base));
-                      return middleRepeatIndex * len + idx;
-                    })()
-                  }
-                  onValueChange={value => {
+                  selectedValue={(() => {
+                    const current = getCurrentWeight();
+                    const base = isMetric ? 40 : 90;
+                    const len = weightOptions.length;
+                    const idx = Math.max(0, Math.min(len - 1, Math.round(current) - base));
+                    return middleRepeatIndex * len + idx;
+                  })()}
+                  onValueChange={(value) => {
                     const len = weightOptions.length;
                     const optionIndex = Number(value) % len;
                     const selected = weightOptions[optionIndex];
                     handleWeightSelect(selected);
                   }}
                   style={[styles.picker, { color: appColors.onboarding.measurements.picker.text }]}
-                  itemStyle={Platform.OS === 'ios' ? { color: appColors.onboarding.measurements.picker.itemText, fontSize: 14 } : undefined}
+                  itemStyle={
+                    Platform.OS === 'ios'
+                      ? { color: appColors.onboarding.measurements.picker.itemText, fontSize: 14 }
+                      : undefined
+                  }
                   dropdownIconColor={appColors.onboarding.measurements.picker.dropdownIcon}
                 >
-                  {Array.from({ length: repeats * weightOptions.length }, (_, i) => weightOptions[i % weightOptions.length]).map((weight, index) => (
-                    <Picker.Item key={`w-${index}`} label={`${weight} ${isMetric ? i18n.t('onboarding.measurements.kg') : i18n.t('onboarding.measurements.lbs')}`} value={index} color={appColors.onboarding.measurements.picker.itemText} />
+                  {Array.from(
+                    { length: repeats * weightOptions.length },
+                    (_, i) => weightOptions[i % weightOptions.length]
+                  ).map((weight, index) => (
+                    <Picker.Item
+                      key={`w-${index}`}
+                      label={`${weight} ${isMetric ? i18n.t('onboarding.measurements.kg') : i18n.t('onboarding.measurements.lbs')}`}
+                      value={index}
+                      color={appColors.onboarding.measurements.picker.itemText}
+                    />
                   ))}
                 </Picker>
               </View>
@@ -2067,9 +2633,8 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
         </ScrollView>
       )}
 
-
       {currentStep.type === 'rating' && (
-        <ScrollView 
+        <ScrollView
           style={styles.ratingContainer}
           contentContainerStyle={styles.ratingContentContainer}
           showsVerticalScrollIndicator={false}
@@ -2115,9 +2680,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
           </View>
 
           <View style={styles.ratingMiddleTextContainer}>
-            <Text style={styles.ratingMiddleText}>
-              {i18n.t('onboarding.rating.middleText')}
-            </Text>
+            <Text style={styles.ratingMiddleText}>{i18n.t('onboarding.rating.middleText')}</Text>
           </View>
 
           {/* Overlapping Profile Images */}
@@ -2130,7 +2693,7 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
               />
             </View>
             <View style={[styles.profileImageWrapper, { zIndex: 1, marginLeft: -14 }]}>
-              <Image 
+              <Image
                 source={require('../../../assets/ratings/catie.png')}
                 style={styles.profileImageCircle}
                 contentFit="cover"
@@ -2151,9 +2714,9 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
               />
             </View>
           </View>
-          
+
           {/* Testimonial Cards */}
-            <AnimatedInfoCard delay={50}>
+          <AnimatedInfoCard delay={50}>
             <View style={styles.testimonialBoxOuter}>
               <LinearGradient
                 colors={['#e2e8f0', '#f5f3ff']}
@@ -2163,35 +2726,34 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                 end={{ x: 0, y: 1 }}
               >
                 <View style={styles.testimonialHeader}>
-                <View style={styles.testimonialProfileImageWrapper}>
-                  <Image 
-                    source={require('../../../assets/ratings/catie.png')}
-                    style={styles.profileImageInner}
-                    contentFit="cover"
-                  />
-                </View>
-                <View style={styles.userInfo}>
-                  <View style={styles.nameStarsRow}>
-                                    <Text style={[styles.userName, { color: '#000000' }]}>
-                  Catie Mc Nama
-                </Text>
+                  <View style={styles.testimonialProfileImageWrapper}>
                     <Image
-                      source={require('../../../assets/ratings/5-stars.svg')}
-                      style={styles.testimonialStarsIcon}
-                      contentFit="contain"
+                      source={require('../../../assets/ratings/catie.png')}
+                      style={styles.profileImageInner}
+                      contentFit="cover"
                     />
                   </View>
+                  <View style={styles.userInfo}>
+                    <View style={styles.nameStarsRow}>
+                      <Text style={[styles.userName, { color: '#000000' }]}>Catie Mc Nama</Text>
+                      <Image
+                        source={require('../../../assets/ratings/5-stars.svg')}
+                        style={styles.testimonialStarsIcon}
+                        contentFit="contain"
+                      />
+                    </View>
+                  </View>
                 </View>
-              </View>
-              <Text style={[styles.testimonialText, { color: '#000000' }]}>
-              As a gym girl that also dances I love this app. It lets me push harder in the gym without the fear of injuring myself and not being able to compete.
-              </Text>
+                <Text style={[styles.testimonialText, { color: '#000000' }]}>
+                  As a gym girl that also dances I love this app. It lets me push harder in the gym
+                  without the fear of injuring myself and not being able to compete.
+                </Text>
               </LinearGradient>
             </View>
-            </AnimatedInfoCard>
+          </AnimatedInfoCard>
 
-            {/* Second Testimonial */}
-            <AnimatedInfoCard delay={100}>
+          {/* Second Testimonial */}
+          <AnimatedInfoCard delay={100}>
             <View style={styles.testimonialBoxOuter}>
               <LinearGradient
                 colors={['#e2e8f0', '#f5f3ff']}
@@ -2201,35 +2763,35 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                 end={{ x: 0, y: 1 }}
               >
                 <View style={styles.testimonialHeader}>
-                <View style={styles.testimonialProfileImageWrapper}>
-                  <Image 
-                    source={require('../../../assets/ratings/kiril.png')}
-                    style={styles.profileImageInner}
-                    contentFit="cover"
-                  />
-                </View>
-                <View style={styles.userInfo}>
-                  <View style={styles.nameStarsRow}>
-                                    <Text style={[styles.userName, { color: '#000000' }]}>
-                  Kiril D
-                </Text>
+                  <View style={styles.testimonialProfileImageWrapper}>
                     <Image
-                      source={require('../../../assets/ratings/5-stars.svg')}
-                      style={styles.testimonialStarsIcon}
-                      contentFit="contain"
+                      source={require('../../../assets/ratings/kiril.png')}
+                      style={styles.profileImageInner}
+                      contentFit="cover"
                     />
                   </View>
+                  <View style={styles.userInfo}>
+                    <View style={styles.nameStarsRow}>
+                      <Text style={[styles.userName, { color: '#000000' }]}>Kiril D</Text>
+                      <Image
+                        source={require('../../../assets/ratings/5-stars.svg')}
+                        style={styles.testimonialStarsIcon}
+                        contentFit="contain"
+                      />
+                    </View>
+                  </View>
                 </View>
-              </View>
-              <Text style={[styles.testimonialText, { color: '#000000' }]}>
-                Trying to get back into a sustainable routine is so much easier and motivating with Form AI. Really helped me understand my technique and make it engaging while saving $$$ on a personal trainer.
-              </Text>
+                <Text style={[styles.testimonialText, { color: '#000000' }]}>
+                  Trying to get back into a sustainable routine is so much easier and motivating
+                  with Form AI. Really helped me understand my technique and make it engaging while
+                  saving $$$ on a personal trainer.
+                </Text>
               </LinearGradient>
             </View>
-            </AnimatedInfoCard>
+          </AnimatedInfoCard>
 
-            {/* Third Testimonial */}
-            <AnimatedInfoCard delay={200}>
+          {/* Third Testimonial */}
+          <AnimatedInfoCard delay={200}>
             <View style={[styles.testimonialBoxOuter, { marginBottom: 20 }]}>
               <LinearGradient
                 colors={['#e2e8f0', '#f5f3ff']}
@@ -2239,32 +2801,31 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
                 end={{ x: 0, y: 1 }}
               >
                 <View style={styles.testimonialHeader}>
-                <View style={styles.testimonialProfileImageWrapper}>
-                  <Image 
-                    source={require('../../../assets/ratings/sami.png')}
-                    style={styles.profileImageInner}
-                    contentFit="cover"
-                  />
-                </View>
-                <View style={styles.userInfo}>
-                  <View style={styles.nameStarsRow}>
-                                    <Text style={[styles.userName, { color: '#000000' }]}>
-                  Sami Syed
-                </Text>
+                  <View style={styles.testimonialProfileImageWrapper}>
                     <Image
-                      source={require('../../../assets/ratings/5-stars.svg')}
-                      style={styles.testimonialStarsIcon}
-                      contentFit="contain"
+                      source={require('../../../assets/ratings/sami.png')}
+                      style={styles.profileImageInner}
+                      contentFit="cover"
                     />
                   </View>
+                  <View style={styles.userInfo}>
+                    <View style={styles.nameStarsRow}>
+                      <Text style={[styles.userName, { color: '#000000' }]}>Sami Syed</Text>
+                      <Image
+                        source={require('../../../assets/ratings/5-stars.svg')}
+                        style={styles.testimonialStarsIcon}
+                        contentFit="contain"
+                      />
+                    </View>
+                  </View>
                 </View>
-              </View>
-              <Text style={[styles.testimonialText, { color: '#000000' }]}>
-                Simple way to actually understand how to improve form in the gym. Use it daily now, I've noticed I'm much more aware of my technique.
-              </Text>
+                <Text style={[styles.testimonialText, { color: '#000000' }]}>
+                  Simple way to actually understand how to improve form in the gym. Use it daily
+                  now, I've noticed I'm much more aware of my technique.
+                </Text>
               </LinearGradient>
             </View>
-            </AnimatedInfoCard>
+          </AnimatedInfoCard>
         </ScrollView>
       )}
 
@@ -2340,42 +2901,29 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
             {/* Header with checkmark and "All done!" text */}
             <View style={styles.header}>
               <CircleCheck size={36} color={appColors.onboarding.allDone.checkmarkColor} />
-              <Text 
-                style={[
-                  styles.allDoneText,
-                  { color: appColors.onboarding.allDone.allDoneText }
-                ]}
+              <Text
+                style={[styles.allDoneText, { color: appColors.onboarding.allDone.allDoneText }]}
               >
                 {i18n.t('onboarding.allDone.allDone')}
               </Text>
             </View>
 
             {/* Main thank you message */}
-            <Text 
-              style={[
-                styles.thankYouText,
-                { color: appColors.onboarding.allDone.thankYouText }
-              ]}
+            <Text
+              style={[styles.thankYouText, { color: appColors.onboarding.allDone.thankYouText }]}
             >
               {i18n.t('onboarding.allDone.thankYou')}
             </Text>
 
             {/* Privacy message */}
-            <Text 
-              style={[
-                styles.privacyText,
-                { color: appColors.onboarding.allDone.privacyText }
-              ]}
-            >
+            <Text style={[styles.privacyText, { color: appColors.onboarding.allDone.privacyText }]}>
               {i18n.t('onboarding.allDone.privacy')}
             </Text>
           </View>
         </View>
       )}
 
-      {currentStep.type === 'progressTracking' && (
-        <AnimatedProgressTrackingImage />
-      )}
+      {currentStep.type === 'progressTracking' && <AnimatedProgressTrackingImage />}
 
       {currentStep.type === 'saveProgress' && (
         <CreateAccountScreen
@@ -2401,12 +2949,12 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
           isDontAllowLoading={notificationDontAllowLoading}
           onDontAllow={async () => {
             setNotificationDontAllowLoading(true);
-            
+
             // Set 7-second timeout for loading icon
             const loadingTimeout = setTimeout(() => {
               setNotificationDontAllowLoading(false);
             }, 5000);
-            
+
             try {
               const result = await Notifications.requestPermissionsAsync();
               const granted = result.granted === true;
@@ -2417,7 +2965,12 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
 
               // Let the auto-advance logic handle navigation
             } catch (error) {
-              trackPermission('notifications', false, 'notificationPermission', error instanceof Error ? error.message : 'Unknown error');
+              trackPermission(
+                'notifications',
+                false,
+                'notificationPermission',
+                error instanceof Error ? error.message : 'Unknown error'
+              );
               // Let the auto-advance logic handle navigation
             } finally {
               clearTimeout(loadingTimeout);
@@ -2425,12 +2978,12 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
           }}
           onAllow={async () => {
             setNotificationPermissionLoading(true);
-            
+
             // Set 7-second timeout for loading icon
             const loadingTimeout = setTimeout(() => {
               setNotificationPermissionLoading(false);
             }, 5000);
-            
+
             try {
               const result = await Notifications.requestPermissionsAsync();
               const granted = result.granted;
@@ -2440,7 +2993,12 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
               trackPermission('notifications', granted, 'notificationPermission');
               // Let the auto-advance logic handle navigation
             } catch (error) {
-              trackPermission('notifications', false, 'notificationPermission', error instanceof Error ? error.message : 'Unknown error');
+              trackPermission(
+                'notifications',
+                false,
+                'notificationPermission',
+                error instanceof Error ? error.message : 'Unknown error'
+              );
               // Let the auto-advance logic handle navigation
             } finally {
               clearTimeout(loadingTimeout);
@@ -2469,7 +3027,6 @@ export function OnboardingUnifiedScreen({}: OnboardingUnifiedScreenProps) {
           }}
         />
       )}
-
     </OnboardingLayout>
   );
 }
@@ -2791,7 +3348,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '600',
     marginLeft: 8,
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
   thankYouText: {
     fontSize: 40,
@@ -2799,7 +3356,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 16,
     lineHeight: 44,
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto'
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
   },
   privacyText: {
     fontSize: 17,
@@ -2928,7 +3485,7 @@ const styles = StyleSheet.create({
   },
   description: {
     fontSize: 17,
-    fontWeight: '600',  
+    fontWeight: '600',
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: 24,
@@ -3129,4 +3686,4 @@ const styles = StyleSheet.create({
     height: 450,
     maxWidth: 500,
   },
-}); 
+});

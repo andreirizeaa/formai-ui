@@ -36,4 +36,4 @@ export const hapticFeedback = {
       // Silently handle haptic errors to prevent blocking UI
     });
   },
-}; 
+};

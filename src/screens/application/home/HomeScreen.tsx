@@ -1,5 +1,18 @@
 import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, Dimensions, ImageSourcePropType, ImageBackground, Modal, Animated as RNAnimated, Platform, RefreshControl } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Pressable,
+  Dimensions,
+  ImageSourcePropType,
+  ImageBackground,
+  Modal,
+  Animated as RNAnimated,
+  Platform,
+  RefreshControl,
+} from 'react-native';
 import { Image } from 'expo-image';
 import { FlashList } from '@shopify/flash-list';
 import { hapticFeedback } from '../../../utils/haptic';
@@ -10,7 +23,7 @@ import { LoadingLiftData } from '../../../types/Lifts.d';
 import { track, identify } from '../../../services/analytics';
 import {
   getTrackingPermissionsAsync,
-  requestTrackingPermissionsAsync
+  requestTrackingPermissionsAsync,
 } from 'expo-tracking-transparency';
 
 // Type guard for loading lifts
@@ -25,14 +38,14 @@ function parseTimeString(timeString: string): number {
     const today = new Date();
     const [time, period] = timeString.split(' ');
     const [hours, minutes] = time.split(':').map(Number);
-    
+
     let hour24 = hours;
     if (period === 'PM' && hours !== 12) {
       hour24 = hours + 12;
     } else if (period === 'AM' && hours === 12) {
       hour24 = 0;
     }
-    
+
     const date = new Date(today.getFullYear(), today.getMonth(), today.getDate(), hour24, minutes);
     return date.getTime();
   } catch (error) {
@@ -57,13 +70,13 @@ async function requestTrackingPermissionSafe() {
   if (Platform.OS !== 'ios') {
     // track/skip gracefully on non-iOS platforms
     trackPermission('tracking_transparency', false, 'home');
-    
+
     // Always identify user for analytics
     const userId = await getUserId();
     if (userId) {
       identify(userId);
     }
-    
+
     return { status: 'unavailable' };
   }
 
@@ -73,13 +86,13 @@ async function requestTrackingPermissionSafe() {
     if (existing === 'granted' || existing === 'denied') {
       const granted = existing === 'granted';
       trackPermission('tracking_transparency', granted, 'home');
-      
+
       // Always identify user for analytics
       const userId = await getUserId();
       if (userId) {
         identify(userId);
       }
-      
+
       return { status: existing };
     }
 
@@ -87,25 +100,30 @@ async function requestTrackingPermissionSafe() {
     const result = await requestTrackingPermissionsAsync();
     const granted = result.status === 'granted';
     trackPermission('tracking_transparency', granted, 'home');
-    
+
     // Always identify user for analytics
     const userId = await getUserId();
     if (userId) {
       identify(userId);
     }
-    
+
     return result;
   } catch (error) {
     // Never crash the UI
     console.warn('ATT request failed:', error);
-    trackPermission('tracking_transparency', false, 'home', error instanceof Error ? error.message : 'Unknown error');
-    
+    trackPermission(
+      'tracking_transparency',
+      false,
+      'home',
+      error instanceof Error ? error.message : 'Unknown error'
+    );
+
     // Always identify user for analytics even if permission request fails
     const userId = await getUserId();
     if (userId) {
       identify(userId);
     }
-    
+
     return { status: 'unavailable' };
   }
 }
@@ -132,36 +150,56 @@ interface HomeScreenProps {
   onNavigateToPerformance: () => void;
 }
 
-export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibrary, onShowShare, onTriggerAddOptions, onNavigateToPerformance }: HomeScreenProps) {
-  const { loadingLifts, showStreakModal, closeStreakModal, handleStreakModalContinue, removeLift: removeLoadingLift, setHomeActive } = useLoadingLifts();
-  const { liftData , getLiftsByDate , refreshLifts, removeLift, invalidateAndRefetch: invalidateLifts } = useLiftData();
+export function HomeScreen({
+  onShowFeedback,
+  onShowFeedbackSlideshow,
+  onShowLibrary,
+  onShowShare,
+  onTriggerAddOptions,
+  onNavigateToPerformance,
+}: HomeScreenProps) {
+  const {
+    loadingLifts,
+    showStreakModal,
+    closeStreakModal,
+    handleStreakModalContinue,
+    removeLift: removeLoadingLift,
+    setHomeActive,
+  } = useLoadingLifts();
+  const {
+    liftData,
+    getLiftsByDate,
+    refreshLifts,
+    removeLift,
+    invalidateAndRefetch: invalidateLifts,
+  } = useLiftData();
   const { currentStreak, invalidateAndRefetch: invalidateCheckIns } = useUserCheckIns();
   const { selectedDate, setSelectedDate } = useSelectedDate();
-  
+
   // Fire card popup state - manual trigger for fire card press
   const [isFirePopupVisible, setIsFirePopupVisible] = useState(false);
-  
+
   // Accuracy card swipe state
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
 
   // Confetti animation state
   const [showConfetti, setShowConfetti] = useState(false);
-  
+
   // Tracking permission state
   const [hasRequestedTrackingPermission, setHasRequestedTrackingPermission] = useState(false);
 
   // Pull-to-refresh state
   const [isRefreshing, setIsRefreshing] = useState(false);
-  
+
   // ScrollView ref for gesture handling
   const scrollViewRef = useRef<ScrollView>(null);
-  
+
   // Tutorial target ref for the "see all lifts" button
   const { ref: seeAllLiftsRef } = useTutorialTarget('home_see_all_lifts');
-  
+
   // Lifts for the selected date from LiftDataContext only
   const liftsForSelectedDate: ILiftData[] = getLiftsByDate(selectedDate);
-  
+
   // Combined lifts for seamless transition - loading lifts + final lifts (excluding duplicates)
   const combinedLiftsForDay = useMemo(() => {
     // loading lifts are already filtered by selected date in context
@@ -169,18 +207,14 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
 
     // Stable keys: never replace the completed loading card with final ILiftData
     const completedFinalIds = new Set(
-      loading
-        .filter(l => l.status === 'completed' && l.finalData?.id)
-        .map(l => l.finalData!.id)
+      loading.filter((l) => l.status === 'completed' && l.finalData?.id).map((l) => l.finalData!.id)
     );
 
     // Show all loading cards (including completed-with-finalData)
     const loadingCards = loading;
 
     // Only add final ILiftData that don't have a completed twin
-    const additionalFinals = liftsForSelectedDate.filter(
-      l => !completedFinalIds.has(l.id)
-    );
+    const additionalFinals = liftsForSelectedDate.filter((l) => !completedFinalIds.has(l.id));
 
     // Combine all lifts
     const allLifts = [...loadingCards, ...additionalFinals];
@@ -189,7 +223,7 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
     return allLifts.sort((a, b) => {
       let aTime: number;
       let bTime: number;
-      
+
       if (isLoadingLift(a)) {
         // For loading lifts, use enqueuedAt or fallback to id timestamp
         aTime = a.enqueuedAt ?? parseInt(a.id.split('-')[0]);
@@ -197,7 +231,7 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
         // For final lifts, parse 12-hour format liftTime (e.g., "9:56 AM", "2:45 PM")
         aTime = parseTimeString(a.liftTime);
       }
-      
+
       if (isLoadingLift(b)) {
         // For loading lifts, use enqueuedAt or fallback to id timestamp
         bTime = b.enqueuedAt ?? parseInt(b.id.split('-')[0]);
@@ -205,22 +239,27 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
         // For final lifts, parse 12-hour format liftTime (e.g., "9:56 AM", "2:45 PM")
         bTime = parseTimeString(b.liftTime);
       }
-      
+
       return aTime - bTime; // Ascending order (earliest first)
     });
   }, [loadingLifts, liftsForSelectedDate]);
-  
+
   // Calculate average accuracy for the selected date
   const averageAccuracy = useMemo(() => {
-    return liftsForSelectedDate.length > 0 
-      ? Math.round(liftsForSelectedDate.reduce((sum, lift) => sum + lift.analysis.accuracy, 0) / liftsForSelectedDate.length)
+    return liftsForSelectedDate.length > 0
+      ? Math.round(
+          liftsForSelectedDate.reduce((sum, lift) => sum + lift.analysis.accuracy, 0) /
+            liftsForSelectedDate.length
+        )
       : 0;
   }, [liftsForSelectedDate]);
-  
+
   // Calculate average accuracy for all lifts across all dates
   const allTimeAverageAccuracy = useMemo(() => {
-    return liftData.length > 0 
-      ? Math.round(liftData.reduce((sum, lift) => sum + lift.analysis.accuracy, 0) / liftData.length)
+    return liftData.length > 0
+      ? Math.round(
+          liftData.reduce((sum, lift) => sum + lift.analysis.accuracy, 0) / liftData.length
+        )
       : 0;
   }, [liftData]);
 
@@ -228,18 +267,31 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
   const formatSelectedDate = useCallback(() => {
     const day = selectedDate.getDate();
     const monthIndex = selectedDate.getMonth();
-    
+
     // Get month names from i18n
-    const monthKeys = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+    const monthKeys = [
+      'jan',
+      'feb',
+      'mar',
+      'apr',
+      'may',
+      'jun',
+      'jul',
+      'aug',
+      'sep',
+      'oct',
+      'nov',
+      'dec',
+    ];
     const month = i18n.t(`home.dateFormat.months.${monthKeys[monthIndex]}`);
-    
+
     // Get "lifts" text from i18n
     const liftsText = i18n.t('home.dateFormat.lifts');
-    
+
     // For languages that don't use ordinal suffixes, just use the day number
     // For English, we'll keep the ordinal suffixes for now, but this can be made more flexible
     const currentLanguage = i18n.locale;
-    
+
     if (currentLanguage === 'en') {
       // English ordinal suffixes
       let suffix = 'th';
@@ -252,15 +304,21 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
       return `${day} ${month} ${liftsText}`;
     }
   }, [selectedDate]);
-  
+
   // Different data for each card
-  const cardData = useMemo(() => [
-    { 
-      percentage: averageAccuracy, 
-      label: liftsForSelectedDate.length > 0 ? i18n.t('home.dailyAccuracyLevel') : i18n.t('home.noLiftsToday')
-    },
-    { percentage: allTimeAverageAccuracy, label: i18n.t('home.allTimeAccuracy') }
-  ], [averageAccuracy, allTimeAverageAccuracy, liftsForSelectedDate.length]);
+  const cardData = useMemo(
+    () => [
+      {
+        percentage: averageAccuracy,
+        label:
+          liftsForSelectedDate.length > 0
+            ? i18n.t('home.dailyAccuracyLevel')
+            : i18n.t('home.noLiftsToday'),
+      },
+      { percentage: allTimeAverageAccuracy, label: i18n.t('home.allTimeAccuracy') },
+    ],
+    [averageAccuracy, allTimeAverageAccuracy, liftsForSelectedDate.length]
+  );
 
   // Animation values for each lift card - recreate when lifts change
   const liftAnimations = useRef<RNAnimated.Value[]>([]);
@@ -270,12 +328,10 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
   useEffect(() => {
     const newLiftAnimations = liftsForSelectedDate.map(() => new RNAnimated.Value(0));
     const newFadeAnimations = liftsForSelectedDate.map(() => new RNAnimated.Value(0));
-    
+
     liftAnimations.current = newLiftAnimations;
     fadeAnimations.current = newFadeAnimations;
   }, [liftsForSelectedDate]);
-
-
 
   // Animate lift cards when lifts change
   useEffect(() => {
@@ -301,22 +357,28 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
     RNAnimated.parallel(animations).start();
   }, [liftsForSelectedDate]); // Re-run when lifts change
 
-  const handleLiftPress = useCallback((liftId: string) => {
-    hapticFeedback.selection();
-    // Track home screen clicks for lift card
-    track('Home screen clicks', { event: 'Lift card' });
-    // First try from final lists
-    const lift = liftsForSelectedDate.find(l => l.id === liftId) || liftData.find(l => l.id === liftId);
-    if (lift) {
-      onShowFeedback(lift);
-      return;
-    }
-    // Fallback: if pressed from a completed loading card that hasn't synced to final list yet
-    const completedLoading = loadingLifts.find(l => l.status === 'completed' && l.finalData?.id === liftId);
-    if (completedLoading?.finalData) {
-      onShowFeedback(completedLoading.finalData);
-    }
-  }, [liftsForSelectedDate, liftData, loadingLifts, onShowFeedback]);
+  const handleLiftPress = useCallback(
+    (liftId: string) => {
+      hapticFeedback.selection();
+      // Track home screen clicks for lift card
+      track('Home screen clicks', { event: 'Lift card' });
+      // First try from final lists
+      const lift =
+        liftsForSelectedDate.find((l) => l.id === liftId) || liftData.find((l) => l.id === liftId);
+      if (lift) {
+        onShowFeedback(lift);
+        return;
+      }
+      // Fallback: if pressed from a completed loading card that hasn't synced to final list yet
+      const completedLoading = loadingLifts.find(
+        (l) => l.status === 'completed' && l.finalData?.id === liftId
+      );
+      if (completedLoading?.finalData) {
+        onShowFeedback(completedLoading.finalData);
+      }
+    },
+    [liftsForSelectedDate, liftData, loadingLifts, onShowFeedback]
+  );
 
   const handleLibraryPress = useCallback(() => {
     hapticFeedback.selection();
@@ -332,12 +394,15 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
     onTriggerAddOptions();
   }, [onTriggerAddOptions]);
 
-  const handleDateSelect = useCallback((date: Date) => {
-    hapticFeedback.selection();
-    // Track home screen clicks for calendar day
-    track('Home screen clicks', { event: 'Calendar Day' });
-    setSelectedDate(date);
-  }, [setSelectedDate]);
+  const handleDateSelect = useCallback(
+    (date: Date) => {
+      hapticFeedback.selection();
+      // Track home screen clicks for calendar day
+      track('Home screen clicks', { event: 'Calendar Day' });
+      setSelectedDate(date);
+    },
+    [setSelectedDate]
+  );
 
   const handleFireCardPress = useCallback(() => {
     hapticFeedback.selection();
@@ -361,16 +426,11 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
     setCurrentCardIndex(index);
   }, []);
 
-
-
   // Pull-to-refresh handler
   const handleRefresh = useCallback(async () => {
     try {
       setIsRefreshing(true);
-      await Promise.all([
-        invalidateLifts?.(),
-        invalidateCheckIns?.(),
-      ]);
+      await Promise.all([invalidateLifts?.(), invalidateCheckIns?.()]);
     } catch (_) {
     } finally {
       setIsRefreshing(false);
@@ -379,7 +439,6 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
 
   // Note: Removed refreshLifts() call as it was causing lifts to disappear when reopening home screen
   // The LiftDataContext will fetch data naturally when it mounts
-
 
   // Request tracking permission on first load
   useEffect(() => {
@@ -426,12 +485,13 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
   useEffect(() => {
     (global as any).showFirstLiftDetails = () => {
       // Find the first lift in the current date's lifts, or fall back to any lift
-      const firstLift = liftsForSelectedDate.length > 0 
-        ? liftsForSelectedDate[0] 
-        : liftData.length > 0 
-          ? liftData[0] 
-          : null;
-      
+      const firstLift =
+        liftsForSelectedDate.length > 0
+          ? liftsForSelectedDate[0]
+          : liftData.length > 0
+            ? liftData[0]
+            : null;
+
       if (firstLift) {
         hapticFeedback.selection();
         onShowFeedback(firstLift);
@@ -472,133 +532,118 @@ export function HomeScreen({ onShowFeedback, onShowFeedbackSlideshow, onShowLibr
   }, [onShowLibrary, setSelectedDate]);
 
   // Render function for unified FlashList
-  const renderLiftItem = useCallback(({ item }: { item: any }) => (
-    <LiftCard
-      lift={item}
-      onPress={handleLiftPress}
-      showDate={false} // always show time instead of date
-    />
-  ), [handleLiftPress]);
+  const renderLiftItem = useCallback(
+    ({ item }: { item: any }) => (
+      <LiftCard
+        lift={item}
+        onPress={handleLiftPress}
+        showDate={false} // always show time instead of date
+      />
+    ),
+    [handleLiftPress]
+  );
 
   return (
     <View style={{ flex: 1 }}>
-      <ScrollView 
-      style={styles.scrollView}
-      contentContainerStyle={styles.scrollContent}
-      showsVerticalScrollIndicator={false}
-      ref={scrollViewRef}
-      contentInsetAdjustmentBehavior="automatic"
-      refreshControl={
-        <RefreshControl
-          refreshing={isRefreshing}
-          onRefresh={handleRefresh}
-        />
-      }
-    >
-      <View style={styles.header}>
-        <FormAILogo 
-          iconSize={40}
-          containerStyle={styles.logoContainer}
-        />
-        <Pressable 
-          style={({ pressed }) => [
-            styles.streakBadge,
-            { opacity: pressed ? 0.7 : 1 }
-          ]}
-          onPress={handleFireCardPress}
-        >
-          <Image
-            source={require('../../../../assets/icons/fire.png')}
-            style={styles.streakBadgeIcon}
-            contentFit="contain"
-          />
-          <Text style={styles.streakBadgeText}>{currentStreak}</Text>
-        </Pressable>
-      </View>
-      
-      {/* Swipeable Calendar */}
-      <SwipeableCalendar 
-        onDateSelect={handleDateSelect}
-        onSwipe={handleCalendarSwipe}
-      />
-      
-      {/* Swipeable Accuracy Card */}
-      <SwipeableAccuracyCard
-        cardData={cardData}
-        currentCardIndex={currentCardIndex}
-        onCardIndexChange={handleAccuracyCardSwipe}
-      />
-      
-      {/* Spacer to push content to bottom */}
-      <View style={styles.spacer} />
-      
-      <View style={styles.bottomContent}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>{formatSelectedDate()}</Text>
-          <Pressable 
-            ref={seeAllLiftsRef}
-            style={({ pressed }) => [
-              styles.seeAllPill,
-              { opacity: pressed ? 0.7 : 1 }
-            ]} 
-            onPress={handleLibraryPress}
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        ref={scrollViewRef}
+        contentInsetAdjustmentBehavior="automatic"
+        refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />}
+      >
+        <View style={styles.header}>
+          <FormAILogo iconSize={40} containerStyle={styles.logoContainer} />
+          <Pressable
+            style={({ pressed }) => [styles.streakBadge, { opacity: pressed ? 0.7 : 1 }]}
+            onPress={handleFireCardPress}
           >
-            <Text style={styles.seeAllText}>{i18n.t('home.seeAll')}</Text>
-            <FileVideoCamera size={16} color="#8E8E93" />
+            <Image
+              source={require('../../../../assets/icons/fire.png')}
+              style={styles.streakBadgeIcon}
+              contentFit="contain"
+            />
+            <Text style={styles.streakBadgeText}>{currentStreak}</Text>
           </Pressable>
         </View>
-        <View style={styles.liftsScrollView}>
-          {/* Show unified list of loading and final lifts */}
-          {combinedLiftsForDay.length > 0 ? (
-            <FlashList
-              data={combinedLiftsForDay}
-              renderItem={renderLiftItem}
-              keyExtractor={(item) => item.id}
-              getItemType={(item) => (isLoadingLift(item) ? 'loading' : 'final')}
-              estimatedItemSize={146}
-              showsVerticalScrollIndicator={false}
-              scrollEnabled={false}
-              extraData={combinedLiftsForDay}
-            />
-          ) : (
-            <LiftCard
-              lift={null}
-              isNoLiftsCard={true}
-              noLiftsTitle={i18n.t('home.noRecordedLifts')}
-              noLiftsSubtitle={i18n.t('home.startAnalyzingWorkout')}
-              onNoLiftsPress={handleNoLiftsPress}
-            />
-          )}
-        </View>
-      </View>
-      
-      {/* Streak-triggered Fire Card Popup */}
-      <StreakModal
-        visible={showStreakModal}
-        currentStreak={currentStreak}
-        onClose={handleStreakModalContinue}
-      />
-      
-      {/* Manual Fire Card Popup */}
-      <StreakModal
-        visible={isFirePopupVisible}
-        currentStreak={currentStreak}
-        onClose={handleFirePopupClose}
-      />
 
-      {/* Tutorial Completion Confetti Animation */}
-      {showConfetti && (
-        <View style={styles.confettiContainer}>
-          <LottieView
-            source={require('../../../../assets/animations/confetti.json')}
-            autoPlay
-            loop={false}
-            speed={0.7}
-            style={styles.confettiAnimation}
-          />
+        {/* Swipeable Calendar */}
+        <SwipeableCalendar onDateSelect={handleDateSelect} onSwipe={handleCalendarSwipe} />
+
+        {/* Swipeable Accuracy Card */}
+        <SwipeableAccuracyCard
+          cardData={cardData}
+          currentCardIndex={currentCardIndex}
+          onCardIndexChange={handleAccuracyCardSwipe}
+        />
+
+        {/* Spacer to push content to bottom */}
+        <View style={styles.spacer} />
+
+        <View style={styles.bottomContent}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>{formatSelectedDate()}</Text>
+            <Pressable
+              ref={seeAllLiftsRef}
+              style={({ pressed }) => [styles.seeAllPill, { opacity: pressed ? 0.7 : 1 }]}
+              onPress={handleLibraryPress}
+            >
+              <Text style={styles.seeAllText}>{i18n.t('home.seeAll')}</Text>
+              <FileVideoCamera size={16} color="#8E8E93" />
+            </Pressable>
+          </View>
+          <View style={styles.liftsScrollView}>
+            {/* Show unified list of loading and final lifts */}
+            {combinedLiftsForDay.length > 0 ? (
+              <FlashList
+                data={combinedLiftsForDay}
+                renderItem={renderLiftItem}
+                keyExtractor={(item) => item.id}
+                getItemType={(item) => (isLoadingLift(item) ? 'loading' : 'final')}
+                estimatedItemSize={146}
+                showsVerticalScrollIndicator={false}
+                scrollEnabled={false}
+                extraData={combinedLiftsForDay}
+              />
+            ) : (
+              <LiftCard
+                lift={null}
+                isNoLiftsCard={true}
+                noLiftsTitle={i18n.t('home.noRecordedLifts')}
+                noLiftsSubtitle={i18n.t('home.startAnalyzingWorkout')}
+                onNoLiftsPress={handleNoLiftsPress}
+              />
+            )}
+          </View>
         </View>
-      )}
-    
+
+        {/* Streak-triggered Fire Card Popup */}
+        <StreakModal
+          visible={showStreakModal}
+          currentStreak={currentStreak}
+          onClose={handleStreakModalContinue}
+        />
+
+        {/* Manual Fire Card Popup */}
+        <StreakModal
+          visible={isFirePopupVisible}
+          currentStreak={currentStreak}
+          onClose={handleFirePopupClose}
+        />
+
+        {/* Tutorial Completion Confetti Animation */}
+        {showConfetti && (
+          <View style={styles.confettiContainer}>
+            <LottieView
+              source={require('../../../../assets/animations/confetti.json')}
+              autoPlay
+              loop={false}
+              speed={0.7}
+              style={styles.confettiAnimation}
+            />
+          </View>
+        )}
       </ScrollView>
     </View>
   );
@@ -664,7 +709,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
     paddingHorizontal: 20,
-
   },
   sectionTitle: {
     fontSize: 22,
@@ -728,4 +772,4 @@ const styles = StyleSheet.create({
     width: 900,
     height: 900,
   },
-}); 
+});

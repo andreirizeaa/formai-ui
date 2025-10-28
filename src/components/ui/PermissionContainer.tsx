@@ -1,5 +1,13 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, Animated, Platform, StyleSheet, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Animated,
+  Platform,
+  StyleSheet,
+  ActivityIndicator,
+} from 'react-native';
 import { hapticFeedback } from '../../utils/haptic';
 import i18n from '../../utils/i18n';
 import { appColors } from '../../constants/appColorScheme';
@@ -40,55 +48,59 @@ export function PermissionContainer({
       {/* Dialog container with flex to center dialog */}
       <View style={styles.dialogWrapper}>
         {/* Title above the dialog */}
-        <Text style={[
-          styles.permissionTitle,
-          { color: appColors.onboarding.permission.title }
-        ]}>
+        <Text style={[styles.permissionTitle, { color: appColors.onboarding.permission.title }]}>
           {title}
         </Text>
-        
+
         {/* iOS-style Permission Dialog */}
-        <View style={[
-          styles.dialog,
-          {
-            backgroundColor: appColors.onboarding.permission.dialog.background,
-            shadowColor: appColors.onboarding.permission.dialog.shadow,
-          }
-        ]}>
-          {/* Text Area */}
-          <View style={[
-            styles.textArea,
+        <View
+          style={[
+            styles.dialog,
             {
-              backgroundColor: appColors.onboarding.permission.textArea.background,
-            }
-          ]}>
-            <Text style={[
-              styles.dialogText,
+              backgroundColor: appColors.onboarding.permission.dialog.background,
+              shadowColor: appColors.onboarding.permission.dialog.shadow,
+            },
+          ]}
+        >
+          {/* Text Area */}
+          <View
+            style={[
+              styles.textArea,
               {
-                color: appColors.onboarding.permission.textArea.text,
-                fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
-              }
-            ]}>
+                backgroundColor: appColors.onboarding.permission.textArea.background,
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.dialogText,
+                {
+                  color: appColors.onboarding.permission.textArea.text,
+                  fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+                },
+              ]}
+            >
               {dialogText}
             </Text>
-            
           </View>
 
           {/* Buttons Container */}
-          <View style={[
-            styles.buttonContainer,
-            {
-              borderTopColor: appColors.onboarding.permission.buttonContainer.border,
-              borderTopWidth: 1,
-            }
-          ]}>
+          <View
+            style={[
+              styles.buttonContainer,
+              {
+                borderTopColor: appColors.onboarding.permission.buttonContainer.border,
+                borderTopWidth: 1,
+              },
+            ]}
+          >
             {singleButton ? (
               <TouchableOpacity
                 style={[
                   styles.singleButton,
                   {
                     backgroundColor: appColors.onboarding.permission.button.allow.background,
-                  }
+                  },
                 ]}
                 onPress={() => {
                   if (isLoading) return;
@@ -99,15 +111,20 @@ export function PermissionContainer({
                 disabled={isLoading}
               >
                 {isLoading ? (
-                  <ActivityIndicator size="small" color={appColors.onboarding.permission.button.allow.text} />
+                  <ActivityIndicator
+                    size="small"
+                    color={appColors.onboarding.permission.button.allow.text}
+                  />
                 ) : (
-                  <Text style={[
-                    styles.buttonText,
-                    {
-                      color: appColors.onboarding.permission.button.allow.text,
-                      fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
-                    }
-                  ]}>
+                  <Text
+                    style={[
+                      styles.buttonText,
+                      {
+                        color: appColors.onboarding.permission.button.allow.text,
+                        fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+                      },
+                    ]}
+                  >
                     {singleButtonText || i18n.t('onboarding.notificationPermission.allow')}
                   </Text>
                 )}
@@ -120,36 +137,47 @@ export function PermissionContainer({
                     styles.dontAllowButton,
                     {
                       backgroundColor: appColors.onboarding.permission.button.dontAllow.background,
-                    }
+                    },
                   ]}
-                  onPress={disableDontAllowButton || isDontAllowLoading ? undefined : () => {
-                    hapticFeedback.selection();
-                    onDontAllow();
-                  }}
+                  onPress={
+                    disableDontAllowButton || isDontAllowLoading
+                      ? undefined
+                      : () => {
+                          hapticFeedback.selection();
+                          onDontAllow();
+                        }
+                  }
                   activeOpacity={0.7}
                   disabled={disableDontAllowButton || isDontAllowLoading}
                 >
                   {isDontAllowLoading ? (
-                    <ActivityIndicator size="small" color={appColors.onboarding.permission.button.dontAllow.text} />
+                    <ActivityIndicator
+                      size="small"
+                      color={appColors.onboarding.permission.button.dontAllow.text}
+                    />
                   ) : (
-                    <Text style={[
-                      styles.buttonText,
-                      {
-                        color: appColors.onboarding.permission.button.dontAllow.text,
-                        fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
-                      }
-                    ]}>
+                    <Text
+                      style={[
+                        styles.buttonText,
+                        {
+                          color: appColors.onboarding.permission.button.dontAllow.text,
+                          fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+                        },
+                      ]}
+                    >
                       {dontAllowButtonText || i18n.t('onboarding.notificationPermission.dontAllow')}
                     </Text>
                   )}
                 </TouchableOpacity>
 
-                <View style={[
-                  styles.buttonDivider,
-                  {
-                    backgroundColor: appColors.onboarding.permission.button.divider,
-                  }
-                ]} />
+                <View
+                  style={[
+                    styles.buttonDivider,
+                    {
+                      backgroundColor: appColors.onboarding.permission.button.divider,
+                    },
+                  ]}
+                />
 
                 <TouchableOpacity
                   style={[
@@ -157,7 +185,7 @@ export function PermissionContainer({
                     styles.allowButton,
                     {
                       backgroundColor: appColors.onboarding.permission.button.allow.background,
-                    }
+                    },
                   ]}
                   onPress={() => {
                     if (isLoading) return;
@@ -168,15 +196,20 @@ export function PermissionContainer({
                   disabled={isLoading}
                 >
                   {isLoading ? (
-                    <ActivityIndicator size="small" color={appColors.onboarding.permission.button.allow.text} />
+                    <ActivityIndicator
+                      size="small"
+                      color={appColors.onboarding.permission.button.allow.text}
+                    />
                   ) : (
-                    <Text style={[
-                      styles.buttonText,
-                      {
-                        color: appColors.onboarding.permission.button.allow.text,
-                        fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto'
-                      }
-                    ]}>
+                    <Text
+                      style={[
+                        styles.buttonText,
+                        {
+                          color: appColors.onboarding.permission.button.allow.text,
+                          fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+                        },
+                      ]}
+                    >
                       {allowButtonText || i18n.t('onboarding.notificationPermission.allow')}
                     </Text>
                   )}
@@ -187,12 +220,14 @@ export function PermissionContainer({
         </View>
 
         {/* Animated upwards pointing finger emoji */}
-        <Animated.View style={[
-          singleButton ? styles.animatedFingerContainerCentered : styles.animatedFingerContainer,
-          {
-            transform: [{ translateY: fingerTranslateY }]
-          }
-        ]}>
+        <Animated.View
+          style={[
+            singleButton ? styles.animatedFingerContainerCentered : styles.animatedFingerContainer,
+            {
+              transform: [{ translateY: fingerTranslateY }],
+            },
+          ]}
+        >
           <Text style={styles.pointingEmoji}>👆</Text>
         </Animated.View>
       </View>

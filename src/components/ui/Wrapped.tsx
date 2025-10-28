@@ -1,7 +1,16 @@
 import React, { useState, useMemo, useRef, forwardRef, useImperativeHandle } from 'react';
 import { View, Text, StyleSheet, Platform, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Crown, Share, Zap, BicepsFlexed, Video, Flame, Ghost, Dumbbell } from 'lucide-react-native';
+import {
+  Crown,
+  Share,
+  Zap,
+  BicepsFlexed,
+  Video,
+  Flame,
+  Ghost,
+  Dumbbell,
+} from 'lucide-react-native';
 import i18n from '../../utils/i18n';
 import { hapticFeedback } from '../../utils/haptic';
 import { track } from '../../services/analytics';
@@ -33,115 +42,135 @@ interface WrappedProps {
   selectedYear?: string;
 }
 
-export const Wrapped = forwardRef<any, WrappedProps>(({
-  totalVideos,
-  totalReps,
-  totalWeightMoved,
-  favouriteLift,
-  longestStreak,
-  longestBreak,
-  distinctLiftTypes,
-  personality,
-  unitSystem = 'metric',
-  liftData = [],
-  selectedYear,
-}, ref) => {
-  // Use the selectedYear prop directly
-  const currentSelectedYear = selectedYear || new Date().getFullYear().toString();
-  const [showShareOverlay, setShowShareOverlay] = useState(false);
-  const shareAreaRef = useRef<View>(null);
-
-  // Helper function to get personality display text
-  const getPersonalityText = (personalityType: string) => {
-    switch (personalityType) {
-      case 'morningBird':
-        return i18n.t('performance.morningBird');
-      case 'lunchMonster':
-        return i18n.t('performance.lunchMonster');
-      case 'nightMachine':
-        return i18n.t('performance.nightMachine');
-      default:
-        return i18n.t('performance.morningBird');
-    }
-  };
-
-
-  // Filter lift data by selected year
-  const filteredLiftData = useMemo(() => {
-    if (!liftData || !Array.isArray(liftData)) {
-      return [];
-    }
-    if (currentSelectedYear === 'all') return liftData;
-    return liftData.filter(lift => lift.liftDate.split('-')[2] === currentSelectedYear);
-  }, [liftData, currentSelectedYear]);
-
-  // Use the props passed from parent, but calculate average accuracy from filtered data
-  const filteredMetrics = useMemo(() => {
-
-    // Calculate average accuracy from filtered data
-    const validAccuracies = filteredLiftData
-      .map(lift => lift.analysis?.accuracy)
-      .filter((accuracy): accuracy is number => typeof accuracy === 'number' && !isNaN(accuracy));
-    
-    const averageAccuracy = validAccuracies.length > 0
-      ? Math.round(validAccuracies.reduce((sum, acc) => sum + acc, 0) / validAccuracies.length)
-      : 0;
-
-    return {
+export const Wrapped = forwardRef<any, WrappedProps>(
+  (
+    {
       totalVideos,
       totalReps,
       totalWeightMoved,
       favouriteLift,
-      averageAccuracy,
+      longestStreak,
+      longestBreak,
+      distinctLiftTypes,
+      personality,
+      unitSystem = 'metric',
+      liftData = [],
+      selectedYear,
+    },
+    ref
+  ) => {
+    // Use the selectedYear prop directly
+    const currentSelectedYear = selectedYear || new Date().getFullYear().toString();
+    const [showShareOverlay, setShowShareOverlay] = useState(false);
+    const shareAreaRef = useRef<View>(null);
+
+    // Helper function to get personality display text
+    const getPersonalityText = (personalityType: string) => {
+      switch (personalityType) {
+        case 'morningBird':
+          return i18n.t('performance.morningBird');
+        case 'lunchMonster':
+          return i18n.t('performance.lunchMonster');
+        case 'nightMachine':
+          return i18n.t('performance.nightMachine');
+        default:
+          return i18n.t('performance.morningBird');
+      }
     };
-  }, [filteredLiftData, totalVideos, totalReps, totalWeightMoved, favouriteLift]);
 
+    // Filter lift data by selected year
+    const filteredLiftData = useMemo(() => {
+      if (!liftData || !Array.isArray(liftData)) {
+        return [];
+      }
+      if (currentSelectedYear === 'all') return liftData;
+      return liftData.filter((lift) => lift.liftDate.split('-')[2] === currentSelectedYear);
+    }, [liftData, currentSelectedYear]);
 
+    // Use the props passed from parent, but calculate average accuracy from filtered data
+    const filteredMetrics = useMemo(() => {
+      // Calculate average accuracy from filtered data
+      const validAccuracies = filteredLiftData
+        .map((lift) => lift.analysis?.accuracy)
+        .filter((accuracy): accuracy is number => typeof accuracy === 'number' && !isNaN(accuracy));
 
-  // Render function for shareable content (includes overview title, logo, year)
-  const renderShareableCards = () => (
-    <View style={styles.shareableBackground}>
-      {/* Overview Title */}
-      <Text style={styles.overviewTitle}>{i18n.t('performance.myOverview')}</Text>
-      
-      {/* Videos and Reps Row */}
-      <View style={styles.statsRow}>
-        {/* Videos Card */}
-        <View style={[styles.statCard, styles.cardShadow, styles.videosCardSolid, styles.solidCard]}>
-          <Text style={styles.solidCardTitle}>{i18n.t('performance.videos')}</Text>
-          <View style={styles.solidCardValueContainer}>
-            <Text style={styles.solidCardValue}>{filteredMetrics.totalVideos || 0}</Text>
-            <Video width={24} height={24} color="#FFFFFF" style={{ marginLeft: 8 }} />
+      const averageAccuracy =
+        validAccuracies.length > 0
+          ? Math.round(validAccuracies.reduce((sum, acc) => sum + acc, 0) / validAccuracies.length)
+          : 0;
+
+      return {
+        totalVideos,
+        totalReps,
+        totalWeightMoved,
+        favouriteLift,
+        averageAccuracy,
+      };
+    }, [filteredLiftData, totalVideos, totalReps, totalWeightMoved, favouriteLift]);
+
+    // Render function for shareable content (includes overview title, logo, year)
+    const renderShareableCards = () => (
+      <View style={styles.shareableBackground}>
+        {/* Overview Title */}
+        <Text style={styles.overviewTitle}>{i18n.t('performance.myOverview')}</Text>
+
+        {/* Videos and Reps Row */}
+        <View style={styles.statsRow}>
+          {/* Videos Card */}
+          <View
+            style={[styles.statCard, styles.cardShadow, styles.videosCardSolid, styles.solidCard]}
+          >
+            <Text style={styles.solidCardTitle}>{i18n.t('performance.videos')}</Text>
+            <View style={styles.solidCardValueContainer}>
+              <Text style={styles.solidCardValue}>{filteredMetrics.totalVideos || 0}</Text>
+              <Video width={24} height={24} color="#FFFFFF" style={{ marginLeft: 8 }} />
+            </View>
+          </View>
+
+          {/* Reps Card */}
+          <View
+            style={[styles.statCard, styles.cardShadow, styles.repsCardSolid, styles.solidCard]}
+          >
+            <Text style={styles.solidCardTitle}>{i18n.t('performance.reps')}</Text>
+            <View style={styles.solidCardValueContainer}>
+              <Text style={styles.solidCardValue}>{filteredMetrics.totalReps || 0}</Text>
+            </View>
           </View>
         </View>
 
-        {/* Reps Card */}
-        <View style={[styles.statCard, styles.cardShadow, styles.repsCardSolid, styles.solidCard]}>
-          <Text style={styles.solidCardTitle}>{i18n.t('performance.reps')}</Text>
-          <View style={styles.solidCardValueContainer}>
-            <Text style={styles.solidCardValue}>{filteredMetrics.totalReps || 0}</Text>
+        {/* Total Weight and Accuracy Row */}
+        <View style={styles.weightAccuracyRow}>
+          {/* Total Weight Moved Card - 70% */}
+          <View
+            style={[
+              styles.totalWeightCard,
+              styles.cardShadow,
+              styles.weightCard70,
+              styles.totalWeightCardSolid,
+              styles.solidCard,
+            ]}
+          >
+            <Text style={styles.solidCardTitle}>{i18n.t('performance.totalWeight')}</Text>
+            <View style={styles.solidCardValueContainer}>
+              <Text style={styles.solidCardValue}>
+                {unitSystem === 'imperial'
+                  ? Math.round((filteredMetrics.totalWeightMoved || 0) * 2.20462).toLocaleString()
+                  : Math.round(filteredMetrics.totalWeightMoved || 0).toLocaleString()}{' '}
+                {unitSystem === 'imperial' ? i18n.t('feedback.lbs') : i18n.t('feedback.kg')}
+              </Text>
+              <BicepsFlexed width={24} height={24} color="#FFFFFF" style={{ marginLeft: 8 }} />
+            </View>
           </View>
-        </View>
-      </View>
 
-      {/* Total Weight and Accuracy Row */}
-      <View style={styles.weightAccuracyRow}>
-        {/* Total Weight Moved Card - 70% */}
-        <View style={[styles.totalWeightCard, styles.cardShadow, styles.weightCard70, styles.totalWeightCardSolid, styles.solidCard]}>
-          <Text style={styles.solidCardTitle}>{i18n.t('performance.totalWeight')}</Text>
-          <View style={styles.solidCardValueContainer}>
-            <Text style={styles.solidCardValue}>
-              {unitSystem === 'imperial'
-                ? Math.round((filteredMetrics.totalWeightMoved || 0) * 2.20462).toLocaleString()
-                : Math.round(filteredMetrics.totalWeightMoved || 0).toLocaleString()
-              } {unitSystem === 'imperial' ? i18n.t('feedback.lbs') : i18n.t('feedback.kg')}
-            </Text>
-            <BicepsFlexed width={24} height={24} color="#FFFFFF" style={{ marginLeft: 8 }} />
-          </View>
-        </View>
-
-        {/* Accuracy Card - 30% */}
-          <View style={[styles.accuracyCard, styles.cardShadow, styles.accuracyCard30, styles.accuracyCardSolid]}>
+          {/* Accuracy Card - 30% */}
+          <View
+            style={[
+              styles.accuracyCard,
+              styles.cardShadow,
+              styles.accuracyCard30,
+              styles.accuracyCardSolid,
+            ]}
+          >
             <View style={styles.accuracyHeaderRow}>
               <Text style={styles.accuracyTitle}>{i18n.t('performance.accuracy')}</Text>
             </View>
@@ -150,162 +179,207 @@ export const Wrapped = forwardRef<any, WrappedProps>(({
               <Zap width={24} height={24} color="#FFFFFF" />
             </View>
           </View>
-      </View>
-
-      {/* Lifts and Favourite Row */}
-      <View style={styles.statsRow}>
-        {/* Lifts Card */}
-        <View style={[styles.statCard, styles.cardShadow, styles.liftsCardSolid, styles.solidCard]}>
-          <Text style={styles.solidCardTitle}>{i18n.t('performance.lifts')}</Text>
-          <View style={styles.solidCardValueContainer}>
-            <Text style={styles.solidCardValue}>{distinctLiftTypes || 0}</Text>
-            <Dumbbell width={24} height={24} color="#FFFFFF" style={{ marginLeft: 8 }} />
-          </View>
         </View>
 
-      {/* Favourite Exercise Card */}
-      <View style={[styles.statCard, styles.cardShadow, styles.favouriteExerciseCard, styles.solidCard]}>
-        <Text style={styles.solidCardTitle}>{i18n.t('performance.favouriteExercise')}</Text>
-        <View style={styles.solidCardValueContainer}>
-          <View style={styles.favouriteExerciseValueWrapper}>
-            <Text style={styles.solidCardValue}>
-              {filteredMetrics.favouriteLift || i18n.t('performance.noData')}
-            </Text>
-          </View>
-          {filteredMetrics.favouriteLift && <Crown width={24} height={24} color="#FFFFFF" style={{ marginLeft: 8, flexShrink: 0 }} />}
-        </View>
-      </View>
-      </View>
-
-      {/* Streak and Break Row */}
-      <View style={styles.statsRow}>
-        {/* {i18n.t('performance.longestStreak')} Card */}
-        <View style={[styles.statCard, styles.cardShadow, styles.longestStreakCardSolid, styles.solidCard]}>
-          <Text style={styles.solidCardTitle}>{i18n.t('performance.longestStreak')}</Text>
-          <View style={styles.solidCardValueContainer}>
-            <Text style={styles.solidCardValue}>{longestStreak || 0}</Text>
-            <Flame width={24} height={24} color="#FFFFFF" style={{ marginLeft: 8 }} />
-          </View>
-        </View>
-
-        {/* {i18n.t('performance.longestBreak')} Card */}
-        <View style={[styles.statCard, styles.cardShadow, styles.longestBreakCardSolid, styles.solidCard]}>
-          <Text style={styles.solidCardTitle}>{i18n.t('performance.longestBreak')}</Text>
-          <View style={styles.solidCardValueContainer}>
-            <Text style={styles.solidCardValue}>{longestBreak === 0 ? i18n.t('performance.none') : longestBreak}</Text>
-            <Ghost width={24} height={24} color="#FFFFFF" style={{ marginLeft: 8 }} />
-          </View>
-        </View>
-      </View>
-
-      {/* Personality, Logo and Year Row */}
-      <View style={styles.weightAccuracyRow}>
-        {/* Left side - Two horizontal cards */}
-        <View style={styles.leftCardsContainer}>
-          {/* Personality Card */}
-          <View style={[styles.statCard, styles.cardShadow, styles.personalityCard, styles.personalityCardSolid, styles.solidCard]}>
-            <Text style={styles.solidCardTitle}>{i18n.t('performance.personality')}</Text>
-            <View style={styles.solidCardValueContainer}>
-              <Text style={styles.solidCardValue}>{getPersonalityText(personality)}</Text>
-            </View>
-          </View>
-
-          {/* FormAI Logo Card */}
-          <View style={[styles.statCard, styles.cardShadow, styles.logoCard, styles.logoCardSolid, styles.solidCard]}>
-            <Text style={styles.logoCardTitle}>{i18n.t('performance.thankYou')}</Text>
-            <View style={styles.logoContainer}>
-              <FormAILogo
-                iconSize={32}
-                textStyle={styles.logoTextGray}
-              />
-            </View>
-          </View>
-        </View>
-
-        {/* Year Card - 35% width with vertical text */}
-        <View style={[styles.accuracyCard, styles.cardShadow, styles.yearCard]}>
-          <LinearGradient
-            colors={['#f6339a', '#fb2c36', '#ff6900', '#fe9a00']}
-            locations={[0, 0.5, 0.8, 1]}
-            style={styles.yearGradientFill}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
+        {/* Lifts and Favourite Row */}
+        <View style={styles.statsRow}>
+          {/* Lifts Card */}
+          <View
+            style={[styles.statCard, styles.cardShadow, styles.liftsCardSolid, styles.solidCard]}
           >
-            <View style={styles.yearContainer}>
-              <View style={styles.verticalTextContainer}>
-                <Text 
-                  style={styles.verticalYearText}
-                  numberOfLines={1}
-                >
-                  {selectedYear === 'all' ? i18n.t('performance.timeRanges.allTime') : selectedYear}
+            <Text style={styles.solidCardTitle}>{i18n.t('performance.lifts')}</Text>
+            <View style={styles.solidCardValueContainer}>
+              <Text style={styles.solidCardValue}>{distinctLiftTypes || 0}</Text>
+              <Dumbbell width={24} height={24} color="#FFFFFF" style={{ marginLeft: 8 }} />
+            </View>
+          </View>
+
+          {/* Favourite Exercise Card */}
+          <View
+            style={[
+              styles.statCard,
+              styles.cardShadow,
+              styles.favouriteExerciseCard,
+              styles.solidCard,
+            ]}
+          >
+            <Text style={styles.solidCardTitle}>{i18n.t('performance.favouriteExercise')}</Text>
+            <View style={styles.solidCardValueContainer}>
+              <View style={styles.favouriteExerciseValueWrapper}>
+                <Text style={styles.solidCardValue}>
+                  {filteredMetrics.favouriteLift || i18n.t('performance.noData')}
                 </Text>
               </View>
+              {filteredMetrics.favouriteLift && (
+                <Crown
+                  width={24}
+                  height={24}
+                  color="#FFFFFF"
+                  style={{ marginLeft: 8, flexShrink: 0 }}
+                />
+              )}
             </View>
-          </LinearGradient>
+          </View>
+        </View>
+
+        {/* Streak and Break Row */}
+        <View style={styles.statsRow}>
+          {/* {i18n.t('performance.longestStreak')} Card */}
+          <View
+            style={[
+              styles.statCard,
+              styles.cardShadow,
+              styles.longestStreakCardSolid,
+              styles.solidCard,
+            ]}
+          >
+            <Text style={styles.solidCardTitle}>{i18n.t('performance.longestStreak')}</Text>
+            <View style={styles.solidCardValueContainer}>
+              <Text style={styles.solidCardValue}>{longestStreak || 0}</Text>
+              <Flame width={24} height={24} color="#FFFFFF" style={{ marginLeft: 8 }} />
+            </View>
+          </View>
+
+          {/* {i18n.t('performance.longestBreak')} Card */}
+          <View
+            style={[
+              styles.statCard,
+              styles.cardShadow,
+              styles.longestBreakCardSolid,
+              styles.solidCard,
+            ]}
+          >
+            <Text style={styles.solidCardTitle}>{i18n.t('performance.longestBreak')}</Text>
+            <View style={styles.solidCardValueContainer}>
+              <Text style={styles.solidCardValue}>
+                {longestBreak === 0 ? i18n.t('performance.none') : longestBreak}
+              </Text>
+              <Ghost width={24} height={24} color="#FFFFFF" style={{ marginLeft: 8 }} />
+            </View>
+          </View>
+        </View>
+
+        {/* Personality, Logo and Year Row */}
+        <View style={styles.weightAccuracyRow}>
+          {/* Left side - Two horizontal cards */}
+          <View style={styles.leftCardsContainer}>
+            {/* Personality Card */}
+            <View
+              style={[
+                styles.statCard,
+                styles.cardShadow,
+                styles.personalityCard,
+                styles.personalityCardSolid,
+                styles.solidCard,
+              ]}
+            >
+              <Text style={styles.solidCardTitle}>{i18n.t('performance.personality')}</Text>
+              <View style={styles.solidCardValueContainer}>
+                <Text style={styles.solidCardValue}>{getPersonalityText(personality)}</Text>
+              </View>
+            </View>
+
+            {/* FormAI Logo Card */}
+            <View
+              style={[
+                styles.statCard,
+                styles.cardShadow,
+                styles.logoCard,
+                styles.logoCardSolid,
+                styles.solidCard,
+              ]}
+            >
+              <Text style={styles.logoCardTitle}>{i18n.t('performance.thankYou')}</Text>
+              <View style={styles.logoContainer}>
+                <FormAILogo iconSize={32} textStyle={styles.logoTextGray} />
+              </View>
+            </View>
+          </View>
+
+          {/* Year Card - 35% width with vertical text */}
+          <View style={[styles.accuracyCard, styles.cardShadow, styles.yearCard]}>
+            <LinearGradient
+              colors={['#f6339a', '#fb2c36', '#ff6900', '#fe9a00']}
+              locations={[0, 0.5, 0.8, 1]}
+              style={styles.yearGradientFill}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+            >
+              <View style={styles.yearContainer}>
+                <View style={styles.verticalTextContainer}>
+                  <Text style={styles.verticalYearText} numberOfLines={1}>
+                    {selectedYear === 'all'
+                      ? i18n.t('performance.timeRanges.allTime')
+                      : selectedYear}
+                  </Text>
+                </View>
+              </View>
+            </LinearGradient>
+          </View>
         </View>
       </View>
-      
-    </View>
-  );
+    );
 
-  const handleShare = async () => {
-    try {
-      hapticFeedback.selection();
-      track('Wrapped share tapped', { year: currentSelectedYear });
+    const handleShare = async () => {
+      try {
+        hapticFeedback.selection();
+        track('Wrapped share tapped', { year: currentSelectedYear });
 
-      setShowShareOverlay(true); // mount the hidden white version
-      await new Promise((r) => requestAnimationFrame(() => setTimeout(r, 0))); // wait a frame
+        setShowShareOverlay(true); // mount the hidden white version
+        await new Promise((r) => requestAnimationFrame(() => setTimeout(r, 0))); // wait a frame
 
-      const uri = await captureRef(shareAreaRef, {
-        format: 'png',
-        quality: 1,
-        fileName: `lift-wrapped-${currentSelectedYear}`,
-        result: 'tmpfile',
-      });
+        const uri = await captureRef(shareAreaRef, {
+          format: 'png',
+          quality: 1,
+          fileName: `lift-wrapped-${currentSelectedYear}`,
+          result: 'tmpfile',
+        });
 
-      setShowShareOverlay(false);
+        setShowShareOverlay(false);
 
-      if (!(await Sharing.isAvailableAsync())) {
-        Alert.alert('Sharing not available on this device.');
-        return;
+        if (!(await Sharing.isAvailableAsync())) {
+          Alert.alert('Sharing not available on this device.');
+          return;
+        }
+
+        await Sharing.shareAsync(uri, {
+          dialogTitle: i18n.t('performance.shareWrapped') || 'Share your Wrapped',
+          mimeType: 'image/png',
+          UTI: 'public.png', // iOS
+        });
+      } catch (e: any) {
+        setShowShareOverlay(false);
+        Alert.alert(
+          i18n.t('performance.shareError'),
+          e?.message ?? i18n.t('performance.unknownError')
+        );
       }
+    };
 
-      await Sharing.shareAsync(uri, {
-        dialogTitle: i18n.t('performance.shareWrapped') || 'Share your Wrapped',
-        mimeType: 'image/png',
-        UTI: 'public.png', // iOS
-      });
-    } catch (e: any) {
-      setShowShareOverlay(false);
-      Alert.alert(i18n.t('performance.shareError'), e?.message ?? i18n.t('performance.unknownError'));
-    }
-  };
+    // Expose handleShare function to parent components
+    useImperativeHandle(ref, () => ({
+      handleShare,
+    }));
+    return (
+      <View style={styles.container}>
+        {/* Visible Cards - Now showing shareable content with white background */}
+        <View style={styles.mainCardContainer}>{renderShareableCards()}</View>
 
-  // Expose handleShare function to parent components
-  useImperativeHandle(ref, () => ({
-    handleShare,
-  }));
-  return (
-    <View style={styles.container}>
-      {/* Visible Cards - Now showing shareable content with white background */}
-      <View style={styles.mainCardContainer}>
-        {renderShareableCards()}
+        {/* Hidden white overlay used only for capture */}
+        {showShareOverlay && (
+          <View
+            ref={shareAreaRef}
+            collapsable={false}
+            pointerEvents="none"
+            style={styles.shareOverlay}
+          >
+            {renderShareableCards()}
+          </View>
+        )}
       </View>
-
-      {/* Hidden white overlay used only for capture */}
-      {showShareOverlay && (
-        <View
-          ref={shareAreaRef}
-          collapsable={false}
-          pointerEvents="none"
-          style={styles.shareOverlay}
-        >
-          {renderShareableCards()}
-        </View>
-      )}
-    </View>
-  );
-});
+    );
+  }
+);
 
 const styles = StyleSheet.create({
   container: {

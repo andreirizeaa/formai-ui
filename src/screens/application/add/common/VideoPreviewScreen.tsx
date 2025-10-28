@@ -1,5 +1,12 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, useWindowDimensions } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Platform,
+  useWindowDimensions,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { Asset } from 'expo-asset';
@@ -10,7 +17,7 @@ import i18n from '../../../../utils/i18n';
 
 interface VideoPreviewScreenProps {
   videoUri: string | number;
-onSelectNewVideo: () => void;
+  onSelectNewVideo: () => void;
   onContinue: () => void;
   onClose: () => void;
   title?: string;
@@ -50,21 +57,16 @@ function VideoPlayerComponent({ videoUri }: VideoPlayerComponentProps) {
     );
   }
 
-  return (
-    <VideoView
-      player={player}
-      style={styles.videoPreview}
-    />
-  );
+  return <VideoView player={player} style={styles.videoPreview} />;
 }
 
-export function VideoPreviewScreen({ 
-  videoUri, 
-  onSelectNewVideo, 
-  onContinue, 
+export function VideoPreviewScreen({
+  videoUri,
+  onSelectNewVideo,
+  onContinue,
   onClose,
   title = i18n.t('add.videoPreview'),
-  selectNewVideoText = i18n.t('add.selectNewVideo')
+  selectNewVideoText = i18n.t('add.selectNewVideo'),
 }: VideoPreviewScreenProps) {
   const { ref: continueButtonRef } = useTutorialTarget('video_preview_continue');
   const { height: screenHeight } = useWindowDimensions();
@@ -73,7 +75,10 @@ export function VideoPreviewScreen({
   React.useEffect(() => {
     let cancelled = false;
     (async () => {
-      if (!videoUri) { setVideoRatio(null); return; }
+      if (!videoUri) {
+        setVideoRatio(null);
+        return;
+      }
       try {
         // Handle both string URIs and require() numbers
         let actualVideoUri: string;
@@ -85,8 +90,11 @@ export function VideoPreviewScreen({
         } else {
           actualVideoUri = videoUri;
         }
-        
-        const meta = await generateVideoThumbnailWithMetadata(actualVideoUri, { time: 2000, quality: 0.5 });
+
+        const meta = await generateVideoThumbnailWithMetadata(actualVideoUri, {
+          time: 2000,
+          quality: 0.5,
+        });
         if (!cancelled && meta.width && meta.height) {
           setVideoRatio(meta.width / meta.height);
         }
@@ -94,18 +102,22 @@ export function VideoPreviewScreen({
         if (!cancelled) setVideoRatio(null);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [videoUri]);
-  
+
   return (
     <View style={styles.container}>
       <View style={styles.content}>
         <View style={styles.videoPreviewWrapper}>
-          <View 
+          <View
             style={[
               styles.videoPreviewContainer,
               { width: '100%' },
-              videoRatio ? { aspectRatio: videoRatio, maxHeight: screenHeight * 0.5 } : { height: 220 }
+              videoRatio
+                ? { aspectRatio: videoRatio, maxHeight: screenHeight * 0.5 }
+                : { height: 220 },
             ]}
             ref={continueButtonRef}
           >
@@ -122,8 +134,8 @@ export function VideoPreviewScreen({
 
       <View style={styles.bottomControls}>
         <View style={styles.buttonStack}>
-          <TouchableOpacity 
-            style={styles.selectNewVideoButton} 
+          <TouchableOpacity
+            style={styles.selectNewVideoButton}
             onPress={() => {
               // Track add analysis clicks for new video
               track('Add analysis', { event: 'New video' });
@@ -132,8 +144,8 @@ export function VideoPreviewScreen({
           >
             <Text style={styles.selectNewVideoButtonText}>{selectNewVideoText}</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.continueButton} 
+          <TouchableOpacity
+            style={styles.continueButton}
             onPress={() => {
               // Track add analysis clicks for proceed with video
               track('Add analysis', { event: 'Continue to movements' });
@@ -222,4 +234,4 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
-}); 
+});

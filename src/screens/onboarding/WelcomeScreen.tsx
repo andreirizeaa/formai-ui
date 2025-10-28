@@ -1,5 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, Animated, Modal, Pressable, ScrollView } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Platform,
+  Animated,
+  Modal,
+  Pressable,
+  ScrollView,
+} from 'react-native';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AnimatedOptionButton } from '../../components/ui/buttons/AnimatedOptionButton';
@@ -20,12 +30,12 @@ interface WelcomeScreenProps {
   isAppVisible?: boolean;
 }
 
-export function WelcomeScreen({ 
-  onGetStarted, 
-  onSignIn, 
-  onNavigateToOnboarding, 
-  onRequirePayment, 
-  isAppVisible = false 
+export function WelcomeScreen({
+  onGetStarted,
+  onSignIn,
+  onNavigateToOnboarding,
+  onRequirePayment,
+  isAppVisible = false,
 }: WelcomeScreenProps) {
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const [showSignInModal, setShowSignInModal] = useState(false);
@@ -38,11 +48,11 @@ export function WelcomeScreen({
   const videoTranslateY = React.useRef(new Animated.Value(500)).current; // Start below screen
   const videoTranslateX = React.useRef(new Animated.Value(400)).current; // Start way far right (like x=40)
   const videoRotation = React.useRef(new Animated.Value(30)).current; // Start rotated 30° right
-  
+
   // Create video player with stable reference
   const playerRef = React.useRef<any>(null);
   const [videoReady, setVideoReady] = useState(false);
-  const player = useVideoPlayer(require('../../../assets/formai-homescreen.mp4'), player => {
+  const player = useVideoPlayer(require('../../../assets/formai-homescreen.mp4'), (player) => {
     player.loop = true;
     player.muted = true;
     player.volume = 0; // Ensure volume is 0
@@ -66,18 +76,24 @@ export function WelcomeScreen({
     if (showLanguageModal) {
       setLanguageShouldRender(true);
       languageOpacity.setValue(0);
-      Animated.timing(languageOpacity, { toValue: 1, duration: 100, useNativeDriver: true }).start();
+      Animated.timing(languageOpacity, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }).start();
       return;
     }
-    Animated.timing(languageOpacity, { toValue: 0, duration: 100, useNativeDriver: true }).start(({ finished }) => {
-      if (finished) setLanguageShouldRender(false);
-    });
+    Animated.timing(languageOpacity, { toValue: 0, duration: 100, useNativeDriver: true }).start(
+      ({ finished }) => {
+        if (finished) setLanguageShouldRender(false);
+      }
+    );
   }, [showLanguageModal, languageOpacity]);
 
   // Ensure video stays muted during playback
   useEffect(() => {
     if (!playerRef.current) return;
-    
+
     const ensureMuted = () => {
       if (playerRef.current) {
         try {
@@ -88,10 +104,10 @@ export function WelcomeScreen({
         }
       }
     };
-    
+
     // Check every 100ms to ensure video stays muted
     const interval = setInterval(ensureMuted, 100);
-    
+
     return () => clearInterval(interval);
   }, [videoReady]);
 
@@ -156,10 +172,7 @@ export function WelcomeScreen({
       ]);
 
       // Chain the animations and loop
-      Animated.sequence([
-        enterAnimation,
-        stayAnimation,
-      ]).start(() => {
+      Animated.sequence([enterAnimation, stayAnimation]).start(() => {
         // Video continues playing during exit animation
         // (removed pause call to keep video playing)
 
@@ -182,7 +195,9 @@ export function WelcomeScreen({
     return () => {
       cancelled = true;
       // Optional: pause when unmounting or becoming invisible again
-      try { playerRef.current?.pause?.(); } catch {}
+      try {
+        playerRef.current?.pause?.();
+      } catch {}
     };
   }, [videoReady, isAppVisible, videoTranslateY, videoTranslateX, videoRotation]);
 
@@ -221,166 +236,208 @@ export function WelcomeScreen({
   };
 
   // Get current language info
-  const currentLangInfo = LANGUAGES.find(lang => lang.code === currentLanguage) || LANGUAGES[0];
+  const currentLangInfo = LANGUAGES.find((lang) => lang.code === currentLanguage) || LANGUAGES[0];
 
   return (
     <>
       <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
         <SafeAreaView
-          style={[
-            styles.container,
-            { backgroundColor: appColors.onboarding.welcome.background }
-          ]}
+          style={[styles.container, { backgroundColor: appColors.onboarding.welcome.background }]}
         >
-      {/* Absolutely positioned language pill */}
-      <Pressable
-        style={({ pressed }) => [
-          styles.languagePill,
-          { 
-            opacity: pressed ? 0.7 : 1,
-            backgroundColor: appColors.onboarding.welcome.languagePill.background,
-            shadowColor: appColors.onboarding.welcome.languagePill.shadow,
-          }
-        ]}
-        onPress={handleLanguagePress}
-      >
-        <Text style={styles.languageFlag}>{currentLangInfo.flag}</Text>
-        <Text style={[styles.languageCode, { color: appColors.onboarding.welcome.languagePill.text }]}>
-          {currentLangInfo.code.toUpperCase()}
-        </Text>
-      </Pressable>
-
-      {/* App overview video */}
-      <View style={styles.photoContainer}>
-        <Animated.View
-          style={[
-            styles.videoContainer,
-            {
-              transform: [
-                { translateY: videoTranslateY },
-                { translateX: videoTranslateX },
-                {
-                  rotate: videoRotation.interpolate({
-                    inputRange: [-30, 0, 30],
-                    outputRange: ['-30deg', '0deg', '30deg'],
-                  })
-                },
-              ],
-            },
-          ]}
-        >
-          <VideoView
-            player={player}
-            style={styles.photo}
-            allowsFullscreen={false}
-            allowsPictureInPicture={false}
-            contentFit="contain"
-            nativeControls={false}
-            onFirstFrameRender={() => setVideoReady(true)}
-          />
-        </Animated.View>
-      </View>
-
-      {/* Content area with text and buttons */}
-      <View style={[styles.contentContainer, { backgroundColor: appColors.onboarding.welcome.content.background }]}>
-        <View style={styles.content}>
-          <Text style={[styles.subtitle, { color: appColors.onboarding.welcome.subtitle }]}>
-            {i18n.t('perfectFormAlways')}
-          </Text>
-        </View>
-
-        <View style={styles.actions}>
-          <TouchableOpacity
-            style={styles.getStartedButton}
-            onPress={handleGetStarted}
-            activeOpacity={0.8}
+          {/* Absolutely positioned language pill */}
+          <Pressable
+            style={({ pressed }) => [
+              styles.languagePill,
+              {
+                opacity: pressed ? 0.7 : 1,
+                backgroundColor: appColors.onboarding.welcome.languagePill.background,
+                shadowColor: appColors.onboarding.welcome.languagePill.shadow,
+              },
+            ]}
+            onPress={handleLanguagePress}
           >
-            <Text style={styles.getStartedButtonText}>
-              {i18n.t('getStartedButton')}
-            </Text>
-          </TouchableOpacity>
-
-          <View style={styles.haveAccountContainer}>
-            <Text style={[styles.haveAccountText, { color: appColors.onboarding.welcome.haveAccountText }]}>
-              {i18n.t('alreadyHaveAccount')}{' '}
-            </Text>
-            <TouchableOpacity onPress={handleSignIn} activeOpacity={0.7}>
-              <Text style={[styles.signInLink, { color: appColors.onboarding.welcome.signInLink }]}>
-                {i18n.t('signIn')}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
-
-      {/* Language Selection Modal */}
-      <Modal
-        visible={languageShouldRender}
-        transparent={true}
-        animationType="none"
-        onRequestClose={handleCloseLanguageModal}
-      >
-        <Animated.View style={{ flex: 1, opacity: languageOpacity }}>
-          <TouchableOpacity
-            style={[styles.overlay, { backgroundColor: appColors.onboarding.welcome.modal.overlay }]}
-            activeOpacity={1}
-            onPress={handleCloseLanguageModal}
-          >
-            <TouchableOpacity
-              style={[styles.popupContainer, { backgroundColor: appColors.onboarding.welcome.modal.background }]}
-              activeOpacity={1}
-              onPress={() => {}} // Prevent closing when clicking inside the modal
+            <Text style={styles.languageFlag}>{currentLangInfo.flag}</Text>
+            <Text
+              style={[
+                styles.languageCode,
+                { color: appColors.onboarding.welcome.languagePill.text },
+              ]}
             >
-            {/* Header */}
-            <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: appColors.onboarding.welcome.modal.title }]}>Language</Text>
-              <TouchableOpacity style={[styles.modalCloseButton, { 
-                borderColor: appColors.onboarding.welcome.modal.closeButtonBorder 
-              }]} onPress={handleCloseLanguageModal}>
-                <X width={20} height={20} color={appColors.onboarding.welcome.modal.closeButton} />
+              {currentLangInfo.code.toUpperCase()}
+            </Text>
+          </Pressable>
+
+          {/* App overview video */}
+          <View style={styles.photoContainer}>
+            <Animated.View
+              style={[
+                styles.videoContainer,
+                {
+                  transform: [
+                    { translateY: videoTranslateY },
+                    { translateX: videoTranslateX },
+                    {
+                      rotate: videoRotation.interpolate({
+                        inputRange: [-30, 0, 30],
+                        outputRange: ['-30deg', '0deg', '30deg'],
+                      }),
+                    },
+                  ],
+                },
+              ]}
+            >
+              <VideoView
+                player={player}
+                style={styles.photo}
+                allowsFullscreen={false}
+                allowsPictureInPicture={false}
+                contentFit="contain"
+                nativeControls={false}
+                onFirstFrameRender={() => setVideoReady(true)}
+              />
+            </Animated.View>
+          </View>
+
+          {/* Content area with text and buttons */}
+          <View
+            style={[
+              styles.contentContainer,
+              { backgroundColor: appColors.onboarding.welcome.content.background },
+            ]}
+          >
+            <View style={styles.content}>
+              <Text style={[styles.subtitle, { color: appColors.onboarding.welcome.subtitle }]}>
+                {i18n.t('perfectFormAlways')}
+              </Text>
+            </View>
+
+            <View style={styles.actions}>
+              <TouchableOpacity
+                style={styles.getStartedButton}
+                onPress={handleGetStarted}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.getStartedButtonText}>{i18n.t('getStartedButton')}</Text>
               </TouchableOpacity>
-            </View>
 
-            {/* Content */}
-            <View style={styles.modalContent}>
-              <ScrollView style={styles.languageList} showsVerticalScrollIndicator={false}>
-                {LANGUAGES.map((item, index) => (
-                  <AnimatedOptionButton
-                    key={item.code}
-                    onPress={() => handleLanguageSelect(item.code)}
-                    isSelected={currentLanguage === item.code}
-                    delay={index * 50} // Stagger animation
-                    style={[
-                      styles.languageButton,
-                      { 
-                        backgroundColor: currentLanguage === item.code 
-                          ? appColors.onboarding.welcome.modal.languageButton.selected.background
-                          : appColors.onboarding.welcome.modal.languageButton.unselected.background
-                      }
-                    ]}
+              <View style={styles.haveAccountContainer}>
+                <Text
+                  style={[
+                    styles.haveAccountText,
+                    { color: appColors.onboarding.welcome.haveAccountText },
+                  ]}
+                >
+                  {i18n.t('alreadyHaveAccount')}{' '}
+                </Text>
+                <TouchableOpacity onPress={handleSignIn} activeOpacity={0.7}>
+                  <Text
+                    style={[styles.signInLink, { color: appColors.onboarding.welcome.signInLink }]}
                   >
-                    <View style={styles.languageOptionContent}>
-                      <Text style={[
-                        styles.languageOptionText,
-                        { 
-                          color: currentLanguage === item.code 
-                            ? appColors.onboarding.welcome.modal.languageButton.selected.text
-                            : appColors.onboarding.welcome.modal.languageButton.unselected.text
-                        }
-                      ]}>
-                        {item.nativeName}
-                      </Text>
-                      <Text style={styles.languageOptionFlag}>{item.flag}</Text>
-                    </View>
-                  </AnimatedOptionButton>
-                ))}
-              </ScrollView>
+                    {i18n.t('signIn')}
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
-            </TouchableOpacity>
-          </TouchableOpacity>
-        </Animated.View>
-      </Modal>
+          </View>
 
+          {/* Language Selection Modal */}
+          <Modal
+            visible={languageShouldRender}
+            transparent={true}
+            animationType="none"
+            onRequestClose={handleCloseLanguageModal}
+          >
+            <Animated.View style={{ flex: 1, opacity: languageOpacity }}>
+              <TouchableOpacity
+                style={[
+                  styles.overlay,
+                  { backgroundColor: appColors.onboarding.welcome.modal.overlay },
+                ]}
+                activeOpacity={1}
+                onPress={handleCloseLanguageModal}
+              >
+                <TouchableOpacity
+                  style={[
+                    styles.popupContainer,
+                    { backgroundColor: appColors.onboarding.welcome.modal.background },
+                  ]}
+                  activeOpacity={1}
+                  onPress={() => {}} // Prevent closing when clicking inside the modal
+                >
+                  {/* Header */}
+                  <View style={styles.modalHeader}>
+                    <Text
+                      style={[
+                        styles.modalTitle,
+                        { color: appColors.onboarding.welcome.modal.title },
+                      ]}
+                    >
+                      Language
+                    </Text>
+                    <TouchableOpacity
+                      style={[
+                        styles.modalCloseButton,
+                        {
+                          borderColor: appColors.onboarding.welcome.modal.closeButtonBorder,
+                        },
+                      ]}
+                      onPress={handleCloseLanguageModal}
+                    >
+                      <X
+                        width={20}
+                        height={20}
+                        color={appColors.onboarding.welcome.modal.closeButton}
+                      />
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* Content */}
+                  <View style={styles.modalContent}>
+                    <ScrollView style={styles.languageList} showsVerticalScrollIndicator={false}>
+                      {LANGUAGES.map((item, index) => (
+                        <AnimatedOptionButton
+                          key={item.code}
+                          onPress={() => handleLanguageSelect(item.code)}
+                          isSelected={currentLanguage === item.code}
+                          delay={index * 50} // Stagger animation
+                          style={[
+                            styles.languageButton,
+                            {
+                              backgroundColor:
+                                currentLanguage === item.code
+                                  ? appColors.onboarding.welcome.modal.languageButton.selected
+                                      .background
+                                  : appColors.onboarding.welcome.modal.languageButton.unselected
+                                      .background,
+                            },
+                          ]}
+                        >
+                          <View style={styles.languageOptionContent}>
+                            <Text
+                              style={[
+                                styles.languageOptionText,
+                                {
+                                  color:
+                                    currentLanguage === item.code
+                                      ? appColors.onboarding.welcome.modal.languageButton.selected
+                                          .text
+                                      : appColors.onboarding.welcome.modal.languageButton.unselected
+                                          .text,
+                                },
+                              ]}
+                            >
+                              {item.nativeName}
+                            </Text>
+                            <Text style={styles.languageOptionFlag}>{item.flag}</Text>
+                          </View>
+                        </AnimatedOptionButton>
+                      ))}
+                    </ScrollView>
+                  </View>
+                </TouchableOpacity>
+              </TouchableOpacity>
+            </Animated.View>
+          </Modal>
         </SafeAreaView>
       </Animated.View>
 
@@ -487,7 +544,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
-  signInLink: { 
+  signInLink: {
     fontSize: 16,
     fontWeight: '800',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
@@ -579,4 +636,4 @@ const styles = StyleSheet.create({
   languageOptionFlag: {
     fontSize: 24,
   },
-}); 
+});

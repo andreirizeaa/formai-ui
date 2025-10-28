@@ -20,8 +20,10 @@ class SimpleEventBus {
   emit<T = any>(event: string, payload?: T) {
     const set = this.handlers[event];
     if (!set || set.size === 0) return;
-    set.forEach(fn => {
-      try { fn(payload); } catch {}
+    set.forEach((fn) => {
+      try {
+        fn(payload);
+      } catch {}
     });
   }
 
@@ -51,5 +53,3 @@ export interface LiftFailedPayload {
   liftId?: string;
   assetId?: string;
 }
-
-

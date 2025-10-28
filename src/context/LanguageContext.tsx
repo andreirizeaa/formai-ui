@@ -43,7 +43,7 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
     // Update i18n immediately
     setLanguage(languageCode);
     setCurrentLanguage(languageCode);
-    
+
     // Save to AsyncStorage
     try {
       const { setSelectedLanguage } = await import('../services/storageService');
@@ -66,4 +66,4 @@ export function useLanguage() {
     throw new Error('useLanguage must be used within a LanguageProvider');
   }
   return context;
-} 
+}

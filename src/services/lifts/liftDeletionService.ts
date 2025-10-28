@@ -5,10 +5,7 @@ import { hapticFeedback } from '../../utils/haptic';
  * Simple lift deletion method that handles both loading and final lifts
  * Returns true if successful, false otherwise
  */
-export async function deleteLift(
-  liftId: string, 
-  lift: any, 
-): Promise<boolean> {
+export async function deleteLift(liftId: string, lift: any): Promise<boolean> {
   hapticFeedback.selection();
   try {
     const assetId = typeof lift?.assetId === 'string' ? lift.assetId : undefined;

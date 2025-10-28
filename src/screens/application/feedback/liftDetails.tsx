@@ -1,5 +1,16 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, ActivityIndicator, TextInput, Keyboard, Animated } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Dimensions,
+  ActivityIndicator,
+  TextInput,
+  Keyboard,
+  Animated,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft, Ellipsis, Heart, Trash2, X, Pencil, Download } from 'lucide-react-native';
 import { VideoView, useVideoPlayer } from 'expo-video';
@@ -8,9 +19,17 @@ import SwipeableLiftDetailsGraphs from '../../../components/ui/swipeables/Swipea
 import { OrangeGradientButton } from '../../../components/ui/buttons/OrangeGradientButton';
 import { useQueryClient } from '@tanstack/react-query';
 import { hapticFeedback } from '../../../utils/haptic';
-import { useLiftData, ILiftData, extractObjectKeyFromUrl, signPath } from '../../../context/LiftDataContext';
+import {
+  useLiftData,
+  ILiftData,
+  extractObjectKeyFromUrl,
+  signPath,
+} from '../../../context/LiftDataContext';
 import { useLoadingLifts } from '../../../context/LoadingLiftsContext';
-import { favouriteLift as favouriteLiftApi, updateLiftWeight } from '../../../services/lifts/liftService';
+import {
+  favouriteLift as favouriteLiftApi,
+  updateLiftWeight,
+} from '../../../services/lifts/liftService';
 import { deleteLift } from '../../../services/lifts/liftDeletionService';
 import { showAlert } from '../../../services/alertService';
 import { useTutorialTarget } from '../../../context/TutorialContext';
@@ -24,7 +43,13 @@ import { openAppSettings } from '../../../utils/openAppSettings';
 import * as MediaLibrary from 'expo-media-library';
 import { downloadVideoToLibrary } from '../../../services/downloadVideoService';
 
-function VideoPlayerComponent({ videoUri, onReady }: { videoUri: string | number; onReady: () => void }) {
+function VideoPlayerComponent({
+  videoUri,
+  onReady,
+}: {
+  videoUri: string | number;
+  onReady: () => void;
+}) {
   const player = useVideoPlayer(videoUri as any, (player) => {
     player.loop = false;
     player.showNowPlayingNotification = false;
@@ -38,16 +63,21 @@ function VideoPlayerComponent({ videoUri, onReady }: { videoUri: string | number
     return () => clearTimeout(timeout);
   }, [onReady]);
 
-  return (
-    <VideoView
-      player={player}
-      style={styles.video}
-    />
-  );
+  return <VideoView player={player} style={styles.video} />;
 }
 
-export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initialLiftData }: LiftDetailsProps) {
-  const { removeLift, updateLift, refreshLifts, liftData: contextLiftData, favouriteLiftAndRefresh } = useLiftData();
+export function LiftDetails({
+  onClose,
+  onShowFeedbackSlideshow,
+  liftData: initialLiftData,
+}: LiftDetailsProps) {
+  const {
+    removeLift,
+    updateLift,
+    refreshLifts,
+    liftData: contextLiftData,
+    favouriteLiftAndRefresh,
+  } = useLiftData();
   const { removeLift: removeLoadingLift } = useLoadingLifts();
   const { userDetails } = useUserDetails();
   const { invalidateAndRefetch, optimisticRemoveToday } = useUserCheckIns();
@@ -64,31 +94,32 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
   const [showPermissionRequiredModal, setShowPermissionRequiredModal] = useState(false);
   const [editWeightShouldRender, setEditWeightShouldRender] = useState(showEditWeightModal);
   const editWeightOpacity = useRef(new Animated.Value(0)).current;
-  
+
   // Animation value for finger icon
   const fingerTranslateY = useMemo(() => new Animated.Value(0), []);
-  
+
   // Track screen view on mount
   useEffect(() => {
     track('Screen viewed', { screen_name: 'Lift Details' });
   }, []);
-  
+
   // Tutorial target for the review feedback button
   const { ref: reviewFeedbackRef } = useTutorialTarget('lift_details_review_feedback');
-  
+
   // Tutorial targets for graphs
   const { ref: formGraphRef } = useTutorialTarget('lift_details_form_graph');
   const { ref: depthGraphRef } = useTutorialTarget('lift_details_depth_graph');
-  
+
   // Simple boolean for favourite state - starts with the initial value
   const [isFavourite, setIsFavourite] = useState(initialLiftData.isFavourite);
 
   // Get the current lift data from context, falling back to the prop if not found
-  const currentLiftData = contextLiftData.find(lift => lift.id === initialLiftData.id) || initialLiftData;
+  const currentLiftData =
+    contextLiftData.find((lift) => lift.id === initialLiftData.id) || initialLiftData;
 
   // Update local state when context data changes
   useEffect(() => {
-    const freshData = contextLiftData.find(lift => lift.id === initialLiftData.id);
+    const freshData = contextLiftData.find((lift) => lift.id === initialLiftData.id);
     if (freshData) {
       setIsFavourite(freshData.isFavourite);
     }
@@ -98,15 +129,24 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const source = (contextLiftData.find(l => l.id === initialLiftData.id)?.poseVideoURL) || initialLiftData.poseVideoURL;
-      if (!source) { setResolvedPoseUrl(null); return; }
+      const source =
+        contextLiftData.find((l) => l.id === initialLiftData.id)?.poseVideoURL ||
+        initialLiftData.poseVideoURL;
+      if (!source) {
+        setResolvedPoseUrl(null);
+        return;
+      }
       // If this is a static require() number, use it directly
-      if (typeof source === 'number') { setResolvedPoseUrl(source); return; }
+      if (typeof source === 'number') {
+        setResolvedPoseUrl(source);
+        return;
+      }
       try {
         const key = await extractObjectKeyFromUrl(typeof source === 'string' ? source : undefined);
         if (key) {
           const signed = await signPath(key);
-          if (!cancelled) setResolvedPoseUrl(signed || (typeof source === 'string' ? source : null));
+          if (!cancelled)
+            setResolvedPoseUrl(signed || (typeof source === 'string' ? source : null));
         } else {
           // If we can't extract a key, the source might already be a valid URL or path
           if (!cancelled) setResolvedPoseUrl(typeof source === 'string' ? source : null);
@@ -116,7 +156,9 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
         if (!cancelled) setResolvedPoseUrl(typeof source === 'string' ? source : null);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [contextLiftData, initialLiftData.id]);
 
   // Auto-focus input when edit weight modal opens
@@ -124,15 +166,21 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
     if (showEditWeightModal) {
       setEditWeightShouldRender(true);
       editWeightOpacity.setValue(0);
-      Animated.timing(editWeightOpacity, { toValue: 1, duration: 100, useNativeDriver: true }).start();
+      Animated.timing(editWeightOpacity, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }).start();
       const timer = setTimeout(() => {
         editWeightInputRef.current?.focus();
       }, 100);
       return () => clearTimeout(timer);
     }
-    Animated.timing(editWeightOpacity, { toValue: 0, duration: 100, useNativeDriver: true }).start(({ finished }) => {
-      if (finished) setEditWeightShouldRender(false);
-    });
+    Animated.timing(editWeightOpacity, { toValue: 0, duration: 100, useNativeDriver: true }).start(
+      ({ finished }) => {
+        if (finished) setEditWeightShouldRender(false);
+      }
+    );
   }, [showEditWeightModal]);
 
   const handleClose = () => {
@@ -150,7 +198,8 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
   };
 
   // Check if feedback array is empty
-  const hasFeedback = currentLiftData.analysis.feedback && currentLiftData.analysis.feedback.length > 0;
+  const hasFeedback =
+    currentLiftData.analysis.feedback && currentLiftData.analysis.feedback.length > 0;
 
   const handleDeleteLift = () => {
     hapticFeedback.selection();
@@ -201,13 +250,13 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
     hapticFeedback.selection();
     // Track lift details clicks for favourite
     track('Lift details clicks', { event: 'Favourite' });
-    
+
     // Immediately toggle the favourite state
-    setIsFavourite(prev => !prev);
-    
+    setIsFavourite((prev) => !prev);
+
     // Make API call in background - no need to wait for response
     favouriteLiftAndRefresh(currentLiftData.id);
-    
+
     // Ensure the main lifts list refetches with the correct key
     void refreshLifts();
   };
@@ -239,9 +288,10 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
     // Track lift details clicks for edit weight
     track('Lift details clicks', { event: 'Edit weight' });
     // Initialize edit weight with current weight value
-    const currentWeight = userDetails?.unitSystem === 'imperial' 
-      ? Math.round((currentLiftData.metricWeight || 0) * 2.20462).toString()
-      : (currentLiftData.metricWeight || 0).toString();
+    const currentWeight =
+      userDetails?.unitSystem === 'imperial'
+        ? Math.round((currentLiftData.metricWeight || 0) * 2.20462).toString()
+        : (currentLiftData.metricWeight || 0).toString();
     setEditWeight(currentWeight);
     setShowEditWeightModal(true);
   };
@@ -263,21 +313,24 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
       setIsUpdatingWeight(true);
       try {
         const result = await updateLiftWeight(
-          currentLiftData.id, 
-          metricWeight, 
+          currentLiftData.id,
+          metricWeight,
           userDetails?.unitSystem || 'metric'
         );
-        
+
         if (result.success) {
           // Update the lift data immediately for instant UI feedback
-          updateLift(currentLiftData.id, { metricWeight: userDetails?.unitSystem === 'imperial' ? metricWeight / 2.20462 : metricWeight });
-          
+          updateLift(currentLiftData.id, {
+            metricWeight:
+              userDetails?.unitSystem === 'imperial' ? metricWeight / 2.20462 : metricWeight,
+          });
+
           // Invalidate the specific lift query to refresh data
           queryClient.invalidateQueries({ queryKey: ['lift', currentLiftData.id] });
-          
+
           // Ensure the main lifts list refetches with the correct key
           void refreshLifts();
-          
+
           hapticFeedback.success();
           setShowEditWeightModal(false);
           setEditWeight('');
@@ -286,7 +339,7 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
           setShowEditWeightModal(false);
           setEditWeight('');
           showAlert(
-            i18n.t('feedback.updateFailed.weight'), 
+            i18n.t('feedback.updateFailed.weight'),
             i18n.t('feedback.updateFailed.message'),
             undefined,
             'Weight edit failed'
@@ -297,7 +350,7 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
         setShowEditWeightModal(false);
         setEditWeight('');
         showAlert(
-          i18n.t('feedback.updateFailed.weight'), 
+          i18n.t('feedback.updateFailed.weight'),
           i18n.t('feedback.updateFailed.message'),
           undefined,
           'Weight edit failed'
@@ -308,11 +361,10 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
     }
   };
 
-
   const handlePermissionRequiredAllow = async () => {
     hapticFeedback.selection();
     setShowPermissionRequiredModal(false);
-    
+
     try {
       const result = await MediaLibrary.requestPermissionsAsync();
       if (!result.granted && result.canAskAgain === false) {
@@ -336,9 +388,9 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
     hapticFeedback.selection();
     // Track lift details clicks for download
     track('Lift details clicks', { event: 'Download' });
-    
+
     setIsDownloading(true);
-    
+
     try {
       const success = await downloadVideoToLibrary({
         videoUrl: resolvedPoseUrl,
@@ -350,7 +402,7 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
         },
         onPermissionRequired: () => {
           setShowPermissionRequiredModal(true);
-        }
+        },
       });
     } finally {
       setIsDownloading(false);
@@ -361,67 +413,76 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
   const isEditWeightValid = () => {
     const metricWeight = parseFloat(editWeight);
     if (metricWeight <= 0) return false;
-    
+
     // Get current weight in the same unit system as the input
-    const currentWeight = userDetails?.unitSystem === 'imperial' 
-      ? Math.round((currentLiftData.metricWeight || 0) * 2.20462)
-      : (currentLiftData.metricWeight || 0);
-    
+    const currentWeight =
+      userDetails?.unitSystem === 'imperial'
+        ? Math.round((currentLiftData.metricWeight || 0) * 2.20462)
+        : currentLiftData.metricWeight || 0;
+
     return metricWeight !== currentWeight;
   };
 
   // Format date to "Aug 25th, 2025" format
   function formatDate(dateString: string | null) {
     if (!dateString) return 'Aug 25th, 2025';
-    
+
     // Parse dd-mm-yyyy format
     const parts = dateString.split('-');
     if (parts.length !== 3) return 'Aug 25th, 2025';
-    
+
     const day = parseInt(parts[0], 10);
     const month = parseInt(parts[1], 10) - 1; // Month is 0-indexed in Date constructor
     const year = parseInt(parts[2], 10);
-    
+
     if (isNaN(day) || isNaN(month) || isNaN(year)) return 'Aug 25th, 2025';
-    
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
     const monthName = months[month];
-    
+
     // Add ordinal suffix to day
     let suffix = 'th';
     if (day === 1 || day === 21 || day === 31) suffix = 'st';
     else if (day === 2 || day === 22) suffix = 'nd';
     else if (day === 3 || day === 23) suffix = 'rd';
-    
+
     return `${monthName} ${day}${suffix}, ${year}`;
   }
 
   // No chart data computed here; handled by SwipeableLiftDetailsGraphs
-  
-  
+
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.headerCard}>
-          <TouchableOpacity 
-            style={styles.backButton} 
-            onPress={handleClose}
-            activeOpacity={0.7}
-          >
+          <TouchableOpacity style={styles.backButton} onPress={handleClose} activeOpacity={0.7}>
             <ChevronLeft size={24} color="#ffffff" />
           </TouchableOpacity>
           <View style={styles.titleContainer}>
             <Text style={styles.title}>{i18n.t('feedback.liftDetails')}</Text>
           </View>
-          <TouchableOpacity 
-            style={styles.ellipsisButton} 
+          <TouchableOpacity
+            style={styles.ellipsisButton}
             onPress={handleActionSheet}
             activeOpacity={0.7}
           >
             <Ellipsis size={24} color="#ffffff" />
           </TouchableOpacity>
         </View>
-        
+
         <View style={styles.content}>
           {/* Video Player */}
           <View style={styles.videoContainer}>
@@ -446,11 +507,7 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
           {/* Pills Row */}
           <View style={styles.pillsRow}>
             <View style={styles.pillWithMaxWidth}>
-              <Text 
-                style={styles.pillTextEllipsis}
-                numberOfLines={1}
-                ellipsizeMode="tail"
-              >
+              <Text style={styles.pillTextEllipsis} numberOfLines={1} ellipsizeMode="tail">
                 {currentLiftData.liftType || 'Bench Press'}
               </Text>
             </View>
@@ -462,7 +519,11 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
             </View>
           </View>
           {/* Swipeable graphs (line + bar) */}
-          <SwipeableLiftDetailsGraphs data={currentLiftData} formGraphRef={formGraphRef} depthGraphRef={depthGraphRef} />
+          <SwipeableLiftDetailsGraphs
+            data={currentLiftData}
+            formGraphRef={formGraphRef}
+            depthGraphRef={depthGraphRef}
+          />
 
           {/* Weight, Reps, and Accuracy Cards Row */}
           <View style={[styles.cardsRow, styles.bottomCardsRow]}>
@@ -470,7 +531,7 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
             <View style={[styles.infoCard, styles.weightCard]}>
               <View style={styles.weightCardTitleRow}>
                 <Text style={styles.infoCardTitle}>{i18n.t('feedback.weight')}</Text>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.editWeightButton}
                   onPress={handleEditWeight}
                   activeOpacity={0.7}
@@ -479,19 +540,16 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
                 </TouchableOpacity>
               </View>
               <Text style={styles.infoCardValue}>
-                {userDetails?.unitSystem === 'imperial' 
+                {userDetails?.unitSystem === 'imperial'
                   ? `${Math.round((currentLiftData.metricWeight || 0) * 2.20462)} ${i18n.t('feedback.lbs')}`
-                  : `${currentLiftData.metricWeight || '--'} ${i18n.t('feedback.kg')}`
-                }
+                  : `${currentLiftData.metricWeight || '--'} ${i18n.t('feedback.kg')}`}
               </Text>
             </View>
-            
+
             {/* Reps Card */}
             <View style={[styles.infoCard, styles.repsCard]}>
               <Text style={styles.infoCardTitle}>{i18n.t('feedback.reps')}</Text>
-              <Text style={styles.infoCardValue}>
-                {currentLiftData.reps || '--'}
-              </Text>
+              <Text style={styles.infoCardValue}>{currentLiftData.reps || '--'}</Text>
             </View>
 
             {/* Accuracy Card */}
@@ -507,12 +565,20 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
           <View style={styles.feedbackButtonCard}>
             <View ref={reviewFeedbackRef}>
               <TouchableOpacity
-                style={[styles.reviewFeedbackButton, !hasFeedback && styles.reviewFeedbackButtonDisabled]}
+                style={[
+                  styles.reviewFeedbackButton,
+                  !hasFeedback && styles.reviewFeedbackButtonDisabled,
+                ]}
                 onPress={hasFeedback ? handleReviewFeedback : undefined}
                 activeOpacity={hasFeedback ? 0.8 : 1}
                 disabled={!hasFeedback}
               >
-                <Text style={[styles.reviewFeedbackButtonText, !hasFeedback && styles.reviewFeedbackButtonTextDisabled]}>
+                <Text
+                  style={[
+                    styles.reviewFeedbackButtonText,
+                    !hasFeedback && styles.reviewFeedbackButtonTextDisabled,
+                  ]}
+                >
                   {hasFeedback ? i18n.t('feedback.reviewFeedback') : i18n.t('feedback.noFeedback')}
                 </Text>
               </TouchableOpacity>
@@ -523,19 +589,24 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
 
       {/* Custom Dropdown Modal */}
       {showDropdown && (
-        <TouchableOpacity 
-          style={styles.dropdownOverlay} 
-          activeOpacity={1} 
+        <TouchableOpacity
+          style={styles.dropdownOverlay}
+          activeOpacity={1}
           onPress={() => setShowDropdown(false)}
         >
           <View style={styles.dropdownContainer}>
-            <TouchableOpacity 
-              style={styles.dropdownOption} 
+            <TouchableOpacity
+              style={styles.dropdownOption}
               onPress={handleDownload}
               activeOpacity={0.7}
               disabled={isDownloading}
             >
-              <Text style={[styles.dropdownOptionText, isDownloading && styles.dropdownOptionTextDisabled]}>
+              <Text
+                style={[
+                  styles.dropdownOptionText,
+                  isDownloading && styles.dropdownOptionTextDisabled,
+                ]}
+              >
                 {i18n.t('feedback.download')}
               </Text>
               <View style={styles.dropdownIconContainer}>
@@ -547,23 +618,25 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
               </View>
             </TouchableOpacity>
             <View style={styles.dropdownDivider} />
-            <TouchableOpacity 
-              style={styles.dropdownOption} 
+            <TouchableOpacity
+              style={styles.dropdownOption}
               onPress={handleFavourite}
               activeOpacity={0.7}
             >
               <Text style={styles.dropdownOptionText}>{i18n.t('feedback.favourite')}</Text>
               <View style={styles.dropdownIconContainer}>
-                <Heart size={22} color="#FF3B30" fill={isFavourite ? "#FF3B30" : "none"} />
+                <Heart size={22} color="#FF3B30" fill={isFavourite ? '#FF3B30' : 'none'} />
               </View>
             </TouchableOpacity>
             <View style={styles.dropdownDivider} />
-            <TouchableOpacity 
-              style={styles.dropdownOption} 
+            <TouchableOpacity
+              style={styles.dropdownOption}
               onPress={handleDelete}
               activeOpacity={0.7}
             >
-              <Text style={styles.dropdownOptionTextDestructive}>{i18n.t('feedback.manualDeleteLiftCardData')}</Text>
+              <Text style={styles.dropdownOptionTextDestructive}>
+                {i18n.t('feedback.manualDeleteLiftCardData')}
+              </Text>
               <View style={styles.dropdownIconContainer}>
                 <Trash2 size={22} color="#FF3B30" />
               </View>
@@ -574,21 +647,18 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
 
       {/* Delete Lift Modal */}
       {showDeleteModal && (
-        <TouchableOpacity 
-          style={styles.modalOverlay} 
-          activeOpacity={1} 
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
           onPress={handleDeleteCancel}
         >
-          <TouchableOpacity 
-            style={styles.modalContainer} 
-            activeOpacity={1} 
+          <TouchableOpacity
+            style={styles.modalContainer}
+            activeOpacity={1}
             onPress={(e) => e.stopPropagation()}
           >
             {/* Close button */}
-            <TouchableOpacity 
-              style={styles.modalCloseButton} 
-              onPress={handleDeleteCancel}
-            >
+            <TouchableOpacity style={styles.modalCloseButton} onPress={handleDeleteCancel}>
               <X size={20} color="#000000" />
             </TouchableOpacity>
 
@@ -600,15 +670,15 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
 
             {/* Action buttons */}
             <View style={styles.modalButtonContainer}>
-              <TouchableOpacity 
-                style={[styles.modalButton, styles.modalButtonOutlined]} 
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonOutlined]}
                 onPress={handleDeleteCancel}
                 disabled={isDeleting}
               >
                 <Text style={styles.modalButtonOutlinedText}>{i18n.t('feedback.cancel')}</Text>
               </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.modalButton, styles.modalButtonPrimary]} 
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonPrimary]}
                 onPress={handleDeleteConfirm}
                 disabled={isDeleting}
               >
@@ -626,70 +696,79 @@ export function LiftDetails({ onClose, onShowFeedbackSlideshow, liftData: initia
       {/* Edit Weight Modal */}
       {editWeightShouldRender && (
         <Animated.View style={[styles.modalFadeWrapper, { opacity: editWeightOpacity }]}>
-          <TouchableOpacity 
-            style={styles.modalOverlay} 
-            activeOpacity={1} 
+          <TouchableOpacity
+            style={styles.modalOverlay}
+            activeOpacity={1}
             onPress={handleEditWeightCancel}
           >
-            <TouchableOpacity 
-              style={styles.modalContainer} 
-              activeOpacity={1} 
+            <TouchableOpacity
+              style={styles.modalContainer}
+              activeOpacity={1}
               onPress={(e) => e.stopPropagation()}
             >
-            {/* Close button */}
-            <TouchableOpacity 
-              style={styles.modalCloseButton} 
-              onPress={handleEditWeightCancel}
-            >
-              <X size={20} color="#000000" />
-            </TouchableOpacity>
+              {/* Close button */}
+              <TouchableOpacity style={styles.modalCloseButton} onPress={handleEditWeightCancel}>
+                <X size={20} color="#000000" />
+              </TouchableOpacity>
 
-            {/* Title */}
-            <Text style={styles.modalTitle}>{i18n.t('feedback.editWeight')}</Text>
+              {/* Title */}
+              <Text style={styles.modalTitle}>{i18n.t('feedback.editWeight')}</Text>
 
-            {/* Weight Input Section */}
-            <View style={styles.editWeightSection}>
-              <View style={styles.editWeightInputContainer}>
-                <TextInput
-                  ref={editWeightInputRef}
-                  style={styles.editWeightInput}
-                  value={editWeight}
-                  onChangeText={setEditWeight}
-                  placeholder="1"
-                  placeholderTextColor="#8E8E93"
-                  keyboardType="numeric"
-                  textContentType="none"
-                  autoComplete="off"
-                  autoCorrect={false}
-                />
-                <Text style={styles.editWeightUnitText}>
-                  {userDetails?.unitSystem === 'imperial' ? 'lbs' : 'kg'}
-                </Text>
+              {/* Weight Input Section */}
+              <View style={styles.editWeightSection}>
+                <View style={styles.editWeightInputContainer}>
+                  <TextInput
+                    ref={editWeightInputRef}
+                    style={styles.editWeightInput}
+                    value={editWeight}
+                    onChangeText={setEditWeight}
+                    placeholder="1"
+                    placeholderTextColor="#8E8E93"
+                    keyboardType="numeric"
+                    textContentType="none"
+                    autoComplete="off"
+                    autoCorrect={false}
+                  />
+                  <Text style={styles.editWeightUnitText}>
+                    {userDetails?.unitSystem === 'imperial' ? 'lbs' : 'kg'}
+                  </Text>
+                </View>
               </View>
-            </View>
 
-            {/* Action buttons */}
-            <View style={styles.modalButtonContainer}>
-              <TouchableOpacity 
-                style={[styles.modalButton, styles.modalButtonOutlined]} 
-                onPress={handleEditWeightCancel}
-              >
-                <Text style={styles.modalButtonOutlinedText}>{i18n.t('feedback.cancel')}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.modalButton, styles.modalButtonPrimary, (!isEditWeightValid() || isUpdatingWeight) && styles.modalButtonDisabled]} 
-                onPress={handleEditWeightApply}
-                disabled={!isEditWeightValid() || isUpdatingWeight}
-              >
-                {isUpdatingWeight ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" />
-                ) : (
-                  <Text style={[styles.modalButtonPrimaryText, (!isEditWeightValid() || isUpdatingWeight) && styles.modalButtonTextDisabled]}>{i18n.t('feedback.apply')}</Text>
-                )}
-              </TouchableOpacity>
-            </View>
+              {/* Action buttons */}
+              <View style={styles.modalButtonContainer}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.modalButtonOutlined]}
+                  onPress={handleEditWeightCancel}
+                >
+                  <Text style={styles.modalButtonOutlinedText}>{i18n.t('feedback.cancel')}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.modalButton,
+                    styles.modalButtonPrimary,
+                    (!isEditWeightValid() || isUpdatingWeight) && styles.modalButtonDisabled,
+                  ]}
+                  onPress={handleEditWeightApply}
+                  disabled={!isEditWeightValid() || isUpdatingWeight}
+                >
+                  {isUpdatingWeight ? (
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                  ) : (
+                    <Text
+                      style={[
+                        styles.modalButtonPrimaryText,
+                        (!isEditWeightValid() || isUpdatingWeight) &&
+                          styles.modalButtonTextDisabled,
+                      ]}
+                    >
+                      {i18n.t('feedback.apply')}
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
           </TouchableOpacity>
-        </TouchableOpacity>
         </Animated.View>
       )}
 
@@ -799,7 +878,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(0,0,0,0.3)'
+    backgroundColor: 'rgba(0,0,0,0.3)',
   },
   optionRow: {
     flexDirection: 'row',
@@ -902,8 +981,7 @@ const styles = StyleSheet.create({
     width: '100%',
     marginLeft: -24,
   },
-  chart: {
-  },
+  chart: {},
   dropdownOverlay: {
     position: 'absolute',
     top: 0,
@@ -1189,7 +1267,7 @@ const styles = StyleSheet.create({
   },
   // Weight card styles
   weightCard: {
-    width: "auto",
+    width: 'auto',
     marginRight: 8,
     height: 70, // Ensure consistent height
   },
@@ -1200,7 +1278,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   repsCard: {
-    width: "auto",
+    width: 'auto',
     flex: 0, // Override flex to use fixed width
     height: 70, // Ensure consistent height
   },
@@ -1215,7 +1293,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   accuracyCard: {
-    width: "auto",
+    width: 'auto',
     flex: 0, // Override flex to use fixed width
     marginBottom: 8,
     marginLeft: 8,
@@ -1257,4 +1335,4 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     fontFamily: 'SF Pro Display',
   },
-}); 
+});

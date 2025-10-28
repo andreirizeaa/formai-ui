@@ -71,9 +71,11 @@ export function StreakModal({ visible, currentStreak, onClose }: StreakModalProp
       };
     } else {
       // Reset animations when modal closes
-      Animated.timing(fadeOpacity, { toValue: 0, duration: 100, useNativeDriver: true }).start(({ finished }) => {
-        if (finished) setShouldRender(false);
-      });
+      Animated.timing(fadeOpacity, { toValue: 0, duration: 100, useNativeDriver: true }).start(
+        ({ finished }) => {
+          if (finished) setShouldRender(false);
+        }
+      );
       pulseAnim.setValue(1);
       streakTextTranslateY.setValue(50);
       streakTextOpacity.setValue(0);
@@ -91,94 +93,80 @@ export function StreakModal({ visible, currentStreak, onClose }: StreakModalProp
   };
 
   return (
-    <Modal
-      visible={shouldRender}
-      transparent
-      onRequestClose={handleClose}
-    >
+    <Modal visible={shouldRender} transparent onRequestClose={handleClose}>
       <Animated.View style={{ flex: 1, opacity: fadeOpacity }}>
-        <TouchableOpacity 
-          style={styles.overlay} 
-          activeOpacity={1} 
-          onPress={handleClose}
-        >
-          <TouchableOpacity 
-            style={styles.modalContainer} 
-            activeOpacity={1} 
+        <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={handleClose}>
+          <TouchableOpacity
+            style={styles.modalContainer}
+            activeOpacity={1}
             onPress={(e) => e.stopPropagation()}
           >
-          {/* Header with FormAI logo and streak pill */}
-          <View style={styles.modalHeader}>
-            <FormAILogo 
-              iconSize={24}
-              containerStyle={styles.modalLogoContainer}
-              textStyle={styles.modalLogoText}
-            />
-            <View style={styles.streakBadge}>
-              <Image
-                source={require('../../../../assets/icons/fire.png')}
-                style={styles.streakBadgeIcon}
-                contentFit="contain"
+            {/* Header with FormAI logo and streak pill */}
+            <View style={styles.modalHeader}>
+              <FormAILogo
+                iconSize={24}
+                containerStyle={styles.modalLogoContainer}
+                textStyle={styles.modalLogoText}
               />
-              <Text style={styles.streakBadgeText}>{currentStreak}</Text>
+              <View style={styles.streakBadge}>
+                <Image
+                  source={require('../../../../assets/icons/fire.png')}
+                  style={styles.streakBadgeIcon}
+                  contentFit="contain"
+                />
+                <Text style={styles.streakBadgeText}>{currentStreak}</Text>
+              </View>
             </View>
-          </View>
 
-          {/* Large centered fire icon */}
-          <View style={styles.fireModalContent}>
+            {/* Large centered fire icon */}
+            <View style={styles.fireModalContent}>
+              <Animated.View
+                style={[
+                  styles.fireIconContainer,
+                  {
+                    transform: [{ scale: pulseAnim }],
+                  },
+                ]}
+              >
+                <Image
+                  source={require('../../../../assets/icons/fire.png')}
+                  style={styles.fireModalIcon}
+                  contentFit="contain"
+                />
+              </Animated.View>
+            </View>
+
+            {/* Streak text */}
             <Animated.View
               style={[
-                styles.fireIconContainer,
+                styles.streakTextContainer,
                 {
-                  transform: [{ scale: pulseAnim }],
+                  transform: [{ translateY: streakTextTranslateY }],
+                  opacity: streakTextOpacity,
                 },
               ]}
             >
-              <Image
-                source={require('../../../../assets/icons/fire.png')}
-                style={styles.fireModalIcon}
-                contentFit="contain"
-              />
+              <Text style={styles.streakText}>
+                {currentStreak === 0
+                  ? i18n.t('home.zeroDayStreak')
+                  : i18n.t('home.dayStreak', { count: currentStreak })}
+              </Text>
             </Animated.View>
-          </View>
 
-          {/* Streak text */}
-          <Animated.View
-            style={[
-              styles.streakTextContainer,
-              {
-                transform: [{ translateY: streakTextTranslateY }],
-                opacity: streakTextOpacity,
-              },
-            ]}
-          >
-            <Text style={styles.streakText}>
-              {currentStreak === 0
-                ? i18n.t('home.zeroDayStreak')
-                : i18n.t('home.dayStreak', { count: currentStreak })}
+            {/* Streak Calendar */}
+            <StreakCalendar />
+
+            {/* Message */}
+            <Text style={styles.message}>
+              {currentStreak === 0 ? i18n.t('home.noStreakMessage') : i18n.t('home.onFireMessage')}
             </Text>
-          </Animated.View>
 
-          {/* Streak Calendar */}
-          <StreakCalendar />
-
-          {/* Message */}
-          <Text style={styles.message}>
-            {currentStreak === 0
-              ? i18n.t('home.noStreakMessage')
-              : i18n.t('home.onFireMessage')}
-          </Text>
-
-          {/* Action button */}
-          <TouchableOpacity
-            style={styles.button}
-            onPress={handleContinue}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.buttonText}>{i18n.t('home.continue')}</Text>
+            {/* Action button */}
+            <TouchableOpacity style={styles.button} onPress={handleContinue} activeOpacity={0.8}>
+              <Text style={styles.buttonText}>{i18n.t('home.continue')}</Text>
+            </TouchableOpacity>
           </TouchableOpacity>
         </TouchableOpacity>
-      </TouchableOpacity>
       </Animated.View>
     </Modal>
   );

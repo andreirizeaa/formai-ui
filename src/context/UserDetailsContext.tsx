@@ -3,16 +3,13 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getUserId, setSelectedLanguage, getSelectedLanguage } from '../services/storageService';
 import { fetchUserDetailsById, editUserDetails } from '../services/userService';
 import { setLanguage } from '../utils/i18n';
-import { 
-  formatWeightForDisplay, 
-  formatHeightForDisplay 
-} from '../utils/unitConversions';
+import { formatWeightForDisplay, formatHeightForDisplay } from '../utils/unitConversions';
 
 interface UserDetails {
   unitSystem: 'metric' | 'imperial' | null;
-  currentWeightKG: number | null; 
-  heightCM: number | null; 
-  ageRange: string | null; 
+  currentWeightKG: number | null;
+  heightCM: number | null;
+  ageRange: string | null;
   gender: string | null;
   language: string | null;
   currentStreak: number | null;
@@ -65,7 +62,8 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
   // Set loaded to true if there's no userId (onboarding case)
   // Set loaded to false when userId is set (signed in case)
   useEffect(() => {
-    if (userId == null) { // matches null or undefined
+    if (userId == null) {
+      // matches null or undefined
       setIsLoaded(true);
     } else {
       setIsLoaded(false); // Reset loading state when user signs in
@@ -76,7 +74,7 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
   useEffect(() => {
     if (userDetails?.language) {
       setLanguage(userDetails.language);
-      
+
       // Also sync with LanguageContext if it exists
       try {
         const { setSelectedLanguage } = require('../services/storageService');
@@ -117,11 +115,8 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
     },
   });
 
-  const updateUserDetails = <K extends keyof UserDetails>(
-    key: K,
-    value: UserDetails[K]
-  ) => {
-    setUserDetails(prev => {
+  const updateUserDetails = <K extends keyof UserDetails>(key: K, value: UserDetails[K]) => {
+    setUserDetails((prev) => {
       const base: UserDetails = prev ?? {
         unitSystem: null,
         currentWeightKG: null,
@@ -141,7 +136,7 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
   };
 
   const updateUnitSystem = (unitSystem: 'metric' | 'imperial') => {
-    setUserDetails(prev => {
+    setUserDetails((prev) => {
       const base: UserDetails = prev ?? {
         unitSystem: null,
         currentWeightKG: null,
@@ -161,7 +156,7 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
   };
 
   const updateWeight = (weightKg: number) => {
-    setUserDetails(prev => {
+    setUserDetails((prev) => {
       const base: UserDetails = prev ?? {
         unitSystem: null,
         currentWeightKG: null,
@@ -181,7 +176,7 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
   };
 
   const updateHeight = (heightCm: number) => {
-    setUserDetails(prev => {
+    setUserDetails((prev) => {
       const base: UserDetails = prev ?? {
         unitSystem: null,
         currentWeightKG: null,
@@ -201,7 +196,7 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
   };
 
   const updateWalkthroughCompleted = (completed: boolean) => {
-    setUserDetails(prev => {
+    setUserDetails((prev) => {
       const base: UserDetails = prev ?? {
         unitSystem: null,
         currentWeightKG: null,
@@ -221,7 +216,7 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
   };
 
   const updateHasRated = (rated: boolean) => {
-    setUserDetails(prev => {
+    setUserDetails((prev) => {
       const base: UserDetails = prev ?? {
         unitSystem: null,
         currentWeightKG: null,
@@ -243,12 +238,12 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
   const updateLanguage = async (language: string) => {
     // Update i18n immediately
     setLanguage(language);
-    
+
     // Save to AsyncStorage
     await setSelectedLanguage(language);
-    
+
     // Update context
-    setUserDetails(prev => {
+    setUserDetails((prev) => {
       const base: UserDetails = prev ?? {
         unitSystem: null,
         currentWeightKG: null,
@@ -303,7 +298,7 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
 
   const setSignedInUser = async (id: string | null) => {
     setUserIdState(id);
-    
+
     if (!id) {
       setUserDetails(null);
       return;
@@ -329,7 +324,8 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
       refetchUserDetails,
       setSignedInUser,
       isUserDetailsLoaded: isLoaded,
-    }), [
+    }),
+    [
       userDetails,
       updateUserDetails,
       updateUnitSystem,
@@ -363,11 +359,7 @@ export function UserDetailsProvider({ children }: UserDetailsProviderProps) {
     };
   }, [resetContext]);
 
-  return (
-    <UserDetailsContext.Provider value={value}>
-      {children}
-    </UserDetailsContext.Provider>
-  );
+  return <UserDetailsContext.Provider value={value}>{children}</UserDetailsContext.Provider>;
 }
 
 export function useUserDetails() {
@@ -376,4 +368,4 @@ export function useUserDetails() {
     throw new Error('useUserDetails must be used within a UserDetailsProvider');
   }
   return context;
-} 
+}

@@ -1,13 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, ActivityIndicator, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Platform,
+  TouchableOpacity,
+  StatusBar,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import i18n from '../../../../utils/i18n';
 import { hapticFeedback } from '../../../../utils/haptic';
 import { useUserDetails } from '../../../../context/UserDetailsContext';
-import { 
-  parseHeightToMetric, 
-  convertMetricHeightToImperial, 
-  convertImperialHeightToMetric 
+import {
+  parseHeightToMetric,
+  convertMetricHeightToImperial,
+  convertImperialHeightToMetric,
 } from '../../../../utils/unitConversions';
 import { editUserDetails } from '../../../../services/userService';
 import { ChevronLeft } from 'lucide-react-native';
@@ -43,7 +52,7 @@ export function EditHeightScreen({ onBack, currentValue, onSave }: EditHeightScr
     if (currentValue) {
       // Parse the current height string to get the metric value
       const heightCm = parseHeightToMetric(currentValue);
-      
+
       if (isMetric) {
         setSelectedHeight(heightCm);
       } else {
@@ -53,7 +62,7 @@ export function EditHeightScreen({ onBack, currentValue, onSave }: EditHeightScr
         setSelectedInches(inches);
       }
     }
-  }
+  };
 
   const handleHeightChange = (height: number) => {
     setSelectedHeight(height);
@@ -73,10 +82,10 @@ export function EditHeightScreen({ onBack, currentValue, onSave }: EditHeightScr
     // Track library screen clicks for save
     track('Library screen clicks', { event: 'Save new height' });
     setIsSaving(true);
-    
+
     let heightCm: number;
     let displayValue: string;
-    
+
     if (isMetric) {
       heightCm = selectedHeight;
       displayValue = `${Math.round(heightCm)} ${i18n.t('onboarding.measurements.cm')}`;
@@ -85,7 +94,7 @@ export function EditHeightScreen({ onBack, currentValue, onSave }: EditHeightScr
       heightCm = convertImperialHeightToMetric(selectedFeet, selectedInches);
       displayValue = `${selectedFeet}' ${selectedInches}"`;
     }
-    
+
     try {
       await editUserDetails({ height: heightCm });
       await refetchUserDetails();
@@ -94,13 +103,17 @@ export function EditHeightScreen({ onBack, currentValue, onSave }: EditHeightScr
     } catch (e) {
       hapticFeedback.error();
       updateValues();
-      showAlert(i18n.t('settings.editFailed.height'), i18n.t('settings.editFailed.message'), () => {
-        hapticFeedback.selection();
-        onBack();
-      }, 'Height edit failed');
-
+      showAlert(
+        i18n.t('settings.editFailed.height'),
+        i18n.t('settings.editFailed.message'),
+        () => {
+          hapticFeedback.selection();
+          onBack();
+        },
+        'Height edit failed'
+      );
     }
-    
+
     setIsSaving(false);
   };
 
@@ -116,8 +129,8 @@ export function EditHeightScreen({ onBack, currentValue, onSave }: EditHeightScr
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton} 
+        <TouchableOpacity
+          style={styles.backButton}
           onPress={() => {
             hapticFeedback.selection();
             onBack();
@@ -133,9 +146,7 @@ export function EditHeightScreen({ onBack, currentValue, onSave }: EditHeightScr
       <View style={styles.content}>
         {/* Height Picker */}
         <View style={styles.pickerContainer}>
-          <Text style={styles.pickerLabel}>
-            {i18n.t('onboarding.measurements.height')}
-          </Text>
+          <Text style={styles.pickerLabel}>{i18n.t('onboarding.measurements.height')}</Text>
           <View style={styles.pickerWrapper}>
             {isMetric ? (
               // Single picker for metric with repeats
@@ -155,10 +166,13 @@ export function EditHeightScreen({ onBack, currentValue, onSave }: EditHeightScr
                 style={styles.picker}
                 itemStyle={Platform.OS === 'ios' ? { fontSize: 16 } : undefined}
               >
-                {Array.from({ length: repeats * heightOptions.length }, (_, i) => heightOptions[i % heightOptions.length]).map((height, index) => (
-                  <Picker.Item 
-                    key={`h-${index}`} 
-                    label={`${height} ${i18n.t('onboarding.measurements.cm')}`} 
+                {Array.from(
+                  { length: repeats * heightOptions.length },
+                  (_, i) => heightOptions[i % heightOptions.length]
+                ).map((height, index) => (
+                  <Picker.Item
+                    key={`h-${index}`}
+                    label={`${height} ${i18n.t('onboarding.measurements.cm')}`}
                     value={index}
                   />
                 ))}
@@ -182,12 +196,11 @@ export function EditHeightScreen({ onBack, currentValue, onSave }: EditHeightScr
                     style={styles.imperialPicker}
                     itemStyle={Platform.OS === 'ios' ? { fontSize: 16 } : undefined}
                   >
-                    {Array.from({ length: repeats * feetOptions.length }, (_, i) => feetOptions[i % feetOptions.length]).map((feet, index) => (
-                      <Picker.Item 
-                        key={`f-${index}`} 
-                        label={`${feet} ft`} 
-                        value={index}
-                      />
+                    {Array.from(
+                      { length: repeats * feetOptions.length },
+                      (_, i) => feetOptions[i % feetOptions.length]
+                    ).map((feet, index) => (
+                      <Picker.Item key={`f-${index}`} label={`${feet} ft`} value={index} />
                     ))}
                   </Picker>
                 </View>
@@ -207,12 +220,11 @@ export function EditHeightScreen({ onBack, currentValue, onSave }: EditHeightScr
                     style={styles.imperialPicker}
                     itemStyle={Platform.OS === 'ios' ? { fontSize: 16 } : undefined}
                   >
-                    {Array.from({ length: repeats * inchesOptions.length }, (_, i) => inchesOptions[i % inchesOptions.length]).map((inches, index) => (
-                      <Picker.Item 
-                        key={`i-${index}`} 
-                        label={`${inches} in`} 
-                        value={index}
-                      />
+                    {Array.from(
+                      { length: repeats * inchesOptions.length },
+                      (_, i) => inchesOptions[i % inchesOptions.length]
+                    ).map((inches, index) => (
+                      <Picker.Item key={`i-${index}`} label={`${inches} in`} value={index} />
                     ))}
                   </Picker>
                 </View>
@@ -224,7 +236,12 @@ export function EditHeightScreen({ onBack, currentValue, onSave }: EditHeightScr
 
       {/* Save Button */}
       <View style={styles.bottomContainer}>
-        <TouchableOpacity style={[styles.saveButton, isSaving && { opacity: 0.7 }]} onPress={handleSave} activeOpacity={0.8} disabled={isSaving}>
+        <TouchableOpacity
+          style={[styles.saveButton, isSaving && { opacity: 0.7 }]}
+          onPress={handleSave}
+          activeOpacity={0.8}
+          disabled={isSaving}
+        >
           {isSaving ? (
             <ActivityIndicator color="#FFFFFF" />
           ) : (
@@ -337,4 +354,4 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
-}); 
+});

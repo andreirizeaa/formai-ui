@@ -25,7 +25,7 @@ export async function loadLoadingLifts(): Promise<LoadingLiftData[]> {
  */
 export async function saveLoadingLifts(lifts: LoadingLiftData[]): Promise<void> {
   try {
-    const toStore = lifts.filter(lift => !(lift.isComplete && lift.status === 'completed'));
+    const toStore = lifts.filter((lift) => !(lift.isComplete && lift.status === 'completed'));
     await AsyncStorage.setItem(KEY, JSON.stringify(toStore));
   } catch (error) {
     // Ignore write errors silently to avoid breaking the app
@@ -39,10 +39,9 @@ export async function saveLoadingLifts(lifts: LoadingLiftData[]): Promise<void> 
 export async function removeLoadingLiftById(id: string): Promise<void> {
   try {
     const all = await loadLoadingLifts();
-    const next = all.filter(lift => lift.id !== id);
+    const next = all.filter((lift) => lift.id !== id);
     await AsyncStorage.setItem(KEY, JSON.stringify(next));
-  } catch (error) {
-  }
+  } catch (error) {}
 }
 
 /**
@@ -52,6 +51,5 @@ export async function removeLoadingLiftById(id: string): Promise<void> {
 export async function clearAllLoadingLifts(): Promise<void> {
   try {
     await AsyncStorage.removeItem(KEY);
-  } catch (error) {
-  }
+  } catch (error) {}
 }

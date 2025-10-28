@@ -14,8 +14,8 @@ export function BackButton({ onPress }: BackButtonProps) {
   };
 
   return (
-    <TouchableOpacity 
-      style={[styles.container, { backgroundColor: '#F0F0F0' }]} 
+    <TouchableOpacity
+      style={[styles.container, { backgroundColor: '#F0F0F0' }]}
       onPress={handlePress}
       activeOpacity={0.8}
     >
@@ -33,4 +33,4 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 8,
   },
-}); 
+});

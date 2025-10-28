@@ -73,7 +73,8 @@ export async function handleLiftNotificationData(raw: any) {
 
       const goToFailedDate = () => {
         if (global.pendingFailedLiftNavigation) {
-          const { assetId: pendingAssetId, liftId: pendingLiftId } = global.pendingFailedLiftNavigation;
+          const { assetId: pendingAssetId, liftId: pendingLiftId } =
+            global.pendingFailedLiftNavigation;
           navigateToFailedLiftDate(pendingAssetId, pendingLiftId);
           global.pendingFailedLiftNavigation = undefined;
         }

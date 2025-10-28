@@ -20,9 +20,7 @@ function computeCurrentStreak(isoDates: string[]): number {
   const today = new Date().toISOString().slice(0, 10);
   const set = new Set(isoDates);
 
-  const latest = isoDates
-    .filter(d => d <= today)
-    .sort((a, b) => (a < b ? 1 : -1))[0];
+  const latest = isoDates.filter((d) => d <= today).sort((a, b) => (a < b ? 1 : -1))[0];
   if (!latest) return 0;
 
   let streak = 0;
@@ -37,7 +35,6 @@ function computeCurrentStreak(isoDates: string[]): number {
 }
 
 export async function fetchUserCheckIns(userId: string): Promise<CheckInsResponse> {
-
   // Verify user exists
   const { data: userRow, error: userErr } = await supabase
     .from('users')
@@ -54,11 +51,13 @@ export async function fetchUserCheckIns(userId: string): Promise<CheckInsRespons
     .eq('user_id', userId);
   if (error) throw new Error(error.message);
 
-  const rawDates = (rows ?? []).map((r: any) => {
-    const raw = r?.date ?? null;
-    if (!raw) return null;
-    return String(raw).split('T')[0];
-  }).filter(Boolean) as string[];
+  const rawDates = (rows ?? [])
+    .map((r: any) => {
+      const raw = r?.date ?? null;
+      if (!raw) return null;
+      return String(raw).split('T')[0];
+    })
+    .filter(Boolean) as string[];
 
   const unique = Array.from(new Set(rawDates));
   const sortedDesc = unique.sort((a, b) => (a < b ? 1 : -1));

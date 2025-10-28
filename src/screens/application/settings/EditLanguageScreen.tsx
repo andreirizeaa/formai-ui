@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, ActivityIndicator, Alert, ScrollView } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Platform,
+  TouchableOpacity,
+  StatusBar,
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import i18n from '../../../utils/i18n';
 import { hapticFeedback } from '../../../utils/haptic';
@@ -71,10 +81,15 @@ export function EditLanguageScreen({ onBack }: EditLanguageScreenProps) {
       setLanguage(currentLanguage);
       setSelectedLanguage(currentLanguage);
       hapticFeedback.error();
-      showAlert(i18n.t('settings.editFailed.language'), i18n.t('settings.editFailed.message'), () => {
-        hapticFeedback.selection();
-        onBack();
-      }, 'Language edit failed');
+      showAlert(
+        i18n.t('settings.editFailed.language'),
+        i18n.t('settings.editFailed.message'),
+        () => {
+          hapticFeedback.selection();
+          onBack();
+        },
+        'Language edit failed'
+      );
     } finally {
       setIsSaving(false);
     }
@@ -85,8 +100,8 @@ export function EditLanguageScreen({ onBack }: EditLanguageScreenProps) {
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton} 
+        <TouchableOpacity
+          style={styles.backButton}
           onPress={() => {
             hapticFeedback.selection();
             onBack();
@@ -99,7 +114,7 @@ export function EditLanguageScreen({ onBack }: EditLanguageScreenProps) {
       </View>
 
       {/* Content */}
-      <ScrollView 
+      <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContentContainer}
         showsVerticalScrollIndicator
@@ -124,11 +139,11 @@ export function EditLanguageScreen({ onBack }: EditLanguageScreenProps) {
                 style={[
                   styles.languageButton,
                   isSelected ? styles.selectedLanguageButton : styles.unselectedLanguageButton,
-                  isSaving && styles.disabledLanguageButton
+                  isSaving && styles.disabledLanguageButton,
                 ]}
               >
                 <View style={styles.languageContent}>
-                  <Text 
+                  <Text
                     style={[
                       styles.languageName,
                       isSelected ? styles.selectedLanguageName : styles.unselectedLanguageName,

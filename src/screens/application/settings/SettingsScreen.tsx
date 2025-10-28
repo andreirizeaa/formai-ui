@@ -1,11 +1,36 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Platform,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+} from 'react-native';
 import { Image } from 'expo-image';
 import * as StoreReview from 'expo-store-review';
 import * as DynamicAppIcon from 'expo-dynamic-app-icon';
 import * as Notifications from 'expo-notifications';
 import { useFocusEffect } from '@react-navigation/native';
-import { IdCard, Languages, Ruler, FileText, ShieldCheck, MailPlus, UserMinus, LogOut, School2, Star, FileVideoCamera, Megaphone, RefreshCw, User, Pencil, BellRing } from 'lucide-react-native';
+import {
+  IdCard,
+  Languages,
+  Ruler,
+  FileText,
+  ShieldCheck,
+  MailPlus,
+  UserMinus,
+  LogOut,
+  School2,
+  Star,
+  FileVideoCamera,
+  Megaphone,
+  RefreshCw,
+  User,
+  Pencil,
+  BellRing,
+} from 'lucide-react-native';
 import i18n from '../../../utils/i18n';
 import { hapticFeedback } from '../../../utils/haptic';
 import { DeleteAccountModal } from './DeleteAccountModal';
@@ -49,21 +74,19 @@ interface SettingsOptionProps {
 
 function SettingsOption({ icon, title, subtitle, onPress, ref, isLoading }: SettingsOptionProps) {
   return (
-    <TouchableOpacity 
+    <TouchableOpacity
       ref={ref}
-      style={styles.optionRow} 
+      style={styles.optionRow}
       onPress={() => {
         if (!isLoading) {
           hapticFeedback.selection();
           onPress?.();
         }
-      }} 
+      }}
       activeOpacity={0.7}
       disabled={isLoading}
     >
-      <View style={styles.iconContainer}>
-        {icon}
-      </View>
+      <View style={styles.iconContainer}>{icon}</View>
       <View style={styles.textContainer}>
         {isLoading ? (
           <View style={styles.loadingContainer}>
@@ -80,7 +103,15 @@ function SettingsOption({ icon, title, subtitle, onPress, ref, isLoading }: Sett
   );
 }
 
-export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguagePress, onSharePress, onLogout, onEditNamePress, onAppIconPress }: SettingsScreenProps) {
+export function SettingsScreen({
+  onPersonalDetailsPress,
+  onUnitsPress,
+  onLanguagePress,
+  onSharePress,
+  onLogout,
+  onEditNamePress,
+  onAppIconPress,
+}: SettingsScreenProps) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const { hasSubscription, hasHdVideos } = usePurchases();
@@ -120,7 +151,7 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
   const { addLift, formatDateForLift } = useLiftData();
   const { purgeAllLoadingLifts } = useLoadingLifts();
   const { userDetails } = useUserDetails();
-  
+
   // Helper function to format user since date
   const getUserSinceText = () => {
     if (!userDetails?.createdAt) return '';
@@ -132,7 +163,7 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
       return '';
     }
   };
-  
+
   // Track screen view on mount
   useEffect(() => {
     track('Screen viewed', { screen_name: 'Settings' });
@@ -148,7 +179,6 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
     track('Settings screen clicks', { event: 'App Icon' });
     onAppIconPress?.();
   };
-
 
   // Reset loading states on mount to prevent lingering indicators
   useEffect(() => {
@@ -211,7 +241,7 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
         } catch (error) {
           console.warn('Error refreshing app icon:', error);
         }
-        
+
         // Also refresh notification permission status
         await checkNotificationPermission();
       };
@@ -227,14 +257,14 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
       setIsLoggingOut(false); // Also reset logout loading state
     };
   }, []);
-  
+
   // Tutorial target registration
   const { ref: settingsFirstCardRef } = useTutorialTarget('settings_first_card');
   const { ref: settingsSupportEmailRef } = useTutorialTarget('settings_support_email');
-  
+
   // Tutorial context
   const { start: startTutorial } = useTutorial();
-  
+
   // Superwall placement
   const { registerPlacement } = usePlacement();
 
@@ -263,16 +293,16 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
       // Delete user account from database
       const res = await deleteUserAccount(userId);
       if (!res?.success) throw new Error(res?.message || 'Delete failed');
-      
+
       // Clear all user data from contexts and React Query cache
       await clearUserSpecificData(queryClient, userId);
-      
+
       // Sign out from Supabase
       await supabase.auth.signOut();
-      
+
       // Remove user ID from storage (redundant but safe)
       await removeUserId();
-      
+
       setShowDeleteModal(false);
       if (onLogout) onLogout();
     } catch (e: any) {
@@ -301,7 +331,6 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
     setIsLoggingOut(false);
     onLogout?.();
   };
-
 
   const handleUnitsPress = () => {
     // Track settings screen clicks
@@ -343,24 +372,24 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
 
   const handleSyncDataPress = async () => {
     hapticFeedback.selection();
-    
+
     // Check subscription status before allowing sync
     if (!hasSubscription) {
       // Track settings screen clicks
       track('Settings screen clicks', { event: 'Sync Data - No Subscription' });
       // Track paywall shown
       track('Sync paywall shown', { source: 'settings' });
-      
+
       try {
         await registerPlacement({
           placement: 'sync_trigger',
         });
-        
+
         // Track paywall completion
         track('Sync paywall complete', { source: 'settings' });
       } catch (error) {
         showAlert(
-          'Error', 
+          'Error',
           'Unable to access premium features. Please try again.',
           undefined,
           'SETTINGS_SYNC_PAYWALL_ERROR',
@@ -369,19 +398,19 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
       }
       return;
     }
-    
+
     // Track settings screen clicks
     track('Settings screen clicks', { event: 'Sync Data' });
-    
+
     try {
       setIsSyncing(true);
-      
+
       await performManualSync();
-      
+
       // Update last sync time after successful sync
       const syncTime = await getFormattedLastSyncTime();
       setLastSyncTime(syncTime);
-      
+
       hapticFeedback.success();
     } catch (error) {
       hapticFeedback.error();
@@ -444,15 +473,11 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
           if (global.clearLiftDataForTutorial) {
             global.clearLiftDataForTutorial();
           }
-        } catch (error) {
-        }
+        } catch (error) {}
       })();
 
       // Wait for 2 seconds while cleanup happens in background
-      await Promise.all([
-        cleanupPromise,
-        new Promise(resolve => setTimeout(resolve, 1500))
-      ]);
+      await Promise.all([cleanupPromise, new Promise((resolve) => setTimeout(resolve, 1500))]);
 
       hapticFeedback.success();
 
@@ -492,12 +517,12 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
         // Fallback: open app store page
         const appStoreUrl = 'https://apps.apple.com/us/app/form-ai-train-safer-now/id6749869538';
         const canOpen = await Linking.canOpenURL(appStoreUrl);
-        
+
         if (canOpen) {
           await Linking.openURL(appStoreUrl);
         } else {
           showAlert(
-            'Error', 
+            'Error',
             'Unable to open the app store. Please try again later.',
             undefined,
             'SETTINGS_APP_STORE_ERROR',
@@ -507,7 +532,7 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
       }
     } catch (error) {
       showAlert(
-        'Error', 
+        'Error',
         'Unable to open the app store. Please try again later.',
         undefined,
         'SETTINGS_APP_STORE_ERROR',
@@ -519,12 +544,12 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
   const handleTurnOnNotificationsPress = async () => {
     // Track settings screen clicks
     track('Settings screen clicks', { event: 'Turn on Notifications' });
-    
+
     try {
       await openAppSettings();
     } catch (error) {
       showAlert(
-        'Error', 
+        'Error',
         'Unable to open app settings. Please try again later.',
         undefined,
         'SETTINGS_NOTIFICATIONS_ERROR',
@@ -539,16 +564,16 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
       track('Settings screen clicks', { event: 'Video quality' });
       // Track paywall shown
       track('Low quality paywall shown', { source: 'settings' });
-      
+
       await registerPlacement({
         placement: 'hd_video_trigger',
       });
-      
+
       // Track paywall completion
       track('Low quality paywall complete', { source: 'settings' });
     } catch (error) {
       showAlert(
-        'Error', 
+        'Error',
         'Unable to access premium features. Please try again.',
         undefined,
         'SETTINGS_PREMIUM_FEATURES_ERROR',
@@ -559,7 +584,7 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
 
   const handleAddTestLift = () => {
     hapticFeedback.selection();
-    
+
     // Random movement selection
     const movements = [
       'Barbell Front Squat',
@@ -576,48 +601,48 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
       'Shoulder Press',
       'Bicep Curls',
       'Tricep Dips',
-      'Leg Press'
+      'Leg Press',
     ];
 
     // Add 1000 test lifts
     for (let i = 0; i < 1000; i++) {
       const randomMovement = movements[Math.floor(Math.random() * movements.length)];
-      
+
       // Generate random date within the last 30 days
       const today = new Date();
       const randomDaysAgo = Math.floor(Math.random() * 30);
       const randomDate = new Date(today);
       randomDate.setDate(today.getDate() - randomDaysAgo);
-      
+
       // Calculate accuracy based on date: older dates (30 days ago) = 40%, recent dates (today) = 80%
       // This creates a linear progression from 40% to 80% over 30 days
       const dateProgress = randomDaysAgo / 30; // 0 = today, 1 = 30 days ago
-      const baseAccuracy = 80 - (dateProgress * 40); // 80% for today, 40% for 30 days ago
-      
+      const baseAccuracy = 80 - dateProgress * 40; // 80% for today, 40% for 30 days ago
+
       // Add significant variation to create realistic ups and downs
       // Some days will be much better or worse than the trend
       const variation = (Math.random() - 0.5) * 20; // ±10% variation
       const randomAccuracy = Math.floor(baseAccuracy + variation);
       const clampedAccuracy = Math.max(30, Math.min(90, randomAccuracy)); // Clamp between 30-90%
-      
+
       // Random reps between 1-12
       const randomReps = Math.floor(Math.random() * 12) + 1;
-      
+
       // Random weight between 1-500
       const randomWeight = Math.floor(Math.random() * 500) + 1;
-      
+
       // Generate line graph values that follow the same improvement pattern with variation
       const lineGraphBaseAccuracy = baseAccuracy;
       const randomLineGraphValues = Array.from({ length: randomReps }, () => {
         const variation = (Math.random() - 0.5) * 15; // ±7.5% variation
         return Math.max(25, Math.min(95, Math.floor(lineGraphBaseAccuracy + variation)));
       });
-      
+
       // Random time between 8 AM and 10 PM
       const randomHour = Math.floor(Math.random() * 14) + 8;
       const randomMinute = Math.floor(Math.random() * 60);
       const randomTime = `${randomHour > 12 ? randomHour - 12 : randomHour}:${randomMinute.toString().padStart(2, '0')} ${randomHour >= 12 ? 'PM' : 'AM'}`;
-      
+
       const id = `demo-${today.getTime()}-${i}-${Math.random().toString(36).substr(2, 9)}`;
 
       addLift({
@@ -639,19 +664,19 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
             {
               imageURL: require('../../../../assets/tutorial/formai-example-feedback.png'),
               flaws: [
-                "Right knee is caving inward compared to the left, showing knee valgus.",
-                "Right ankle angle suggests the heel may be lifting more than the left.",
-                "Torso is leaning forward excessively, which stresses the lower back.",
-                "Barbell path is slightly forward of mid-foot, reducing lifting efficiency.",
-                "Hip angle indicates possible butt wink or pelvic tuck at the bottom."
+                'Right knee is caving inward compared to the left, showing knee valgus.',
+                'Right ankle angle suggests the heel may be lifting more than the left.',
+                'Torso is leaning forward excessively, which stresses the lower back.',
+                'Barbell path is slightly forward of mid-foot, reducing lifting efficiency.',
+                'Hip angle indicates possible butt wink or pelvic tuck at the bottom.',
               ],
               improvement: [
                 "Actively push knees out and think 'spread the floor' with your feet to prevent valgus.",
-                "Improve ankle dorsiflexion with stretches and banded mobilizations to keep heels grounded.",
-                "Brace your core harder using the Valsalva maneuver to maintain an upright torso.",
-                "Keep the bar over mid-foot and adjust grip width to tighten the upper back.",
-                "Strengthen glutes and hamstrings with RDLs, hip thrusts, and pause squats to control hip position.",
-                "Consider weightlifting shoes with a heel lift if ankle mobility limits squat depth."
+                'Improve ankle dorsiflexion with stretches and banded mobilizations to keep heels grounded.',
+                'Brace your core harder using the Valsalva maneuver to maintain an upright torso.',
+                'Keep the bar over mid-foot and adjust grip width to tighten the upper back.',
+                'Strengthen glutes and hamstrings with RDLs, hip thrusts, and pause squats to control hip position.',
+                'Consider weightlifting shoes with a heel lift if ankle mobility limits squat depth.',
               ],
             },
           ],
@@ -662,18 +687,18 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
 
   const handlePruneLifts = () => {
     hapticFeedback.selection();
-    
+
     // Purge all loading lifts from memory and AsyncStorage
     purgeAllLoadingLifts();
   };
 
   const handleAddTodayTestLifts = () => {
     hapticFeedback.selection();
-    
+
     const today = new Date();
     const currentTime = new Date();
     const timeString = `${currentTime.getHours() > 12 ? currentTime.getHours() - 12 : currentTime.getHours()}:${currentTime.getMinutes().toString().padStart(2, '0')} ${currentTime.getHours() >= 12 ? 'PM' : 'AM'}`;
-    
+
     // Add Barbell Front Squat
     const frontSquatId = `demo-front-squat-${today.getTime()}-${Math.random().toString(36).substr(2, 9)}`;
     addLift({
@@ -695,16 +720,16 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
           {
             imageURL: require('../../../../assets/tutorial/formai-example-feedback.png'),
             flaws: [
-              "Slight forward lean in the bottom position",
-              "Knees tracking slightly inward on descent"
+              'Slight forward lean in the bottom position',
+              'Knees tracking slightly inward on descent',
             ],
             improvement: [
-              "Focus on keeping chest up and core braced",
-              "Push knees out and track over toes",
-              "Work on ankle mobility to improve depth",
-              "Practice front rack position with lighter weights",
-              "Strengthen upper back to maintain upright torso",
-              "Use tempo squats to improve control and positioning"
+              'Focus on keeping chest up and core braced',
+              'Push knees out and track over toes',
+              'Work on ankle mobility to improve depth',
+              'Practice front rack position with lighter weights',
+              'Strengthen upper back to maintain upright torso',
+              'Use tempo squats to improve control and positioning',
             ],
           },
         ],
@@ -731,13 +756,10 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
         feedback: [
           {
             imageURL: require('../../../../assets/tutorial/formai-example-feedback.png'),
-            flaws: [
-              "Hip drive could be more explosive",
-              "Depth slightly inconsistent across reps"
-            ],
+            flaws: ['Hip drive could be more explosive', 'Depth slightly inconsistent across reps'],
             improvement: [
-              "Focus on driving hips up and forward out of the hole",
-              "Aim for consistent depth on each rep"
+              'Focus on driving hips up and forward out of the hole',
+              'Aim for consistent depth on each rep',
             ],
           },
         ],
@@ -747,99 +769,112 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
 
   return (
     <View style={{ flex: 1 }}>
-      <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false} contentInsetAdjustmentBehavior="automatic">
-      <View style={styles.content}>
-        <Text style={styles.title}>{i18n.t('tabs.settings')}</Text>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={{ paddingBottom: 40 }}
+        showsVerticalScrollIndicator={false}
+        contentInsetAdjustmentBehavior="automatic"
+      >
+        <View style={styles.content}>
+          <Text style={styles.title}>{i18n.t('tabs.settings')}</Text>
 
-        {/* Profile Card */}
-        <View style={styles.card}>
-          <TouchableOpacity style={styles.profileRow} onPress={() => {
-            hapticFeedback.selection();
-            openEditName();
-          }} activeOpacity={0.7}>
-            <View style={styles.profileAvatar}>
-              {userDetails?.profilePicture ? (
-                <Image source={{ uri: userDetails.profilePicture }} style={styles.profileImage as any} contentFit="cover" />
-              ) : userDetails?.fullName ? (
-                <View style={styles.fallbackAvatar}>
-                  <Text style={styles.fallbackAvatarText}>
-                    {userDetails.fullName.trim().split(' ')[0].charAt(0).toUpperCase()}
-                  </Text>
-                </View>
-              ) : (
-                <View style={styles.fallbackAvatar}>
-                  <User size={24} color="#ffffff" />
-                </View>
-              )}
-            </View>
-            <View style={styles.profileTextContainer}>
-              <View style={styles.profileNameRow}>
-                <Text style={styles.profileNameText} numberOfLines={1}>
-                  {userDetails?.fullName || i18n.t('settings.enterName')}
-                </Text>
-                {!userDetails?.fullName && <Pencil size={16} color="#8E8E93" />}
+          {/* Profile Card */}
+          <View style={styles.card}>
+            <TouchableOpacity
+              style={styles.profileRow}
+              onPress={() => {
+                hapticFeedback.selection();
+                openEditName();
+              }}
+              activeOpacity={0.7}
+            >
+              <View style={styles.profileAvatar}>
+                {userDetails?.profilePicture ? (
+                  <Image
+                    source={{ uri: userDetails.profilePicture }}
+                    style={styles.profileImage as any}
+                    contentFit="cover"
+                  />
+                ) : userDetails?.fullName ? (
+                  <View style={styles.fallbackAvatar}>
+                    <Text style={styles.fallbackAvatarText}>
+                      {userDetails.fullName.trim().split(' ')[0].charAt(0).toUpperCase()}
+                    </Text>
+                  </View>
+                ) : (
+                  <View style={styles.fallbackAvatar}>
+                    <User size={24} color="#ffffff" />
+                  </View>
+                )}
               </View>
-              {getUserSinceText() && (
-                <Text style={styles.profileSubtitleText} numberOfLines={1}>
-                  {getUserSinceText()}
-                </Text>
-              )}
-            </View>
-          </TouchableOpacity>
-        </View>
-        
-        {/* Account */}
-        <Text style={styles.sectionTitle}>{i18n.t('settings.cardAccount')}</Text>
-        <View style={styles.card} ref={settingsFirstCardRef}>
-          <SettingsOption
-            icon={<IdCard size={iconSize} color={iconColor} />}
-            title={i18n.t('settings.personalDetails')}
-            onPress={handlePersonalDetailsPress}
-          />
-          <View style={styles.separator} />
-          <SettingsOption
-            icon={<Languages size={iconSize} color={iconColor} />}
-            title={i18n.t('settings.language')}
-            onPress={handleLanguagePress}
-          />
-          <View style={styles.separator} />
-          <SettingsOption
-            icon={<Ruler size={iconSize} color={iconColor} />}
-            title={i18n.t('settings.units')}
-            onPress={handleUnitsPress}
-          />
-          <View style={styles.separator} />
-          <SettingsOption
-            icon={
-              <Image
-                source={APP_ICONS[currentAppIcon as keyof typeof APP_ICONS]}
-                style={{ width: 36, height: 36, borderRadius: 23 * 0.4453125 }}
-              />
-            }
-            title={i18n.t('settings.appIcon')}
-            onPress={handleAppIconPress}
-          />
-          {/* <View style={styles.separator} /> */}
-          {/* <SettingsOption
+              <View style={styles.profileTextContainer}>
+                <View style={styles.profileNameRow}>
+                  <Text style={styles.profileNameText} numberOfLines={1}>
+                    {userDetails?.fullName || i18n.t('settings.enterName')}
+                  </Text>
+                  {!userDetails?.fullName && <Pencil size={16} color="#8E8E93" />}
+                </View>
+                {getUserSinceText() && (
+                  <Text style={styles.profileSubtitleText} numberOfLines={1}>
+                    {getUserSinceText()}
+                  </Text>
+                )}
+              </View>
+            </TouchableOpacity>
+          </View>
+
+          {/* Account */}
+          <Text style={styles.sectionTitle}>{i18n.t('settings.cardAccount')}</Text>
+          <View style={styles.card} ref={settingsFirstCardRef}>
+            <SettingsOption
+              icon={<IdCard size={iconSize} color={iconColor} />}
+              title={i18n.t('settings.personalDetails')}
+              onPress={handlePersonalDetailsPress}
+            />
+            <View style={styles.separator} />
+            <SettingsOption
+              icon={<Languages size={iconSize} color={iconColor} />}
+              title={i18n.t('settings.language')}
+              onPress={handleLanguagePress}
+            />
+            <View style={styles.separator} />
+            <SettingsOption
+              icon={<Ruler size={iconSize} color={iconColor} />}
+              title={i18n.t('settings.units')}
+              onPress={handleUnitsPress}
+            />
+            <View style={styles.separator} />
+            <SettingsOption
+              icon={
+                <Image
+                  source={APP_ICONS[currentAppIcon as keyof typeof APP_ICONS]}
+                  style={{ width: 36, height: 36, borderRadius: 23 * 0.4453125 }}
+                />
+              }
+              title={i18n.t('settings.appIcon')}
+              onPress={handleAppIconPress}
+            />
+            {/* <View style={styles.separator} /> */}
+            {/* <SettingsOption
             icon={<AppearanceIcon width={iconSize} height={iconSize} color={iconColor} />}
             title={i18n.t('settings.appTheme')}
             onPress={() => {}}
           /> */}
-        </View>
-
-        {/* Second Card - Video Quality (only show if user doesn't have HD videos) */}
-        {!hasHdVideos && (
-          <View style={styles.card}>
-            <SettingsOption
-              icon={<FileVideoCamera size={iconSize} color={iconColor} />}
-              title={i18n.t('settings.whyLowQualityVideos')}
-              onPress={handleHdVideoPress}
-            />
           </View>
-        )}
 
-        {/* Third Card */}
-        {/* <View style={styles.card}>
+          {/* Second Card - Video Quality (only show if user doesn't have HD videos) */}
+          {!hasHdVideos && (
+            <View style={styles.card}>
+              <SettingsOption
+                icon={<FileVideoCamera size={iconSize} color={iconColor} />}
+                title={i18n.t('settings.whyLowQualityVideos')}
+                onPress={handleHdVideoPress}
+              />
+            </View>
+          )}
+
+          {/* Third Card */}
+          {/* <View style={styles.card}>
           <MemoizedReferFriendOption
             icon={<ReferFriendIcon width={iconSize} height={iconSize} color={iconColor} />}
             title={i18n.t('settings.referFriends')}
@@ -848,162 +883,163 @@ export function SettingsScreen({ onPersonalDetailsPress, onUnitsPress, onLanguag
           />
         </View> */}
 
-        {/* Support */}
-        <Text style={styles.sectionTitle}>{i18n.t('settings.cardSupport')}</Text>
-        <View style={styles.card}>
-          <SettingsOption
-            ref={settingsSupportEmailRef}
-            icon={<MailPlus size={iconSize} color={iconColor} />}
-            title={i18n.t('settings.supportEmail')}
-            onPress={handleSupportEmailPress}
-          />
-          <View style={styles.separator} />
-          <SettingsOption
-            icon={<Megaphone size={iconSize} color={iconColor} />}
-            title={i18n.t('settings.featureRequests')}
-            onPress={handleFeatureRequestsPress}
-          />
-          <View style={styles.separator} />
-          <TouchableOpacity 
-            style={styles.optionRow} 
-            onPress={() => {
-              if (!isSyncing) {
-                hapticFeedback.selection();
-                handleSyncDataPress();
-              }
-            }} 
-            activeOpacity={0.7}
-            disabled={isSyncing}
-          >
-            <View style={styles.iconContainer}>
-              <RefreshCw size={iconSize} color={iconColor} />
+          {/* Support */}
+          <Text style={styles.sectionTitle}>{i18n.t('settings.cardSupport')}</Text>
+          <View style={styles.card}>
+            <SettingsOption
+              ref={settingsSupportEmailRef}
+              icon={<MailPlus size={iconSize} color={iconColor} />}
+              title={i18n.t('settings.supportEmail')}
+              onPress={handleSupportEmailPress}
+            />
+            <View style={styles.separator} />
+            <SettingsOption
+              icon={<Megaphone size={iconSize} color={iconColor} />}
+              title={i18n.t('settings.featureRequests')}
+              onPress={handleFeatureRequestsPress}
+            />
+            <View style={styles.separator} />
+            <TouchableOpacity
+              style={styles.optionRow}
+              onPress={() => {
+                if (!isSyncing) {
+                  hapticFeedback.selection();
+                  handleSyncDataPress();
+                }
+              }}
+              activeOpacity={0.7}
+              disabled={isSyncing}
+            >
+              <View style={styles.iconContainer}>
+                <RefreshCw size={iconSize} color={iconColor} />
+              </View>
+              <View style={styles.textContainer}>
+                {isSyncing ? (
+                  <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="small" color="#000000" />
+                  </View>
+                ) : (
+                  <>
+                    <Text style={styles.optionTitle}>{i18n.t('settings.syncData')}</Text>
+                    <Text style={styles.optionSubtitle}>
+                      {lastSyncTime
+                        ? i18n.t('settings.lastSynced', { time: lastSyncTime })
+                        : i18n.t('settings.lastSynced', { time: 'Never' })}
+                    </Text>
+                  </>
+                )}
+              </View>
+            </TouchableOpacity>
+            <View style={styles.separator} />
+            <SettingsOption
+              icon={<School2 size={iconSize} color={iconColor} />}
+              title={i18n.t('settings.replayTutorial')}
+              onPress={handleShowTutorialPress}
+              isLoading={isReplayingTutorial}
+            />
+            <View style={styles.separator} />
+            <SettingsOption
+              icon={<Star size={iconSize} color={iconColor} />}
+              title={i18n.t('settings.leaveRating')}
+              onPress={handleLeaveRatingPress}
+            />
+            {/* Only show notifications option if user hasn't granted permission */}
+            {!hasNotificationPermission && (
+              <>
+                <View style={styles.separator} />
+                <SettingsOption
+                  icon={<BellRing size={iconSize} color={iconColor} />}
+                  title={i18n.t('settings.turnOnNotifications')}
+                  onPress={handleTurnOnNotificationsPress}
+                />
+              </>
+            )}
+          </View>
+
+          {/* Legal */}
+          <Text style={styles.sectionTitle}>{i18n.t('settings.cardLegal')}</Text>
+          <View style={styles.card}>
+            <SettingsOption
+              icon={<FileText size={iconSize} color={iconColor} />}
+              title={i18n.t('settings.termsAndConditions')}
+              onPress={handleTermsOfServicePress}
+            />
+            <View style={styles.separator} />
+            <SettingsOption
+              icon={<ShieldCheck size={iconSize} color={iconColor} />}
+              title={i18n.t('settings.privacyPolicy')}
+              onPress={handlePrivacyPolicyPress}
+            />
+          </View>
+
+          {/* Account Actions */}
+          <Text style={styles.sectionTitle}>{i18n.t('settings.cardAccountActions')}</Text>
+          <View style={styles.card}>
+            <SettingsOption
+              icon={<LogOut size={iconSize} color={iconColor} />}
+              title={i18n.t('settings.logout')}
+              onPress={handleLogoutPress}
+              isLoading={isLoggingOut}
+            />
+            <View style={styles.separator} />
+            <SettingsOption
+              icon={<UserMinus size={iconSize} color={iconColor} />}
+              title={i18n.t('settings.deleteAccount')}
+              onPress={handleDeleteAccountPress}
+            />
+          </View>
+
+          {/* Development Test Buttons - Only visible in development */}
+          {__DEV__ && (
+            <View style={styles.card}>
+              <Text style={styles.devSectionTitle}>Development Tools</Text>
+              <TouchableOpacity
+                style={styles.devButton}
+                onPress={handleAddTestLift}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.devButtonText}>Add 1000 Test Lifts</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.devButton, styles.devButtonSecondary]}
+                onPress={handlePruneLifts}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.devButtonText, styles.devButtonTextSecondary]}>
+                  Prune Loading Lifts
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.devButton, styles.devButtonTertiary]}
+                onPress={handleAddTodayTestLifts}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.devButtonText, styles.devButtonTextTertiary]}>
+                  Add Today's Test Lifts
+                </Text>
+              </TouchableOpacity>
             </View>
-            <View style={styles.textContainer}>
-              {isSyncing ? (
-                <View style={styles.loadingContainer}>
-                  <ActivityIndicator size="small" color="#000000" />
-                </View>
-              ) : (
-                <>
-                  <Text style={styles.optionTitle}>{i18n.t('settings.syncData')}</Text>
-                  <Text style={styles.optionSubtitle}>
-                    {lastSyncTime 
-                      ? i18n.t('settings.lastSynced', { time: lastSyncTime })
-                      : i18n.t('settings.lastSynced', { time: 'Never' })
-                    }
-                  </Text>
-                </>
-              )}
-            </View>
-          </TouchableOpacity>
-          <View style={styles.separator} />
-          <SettingsOption
-            icon={<School2 size={iconSize} color={iconColor} />}
-            title={i18n.t('settings.replayTutorial')}
-            onPress={handleShowTutorialPress}
-            isLoading={isReplayingTutorial}
-          />
-          <View style={styles.separator} />
-          <SettingsOption
-            icon={<Star size={iconSize} color={iconColor} />}
-            title={i18n.t('settings.leaveRating')}
-            onPress={handleLeaveRatingPress}
-          />
-          {/* Only show notifications option if user hasn't granted permission */}
-          {!hasNotificationPermission && (
-            <>
-              <View style={styles.separator} />
-              <SettingsOption
-                icon={<BellRing size={iconSize} color={iconColor} />}
-                title={i18n.t('settings.turnOnNotifications')}
-                onPress={handleTurnOnNotificationsPress}
-              />
-            </>
           )}
         </View>
 
-        {/* Legal */}
-        <Text style={styles.sectionTitle}>{i18n.t('settings.cardLegal')}</Text>
-        <View style={styles.card}>
-          <SettingsOption
-            icon={<FileText size={iconSize} color={iconColor} />}
-            title={i18n.t('settings.termsAndConditions')}
-            onPress={handleTermsOfServicePress}
-          />
-          <View style={styles.separator} />
-          <SettingsOption
-            icon={<ShieldCheck size={iconSize} color={iconColor} />}
-            title={i18n.t('settings.privacyPolicy')}
-            onPress={handlePrivacyPolicyPress}
-          />
-        </View>
+        {/* Delete Account Modal */}
+        <DeleteAccountModal
+          isVisible={showDeleteModal}
+          onClose={handleCloseDeleteModal}
+          onConfirm={handleConfirmDeleteAccount}
+        />
 
-        {/* Account Actions */}
-        <Text style={styles.sectionTitle}>{i18n.t('settings.cardAccountActions')}</Text>
-        <View style={styles.card}>
-          <SettingsOption
-            icon={<LogOut size={iconSize} color={iconColor} />}
-            title={i18n.t('settings.logout')}
-            onPress={handleLogoutPress}
-            isLoading={isLoggingOut}
-          />
-          <View style={styles.separator} />
-          <SettingsOption
-            icon={<UserMinus size={iconSize} color={iconColor} />}
-            title={i18n.t('settings.deleteAccount')}
-            onPress={handleDeleteAccountPress}
-          />
-        </View>
+        {/* Logout Modal */}
+        <LogoutModal
+          isVisible={showLogoutModal}
+          onClose={handleCloseLogoutModal}
+          onConfirm={handleConfirmLogout}
+        />
 
-        {/* Development Test Buttons - Only visible in development */}
-        {__DEV__ && (
-          <View style={styles.card}>
-            <Text style={styles.devSectionTitle}>Development Tools</Text>
-            <TouchableOpacity
-              style={styles.devButton}
-              onPress={handleAddTestLift}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.devButtonText}>Add 1000 Test Lifts</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={[styles.devButton, styles.devButtonSecondary]}
-              onPress={handlePruneLifts}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.devButtonText, styles.devButtonTextSecondary]}>Prune Loading Lifts</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={[styles.devButton, styles.devButtonTertiary]}
-              onPress={handleAddTodayTestLifts}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.devButtonText, styles.devButtonTextTertiary]}>Add Today's Test Lifts</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
-
-      {/* Delete Account Modal */}
-      <DeleteAccountModal
-        isVisible={showDeleteModal}
-        onClose={handleCloseDeleteModal}
-        onConfirm={handleConfirmDeleteAccount}
-      />
-
-      {/* Logout Modal */}
-      <LogoutModal
-        isVisible={showLogoutModal}
-        onClose={handleCloseLogoutModal}
-        onConfirm={handleConfirmLogout}
-      />
-
-
-      {/* Personal Details Screen */}
-      {/* This component is now rendered by the parent based on the onPersonalDetailsPress prop */}
-      
+        {/* Personal Details Screen */}
+        {/* This component is now rendered by the parent based on the onPersonalDetailsPress prop */}
       </ScrollView>
     </View>
   );
@@ -1254,4 +1290,4 @@ const styles = StyleSheet.create({
   devButtonTextTertiary: {
     color: '#FFFFFF',
   },
-}); 
+});

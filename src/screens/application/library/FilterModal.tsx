@@ -1,5 +1,15 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, TextInput, ScrollView, Modal, Animated } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Platform,
+  TextInput,
+  ScrollView,
+  Modal,
+  Animated,
+} from 'react-native';
 import { gymMovements } from '../../../constants/gymMovements';
 import { hapticFeedback } from '../../../utils/haptic';
 import i18n from '../../../utils/i18n';
@@ -19,7 +29,7 @@ export function FilterModal({
   onClose,
   onFilterSelect,
   currentFilters,
-  title = i18n.t('library.filterByMovement')
+  title = i18n.t('library.filterByMovement'),
 }: FilterModalProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMovements, setSelectedMovements] = useState<string[]>(currentFilters);
@@ -33,28 +43,28 @@ export function FilterModal({
       Animated.timing(fadeOpacity, { toValue: 1, duration: 100, useNativeDriver: true }).start();
       return;
     }
-    Animated.timing(fadeOpacity, { toValue: 0, duration: 100, useNativeDriver: true }).start(({ finished }) => {
-      if (finished) setShouldRender(false);
-    });
+    Animated.timing(fadeOpacity, { toValue: 0, duration: 100, useNativeDriver: true }).start(
+      ({ finished }) => {
+        if (finished) setShouldRender(false);
+      }
+    );
   }, [isVisible, fadeOpacity]);
 
   // Filter movements based on search query
   const filteredMovements = useMemo(() => {
     if (!searchQuery.trim()) {
-      return gymMovements.map(m => m.name);
+      return gymMovements.map((m) => m.name);
     }
     return gymMovements
-      .filter(movement =>
-        movement.name.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-      .map(m => m.name);
+      .filter((movement) => movement.name.toLowerCase().includes(searchQuery.toLowerCase()))
+      .map((m) => m.name);
   }, [searchQuery]);
 
   const handleMovementToggle = (movement: string) => {
     hapticFeedback.selection();
-    setSelectedMovements(prev => {
+    setSelectedMovements((prev) => {
       if (prev.includes(movement)) {
-        return prev.filter(m => m !== movement);
+        return prev.filter((m) => m !== movement);
       } else {
         return [...prev, movement];
       }
@@ -103,113 +113,114 @@ export function FilterModal({
       onRequestClose={handleClose}
     >
       <Animated.View style={{ flex: 1, opacity: fadeOpacity }}>
-        <TouchableOpacity 
-          style={styles.overlay} 
-          activeOpacity={1} 
-          onPress={handleClose}
-        >
-          <TouchableOpacity 
-            style={styles.popupContainer} 
-            activeOpacity={1} 
+        <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={handleClose}>
+          <TouchableOpacity
+            style={styles.popupContainer}
+            activeOpacity={1}
             onPress={() => {}} // Prevent closing when clicking inside the modal
           >
-          {/* Header */}
-          <View style={styles.header}>
-            <Text style={styles.headerTitle}>{title}</Text>
-            <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
-              <X width={20} height={20} color="#000000" />
-            </TouchableOpacity>
-          </View>
+            {/* Header */}
+            <View style={styles.header}>
+              <Text style={styles.headerTitle}>{title}</Text>
+              <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
+                <X width={20} height={20} color="#000000" />
+              </TouchableOpacity>
+            </View>
 
-          {/* Content */}
-          <View style={styles.content}>
-            <View style={styles.movementSelectionContainer}>
-              <View style={styles.searchInputContainer}>
-                <TextInput
-                  style={styles.searchInput}
-                  placeholder={i18n.t('library.searchMovements')}
-                  value={searchQuery}
-                  onChangeText={(text) => {
-                    // Track library screen clicks for search box
-                    if (text.length > 0 && searchQuery.length === 0) {
-                      track('Library screen clicks', { event: 'Filter lifts search' });
-                    }
-                    setSearchQuery(text);
-                  }}
-                  placeholderTextColor="#8E8E93"
-                />
-                {searchQuery.length > 0 && (
-                  <TouchableOpacity 
-                    style={styles.clearButton} 
-                    onPress={handleClearSearch}
-                    activeOpacity={0.7}
-                  >
-                    <X width={20} height={20} color="#8E8E93" />
-                  </TouchableOpacity>
-                )}
-              </View>
-              
-              <ScrollView style={styles.movementsList} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-                <TouchableOpacity
-                  style={[
-                    styles.movementItem,
-                    selectedMovements.length === 0 && styles.movementItemSelected
-                  ]}
-                  onPress={handleSelectAllMovements}
-                  activeOpacity={0.7}
-                  delayPressIn={0}
-                >
-                  <Text style={[
-                    styles.movementItemText,
-                    selectedMovements.length === 0 && styles.movementItemTextSelected
-                  ]}>
-                    {i18n.t('library.allMovements')}
-                  </Text>
-                  {selectedMovements.length === 0 && (
-                    <Check width={20} height={20} color="#000000" />
+            {/* Content */}
+            <View style={styles.content}>
+              <View style={styles.movementSelectionContainer}>
+                <View style={styles.searchInputContainer}>
+                  <TextInput
+                    style={styles.searchInput}
+                    placeholder={i18n.t('library.searchMovements')}
+                    value={searchQuery}
+                    onChangeText={(text) => {
+                      // Track library screen clicks for search box
+                      if (text.length > 0 && searchQuery.length === 0) {
+                        track('Library screen clicks', { event: 'Filter lifts search' });
+                      }
+                      setSearchQuery(text);
+                    }}
+                    placeholderTextColor="#8E8E93"
+                  />
+                  {searchQuery.length > 0 && (
+                    <TouchableOpacity
+                      style={styles.clearButton}
+                      onPress={handleClearSearch}
+                      activeOpacity={0.7}
+                    >
+                      <X width={20} height={20} color="#8E8E93" />
+                    </TouchableOpacity>
                   )}
-                </TouchableOpacity>
-                
-                {filteredMovements.map((movement, index) => (
+                </View>
+
+                <ScrollView
+                  style={styles.movementsList}
+                  showsVerticalScrollIndicator={false}
+                  keyboardShouldPersistTaps="handled"
+                >
                   <TouchableOpacity
-                    key={index}
                     style={[
                       styles.movementItem,
-                      isMovementSelected(movement) && styles.movementItemSelected
+                      selectedMovements.length === 0 && styles.movementItemSelected,
                     ]}
-                    onPress={() => handleMovementToggle(movement)}
+                    onPress={handleSelectAllMovements}
                     activeOpacity={0.7}
                     delayPressIn={0}
                   >
-                    <Text style={[
-                      styles.movementItemText,
-                      isMovementSelected(movement) && styles.movementItemTextSelected
-                    ]}>
-                      {movement}
+                    <Text
+                      style={[
+                        styles.movementItemText,
+                        selectedMovements.length === 0 && styles.movementItemTextSelected,
+                      ]}
+                    >
+                      {i18n.t('library.allMovements')}
                     </Text>
-                    {isMovementSelected(movement) && (
+                    {selectedMovements.length === 0 && (
                       <Check width={20} height={20} color="#000000" />
                     )}
                   </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-          </View>
 
-          {/* Bottom Buttons */}
-          <View style={styles.bottomControls}>
-            <View style={styles.buttonStack}>
-              <TouchableOpacity 
-                style={styles.resetButton} 
-                onPress={handleReset}
-              >
-                <Text style={styles.resetButtonText}>{i18n.t('library.reset')}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.applyButton} onPress={handleApply}>
-                <Text style={styles.applyButtonText}>{i18n.t('library.apply')}</Text>
-              </TouchableOpacity>
+                  {filteredMovements.map((movement, index) => (
+                    <TouchableOpacity
+                      key={index}
+                      style={[
+                        styles.movementItem,
+                        isMovementSelected(movement) && styles.movementItemSelected,
+                      ]}
+                      onPress={() => handleMovementToggle(movement)}
+                      activeOpacity={0.7}
+                      delayPressIn={0}
+                    >
+                      <Text
+                        style={[
+                          styles.movementItemText,
+                          isMovementSelected(movement) && styles.movementItemTextSelected,
+                        ]}
+                      >
+                        {movement}
+                      </Text>
+                      {isMovementSelected(movement) && (
+                        <Check width={20} height={20} color="#000000" />
+                      )}
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
             </View>
-          </View>
+
+            {/* Bottom Buttons */}
+            <View style={styles.bottomControls}>
+              <View style={styles.buttonStack}>
+                <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
+                  <Text style={styles.resetButtonText}>{i18n.t('library.reset')}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.applyButton} onPress={handleApply}>
+                  <Text style={styles.applyButtonText}>{i18n.t('library.apply')}</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
           </TouchableOpacity>
         </TouchableOpacity>
       </Animated.View>
@@ -384,4 +395,4 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
   },
-}); 
+});

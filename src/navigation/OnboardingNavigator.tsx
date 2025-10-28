@@ -1,6 +1,9 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator, NativeStackNavigationProp } from '@react-navigation/native-stack';
+import {
+  createNativeStackNavigator,
+  NativeStackNavigationProp,
+} from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 
 // Import screens
@@ -36,9 +39,15 @@ const Stack = createNativeStackNavigator<OnboardingStackParamList>();
 
 // Wrapper components that handle navigation
 
-function WelcomeScreenWrapper({ onSignIn, isAppVisible }: { onSignIn: () => void; isAppVisible?: boolean }) {
+function WelcomeScreenWrapper({
+  onSignIn,
+  isAppVisible,
+}: {
+  onSignIn: () => void;
+  isAppVisible?: boolean;
+}) {
   const navigation = useNavigation<OnboardingNavigationProp>();
-  
+
   const handleGetStarted = () => {
     navigation.navigate('Onboarding');
   };
@@ -52,12 +61,12 @@ function WelcomeScreenWrapper({ onSignIn, isAppVisible }: { onSignIn: () => void
   };
 
   return (
-    <WelcomeScreen 
-      onGetStarted={handleGetStarted} 
-      onSignIn={onSignIn} 
+    <WelcomeScreen
+      onGetStarted={handleGetStarted}
+      onSignIn={onSignIn}
       onNavigateToOnboarding={handleNavigateToOnboarding}
       onRequirePayment={handleRequirePayment}
-      isAppVisible={isAppVisible} 
+      isAppVisible={isAppVisible}
     />
   );
 }
@@ -68,7 +77,7 @@ function UnifiedOnboardingScreenWrapper() {
 
 function PaymentScreenWrapper() {
   const navigation = useNavigation<OnboardingNavigationProp>();
-  
+
   return (
     <PaymentScreen
       onComplete={() => {
@@ -79,11 +88,9 @@ function PaymentScreenWrapper() {
   );
 }
 
-
-
 function NotificationPermissionScreenWrapper() {
   const navigation = useNavigation<OnboardingNavigationProp>();
-  
+
   const handleNext = () => {
     navigation.navigate('AccountLoading');
   };
@@ -100,7 +107,7 @@ function AccountLoadingScreenWrapper({ onComplete }: { onComplete: () => void })
   const { hasSubscription, refreshCustomerInfo } = usePurchases();
   const { refetchUserDetails } = useUserDetails();
   const isRunningRef = React.useRef(false);
-  
+
   const handleNext = async () => {
     if (isRunningRef.current) return; // guard against double-taps
     isRunningRef.current = true;
@@ -110,7 +117,7 @@ function AccountLoadingScreenWrapper({ onComplete }: { onComplete: () => void })
       navigation.navigate('Payment');
     } else {
       await refetchUserDetails(); // ensure context is populated, silently
-      onComplete();               // this triggers your fade to MainAppLayout
+      onComplete(); // this triggers your fade to MainAppLayout
     }
 
     isRunningRef.current = false;
@@ -119,7 +126,13 @@ function AccountLoadingScreenWrapper({ onComplete }: { onComplete: () => void })
   return <AccountLoadingScreen onComplete={handleNext} />;
 }
 
-export function OnboardingNavigator({ onComplete, onSignIn, onUserNeedsOnboarding, initialRouteName = 'Welcome', isAppVisible = false }: OnboardingNavigatorProps) {
+export function OnboardingNavigator({
+  onComplete,
+  onSignIn,
+  onUserNeedsOnboarding,
+  initialRouteName = 'Welcome',
+  isAppVisible = false,
+}: OnboardingNavigatorProps) {
   return (
     <NavigationContainer>
       <Stack.Navigator
@@ -132,27 +145,17 @@ export function OnboardingNavigator({ onComplete, onSignIn, onUserNeedsOnboardin
           {() => <WelcomeScreenWrapper onSignIn={onSignIn} isAppVisible={isAppVisible} />}
         </Stack.Screen>
 
-        <Stack.Screen name="Onboarding">
-          {() => <UnifiedOnboardingScreenWrapper />}
-        </Stack.Screen>
+        <Stack.Screen name="Onboarding">{() => <UnifiedOnboardingScreenWrapper />}</Stack.Screen>
 
         <Stack.Screen name="NotificationPermission">
           {() => <NotificationPermissionScreenWrapper />}
         </Stack.Screen>
 
-        <Stack.Screen 
-          name="AccountLoading"
-        >
+        <Stack.Screen name="AccountLoading">
           {() => <AccountLoadingScreenWrapper onComplete={onComplete} />}
         </Stack.Screen>
 
-        <Stack.Screen 
-          name="Payment"
-        >
-          {() => <PaymentScreenWrapper />}
-        </Stack.Screen>
-
-
+        <Stack.Screen name="Payment">{() => <PaymentScreenWrapper />}</Stack.Screen>
       </Stack.Navigator>
     </NavigationContainer>
   );

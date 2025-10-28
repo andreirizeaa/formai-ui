@@ -1,5 +1,15 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, StatusBar, FlatList, useWindowDimensions, Animated } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Platform,
+  TouchableOpacity,
+  StatusBar,
+  FlatList,
+  useWindowDimensions,
+  Animated,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft } from 'lucide-react-native';
 import { Image } from 'expo-image';
@@ -42,10 +52,14 @@ export function AppIconScreen({ onBack }: AppIconScreenProps) {
   const horizontalPadding = 20; // matches screens using 20 padding
   const gap = 20;
   const columns = 4;
-  const itemSize = Math.floor((screenWidth - horizontalPadding * 2 - gap * (columns - 1)) / columns);
+  const itemSize = Math.floor(
+    (screenWidth - horizontalPadding * 2 - gap * (columns - 1)) / columns
+  );
 
   const iconEntries = useMemo(() => Object.entries(ICONS) as [IconKey, any][], []);
-  const animationValues = useRef<Map<IconKey, { scale: Animated.Value; rotate: Animated.Value }>>(new Map());
+  const animationValues = useRef<Map<IconKey, { scale: Animated.Value; rotate: Animated.Value }>>(
+    new Map()
+  );
 
   // Initialize animation values for each icon
   iconEntries.forEach(([key]) => {
@@ -78,12 +92,12 @@ export function AppIconScreen({ onBack }: AppIconScreenProps) {
     try {
       hapticFeedback.selection();
       setAnimatingIcon(key);
-      
+
       const animations = animationValues.current.get(key);
       if (animations) {
         // Reset rotation to 0 first
         animations.rotate.setValue(0);
-        
+
         // Animate: scale down + spin, then scale back up
         Animated.sequence([
           Animated.parallel([
@@ -138,7 +152,7 @@ export function AppIconScreen({ onBack }: AppIconScreenProps) {
           accessibilityLabel="Go back"
           disabled={!!animatingIcon}
         >
-          <ChevronLeft width={24} height={24} color={animatingIcon ? "#CCCCCC" : "#000000"} />
+          <ChevronLeft width={24} height={24} color={animatingIcon ? '#CCCCCC' : '#000000'} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{i18n.t('settings.appIconTitle')}</Text>
         <View style={styles.placeholder} />
@@ -152,7 +166,7 @@ export function AppIconScreen({ onBack }: AppIconScreenProps) {
             const [key, source] = item;
             const isActive = key === activeIcon;
             const animations = animationValues.current.get(key);
-            
+
             const rotateInterpolation = animations?.rotate.interpolate({
               inputRange: [0, 1],
               outputRange: ['0deg', '360deg'],
@@ -161,7 +175,7 @@ export function AppIconScreen({ onBack }: AppIconScreenProps) {
             return (
               <TouchableOpacity
                 onPress={() => {
-                    handleSelect(key);
+                  handleSelect(key);
                 }}
                 activeOpacity={0.8}
                 style={{ width: itemSize, height: itemSize, marginRight: gap, marginBottom: gap }}
@@ -178,26 +192,28 @@ export function AppIconScreen({ onBack }: AppIconScreenProps) {
                 >
                   <Image
                     source={source}
-                    style={{ 
+                    style={{
                       width: itemSize,
                       height: itemSize,
-                      borderRadius: 38 * 0.4453125
+                      borderRadius: 38 * 0.4453125,
                     }}
                     contentFit="cover"
                     accessibilityIgnoresInvertColors
                   />
                 </Animated.View>
                 {isActive && (
-                  <View style={{
-                    position: 'absolute',
-                    top: -7,
-                    left: -7,
-                    right: -7,
-                    bottom: -7,
-                    borderRadius: 50 * 0.4453125,
-                    borderWidth: 4,
-                    borderColor: '#000000',
-                  }} />
+                  <View
+                    style={{
+                      position: 'absolute',
+                      top: -7,
+                      left: -7,
+                      right: -7,
+                      bottom: -7,
+                      borderRadius: 50 * 0.4453125,
+                      borderWidth: 4,
+                      borderColor: '#000000',
+                    }}
+                  />
                 )}
               </TouchableOpacity>
             );
@@ -205,7 +221,11 @@ export function AppIconScreen({ onBack }: AppIconScreenProps) {
           numColumns={columns}
           columnWrapperStyle={{ marginBottom: 0, justifyContent: 'flex-start' }}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: horizontalPadding, paddingTop: 10, paddingBottom: 24 }}
+          contentContainerStyle={{
+            paddingHorizontal: horizontalPadding,
+            paddingTop: 10,
+            paddingBottom: 24,
+          }}
         />
       </View>
     </SafeAreaView>
@@ -248,5 +268,3 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 });
-
-

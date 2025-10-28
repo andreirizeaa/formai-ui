@@ -1,5 +1,12 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Platform,
+  ActivityIndicator,
+} from 'react-native';
 import { Image } from 'expo-image';
 import { hapticFeedback } from '../../../../utils/haptic';
 import i18n from '../../../../utils/i18n';
@@ -21,10 +28,10 @@ export function PracticesScreen({
   title = i18n.t('add.bestRecordingPractices'),
   buttonText,
   tips = i18n.t('add.recordingTips') as string[],
-  isLoading = false
+  isLoading = false,
 }: PracticesScreenProps) {
   const { ref: practicesCtaRef } = useTutorialTarget('upload_practices_cta');
-  
+
   const handleButtonPress = () => {
     if (isLoading) return; // Don't process button press when loading
     hapticFeedback.selection();
@@ -77,8 +84,8 @@ export function PracticesScreen({
       {buttonText && (
         <View style={styles.bottomControls}>
           <View style={styles.buttonStack}>
-            <TouchableOpacity 
-              style={[styles.nextButton, isLoading && styles.nextButtonDisabled]} 
+            <TouchableOpacity
+              style={[styles.nextButton, isLoading && styles.nextButtonDisabled]}
               onPress={handleButtonPress}
               disabled={isLoading}
               activeOpacity={isLoading ? 1 : 0.7}
@@ -206,4 +213,4 @@ const styles = StyleSheet.create({
     backgroundColor: '#8E8E93',
     opacity: 0.7,
   },
-}); 
+});

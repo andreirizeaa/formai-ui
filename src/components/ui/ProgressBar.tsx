@@ -10,18 +10,15 @@ export function ProgressBar({ currentStep, totalSteps }: ProgressBarProps) {
   const progress = (currentStep / totalSteps) * 100;
 
   return (
-    <View style={[
-      styles.track,
-      { backgroundColor: '#E5E5EA' }
-    ]}>
-      <View 
+    <View style={[styles.track, { backgroundColor: '#E5E5EA' }]}>
+      <View
         style={[
-          styles.fill, 
-          { 
+          styles.fill,
+          {
             width: `${progress}%`,
-            backgroundColor: '#000000'
-          }
-        ]} 
+            backgroundColor: '#000000',
+          },
+        ]}
       />
     </View>
   );
@@ -37,4 +34,4 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: 2,
   },
-}); 
+});

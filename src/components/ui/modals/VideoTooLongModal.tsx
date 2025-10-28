@@ -11,10 +11,10 @@ interface VideoTooLongModalProps {
   onSelectNewVideo: () => Promise<void> | void;
 }
 
-export function VideoTooLongModal({ 
-  isVisible, 
-  onClose, 
-  onSelectNewVideo 
+export function VideoTooLongModal({
+  isVisible,
+  onClose,
+  onSelectNewVideo,
 }: VideoTooLongModalProps) {
   const [shouldRender, setShouldRender] = React.useState(isVisible);
   const fadeOpacity = React.useRef(new Animated.Value(0)).current;
@@ -26,9 +26,11 @@ export function VideoTooLongModal({
       Animated.timing(fadeOpacity, { toValue: 1, duration: 100, useNativeDriver: true }).start();
       return;
     }
-    Animated.timing(fadeOpacity, { toValue: 0, duration: 100, useNativeDriver: true }).start(({ finished }) => {
-      if (finished) setShouldRender(false);
-    });
+    Animated.timing(fadeOpacity, { toValue: 0, duration: 100, useNativeDriver: true }).start(
+      ({ finished }) => {
+        if (finished) setShouldRender(false);
+      }
+    );
   }, [isVisible, fadeOpacity]);
 
   // Track when modal appears
@@ -42,7 +44,9 @@ export function VideoTooLongModal({
     hapticFeedback.selection();
     onClose();
     setTimeout(() => {
-      try { onSelectNewVideo(); } catch (_) {}
+      try {
+        onSelectNewVideo();
+      } catch (_) {}
     }, 100);
   };
 
@@ -52,49 +56,32 @@ export function VideoTooLongModal({
   };
 
   return (
-    <Modal
-      visible={shouldRender}
-      transparent
-      onRequestClose={handleClose}
-    >
+    <Modal visible={shouldRender} transparent onRequestClose={handleClose}>
       <Animated.View style={{ flex: 1, opacity: fadeOpacity }}>
-        <TouchableOpacity 
-          style={styles.overlay} 
-          activeOpacity={1} 
-          onPress={handleClose}
-        >
-          <TouchableOpacity 
-            style={styles.modalContainer} 
-            activeOpacity={1} 
+        <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={handleClose}>
+          <TouchableOpacity
+            style={styles.modalContainer}
+            activeOpacity={1}
             onPress={(e) => e.stopPropagation()}
           >
-          {/* Close button */}
-          <TouchableOpacity 
-            style={styles.closeButton} 
-            onPress={handleClose}
-          >
-            <X size={20} color="#000000" />
-          </TouchableOpacity>
+            {/* Close button */}
+            <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
+              <X size={20} color="#000000" />
+            </TouchableOpacity>
 
-          {/* Title */}
-          <Text style={styles.title}>
-            {i18n.t('upload.videoTooLong')}
-          </Text>
+            {/* Title */}
+            <Text style={styles.title}>{i18n.t('upload.videoTooLong')}</Text>
 
-          {/* Message */}
-          <Text style={styles.message}>
-            {i18n.t('upload.videoTooLongMessage')}
-          </Text>
+            {/* Message */}
+            <Text style={styles.message}>{i18n.t('upload.videoTooLongMessage')}</Text>
 
-          {/* Action button */}
-          <TouchableOpacity 
-            style={[styles.button, styles.buttonPrimary]} 
-            onPress={handleSelectNewVideo}
-          >
-            <Text style={styles.buttonPrimaryText}>
-              {i18n.t('upload.selectNewVideo')}
-            </Text>
-          </TouchableOpacity>
+            {/* Action button */}
+            <TouchableOpacity
+              style={[styles.button, styles.buttonPrimary]}
+              onPress={handleSelectNewVideo}
+            >
+              <Text style={styles.buttonPrimaryText}>{i18n.t('upload.selectNewVideo')}</Text>
+            </TouchableOpacity>
           </TouchableOpacity>
         </TouchableOpacity>
       </Animated.View>

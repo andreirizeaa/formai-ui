@@ -1,5 +1,14 @@
 import React from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, Animated, Dimensions, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Platform,
+  TouchableOpacity,
+  Animated,
+  Dimensions,
+  ActivityIndicator,
+} from 'react-native';
 import { Image } from 'expo-image';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import Constants from 'expo-constants';
@@ -27,36 +36,38 @@ interface WelcomeScreenSignInProps {
   onRequirePayment?: () => void;
 }
 
-export function WelcomeScreenSignIn({ 
-  visible, 
-  onClose, 
-  onSignIn, 
-  onNavigateToOnboarding, 
-  onRequirePayment 
+export function WelcomeScreenSignIn({
+  visible,
+  onClose,
+  onSignIn,
+  onNavigateToOnboarding,
+  onRequirePayment,
 }: WelcomeScreenSignInProps) {
   const [isSigningIn, setIsSigningIn] = React.useState(false);
   const [isAnimatingOut, setIsAnimatingOut] = React.useState(false);
   const [isVisible, setIsVisible] = React.useState(false);
   const { hasSubscription, logIn } = usePurchases();
   const { updateOnboardingData } = useOnboarding();
-  
+
   // Animation values - similar to feedback slideshow
   const slideAnim = React.useRef(new Animated.Value(screenHeight)).current; // Start off-screen
-  
+
   // Check if we're running in Expo Go
   const isExpoGo = Constants.appOwnership === 'expo';
 
   // Configure Google Sign-In only if not in Expo Go
   React.useEffect(() => {
     if (!isExpoGo) {
-      import('@react-native-google-signin/google-signin').then(({ GoogleSignin }) => {
-        GoogleSignin.configure({
-          scopes: ['email', 'profile'],
-          iosClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID!,
+      import('@react-native-google-signin/google-signin')
+        .then(({ GoogleSignin }) => {
+          GoogleSignin.configure({
+            scopes: ['email', 'profile'],
+            iosClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID!,
+          });
+        })
+        .catch(() => {
+          // Intentionally no logs
         });
-      }).catch(() => {
-        // Intentionally no logs
-      });
     }
   }, [isExpoGo]);
 
@@ -77,7 +88,7 @@ export function WelcomeScreenSignIn({
     try {
       // Set onboardingData.userId immediately after authentication
       updateOnboardingData('userId', userId);
-      
+
       await setUserId(userId);
       const { user } = await fetchUserById(userId);
       if (!user) {
@@ -132,12 +143,12 @@ export function WelcomeScreenSignIn({
     try {
       hapticFeedback.selection();
       if (isExpoGo) return;
-      
+
       const { GoogleSignin } = await import('@react-native-google-signin/google-signin');
       await GoogleSignin.hasPlayServices();
       setIsSigningIn(true);
       const userInfo = await GoogleSignin.signIn();
-      
+
       if (userInfo.idToken) {
         const { data, error } = await supabase.auth.signInWithIdToken({
           provider: 'google',
@@ -171,13 +182,13 @@ export function WelcomeScreenSignIn({
           AppleAuthentication.AppleAuthenticationScope.EMAIL,
         ],
       });
-      
+
       if (credential.identityToken) {
         const { error, data } = await supabase.auth.signInWithIdToken({
           provider: 'apple',
           token: credential.identityToken,
         });
-        
+
         if (error) {
           setIsSigningIn(false);
         } else if (data.user?.id) {
@@ -243,18 +254,18 @@ export function WelcomeScreenSignIn({
 
   return (
     <View style={styles.overlay}>
-      <TouchableOpacity 
-        style={styles.overlayBackground} 
-        activeOpacity={1} 
+      <TouchableOpacity
+        style={styles.overlayBackground}
+        activeOpacity={1}
         onPress={() => handleClose(false)}
       />
-      
-      <Animated.View 
+
+      <Animated.View
         style={[
           styles.container,
           {
-            transform: [{ translateY: slideAnim }]
-          }
+            transform: [{ translateY: slideAnim }],
+          },
         ]}
       >
         {/* Header with title and close button */}
@@ -263,7 +274,7 @@ export function WelcomeScreenSignIn({
           <Text style={[styles.mainTitle, { color: appColors.onboarding.signIn.title }]}>
             {i18n.t('signIn')}
           </Text>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.closeButton}
             onPress={() => handleClose(true)}
             activeOpacity={0.7}
@@ -271,7 +282,7 @@ export function WelcomeScreenSignIn({
             <X width={20} height={20} color={appColors.onboarding.signIn.closeButton} />
           </TouchableOpacity>
         </View>
-        
+
         {/* Divider under title */}
         <View style={[styles.divider, { backgroundColor: appColors.onboarding.signIn.divider }]} />
 
@@ -282,17 +293,28 @@ export function WelcomeScreenSignIn({
             {/* Sign in buttons */}
             <View style={styles.buttonContainer}>
               <TouchableOpacity
-                style={[styles.appleButton, { backgroundColor: appColors.onboarding.signIn.appleButton.background }]}
+                style={[
+                  styles.appleButton,
+                  { backgroundColor: appColors.onboarding.signIn.appleButton.background },
+                ]}
                 onPress={handleAppleSignIn}
                 activeOpacity={0.8}
               >
                 <View style={styles.buttonContent}>
-                  <Image 
+                  <Image
                     source={require('../../../assets/icons/apple.png')}
-                    style={[styles.appleIcon, { tintColor: appColors.onboarding.signIn.appleButton.iconTint }]}
+                    style={[
+                      styles.appleIcon,
+                      { tintColor: appColors.onboarding.signIn.appleButton.iconTint },
+                    ]}
                     contentFit="contain"
                   />
-                  <Text style={[styles.appleButtonText, { color: appColors.onboarding.signIn.appleButton.text }]}>
+                  <Text
+                    style={[
+                      styles.appleButtonText,
+                      { color: appColors.onboarding.signIn.appleButton.text },
+                    ]}
+                  >
                     {i18n.t('onboarding.createAccount.signInWithApple')}
                   </Text>
                 </View>
@@ -300,21 +322,29 @@ export function WelcomeScreenSignIn({
 
               {/* Sign in with Google */}
               <TouchableOpacity
-                style={[styles.googleButton, { 
-                  backgroundColor: appColors.onboarding.signIn.googleButton.background,
-                  borderColor: appColors.onboarding.signIn.googleButton.border 
-                }]}
+                style={[
+                  styles.googleButton,
+                  {
+                    backgroundColor: appColors.onboarding.signIn.googleButton.background,
+                    borderColor: appColors.onboarding.signIn.googleButton.border,
+                  },
+                ]}
                 onPress={handleGoogleSignIn}
                 activeOpacity={0.8}
               >
                 <View style={styles.buttonContent}>
-                  <Image 
+                  <Image
                     source={require('../../../assets/icons/google.png')}
                     style={styles.googleIcon}
                     contentFit="contain"
                   />
 
-                  <Text style={[styles.googleButtonText, { color: appColors.onboarding.signIn.googleButton.text }]}>
+                  <Text
+                    style={[
+                      styles.googleButtonText,
+                      { color: appColors.onboarding.signIn.googleButton.text },
+                    ]}
+                  >
                     {i18n.t('onboarding.createAccount.signInWithGoogle')}
                   </Text>
                 </View>
@@ -326,7 +356,9 @@ export function WelcomeScreenSignIn({
                   {i18n.t('termsAgreement')}{' '}
                 </Text>
                 <TouchableOpacity onPress={handleTermsOfServicePress}>
-                  <Text style={[styles.termsLink, { color: appColors.onboarding.signIn.terms.link }]}>
+                  <Text
+                    style={[styles.termsLink, { color: appColors.onboarding.signIn.terms.link }]}
+                  >
                     {i18n.t('termsOfUse')}
                   </Text>
                 </TouchableOpacity>
@@ -334,7 +366,9 @@ export function WelcomeScreenSignIn({
                   {i18n.t('and')}{' '}
                 </Text>
                 <TouchableOpacity onPress={handlePrivacyPolicyPress}>
-                  <Text style={[styles.termsLink, { color: appColors.onboarding.signIn.terms.link }]}>
+                  <Text
+                    style={[styles.termsLink, { color: appColors.onboarding.signIn.terms.link }]}
+                  >
                     {i18n.t('privacyPolicy')}
                   </Text>
                 </TouchableOpacity>
@@ -342,12 +376,25 @@ export function WelcomeScreenSignIn({
             </View>
           </View>
         </View>
-        
+
         {/* Custom loading overlay for modal only */}
         {isSigningIn && (
-          <View style={[styles.modalLoadingOverlay, { backgroundColor: appColors.onboarding.signIn.loading.background }]}>
-            <View style={[styles.modalLoadingContainer, { backgroundColor: appColors.onboarding.signIn.loading.container }]}>
-              <ActivityIndicator size="large" color={appColors.onboarding.signIn.loading.indicator} />
+          <View
+            style={[
+              styles.modalLoadingOverlay,
+              { backgroundColor: appColors.onboarding.signIn.loading.background },
+            ]}
+          >
+            <View
+              style={[
+                styles.modalLoadingContainer,
+                { backgroundColor: appColors.onboarding.signIn.loading.container },
+              ]}
+            >
+              <ActivityIndicator
+                size="large"
+                color={appColors.onboarding.signIn.loading.indicator}
+              />
             </View>
           </View>
         )}

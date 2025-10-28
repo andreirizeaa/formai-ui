@@ -38,4 +38,4 @@ export interface OnboardingContextType {
   getOnboardingDataForAPI: () => OnboardingData;
   resetOnboarding: () => void;
   getOnboardingProgress: () => number;
-} 
+}
