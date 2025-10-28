@@ -1,0 +1,22 @@
+{
+    "recommendations": [
+        // Markdown
+        "yzhang.markdown-all-in-one",
+        "bierner.markdown-preview-github-styles",
+        // TypeScript & React Native
+        "dbaeumer.vscode-eslint",
+        "biomejs.biome",
+        "ms-vscode.vscode-typescript-next",
+        // Expo
+        "expo.vscode-expo-tools",
+        // Git
+        "eamodio.gitlens",
+        // Supabase
+        "supabase.supabase-vscode",
+        // Other useful extensions
+        "usernamehw.errorlens",
+        "christian-kohler.path-intellisense",
+        "bradlc.vscode-tailwindcss",
+        "esbenp.prettier-vscode"
+    ]
+}
