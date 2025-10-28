@@ -1,4 +1,4 @@
-name: DB Migrations (Prod only, gated)
+name: DB Migrations (Prod only)
 
 on:
   push:
@@ -8,16 +8,15 @@ on:
 jobs:
   migrate_prod:
     runs-on: ubuntu-latest
-    environment: prod   # approval gate + env-scoped secrets if you use them
+    environment: prod
     steps:
       - uses: actions/checkout@v4
 
       - name: Install Supabase CLI
         uses: supabase/setup-cli@v1
         with:
-          version: latest   # optionally pin a version
+          version: latest
 
       - name: Apply migrations to PROD
         run: |
-          yes | supabase db push \
-            --db-url "${{ secrets.PROD_DB_URL }}"
+          supabase db push --db-url "${{ secrets.PROD_DB_URL }}"
