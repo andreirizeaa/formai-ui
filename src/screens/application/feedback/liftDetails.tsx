@@ -1155,7 +1155,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   reviewFeedbackButtonText: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: '800',
     color: '#000000',
     fontFamily: 'SF Pro Text',
