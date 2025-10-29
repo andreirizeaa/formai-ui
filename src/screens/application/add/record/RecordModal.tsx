@@ -5,6 +5,7 @@ import { ChevronLeft, Timer, TimerOff, X } from 'lucide-react-native';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Animated,
   Keyboard,
   Modal,
@@ -739,18 +740,19 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
     if (isUploading || isModalDisabled) return;
     hapticFeedback.selection();
     if (isRecording) {
-      showAlert(
-        i18n.t('upload.stopRecording'),
-        i18n.t('upload.stopRecordingMessage'),
-        () => {
-          handleStopRecording();
-          setIsRecording(false);
-          setShowPractices(true);
-          setShowCamera(false);
-          onClose();
+      Alert.alert(i18n.t('upload.stopRecording'), i18n.t('upload.stopRecordingMessage'), [
+        { text: i18n.t('upload.goBack') },
+        {
+          text: i18n.t('upload.stop'),
+          onPress: () => {
+            handleStopRecording();
+            setIsRecording(false);
+            setShowPractices(true);
+            setShowCamera(false);
+            onClose();
+          },
         },
-        'RECORD_STOP_RECORDING_CONFIRMATION'
-      );
+      ]);
     } else {
       setIsRecording(false);
       setShowPractices(true);
@@ -1022,11 +1024,15 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
                     onPress={() => {
                       hapticFeedback.selection();
                       cancelPreCountdown();
-                      setIsClosingCamera(true);
-                      onClose();
+                      if (isRecording) {
+                        handleClose();
+                      } else {
+                        setIsClosingCamera(true);
+                        onClose();
+                      }
                     }}
                     style={styles.closeButtonCamera}
-                    disabled={isRecording || isUploading || isModalDisabled || isClosingCamera}
+                    disabled={isUploading || isModalDisabled || isClosingCamera}
                   >
                     {isClosingCamera ? (
                       <ActivityIndicator size="small" color="#ffffff" />

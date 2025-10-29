@@ -1058,6 +1058,7 @@ const es = {
     failedToFinishRecording: 'Error al finalizar grabación. Por favor inténtalo de nuevo.',
     stopRecording: '¿Detener Grabación?',
     stopRecordingMessage: '¿Estás seguro de que quieres detener la grabación?',
+    goBack: 'Volver',
     cancel: 'Cancelar',
     stop: 'Detener',
     accessibility: {

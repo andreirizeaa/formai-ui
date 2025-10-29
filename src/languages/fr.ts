@@ -1033,6 +1033,7 @@ const fr = {
     'failedToFinishRecording': 'Impossible de terminer l’enregistrement. Réessayez.',
     'stopRecording': 'Arrêter l’enregistrement ?',
     'stopRecordingMessage': 'Voulez-vous vraiment arrêter l’enregistrement ?',
+    'goBack': 'Retour',
     'cancel': 'Annuler',
     'stop': 'Arrêter',
     'accessibility': {

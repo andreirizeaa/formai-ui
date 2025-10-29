@@ -1043,6 +1043,7 @@ const it = {
     failedToFinishRecording: 'Impossibile terminare la registrazione. Riprova.',
     stopRecording: 'Fermare la Registrazione?',
     stopRecordingMessage: 'Sei sicuro di voler fermare la registrazione?',
+    goBack: 'Indietro',
     cancel: 'Annulla',
     stop: 'Ferma',
     accessibility: {

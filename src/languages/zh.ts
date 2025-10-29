@@ -1000,6 +1000,7 @@ const zh = {
     failedToFinishRecording: '录制完成失败。请重试。',
     stopRecording: '停止录制？',
     stopRecordingMessage: '您确定要停止录制吗？',
+    goBack: '返回',
     cancel: '取消',
     stop: '停止',
     accessibility: {

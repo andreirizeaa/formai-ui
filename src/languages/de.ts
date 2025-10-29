@@ -1021,6 +1021,7 @@ const de = {
     'failedToFinishRecording': 'Aufnahme konnte nicht beendet werden. Bitte erneut versuchen.',
     'stopRecording': 'Aufnahme stoppen?',
     'stopRecordingMessage': 'Möchtest du die Aufnahme wirklich stoppen?',
+    'goBack': 'Zurück',
     'cancel': 'Abbrechen',
     'stop': 'Stoppen',
     'accessibility': {

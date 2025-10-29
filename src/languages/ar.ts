@@ -1005,6 +1005,7 @@ const ar = {
     'failedToFinishRecording': 'فشل إنهاء التسجيل. حاول مرة أخرى.',
     'stopRecording': 'إيقاف التسجيل؟',
     'stopRecordingMessage': 'هل أنت متأكد من رغبتك في إيقاف التسجيل؟',
+    'goBack': 'رجوع',
     'cancel': 'إلغاء',
     'stop': 'إيقاف',
     'accessibility': {

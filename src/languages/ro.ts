@@ -1017,6 +1017,7 @@ const ro = {
     'failedToFinishRecording': 'Nu s-a putut finaliza înregistrarea. Încearcă din nou.',
     'stopRecording': 'Oprești înregistrarea?',
     'stopRecordingMessage': 'Sigur vrei să oprești înregistrarea?',
+    'goBack': 'Înapoi',
     'cancel': 'Anulează',
     'stop': 'Oprește',
     'accessibility': {

@@ -1051,6 +1051,7 @@ const en = {
     failedToFinishRecording: 'Recording failed to finish. Please try again.',
     stopRecording: 'Stop Recording?',
     stopRecordingMessage: 'Are you sure you want to stop recording?',
+    goBack: 'Go Back',
     cancel: 'Cancel',
     stop: 'Stop',
     accessibility: {

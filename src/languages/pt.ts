@@ -1039,6 +1039,7 @@ const pt = {
     failedToFinishRecording: 'Falha ao finalizar gravação. Tente novamente.',
     stopRecording: 'Parar Gravação?',
     stopRecordingMessage: 'Tem certeza de que deseja parar a gravação?',
+    goBack: 'Voltar',
     cancel: 'Cancelar',
     stop: 'Parar',
     accessibility: {
