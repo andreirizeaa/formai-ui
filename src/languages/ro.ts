@@ -984,7 +984,7 @@ const ro = {
     'videoTooLong': 'Video prea lung',
     'videoTooLongMessage': 'Selectează un video sub 90 de secunde.',
     'videoTooShort': 'Video prea scurt',
-    'videoTooShortMessage': 'Asigură-te că videoclipul are cel puțin 3 secunde.',
+    'videoTooShortMessage': 'Asigură-te că videoclipul are cel puțin 2 secunde.',
     'error': 'Eroare',
     'failedToSelectVideo': 'Selectarea videoclipului a eșuat. Încearcă din nou.',
     'failedToGenerateThumbnail': 'Generarea miniaturii a eșuat. Încearcă din nou.',

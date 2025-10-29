@@ -1009,7 +1009,7 @@ const it = {
     videoTooLong: 'Video Troppo Lungo',
     videoTooLongMessage: 'Seleziona un video che sia sotto i 90 secondi.',
     videoTooShort: 'Video Troppo Corto',
-    videoTooShortMessage: 'Assicurati che il video sia lungo almeno 3 secondi.',
+    videoTooShortMessage: 'Assicurati che il video sia lungo almeno 2 secondi.',
     error: 'Errore',
     failedToSelectVideo: 'Impossibile selezionare il video. Riprova.',
     failedToGenerateThumbnail: 'Impossibile generare la miniatura del video. Riprova.',

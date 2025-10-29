@@ -1005,7 +1005,7 @@ const pt = {
     videoTooLong: 'Vídeo Muito Longo',
     videoTooLongMessage: 'Por favor selecione um vídeo com menos de 90 segundos.',
     videoTooShort: 'Vídeo Muito Curto',
-    videoTooShortMessage: 'Certifique-se de que o vídeo tenha pelo menos 3 segundos de duração.',
+    videoTooShortMessage: 'Certifique-se de que o vídeo tenha pelo menos 2 segundos de duração.',
     error: 'Erro',
     failedToSelectVideo: 'Falha ao selecionar vídeo. Tente novamente.',
     failedToGenerateThumbnail: 'Falha ao gerar miniatura do vídeo. Tente novamente.',

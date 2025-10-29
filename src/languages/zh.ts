@@ -967,7 +967,7 @@ const zh = {
     videoTooLong: '视频太长',
     videoTooLongMessage: '请选择90秒以下的视频。',
     videoTooShort: '视频太短',
-    videoTooShortMessage: '请确保视频至少3秒长。',
+    videoTooShortMessage: '请确保视频至少2秒长。',
     error: '错误',
     failedToSelectVideo: '选择视频失败。请重试。',
     failedToGenerateThumbnail: '生成视频缩略图失败。请重试。',

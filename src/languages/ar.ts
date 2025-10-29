@@ -973,7 +973,7 @@ const ar = {
     'videoTooLong': 'الفيديو طويل جدًا',
     'videoTooLongMessage': 'يرجى اختيار فيديو أقل من 90 ثانية.',
     'videoTooShort': 'الفيديو قصير جدًا',
-    'videoTooShortMessage': 'يرجى التأكد من أن الفيديو لا يقل عن 3 ثوانٍ.',
+    'videoTooShortMessage': 'يرجى التأكد من أن الفيديو لا يقل عن 2 ثوانٍ.',
     'error': 'خطأ',
     'failedToSelectVideo': 'فشل اختيار الفيديو. حاول مرة أخرى.',
     'failedToGenerateThumbnail': 'فشل إنشاء صورة مصغرة للفيديو. حاول مرة أخرى.',

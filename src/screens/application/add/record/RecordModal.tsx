@@ -4,6 +4,7 @@ import * as MediaLibrary from 'expo-media-library';
 import { ChevronLeft, Timer, TimerOff, X } from 'lucide-react-native';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   Animated,
   Keyboard,
   Modal,
@@ -80,6 +81,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
   const [isCameraReady, setIsCameraReady] = useState(false);
   const [showCamera, setShowCamera] = useState(true);
   const [cameraKey, setCameraKey] = useState(0);
+  const [isClosingCamera, setIsClosingCamera] = useState(false);
   const cameraRef = useRef<Camera>(null);
   const [cameraFacing, setCameraFacing] = useState<'back' | 'front'>('back');
   const [isTorchOn, setIsTorchOn] = useState(false);
@@ -170,6 +172,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
       setShowCountdownModal(false);
       setShowVideoTooShortModal(false);
       setShowCameraPermissionScreen(false);
+      setIsClosingCamera(false);
       if (preCountdownIntervalRef.current) {
         clearInterval(preCountdownIntervalRef.current);
         preCountdownIntervalRef.current = null;
@@ -181,6 +184,16 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
       setIsModalDisabled(false);
     }
   }, [isVisible]);
+
+  // Reset closing camera state when transition completes
+  useEffect(() => {
+    if (showPractices && !showCamera && isClosingCamera) {
+      const timer = setTimeout(() => {
+        setIsClosingCamera(false);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [showPractices, showCamera, isClosingCamera]);
 
   // keep permission in sync when the hook updates - but don't automatically show permission screen
   useEffect(() => {
@@ -976,83 +989,100 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
             {/* Camera Overlay - positioned absolutely on top */}
             <View style={styles.cameraOverlay}>
               {/* Top Controls */}
-              <View style={styles.topControls}>
+              <View style={styles.cameraTopControls}>
                 <TouchableOpacity
                   onPress={() => {
                     hapticFeedback.selection();
                     cancelPreCountdown();
+                    setIsClosingCamera(true);
                     setShowCamera(false);
                     setShowPractices(true);
                   }}
                   style={styles.backButtonCamera}
-                  disabled={isRecording || isUploading || isModalDisabled}
+                  disabled={isRecording || isUploading || isModalDisabled || isClosingCamera}
                 >
-                  <ChevronLeft size={24} color="#ffffff" />
+                  {isClosingCamera ? (
+                    <ActivityIndicator size="small" color="#ffffff" />
+                  ) : (
+                    <ChevronLeft size={24} color="#ffffff" />
+                  )}
                 </TouchableOpacity>
 
                 <View style={styles.logoPill}>
                   <FormAILogo
-                    iconSize={24}
-                    textStyle={{ color: '#FFFFFF', fontSize: 24 }}
+                    iconSize={28}
+                    textStyle={{ color: '#FFFFFF', fontSize: 28 }}
                     variant="white"
                   />
                 </View>
 
-                <TouchableOpacity
-                  onPress={() => {
-                    hapticFeedback.selection();
-                    cancelPreCountdown();
-                    onClose();
-                  }}
-                  style={styles.closeButtonCamera}
-                  disabled={isRecording || isUploading || isModalDisabled}
-                >
-                  <X width={24} height={24} color="#ffffff" />
-                </TouchableOpacity>
-              </View>
+                {/* Right Side Container with Close Button and Toggles */}
+                <View style={styles.rightControlsContainer}>
+                  <TouchableOpacity
+                    onPress={() => {
+                      hapticFeedback.selection();
+                      cancelPreCountdown();
+                      setIsClosingCamera(true);
+                      onClose();
+                    }}
+                    style={styles.closeButtonCamera}
+                    disabled={isRecording || isUploading || isModalDisabled || isClosingCamera}
+                  >
+                    {isClosingCamera ? (
+                      <ActivityIndicator size="small" color="#ffffff" />
+                    ) : (
+                      <X width={24} height={24} color="#ffffff" />
+                    )}
+                  </TouchableOpacity>
 
-              {/* Side Toggles (Vision Camera style) */}
-              <View style={styles.sideToggles}>
-                <TouchableOpacity
-                  accessibilityLabel={i18n.t('upload.accessibility.flipCamera')}
-                  onPress={() => {
-                    hapticFeedback.selection();
-                    setCameraFacing((prev) => (prev === 'back' ? 'front' : 'back'));
-                  }}
-                  style={styles.toggleButton}
-                >
-                  <Ionicons name="camera-reverse" size={24} color="#FFFFFF" />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  accessibilityLabel={i18n.t('upload.accessibility.toggleTorch')}
-                  onPress={() => {
-                    hapticFeedback.selection();
-                    setIsTorchOn((v) => !v);
-                  }}
-                  style={styles.toggleButton}
-                >
-                  <Ionicons name={isTorchOn ? 'flash' : 'flash-off'} size={24} color="#FFFFFF" />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  accessibilityLabel={i18n.t('upload.accessibility.countdown')}
-                  onPress={() => {
-                    hapticFeedback.selection();
-                    setShowCountdownModal(true);
-                  }}
-                  style={[
-                    countdownSetting > 0 ? styles.countdownButton : styles.toggleButton,
-                    countdownSetting > 0 && styles.countdownButtonActive,
-                  ]}
-                >
-                  {countdownSetting > 0 ? (
-                    <>
-                      <Text style={styles.countdownText}>{countdownSetting}s</Text>
-                      <Timer size={26} color="#000000" />
-                    </>
-                  ) : (
-                    <TimerOff size={24} color="#FFFFFF" />
-                  )}
-                </TouchableOpacity>
+                  {/* Side Toggles (Vision Camera style) */}
+                  <View style={styles.sideTogglesContainer}>
+                    <TouchableOpacity
+                      accessibilityLabel={i18n.t('upload.accessibility.flipCamera')}
+                      onPress={() => {
+                        hapticFeedback.selection();
+                        setCameraFacing((prev) => (prev === 'back' ? 'front' : 'back'));
+                      }}
+                      style={styles.toggleButton}
+                    >
+                      <Ionicons name="camera-reverse" size={24} color="#FFFFFF" />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      accessibilityLabel={i18n.t('upload.accessibility.toggleTorch')}
+                      onPress={() => {
+                        hapticFeedback.selection();
+                        setIsTorchOn((v) => !v);
+                      }}
+                      style={styles.toggleButton}
+                    >
+                      <Ionicons
+                        name={isTorchOn ? 'flash' : 'flash-off'}
+                        size={24}
+                        color="#FFFFFF"
+                      />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      accessibilityLabel={i18n.t('upload.accessibility.countdown')}
+                      onPress={() => {
+                        hapticFeedback.selection();
+                        setShowCountdownModal(true);
+                      }}
+                      style={[
+                        countdownSetting > 0 ? styles.countdownButton : styles.toggleButton,
+                        countdownSetting > 0 && styles.countdownButtonActive,
+                      ]}
+                    >
+                      {countdownSetting > 0 ? (
+                        <>
+                          <Text style={styles.countdownText}>{countdownSetting}s</Text>
+                          <Timer size={26} color="#000000" />
+                        </>
+                      ) : (
+                        <TimerOff size={24} color="#FFFFFF" />
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                </View>
               </View>
 
               {/* Bottom Controls */}
@@ -1243,7 +1273,7 @@ const styles = StyleSheet.create({
     zIndex: 1000,
   },
   cameraContainer: {
-    flex: 1,
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: '#000000',
   },
   camera: {
@@ -1263,12 +1293,30 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 24,
+    paddingTop: 14,
     zIndex: 10,
     pointerEvents: 'box-none',
   },
+  cameraTopControls: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    paddingHorizontal: 20,
+    paddingTop: 60,
+    zIndex: 10,
+    pointerEvents: 'box-none',
+  },
+  rightControlsContainer: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 12,
+  },
+  sideTogglesContainer: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 12,
+  },
   logoPill: {
-    backgroundColor: 'rgba(0, 0, 0, 0.1)',
     borderRadius: 16,
     height: 44,
     minWidth: 120,
@@ -1390,7 +1438,7 @@ const styles = StyleSheet.create({
   },
   timerPillRecording: {
     backgroundColor: '#FF3B30',
-    borderRadius: 16,
+    borderRadius: 10,
     height: 36,
     width: 110,
     marginTop: 16,

@@ -1000,7 +1000,7 @@ const fr = {
     'videoTooLong': 'Vidéo trop longue',
     'videoTooLongMessage': 'Choisissez une vidéo de moins de 90 secondes.',
     'videoTooShort': 'Vidéo trop courte',
-    'videoTooShortMessage': 'Assurez-vous que la vidéo fait au moins 3 secondes.',
+    'videoTooShortMessage': 'Assurez-vous que la vidéo fait au moins 2 secondes.',
     'error': 'Erreur',
     'failedToSelectVideo': 'Échec de la sélection. Réessayez.',
     'failedToGenerateThumbnail': 'Échec de la miniature. Réessayez.',

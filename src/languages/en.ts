@@ -1017,7 +1017,7 @@ const en = {
     videoTooLong: 'Video Too Long',
     videoTooLongMessage: 'Please select a video that is under 90 seconds.',
     videoTooShort: 'Video Too Short',
-    videoTooShortMessage: 'Please ensure the video is at least 3 seconds long.',
+    videoTooShortMessage: 'Please ensure the video is at least 2 seconds long.',
     error: 'Error',
     failedToSelectVideo: 'Failed to select video. Please try again.',
     failedToGenerateThumbnail: 'Failed to generate video thumbnail. Please try again.',

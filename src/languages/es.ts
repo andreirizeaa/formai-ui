@@ -1022,7 +1022,7 @@ const es = {
     videoTooLong: 'Video Muy Largo',
     videoTooLongMessage: 'Por favor selecciona un video que sea menor a 90 segundos.',
     videoTooShort: 'Video Muy Corto',
-    videoTooShortMessage: 'Asegúrate de que el video tenga al menos 3 segundos de duración.',
+    videoTooShortMessage: 'Asegúrate de que el video tenga al menos 2 segundos de duración.',
     error: 'Error',
     failedToSelectVideo: 'Error al seleccionar video. Por favor inténtalo de nuevo.',
     failedToGenerateThumbnail:
