@@ -8,16 +8,14 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { Dimensions, UIManager, findNodeHandle, Platform, InteractionManager } from 'react-native';
-import { useUserDetails } from './UserDetailsContext';
-import { useSelectedDate } from './SelectedDateContext';
-import { useLanguage } from './LanguageContext';
-import { hapticFeedback } from '../utils/haptic';
+import { findNodeHandle, InteractionManager, Platform, UIManager } from 'react-native';
+import { showAlert } from '../services/alertService';
+import { track } from '../services/analytics';
 import { editUserDetails } from '../services/userService';
 import i18n from '../utils/i18n';
-import { track } from '../services/analytics';
-import { showAlert } from '../services/alertService';
-import { setItem } from '../services/storageService';
+import { useLanguage } from './LanguageContext';
+import { useSelectedDate } from './SelectedDateContext';
+import { useUserDetails } from './UserDetailsContext';
 
 // Global type declarations for tutorial functions
 declare global {
@@ -57,7 +55,6 @@ declare global {
   var startTutorialWithDataBackup: (() => Promise<void>) | undefined;
   var finishTutorialAndRestoreData: (() => Promise<void>) | undefined;
   var clearTemporaryLifts: (() => void) | undefined;
-  var navigateToHowItWorksStep: (() => void) | undefined;
   var navigateToFeedbackPage: (() => void) | undefined;
   var onFeedbackPageReady: (() => void) | undefined;
   var remeasureTutorialTarget: (() => void) | undefined;
@@ -273,25 +270,6 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
         },
       },
       {
-        id: 'how_it_works_modal',
-        title: i18n.t('tutorial.howItWorksModal.title'),
-        description: i18n.t('tutorial.howItWorksModal.description'),
-        targetId: 'how_it_works_modal',
-        tooltipPlacement: 'bottom',
-        onNext: () => {
-          try {
-            track('Tutorial', { step_index: 10, target_id: 'how_it_works_modal' });
-            if (global.navigateToFeedbackPage) global.navigateToFeedbackPage();
-          } catch (error) {}
-        },
-        onPrev: () => {
-          try {
-            // Go back to lift details - this will be handled by the component's navigation
-            // The tutorial will go back to the previous step
-          } catch (error) {}
-        },
-      },
-      {
         id: 'feedback_slideshow',
         title: i18n.t('tutorial.feedbackSlideshow.title'),
         description: i18n.t('tutorial.feedbackSlideshow.description'),
@@ -307,9 +285,8 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
         },
         onPrev: () => {
           try {
-            // Go back to how it works step within the feedback slideshow
+            // Go back to lift details review feedback step
             // This will be handled by the component's internal state
-            if (global.navigateToHowItWorksStep) global.navigateToHowItWorksStep();
           } catch (error) {}
         },
       },
@@ -603,11 +580,6 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
 
         // Longer delay for review feedback step to ensure it's fully rendered
         if (step.id === 'lift_details_form_graph') {
-          await new Promise((resolve) => setTimeout(resolve, 300));
-        }
-
-        // Delay for how it works modal step
-        if (step.id === 'how_it_works_modal') {
           await new Promise((resolve) => setTimeout(resolve, 300));
         }
 
@@ -953,27 +925,25 @@ export function useTutorialTarget(targetId?: string) {
       const delay =
         targetId === 'lift_details_form_graph'
           ? 500
-          : targetId === 'how_it_works_modal'
-            ? 500
-            : targetId === 'feedback_slideshow'
-              ? 300
-              : targetId === 'home_see_all_lifts'
+          : targetId === 'feedback_slideshow'
+            ? 300
+            : targetId === 'home_see_all_lifts'
+              ? 500
+              : targetId === 'home_performance_icon'
                 ? 500
-                : targetId === 'home_performance_icon'
-                  ? 500
-                  : targetId === 'upload_practices_cta'
-                    ? 300
-                    : targetId === 'home_first_lift_card'
+                : targetId === 'upload_practices_cta'
+                  ? 300
+                  : targetId === 'home_first_lift_card'
+                    ? 500
+                    : targetId === 'library_screen'
                       ? 500
-                      : targetId === 'library_screen'
-                        ? 500
-                        : targetId === 'lift_details_depth_graph'
-                          ? 300
-                          : targetId === 'performance_over_weight'
+                      : targetId === 'lift_details_depth_graph'
+                        ? 300
+                        : targetId === 'performance_over_weight'
+                          ? 500
+                          : targetId === 'performance_charts_over_time'
                             ? 500
-                            : targetId === 'performance_charts_over_time'
-                              ? 500
-                              : 100;
+                            : 100;
       const timer = setTimeout(() => {
         try {
           // AGGRESSIVE SAFEGUARD: Never register add_button when not on step 0

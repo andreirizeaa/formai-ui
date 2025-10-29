@@ -679,6 +679,7 @@ const de = {
       'accuracyOverTime': 'Präzision im Zeitverlauf',
       'loading': 'Wird geladen...',
       'noDataAvailable': 'Keine Daten verfügbar',
+      'moreDataNeeded': 'Weitere Daten erforderlich',
     },
     'info': {
       'accuracyPerWeight': {
@@ -809,6 +810,7 @@ const de = {
     'rangeOfMotionAcrossReps': 'Bewegungsumfang über deine Wiederholungen',
     'benchPress': 'Bankdrücken',
     'formAccuracyAcrossReps': 'Formpräzision über deine Wiederholungen',
+    'historicalAccuracy': 'Historische Genauigkeit',
     'weight': 'Gewicht',
     'reps': 'Wiederholungen',
     'reviewFeedback': 'Feedback ansehen',

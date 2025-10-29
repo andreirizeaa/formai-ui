@@ -1,51 +1,52 @@
-import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { navigationRef } from '../services/navigationService';
-import { eventBus, AppEvents } from '../services/lifts/event-bus';
-import { openLiftById, navigateToFailedLiftDate } from '../services/navigationService';
-import { handleColdStartNotificationIfAny } from '../services/notificationNavigation';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { NavigationContainer, RouteProp, useNavigation, useRoute } from '@react-navigation/native';
+import {
+  createNativeStackNavigator,
+  NativeStackNavigationProp,
+} from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
-import { View, StyleSheet } from 'react-native';
+import React from 'react';
+import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { showAlert } from '../services/alertService';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { track } from '../services/analytics';
-import { HomeScreen } from '../screens/application/home/HomeScreen';
-import { PerformanceScreen } from '../screens/application/performance/PerformanceScreen';
-import { SettingsScreen } from '../screens/application/settings/SettingsScreen';
-import { PersonalDetailsScreen } from '../screens/application/settings/PersonalDetailsScreen';
-import { EditUnitsScreen } from '../screens/application/settings/EditUnitsScreen';
-import { EditLanguageScreen } from '../screens/application/settings/EditLanguageScreen';
-import { EditNameScreen } from '../screens/application/settings/EditNameScreen';
-import { AppIconScreen } from '../screens/application/settings/AppIconScreen';
-import { ShareScreen } from '../screens/application/settings/ShareScreen';
-import { EditCurrentWeightScreen } from '../screens/application/settings/editPersonalDetails/EditCurrentWeightScreen';
-import { EditHeightScreen } from '../screens/application/settings/editPersonalDetails/EditHeightScreen';
-import { EditAgeScreen } from '../screens/application/settings/editPersonalDetails/EditAgeScreen';
-import { EditGenderScreen } from '../screens/application/settings/editPersonalDetails/EditGenderScreen';
+import { BottomNavigationBar } from '../components/ui/BottomNavigationBar';
+import { UpgradeAppModal } from '../components/ui/modals/UpgradeAppModal';
+import { TranslucentStatusBar } from '../components/ui/TranslucentStatusBar';
+import { ILiftData, useLiftData } from '../context/LiftDataContext';
+import { useUserDetails } from '../context/UserDetailsContext';
 import { AddOptions } from '../screens/application/add/AddOptions';
 import { RecordModal } from '../screens/application/add/record/RecordModal';
 import { UploadModal } from '../screens/application/add/upload/UploadModal';
-import { LiftDetails } from '../screens/application/feedback/liftDetails';
-import { ILiftData } from '../context/LiftDataContext';
 import { FeedbackSlideshow } from '../screens/application/feedback/feedbackSlideshow';
+import { HowItWorksScreen } from '../screens/application/feedback/HowItWorksScreen';
+import { LiftDetails } from '../screens/application/feedback/liftDetails';
+import { HomeScreen } from '../screens/application/home/HomeScreen';
 import { LibraryScreen } from '../screens/application/library/LibraryScreen';
+import { PerformanceScreen } from '../screens/application/performance/PerformanceScreen';
 import { WrappedDetailsScreen } from '../screens/application/performance/WrappedDetailsScreen';
-import { BottomNavigationBar } from '../components/ui/BottomNavigationBar';
-import { useLiftData } from '../context/LiftDataContext';
-import { supabase } from '../lib/supabase';
-import { extractObjectKeyFromUrl, signPath } from '../context/LiftDataContext';
-import { useUserDetails } from '../context/UserDetailsContext';
-import { getUserJustPaid, clearUserJustPaid } from '../services/storageService';
-import { UpgradeAppModal } from '../components/ui/modals/UpgradeAppModal';
+import { AppIconScreen } from '../screens/application/settings/AppIconScreen';
+import { EditLanguageScreen } from '../screens/application/settings/EditLanguageScreen';
+import { EditNameScreen } from '../screens/application/settings/EditNameScreen';
+import { EditAgeScreen } from '../screens/application/settings/editPersonalDetails/EditAgeScreen';
+import { EditCurrentWeightScreen } from '../screens/application/settings/editPersonalDetails/EditCurrentWeightScreen';
+import { EditGenderScreen } from '../screens/application/settings/editPersonalDetails/EditGenderScreen';
+import { EditHeightScreen } from '../screens/application/settings/editPersonalDetails/EditHeightScreen';
+import { EditUnitsScreen } from '../screens/application/settings/EditUnitsScreen';
+import { PersonalDetailsScreen } from '../screens/application/settings/PersonalDetailsScreen';
+import { SettingsScreen } from '../screens/application/settings/SettingsScreen';
+import { ShareScreen } from '../screens/application/settings/ShareScreen';
+import { track } from '../services/analytics';
 import {
   checkAppVersion,
   forceCheckAppVersion,
   VersionCheckResult,
 } from '../services/appVersionService';
-import { TranslucentStatusBar } from '../components/ui/TranslucentStatusBar';
+import { AppEvents, eventBus } from '../services/lifts/event-bus';
+import {
+  navigateToFailedLiftDate,
+  navigationRef,
+  openLiftById,
+} from '../services/navigationService';
+import { handleColdStartNotificationIfAny } from '../services/notificationNavigation';
+import { clearUserJustPaid, getUserJustPaid } from '../services/storageService';
 
 // Types for navigation
 export type MainTabParamList = {
@@ -72,9 +73,7 @@ export type MainStackParamList = {
   LiftDetails: {
     liftData: ILiftData;
   };
-  HowItWorks: {
-    liftData: ILiftData;
-  };
+  HowItWorks: undefined;
   FeedbackSlideshow: {
     liftData: ILiftData;
   };
@@ -531,6 +530,16 @@ function LiftDetailsWrapper() {
   );
 }
 
+function HowItWorksScreenWrapper() {
+  const navigation = useNavigation<MainStackNavigationProp>();
+
+  const handleClose = () => {
+    navigation.goBack();
+  };
+
+  return <HowItWorksScreen onClose={handleClose} />;
+}
+
 function FeedbackSlideshowWrapper() {
   const navigation = useNavigation<MainStackNavigationProp>();
   const route = useRoute<RouteProp<MainStackParamList, 'FeedbackSlideshow'>>();
@@ -559,6 +568,10 @@ function FeedbackSlideshowWrapper() {
     }, 100);
   };
 
+  const handleShowHowItWorks = () => {
+    navigation.navigate('HowItWorks');
+  };
+
   // Transform the liftData to match the expected format
   const transformedLiftData = route.params?.liftData
     ? {
@@ -579,6 +592,7 @@ function FeedbackSlideshowWrapper() {
       onClose={handleClose}
       onNavigateToLiftDetails={handleNavigateToLiftDetails}
       onNavigateToHome={handleNavigateToHome}
+      onShowHowItWorks={handleShowHowItWorks}
       liftData={transformedLiftData}
     />
   );
@@ -993,6 +1007,13 @@ export function MainAppNavigator({
           component={LiftDetailsWrapper}
           options={{
             presentation: 'card',
+          }}
+        />
+        <Stack.Screen
+          name="HowItWorks"
+          component={HowItWorksScreenWrapper}
+          options={{
+            presentation: 'modal',
           }}
         />
         <Stack.Screen

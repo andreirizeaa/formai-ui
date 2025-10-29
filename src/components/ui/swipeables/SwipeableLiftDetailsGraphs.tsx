@@ -1,9 +1,9 @@
-import React, { useMemo, useState, useCallback, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, Dimensions, Platform } from 'react-native';
 import { FlashList, ListRenderItemInfo } from '@shopify/flash-list';
-import { LineChart, BarChart } from 'react-native-chart-kit';
-import i18n from '../../../utils/i18n';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Dimensions, StyleSheet, Text, View } from 'react-native';
+import { BarChart, LineChart } from 'react-native-chart-kit';
 import { track } from '../../../services/analytics';
+import i18n from '../../../utils/i18n';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 const SCREEN_WIDTH = Math.round(SCREEN_W);
@@ -131,23 +131,28 @@ export function SwipeableLiftDetailsGraphs({
     [currentIndex]
   );
 
-  const onViewableItemsChanged = useCallback(
-    ({ viewableItems }: any) => {
-      if (viewableItems && viewableItems.length > 0) {
-        const firstVisibleIndex = viewableItems[0]?.index ?? 0;
-        if (firstVisibleIndex !== currentIndex) {
+  const onViewableItemsChanged = useCallback(({ viewableItems }: any) => {
+    if (viewableItems && viewableItems.length > 0) {
+      const firstVisibleIndex = viewableItems[0]?.index ?? 0;
+      setCurrentIndex((prevIndex) => {
+        if (
+          firstVisibleIndex !== prevIndex &&
+          firstVisibleIndex !== null &&
+          firstVisibleIndex !== undefined
+        ) {
           // Track lift details clicks for card swipe
           track('Lift details clicks', { event: 'Card swipe' });
-          setCurrentIndex(firstVisibleIndex);
+          return firstVisibleIndex;
         }
-      }
-    },
-    [currentIndex]
-  );
+        return prevIndex;
+      });
+    }
+  }, []);
 
   const viewabilityConfig = useRef({
     itemVisiblePercentThreshold: 50,
     minimumViewTime: 0,
+    waitForInteraction: false,
   }).current;
 
   const renderItem = useCallback(
@@ -260,7 +265,7 @@ export function SwipeableLiftDetailsGraphs({
 
   return (
     <View style={styles.container}>
-      <View style={{ width: SCREEN_WIDTH }}>
+      <View style={{ width: SCREEN_WIDTH, paddingTop: 8 }}>
         <FlashList
           ref={listRef}
           data={cards}
@@ -305,22 +310,24 @@ const styles = StyleSheet.create({
   container: {
     width: '100%',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 6,
+    paddingTop: 6,
   },
   card: {
-    backgroundColor: 'transparent',
-    borderRadius: 18,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
     padding: 16,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderWidth: 0.5,
+    borderColor: '#f0f0f0',
     marginBottom: 16,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   bottomCard: {
-    shadowColor: 'transparent',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0,
-    shadowRadius: 0,
-    elevation: 0,
+    // Inherits shadow from card style
   },
   cardTitle: {
     fontSize: 18,

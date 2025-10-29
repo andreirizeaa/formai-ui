@@ -671,6 +671,7 @@ const ar = {
       'accuracyOverTime': 'الدقة بمرور الوقت',
       'loading': 'جارٍ التحميل...',
       'noDataAvailable': 'لا توجد بيانات',
+      'moreDataNeeded': 'يحتاج المزيد من البيانات',
     },
     'info': {
       'accuracyPerWeight': {
@@ -797,6 +798,7 @@ const ar = {
     'rangeOfMotionAcrossReps': 'مدى الحركة عبر العدّات',
     'benchPress': 'بنش برس',
     'formAccuracyAcrossReps': 'دقة الأداء عبر العدّات',
+    'historicalAccuracy': 'الدقة التاريخية',
     'weight': 'الوزن',
     'reps': 'العدّات',
     'reviewFeedback': 'مراجعة الملاحظات',

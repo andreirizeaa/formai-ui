@@ -685,6 +685,7 @@ const fr = {
       'accuracyOverTime': 'Précision dans le temps',
       'loading': 'Chargement…',
       'noDataAvailable': 'Aucune donnée disponible',
+      'moreDataNeeded': 'Plus de données nécessaires',
     },
     'info': {
       'accuracyPerWeight': {
@@ -814,6 +815,7 @@ const fr = {
     'rangeOfMotionAcrossReps': 'Amplitude sur vos répétitions',
     'benchPress': 'Développé couché',
     'formAccuracyAcrossReps': 'Précision sur vos répétitions',
+    'historicalAccuracy': 'Précision Historique',
     'weight': 'Poids',
     'reps': 'Répétitions',
     'reviewFeedback': 'Consulter les retours',

@@ -1,35 +1,34 @@
-import React, { useState, useEffect } from 'react';
+import { Image } from 'expo-image';
+import * as StoreReview from 'expo-store-review';
+import LottieView from 'lottie-react-native';
+import { ChevronLeft, ChevronRight, CircleCheck, CircleX, X } from 'lucide-react-native';
+import React, { useEffect, useState } from 'react';
 import {
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  Text,
-  Platform,
-  ScrollView,
   Animated,
   PanResponder,
+  Platform,
+  Image as RNImage,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
   useWindowDimensions,
+  View,
 } from 'react-native';
-import { Image as RNImage } from 'react-native';
-import { Image } from 'expo-image';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { X, ChevronLeft, ChevronRight, CircleCheck, CircleX } from 'lucide-react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { OrangeGradientButton } from '../../../components/ui/buttons/OrangeGradientButton';
-import { hapticFeedback } from '../../../utils/haptic';
-import { useTutorialTarget } from '../../../context/TutorialContext';
-import i18n from '../../../utils/i18n';
-import LottieView from 'lottie-react-native';
-import { useUserDetails } from '../../../context/UserDetailsContext';
-import * as StoreReview from 'expo-store-review';
-import { editUserDetails } from '../../../services/userService';
 import ReanimatedAnimated, {
-  useSharedValue,
   useAnimatedStyle,
-  withSpring,
+  useSharedValue,
   withDelay,
+  withSpring,
 } from 'react-native-reanimated';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { OrangeGradientButton } from '../../../components/ui/buttons/OrangeGradientButton';
+import { useTutorialTarget } from '../../../context/TutorialContext';
+import { useUserDetails } from '../../../context/UserDetailsContext';
 import { track } from '../../../services/analytics';
+import { editUserDetails } from '../../../services/userService';
+import { hapticFeedback } from '../../../utils/haptic';
+import i18n from '../../../utils/i18n';
 
 // Custom hook to get image aspect ratio from remote URL
 function useRemoteImageRatio(uri?: string) {
@@ -193,6 +192,7 @@ interface FeedbackSlideshowProps {
   onClose: () => void;
   onNavigateToLiftDetails?: () => void;
   onNavigateToHome?: () => void;
+  onShowHowItWorks?: () => void;
   liftData?: {
     analysis: {
       feedback: Array<{
@@ -206,12 +206,13 @@ interface FeedbackSlideshowProps {
   };
 }
 
-type ScreenMode = 'howItWorks' | 'feedback' | 'accuracyScore';
+type ScreenMode = 'feedback' | 'accuracyScore';
 
 export function FeedbackSlideshow({
   onClose,
   onNavigateToLiftDetails,
   onNavigateToHome,
+  onShowHowItWorks,
   liftData,
 }: FeedbackSlideshowProps) {
   const [currentFeedbackIndex, setCurrentFeedbackIndex] = useState(0);
@@ -219,7 +220,7 @@ export function FeedbackSlideshow({
     'image'
   );
   const [isBottomExpanded, setIsBottomExpanded] = useState(false);
-  const [screenMode, setScreenMode] = useState<ScreenMode>('howItWorks');
+  const [screenMode, setScreenMode] = useState<ScreenMode>('feedback');
   const { userDetails, updateHasRated } = useUserDetails();
   const { height: screenHeight } = useWindowDimensions();
 
@@ -414,7 +415,6 @@ export function FeedbackSlideshow({
   const { ref: feedbackSlideshowRef } = useTutorialTarget('feedback_slideshow');
   const { ref: issuesRef } = useTutorialTarget('feedback_issues');
   const { ref: tipsRef } = useTutorialTarget('feedback_tips');
-  const { ref: howItWorksModalRef } = useTutorialTarget('how_it_works_modal');
 
   // Initialize slideAnim position based on current state
   React.useEffect(() => {
@@ -446,19 +446,6 @@ export function FeedbackSlideshow({
       onNavigateToLiftDetails();
     } else {
       onClose();
-    }
-  };
-
-  const handleViewFeedback = () => {
-    hapticFeedback.selection();
-    // Check if accuracy score is 100% - if so, skip feedback and go directly to accuracy score
-    const accuracyScore = Math.round(
-      liftData?.analysis?.accuracyScore || liftData?.analysis?.accuracy || 0
-    );
-    if (accuracyScore >= 100) {
-      setScreenMode('accuracyScore');
-    } else {
-      setScreenMode('feedback');
     }
   };
 
@@ -532,10 +519,6 @@ export function FeedbackSlideshow({
       }
     };
 
-    global.navigateToHowItWorksStep = () => {
-      setScreenMode('howItWorks');
-    };
-
     global.navigateToFeedbackPage = () => {
       setScreenMode('feedback');
       // Notify tutorial that the component is ready to continue
@@ -563,7 +546,6 @@ export function FeedbackSlideshow({
       delete global.navigateToIssues;
       delete global.navigateToTips;
       delete global.navigateToImage;
-      delete global.navigateToHowItWorksStep;
       delete global.navigateToFeedbackPage;
       // Restore previous handler or fallback to base
       if (previousNavigateToHome) {
@@ -762,85 +744,6 @@ export function FeedbackSlideshow({
     feedbackItem && typeof feedbackItem.imageURL === 'string' ? feedbackItem.imageURL : undefined;
   const imageRatio = useRemoteImageRatio(imageUri);
 
-  // Render How It Works screen
-  if (screenMode === 'howItWorks') {
-    return (
-      <View style={styles.container}>
-        <SafeAreaView style={styles.safeArea}>
-          {/* Header */}
-          <View style={styles.header}>
-            <Text style={styles.title}>{i18n.t('feedback.howItWorks')}</Text>
-            <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
-              <X size={24} color="#000000" />
-            </TouchableOpacity>
-          </View>
-
-          {/* Content Area */}
-          <View style={styles.content}>
-            <View style={styles.howItWorksContainer}>
-              <View style={styles.howItWorksItems} ref={howItWorksModalRef}>
-                <AnimatedHowItWorksItem delay={0}>
-                  <View style={styles.howItWorksItem}>
-                    <View style={styles.howItWorksIcon}>
-                      <Text style={styles.howItWorksNumber}>1</Text>
-                    </View>
-                    <View style={styles.howItWorksContent}>
-                      <Text style={styles.howItWorksText}>{i18n.t('feedback.step1')}</Text>
-                    </View>
-                  </View>
-                </AnimatedHowItWorksItem>
-
-                <AnimatedHowItWorksItem delay={100}>
-                  <View style={styles.howItWorksItem}>
-                    <View style={styles.howItWorksIcon}>
-                      <Text style={styles.howItWorksNumber}>2</Text>
-                    </View>
-                    <View style={styles.howItWorksContent}>
-                      <Text style={styles.howItWorksText}>{i18n.t('feedback.step2')}</Text>
-                    </View>
-                  </View>
-                </AnimatedHowItWorksItem>
-
-                <AnimatedHowItWorksItem delay={200}>
-                  <View style={styles.howItWorksItem}>
-                    <View style={styles.howItWorksIcon}>
-                      <Text style={styles.howItWorksNumber}>3</Text>
-                    </View>
-                    <View style={styles.howItWorksContent}>
-                      <Text style={styles.howItWorksText}>{i18n.t('feedback.step3')}</Text>
-                    </View>
-                  </View>
-                </AnimatedHowItWorksItem>
-
-                <AnimatedHowItWorksItem delay={300}>
-                  <View style={styles.howItWorksItem}>
-                    <View style={styles.howItWorksIcon}>
-                      <Text style={styles.howItWorksNumber}>4</Text>
-                    </View>
-                    <View style={styles.howItWorksContent}>
-                      <Text style={styles.howItWorksText}>{i18n.t('feedback.step4')}</Text>
-                    </View>
-                  </View>
-                </AnimatedHowItWorksItem>
-              </View>
-            </View>
-          </View>
-
-          {/* Bottom Button */}
-          <View style={styles.bottomContainer}>
-            <TouchableOpacity
-              style={styles.viewFeedbackButton}
-              onPress={handleViewFeedback}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.viewFeedbackButtonText}>{i18n.t('feedback.viewFeedback')}</Text>
-            </TouchableOpacity>
-          </View>
-        </SafeAreaView>
-      </View>
-    );
-  }
-
   // Render Accuracy Score screen
   if (screenMode === 'accuracyScore') {
     const accuracyScore = Math.round(
@@ -927,90 +830,118 @@ export function FeedbackSlideshow({
         </View>
 
         {/* Bottom Navigation Section - Overlays on top */}
-        <Animated.View
-          {...panResponder.panHandlers}
-          style={[
-            styles.bottomNavigationSection,
-            {
-              transform: [{ translateY: slideAnim }],
-            },
-          ]}
+        <View
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            marginBottom: currentPageType === 'image' ? 24 : 0, // Only add bottom spacing when closed
+          }}
         >
-          {/* Top Line when expanded on issues/tips */}
-          {(currentPageType === 'flaws' || currentPageType === 'improvement') &&
-            isBottomExpanded && (
-              <TouchableOpacity
-                style={styles.topMinusIcon}
-                activeOpacity={0.8}
-                onPress={toggleBottomContainer}
-                hitSlop={{ top: 12, bottom: 12, left: 24, right: 24 }}
-              >
-                <View style={styles.topLine} />
-              </TouchableOpacity>
-            )}
-
-          {/* Bottom Content - Above navigation when expanded */}
-          {getBottomContent()}
-
-          {/* Navigation Row - Only show when fully expanded or collapsed, not in intermediate state */}
           <Animated.View
+            {...panResponder.panHandlers}
             style={[
-              styles.navigationRow,
+              styles.bottomNavigationSection,
               {
-                opacity: slideAnim.interpolate({
-                  inputRange: [0, 150, 200, 390],
-                  outputRange: [1, 0, 0, 1], // visible at 0 (expanded) and 390 (collapsed), hidden in between
-                }),
+                transform: [{ translateY: slideAnim }],
               },
             ]}
           >
-            {/* Left Chevron */}
-            <TouchableOpacity
-              style={styles.bottomChevron}
-              onPress={handleLeftChevron}
-              activeOpacity={0.7}
-            >
-              <ChevronLeft size={24} color="#000000" />
-            </TouchableOpacity>
+            {/* Top Line when expanded on issues/tips */}
+            {(currentPageType === 'flaws' || currentPageType === 'improvement') &&
+              isBottomExpanded && (
+                <TouchableOpacity
+                  style={styles.topMinusIcon}
+                  activeOpacity={0.8}
+                  onPress={toggleBottomContainer}
+                  hitSlop={{ top: 12, bottom: 12, left: 24, right: 24 }}
+                >
+                  <View style={styles.topLine} />
+                </TouchableOpacity>
+              )}
 
-            {/* Center Column - Page Indicator and Expand/Collapse */}
-            <View style={styles.centerColumn}>
-              {/* Tappable line above page indicator when collapsed on issues/tips */}
-              {(currentPageType === 'flaws' || currentPageType === 'improvement') &&
-                !isBottomExpanded && (
-                  <TouchableOpacity
-                    style={styles.expandCollapseButton}
-                    activeOpacity={0.8}
-                    onPress={toggleBottomContainer}
-                    hitSlop={{ top: 12, bottom: 12, left: 24, right: 24 }}
-                  >
-                    <View style={styles.topLine} />
-                  </TouchableOpacity>
-                )}
-              {/* Page Indicator */}
-              <View style={styles.bottomPageIndicator}>
-                <Text style={styles.bottomPageIndicatorText}>
-                  {getCurrentPageNumber()} / {getTotalPages()}
-                </Text>
-              </View>
-            </View>
+            {/* Bottom Content - Above navigation when expanded */}
+            {getBottomContent()}
 
-            {/* Right Chevron */}
+            {/* Navigation Row - Only show when fully expanded or collapsed, not in intermediate state */}
             <Animated.View
-              style={{
-                transform: [{ scale: rightChevronPulse }],
-              }}
+              style={[
+                styles.navigationRow,
+                {
+                  opacity: slideAnim.interpolate({
+                    inputRange: [0, 150, 200, 390],
+                    outputRange: [1, 0, 0, 1], // visible at 0 (expanded) and 390 (collapsed), hidden in between
+                  }),
+                },
+              ]}
             >
-              <TouchableOpacity
-                style={styles.bottomChevron}
-                onPress={handleRightChevron}
-                activeOpacity={0.7}
+              {/* Question mark button on first feedback image, left chevron otherwise */}
+              {currentFeedbackIndex === 0 && currentPageType === 'image' ? (
+                <TouchableOpacity
+                  style={styles.bottomChevron}
+                  onPress={() => {
+                    hapticFeedback.selection();
+                    onShowHowItWorks?.();
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.questionMarkText}>?</Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={styles.bottomChevron}
+                  onPress={handleLeftChevron}
+                  activeOpacity={0.7}
+                >
+                  <ChevronLeft size={24} color="#000000" />
+                </TouchableOpacity>
+              )}
+
+              {/* Center Column - Page Indicator and Expand/Collapse */}
+              <View style={styles.centerColumn}>
+                {/* Tappable line above page indicator when collapsed on issues/tips */}
+                {(currentPageType === 'flaws' || currentPageType === 'improvement') &&
+                  !isBottomExpanded && (
+                    <TouchableOpacity
+                      style={styles.expandCollapseButton}
+                      activeOpacity={0.8}
+                      onPress={toggleBottomContainer}
+                      hitSlop={{ top: 12, bottom: 12, left: 24, right: 24 }}
+                    >
+                      <View style={styles.topLine} />
+                    </TouchableOpacity>
+                  )}
+                {/* Page Indicator */}
+                <View style={styles.bottomPageIndicator}>
+                  <Text style={styles.bottomPageIndicatorText}>
+                    {getCurrentPageNumber()} / {getTotalPages()}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Right Chevron */}
+              <Animated.View
+                style={{
+                  transform: [{ scale: rightChevronPulse }],
+                }}
               >
-                <ChevronRight size={24} color="#000000" />
-              </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.bottomChevron}
+                  onPress={handleRightChevron}
+                  activeOpacity={0.7}
+                >
+                  <ChevronRight size={24} color="#000000" />
+                </TouchableOpacity>
+              </Animated.View>
             </Animated.View>
+
+            {/* Bottom padding spacer - only visible when collapsed (image page) */}
+            {currentPageType === 'image' && (
+              <View style={{ height: 24, backgroundColor: '#FFFFFF' }} />
+            )}
           </Animated.View>
-        </Animated.View>
+        </View>
       </SafeAreaView>
     </View>
   );
@@ -1019,10 +950,11 @@ export function FeedbackSlideshow({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1d293d',
+    backgroundColor: '#FFFFFF',
   },
   safeArea: {
     flex: 1,
+    backgroundColor: '#FFFFFF',
   },
   backgroundImage: {
     position: 'absolute',
@@ -1051,25 +983,23 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 36,
     fontWeight: '700',
-    color: '#ffffff',
+    color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
   },
   bottomNavigationSection: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
     height: 480, // fixed max height
-    backgroundColor: '#1d293d',
+    backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    shadowColor: '#45556c',
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 2,
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 8,
     paddingHorizontal: 20,
     paddingTop: 10,
-    marginBottom: 40,
+    paddingBottom: 24,
+    marginBottom: 0,
   },
   topMinusIcon: {
     alignItems: 'center',
@@ -1081,7 +1011,7 @@ const styles = StyleSheet.create({
   topLine: {
     width: 40,
     height: 2.5,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#000000',
     borderRadius: 28,
   },
   bottomChevron: {
@@ -1094,13 +1024,19 @@ const styles = StyleSheet.create({
     flex: 1,
     maxWidth: 44,
   },
+  questionMarkText: {
+    fontSize: 24,
+    fontWeight: '400',
+    color: '#000000',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
+  },
   bottomPageIndicator: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 12,
     paddingHorizontal: 16,
     backgroundColor: '#F0F0F0',
-    borderRadius: 20,
+    borderRadius: 16,
     flex: 1,
     maxWidth: 100,
   },
@@ -1133,14 +1069,14 @@ const styles = StyleSheet.create({
   listItemText: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#ffffff',
+    color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
     flexShrink: 1,
   },
   bottomContentTitle: {
     fontSize: 24,
     fontWeight: '600',
-    color: '#ffffff',
+    color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
     marginBottom: 12,
     marginTop: 12,
@@ -1189,7 +1125,7 @@ const styles = StyleSheet.create({
   howItWorksText: {
     fontSize: 17,
     fontWeight: '500',
-    color: '#ffffff',
+    color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
     lineHeight: 24,
   },
@@ -1299,7 +1235,7 @@ const styles = StyleSheet.create({
   accuracyScoreLabel: {
     fontSize: 24,
     fontWeight: '800',
-    color: '#fff',
+    color: '#000000',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
     textAlign: 'center',
   },

@@ -690,6 +690,7 @@ const it = {
       accuracyOverTime: 'Accuratezza nel tempo',
       loading: 'Caricamento...',
       noDataAvailable: 'Nessun dato disponibile',
+      moreDataNeeded: 'Sono necessari più dati',
     },
     info: {
       accuracyPerWeight: {
@@ -819,6 +820,7 @@ const it = {
     rangeOfMotionAcrossReps: 'Ampiezza di movimento attraverso le tue ripetizioni',
     benchPress: 'Panca Piana',
     formAccuracyAcrossReps: 'Accuratezza della forma attraverso le tue ripetizioni',
+    historicalAccuracy: 'Accuratezza Storica',
     weight: 'Peso',
     reps: 'Ripetizioni',
     reviewFeedback: 'Rivedi Feedback',

@@ -670,6 +670,7 @@ const zh = {
       accuracyOverTime: '准确性随时间变化',
       loading: '加载中...',
       noDataAvailable: '没有可用数据',
+      moreDataNeeded: '需要更多数据',
     },
     info: {
       accuracyPerWeight: {
@@ -793,6 +794,7 @@ const zh = {
     rangeOfMotionAcrossReps: '您各次重复的运动范围',
     benchPress: '卧推',
     formAccuracyAcrossReps: '您各次重复的动作准确性',
+    historicalAccuracy: '历史准确性',
     weight: '重量',
     reps: '重复次数',
     reviewFeedback: '查看反馈',

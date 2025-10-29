@@ -1,70 +1,66 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import * as MediaLibrary from 'expo-media-library';
+import { VideoView, useVideoPlayer } from 'expo-video';
+import { ChevronLeft, Download, Ellipsis, Heart, Pencil, Trash2, X } from 'lucide-react-native';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Dimensions,
   ActivityIndicator,
-  TextInput,
-  Keyboard,
   Animated,
+  Dimensions,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ChevronLeft, Ellipsis, Heart, Trash2, X, Pencil, Download } from 'lucide-react-native';
-import { VideoView, useVideoPlayer } from 'expo-video';
-import { LinearGradient } from 'expo-linear-gradient';
-import SwipeableLiftDetailsGraphs from '../../../components/ui/swipeables/SwipeableLiftDetailsGraphs';
-import { OrangeGradientButton } from '../../../components/ui/buttons/OrangeGradientButton';
-import { useQueryClient } from '@tanstack/react-query';
-import { hapticFeedback } from '../../../utils/haptic';
-import {
-  useLiftData,
-  ILiftData,
-  extractObjectKeyFromUrl,
-  signPath,
-} from '../../../context/LiftDataContext';
-import { useLoadingLifts } from '../../../context/LoadingLiftsContext';
-import {
-  favouriteLift as favouriteLiftApi,
-  updateLiftWeight,
-} from '../../../services/lifts/liftService';
-import { deleteLift } from '../../../services/lifts/liftDeletionService';
-import { showAlert } from '../../../services/alertService';
-import { useTutorialTarget } from '../../../context/TutorialContext';
-import { useUserDetails } from '../../../context/UserDetailsContext';
-import { useUserCheckIns } from '../../../context/UserCheckInsContext';
-import i18n from '../../../utils/i18n';
-import { VideoPlayerComponentProps, LiftDetailsProps } from '../../../types/Lifts';
-import { track } from '../../../services/analytics';
 import { PermissionRequiredModal } from '../../../components/ui/modals/PermissionRequiredModal';
-import { openAppSettings } from '../../../utils/openAppSettings';
-import * as MediaLibrary from 'expo-media-library';
+import { HistoricalAccuracyCard } from '../../../components/ui/swipeables/HistoricalAccuracyCard';
+import SwipeableLiftDetailsGraphs from '../../../components/ui/swipeables/SwipeableLiftDetailsGraphs';
+import { extractObjectKeyFromUrl, signPath, useLiftData } from '../../../context/LiftDataContext';
+import { useLoadingLifts } from '../../../context/LoadingLiftsContext';
+import { useTutorialTarget } from '../../../context/TutorialContext';
+import { useUserCheckIns } from '../../../context/UserCheckInsContext';
+import { useUserDetails } from '../../../context/UserDetailsContext';
+import { showAlert } from '../../../services/alertService';
+import { track } from '../../../services/analytics';
 import { downloadVideoToLibrary } from '../../../services/downloadVideoService';
+import { deleteLift } from '../../../services/lifts/liftDeletionService';
+import { updateLiftWeight } from '../../../services/lifts/liftService';
+import { LiftDetailsProps } from '../../../types/Lifts';
+import { hapticFeedback } from '../../../utils/haptic';
+import i18n from '../../../utils/i18n';
+import { openAppSettings } from '../../../utils/openAppSettings';
 
-function VideoPlayerComponent({
-  videoUri,
-  onReady,
-}: {
-  videoUri: string | number;
-  onReady: () => void;
-}) {
-  const player = useVideoPlayer(videoUri as any, (player) => {
-    player.loop = false;
-    player.showNowPlayingNotification = false;
-    player.play();
-  });
+const VideoPlayerComponent = React.memo(
+  function VideoPlayerComponent({
+    videoUri,
+    onReady,
+  }: {
+    videoUri: string | number;
+    onReady: () => void;
+  }) {
+    const player = useVideoPlayer(videoUri as any, (player) => {
+      player.loop = false;
+      player.showNowPlayingNotification = false;
+      player.play();
+    });
 
-  React.useEffect(() => {
-    const timeout = setTimeout(() => {
-      onReady();
-    }, 1000);
-    return () => clearTimeout(timeout);
-  }, [onReady]);
+    React.useEffect(() => {
+      const timeout = setTimeout(() => {
+        onReady();
+      }, 1000);
+      return () => clearTimeout(timeout);
+    }, [onReady]);
 
-  return <VideoView player={player} style={styles.video} />;
-}
+    return <VideoView player={player} style={styles.video} />;
+  },
+  (prevProps, nextProps) => {
+    // Only re-render if videoUri changes
+    return prevProps.videoUri === nextProps.videoUri;
+  }
+);
 
 export function LiftDetails({
   onClose,
@@ -86,6 +82,7 @@ export function LiftDetails({
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showEditWeightModal, setShowEditWeightModal] = useState(false);
   const [resolvedPoseUrl, setResolvedPoseUrl] = useState<string | number | null>(null);
+  const stableVideoUriRef = useRef<string | number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUpdatingWeight, setIsUpdatingWeight] = useState(false);
   const [editWeight, setEditWeight] = useState('');
@@ -110,34 +107,31 @@ export function LiftDetails({
   const { ref: formGraphRef } = useTutorialTarget('lift_details_form_graph');
   const { ref: depthGraphRef } = useTutorialTarget('lift_details_depth_graph');
 
-  // Simple boolean for favourite state - starts with the initial value
+  // Simple boolean for favourite state - only initialized from initial data on load
   const [isFavourite, setIsFavourite] = useState(initialLiftData.isFavourite);
 
   // Get the current lift data from context, falling back to the prop if not found
   const currentLiftData =
     contextLiftData.find((lift) => lift.id === initialLiftData.id) || initialLiftData;
 
-  // Update local state when context data changes
+  // Re-sign pose video URL on open for fresh access - only runs once on mount
   useEffect(() => {
-    const freshData = contextLiftData.find((lift) => lift.id === initialLiftData.id);
-    if (freshData) {
-      setIsFavourite(freshData.isFavourite);
-    }
-  }, [contextLiftData, initialLiftData.id]);
+    // Only resolve if we haven't already set a stable URI
+    if (stableVideoUriRef.current !== null) return;
 
-  // Re-sign pose video URL on open for fresh access
-  useEffect(() => {
     let cancelled = false;
     (async () => {
       const source =
         contextLiftData.find((l) => l.id === initialLiftData.id)?.poseVideoURL ||
         initialLiftData.poseVideoURL;
       if (!source) {
+        stableVideoUriRef.current = null;
         setResolvedPoseUrl(null);
         return;
       }
       // If this is a static require() number, use it directly
       if (typeof source === 'number') {
+        stableVideoUriRef.current = source;
         setResolvedPoseUrl(source);
         return;
       }
@@ -145,21 +139,33 @@ export function LiftDetails({
         const key = await extractObjectKeyFromUrl(typeof source === 'string' ? source : undefined);
         if (key) {
           const signed = await signPath(key);
-          if (!cancelled)
-            setResolvedPoseUrl(signed || (typeof source === 'string' ? source : null));
+          if (!cancelled) {
+            const finalUri = signed || (typeof source === 'string' ? source : null);
+            stableVideoUriRef.current = finalUri;
+            setResolvedPoseUrl(finalUri);
+          }
         } else {
           // If we can't extract a key, the source might already be a valid URL or path
-          if (!cancelled) setResolvedPoseUrl(typeof source === 'string' ? source : null);
+          if (!cancelled) {
+            const finalUri = typeof source === 'string' ? source : null;
+            stableVideoUriRef.current = finalUri;
+            setResolvedPoseUrl(finalUri);
+          }
         }
       } catch (error) {
         console.warn('Failed to resolve pose video URL:', error);
-        if (!cancelled) setResolvedPoseUrl(typeof source === 'string' ? source : null);
+        if (!cancelled) {
+          const finalUri = typeof source === 'string' ? source : null;
+          stableVideoUriRef.current = finalUri;
+          setResolvedPoseUrl(finalUri);
+        }
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [contextLiftData, initialLiftData.id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount
 
   // Auto-focus input when edit weight modal opens
   useEffect(() => {
@@ -200,6 +206,46 @@ export function LiftDetails({
   // Check if feedback array is empty
   const hasFeedback =
     currentLiftData.analysis.feedback && currentLiftData.analysis.feedback.length > 0;
+
+  // Stable empty callback for video player to prevent unnecessary re-renders
+  const handleVideoReady = useCallback(() => {
+    // Empty callback - no action needed
+  }, []);
+
+  // Update stable ref when resolvedPoseUrl is first set - this only happens once
+  useEffect(() => {
+    if (resolvedPoseUrl && !stableVideoUriRef.current) {
+      stableVideoUriRef.current = resolvedPoseUrl;
+    }
+  }, [resolvedPoseUrl]);
+
+  // Memoize the final video URI - prefer stable ref (set once on mount) over state
+  // This ensures we always use the same value after initial load, preventing re-renders
+  const finalVideoUri = useMemo(() => {
+    return stableVideoUriRef.current || resolvedPoseUrl;
+  }, [resolvedPoseUrl]);
+
+  // Render video - this JSX will be stable once finalVideoUri is set
+  // The VideoPlayerComponent is memoized and will only re-render if videoUri prop changes
+  // Since we always use stableVideoUriRef (which never changes) or the same resolvedPoseUrl value,
+  // the videoUri prop reference will remain stable
+  const videoPlayer = useMemo(() => {
+    if (!finalVideoUri) {
+      return (
+        <View style={styles.videoLoadingOverlay}>
+          <ActivityIndicator />
+        </View>
+      );
+    }
+    return (
+      <VideoPlayerComponent
+        key={initialLiftData.id}
+        videoUri={finalVideoUri}
+        onReady={handleVideoReady}
+      />
+    );
+    // Use finalVideoUri which is derived from stable ref - will only change on initial load
+  }, [finalVideoUri, handleVideoReady, initialLiftData.id]);
 
   const handleDeleteLift = () => {
     hapticFeedback.selection();
@@ -247,11 +293,11 @@ export function LiftDetails({
   };
 
   const handleStarPress = async () => {
-    hapticFeedback.selection();
+    hapticFeedback.success();
     // Track lift details clicks for favourite
     track('Lift details clicks', { event: 'Favourite' });
 
-    // Immediately toggle the favourite state
+    // Toggle the favourite state locally (manual toggle only)
     setIsFavourite((prev) => !prev);
 
     // Make API call in background - no need to wait for response
@@ -462,20 +508,37 @@ export function LiftDetails({
     return `${monthName} ${day}${suffix}, ${year}`;
   }
 
-  // No chart data computed here; handled by SwipeableLiftDetailsGraphs
+  // Filter lifts of the same type for the accuracy over time chart
+  const liftsOfSameType = useMemo(() => {
+    const currentLiftType = currentLiftData.liftType;
+    if (!currentLiftType) return [];
+
+    return contextLiftData
+      .filter((lift) => lift.liftType === currentLiftType)
+      .map((lift) => ({
+        liftType: lift.liftType,
+        metricWeight: lift.metricWeight || 0,
+        liftDate: lift.liftDate,
+        analysis: {
+          accuracy: typeof lift.analysis?.accuracy === 'number' ? lift.analysis.accuracy : 0,
+        },
+      }));
+  }, [contextLiftData, currentLiftData.liftType]);
 
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.headerCard}>
-          <TouchableOpacity style={styles.backButton} onPress={handleClose} activeOpacity={0.7}>
+          <TouchableOpacity style={styles.headerButton} onPress={handleClose} activeOpacity={0.7}>
             <ChevronLeft size={24} color="#ffffff" />
           </TouchableOpacity>
           <View style={styles.titleContainer}>
-            <Text style={styles.title}>{i18n.t('feedback.liftDetails')}</Text>
+            <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">
+              {currentLiftData.liftType || 'Bench Press'}
+            </Text>
           </View>
           <TouchableOpacity
-            style={styles.ellipsisButton}
+            style={styles.headerButton}
             onPress={handleActionSheet}
             activeOpacity={0.7}
           >
@@ -485,104 +548,108 @@ export function LiftDetails({
 
         <View style={styles.content}>
           {/* Video Player */}
-          <View style={styles.videoContainer}>
-            {resolvedPoseUrl ? (
-              <VideoPlayerComponent
-                key={String(resolvedPoseUrl)} // force remount when URL changes
-                videoUri={resolvedPoseUrl}
-                onReady={() => {}}
-              />
-            ) : (
-              <View style={styles.videoLoadingOverlay}>
-                <ActivityIndicator />
-              </View>
-            )}
-          </View>
+          <View style={styles.videoContainer}>{videoPlayer}</View>
         </View>
       </SafeAreaView>
 
       {/* Bottom Container with Chart, Cards, and Review Button */}
       <View style={styles.bottomContainer}>
-        <View style={styles.bottomBackground}>
-          {/* Pills Row */}
-          <View style={styles.pillsRow}>
-            <View style={styles.pillWithMaxWidth}>
-              <Text style={styles.pillTextEllipsis} numberOfLines={1} ellipsizeMode="tail">
-                {currentLiftData.liftType || 'Bench Press'}
-              </Text>
-            </View>
-            <View style={styles.pill}>
-              <Text style={styles.pillText}>{formatDate(currentLiftData.liftDate)}</Text>
-            </View>
-            <View style={styles.pill}>
-              <Text style={styles.pillText}>{currentLiftData.liftTime || '--:--'}</Text>
-            </View>
-          </View>
-          {/* Swipeable graphs (line + bar) */}
-          <SwipeableLiftDetailsGraphs
-            data={currentLiftData}
-            formGraphRef={formGraphRef}
-            depthGraphRef={depthGraphRef}
-          />
-
-          {/* Weight, Reps, and Accuracy Cards Row */}
-          <View style={[styles.cardsRow, styles.bottomCardsRow]}>
-            {/* Weight Card - Wider */}
-            <View style={[styles.infoCard, styles.weightCard]}>
-              <View style={styles.weightCardTitleRow}>
-                <Text style={styles.infoCardTitle}>{i18n.t('feedback.weight')}</Text>
-                <TouchableOpacity
-                  style={styles.editWeightButton}
-                  onPress={handleEditWeight}
-                  activeOpacity={0.7}
-                >
-                  <Pencil size={12} color="#8E8E93" />
-                </TouchableOpacity>
+        <ScrollView
+          style={styles.bottomScrollView}
+          contentContainerStyle={styles.bottomScrollContent}
+          showsVerticalScrollIndicator={false}
+          nestedScrollEnabled
+        >
+          <View style={styles.bottomBackground}>
+            {/* Pills Row */}
+            <View style={styles.pillsRow}>
+              <View style={styles.pillsLeftContainer}>
+                <View style={styles.pill}>
+                  <Text style={styles.pillText}>{formatDate(currentLiftData.liftDate)}</Text>
+                </View>
+                <View style={styles.pill}>
+                  <Text style={styles.pillText}>{currentLiftData.liftTime || '--:--'}</Text>
+                </View>
               </View>
-              <Text style={styles.infoCardValue}>
-                {userDetails?.unitSystem === 'imperial'
-                  ? `${Math.round((currentLiftData.metricWeight || 0) * 2.20462)} ${i18n.t('feedback.lbs')}`
-                  : `${currentLiftData.metricWeight || '--'} ${i18n.t('feedback.kg')}`}
-              </Text>
-            </View>
-
-            {/* Reps Card */}
-            <View style={[styles.infoCard, styles.repsCard]}>
-              <Text style={styles.infoCardTitle}>{i18n.t('feedback.reps')}</Text>
-              <Text style={styles.infoCardValue}>{currentLiftData.reps || '--'}</Text>
-            </View>
-
-            {/* Accuracy Card */}
-            <View style={[styles.infoCard, styles.accuracyCard]}>
-              <Text style={styles.infoCardTitle}>{i18n.t('feedback.accuracy')}</Text>
-              <Text style={styles.infoCardValue}>
-                {Math.round(currentLiftData.analysis.accuracy)}%
-              </Text>
-            </View>
-          </View>
-
-          {/* Review Feedback Button Card */}
-          <View style={styles.feedbackButtonCard}>
-            <View ref={reviewFeedbackRef}>
               <TouchableOpacity
-                style={[
-                  styles.reviewFeedbackButton,
-                  !hasFeedback && styles.reviewFeedbackButtonDisabled,
-                ]}
-                onPress={hasFeedback ? handleReviewFeedback : undefined}
-                activeOpacity={hasFeedback ? 0.8 : 1}
-                disabled={!hasFeedback}
+                style={styles.favouriteHeartButton}
+                onPress={handleStarPress}
+                activeOpacity={0.7}
               >
-                <Text
-                  style={[
-                    styles.reviewFeedbackButtonText,
-                    !hasFeedback && styles.reviewFeedbackButtonTextDisabled,
-                  ]}
-                >
-                  {hasFeedback ? i18n.t('feedback.reviewFeedback') : i18n.t('feedback.noFeedback')}
-                </Text>
+                <Heart size={24} color="#FF3B30" fill={isFavourite ? '#FF3B30' : 'none'} />
               </TouchableOpacity>
             </View>
+            {/* Swipeable graphs (line + bar) */}
+            <SwipeableLiftDetailsGraphs
+              data={currentLiftData}
+              formGraphRef={formGraphRef}
+              depthGraphRef={depthGraphRef}
+            />
+
+            {/* Weight, Reps, and Accuracy Cards Row */}
+            <View style={styles.cardsRowContainer}>
+              <View style={styles.cardsRow}>
+                {/* Weight Card - Wider */}
+                <View style={[styles.infoCard, styles.weightCard]}>
+                  <View style={styles.weightCardTitleRow}>
+                    <Text style={styles.infoCardTitle}>{i18n.t('feedback.weight')}</Text>
+                    <TouchableOpacity
+                      style={styles.editWeightButton}
+                      onPress={handleEditWeight}
+                      activeOpacity={0.7}
+                    >
+                      <Pencil size={12} color="#8E8E93" />
+                    </TouchableOpacity>
+                  </View>
+                  <Text style={styles.infoCardValue}>
+                    {userDetails?.unitSystem === 'imperial'
+                      ? `${Math.round((currentLiftData.metricWeight || 0) * 2.20462)} ${i18n.t('feedback.lbs')}`
+                      : `${currentLiftData.metricWeight || '--'} ${i18n.t('feedback.kg')}`}
+                  </Text>
+                </View>
+
+                {/* Reps Card */}
+                <View style={[styles.infoCard, styles.repsCard]}>
+                  <Text style={styles.infoCardTitle}>{i18n.t('feedback.reps')}</Text>
+                  <Text style={styles.infoCardValue}>{currentLiftData.reps || '--'}</Text>
+                </View>
+
+                {/* Accuracy Card */}
+                <View style={[styles.infoCard, styles.accuracyCard]}>
+                  <Text style={styles.infoCardTitle}>{i18n.t('feedback.accuracy')}</Text>
+                  <Text style={styles.infoCardValue}>
+                    {Math.round(currentLiftData.analysis.accuracy)}%
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Historical Accuracy Chart Card */}
+            <HistoricalAccuracyCard lifts={liftsOfSameType} />
+          </View>
+        </ScrollView>
+
+        {/* Review Feedback Button Card - Fixed at bottom */}
+        <View style={styles.feedbackButtonCard}>
+          <View ref={reviewFeedbackRef}>
+            <TouchableOpacity
+              style={[
+                styles.reviewFeedbackButton,
+                !hasFeedback && styles.reviewFeedbackButtonDisabled,
+              ]}
+              onPress={hasFeedback ? handleReviewFeedback : undefined}
+              activeOpacity={hasFeedback ? 0.8 : 1}
+              disabled={!hasFeedback}
+            >
+              <Text
+                style={[
+                  styles.reviewFeedbackButtonText,
+                  !hasFeedback && styles.reviewFeedbackButtonTextDisabled,
+                ]}
+              >
+                {hasFeedback ? i18n.t('feedback.reviewFeedback') : i18n.t('feedback.noFeedback')}
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
       </View>
@@ -615,17 +682,6 @@ export function LiftDetails({
                 ) : (
                   <Download size={22} color="#ffffff" />
                 )}
-              </View>
-            </TouchableOpacity>
-            <View style={styles.dropdownDivider} />
-            <TouchableOpacity
-              style={styles.dropdownOption}
-              onPress={handleFavourite}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.dropdownOptionText}>{i18n.t('feedback.favourite')}</Text>
-              <View style={styles.dropdownIconContainer}>
-                <Heart size={22} color="#FF3B30" fill={isFavourite ? '#FF3B30' : 'none'} />
               </View>
             </TouchableOpacity>
             <View style={styles.dropdownDivider} />
@@ -783,6 +839,7 @@ export function LiftDetails({
 }
 
 const { width, height } = Dimensions.get('window');
+const CARD_WIDTH = Math.round(width - 40 - 11); // match liftDetails chart width (width - 51)
 
 const styles = StyleSheet.create({
   container: {
@@ -805,16 +862,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     position: 'relative',
   },
-  backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#0F0F0F',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1,
-  },
-  ellipsisButton: {
+  headerButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
@@ -824,13 +872,14 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   titleContainer: {
+    flex: 1,
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 1,
-    width: 'auto',
+    minWidth: 0, // Allow flex shrink for ellipsis
   },
   title: {
     fontSize: 20,
@@ -838,26 +887,11 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontFamily: 'SF Pro Display',
     textAlign: 'center',
+    flexShrink: 1, // Allow text to shrink for ellipsis
   },
   content: {
     paddingHorizontal: 20,
     paddingBottom: 0,
-  },
-  card: {
-    backgroundColor: 'transparent',
-    borderRadius: 18,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#000000',
-    marginBottom: 16,
-    shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
   },
   videoContainer: {
     borderRadius: 18,
@@ -880,108 +914,48 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'rgba(0,0,0,0.3)',
   },
-  optionRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  textContainer: {
-    flex: 1,
-  },
-  optionTitle: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#000000',
-    fontFamily: 'SF Pro Display',
-    marginBottom: 4,
-  },
-  optionValue: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#000000',
-    fontFamily: 'SF Pro Display',
-  },
-  reviewFeedbackRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  reviewFeedbackText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#000000',
-    fontFamily: 'SF Pro Display',
-    marginLeft: 12,
-  },
   pillsRow: {
     marginTop: -8,
+    marginBottom: -5,
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
-    paddingHorizontal: 6,
+    justifyContent: 'space-between',
+  },
+  pillsLeftContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 12,
+    flex: 1,
+  },
+  favouriteHeartButton: {
+    width: 26,
+    height: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 12,
   },
   pill: {
-    backgroundColor: '#000000',
-    borderRadius: 18,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
     paddingVertical: 4,
     paddingHorizontal: 12,
     alignItems: 'center',
     justifyContent: 'center',
     alignSelf: 'flex-start',
-  },
-  pillWithMaxWidth: {
-    backgroundColor: '#000000',
-    borderRadius: 18,
-    paddingVertical: 4,
-    paddingHorizontal: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    alignSelf: 'flex-start',
-    maxWidth: '90%',
+    borderWidth: 0.5,
+    borderColor: '#f0f0f0',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   pillText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '400',
-    fontFamily: 'SF Pro Display',
-  },
-  pillTextEllipsis: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '400',
-    fontFamily: 'SF Pro Display',
-    flexShrink: 1,
-  },
-  orangePillText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '700',
-    fontFamily: 'SF Pro Display',
-  },
-  orangePill: {
-    backgroundColor: '#ffb86a',
-    borderRadius: 18,
-    paddingVertical: 4,
-    paddingHorizontal: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: '400',
     color: '#000000',
+    fontSize: 14,
+    fontWeight: '500',
     fontFamily: 'SF Pro Display',
-    marginBottom: 12,
   },
-  chartContainer: {
-    backgroundColor: 'transparent',
-    borderRadius: 16,
-    overflow: 'hidden',
-    alignItems: 'center',
-    width: '100%',
-    marginLeft: -24,
-  },
-  chart: {},
   dropdownOverlay: {
     position: 'absolute',
     top: 0,
@@ -1181,11 +1155,20 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     backgroundColor: '#f1f5f9',
+    overflow: 'visible', // Allow shadows to be visible
+    height: height * 0.585,
+  },
+  bottomScrollView: {
+    flex: 1,
+  },
+  bottomScrollContent: {
+    paddingBottom: 90, // Space for fixed feedback button
   },
   bottomBackground: {
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    paddingVertical: 20,
+    paddingTop: 22, // Increased top padding to allow shadow space
+    paddingBottom: 20,
     paddingHorizontal: 20,
     alignItems: 'flex-start',
     justifyContent: 'flex-start',
@@ -1197,25 +1180,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 8,
-    height: height * 0.585,
-  },
-  bottomCard: {
-    marginBottom: 20,
-    shadowColor: 'transparent',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0,
-    shadowRadius: 0,
-    elevation: 0,
-    borderColor: '#e2e8f0',
-  },
-  bottomCardsRow: {
-    marginBottom: 10,
-  },
-  bottomButton: {
-    marginTop: 10,
+    overflow: 'visible', // Allow shadows to be visible
   },
   feedbackButtonCard: {
-    backgroundColor: '#f1f5f9',
+    backgroundColor: '#ffffff',
     paddingHorizontal: 20,
     paddingTop: 14,
     paddingBottom: 10,
@@ -1226,31 +1194,39 @@ const styles = StyleSheet.create({
     shadowColor: '#000000',
     shadowOffset: {
       width: 0,
-      height: -2,
+      height: 4,
     },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 4,
+  },
+  cardsRowContainer: {
+    width: '100%',
+    alignItems: 'center',
+    marginTop: -10,
+    marginBottom: 10,
   },
   cardsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 12,
-    marginTop: -10,
+    gap: 6,
+    alignItems: 'center',
+    width: CARD_WIDTH + 17, // Match graph card width (CARD_WIDTH + padding 16*2 - marginLeft 15)
   },
   infoCard: {
     flex: 1,
-    backgroundColor: 'transparent',
-    borderRadius: 18,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
     padding: 12,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    shadowColor: 'transparent',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0,
-    shadowRadius: 0,
-    elevation: 0,
+    borderWidth: 0.5,
+    borderColor: '#f0f0f0',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
     height: 70, // Fixed height for all info cards
+    justifyContent: 'space-between',
   },
   infoCardTitle: {
     fontSize: 14,
@@ -1258,57 +1234,44 @@ const styles = StyleSheet.create({
     color: '#000000',
     fontFamily: 'SF Pro Display',
     marginBottom: 4,
+    height: 20, // Fixed height for title row
   },
   infoCardValue: {
     fontSize: 24,
     fontWeight: '800',
     color: '#000000',
     fontFamily: 'SF Pro Display',
+    lineHeight: 28, // Consistent line height for alignment
   },
-  // Weight card styles
+  // Info card variants
   weightCard: {
     width: 'auto',
-    marginRight: 8,
-    height: 70, // Ensure consistent height
   },
   weightCardTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 4,
+    height: 20,
   },
   repsCard: {
-    width: 'auto',
-    flex: 0, // Override flex to use fixed width
-    height: 70, // Ensure consistent height
+    flex: 0,
+  },
+  accuracyCard: {
+    flex: 0,
   },
   editWeightButton: {
     width: 20,
     height: 20,
     borderRadius: 10,
     borderWidth: 0.5,
-    marginTop: -6,
     borderColor: '#000000',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  accuracyCard: {
-    width: 'auto',
-    flex: 0, // Override flex to use fixed width
-    marginBottom: 8,
-    marginLeft: 8,
-    height: 70, // Ensure consistent height
-  },
   // Edit weight modal styles
   editWeightSection: {
     marginBottom: 24,
-  },
-  editWeightTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#000000',
-    marginBottom: 16,
-    fontFamily: 'SF Pro Display',
   },
   editWeightInputContainer: {
     flexDirection: 'row',

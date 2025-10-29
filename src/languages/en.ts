@@ -693,6 +693,7 @@ const en = {
       accuracyOverTime: 'Accuracy over time',
       loading: 'Loading...',
       noDataAvailable: 'No data available',
+      moreDataNeeded: 'More data needed',
     },
     info: {
       accuracyPerWeight: {
@@ -825,6 +826,7 @@ const en = {
     rangeOfMotionAcrossReps: 'Range of motion across your reps',
     benchPress: 'Bench Press',
     formAccuracyAcrossReps: 'Form accuracy across your reps',
+    historicalAccuracy: 'Historical Accuracy',
     weight: 'Weight',
     reps: 'Reps',
     reviewFeedback: 'Review Feedback',

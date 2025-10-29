@@ -681,6 +681,7 @@ const ro = {
       'accuracyOverTime': 'Precizie în timp',
       'loading': 'Se încarcă...',
       'noDataAvailable': 'Nu există date',
+      'moreDataNeeded': 'Sunt necesare mai multe date',
     },
     'info': {
       'accuracyPerWeight': {
@@ -808,6 +809,7 @@ const ro = {
     'rangeOfMotionAcrossReps': 'Amplitudinea mișcării pe repetări',
     'benchPress': 'Împins la piept',
     'formAccuracyAcrossReps': 'Precizia formei pe repetări',
+    'historicalAccuracy': 'Precizie Istorică',
     'weight': 'Greutate',
     'reps': 'Repetări',
     'reviewFeedback': 'Vezi feedbackul',

@@ -1,57 +1,57 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Platform,
-  TouchableOpacity,
-  ScrollView,
-  ActivityIndicator,
-} from 'react-native';
-import { Image } from 'expo-image';
-import * as StoreReview from 'expo-store-review';
-import * as DynamicAppIcon from 'expo-dynamic-app-icon';
-import * as Notifications from 'expo-notifications';
 import { useFocusEffect } from '@react-navigation/native';
+import { useQueryClient } from '@tanstack/react-query';
+import * as DynamicAppIcon from 'expo-dynamic-app-icon';
+import { Image } from 'expo-image';
+import * as Linking from 'expo-linking';
+import * as Notifications from 'expo-notifications';
+import * as StoreReview from 'expo-store-review';
+import { usePlacement } from 'expo-superwall';
 import {
+  BellRing,
+  FileText,
+  FileVideoCamera,
   IdCard,
   Languages,
-  Ruler,
-  FileText,
-  ShieldCheck,
-  MailPlus,
-  UserMinus,
   LogOut,
-  School2,
-  Star,
-  FileVideoCamera,
+  MailPlus,
   Megaphone,
-  RefreshCw,
-  User,
   Pencil,
-  BellRing,
+  RefreshCw,
+  Ruler,
+  School2,
+  ShieldCheck,
+  Star,
+  User,
+  UserMinus,
 } from 'lucide-react-native';
-import i18n from '../../../utils/i18n';
-import { hapticFeedback } from '../../../utils/haptic';
-import { DeleteAccountModal } from './DeleteAccountModal';
-import { LogoutModal } from './LogoutModal';
-import { removeUserId, getUserId } from '../../../services/storageService';
-import { deleteUserAccount } from '../../../services/authService';
-import { clearUserSpecificData } from '../../../services/contextCleanupService';
-import { useTutorialTarget, useTutorial } from '../../../context/TutorialContext';
-import { usePurchases } from '../../../context/PurchasesContext';
-import { usePlacement } from 'expo-superwall';
-import { supabase } from '../../../lib/supabase';
-import { openSupportEmail } from '../../../services/emailService';
-import { showAlert } from '../../../services/alertService';
-import { useQueryClient } from '@tanstack/react-query';
+import React, { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { useLiftData } from '../../../context/LiftDataContext';
 import { useLoadingLifts } from '../../../context/LoadingLiftsContext';
-import * as Linking from 'expo-linking';
-import { track } from '../../../services/analytics';
-import { performManualSync, getFormattedLastSyncTime } from '../../../services/syncService';
+import { usePurchases } from '../../../context/PurchasesContext';
+import { useTutorial, useTutorialTarget } from '../../../context/TutorialContext';
 import { useUserDetails } from '../../../context/UserDetailsContext';
+import { supabase } from '../../../lib/supabase';
+import { showAlert } from '../../../services/alertService';
+import { track } from '../../../services/analytics';
+import { deleteUserAccount } from '../../../services/authService';
+import { clearUserSpecificData } from '../../../services/contextCleanupService';
+import { openSupportEmail } from '../../../services/emailService';
+import { getUserId, removeUserId } from '../../../services/storageService';
+import { getFormattedLastSyncTime, performManualSync } from '../../../services/syncService';
+import { hapticFeedback } from '../../../utils/haptic';
+import i18n from '../../../utils/i18n';
 import { openAppSettings } from '../../../utils/openAppSettings';
+import { DeleteAccountModal } from './DeleteAccountModal';
+import { LogoutModal } from './LogoutModal';
 
 interface SettingsScreenProps {
   onPersonalDetailsPress: () => void;
@@ -608,16 +608,16 @@ export function SettingsScreen({
     for (let i = 0; i < 1000; i++) {
       const randomMovement = movements[Math.floor(Math.random() * movements.length)];
 
-      // Generate random date within the last 30 days
+      // Generate random date from 2 years ago to today
       const today = new Date();
-      const randomDaysAgo = Math.floor(Math.random() * 30);
+      const randomDaysAgo = Math.floor(Math.random() * 730); // 2 years = 730 days
       const randomDate = new Date(today);
       randomDate.setDate(today.getDate() - randomDaysAgo);
 
-      // Calculate accuracy based on date: older dates (30 days ago) = 40%, recent dates (today) = 80%
-      // This creates a linear progression from 40% to 80% over 30 days
-      const dateProgress = randomDaysAgo / 30; // 0 = today, 1 = 30 days ago
-      const baseAccuracy = 80 - dateProgress * 40; // 80% for today, 40% for 30 days ago
+      // Calculate accuracy based on date: older dates (2 years ago) = 40%, recent dates (today) = 80%
+      // This creates a linear progression from 40% to 80% over 2 years
+      const dateProgress = randomDaysAgo / 730; // 0 = today, 1 = 2 years ago
+      const baseAccuracy = 80 - dateProgress * 40; // 80% for today, 40% for 2 years ago
 
       // Add significant variation to create realistic ups and downs
       // Some days will be much better or worse than the trend

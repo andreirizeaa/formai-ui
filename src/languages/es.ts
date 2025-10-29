@@ -696,6 +696,7 @@ const es = {
       accuracyOverTime: 'Precisión a lo largo del tiempo',
       loading: 'Cargando...',
       noDataAvailable: 'No hay datos disponibles',
+      moreDataNeeded: 'Se necesitan más datos',
     },
     info: {
       accuracyPerWeight: {
@@ -824,6 +825,7 @@ const es = {
     rangeOfMotionAcrossReps: 'Rango de movimiento a través de tus repeticiones',
     benchPress: 'Press de Banca',
     formAccuracyAcrossReps: 'Precisión de forma a través de tus repeticiones',
+    historicalAccuracy: 'Precisión Histórica',
     weight: 'Peso',
     reps: 'Repeticiones',
     reviewFeedback: 'Revisar Retroalimentación',

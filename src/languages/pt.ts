@@ -688,6 +688,7 @@ const pt = {
       accuracyOverTime: 'Precisão ao longo do tempo',
       loading: 'Carregando...',
       noDataAvailable: 'Nenhum dado disponível',
+      moreDataNeeded: 'Mais dados necessários',
     },
     info: {
       accuracyPerWeight: {
@@ -816,6 +817,7 @@ const pt = {
     rangeOfMotionAcrossReps: 'Amplitude de movimento através das suas repetições',
     benchPress: 'Supino',
     formAccuracyAcrossReps: 'Precisão de forma através das suas repetições',
+    historicalAccuracy: 'Precisão Histórica',
     weight: 'Peso',
     reps: 'Repetições',
     reviewFeedback: 'Revisar Feedback',
