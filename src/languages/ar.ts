@@ -608,6 +608,8 @@ const ar = {
     'seeAll': 'عرض الكل',
     'noRecordedLifts': 'لا توجد رفعات مسجلة لهذا التاريخ',
     'startAnalyzingWorkout': 'ابدأ تحليل تمرينك بتصوير سريع',
+    'tapToAnalyseFirstLift': 'اضغط لتحليل أول رفعة لك',
+    'tapHereOrPlusAnalyzeFirstLift': 'اضغط هنا أو على + لتحليل أول رفعة لك',
     'dateFormat': {
       'lifts': 'رفعات',
       'months': {
@@ -839,6 +841,7 @@ const ar = {
     'oneLift': 'رفعة واحدة',
     'lifts': 'رفعات',
     'noLiftsFound': 'لم يتم العثور على رفعات',
+    'noFavouritesInstruction': 'لا مفضلات بعد، اضغط لعرض كل الرفعات',
   },
   'tutorial': {
     'buttons': {

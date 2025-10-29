@@ -608,6 +608,8 @@ const zh = {
     seeAll: '查看全部',
     noRecordedLifts: '此日期没有记录的举重',
     startAnalyzingWorkout: '通过拍摄快速视频开始分析您的锻炼',
+    tapToAnalyseFirstLift: '轻触以分析您的第一次举重',
+    tapHereOrPlusAnalyzeFirstLift: '点此或按 + 分析您的第一次举重',
     dateFormat: {
       lifts: '举重',
       months: {
@@ -730,6 +732,7 @@ const zh = {
     noLiftsAnalysed: '没有分析的举重',
     noFavouriteLifts: '没有收藏的举重',
     noLiftsFound: '未找到举重',
+    noFavouritesInstruction: '暂无收藏，点按以查看所有举重',
     startAnalysingWorkout: '通过拍摄快速视频开始分析今天的锻炼',
     markLiftsAsFavourites: '将举重标记为收藏以在此处查看',
     tryAdjustingFilters: '尝试调整您的筛选器',

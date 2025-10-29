@@ -625,6 +625,8 @@ const pt = {
     seeAll: 'Ver todos',
     noRecordedLifts: 'Nenhum levantamento gravado para esta data',
     startAnalyzingWorkout: 'Comece a analisar seu treino fazendo um vídeo rápido',
+    tapToAnalyseFirstLift: 'Toque para analisar seu primeiro levantamento',
+    tapHereOrPlusAnalyzeFirstLift: 'Toque aqui ou no + para analisar seu primeiro levantamento',
     dateFormat: {
       lifts: 'levantamentos',
       months: {
@@ -752,6 +754,7 @@ const pt = {
     noLiftsAnalysed: 'Nenhum levantamento analisado',
     noFavouriteLifts: 'Nenhum levantamento favorito',
     noLiftsFound: 'Nenhum levantamento encontrado',
+    noFavouritesInstruction: 'Ainda não há favoritos, toque para ver todos os levantamentos',
     startAnalysingWorkout: 'Comece a analisar o treino de hoje fazendo um vídeo rápido',
     markLiftsAsFavourites: 'Marque levantamentos como favoritos para vê-los aqui',
     tryAdjustingFilters: 'Tente ajustar seus filtros',

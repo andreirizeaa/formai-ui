@@ -619,6 +619,8 @@ const ro = {
     'seeAll': 'Vezi tot',
     'noRecordedLifts': 'Nu există lifturi înregistrate pentru această dată',
     'startAnalyzingWorkout': 'Începe analiza antrenamentului cu un video scurt',
+    'tapToAnalyseFirstLift': 'Apasă pentru a analiza primul tău lift',
+    'tapHereOrPlusAnalyzeFirstLift': 'Apasă aici sau pe + pentru a-ți analiza primul lift',
     'dateFormat': {
       'lifts': 'lifturi',
       'months': {
@@ -744,6 +746,7 @@ const ro = {
     'noLiftsAnalysed': 'Niciun lift analizat',
     'noFavouriteLifts': 'Niciun lift favorit',
     'noLiftsFound': 'Nu s-au găsit lifturi',
+    'noFavouritesInstruction': 'Niciun favorit încă, apasă pentru a vedea toate lifturile',
     'startAnalysingWorkout': 'Începe analiza antrenamentului de azi cu un video scurt',
     'markLiftsAsFavourites': 'Marchează lifturile ca favorite pentru a apărea aici',
     'tryAdjustingFilters': 'Încearcă să ajustezi filtrele',

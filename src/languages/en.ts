@@ -625,6 +625,8 @@ const en = {
     seeAll: 'See all',
     noRecordedLifts: 'No recorded lifts for this date',
     startAnalyzingWorkout: 'Start analysing your workout by taking a quick video',
+    tapToAnalyseFirstLift: 'Tap to analyse your first lift',
+    tapHereOrPlusAnalyzeFirstLift: 'Tap here or the + to analyze your first lift',
     dateFormat: {
       lifts: 'lifts',
       months: {
@@ -759,6 +761,7 @@ const en = {
     noLiftsFound: 'No lifts found',
     startAnalysingWorkout: "Start analysing today's workout by taking a quick video",
     markLiftsAsFavourites: 'Mark lifts as favourites to see them here',
+    noFavouritesInstruction: 'No favourites yet, tap to view all lifts',
     tryAdjustingFilters: 'Try adjusting your filters',
     lifts: 'lifts',
     lift: 'lift',

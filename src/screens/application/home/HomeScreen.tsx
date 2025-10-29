@@ -1,30 +1,35 @@
-import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Pressable,
-  Dimensions,
-  ImageSourcePropType,
-  ImageBackground,
-  Modal,
-  Animated as RNAnimated,
-  Platform,
-  RefreshControl,
-} from 'react-native';
-import { Image } from 'expo-image';
-import { FlashList } from '@shopify/flash-list';
-import { hapticFeedback } from '../../../utils/haptic';
-import { useLoadingLifts } from '../../../context/LoadingLiftsContext';
 import { useFocusEffect } from '@react-navigation/native';
-import { useLiftData, ILiftData } from '../../../context/LiftDataContext';
-import { LoadingLiftData } from '../../../types/Lifts.d';
-import { track, identify } from '../../../services/analytics';
+import { FlashList } from '@shopify/flash-list';
+import { Image } from 'expo-image';
 import {
   getTrackingPermissionsAsync,
   requestTrackingPermissionsAsync,
 } from 'expo-tracking-transparency';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  Platform,
+  Pressable,
+  RefreshControl,
+  Animated as RNAnimated,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import { FormAILogo } from '../../../components/ui/FormAILogo';
+import { LiftCard } from '../../../components/ui/LiftCard';
+import { StreakModal } from '../../../components/ui/modals/StreakModal';
+import { SwipeableAccuracyCard } from '../../../components/ui/swipeables/SwipeableAccuracyCard';
+import { SwipeableCalendar } from '../../../components/ui/swipeables/SwipeableCalendar';
+import { ILiftData, useLiftData } from '../../../context/LiftDataContext';
+import { useLoadingLifts } from '../../../context/LoadingLiftsContext';
+import { useSelectedDate } from '../../../context/SelectedDateContext';
+import { useTutorialTarget } from '../../../context/TutorialContext';
+import { useUserCheckIns } from '../../../context/UserCheckInsContext';
+import { identify, track } from '../../../services/analytics';
+import { getUserId } from '../../../services/storageService';
+import { LoadingLiftData } from '../../../types/Lifts.d';
+import { hapticFeedback } from '../../../utils/haptic';
 
 // Type guard for loading lifts
 function isLoadingLift(x: ILiftData | LoadingLiftData): x is LoadingLiftData {
@@ -127,19 +132,10 @@ async function requestTrackingPermissionSafe() {
     return { status: 'unavailable' };
   }
 }
-import { LiftCard } from '../../../components/ui/LiftCard';
-import { SwipeableCalendar } from '../../../components/ui/swipeables/SwipeableCalendar';
-import { SwipeableAccuracyCard } from '../../../components/ui/swipeables/SwipeableAccuracyCard';
-import { StreakModal } from '../../../components/ui/modals/StreakModal';
-import { FormAILogo } from '../../../components/ui/FormAILogo';
-import { useUserCheckIns } from '../../../context/UserCheckInsContext';
-import { useTutorialTarget } from '../../../context/TutorialContext';
-import { useSelectedDate } from '../../../context/SelectedDateContext';
-import { getUserId } from '../../../services/storageService';
 
-import i18n from '../../../utils/i18n';
-import { ChevronRight, FileVideoCamera } from 'lucide-react-native';
 import LottieView from 'lottie-react-native';
+import { FileVideoCamera } from 'lucide-react-native';
+import i18n from '../../../utils/i18n';
 
 interface HomeScreenProps {
   onShowFeedback: (liftData: ILiftData) => void;
@@ -607,13 +603,7 @@ export function HomeScreen({
                 extraData={combinedLiftsForDay}
               />
             ) : (
-              <LiftCard
-                lift={null}
-                isNoLiftsCard={true}
-                noLiftsTitle={i18n.t('home.noRecordedLifts')}
-                noLiftsSubtitle={i18n.t('home.startAnalyzingWorkout')}
-                onNoLiftsPress={handleNoLiftsPress}
-              />
+              <LiftCard lift={null} isNoLiftsCard={true} onNoLiftsPress={handleNoLiftsPress} />
             )}
           </View>
         </View>

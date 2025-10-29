@@ -627,6 +627,8 @@ const it = {
     seeAll: 'Vedi tutti',
     noRecordedLifts: 'Nessun sollevamento registrato per questa data',
     startAnalyzingWorkout: 'Inizia ad analizzare il tuo allenamento facendo un video veloce',
+    tapToAnalyseFirstLift: 'Tocca per analizzare il tuo primo sollevamento',
+    tapHereOrPlusAnalyzeFirstLift: 'Tocca qui o il + per analizzare il tuo primo sollevamento',
     dateFormat: {
       lifts: 'sollevamenti',
       months: {
@@ -754,6 +756,7 @@ const it = {
     noLiftsAnalysed: 'Nessun sollevamento analizzato',
     noFavouriteLifts: 'Nessun sollevamento preferito',
     noLiftsFound: 'Nessun sollevamento trovato',
+    noFavouritesInstruction: 'Nessun preferito, tocca per vedere tutti i sollevamenti',
     startAnalysingWorkout: "Inizia ad analizzare l'allenamento di oggi facendo un video veloce",
     markLiftsAsFavourites: 'Contrassegna i sollevamenti come preferiti per vederli qui',
     tryAdjustingFilters: 'Prova ad aggiustare i tuoi filtri',

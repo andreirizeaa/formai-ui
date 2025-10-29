@@ -1,7 +1,16 @@
 import { useQueryClient } from '@tanstack/react-query';
 import * as MediaLibrary from 'expo-media-library';
 import { VideoView, useVideoPlayer } from 'expo-video';
-import { ChevronLeft, Download, Ellipsis, Heart, Pencil, Trash2, X } from 'lucide-react-native';
+import {
+  ChevronLeft,
+  Download,
+  Ellipsis,
+  Heart,
+  Pencil,
+  Search,
+  Trash2,
+  X,
+} from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -641,6 +650,11 @@ export function LiftDetails({
               activeOpacity={hasFeedback ? 0.8 : 1}
               disabled={!hasFeedback}
             >
+              <Search
+                size={26}
+                color={hasFeedback ? '#000000' : '#C7C7CC'}
+                style={styles.reviewFeedbackButtonIcon}
+              />
               <Text
                 style={[
                   styles.reviewFeedbackButtonText,
@@ -1128,20 +1142,26 @@ const styles = StyleSheet.create({
   reviewFeedbackButton: {
     width: '100%',
     marginBottom: 16,
-    backgroundColor: '#000000',
-    borderRadius: 28,
-    paddingVertical: 20,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 40,
+    borderWidth: 2,
+    borderColor: '#f0f0f0',
+    paddingVertical: 16,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  reviewFeedbackButtonIcon: {
+    marginRight: 8,
   },
   reviewFeedbackButtonText: {
     fontSize: 22,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: '#000000',
     fontFamily: 'SF Pro Text',
   },
   reviewFeedbackButtonDisabled: {
-    backgroundColor: '#8E8E93',
+    backgroundColor: '#FFFFFF',
     opacity: 0.6,
   },
   reviewFeedbackButtonTextDisabled: {
@@ -1191,6 +1211,8 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
+    borderTopWidth: 1.5,
+    borderTopColor: '#f0f0f0',
     shadowColor: '#000000',
     shadowOffset: {
       width: 0,

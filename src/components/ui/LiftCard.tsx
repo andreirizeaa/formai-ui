@@ -1,46 +1,49 @@
-import React, { useState, useRef, useEffect, memo, useCallback } from 'react';
-import { View, Text, StyleSheet, Platform, Pressable, ActivityIndicator } from 'react-native';
-import { Image } from 'expo-image';
 import { BlurView } from 'expo-blur';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  runOnJS,
-  withTiming,
-  Easing,
-} from 'react-native-reanimated';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import Svg, { Circle } from 'react-native-svg';
-import AnimatedReanimated, {
-  useSharedValue as useSharedValue2,
-  useAnimatedStyle as useAnimatedStyle2,
-  useAnimatedProps,
-  useDerivedValue,
-  withRepeat,
-  withTiming as withTiming2,
-  withSequence,
-  interpolate,
+import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import {
+  default as Animated,
+  default as AnimatedReanimated,
+  Easing,
   Easing as Easing2,
+  interpolate,
+  runOnJS,
+  useAnimatedProps,
+  useAnimatedStyle,
+  useAnimatedStyle as useAnimatedStyle2,
+  useSharedValue,
+  useSharedValue as useSharedValue2,
+  withRepeat,
+  withSequence,
+  withTiming,
+  withTiming as withTiming2,
 } from 'react-native-reanimated';
+import Svg, { Circle } from 'react-native-svg';
 
 const AnimatedCircle = AnimatedReanimated.createAnimatedComponent(Circle);
 
-import { Trash2, Target, Weight, ChartNoAxesCombined } from 'lucide-react-native';
+import { ChartNoAxesCombined, Target, Trash2, Weight } from 'lucide-react-native';
 import { hapticFeedback } from '../../utils/haptic';
 
-import { useLiftData, ILiftData } from '../../context/LiftDataContext';
+import {
+  extractObjectKeyFromUrl,
+  ILiftData,
+  signPath,
+  useLiftData,
+} from '../../context/LiftDataContext';
 import { useLoadingLifts } from '../../context/LoadingLiftsContext';
-import { useUserDetails } from '../../context/UserDetailsContext';
-import { useUserCheckIns } from '../../context/UserCheckInsContext';
-import { extractObjectKeyFromUrl, signPath } from '../../context/LiftDataContext';
-import { deleteLift } from '../../services/lifts/liftDeletionService';
-import { deleteJob } from '../../services/lifts/liftApi';
-import { getUserId } from '../../services/storageService';
-import i18n from '../../utils/i18n';
-import { LoadingLiftData } from '../../types/Lifts';
 import { useTutorialTarget } from '../../context/TutorialContext';
+import { useUserCheckIns } from '../../context/UserCheckInsContext';
+import { useUserDetails } from '../../context/UserDetailsContext';
 import { track } from '../../services/analytics';
+import { deleteJob } from '../../services/lifts/liftApi';
+import { deleteLift } from '../../services/lifts/liftDeletionService';
+import { getUserId } from '../../services/storageService';
+import { LoadingLiftData } from '../../types/Lifts';
+import i18n from '../../utils/i18n';
 
 // ---------- types / guards ----------
 type LiftLike = ILiftData | LoadingLiftData;
@@ -737,10 +740,57 @@ export const LiftCard = memo(function LiftCard({
         style={({ pressed }) => [styles.noLiftsCard, { opacity: pressed ? 0.7 : 1 }]}
         onPress={onNoLiftsPress}
       >
-        <View style={styles.noLiftsContent}>
-          <Text style={styles.noLiftsTitle}>{noLiftsTitle}</Text>
-          <Text style={styles.noLiftsSubtitle}>{noLiftsSubtitle}</Text>
-        </View>
+        <LinearGradient
+          colors={['#e2e8f0', '#f5f3ff']}
+          locations={[0, 0.3]}
+          style={styles.noLiftsCardGradient}
+          start={{ x: 0.6, y: 0 }}
+          end={{ x: 0, y: 1 }}
+        >
+          <View style={styles.noLiftsStackContainer}>
+            {/* Stack of three cards - all with same content, progressively smaller */}
+            <View style={[styles.noLiftsStackCard, styles.noLiftsStackCard3]}>
+              <View style={styles.noLiftsCardContent}>
+                <View style={styles.noLiftsCardImage} />
+                <View style={styles.noLiftsCardTextPlaceholder}>
+                  <View style={styles.noLiftsPlaceholderLine} />
+                  <View
+                    style={[styles.noLiftsPlaceholderLine, styles.noLiftsPlaceholderLineShort]}
+                  />
+                </View>
+              </View>
+            </View>
+            <View style={[styles.noLiftsStackCard, styles.noLiftsStackCard2]}>
+              <View style={styles.noLiftsCardContent}>
+                <View style={styles.noLiftsCardImage} />
+                <View style={styles.noLiftsCardTextPlaceholder}>
+                  <View style={styles.noLiftsPlaceholderLine} />
+                  <View
+                    style={[styles.noLiftsPlaceholderLine, styles.noLiftsPlaceholderLineShort]}
+                  />
+                </View>
+              </View>
+            </View>
+            <View style={[styles.noLiftsStackCard, styles.noLiftsStackCard1]}>
+              <View style={styles.noLiftsCardContent}>
+                <Image
+                  source={require('../../../assets/icons/bench-press.png')}
+                  style={styles.noLiftsCardImage}
+                  contentFit="contain"
+                />
+                <View style={styles.noLiftsCardTextPlaceholder}>
+                  <View style={[styles.noLiftsPlaceholderLine, styles.noLiftsPlaceholderLineTop]} />
+                  <View
+                    style={[styles.noLiftsPlaceholderLine, styles.noLiftsPlaceholderLineShort]}
+                  />
+                </View>
+              </View>
+            </View>
+          </View>
+          <Text style={styles.noLiftsInstructionText}>
+            {noLiftsSubtitle || i18n.t('home.tapHereOrPlusAnalyzeFirstLift')}
+          </Text>
+        </LinearGradient>
       </Pressable>
     );
   }
@@ -1095,7 +1145,7 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 2,
   },
-  cardInner: { borderRadius: 18, overflow: 'hidden' },
+  cardInner: { borderRadius: 18, overflow: 'hidden', borderWidth: 1.1, borderColor: '#f0f0f0' },
   cardGradient: { flex: 1, borderRadius: 18 },
 
   contentRow: { flexDirection: 'row', height: 130 },
@@ -1286,15 +1336,10 @@ const styles = StyleSheet.create({
 
   // no lifts card styles
   noLiftsCard: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 0.5,
-    borderColor: '#f0f0f0',
     borderRadius: 18,
-    paddingVertical: 20,
-    paddingHorizontal: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
+    paddingVertical: 6,
     marginHorizontal: 20,
+    overflow: 'hidden',
     shadowColor: '#000000',
     shadowOffset: {
       width: 0,
@@ -1304,23 +1349,85 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 2,
   },
-  noLiftsContent: {
+  noLiftsCardGradient: {
+    borderRadius: 18,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
     alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#f0f0f0',
   },
-  noLiftsTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: '#000000',
-    marginBottom: 8,
-    textAlign: 'center',
-    fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
+  noLiftsStackContainer: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+    position: 'relative',
+    height: 60,
   },
-  noLiftsSubtitle: {
-    fontSize: 16,
-    fontWeight: '600',
+  noLiftsStackCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderWidth: 2,
+    borderColor: '#f0f0f0',
+  },
+  noLiftsStackCard1: {
+    position: 'absolute',
+    zIndex: 3,
+    width: 210,
+    paddingHorizontal: 16,
+  },
+  noLiftsStackCard2: {
+    position: 'absolute',
+    top: 10,
+    zIndex: 2,
+    opacity: 0.9,
+    width: 190,
+  },
+  noLiftsStackCard3: {
+    position: 'absolute',
+    top: 16,
+    zIndex: 1,
+    opacity: 0.8,
+    width: 172,
+  },
+  noLiftsCardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  noLiftsCardImage: {
+    width: 32,
+    height: 32,
+    marginRight: 4,
+  },
+  noLiftsCardTextPlaceholder: {
+    flex: 1,
+    justifyContent: 'center',
+    gap: 6,
+  },
+  noLiftsPlaceholderLine: {
+    height: 5,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 3,
+    width: '100%',
+  },
+  noLiftsPlaceholderLineTop: {
+    width: '85%',
+  },
+  noLiftsPlaceholderLineShort: {
+    width: '70%',
+  },
+  noLiftsInstructionText: {
+    fontSize: 15,
+    fontWeight: '500',
     color: '#8E8E93',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
     textAlign: 'center',
+    marginTop: 4,
   },
 
   // right pane styles

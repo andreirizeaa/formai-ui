@@ -617,6 +617,8 @@ const de = {
     'seeAll': 'Alle anzeigen',
     'noRecordedLifts': 'Keine Lifts an diesem Datum',
     'startAnalyzingWorkout': 'Starte die Analyse deines Trainings mit einem kurzen Video',
+    'tapToAnalyseFirstLift': 'Tippen, um deinen ersten Lift zu analysieren',
+    'tapHereOrPlusAnalyzeFirstLift': 'Tippe hier oder auf +, um deinen ersten Lift zu analysieren',
     'dateFormat': {
       'lifts': 'Lifts',
       'months': {
@@ -744,6 +746,7 @@ const de = {
     'noLiftsAnalysed': 'Keine Lifts analysiert',
     'noFavouriteLifts': 'Keine Favoriten-Lifts',
     'noLiftsFound': 'Keine Lifts gefunden',
+    'noFavouritesInstruction': 'Noch keine Favoriten, tippe um alle Lifts zu sehen',
     'startAnalysingWorkout': 'Starte die Analyse des heutigen Trainings mit einem kurzen Video',
     'markLiftsAsFavourites': 'Markiere Lifts als Favoriten, um sie hier zu sehen',
     'tryAdjustingFilters': 'Versuche, die Filter anzupassen',

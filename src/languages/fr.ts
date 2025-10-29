@@ -623,6 +623,8 @@ const fr = {
     'seeAll': 'Voir tout',
     'noRecordedLifts': 'Aucune levée enregistrée à cette date',
     'startAnalyzingWorkout': "Commencez l'analyse de votre séance avec une courte vidéo",
+    'tapToAnalyseFirstLift': 'Appuyez pour analyser votre première levée',
+    'tapHereOrPlusAnalyzeFirstLift': 'Appuyez ici ou sur + pour analyser votre première levée',
     'dateFormat': {
       'lifts': 'levées',
       'months': {
@@ -749,6 +751,7 @@ const fr = {
     'noLiftsAnalysed': 'Aucune levée analysée',
     'noFavouriteLifts': 'Aucune levée favorite',
     'noLiftsFound': 'Aucune levée trouvée',
+    'noFavouritesInstruction': 'Aucun favori pour le moment, appuyez pour voir toutes les levées',
     'startAnalysingWorkout': 'Commencez l’analyse d’aujourd’hui avec une courte vidéo',
     'markLiftsAsFavourites': 'Marquez des levées en favori pour les voir ici',
     'tryAdjustingFilters': 'Essayez d’ajuster les filtres',

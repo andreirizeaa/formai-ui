@@ -1,35 +1,34 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, Platform, Pressable, StatusBar } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { FlashList } from '@shopify/flash-list';
-import { hapticFeedback } from '../../../utils/haptic';
-import { LiftCard } from '../../../components/ui/LiftCard';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RouteProp } from '@react-navigation/native';
-import { FilterModal } from './FilterModal';
-import { DateRangeModal } from './DateRangeModal';
+import { FlashList } from '@shopify/flash-list';
+import * as ImagePicker from 'expo-image-picker';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Platform, Pressable, StatusBar, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { LiftCard } from '../../../components/ui/LiftCard';
+import { PhotoLibraryPermissionModal } from '../../../components/ui/modals/PhotoLibraryPermissionModal';
+import { LoadingOverlay } from '../../../components/ui/overlays/LoadingOverlay';
 import { ILiftData, useLiftData } from '../../../context/LiftDataContext';
 import { useLoadingLifts } from '../../../context/LoadingLiftsContext';
 import { useTutorialTarget } from '../../../context/TutorialContext';
+import { showAlert } from '../../../services/alertService';
+import { track } from '../../../services/analytics';
 import { searchLiftByAssetId } from '../../../services/lifts/liftService';
 import { getUserId } from '../../../services/storageService';
-import { LoadingOverlay } from '../../../components/ui/overlays/LoadingOverlay';
-import { track } from '../../../services/analytics';
-import { showAlert } from '../../../services/alertService';
-import { PhotoLibraryPermissionModal } from '../../../components/ui/modals/PhotoLibraryPermissionModal';
+import { hapticFeedback } from '../../../utils/haptic';
 import { openAppSettings } from '../../../utils/openAppSettings';
+import { DateRangeModal } from './DateRangeModal';
+import { FilterModal } from './FilterModal';
 
-import i18n from '../../../utils/i18n';
 import {
   ClockArrowDown,
   ClockArrowUp,
-  SlidersHorizontal,
   Pencil,
-  X,
   Search,
+  SlidersHorizontal,
+  X,
 } from 'lucide-react-native';
+import i18n from '../../../utils/i18n';
 
 interface LibraryScreenProps {
   onBack: () => void;
@@ -203,7 +202,11 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
     hapticFeedback.selection();
     // Track library screen clicks for no lifts card
     track('Library screen clicks', { event: 'No lifts card' });
-
+    // If on favourites tab and empty, switch to All tab
+    if (activeTab === 'favourites' && filteredAndSortedLifts.length === 0) {
+      setActiveTab('all');
+      return;
+    }
     // If there are completed lifts but none match the current filters, open the filter modal
     const totalLifts = liftData.length;
     if (totalLifts > 0 && filteredAndSortedLifts.length === 0) {
@@ -616,7 +619,7 @@ export function LibraryScreen({ onBack, onTriggerAddOptions }: LibraryScreenProp
               liftData.length === 0
                 ? i18n.t('library.startAnalysingWorkout')
                 : activeTab === 'favourites'
-                  ? i18n.t('library.markLiftsAsFavourites')
+                  ? i18n.t('library.noFavouritesInstruction')
                   : i18n.t('library.tryAdjustingFilters')
             }
             onNoLiftsPress={handleEmptyCardPress}
