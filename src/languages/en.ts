@@ -834,6 +834,8 @@ const en = {
     reps: 'Reps',
     reviewFeedback: 'Review Feedback',
     noFeedback: 'No Feedback',
+    feedback: 'Feedback',
+    share: 'Share',
     favourite: 'Favourite',
     manualDeleteLiftCardData: 'Delete Lift',
     deleteLiftTitle: 'Delete Lift',

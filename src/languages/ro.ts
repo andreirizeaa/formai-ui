@@ -817,6 +817,8 @@ const ro = {
     'reps': 'Repetări',
     'reviewFeedback': 'Vezi feedbackul',
     'noFeedback': 'Fără feedback',
+    'feedback': 'Opinii',
+    'share': 'Distribuie',
     'favourite': 'Favorit',
     'manualDeleteLiftCardData': 'Șterge liftul',
     'deleteLiftTitle': 'Ștergi liftul',

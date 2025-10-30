@@ -818,6 +818,8 @@ const de = {
     'reps': 'Wiederholungen',
     'reviewFeedback': 'Feedback ansehen',
     'noFeedback': 'Kein Feedback',
+    'feedback': 'Rückmeldung',
+    'share': 'Teilen',
     'favourite': 'Favorit',
     'manualDeleteLiftCardData': 'Lift löschen',
     'deleteLiftTitle': 'Lift löschen',

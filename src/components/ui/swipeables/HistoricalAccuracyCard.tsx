@@ -319,7 +319,6 @@ const styles = StyleSheet.create({
   segmentedWrapper: {
     width: '100%',
     marginBottom: 12,
-    paddingHorizontal: 0,
   },
   segmented: {
     flexDirection: 'row',

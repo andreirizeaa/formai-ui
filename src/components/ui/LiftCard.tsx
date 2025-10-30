@@ -781,7 +781,7 @@ export const LiftCard = memo(function LiftCard({
                 <View style={styles.noLiftsCardTextPlaceholder}>
                   <View style={[styles.noLiftsPlaceholderLine, styles.noLiftsPlaceholderLineTop]} />
                   <View
-                    style={[styles.noLiftsPlaceholderLine, styles.noLiftsPlaceholderLineShort]}
+                    style={[styles.noLiftsPlaceholderLine, styles.noLiftsPlaceholderLineShortTop]}
                   />
                 </View>
               </View>
@@ -1145,7 +1145,7 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 2,
   },
-  cardInner: { borderRadius: 18, overflow: 'hidden', borderWidth: 1.1, borderColor: '#f0f0f0' },
+  cardInner: { borderRadius: 24, overflow: 'hidden', borderWidth: 1.1, borderColor: '#f0f0f0' },
   cardGradient: { flex: 1, borderRadius: 18 },
 
   contentRow: { flexDirection: 'row', height: 130 },
@@ -1355,7 +1355,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: '#f0f0f0',
   },
   noLiftsStackContainer: {
@@ -1421,9 +1421,12 @@ const styles = StyleSheet.create({
   noLiftsPlaceholderLineShort: {
     width: '70%',
   },
+  noLiftsPlaceholderLineShortTop: {
+    width: '55%',
+  },
   noLiftsInstructionText: {
     fontSize: 15,
-    fontWeight: '500',
+    fontWeight: '600',
     color: '#8E8E93',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
     textAlign: 'center',

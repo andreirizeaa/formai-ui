@@ -924,25 +924,25 @@ export function useTutorialTarget(targetId?: string) {
       // For lift_details_review_feedback, use a longer delay to ensure proper rendering
       const delay =
         targetId === 'lift_details_form_graph'
-          ? 500
+          ? 400
           : targetId === 'feedback_slideshow'
             ? 300
             : targetId === 'home_see_all_lifts'
-              ? 500
+              ? 400
               : targetId === 'home_performance_icon'
-                ? 500
+                ? 400
                 : targetId === 'upload_practices_cta'
                   ? 300
                   : targetId === 'home_first_lift_card'
-                    ? 500
+                    ? 400
                     : targetId === 'library_screen'
-                      ? 500
+                      ? 400
                       : targetId === 'lift_details_depth_graph'
                         ? 300
                         : targetId === 'performance_over_weight'
-                          ? 500
+                          ? 400
                           : targetId === 'performance_charts_over_time'
-                            ? 500
+                            ? 400
                             : 100;
       const timer = setTimeout(() => {
         try {

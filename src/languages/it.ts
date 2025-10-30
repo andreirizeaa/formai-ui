@@ -828,6 +828,8 @@ const it = {
     reps: 'Ripetizioni',
     reviewFeedback: 'Rivedi Feedback',
     noFeedback: 'Nessun Feedback',
+    feedback: 'Commenti',
+    share: 'Condividi',
     favourite: 'Preferito',
     manualDeleteLiftCardData: 'Elimina Sollevamento',
     deleteLiftTitle: 'Elimina Sollevamento',

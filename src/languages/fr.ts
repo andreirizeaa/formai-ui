@@ -823,6 +823,8 @@ const fr = {
     'reps': 'Répétitions',
     'reviewFeedback': 'Consulter les retours',
     'noFeedback': 'Aucun retour',
+    'feedback': 'Commentaires',
+    'share': 'Partager',
     'favourite': 'Favori',
     'manualDeleteLiftCardData': 'Supprimer la levée',
     'deleteLiftTitle': 'Supprimer la levée',

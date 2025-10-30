@@ -825,6 +825,8 @@ const pt = {
     reps: 'Repetições',
     reviewFeedback: 'Revisar Feedback',
     noFeedback: 'Sem Feedback',
+    feedback: 'Opinião',
+    share: 'Compartilhar',
     favourite: 'Favorito',
     manualDeleteLiftCardData: 'Excluir Levantamento',
     deleteLiftTitle: 'Excluir Levantamento',

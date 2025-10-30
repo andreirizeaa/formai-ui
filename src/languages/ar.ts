@@ -805,6 +805,8 @@ const ar = {
     'reps': 'العدّات',
     'reviewFeedback': 'مراجعة الملاحظات',
     'noFeedback': 'لا توجد ملاحظات',
+    'feedback': 'ملاحظات',
+    'share': 'مشاركة',
     'favourite': 'مفضلة',
     'manualDeleteLiftCardData': 'حذف الرفعة',
     'deleteLiftTitle': 'حذف الرفعة',

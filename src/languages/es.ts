@@ -833,6 +833,8 @@ const es = {
     reps: 'Repeticiones',
     reviewFeedback: 'Revisar Retroalimentación',
     noFeedback: 'Sin Retroalimentación',
+    feedback: 'Comentarios',
+    share: 'Compartir',
     favourite: 'Favorito',
     manualDeleteLiftCardData: 'Eliminar Levantamiento',
     deleteLiftTitle: 'Eliminar Levantamiento',

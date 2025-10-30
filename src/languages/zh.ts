@@ -802,6 +802,8 @@ const zh = {
     reps: '重复次数',
     reviewFeedback: '查看反馈',
     noFeedback: '无反馈',
+    feedback: '反馈',
+    share: '分享',
     favourite: '收藏',
     manualDeleteLiftCardData: '删除举重',
     deleteLiftTitle: '删除举重',

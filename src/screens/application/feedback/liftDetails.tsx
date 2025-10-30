@@ -1,5 +1,8 @@
 import { useQueryClient } from '@tanstack/react-query';
+import { Asset } from 'expo-asset';
+import * as FileSystem from 'expo-file-system';
 import * as MediaLibrary from 'expo-media-library';
+import * as Sharing from 'expo-sharing';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import {
   ChevronLeft,
@@ -8,6 +11,7 @@ import {
   Heart,
   Pencil,
   Search,
+  Share,
   Trash2,
   X,
 } from 'lucide-react-native';
@@ -97,6 +101,7 @@ export function LiftDetails({
   const [editWeight, setEditWeight] = useState('');
   const editWeightInputRef = useRef<TextInput>(null);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
   const [showPermissionRequiredModal, setShowPermissionRequiredModal] = useState(false);
   const [editWeightShouldRender, setEditWeightShouldRender] = useState(showEditWeightModal);
   const editWeightOpacity = useRef(new Animated.Value(0)).current;
@@ -321,6 +326,87 @@ export function LiftDetails({
     // Track lift details clicks for open menu
     track('Lift details clicks', { event: 'Open menu' });
     setShowDropdown(!showDropdown);
+  };
+
+  const handleSharePoseVideo = async () => {
+    try {
+      setIsSharing(true);
+      hapticFeedback.selection();
+      track('Lift details clicks', { event: 'Share pose video' });
+
+      const source = stableVideoUriRef.current || resolvedPoseUrl;
+      if (!source) {
+        showAlert(i18n.t('feedback.shareUnavailable'), i18n.t('feedback.videoNotAvailable'));
+        return;
+      }
+
+      if (!(await Sharing.isAvailableAsync())) {
+        showAlert(i18n.t('feedback.shareUnavailable'), i18n.t('feedback.shareNotSupported'));
+        return;
+      }
+
+      function toSafeFilename(base: string): string {
+        const trimmed = base.trim().toLowerCase();
+        const dashed = trimmed.replace(/\s+/g, '-');
+        const safe = dashed.replace(/[^a-z0-9-_]/g, '');
+        return safe || 'lift';
+      }
+
+      const liftName = toSafeFilename(currentLiftData.liftType || 'lift');
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const targetName = `${liftName}-${timestamp}.mp4`;
+
+      let localUri: string | null = null;
+
+      if (typeof source === 'number') {
+        const asset = await Asset.fromModule(source).downloadAsync();
+        const origin = asset.localUri ?? asset.uri ?? null;
+        if (origin) {
+          const targetPath =
+            (FileSystem.cacheDirectory || FileSystem.documentDirectory) + targetName;
+          try {
+            await FileSystem.copyAsync({ from: origin, to: targetPath });
+            localUri = targetPath;
+          } catch {
+            localUri = origin; // fallback to the original uri if copy fails
+          }
+        } else {
+          localUri = null;
+        }
+      } else if (typeof source === 'string') {
+        const tempPath = (FileSystem.cacheDirectory || FileSystem.documentDirectory) + targetName;
+        try {
+          const { uri, status } = await FileSystem.downloadAsync(source, tempPath);
+          if (status === 200) localUri = uri;
+        } catch (_) {
+          // Fallback: try to share the remote URL if download fails
+          localUri = null;
+        }
+      }
+
+      if (localUri) {
+        await Sharing.shareAsync(localUri, {
+          dialogTitle: i18n.t('feedback.share') || 'Share',
+          mimeType: 'video/mp4',
+          UTI: 'public.mpeg-4',
+        });
+        return;
+      }
+
+      // Fallback to system Share with URL when we couldn't get a local file
+      if (typeof source === 'string') {
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const RNShare = require('react-native').Share as typeof import('react-native').Share;
+        await RNShare.share({ url: source, message: source, title: i18n.t('feedback.share') });
+        return;
+      }
+
+      showAlert(i18n.t('feedback.shareUnavailable'), i18n.t('feedback.videoNotAvailable'));
+    } catch (e) {
+      showAlert(i18n.t('feedback.shareError'), i18n.t('feedback.unknownError'));
+    } finally {
+      setIsSharing(false);
+    }
   };
 
   const handleFavourite = () => {
@@ -638,32 +724,44 @@ export function LiftDetails({
           </View>
         </ScrollView>
 
-        {/* Review Feedback Button Card - Fixed at bottom */}
+        {/* Review/Share Buttons Card - Fixed at bottom */}
         <View style={styles.feedbackButtonCard}>
-          <View ref={reviewFeedbackRef}>
-            <TouchableOpacity
-              style={[
-                styles.reviewFeedbackButton,
-                !hasFeedback && styles.reviewFeedbackButtonDisabled,
-              ]}
-              onPress={hasFeedback ? handleReviewFeedback : undefined}
-              activeOpacity={hasFeedback ? 0.8 : 1}
-              disabled={!hasFeedback}
-            >
-              <Search
-                size={26}
-                color={hasFeedback ? '#000000' : '#C7C7CC'}
-                style={styles.reviewFeedbackButtonIcon}
-              />
-              <Text
-                style={[
-                  styles.reviewFeedbackButtonText,
-                  !hasFeedback && styles.reviewFeedbackButtonTextDisabled,
-                ]}
+          <View style={styles.footerButtonsRow}>
+            {/* Share button (left) */}
+            <View style={{ flex: 1 }}>
+              <TouchableOpacity
+                style={styles.footerButton}
+                onPress={isSharing ? undefined : handleSharePoseVideo}
+                activeOpacity={isSharing ? 1 : 0.8}
+                disabled={isSharing}
               >
-                {hasFeedback ? i18n.t('feedback.reviewFeedback') : i18n.t('feedback.noFeedback')}
-              </Text>
-            </TouchableOpacity>
+                {isSharing ? (
+                  <ActivityIndicator size="small" color="#000000" />
+                ) : (
+                  <>
+                    <Share size={20} color="#000000" style={styles.footerButtonIconLeft} />
+                    <Text style={styles.footerButtonText}>{i18n.t('feedback.share')}</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
+
+            {/* Feedback button (right) */}
+            <View ref={reviewFeedbackRef} style={{ flex: 1 }}>
+              <TouchableOpacity
+                style={[styles.footerButton, !hasFeedback && styles.footerButtonDisabled]}
+                onPress={hasFeedback ? handleReviewFeedback : undefined}
+                activeOpacity={hasFeedback ? 0.8 : 1}
+                disabled={!hasFeedback}
+              >
+                <Search size={20} color="#000000" style={styles.footerButtonIconLeft} />
+                <Text
+                  style={[styles.footerButtonText, !hasFeedback && styles.footerButtonTextDisabled]}
+                >
+                  {i18n.t('feedback.feedback') || 'Feedback'}
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </View>
@@ -1221,6 +1319,39 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 4,
+  },
+  footerButtonsRow: {
+    flexDirection: 'row',
+    width: '100%',
+    gap: 12,
+    marginBottom: 20,
+  },
+  footerButton: {
+    width: '100%',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#e0e0e0',
+    paddingHorizontal: 0,
+    paddingVertical: 18,
+    borderRadius: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+  },
+  footerButtonIconLeft: {
+    marginRight: 8,
+  },
+  footerButtonText: {
+    color: '#000000',
+    fontSize: 16,
+    fontWeight: '800',
+    fontFamily: 'SF Pro Text',
+  },
+  footerButtonDisabled: {
+    opacity: 0.6,
+  },
+  footerButtonTextDisabled: {
+    color: '#8E8E93',
   },
   cardsRowContainer: {
     width: '100%',
