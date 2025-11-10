@@ -1,6 +1,6 @@
-import { supabase } from '../../lib/supabase';
 import * as FileSystem from 'expo-file-system';
 import { Video as VideoCompressor } from 'react-native-compressor';
+import { supabase } from '../../lib/supabase';
 import { showAlert } from '../alertService';
 
 // Helper to get Supabase auth header for direct storage API calls
@@ -60,20 +60,24 @@ export async function uploadLiftVideo(
   liftId: string,
   fileUri: string,
   assetId?: string,
-  hasHdVideos?: boolean
+  hasHdVideos?: boolean,
+  normalizeOrientation?: boolean
 ): Promise<{ publicUrl: string; path: string }> {
   let uploadUri = fileUri;
 
-  // Only compress video if user doesn't have HD videos entitlement
-  if (!hasHdVideos) {
+  // Normalize orientation (bake rotation into pixels) when requested,
+  // or compress if user doesn't have HD entitlement. We combine these into a single re-encode step.
+  if (normalizeOrientation || !hasHdVideos) {
     try {
-      // Compress video to reduce size (works on iOS and Android)
+      // Re-encode ensures rotation is applied to pixels (no rotate metadata),
+      // and also handles size reduction when HD entitlement is not present.
       const compressedPath = await VideoCompressor.compress(fileUri, {
         compressionMethod: 'manual',
-        // 540p target at ~0.6 Mbps
-        bitrate: 600_000,
-        maxSize: 540,
-        // Always allow compression (0 disables threshold)
+        // If HD is enabled, keep higher quality and resolution to mostly preserve quality.
+        // If not, keep existing 540p ~0.6 Mbps policy.
+        bitrate: hasHdVideos ? 5_000_000 : 600_000,
+        maxSize: hasHdVideos ? 1080 : 540,
+        // Always allow compression/transcode so orientation gets normalized
         minimumFileSizeForCompress: 0,
       });
 

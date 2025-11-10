@@ -386,7 +386,9 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
       actualRecordingDurationRef.current = 0; // Reset ref when starting new recording
 
       cameraRef.current.startRecording({
-        fileType: Platform.OS === 'ios' ? 'mov' : 'mp4',
+        // Use MP4 + H.264 to improve downstream compatibility (pose pipelines often ignore MOV rotate metadata)
+        fileType: 'mp4',
+        videoCodec: 'h264',
         onRecordingFinished: async (video: VideoFile) => {
           const path = video.path as string;
           const uri = path.startsWith('file://') ? path : `file://${path}`;
@@ -662,7 +664,8 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
         liftId,
         videoUri,
         recordedAssetId,
-        hasHdVideos
+        hasHdVideos,
+        true // normalize orientation for in-app recordings to bake rotation into pixels
       );
       const { publicUrl: thumbUrl } = await uploadLiftThumbnail(userId, liftId, thumbnailUri);
 
@@ -984,6 +987,7 @@ export function RecordModal({ isVisible, onClose }: RecordModalProps) {
                 torch={isTorchOn ? 'on' : 'off'}
                 enableZoomGesture={true}
                 zoom={zoom}
+                outputOrientation="device"
                 onInitialized={() => setIsCameraReady(true)}
               />
             )}

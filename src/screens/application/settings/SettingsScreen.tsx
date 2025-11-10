@@ -776,7 +776,7 @@ export function SettingsScreen({
         contentInsetAdjustmentBehavior="automatic"
       >
         <View style={styles.content}>
-          <Text style={styles.title}>{i18n.t('tabs.settings')}</Text>
+          <Text style={styles.title}>{i18n.t('tabs.settings')}!</Text>
 
           {/* Profile Card */}
           <View style={styles.card}>
