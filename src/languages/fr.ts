@@ -9,6 +9,18 @@ const fr = {
   'termsOfUse': "Conditions d'Utilisation",
   'and': 'et',
   'privacyPolicy': 'Politique de Confidentialité',
+  'emailAuth': {
+    'emailAddress': 'Adresse e-mail',
+    'invalidEmail': 'Veuillez entrer une adresse e-mail valide.',
+    'confirmTitle': 'Confirmez votre e-mail',
+    'codeInstructions':
+      "Veuillez entrer le code à 6 chiffres que nous venons d'envoyer à {{email}}",
+    'resend': 'Renvoyer',
+    'resendIn': 'Vous pouvez renvoyer dans {{seconds}} secondes',
+    'invalidCode': "Le code que vous avez entré n'est pas valide. Veuillez réessayer.",
+  },
+  'password': 'Mot de passe',
+  'incorrectEmailOrPassword': 'E-mail ou mot de passe incorrect.',
   'perfectFormAlways': 'Forme parfaite, toujours !',
   'getStartedButton': 'Commencer !',
   'signInButton': 'Se connecter',
@@ -441,6 +453,7 @@ const fr = {
       'title': 'Créer un compte',
       'signInWithApple': 'Se connecter avec Apple',
       'signInWithGoogle': 'Se connecter avec Google',
+      'signInWithEmail': 'Se connecter avec e-mail',
     },
     'cameraPermission': {
       'title': "Autoriser l'accès à la caméra pour continuer",

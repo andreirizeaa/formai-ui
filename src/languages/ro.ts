@@ -9,6 +9,18 @@ const ro = {
   'termsOfUse': 'Termenii de Utilizare',
   'and': 'și',
   'privacyPolicy': 'Politica de Confidențialitate',
+  'emailAuth': {
+    'emailAddress': 'Adresă de e-mail',
+    'invalidEmail': 'Te rugăm să introduci o adresă de e-mail validă.',
+    'confirmTitle': 'Confirmă-ți e-mailul',
+    'codeInstructions':
+      'Te rugăm să introduci codul de 6 cifre pe care tocmai l-am trimis la {{email}}',
+    'resend': 'Retrimite',
+    'resendIn': 'Poți retrimite în {{seconds}} secunde',
+    'invalidCode': 'Codul introdus nu este valid. Te rugăm să încerci din nou.',
+  },
+  'password': 'Parolă',
+  'incorrectEmailOrPassword': 'E-mail sau parolă incorectă.',
   'perfectFormAlways': 'Formă perfectă, întotdeauna!',
   'getStartedButton': 'Începe!',
   'signInButton': 'Autentificare',
@@ -440,6 +452,7 @@ const ro = {
       'title': 'Creează un cont',
       'signInWithApple': 'Autentificare cu Apple',
       'signInWithGoogle': 'Autentificare cu Google',
+      'signInWithEmail': 'Autentificare cu e-mail',
     },
     'cameraPermission': {
       'title': 'Permite accesul la cameră pentru a continua',

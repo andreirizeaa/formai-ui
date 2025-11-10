@@ -1,21 +1,23 @@
-import React from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity } from 'react-native';
-import { Image } from 'expo-image';
+import { useNavigation } from '@react-navigation/native';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import Constants from 'expo-constants';
-import { hapticFeedback } from '../../utils/haptic';
-import { supabase } from '../../lib/supabase';
-import { useOnboarding } from '../../context/OnboardingContext';
+import { Image } from 'expo-image';
+import * as Linking from 'expo-linking';
+import { Mail } from 'lucide-react-native';
+import React from 'react';
+import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { LoadingOverlay } from '../../components/ui/overlays/LoadingOverlay';
-import { showAlert } from '../../services/alertService';
-import { setUserId } from '../../services/storageService';
-import i18n from '../../utils/i18n';
+import { appColors } from '../../constants/appColorScheme';
+import { useOnboarding } from '../../context/OnboardingContext';
 import { usePurchases } from '../../context/PurchasesContext';
+import { supabase } from '../../lib/supabase';
+import { showAlert } from '../../services/alertService';
 import { track } from '../../services/analytics';
 import { registerAndSaveExpoPushToken } from '../../services/push';
+import { setUserId } from '../../services/storageService';
 import { fetchUserById } from '../../services/userService';
-import { appColors } from '../../constants/appColorScheme';
-import * as Linking from 'expo-linking';
+import { hapticFeedback } from '../../utils/haptic';
+import i18n from '../../utils/i18n';
 
 interface CreateAccountScreenProps {
   onNext: () => void;
@@ -25,6 +27,7 @@ interface CreateAccountScreenProps {
 export function CreateAccountScreen({ onNext, onBack }: CreateAccountScreenProps) {
   const { onboardingData, updateOnboardingData } = useOnboarding();
   const { logIn } = usePurchases();
+  const navigation = useNavigation<any>();
   const [isSigningIn, setIsSigningIn] = React.useState(false);
 
   const isExpoGo = Constants.appOwnership === 'expo';
@@ -322,6 +325,40 @@ export function CreateAccountScreen({ onNext, onBack }: CreateAccountScreenProps
                 ]}
               >
                 {i18n.t('onboarding.createAccount.signInWithGoogle')}
+              </Text>
+            </View>
+          </TouchableOpacity>
+
+          {/* Sign in with Email */}
+          <TouchableOpacity
+            style={[
+              styles.googleButton,
+              {
+                backgroundColor: appColors.onboarding.signIn.googleButton.background,
+                borderColor: appColors.onboarding.signIn.googleButton.border,
+                borderWidth: 1,
+              },
+            ]}
+            onPress={() => {
+              hapticFeedback.selection();
+              navigation.navigate('EmailSignIn', { mode: 'signUp' });
+            }}
+            activeOpacity={0.8}
+          >
+            <View style={styles.buttonContent}>
+              <Mail
+                width={28}
+                height={28}
+                color={appColors.onboarding.signIn.googleButton.text}
+                style={{ marginRight: 12 }}
+              />
+              <Text
+                style={[
+                  styles.googleButtonText,
+                  { color: appColors.onboarding.signIn.googleButton.text },
+                ]}
+              >
+                {i18n.t('onboarding.createAccount.signInWithEmail') || 'Sign in with Email'}
               </Text>
             </View>
           </TouchableOpacity>

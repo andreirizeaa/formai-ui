@@ -1,30 +1,32 @@
-import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Platform,
-  TouchableOpacity,
-  Animated,
-  Dimensions,
-  ActivityIndicator,
-} from 'react-native';
-import { Image } from 'expo-image';
+import { useNavigation } from '@react-navigation/native';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import Constants from 'expo-constants';
-import i18n from '../../utils/i18n';
-import { hapticFeedback } from '../../utils/haptic';
-import { supabase } from '../../lib/supabase';
-import { removeUserId, setUserId } from '../../services/storageService';
-import { fetchUserById, requiresOnboarding } from '../../services/userService';
-import { usePurchases } from '../../context/PurchasesContext';
+import { Image } from 'expo-image';
+import * as Linking from 'expo-linking';
+import { Mail, X } from 'lucide-react-native';
+import React from 'react';
+import {
+  ActivityIndicator,
+  Animated,
+  Dimensions,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { appColors } from '../../constants/appColorScheme';
 import { useOnboarding } from '../../context/OnboardingContext';
+import { usePurchases } from '../../context/PurchasesContext';
+import { supabase } from '../../lib/supabase';
+import { showAlert } from '../../services/alertService';
 import { track } from '../../services/analytics';
 import { registerAndSaveExpoPushToken } from '../../services/push';
-import { showAlert } from '../../services/alertService';
-import * as Linking from 'expo-linking';
-import { X } from 'lucide-react-native';
-import { appColors } from '../../constants/appColorScheme';
+import { removeUserId, setUserId } from '../../services/storageService';
+import { fetchUserById, requiresOnboarding } from '../../services/userService';
+import { hapticFeedback } from '../../utils/haptic';
+import i18n from '../../utils/i18n';
 
 const { height: screenHeight } = Dimensions.get('window');
 
@@ -48,6 +50,7 @@ export function WelcomeScreenSignIn({
   const [isVisible, setIsVisible] = React.useState(false);
   const { hasSubscription, logIn } = usePurchases();
   const { updateOnboardingData } = useOnboarding();
+  const navigation = useNavigation<any>();
 
   // Animation values - similar to feedback slideshow
   const slideAnim = React.useRef(new Animated.Value(screenHeight)).current; // Start off-screen
@@ -286,11 +289,15 @@ export function WelcomeScreenSignIn({
         {/* Divider under title */}
         <View style={[styles.divider, { backgroundColor: appColors.onboarding.signIn.divider }]} />
 
-        {/* Main content */}
-        <View style={styles.contentWrapper}>
+        {/* Main content - ScrollView for when content exceeds available space */}
+        <ScrollView
+          style={styles.contentWrapper}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          bounces={true}
+        >
           {/* Button container with flex to center buttons */}
           <View style={styles.buttonWrapper}>
-            {/* Sign in buttons */}
             <View style={styles.buttonContainer}>
               <TouchableOpacity
                 style={[
@@ -350,6 +357,44 @@ export function WelcomeScreenSignIn({
                 </View>
               </TouchableOpacity>
 
+              {/* Sign in with Email */}
+              <TouchableOpacity
+                style={[
+                  styles.googleButton,
+                  {
+                    backgroundColor: appColors.onboarding.signIn.googleButton.background,
+                    borderColor: appColors.onboarding.signIn.googleButton.border,
+                  },
+                ]}
+                onPress={() => {
+                  hapticFeedback.selection();
+                  // Navigate immediately, then close modal
+                  navigation.navigate('EmailSignIn');
+                  // Close modal after a brief delay to allow navigation to start
+                  setTimeout(() => {
+                    handleClose(false);
+                  }, 50);
+                }}
+                activeOpacity={0.8}
+              >
+                <View style={styles.buttonContent}>
+                  <Mail
+                    width={28}
+                    height={28}
+                    color={appColors.onboarding.signIn.googleButton.text}
+                    style={{ marginRight: 12 }}
+                  />
+                  <Text
+                    style={[
+                      styles.googleButtonText,
+                      { color: appColors.onboarding.signIn.googleButton.text },
+                    ]}
+                  >
+                    {i18n.t('onboarding.createAccount.signInWithEmail') || 'Sign in with Email'}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+
               {/* Terms and Privacy Policy */}
               <View style={styles.termsContainer}>
                 <Text style={[styles.termsText, { color: appColors.onboarding.signIn.terms.text }]}>
@@ -375,7 +420,7 @@ export function WelcomeScreenSignIn({
               </View>
             </View>
           </View>
-        </View>
+        </ScrollView>
 
         {/* Custom loading overlay for modal only */}
         {isSigningIn && (
@@ -425,7 +470,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: screenHeight * 0.5, // 40% of screen height
+    height: screenHeight * 0.5,
     backgroundColor: appColors.onboarding.signIn.background,
     borderTopLeftRadius: 12,
     borderTopRightRadius: 12,
@@ -469,9 +514,14 @@ const styles = StyleSheet.create({
   contentWrapper: {
     flex: 1,
   },
-  buttonWrapper: {
-    flex: 1,
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: 'center',
+    paddingVertical: 20,
+  },
+  buttonWrapper: {
+    justifyContent: 'center',
+    minHeight: '100%',
   },
   buttonContainer: {
     gap: 16,

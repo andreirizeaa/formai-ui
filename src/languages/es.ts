@@ -9,6 +9,18 @@ const es = {
   termsOfUse: 'Términos de Uso',
   and: 'y',
   privacyPolicy: 'Política de Privacidad',
+  emailAuth: {
+    emailAddress: 'Dirección de correo electrónico',
+    invalidEmail: 'Por favor, introduce una dirección de correo electrónico válida.',
+    confirmTitle: 'Confirma tu correo electrónico',
+    codeInstructions:
+      'Por favor, introduce el código de 6 dígitos que acabamos de enviar a {{email}}',
+    resend: 'Reenviar',
+    resendIn: 'Puedes reenviar en {{seconds}} segundos',
+    invalidCode: 'El código que ingresaste no es válido. Por favor, inténtalo de nuevo.',
+  },
+  password: 'Contraseña',
+  incorrectEmailOrPassword: 'Correo electrónico o contraseña incorrectos.',
   perfectFormAlways: '¡Forma perfecta, siempre!',
   getStartedButton: '¡Comenzar!',
   signInButton: 'Iniciar sesión',
@@ -442,6 +454,7 @@ const es = {
       title: 'Crear una cuenta',
       signInWithApple: 'Iniciar sesión con Apple',
       signInWithGoogle: 'Iniciar sesión con Google',
+      signInWithEmail: 'Continuar con correo',
     },
     cameraPermission: {
       title: 'Permitir acceso a la cámara para continuar',

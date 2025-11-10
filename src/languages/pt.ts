@@ -9,6 +9,18 @@ const pt = {
   termsOfUse: 'Termos de Uso',
   and: 'e',
   privacyPolicy: 'Política de Privacidade',
+  emailAuth: {
+    emailAddress: 'Endereço de e-mail',
+    invalidEmail: 'Por favor, insira um endereço de e-mail válido.',
+    confirmTitle: 'Confirme seu e-mail',
+    codeInstructions:
+      'Por favor, insira o código de 6 dígitos que acabamos de enviar para {{email}}',
+    resend: 'Reenviar',
+    resendIn: 'Você pode reenviar em {{seconds}} segundos',
+    invalidCode: 'O código inserido é inválido. Tente novamente.',
+  },
+  password: 'Senha',
+  incorrectEmailOrPassword: 'E-mail ou senha incorretos.',
   perfectFormAlways: 'Forma perfeita, sempre!',
   getStartedButton: 'Começar!',
   signInButton: 'Entrar',
@@ -441,6 +453,7 @@ const pt = {
       title: 'Criar uma conta',
       signInWithApple: 'Entrar com Apple',
       signInWithGoogle: 'Entrar com Google',
+      signInWithEmail: 'Entrar com e-mail',
     },
     cameraPermission: {
       title: 'Permitir acesso à câmera para continuar',
