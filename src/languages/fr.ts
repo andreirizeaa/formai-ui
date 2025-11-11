@@ -20,7 +20,15 @@ const fr = {
     'invalidCode': "Le code que vous avez entré n'est pas valide. Veuillez réessayer.",
   },
   'password': 'Mot de passe',
+  'passwordInvalid':
+    'Le mot de passe doit contenir 9+ caractères, inclure une majuscule, un chiffre et un symbole.',
   'incorrectEmailOrPassword': 'E-mail ou mot de passe incorrect.',
+  'passwordRequirements': {
+    'minLength': 'Au moins 9 caractères',
+    'uppercase': 'Une lettre majuscule',
+    'number': 'Un chiffre',
+    'symbol': 'Un symbole',
+  },
   'perfectFormAlways': 'Forme parfaite, toujours !',
   'getStartedButton': 'Commencer !',
   'signInButton': 'Se connecter',

@@ -1,5 +1,5 @@
 import { useFocusEffect } from '@react-navigation/native';
-import { ChevronLeft, Eye, EyeOff } from 'lucide-react-native';
+import { Check, ChevronLeft, Eye, EyeOff, X } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
@@ -8,6 +8,7 @@ import {
   Keyboard,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
@@ -46,6 +47,15 @@ function isValidPassword(value: string): boolean {
   return hasUppercase && hasNumber && hasSymbol;
 }
 
+function checkPasswordRequirements(value: string) {
+  return {
+    minLength: value.length >= 9,
+    hasUppercase: /[A-Z]/.test(value),
+    hasNumber: /[0-9]/.test(value),
+    hasSymbol: /[^A-Za-z0-9]/.test(value),
+  };
+}
+
 export function EmailSignIn({ mode, onBack, onVerifiedUserId }: EmailSignInProps) {
   const [step, setStep] = useState<Step>('email');
   const [email, setEmail] = useState('');
@@ -54,6 +64,7 @@ export function EmailSignIn({ mode, onBack, onVerifiedUserId }: EmailSignInProps
   const [showPassword, setShowPassword] = useState(false);
   const [password, setPassword] = useState('');
   const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
   const [focusedField, setFocusedField] = useState<'email' | 'password' | null>('email');
 
   // OTP
@@ -130,9 +141,13 @@ export function EmailSignIn({ mode, onBack, onVerifiedUserId }: EmailSignInProps
   // Autofocus email input instantly when screen comes into focus
   useFocusEffect(
     useCallback(() => {
+      // Only focus if we're on the email step
       if (step === 'email') {
-        // Focus immediately when screen is focused
-        emailInputRef.current?.focus();
+        // Use a small delay to ensure the screen is fully mounted
+        const timeoutId = setTimeout(() => {
+          emailInputRef.current?.focus();
+        }, 100);
+        return () => clearTimeout(timeoutId);
       }
     }, [step])
   );
@@ -177,8 +192,8 @@ export function EmailSignIn({ mode, onBack, onVerifiedUserId }: EmailSignInProps
       setEmailError(i18n.t('emailAuth.invalidEmail') || 'Please enter a valid email address.');
       return;
     }
-    // Validate password
-    if (!isValidPassword(password)) {
+    // Validate password only for sign-up mode
+    if (mode === 'signUp' && !isValidPassword(password)) {
       setPasswordError(
         i18n.t('passwordInvalid') ||
           'Password must be 9+ chars, include uppercase, number and symbol.'
@@ -188,8 +203,16 @@ export function EmailSignIn({ mode, onBack, onVerifiedUserId }: EmailSignInProps
       passwordInputRef.current?.focus();
       return;
     }
+    // For sign-in mode, password can be empty (no validation)
+    if (mode === 'signIn' && !password) {
+      setAuthError(i18n.t('incorrectEmailOrPassword') || 'Incorrect email or password.');
+      setFocusedField('password');
+      passwordInputRef.current?.focus();
+      return;
+    }
     setEmailError(null);
     setPasswordError(null);
+    setAuthError(null);
     setIsSubmitting(true);
     try {
       if (mode === 'signIn') {
@@ -199,7 +222,7 @@ export function EmailSignIn({ mode, onBack, onVerifiedUserId }: EmailSignInProps
           password,
         });
         if (error || !data.user?.id) {
-          setPasswordError(i18n.t('incorrectEmailOrPassword') || 'Incorrect email or password.');
+          setAuthError(i18n.t('incorrectEmailOrPassword') || 'Incorrect email or password.');
           setIsSubmitting(false);
           setFocusedField('password');
           passwordInputRef.current?.focus();
@@ -331,6 +354,44 @@ export function EmailSignIn({ mode, onBack, onVerifiedUserId }: EmailSignInProps
     [email, otpError, onVerifiedUserId]
   );
 
+  // Memoize keyboard accessory button to avoid conditional hook calls
+  // Must be after handleContinue is defined
+  const keyboardAccessoryButton = useMemo(() => {
+    if (step !== 'email') return null;
+
+    const emailValid = isValidEmail(email);
+    const passwordValid = mode === 'signUp' ? isValidPassword(password) : password.length > 0;
+    const isOnPassword = focusedField === 'password';
+    const isDisabled =
+      isSubmitting ||
+      (!isOnPassword && !emailValid) ||
+      (isOnPassword && (!emailValid || !passwordValid));
+
+    const handleAccessoryPress = () => {
+      if (!isOnPassword) {
+        // Move focus to password
+        setFocusedField('password');
+        passwordInputRef.current?.focus();
+        return;
+      }
+      // Attempt to continue when on password field
+      handleContinue();
+    };
+
+    return (
+      <TouchableOpacity
+        style={[styles.primaryButton, isDisabled && styles.primaryButtonDisabled]}
+        onPress={handleAccessoryPress}
+        activeOpacity={0.7}
+        disabled={isDisabled}
+      >
+        <Text style={[styles.primaryButtonText, isDisabled && styles.primaryButtonTextDisabled]}>
+          {isOnPassword ? 'Complete' : i18n.t('next') || 'Next'}
+        </Text>
+      </TouchableOpacity>
+    );
+  }, [step, email, password, focusedField, isSubmitting, mode, handleContinue]);
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
@@ -361,94 +422,198 @@ export function EmailSignIn({ mode, onBack, onVerifiedUserId }: EmailSignInProps
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         {step === 'email' ? (
-          <View style={styles.content}>
-            {/* Email input box */}
-            <View style={styles.inputBackground}>
-              <View style={{ width: '100%' }}>
-                <Text style={styles.label}>
-                  {i18n.t('emailAuth.emailAddress') || 'Email address'}
-                </Text>
-                <View
-                  style={[
-                    styles.inputContainer,
-                    emailError ? styles.inputContainerError : undefined,
-                  ]}
-                >
-                  <TextInput
-                    ref={emailInputRef}
-                    value={email}
-                    onChangeText={(t) => {
-                      setEmail(t);
-                      if (emailError) setEmailError(null);
-                    }}
-                    style={styles.input}
-                    autoCorrect={false}
-                    autoCapitalize="none"
-                    keyboardType="email-address"
-                    textContentType="emailAddress"
-                    autoComplete="email"
-                    returnKeyType="next"
-                    autoFocus
-                    onFocus={() => setFocusedField('email')}
-                    onSubmitEditing={() => {
-                      setFocusedField('password');
-                      passwordInputRef.current?.focus();
-                    }}
-                  />
-                </View>
-                {emailError && <Text style={styles.errorText}>{emailError}</Text>}
-              </View>
-            </View>
-
-            {/* Password input box */}
-            <View style={[styles.inputBackground, { marginTop: 24 }]}>
-              <View style={{ width: '100%' }}>
-                <Text style={styles.label}>{i18n.t('password') || 'Password'}</Text>
-                <View
-                  style={[
-                    styles.inputContainer,
-                    passwordError ? styles.inputContainerError : undefined,
-                  ]}
-                >
-                  <TextInput
-                    ref={passwordInputRef}
-                    value={password}
-                    onChangeText={(t) => {
-                      setPassword(t);
-                      if (passwordError) setPasswordError(null);
-                    }}
-                    style={styles.input}
-                    autoCorrect={false}
-                    autoCapitalize="none"
-                    secureTextEntry={!showPassword}
-                    textContentType="password"
-                    autoComplete="password"
-                    returnKeyType="done"
-                    onFocus={() => setFocusedField('password')}
-                    onSubmitEditing={() => {
-                      // Attempt submit when password is focused
-                      handleContinue();
-                    }}
-                  />
-                  <TouchableOpacity
-                    style={styles.visibilityButton}
-                    onPress={() => {
-                      hapticFeedback.selection();
-                      setShowPassword(!showPassword);
-                    }}
-                    activeOpacity={0.7}
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            <View style={styles.content}>
+              {/* Email input box */}
+              <View style={styles.inputBackground}>
+                <View style={{ width: '100%' }}>
+                  <Text style={styles.label}>
+                    {i18n.t('emailAuth.emailAddress') || 'Email address'}
+                  </Text>
+                  <View
+                    style={[
+                      styles.inputContainer,
+                      emailError && !authError ? styles.inputContainerError : undefined,
+                    ]}
                   >
-                    {showPassword ? (
-                      <EyeOff width={20} height={20} color="#6B7280" />
-                    ) : (
-                      <Eye width={20} height={20} color="#6B7280" />
-                    )}
-                  </TouchableOpacity>
+                    <TextInput
+                      ref={emailInputRef}
+                      value={email}
+                      onChangeText={(t) => {
+                        setEmail(t);
+                        if (emailError) setEmailError(null);
+                        if (authError) setAuthError(null);
+                      }}
+                      style={styles.input}
+                      autoCorrect={false}
+                      autoCapitalize="none"
+                      keyboardType="email-address"
+                      textContentType="emailAddress"
+                      autoComplete="email"
+                      returnKeyType="next"
+                      autoFocus
+                      onFocus={() => setFocusedField('email')}
+                      onSubmitEditing={() => {
+                        setFocusedField('password');
+                        passwordInputRef.current?.focus();
+                      }}
+                    />
+                  </View>
+                  {emailError && <Text style={styles.errorText}>{emailError}</Text>}
                 </View>
-                {passwordError && <Text style={styles.errorText}>{passwordError}</Text>}
               </View>
+
+              {/* Password input box */}
+              <View style={[styles.inputBackground, { marginTop: 24 }]}>
+                <View style={{ width: '100%' }}>
+                  <Text style={styles.label}>{i18n.t('password') || 'Password'}</Text>
+                  <View
+                    style={[
+                      styles.inputContainer,
+                      passwordError && !authError ? styles.inputContainerError : undefined,
+                    ]}
+                  >
+                    <TextInput
+                      ref={passwordInputRef}
+                      value={password}
+                      onChangeText={(t) => {
+                        setPassword(t);
+                        if (passwordError) setPasswordError(null);
+                        if (authError) setAuthError(null);
+                      }}
+                      style={[
+                        styles.input,
+                        mode === 'signUp' && !isValidEmail(email) && styles.inputDisabled,
+                      ]}
+                      autoCorrect={false}
+                      autoCapitalize="none"
+                      secureTextEntry={!showPassword}
+                      textContentType="password"
+                      autoComplete="password"
+                      returnKeyType="done"
+                      editable={mode === 'signIn' || isValidEmail(email)}
+                      pointerEvents={mode === 'signIn' || isValidEmail(email) ? 'auto' : 'none'}
+                      onFocus={() => setFocusedField('password')}
+                      onSubmitEditing={() => {
+                        // Attempt submit when password is focused
+                        handleContinue();
+                      }}
+                    />
+                    <TouchableOpacity
+                      style={styles.visibilityButton}
+                      onPress={() => {
+                        if (mode === 'signUp' && !isValidEmail(email)) return;
+                        hapticFeedback.selection();
+                        setShowPassword(!showPassword);
+                      }}
+                      activeOpacity={0.7}
+                      disabled={mode === 'signUp' && !isValidEmail(email)}
+                    >
+                      {showPassword ? (
+                        <EyeOff
+                          width={20}
+                          height={20}
+                          color={mode === 'signUp' && !isValidEmail(email) ? '#C7C7CC' : '#6B7280'}
+                        />
+                      ) : (
+                        <Eye
+                          width={20}
+                          height={20}
+                          color={mode === 'signUp' && !isValidEmail(email) ? '#C7C7CC' : '#6B7280'}
+                        />
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                  {passwordError && <Text style={styles.errorText}>{passwordError}</Text>}
+                  {/* Password requirements - only show for sign-up mode */}
+                  {mode === 'signUp' && (
+                    <View style={styles.passwordRequirements}>
+                      {(() => {
+                        const requirements = checkPasswordRequirements(password);
+                        return (
+                          <>
+                            <View style={styles.requirementRow}>
+                              {requirements.minLength ? (
+                                <Check width={14} height={14} color="#34C759" />
+                              ) : (
+                                <X width={14} height={14} color="#FF3B30" />
+                              )}
+                              <Text
+                                style={[
+                                  styles.requirementText,
+                                  requirements.minLength && styles.requirementTextMet,
+                                ]}
+                              >
+                                {i18n.t('passwordRequirements.minLength') ||
+                                  'At least 9 characters'}
+                              </Text>
+                            </View>
+                            <View style={styles.requirementRow}>
+                              {requirements.hasUppercase ? (
+                                <Check width={14} height={14} color="#34C759" />
+                              ) : (
+                                <X width={14} height={14} color="#FF3B30" />
+                              )}
+                              <Text
+                                style={[
+                                  styles.requirementText,
+                                  requirements.hasUppercase && styles.requirementTextMet,
+                                ]}
+                              >
+                                {i18n.t('passwordRequirements.uppercase') || 'One uppercase letter'}
+                              </Text>
+                            </View>
+                            <View style={styles.requirementRow}>
+                              {requirements.hasNumber ? (
+                                <Check width={14} height={14} color="#34C759" />
+                              ) : (
+                                <X width={14} height={14} color="#FF3B30" />
+                              )}
+                              <Text
+                                style={[
+                                  styles.requirementText,
+                                  requirements.hasNumber && styles.requirementTextMet,
+                                ]}
+                              >
+                                {i18n.t('passwordRequirements.number') || 'One number'}
+                              </Text>
+                            </View>
+                            <View style={styles.requirementRow}>
+                              {requirements.hasSymbol ? (
+                                <Check width={14} height={14} color="#34C759" />
+                              ) : (
+                                <X width={14} height={14} color="#FF3B30" />
+                              )}
+                              <Text
+                                style={[
+                                  styles.requirementText,
+                                  requirements.hasSymbol && styles.requirementTextMet,
+                                ]}
+                              >
+                                {i18n.t('passwordRequirements.symbol') || 'One symbol'}
+                              </Text>
+                            </View>
+                          </>
+                        );
+                      })()}
+                    </View>
+                  )}
+                </View>
+              </View>
+
+              {/* Authentication error - shown below both input containers */}
+              {authError && (
+                <View style={styles.authErrorContainer}>
+                  <Text style={styles.authErrorText}>{authError}</Text>
+                </View>
+              )}
             </View>
-          </View>
+          </ScrollView>
         ) : (
           <View style={styles.content}>
             <Text style={styles.otpTitle}>
@@ -529,43 +694,9 @@ export function EmailSignIn({ mode, onBack, onVerifiedUserId }: EmailSignInProps
       </KeyboardAvoidingView>
 
       {/* Keyboard Accessory */}
-      {step === 'email' && (
+      {keyboardAccessoryButton && (
         <Animated.View style={[styles.keyboardAccessoryView, { bottom: accessoryBottom }]}>
-          {(() => {
-            const emailValid = isValidEmail(email);
-            const passwordValid = isValidPassword(password);
-            const isOnPassword = focusedField === 'password';
-            const isDisabled =
-              isSubmitting ||
-              (!isOnPassword && !emailValid) ||
-              (isOnPassword && (!emailValid || !passwordValid));
-
-            const handleAccessoryPress = () => {
-              if (!isOnPassword) {
-                // Move focus to password
-                setFocusedField('password');
-                passwordInputRef.current?.focus();
-                return;
-              }
-              // Attempt to continue when on password field
-              handleContinue();
-            };
-
-            return (
-              <TouchableOpacity
-                style={[styles.primaryButton, isDisabled && styles.primaryButtonDisabled]}
-                onPress={handleAccessoryPress}
-                activeOpacity={0.7}
-                disabled={isDisabled}
-              >
-                <Text
-                  style={[styles.primaryButtonText, isDisabled && styles.primaryButtonTextDisabled]}
-                >
-                  {isOnPassword ? 'Complete' : i18n.t('next') || 'Next'}
-                </Text>
-              </TouchableOpacity>
-            );
-          })()}
+          {keyboardAccessoryButton}
         </Animated.View>
       )}
 
@@ -591,6 +722,12 @@ const styles = StyleSheet.create({
   kav: {
     flex: 1,
     paddingHorizontal: 20,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
   },
   header: {
     flexDirection: 'row',
@@ -665,6 +802,10 @@ const styles = StyleSheet.create({
     paddingVertical: 0,
     paddingRight: 8,
   },
+  inputDisabled: {
+    opacity: 0.5,
+    color: '#8E8E93',
+  },
   visibilityButton: {
     padding: 8,
     justifyContent: 'center',
@@ -675,6 +816,16 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   errorText: {
+    color: '#FF3B30',
+    fontSize: 14,
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+    textAlign: 'center',
+  },
+  authErrorContainer: {
+    marginTop: 16,
+    alignItems: 'center',
+  },
+  authErrorText: {
     color: '#FF3B30',
     fontSize: 14,
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
@@ -784,5 +935,22 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6B7280',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
+  passwordRequirements: {
+    marginTop: 12,
+    gap: 8,
+  },
+  requirementRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  requirementText: {
+    fontSize: 14,
+    color: '#6B7280',
+    fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+  },
+  requirementTextMet: {
+    color: '#34C759',
   },
 });

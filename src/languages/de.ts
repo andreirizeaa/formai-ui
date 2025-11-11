@@ -20,7 +20,15 @@ const de = {
     'invalidCode': 'Der eingegebene Code ist ungültig. Bitte versuche es erneut.',
   },
   'password': 'Passwort',
+  'passwordInvalid':
+    'Das Passwort muss mindestens 9 Zeichen lang sein und einen Großbuchstaben, eine Zahl und ein Symbol enthalten.',
   'incorrectEmailOrPassword': 'Falsche E-Mail-Adresse oder falsches Passwort.',
+  'passwordRequirements': {
+    'minLength': 'Mindestens 9 Zeichen',
+    'uppercase': 'Ein Großbuchstabe',
+    'number': 'Eine Zahl',
+    'symbol': 'Ein Symbol',
+  },
   'perfectFormAlways': 'Perfekte Form, immer!',
   'getStartedButton': "Los geht's!",
   'next': 'Weiter',

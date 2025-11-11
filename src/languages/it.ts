@@ -19,7 +19,15 @@ const it = {
     invalidCode: 'Il codice inserito non è valido. Riprova.',
   },
   password: 'Password',
+  passwordInvalid:
+    'La password deve contenere 9+ caratteri, includere maiuscola, numero e simbolo.',
   incorrectEmailOrPassword: 'Email o password non corretti.',
+  passwordRequirements: {
+    minLength: 'Almeno 9 caratteri',
+    uppercase: 'Una lettera maiuscola',
+    number: 'Un numero',
+    symbol: 'Un simbolo',
+  },
   perfectFormAlways: 'Forma perfetta, sempre!',
   getStartedButton: 'Inizia!',
   signInButton: 'Accedi',
