@@ -154,40 +154,41 @@ eas env:create --environment production
 
 #### Step 3: Add Required Variables
 
-Add these variables for each environment (development, preview, production):
+Some variables differ per environment, others are shared across all environments.
 
-**Supabase:**
-```
-EXPO_PUBLIC_SUPABASE_URL = https://[your-project].supabase.co
-EXPO_PUBLIC_SUPABASE_ANON_KEY = [your-anon-key]
-```
+**Environment-Specific Variables:**
 
-**API Backend:**
+These should have different values for development, preview, and production:
+
+| Variable | Development | Preview | Production |
+|----------|-------------|---------|------------|
+| `EXPO_PUBLIC_SUPABASE_URL` | `http://localhost:54321` (local) | Production URL | Production URL |
+| `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Local anon key | Production key | Production key |
+| `APP_ENV` | `development` | `preview` | `production` |
+
+> **Note:** For development, you can use local Supabase (`npx supabase start`) or point to production. Preview and production typically use the same Supabase instance.
+
+**Shared Variables (same across all environments):**
+
+These use the same values for development, preview, and production:
+
 ```
+# API Backend (transferred)
 EXPO_PUBLIC_API_URL = https://formai-service.onrender.com
-```
 
-**Google Sign-In** (create OAuth credentials in your Google Cloud Console):
-```
+# Google Sign-In
 EXPO_PUBLIC_GOOGLE_CLIENT_ID = [your-client-id].apps.googleusercontent.com
 GOOGLE_URL_SCHEME = com.googleusercontent.apps.[your-client-id]
-```
 
-**Analytics:**
-```
+# Analytics
 EXPO_PUBLIC_MIXPANEL_PROJECT_TOKEN = [your-mixpanel-token]
-```
 
-**Monetization:**
-```
+# Monetization (same for all environments - uses sandbox for dev automatically)
 EXPO_PUBLIC_SUPERWALL_IOS_KEY = pk_[your-superwall-key]
 EXPO_PUBLIC_REVENUECAT_IOS_KEY = appl_[your-revenuecat-key]
 ```
 
-**Environment:**
-```
-APP_ENV = development  (or preview/production)
-```
+> **Note:** RevenueCat and Superwall automatically use sandbox mode in development builds, so you use the same API keys across all environments.
 
 #### Step 4: Pull Variables Locally
 
@@ -936,19 +937,18 @@ export const CANNY_FEATURE_REQUESTS_URL = process.env.EXPO_PUBLIC_CANNY_URL || '
 
 See [Initial Setup Checklist → Step 3](#3-set-up-eas-environment-variables) for detailed setup instructions.
 
-Required variables to set in EAS for each environment:
+**Environment-Specific** (set differently for dev/preview/prod):
+- `EXPO_PUBLIC_SUPABASE_URL` - Local for dev, production for preview/prod
+- `EXPO_PUBLIC_SUPABASE_ANON_KEY` - Matches Supabase URL
+- `APP_ENV` - `development`, `preview`, or `production`
 
-| Variable | Description |
-|----------|-------------|
-| `EXPO_PUBLIC_SUPABASE_URL` | Supabase project URL |
-| `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Supabase anonymous key |
-| `EXPO_PUBLIC_API_URL` | AI analysis backend URL |
-| `EXPO_PUBLIC_GOOGLE_CLIENT_ID` | Google OAuth client ID |
-| `GOOGLE_URL_SCHEME` | Google URL scheme (reversed client ID) |
-| `EXPO_PUBLIC_MIXPANEL_PROJECT_TOKEN` | Mixpanel project token |
-| `EXPO_PUBLIC_SUPERWALL_IOS_KEY` | Superwall iOS API key |
-| `EXPO_PUBLIC_REVENUECAT_IOS_KEY` | RevenueCat iOS API key |
-| `APP_ENV` | `development`, `preview`, or `production` |
+**Shared** (same value across all environments):
+- `EXPO_PUBLIC_API_URL` - AI analysis backend
+- `EXPO_PUBLIC_GOOGLE_CLIENT_ID` - Google OAuth
+- `GOOGLE_URL_SCHEME` - Google URL scheme
+- `EXPO_PUBLIC_MIXPANEL_PROJECT_TOKEN` - Analytics
+- `EXPO_PUBLIC_SUPERWALL_IOS_KEY` - Paywall
+- `EXPO_PUBLIC_REVENUECAT_IOS_KEY` - Purchases
 
 ---
 
@@ -965,19 +965,26 @@ Quick reference for all configurable values. See [Initial Setup Checklist](#init
 
 ### EAS Environment Variables
 
-These are set in EAS and pulled locally via `eas env:pull`:
+These are set in EAS and pulled locally via `eas env:pull`.
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `EXPO_PUBLIC_SUPABASE_URL` | Yes | Supabase project URL |
-| `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Yes | Supabase anonymous key |
-| `EXPO_PUBLIC_API_URL` | Yes | AI analysis backend URL |
-| `EXPO_PUBLIC_GOOGLE_CLIENT_ID` | Yes | Google OAuth client ID |
-| `GOOGLE_URL_SCHEME` | Yes | Google URL scheme (reversed client ID) |
-| `EXPO_PUBLIC_MIXPANEL_PROJECT_TOKEN` | Yes | Mixpanel project token |
-| `EXPO_PUBLIC_SUPERWALL_IOS_KEY` | Yes | Superwall iOS API key |
-| `EXPO_PUBLIC_REVENUECAT_IOS_KEY` | Yes | RevenueCat iOS API key |
-| `APP_ENV` | Yes | `development`, `preview`, or `production` |
+**Environment-Specific (different per environment):**
+
+| Variable | Dev | Preview | Prod | Description |
+|----------|-----|---------|------|-------------|
+| `EXPO_PUBLIC_SUPABASE_URL` | Local or Prod | Prod | Prod | Supabase project URL |
+| `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Local or Prod | Prod | Prod | Supabase anonymous key |
+| `APP_ENV` | `development` | `preview` | `production` | Environment identifier |
+
+**Shared (same across all environments):**
+
+| Variable | Description |
+|----------|-------------|
+| `EXPO_PUBLIC_API_URL` | AI analysis backend URL |
+| `EXPO_PUBLIC_GOOGLE_CLIENT_ID` | Google OAuth client ID |
+| `GOOGLE_URL_SCHEME` | Google URL scheme (reversed client ID) |
+| `EXPO_PUBLIC_MIXPANEL_PROJECT_TOKEN` | Mixpanel project token |
+| `EXPO_PUBLIC_SUPERWALL_IOS_KEY` | Superwall iOS API key |
+| `EXPO_PUBLIC_REVENUECAT_IOS_KEY` | RevenueCat iOS API key |
 
 ### Supabase Secrets
 
