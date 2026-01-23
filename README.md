@@ -19,6 +19,7 @@ AI-powered fitness form analysis mobile application built with React Native and 
 - [EAS (Expo Application Services)](#eas-expo-application-services)
 - [iOS Development & Deployment](#ios-development--deployment)
 - [Supabase Setup](#supabase-setup)
+- [GitHub Actions (CI/CD)](#automated-production-migrations-github-actions)
 - [Development Workflow](#development-workflow)
 - [Common Commands](#common-commands)
 - [Troubleshooting](#troubleshooting)
@@ -124,34 +125,89 @@ All values are pre-configured and transferred with the sale:
 
 Only update `CANNY_FEATURE_REQUESTS_URL` if you want to use your own Canny board.
 
-### 3. Create .env File
+### 3. Set Up EAS Environment Variables
 
-Create a `.env` file in the project root with these variables:
+Environment variables are stored securely in Expo Application Services (EAS), not in a local `.env` file. You'll set them in EAS and then pull them locally.
+
+#### Step 1: Log in to EAS
 
 ```bash
-# Supabase (credentials transferred - update if creating new project)
-EXPO_PUBLIC_SUPABASE_URL=https://yourproject.supabase.co
-EXPO_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+eas login
+```
 
-# API Backend (transferred)
-EXPO_PUBLIC_API_URL=https://formai-service.onrender.com
+#### Step 2: Access Environment Variables
 
-# Google Sign-In (create new OAuth credentials in your Google Cloud)
-EXPO_PUBLIC_GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
-GOOGLE_URL_SCHEME=com.googleusercontent.apps.your-google-client-id
+Go to your project on [expo.dev](https://expo.dev):
+1. Select your project
+2. Go to **Project Settings** → **Environment variables**
 
-# Analytics (transferred - or create your own Mixpanel project)
-EXPO_PUBLIC_MIXPANEL_PROJECT_TOKEN=your-mixpanel-token
+Or use the CLI:
+```bash
+# List current variables
+eas env:list
 
-# Monetization (transferred - accounts need ownership transfer)
-EXPO_PUBLIC_SUPERWALL_IOS_KEY=pk_your-superwall-key
-EXPO_PUBLIC_REVENUECAT_IOS_KEY=appl_your-revenuecat-key
+# Create environments if they don't exist
+eas env:create --environment development
+eas env:create --environment preview
+eas env:create --environment production
+```
 
-# Optional: Only if using your own Canny board
-# EXPO_PUBLIC_CANNY_URL=https://yourcompany.canny.io/feature-requests
+#### Step 3: Add Required Variables
 
-# Environment
-APP_ENV=development
+Add these variables for each environment (development, preview, production):
+
+**Supabase:**
+```
+EXPO_PUBLIC_SUPABASE_URL = https://[your-project].supabase.co
+EXPO_PUBLIC_SUPABASE_ANON_KEY = [your-anon-key]
+```
+
+**API Backend:**
+```
+EXPO_PUBLIC_API_URL = https://formai-service.onrender.com
+```
+
+**Google Sign-In** (create OAuth credentials in your Google Cloud Console):
+```
+EXPO_PUBLIC_GOOGLE_CLIENT_ID = [your-client-id].apps.googleusercontent.com
+GOOGLE_URL_SCHEME = com.googleusercontent.apps.[your-client-id]
+```
+
+**Analytics:**
+```
+EXPO_PUBLIC_MIXPANEL_PROJECT_TOKEN = [your-mixpanel-token]
+```
+
+**Monetization:**
+```
+EXPO_PUBLIC_SUPERWALL_IOS_KEY = pk_[your-superwall-key]
+EXPO_PUBLIC_REVENUECAT_IOS_KEY = appl_[your-revenuecat-key]
+```
+
+**Environment:**
+```
+APP_ENV = development  (or preview/production)
+```
+
+#### Step 4: Pull Variables Locally
+
+After setting variables in EAS, pull them to create your local `.env` file:
+
+```bash
+npx eas env:pull
+# Select "development" when prompted
+```
+
+This creates a `.env` file in your project root. The file is gitignored and should never be committed.
+
+#### Step 5: Verify Setup
+
+```bash
+# Check that .env was created
+cat .env
+
+# Start the app
+npm start
 ```
 
 ### 4. Set Supabase Edge Function Secrets
@@ -168,22 +224,38 @@ npx supabase secrets set SUPPORT_EMAIL=support@useformai.com
 npx supabase secrets set APP_NAME="Form AI"
 ```
 
-### 5. Configure EAS Environment Variables
+### 5. Verify EAS Environment Variables
 
-Add variables to EAS for cloud builds:
+After adding all variables in Step 3, verify they're set for each environment:
 
 ```bash
-eas login
-eas env:create --environment development
-eas env:create --environment preview
-eas env:create --environment production
-
-# Set all EXPO_PUBLIC_* variables for each environment
-eas env:set EXPO_PUBLIC_SUPABASE_URL --environment production
-# ... (repeat for all variables)
+# List variables for each environment
+eas env:list --environment development
+eas env:list --environment preview
+eas env:list --environment production
 ```
 
-### 6. Verify Third-Party Service Accounts
+Make sure all required variables are set before building.
+
+### 6. Configure GitHub Secrets (for CI/CD)
+
+The repository uses GitHub Actions to automatically apply database migrations to production. Set up these secrets in your GitHub repository:
+
+1. Go to your GitHub repo → **Settings** → **Secrets and variables** → **Actions**
+2. Add these secrets:
+
+| Secret | Value |
+|--------|-------|
+| `PROD_SUPABASE_ACCESS_TOKEN` | Generate at [supabase.com/dashboard/account/tokens](https://supabase.com/dashboard/account/tokens) |
+| `PROD_PROJECT_REF` | Your project ref from Supabase dashboard URL |
+
+3. Create a GitHub environment named `prod`:
+   - Go to **Settings** → **Environments** → **New environment**
+   - Name: `prod`
+
+See [Automated Production Migrations](#automated-production-migrations-github-actions) for more details.
+
+### 7. Verify Third-Party Service Accounts
 
 Ensure you have accounts and access to:
 
@@ -860,31 +932,23 @@ export const CANNY_FEATURE_REQUESTS_URL = process.env.EXPO_PUBLIC_CANNY_URL || '
 
 ---
 
-### EAS Environment Variables
+### EAS Environment Variables Summary
 
-After setting up all services, add variables to EAS:
+See [Initial Setup Checklist → Step 3](#3-set-up-eas-environment-variables) for detailed setup instructions.
 
-```bash
-# Add to EAS for each environment
-eas env:create --environment development
-eas env:create --environment preview
-eas env:create --environment production
+Required variables to set in EAS for each environment:
 
-# Set variables (repeat for each environment)
-eas env:set EXPO_PUBLIC_SUPABASE_URL --environment production
-eas env:set EXPO_PUBLIC_SUPABASE_ANON_KEY --environment production
-eas env:set EXPO_PUBLIC_API_URL --environment production
-eas env:set EXPO_PUBLIC_GOOGLE_CLIENT_ID --environment production
-eas env:set GOOGLE_URL_SCHEME --environment production
-eas env:set EXPO_PUBLIC_MIXPANEL_PROJECT_TOKEN --environment production
-eas env:set EXPO_PUBLIC_SUPERWALL_IOS_KEY --environment production
-eas env:set EXPO_PUBLIC_REVENUECAT_IOS_KEY --environment production
-eas env:set EXPO_PUBLIC_CANNY_URL --environment production
-eas env:set EXPO_PUBLIC_SUPPORT_EMAIL --environment production
-eas env:set EXPO_PUBLIC_TOS_URL --environment production
-eas env:set EXPO_PUBLIC_PRIVACY_URL --environment production
-eas env:set APP_ENV --environment production --value production
-```
+| Variable | Description |
+|----------|-------------|
+| `EXPO_PUBLIC_SUPABASE_URL` | Supabase project URL |
+| `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Supabase anonymous key |
+| `EXPO_PUBLIC_API_URL` | AI analysis backend URL |
+| `EXPO_PUBLIC_GOOGLE_CLIENT_ID` | Google OAuth client ID |
+| `GOOGLE_URL_SCHEME` | Google URL scheme (reversed client ID) |
+| `EXPO_PUBLIC_MIXPANEL_PROJECT_TOKEN` | Mixpanel project token |
+| `EXPO_PUBLIC_SUPERWALL_IOS_KEY` | Superwall iOS API key |
+| `EXPO_PUBLIC_REVENUECAT_IOS_KEY` | RevenueCat iOS API key |
+| `APP_ENV` | `development`, `preview`, or `production` |
 
 ---
 
@@ -899,7 +963,9 @@ Quick reference for all configurable values. See [Initial Setup Checklist](#init
 | `app.config.ts` | `EAS_PROJECT_ID`, `OWNER` only (app identity stays the same) |
 | `src/constants/appConfig.ts` | None required (all values transferred including Canny) |
 
-### .env Variables
+### EAS Environment Variables
+
+These are set in EAS and pulled locally via `eas env:pull`:
 
 | Variable | Required | Description |
 |----------|----------|-------------|
@@ -911,8 +977,7 @@ Quick reference for all configurable values. See [Initial Setup Checklist](#init
 | `EXPO_PUBLIC_MIXPANEL_PROJECT_TOKEN` | Yes | Mixpanel project token |
 | `EXPO_PUBLIC_SUPERWALL_IOS_KEY` | Yes | Superwall iOS API key |
 | `EXPO_PUBLIC_REVENUECAT_IOS_KEY` | Yes | RevenueCat iOS API key |
-| `EXPO_PUBLIC_CANNY_URL` | No | Only if replacing existing Canny board |
-| `APP_ENV` | Yes | Environment: `development`, `preview`, `production` |
+| `APP_ENV` | Yes | `development`, `preview`, or `production` |
 
 ### Supabase Secrets
 
@@ -1305,9 +1370,72 @@ npx supabase migration new migration_name
 # Apply migrations locally
 npx supabase db reset
 
-# Push to production
+# Push to production (manual)
 npx supabase db push
 ```
+
+### Automated Production Migrations (GitHub Actions)
+
+The repository includes a GitHub Actions workflow that automatically applies database migrations to production when code is pushed to `main`.
+
+**File:** `.github/workflows/db-migrations.yml`
+
+**How it works:**
+1. Triggered on push to `main` branch (or manual dispatch)
+2. Sets up Supabase CLI
+3. Authenticates with production Supabase
+4. Links to the production project
+5. Runs `supabase db push` to apply any new migrations
+
+**Required GitHub Secrets:**
+
+You must configure these secrets in your GitHub repository settings (**Settings → Secrets and variables → Actions**):
+
+| Secret | Description |
+|--------|-------------|
+| `PROD_SUPABASE_ACCESS_TOKEN` | Supabase access token (from supabase.com/dashboard/account/tokens) |
+| `PROD_PROJECT_REF` | Your Supabase project reference ID |
+
+**Setting up the secrets:**
+
+1. Go to [Supabase Dashboard → Account → Access Tokens](https://supabase.com/dashboard/account/tokens)
+2. Generate a new access token
+3. Copy your project ref from your Supabase project URL: `https://supabase.com/dashboard/project/[PROJECT_REF]`
+4. Add both as secrets in GitHub repository settings
+
+**Workflow file:**
+
+```yaml
+name: DB Migrations (Prod only)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  migrate_prod:
+    runs-on: ubuntu-latest
+    environment: prod
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Login to Supabase
+        run: supabase login --token "${{ secrets.PROD_SUPABASE_ACCESS_TOKEN }}"
+
+      - name: Link to Prod
+        run: supabase link --project-ref "${{ secrets.PROD_PROJECT_REF }}"
+
+      - name: Apply migrations to PROD
+        run: supabase db push
+```
+
+**Usage:**
+- Migrations run automatically when you push to `main`
+- You can also trigger manually from GitHub Actions tab → "DB Migrations" → "Run workflow"
 
 ---
 
