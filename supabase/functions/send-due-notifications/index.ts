@@ -40,6 +40,9 @@ async function sendExpoPush(
 }
 
 // --- Inline helper for sending email via Resend ---
+const SUPPORT_EMAIL = Deno.env.get("SUPPORT_EMAIL") || "support@useformai.com"
+const APP_NAME = Deno.env.get("APP_NAME") || "Form AI"
+
 async function sendEmail(to: string, subject: string, text: string) {
   if (!RESEND_API_KEY) {
     console.error("No RESEND_API_KEY set")
@@ -53,8 +56,8 @@ async function sendEmail(to: string, subject: string, text: string) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from: "Form AI <support@useformai.com>",
-      reply_to: "support@useformai.com",
+      from: `${APP_NAME} <${SUPPORT_EMAIL}>`,
+      reply_to: SUPPORT_EMAIL,
       to: [to],
       subject,
       text,

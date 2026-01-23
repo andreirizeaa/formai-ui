@@ -1,13 +1,15 @@
 import { ConfigContext, ExpoConfig } from "expo/config";
 import { version } from "./package.json";
 
-// Replace these with your EAS project ID and project slug.
-// You can find them at https://expo.dev/accounts/[account]/projects/[project].
-const EAS_PROJECT_ID = "cbbfb6a7-e285-419f-af75-79337f5c77f9";
+// =============================================================================
+// EAS/EXPO ACCOUNT SETTINGS - Update these for your Expo account
+// Find your EAS project ID at https://expo.dev/accounts/[account]/projects/[project]
+// =============================================================================
+const EAS_PROJECT_ID = "cbbfb6a7-e285-419f-af75-79337f5c77f9"; // TODO: Replace with your EAS project ID
 const PROJECT_SLUG = "formai";
-const OWNER = "andreirizea";
+const OWNER = "andreirizea"; // TODO: Replace with your Expo account username
 
-// App production config
+// App identity - These stay the same (transferred with App Store listing)
 const APP_NAME = "Form AI";
 const BUNDLE_IDENTIFIER = "com.useformai.formai";
 const PACKAGE_NAME = "com.useformai.formai";
@@ -93,7 +95,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       },
     },
     web: {
-      proxy: "https://formai-service.onrender.com"
+      proxy: process.env.EXPO_PUBLIC_API_URL || "https://formai-service.onrender.com" // TODO: Update fallback URL to your API
     },
     plugins: [
       "expo-mail-composer",

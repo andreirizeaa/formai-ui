@@ -3,6 +3,7 @@ import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import { showAlert } from './alertService';
 import { getUserId } from './storageService';
+import { SUPPORT_EMAIL } from '../constants/appConfig';
 
 export interface EmailOptions {
   recipients: string[];
@@ -10,7 +11,7 @@ export interface EmailOptions {
   body: string;
 }
 
-const supportEmail = 'support@useformai.com';
+const supportEmail = SUPPORT_EMAIL;
 
 export async function openEmailComposer(options: EmailOptions): Promise<void> {
   try {

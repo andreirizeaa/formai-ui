@@ -34,6 +34,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { CANNY_FEATURE_REQUESTS_URL, LEGAL_URLS } from '../../../constants/appConfig';
 import { useLiftData } from '../../../context/LiftDataContext';
 import { useLoadingLifts } from '../../../context/LoadingLiftsContext';
 import { usePurchases } from '../../../context/PurchasesContext';
@@ -363,7 +364,7 @@ export function SettingsScreen({
     // Small delay to ensure haptic feedback is felt before opening browser
     setTimeout(async () => {
       try {
-        await Linking.openURL('https://form-ai.canny.io/feature-requests');
+        await Linking.openURL(CANNY_FEATURE_REQUESTS_URL);
       } catch (error) {
         showAlert('Error', 'Unable to open feature requests. Please try again later.');
       }
@@ -427,7 +428,7 @@ export function SettingsScreen({
     // Small delay to ensure haptic feedback is felt before opening browser
     setTimeout(async () => {
       try {
-        await Linking.openURL('https://useformai.com/legal/privacy');
+        await Linking.openURL(LEGAL_URLS.privacyPolicy);
       } catch (error) {
         showAlert('Error', 'Unable to open privacy policy. Please try again later.');
       }
@@ -441,7 +442,7 @@ export function SettingsScreen({
     // Small delay to ensure haptic feedback is felt before opening browser
     setTimeout(async () => {
       try {
-        await Linking.openURL('https://useformai.com/legal/tos');
+        await Linking.openURL(LEGAL_URLS.termsOfService);
       } catch (error) {
         showAlert('Error', 'Unable to open terms of use. Please try again later.');
       }

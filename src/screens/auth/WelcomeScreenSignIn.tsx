@@ -17,6 +17,7 @@ import {
   View,
 } from 'react-native';
 import { appColors } from '../../constants/appColorScheme';
+import { LEGAL_URLS } from '../../constants/appConfig';
 import { useOnboarding } from '../../context/OnboardingContext';
 import { usePurchases } from '../../context/PurchasesContext';
 import { supabase } from '../../lib/supabase';
@@ -232,7 +233,7 @@ export function WelcomeScreenSignIn({
     // Small delay to ensure haptic feedback is felt before opening browser
     setTimeout(async () => {
       try {
-        await Linking.openURL('https://useformai.com/legal/tos');
+        await Linking.openURL(LEGAL_URLS.termsOfService);
       } catch (error) {
         showAlert('Error', 'Unable to open terms of use. Please try again later.');
       }
@@ -246,7 +247,7 @@ export function WelcomeScreenSignIn({
     // Small delay to ensure haptic feedback is felt before opening browser
     setTimeout(async () => {
       try {
-        await Linking.openURL('https://useformai.com/legal/privacy');
+        await Linking.openURL(LEGAL_URLS.privacyPolicy);
       } catch (error) {
         showAlert('Error', 'Unable to open privacy policy. Please try again later.');
       }

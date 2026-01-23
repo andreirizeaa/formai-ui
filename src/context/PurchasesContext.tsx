@@ -148,11 +148,13 @@ export function PurchasesProvider({ children, onSubscriptionUpdate }: PurchasesP
     const init = async () => {
       try {
         Purchases.setLogLevel(LOG_LEVEL.WARN);
+        // TODO: Set EXPO_PUBLIC_REVENUECAT_IOS_KEY in your environment variables
+        const revenueCatKey = process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY || 'appl_GUYEEZQfOpAHzaNTEHKrIuRLGuY';
         if (Platform.OS === 'ios') {
-          Purchases.configure({ apiKey: 'appl_GUYEEZQfOpAHzaNTEHKrIuRLGuY' });
+          Purchases.configure({ apiKey: revenueCatKey });
         }
         // else if (Platform.OS === 'android') {
-        //   Purchases.configure({ apiKey: 'your_android_api_key' });
+        //   Purchases.configure({ apiKey: process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY });
         // }
         await Promise.all([refreshOfferings(), refreshCustomerInfo(), syncPurchases()]);
       } catch (error) {
