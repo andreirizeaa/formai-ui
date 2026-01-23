@@ -148,8 +148,13 @@ export function PurchasesProvider({ children, onSubscriptionUpdate }: PurchasesP
     const init = async () => {
       try {
         Purchases.setLogLevel(LOG_LEVEL.WARN);
-        // TODO: Set EXPO_PUBLIC_REVENUECAT_IOS_KEY in your environment variables
-        const revenueCatKey = process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY || 'appl_GUYEEZQfOpAHzaNTEHKrIuRLGuY';
+        const revenueCatKey = process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY;
+        if (!revenueCatKey) {
+          console.error('EXPO_PUBLIC_REVENUECAT_IOS_KEY is not set');
+          setInitializeError('RevenueCat API key not configured');
+          setIsInitializing(false);
+          return;
+        }
         if (Platform.OS === 'ios') {
           Purchases.configure({ apiKey: revenueCatKey });
         }
